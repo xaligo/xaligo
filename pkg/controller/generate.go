@@ -26,6 +26,7 @@ var paperSizes = map[string][2]int{
 // InitGenerateCmd returns the `xaligo generate` parent command with subcommands:
 //   - xaligo generate xal        … generate an AWS hierarchy .xal
 //   - xaligo generate excalidraw … render a .xal into .excalidraw
+//   - xaligo generate pptx       … render a .xal into .pptx via the Node exporter
 func InitGenerateCmd() *cobra.Command {
 	parent := &cobra.Command{
 		Use:   "generate",
@@ -33,6 +34,7 @@ func InitGenerateCmd() *cobra.Command {
 	}
 	parent.AddCommand(initGenerateXalCmd())
 	parent.AddCommand(initGenerateExcalidrawCmd())
+	parent.AddCommand(initGeneratePptxCmd())
 	return parent
 }
 
@@ -145,6 +147,77 @@ func initGenerateExcalidrawCmd() *cobra.Command {
 	return cmd
 }
 
+// ── xaligo generate pptx ────────────────────────────────────────────────────
+
+func initGeneratePptxCmd() *cobra.Command {
+	var (
+		xalPath       string
+		output        string
+		servicesFile  string
+		title         string
+		author        string
+		company       string
+		subject       string
+		compression   bool
+		noCompression bool
+		pxPerInch     float64
+		arrowStyle    string
+		arrowStub     float64
+		arrowMargin   float64
+		paper         string
+		orientation   string
+	)
+
+	cmd := &cobra.Command{
+		Use:   "pptx",
+		Short: "Render a .xal file into a .pptx file via the Node exporter",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if noCompression {
+				compression = false
+			}
+			return RunGeneratePptx(repository.PptxExportOptions{
+				XalPath:      xalPath,
+				Output:       output,
+				ServicesFile: servicesFile,
+				Title:        title,
+				Author:       author,
+				Company:      company,
+				Subject:      subject,
+				Compression:  &compression,
+				PxPerInch:    pxPerInch,
+				ArrowStyle:   arrowStyle,
+				ArrowStub:    arrowStub,
+				ArrowMargin:  arrowMargin,
+				Paper:        paper,
+				Orientation:  orientation,
+				Stdout:       os.Stdout,
+				Stderr:       os.Stderr,
+			})
+		},
+	}
+
+	cmd.Flags().StringVar(&xalPath, "xal", "", "input .xal file path")
+	cmd.Flags().StringVarP(&output, "output", "o", "", "output .pptx file path")
+	cmd.Flags().StringVar(&servicesFile, "services", "", "optional services.csv listing AWS service icons to embed as legend")
+	cmd.Flags().StringVar(&title, "title", "", "optional PPTX title metadata")
+	cmd.Flags().StringVar(&author, "author", "", "optional PPTX author metadata")
+	cmd.Flags().StringVar(&company, "company", "", "optional PPTX company metadata")
+	cmd.Flags().StringVar(&subject, "subject", "", "optional PPTX subject metadata")
+	cmd.Flags().BoolVar(&compression, "compression", true, "compress PPTX output")
+	cmd.Flags().BoolVar(&noCompression, "no-compression", false, "disable PPTX output compression")
+	cmd.Flags().Float64Var(&pxPerInch, "px-per-inch", 0, "pixels per inch for PPTX layout scaling (default 96)")
+	cmd.Flags().StringVar(&arrowStyle, "arrow-style", "", "connector arrow style: thin|standard|triangle|stealth|arrow|diamond|oval|none (default thin)")
+	cmd.Flags().Float64Var(&arrowStub, "arrow-stub", 0, "stub length in px before the first/last bend (default 20)")
+	cmd.Flags().Float64Var(&arrowMargin, "arrow-margin", 0, "clear margin in px reserved on both sides of each line (default 8)")
+	cmd.Flags().StringVar(&paper, "paper", "", "slide paper size: A5 A4 A3 A2 A1 Letter Legal Tabloid (default: match .xal frame)")
+	cmd.Flags().StringVar(&orientation, "orientation", "", "slide orientation: portrait | landscape (default: auto-fit)")
+
+	_ = cmd.MarkFlagRequired("xal")
+	_ = cmd.MarkFlagRequired("output")
+
+	return cmd
+}
+
 // ── RunGenerate ──────────────────────────────────────────────────────────────
 
 // RunGenerate validates parameters and writes the generated .xal to output.
@@ -187,6 +260,20 @@ func RunGenerate(
 	}
 	fmt.Printf("generated: %s\n", output)
 	return nil
+}
+
+// RunGeneratePptx asks the repository layer to export PPTX via the Node/PptxGenJS exporter.
+func RunGeneratePptx(opts repository.PptxExportOptions) error {
+	if opts.XalPath == "" {
+		return fmt.Errorf("--xal is required")
+	}
+	if opts.Output == "" {
+		return fmt.Errorf("--output is required")
+	}
+	if opts.PxPerInch < 0 {
+		return fmt.Errorf("--px-per-inch must be positive")
+	}
+	return repository.ExportPptx(opts)
 }
 
 // ── xal builder ─────────────────────────────────────────────────────────────

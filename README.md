@@ -67,6 +67,7 @@ packages/
 | Command | Description |
 |---|---|
 | `xaligo generate excalidraw --xal <file.xal> -o <out.excalidraw> --services <csv>` | Convert .xal → .excalidraw with service legend (`--services` required) |
+| `xaligo generate pptx --xal <file.xal> -o <out.pptx> [--services <csv>] [pptx flags]` | Convert .xal → .pptx via the Node/PptxGenJS exporter |
 | `xaligo generate xal [flags] -o <out.xal>` | Auto-generate an AWS infrastructure hierarchy .xal |
 | `xaligo render <file.xal> -o <out.excalidraw>` | Convert .xal → .excalidraw without legend |
 | `xaligo add service --name <name> --file <file>` | Add a single AWS service icon to an existing file |
@@ -110,7 +111,19 @@ mkdir -p output
   --xal examples/sample.xal \
   -o output/sample.excalidraw \
   --services examples/services.csv
+
+# Optional: generate a PowerPoint file
+npm run build --workspace packages/xaligo
+make build-wasm
+.bin/xaligo generate pptx \
+  --xal examples/sample.xal \
+  -o output/sample.pptx \
+  --services examples/services.csv \
+  --title "Sample Architecture" \
+  --author "xaligo"
 ```
+
+PPTX flags: `--title`, `--author`, `--company`, `--subject`, `--compression true|false`, `--px-per-inch`.
 
 ### Option B — Auto-generate an AWS hierarchy
 
@@ -147,6 +160,7 @@ Import the generated `.excalidraw` file into [Excalidraw](https://excalidraw.com
 | `<container>` | Vertical stack container (`layout="horizontal"` for horizontal layout) |
 | `<row>` | 12-column grid row |
 | `<col>` | Column inside `<row>` (`span` sets width) |
+| `<spacer>` / `<blank>` | Empty layout cell. Use in rows, stacks, or item grids to reserve blank space |
 
 ### AWS group tags
 
@@ -212,6 +226,9 @@ Edges are fixed with Excalidraw's `fixedPoint` binding, so arrows snap correctly
 | `layout="staggered"` | AWS group tags | Stack children with depth offset |
 | `row="N"` | child in vertical stack | Height ratio (flex-grow equivalent) |
 | `col="N"` | child in `layout="horizontal"` | Width ratio (flex-grow equivalent) |
+| `width="N"` / `height="N"` | non-root child | Fixed child size in px |
+| `content-width="N"` / `content-height="N"` | containers/groups | Shrink the inner layout area, leaving blank space around it |
+| `align="top-left"` etc. | containers/groups and item grids | Align inner content or item grid (`top|middle|bottom` + `left|center|right`; item grids also support `spread`) |
 | `gap="N"` | container tags | Child spacing (px) |
 | `border="none"` | any | Hide border |
 | `visible="false"` | any | Hide only this component (children are still rendered) |
@@ -229,6 +246,9 @@ Unit is `8px`. Multiple classes are space-separated: `class="pa-4 ml-2"`
 | `mx-{n}` / `my-{n}` | margin left+right / top+bottom |
 | `pt/pr/pb/pl-{n}` | padding per side |
 | `mt/mr/mb/ml-{n}` | margin per side |
+
+On the root `<frame>`, margin is treated as outer content whitespace: the paper
+frame keeps its full size, and the diagram content is inset from the paper edge.
 
 ## Sample DSL
 

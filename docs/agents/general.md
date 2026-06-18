@@ -118,7 +118,7 @@ Save as e.g. `examples/my-arch-services.csv`.
 - `<item />` (no id) = spacer slot (no icon, but layout space reserved)
 - `<connection src="A" dst="B" />` draws an elbow arrow; must be a **direct child of `<frame>`**, placed **after** all layout tags
 - `row="N"` on a subnet/container = number of icon columns in the icon grid
-- `item-size="48"` on `<frame>` sets icon size in px (default 48)
+- `item-size="N"` on `<frame>` sets icon size in px (native CLI default 32)
 
 **Available AWS group containers:**
 

@@ -93,17 +93,29 @@ func layoutNode(node *model.Node, target *Box, x, y, w, h float64) {
 		Left:   classMar.Left + attrMar.Left,
 	}
 
-	// margin は親から渡された割り当て領域を削る (sibling spacing)
+	// margin は親から渡された割り当て領域を削る (sibling spacing)。
+	// Root frame の margin は紙フレーム自体を縮めず、内側コンテンツの外側余白として扱う。
 	boxX := x + mar.Left
 	boxY := y + mar.Top
 	boxW := w - mar.Left - mar.Right
 	boxH := h - mar.Top - mar.Bottom
+	if node.Tag == "frame" {
+		boxX = x
+		boxY = y
+		boxW = w
+		boxH = h
+	}
 
 	// width 属性が指定されていれば親計算値を上書きする (frame ルートは除く)
 	if node.Tag != "frame" {
 		if wv := node.Attr("width"); wv != "" {
 			if ew := attrFloat(wv, 0); ew > 0 {
 				boxW = ew
+			}
+		}
+		if hv := node.Attr("height"); hv != "" {
+			if eh := attrFloat(hv, 0); eh > 0 {
+				boxH = eh
 			}
 		}
 	}
@@ -118,6 +130,13 @@ func layoutNode(node *model.Node, target *Box, x, y, w, h float64) {
 	innerY := boxY + pad.Top
 	innerW := boxW - pad.Left - pad.Right
 	innerH := boxH - pad.Top - pad.Bottom
+	if node.Tag == "frame" {
+		innerX += mar.Left
+		innerY += mar.Top
+		innerW -= mar.Left + mar.Right
+		innerH -= mar.Top + mar.Bottom
+	}
+	innerX, innerY, innerW, innerH = alignContentArea(node, innerX, innerY, innerW, innerH)
 
 	switch node.Tag {
 	case "frame", "container":
@@ -157,6 +176,7 @@ func layoutNode(node *model.Node, target *Box, x, y, w, h float64) {
 			gInnerY := boxY + defaultGroupTopInset + pad.Top
 			gInnerW := boxW - defaultGroupSideInset*2 - pad.Left - pad.Right
 			gInnerH := boxH - defaultGroupTopInset - defaultGroupSideInset - pad.Top - pad.Bottom
+			gInnerX, gInnerY, gInnerW, gInnerH = alignContentArea(node, gInnerX, gInnerY, gInnerW, gInnerH)
 			if node.Attr("layout") == "staggered" {
 				layoutStagger(node, target, gInnerX, gInnerY, gInnerW, gInnerH)
 			} else if node.Attr("layout") == "horizontal" {
@@ -311,6 +331,31 @@ func layoutLeaf(node *model.Node, target *Box, x, y, w, h float64) {
 	target.H = h
 }
 
+func alignContentArea(node *model.Node, x, y, w, h float64) (float64, float64, float64, float64) {
+	contentW := attrFloat(node.Attr("content-width"), w)
+	contentH := attrFloat(node.Attr("content-height"), h)
+	if contentW <= 0 || contentW > w {
+		contentW = w
+	}
+	if contentH <= 0 || contentH > h {
+		contentH = h
+	}
+	vert, horiz := parseAlign(node.Attr("align"))
+	switch horiz {
+	case "right":
+		x += w - contentW
+	case "center":
+		x += (w - contentW) / 2
+	}
+	switch vert {
+	case "bottom":
+		y += h - contentH
+	case "middle":
+		y += (h - contentH) / 2
+	}
+	return x, y, contentW, contentH
+}
+
 func childID(parent string, index int) string {
 	return fmt.Sprintf("%s-%d", parent, index)
 }
@@ -386,10 +431,29 @@ func parseClassSpacing(class string) (Spacing, Spacing) {
 	return pad, mar
 }
 
-// IsItemLike reports whether a tag behaves as a layout item slot
-// (<item> and <spacer> are both treated identically by the renderer).
+// IsItemLike reports whether a tag behaves as a layout item slot.
 func IsItemLike(tag string) bool {
-	return tag == "item" || tag == "spacer"
+	return tag == "item" || IsBlank(tag)
+}
+
+// IsBlank reports whether a tag participates in layout without rendering.
+func IsBlank(tag string) bool {
+	return tag == "spacer" || tag == "blank"
+}
+
+func parseAlign(align string) (vert, horiz string) {
+	vert, horiz = "top", "left"
+	parts := strings.SplitN(strings.ToLower(strings.TrimSpace(align)), "-", 2)
+	if len(parts) != 2 {
+		return vert, horiz
+	}
+	if parts[0] == "top" || parts[0] == "middle" || parts[0] == "bottom" {
+		vert = parts[0]
+	}
+	if parts[1] == "left" || parts[1] == "center" || parts[1] == "right" {
+		horiz = parts[1]
+	}
+	return vert, horiz
 }
 
 func spacingValue(s string) float64 {

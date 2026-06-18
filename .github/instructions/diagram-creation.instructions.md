@@ -4,7 +4,7 @@ applyTo: "**"
 
 # xaligo — Diagram Creation Guide
 
-Standard workflow for creating Excalidraw diagrams.
+Standard workflow for creating Excalidraw and PPTX diagrams.
 
 ---
 
@@ -40,7 +40,7 @@ Example output:
 - `Abbreviation`, when set, is used as the **icon label inside the diagram** and in the standalone legend icon below the frame.
   - Takes priority over the built-in abbreviation table in `entity/service.go`.
   - When empty, the built-in table is used as fallback.
-- `OfficialName` is displayed as the full-name text in the right-side legend column.
+- `OfficialName` is displayed as the full-name text in legends.
 
 ```csv
 # 3-tier Architecture service list — IDs must match <item> tags in the .xal file
@@ -179,8 +179,8 @@ xaligo generate excalidraw \
   --services examples/services.csv
 ```
 
-`--services` is a **required parameter**. The services listed in services.csv are
-added as a legend on the right side of the frame.
+`--services` is a **required parameter** for this workflow. The CSV provides
+icon label overrides and service metadata.
 
 > **Note:** Create the output directory if it does not already exist.
 > ```bash
@@ -195,5 +195,15 @@ added as a legend on the right side of the frame.
 |---|---|
 | `grep -i "<name>" etc/resources/aws/service-index.csv` | Search for a service ID |
 | `xaligo generate excalidraw --xal <xal> -o <out> --services <csv>` | Convert .xal → .excalidraw with legend |
+| `xaligo generate pptx --xal <xal> -o <out.pptx> --services <csv> --paper A3 --orientation landscape` | Convert .xal → PPTX with routed connectors and 4-column legend pages |
 | `xaligo add service --list <csv> --file <excalidraw>` | Add service icons to an existing file |
 | `xaligo render <xal> -o <excalidraw>` | Convert .xal → .excalidraw without legend |
+
+## PPTX Notes
+
+- PPTX export adds separate legend slide(s) after the diagram slide.
+- Legend pages use 4 columns and show icon, abbreviation, and official name.
+- Use `--paper A3 --orientation landscape` for the current large AWS sample.
+- Connector routing is resolved in Go/WASM and avoids icon/label obstacles.
+- Keep `examples/sample.xal` and `examples/services.csv` in sync so the legend
+  includes every diagram service.

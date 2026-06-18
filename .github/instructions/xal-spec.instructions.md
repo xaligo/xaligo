@@ -25,7 +25,10 @@ The parser uses `encoding/xml` and handles attributes, nested tags, and text con
 | `class` | string | — | Spacing class |
 | `layout` | string | — | Set to `"horizontal"` to arrange children horizontally |
 | `gap` | float | `16` | Gap between child elements (px) |
-| `item-size` | float | `48` (config value) | Max icon size (px) applied to all `<item>` elements in this file. Overrides `item.icon_size` in `app.yaml` |
+| `item-size` | float | `32` (config value) | Max icon size (px) applied to all `<item>` elements in this file. Overrides `item.icon_size` in `app.yaml` |
+| `margin` / `margin-*` | float | — | Outer content whitespace. On root `<frame>`, paper size is preserved and content is inset |
+| `content-width` / `content-height` | float | — | Shrink usable inner layout area |
+| `align` | string | — | Align usable content area (`top|middle|bottom` + `left|center|right`) |
 
 ## Layout Tags
 
@@ -43,6 +46,8 @@ Stacks children **vertically** (same behavior as `frame`). Use `layout="horizont
 |---|---|---|---|
 | `layout` | string | — | `"horizontal"` to arrange children side by side |
 | `gap` | float | `16` | Gap between child elements (px) |
+| `content-width` / `content-height` | float | — | Shrink usable inner layout area |
+| `align` | string | — | Align usable content area |
 
 ### `<row>`
 
@@ -110,15 +115,16 @@ The icon is rendered to fit within the specified size (`item-size`).
 
 > If no icon is found for the given `id`, rendering is silently skipped (no error).
 
-## `<spacer>` Tag
+## `<spacer>` / `<blank>` Tags
 
-A dedicated **spacer** tag, usable as an alternative to `<item />`.
-Occupies the same layout slot as `<item>` but renders no icon or label.
+Dedicated empty layout tags, usable as alternatives to `<item />`.
+They occupy layout slots but render no icon, label, border, or text.
 
 ```xml
 <public-subnet title="Public Subnet">
   <item id="1178" />
   <spacer />          <!-- empty slot: no icon -->
+  <blank />           <!-- empty slot: no icon -->
   <item id="1189" />
 </public-subnet>
 ```
@@ -222,7 +228,9 @@ Available on `frame` / `container` / `col` and all AWS group tags.
 | `layout` | `"horizontal"` | Arrange children **horizontally** with proportional widths (use the `col` attribute for ratio) |
 | `layout` | `"staggered"` | Stack children with a depth offset (AWS group tags only) |
 | `gap` | float | Child spacing (px). Default `16` |
-| `align` | `"{vertical}-{horizontal}"` | Position of `<item>` icons within the container's content area. Default `"middle-center"` |
+| `align` | `"{vertical}-{horizontal}"` | Position of content area and `<item>` icons. Item grids also support `spread`. Default item-grid alignment is `"middle-center"` |
+| `content-width` / `content-height` | float | Shrink usable inner layout area, leaving whitespace |
+| `width` / `height` | float | Fixed child size (root frame dimensions remain the paper/content frame) |
 
 **`align` values** — combine a vertical part and a horizontal part with `-`:
 
@@ -240,15 +248,6 @@ All 12 combinations are valid: `top-left`, `top-center`, `top-right`, `top-sprea
 > (equivalent to CSS `justify-content: space-evenly`).
 >
 > **`left` / `right`:** icons are packed at the respective edge with a fixed `8 px` gap between icons.
-
-> **Inline placement (AWS group tags only):** when the natural (space-constrained) icon size would be ≤ 32 px,
-> items are placed **inline with the header** (to the right of the label text, vertically centred in the
-> 32 px header band) regardless of the vertical `align` setting, to avoid wasted whitespace below.
-> The horizontal part of `align` controls placement in inline mode:
-> `center` packs icons and centres them within the group width;
-> `spread` distributes icons with equal gaps across the full group width;
-> `left` packs icons immediately after the header text;
-> `right` packs icons at the right edge.
 
 ```xml
 <!-- Icons centred vertically and horizontally inside the group (default) -->

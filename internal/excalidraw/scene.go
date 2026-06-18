@@ -85,11 +85,13 @@ func staggerBGColor(b *layout.Box) string {
 }
 
 const (
-	itemMaxSize  = 32.0
-	itemMinSize  = 16.0
-	itemLabelH   = 14.0
-	itemLabelW   = 56.0 // text box width for item labels (wider than icon, centred on icon)
-	itemGap      = 8.0
+	itemMaxSize     = 32.0
+	itemMinSize     = 16.0
+	itemLabelFontPt = 8.0
+	itemLabelFontPx = itemLabelFontPt * 96.0 / 72.0
+	itemLabelH      = 14.0
+	itemLabelW      = 56.0 // text box width for item labels (wider than icon, centred on icon)
+	itemGap         = 8.0
 )
 
 // paperSizeNames maps (short-side, long-side) → paper name for reverse lookup.
@@ -168,7 +170,7 @@ func BuildJSON(root *layout.Box, svgGroupDir string, catalogCSV string, projectR
 	frameElem := map[string]any{
 		"id": "paper-frame", "type": "frame",
 		"x": root.X, "y": root.Y, "width": root.W, "height": root.H,
-		"angle": 0,
+		"angle":       0,
 		"name":        detectPaperName(root.W, root.H),
 		"strokeColor": "#bbb", "backgroundColor": "transparent",
 		"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
@@ -176,7 +178,7 @@ func BuildJSON(root *layout.Box, svgGroupDir string, catalogCSV string, projectR
 		"groupIds": []string{}, "roundness": nil,
 		"seed": r.Intn(99999999), "version": 1,
 		"versionNonce": r.Intn(99999999),
-		"isDeleted": false, "boundElements": nil,
+		"isDeleted":    false, "boundElements": nil,
 		"updated": updated, "link": nil, "locked": false,
 	}
 
@@ -199,8 +201,8 @@ func BuildJSON(root *layout.Box, svgGroupDir string, catalogCSV string, projectR
 	// Populated during renderItemGrid → renderIconAt, used for edge-based connections.
 	itemImgRects := map[int][4]float64{}
 	itemLblRects := map[int][4]float64{}
-	itemImgIDs   := map[int]string{}
-	itemLblIDs   := map[int]string{}
+	itemImgIDs := map[int]string{}
+	itemLblIDs := map[int]string{}
 
 	walk(root, &elements, files, svgGroupDir, catalogCSV, projectRoot, fsys, r, root, itemGroups, ancestorBoxes)
 	for ancID, items := range itemGroups {
@@ -209,9 +211,9 @@ func BuildJSON(root *layout.Box, svgGroupDir string, catalogCSV string, projectR
 	renderConnections(connections, itemImgRects, itemLblRects, itemImgIDs, itemLblIDs, &elements, r)
 
 	out := file{
-		Type:    "excalidraw",
-		Version: 2,
-		Source:  "https://github.com/ryo-arima/xaligo",
+		Type:     "excalidraw",
+		Version:  2,
+		Source:   "https://github.com/ryo-arima/xaligo",
 		Elements: elements,
 		AppState: map[string]any{
 			"gridSize":            20,
@@ -267,15 +269,15 @@ func walk(b *layout.Box, elements *[]map[string]any, files map[string]any, svgGr
 			*elements = append(*elements, map[string]any{
 				"id": rectID, "type": "rectangle",
 				"x": b.X, "y": b.Y, "width": b.W, "height": b.H,
-				"angle": 0,
+				"angle":       0,
 				"strokeColor": groupStroke, "backgroundColor": staggerBGColor(b),
-				"fillStyle": "solid",
+				"fillStyle":   "solid",
 				"strokeWidth": gd.StrokeWidth, "strokeStyle": gd.StrokeStyle,
 				"roughness": 0, "opacity": 100,
 				"groupIds": []string{}, "roundness": nil,
 				"seed": r.Intn(99999999), "version": 1,
 				"versionNonce": r.Intn(99999999),
-				"isDeleted": false, "boundElements": nil,
+				"isDeleted":    false, "boundElements": nil,
 				"updated": updated, "link": nil, "locked": false,
 			})
 
@@ -299,7 +301,7 @@ func walk(b *layout.Box, elements *[]map[string]any, files map[string]any, svgGr
 						"x": b.X, "y": b.Y,
 						"width": float64(groupIconSize), "height": float64(groupIconSize),
 						"fileId": fid, "status": "saved",
-						"scale": []int{1, 1},
+						"scale":       []int{1, 1},
 						"strokeColor": "transparent", "backgroundColor": "transparent",
 						"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
 						"roughness": 0, "opacity": 100, "angle": 0,
@@ -327,14 +329,14 @@ func walk(b *layout.Box, elements *[]map[string]any, files map[string]any, svgGr
 				"id": fmt.Sprintf("%s-label", b.ID), "type": "text",
 				"x": textX, "y": textY,
 				"width": lblW, "height": float64(groupFontSize + 4),
-				"angle": 0,
+				"angle":       0,
 				"strokeColor": gd.StrokeColor, "backgroundColor": "transparent",
 				"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
 				"roughness": 0, "opacity": 100,
 				"groupIds": []string{}, "roundness": nil,
 				"seed": r.Intn(99999999), "version": 1,
 				"versionNonce": r.Intn(99999999),
-				"isDeleted": false, "boundElements": nil,
+				"isDeleted":    false, "boundElements": nil,
 				"updated": updated, "link": nil, "locked": false,
 				"text": b.Label, "fontSize": groupFontSize, "fontFamily": groupFontFamily,
 				"textAlign": "left", "verticalAlign": "middle",
@@ -351,30 +353,30 @@ func walk(b *layout.Box, elements *[]map[string]any, files map[string]any, svgGr
 			*elements = append(*elements, map[string]any{
 				"id": rectID, "type": "rectangle",
 				"x": b.X, "y": b.Y, "width": b.W, "height": b.H,
-				"angle": 0,
+				"angle":       0,
 				"strokeColor": genStroke, "backgroundColor": "transparent",
 				"fillStyle": "hachure", "strokeWidth": 1, "strokeStyle": "solid",
 				"roughness": 0, "opacity": 100,
 				"groupIds": []string{}, "roundness": map[string]any{"type": 3},
 				"seed": r.Intn(99999999), "version": 1,
-				"versionNonce": r.Intn(99999999),
-				"isDeleted": false,
+				"versionNonce":  r.Intn(99999999),
+				"isDeleted":     false,
 				"boundElements": []map[string]any{{"type": "text", "id": textID}},
-				"updated": updated, "link": nil, "locked": false,
+				"updated":       updated, "link": nil, "locked": false,
 			})
 			*elements = append(*elements, map[string]any{
 				"id": textID, "type": "text",
 				"x": b.X + 12, "y": b.Y + 12,
 				// fontFamily=1 (Virgil 20px): ~10px/rune
 				"width": textWidth(b.Label, 10.0), "height": 24,
-				"angle": 0,
+				"angle":       0,
 				"strokeColor": "#1e1e1e", "backgroundColor": "transparent",
 				"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
 				"roughness": 0, "opacity": 100,
 				"groupIds": []string{}, "roundness": nil,
 				"seed": r.Intn(99999999), "version": 1,
 				"versionNonce": r.Intn(99999999),
-				"isDeleted": false, "boundElements": nil,
+				"isDeleted":    false, "boundElements": nil,
 				"updated": updated, "link": nil, "locked": false,
 				"text": b.Label, "fontSize": 20, "fontFamily": 1,
 				"textAlign": "left", "verticalAlign": "top",
@@ -400,7 +402,7 @@ func walk(b *layout.Box, elements *[]map[string]any, files map[string]any, svgGr
 // isLayoutTag reports whether a tag is a pure layout container
 // (<row>, <col>, <container>) that should not render any visible border or label.
 func isLayoutTag(tag string) bool {
-	return tag == "row" || tag == "col" || tag == "container"
+	return tag == "row" || tag == "col" || tag == "container" || layout.IsBlank(tag)
 }
 
 // textWidth estimates the rendered width of a string in pixels.
@@ -426,22 +428,13 @@ func parseItemAlign(align string) (vert, horiz string) {
 	return
 }
 
-// renderItemGrid lays out all items collected under the same visibleAncestor
-// as a single horizontal row within the ancestor's content area.
-//
-// Alignment of the row within the content area is controlled by the ancestor's
-// `align` attribute (e.g. "top-left", "middle-center", "bottom-right").
-// Default is "middle-center".
-//
-// For AWS group ancestors the content area starts below the header row.
-// Exception: when the natural (space-constrained, uncapped) icon size is ≤ 32 px,
-// items are placed inline with the header (right of the label, centred in the
-// 32 px header band) to avoid wasting the large empty space below.
+// renderItemGrid lays out all items collected under the same visibleAncestor as
+// a compact grid within the ancestor's content area.
 func renderItemGrid(items []*layout.Box, ancestor *layout.Box, elements *[]map[string]any, files map[string]any, catalogCSV string, projectRoot string, fsys fs.FS, maxSize float64, r *rand.Rand, itemImgRects map[int][4]float64, itemLblRects map[int][4]float64, itemImgIDs map[int]string, itemLblIDs map[int]string, abbrevMap map[int]string) {
 	if catalogCSV == "" || len(items) == 0 || ancestor == nil {
 		return
 	}
-	n := float64(len(items))
+	nItems := len(items)
 	vert, horiz := parseItemAlign(ancestor.Attrs["align"])
 
 	var areaX, areaY, areaW, areaH float64
@@ -462,147 +455,98 @@ func renderItemGrid(items []*layout.Box, ancestor *layout.Box, elements *[]map[s
 			areaX = ancestor.X + layout.GroupSideInset
 			areaY = ancestor.Y + itemGap
 			areaW = ancestor.W - layout.GroupSideInset*2
-			areaH = ancestor.H - itemGap*2 - itemLabelH - 4
+			areaH = ancestor.H - itemGap*2
 		} else {
 			// Content area: below the header row.
 			areaX = ancestor.X + layout.GroupSideInset
 			areaY = ancestor.Y + layout.GroupTopInset + itemGap
 			areaW = ancestor.W - layout.GroupSideInset*2
-			areaH = ancestor.H - layout.GroupTopInset - itemGap*2 - itemLabelH - 4
-
-			// Natural (uncapped) icon size — used only to decide inline vs below-header.
-			naturalW := (areaW - itemGap*(n-1)) / n
-			naturalH := areaH
-			naturalSize := naturalW
-			if naturalH < naturalSize {
-				naturalSize = naturalH
-			}
-
-			// Inline placement when natural size ≤ 32: icons fit beside the header text.
-			if naturalSize <= 32 {
-				gd := awsGroups[ancestor.Tag]
-				var headerTextStartX float64
-				if gd.IconFile != "" {
-					headerTextStartX = ancestor.X + float64(groupIconSize) + 4
-				} else {
-					headerTextStartX = ancestor.X + 4
-				}
-				headerEndX := headerTextStartX + textWidth(ancestor.Label, 7.5) + itemGap
-				inlineAvailW := (ancestor.X + ancestor.W - layout.GroupSideInset) - headerEndX
-				if inlineAvailW >= itemMinSize {
-					inlineSizeW := (inlineAvailW - itemGap*(n-1)) / n
-					inlineSize := inlineSizeW
-					if float64(groupIconSize) < inlineSize {
-						inlineSize = float64(groupIconSize)
-					}
-					if inlineSize > maxSize {
-						inlineSize = maxSize
-					}
-					if inlineSize >= itemMinSize {
-						// Vertically centre within the 32 px header band.
-						iconY := ancestor.Y + math.Max(0, (float64(groupIconSize)-inlineSize)/2)
-						totalW := inlineSize*n + itemGap*(n-1)
-					var startX, stepX float64
-					switch horiz {
-					case "right":
-						startX = ancestor.X + ancestor.W - layout.GroupSideInset - totalW
-						stepX = inlineSize + itemGap
-					case "spread":
-						// space-evenly across full ancestor width.
-						if n <= 1 {
-							startX = ancestor.X + math.Max(0, (ancestor.W-inlineSize)/2)
-							stepX = 0
-						} else {
-							evenGap := (ancestor.W - inlineSize*n) / (n + 1)
-							if evenGap < itemGap {
-								evenGap = itemGap
-							}
-							startX = ancestor.X + evenGap
-							stepX = inlineSize + evenGap
-						}
-					case "center":
-						startX = ancestor.X + math.Max(0, (ancestor.W-totalW)/2)
-						stepX = inlineSize + itemGap
-					default: // "left"
-						startX = headerEndX
-						stepX = inlineSize + itemGap
-						}
-						for i, item := range items {
-							iconX := startX + float64(i)*stepX
-							renderIconAt(item.ID, item.Attrs["id"], iconX, iconY, inlineSize, elements, files, catalogCSV, projectRoot, fsys, r, itemImgRects, itemLblRects, itemImgIDs, itemLblIDs, abbrevMap)
-						}
-						return
-					}
-				}
-			}
+			areaH = ancestor.H - layout.GroupTopInset - itemGap*2
 		}
 	} else {
 		// 汎用コンテナ (frame, container, col など).
 		areaX = ancestor.X + itemGap
 		areaY = ancestor.Y + itemGap
 		areaW = ancestor.W - itemGap*2
-		areaH = ancestor.H - itemGap*2 - itemLabelH - 4
+		areaH = ancestor.H - itemGap*2
 	}
 
-	// ── Compute icon size within content area ────────────────────────────────
-	iconSizeW := (areaW - itemGap*(n-1)) / n
-	iconSize := iconSizeW
-	if areaH < iconSize {
-		iconSize = areaH
+	cols, rows, iconSize := chooseItemGrid(nItems, areaW, areaH, maxSize)
+	if cols <= 0 || rows <= 0 {
+		return
 	}
-	if iconSize > maxSize {
-		iconSize = maxSize
-	}
-	if iconSize < itemMinSize {
-		iconSize = itemMinSize
-	}
+	labelBoxH := itemLabelH
+	cellW := iconSize
+	cellH := iconSize + 4 + labelBoxH
+	totalW := cellW*float64(cols) + itemGap*float64(cols-1)
+	totalH := cellH*float64(rows) + itemGap*float64(rows-1)
 
-	totalW := iconSize*n + itemGap*(n-1)
-
-	// ── Horizontal placement ───────────────────────────────────────────────
-	// "center" (default): pack icons and centre the group within the area.
-	// "spread": space-evenly — equal gaps between icons and edges.
-	// "left" / "right": pack icons at the respective edge.
-	var startX float64
-	var stepX float64
-	switch horiz {
-	case "left":
-		startX = areaX
-		stepX = iconSize + itemGap
-	case "right":
-		startX = areaX + areaW - totalW
-		stepX = iconSize + itemGap
-	case "spread":
-		if n <= 1 {
-			startX = areaX + math.Max(0, (areaW-iconSize)/2)
-			stepX = 0
-		} else {
-			evenGap := (areaW - iconSize*n) / (n + 1)
-			if evenGap < itemGap {
-				evenGap = itemGap
-			}
-			startX = areaX + evenGap
-			stepX = iconSize + evenGap
-		}
-	default: // "center" — pack and centre
-		startX = areaX + math.Max(0, (areaW-totalW)/2)
-		stepX = iconSize + itemGap
-	}
-
-	// ── Vertical alignment ───────────────────────────────────────────────────
-	var iconY float64
-	switch vert {
-	case "top":
-		iconY = areaY
-	case "bottom":
-		iconY = areaY + math.Max(0, areaH-iconSize)
-	default: // "middle"
-		iconY = areaY + math.Max(0, (areaH-iconSize)/2)
-	}
+	startX, stepX := gridAxis(areaX, areaW, totalW, cellW, cols, horiz)
+	startY, stepY := gridAxis(areaY, areaH, totalH, cellH, rows, vert)
 
 	for i, item := range items {
-		iconX := startX + float64(i)*stepX
+		col := i % cols
+		row := i / cols
+		iconX := startX + float64(col)*stepX + math.Max(0, (cellW-iconSize)/2)
+		iconY := startY + float64(row)*stepY
 		renderIconAt(item.ID, item.Attrs["id"], iconX, iconY, iconSize, elements, files, catalogCSV, projectRoot, fsys, r, itemImgRects, itemLblRects, itemImgIDs, itemLblIDs, abbrevMap)
+	}
+}
+
+func chooseItemGrid(n int, areaW, areaH, maxSize float64) (cols int, rows int, iconSize float64) {
+	if n <= 0 || areaW <= 0 || areaH <= 0 {
+		return 0, 0, 0
+	}
+	labelBoxH := itemLabelH
+	bestScore := -1.0
+	for c := 1; c <= n; c++ {
+		r := int(math.Ceil(float64(n) / float64(c)))
+		cellW := (areaW - itemGap*float64(c-1)) / float64(c)
+		cellH := (areaH - itemGap*float64(r-1)) / float64(r)
+		size := math.Min(cellW, cellH-4-labelBoxH)
+		size = math.Min(size, maxSize)
+		if size < itemMinSize {
+			continue
+		}
+		usedW := size*float64(c) + itemGap*float64(c-1)
+		usedH := (size+4+labelBoxH)*float64(r) + itemGap*float64(r-1)
+		if usedW-areaW > 1e-6 || usedH-areaH > 1e-6 {
+			continue
+		}
+		aspectPenalty := math.Abs(float64(c)/float64(r) - areaW/math.Max(1, areaH))
+		score := size*100 - aspectPenalty
+		if score > bestScore {
+			bestScore = score
+			cols = c
+			rows = r
+			iconSize = size
+		}
+	}
+	if cols == 0 {
+		cols = n
+		rows = 1
+		iconSize = itemMinSize
+	}
+	return cols, rows, iconSize
+}
+
+func gridAxis(areaStart, areaSize, totalSize, cellSize float64, count int, align string) (start, step float64) {
+	if count <= 1 {
+		return areaStart + math.Max(0, (areaSize-cellSize)/2), 0
+	}
+	switch align {
+	case "left", "top":
+		return areaStart, cellSize + itemGap
+	case "right", "bottom":
+		return areaStart + math.Max(0, areaSize-totalSize), cellSize + itemGap
+	case "spread":
+		gap := (areaSize - cellSize*float64(count)) / float64(count+1)
+		if gap < itemGap {
+			gap = itemGap
+		}
+		return areaStart + gap, cellSize + gap
+	default:
+		return areaStart + math.Max(0, (areaSize-totalSize)/2), cellSize + itemGap
 	}
 }
 
@@ -667,7 +611,7 @@ func renderIconAt(boxID, idAttr string, iconX, iconY, iconSize float64, elements
 		"x": iconX, "y": iconY,
 		"width": iconSize, "height": iconSize,
 		"fileId": fid, "status": "saved",
-		"scale": []int{1, 1},
+		"scale":       []int{1, 1},
 		"strokeColor": "transparent", "backgroundColor": repository.SVGBGColor(ce.DataURL),
 		"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
 		"roughness": 0, "opacity": 100, "angle": 0,
@@ -687,15 +631,15 @@ func renderIconAt(boxID, idAttr string, iconX, iconY, iconSize float64, elements
 	labelX := iconX + (iconSize-itemLabelW)/2 // centre label on icon
 	// Record label bounding rect for bottom-side connection binding.
 	if itemLblRects != nil {
-		itemLblRects[id] = [4]float64{labelX, labelY, itemLabelW, itemMaxSize + 2}
+		itemLblRects[id] = [4]float64{labelX, labelY, itemLabelW, itemLabelH}
 		itemLblIDs[id] = iconID + "-lbl"
 	}
 	textSeed := r.Intn(99999999)
 	*elements = append(*elements, map[string]any{
 		"id": iconID + "-lbl", "type": "text",
 		"x": labelX, "y": labelY,
-		"width": itemLabelW, "height": itemMaxSize + 2,
-		"angle": 0,
+		"width": itemLabelW, "height": itemLabelH,
+		"angle":       0,
 		"strokeColor": "#1e1e1e", "backgroundColor": "transparent",
 		"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
 		"roughness": 0, "opacity": 100,
@@ -704,7 +648,7 @@ func renderIconAt(boxID, idAttr string, iconX, iconY, iconSize float64, elements
 		"isDeleted": false, "boundElements": nil,
 		"updated": updated, "link": nil, "locked": false, "frameId": nil,
 		"text": label, "rawText": label, "originalText": label,
-		"fontSize": 11, "fontFamily": 4,
+		"fontSize": itemLabelFontPx, "fontFamily": 4,
 		"textAlign": "center", "verticalAlign": "top",
 		"containerId": nil, "lineHeight": 1.25,
 	})
@@ -863,7 +807,7 @@ func renderConnections(connections []*model.Node, itemImgRects map[int][4]float6
 			"id": connID, "type": "arrow",
 			"x": srcEdge[0], "y": srcEdge[1],
 			"width": math.Abs(dx), "height": math.Abs(dy),
-			"angle": 0,
+			"angle":       0,
 			"strokeColor": "#1e1e1e", "backgroundColor": "transparent",
 			"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
 			"roughness": 0, "opacity": 100,

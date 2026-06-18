@@ -6,8 +6,8 @@ applyTo: "**"
 
 ## Project Overview
 
-`xaligo` is a Go CLI tool that converts a Vue-style custom DSL (`.xal` files) into Excalidraw JSON files,
-using Vuetify-style grid / padding / margin / container layout.
+`xaligo` is a Go CLI/Node package that converts a Vue-style custom DSL (`.xal` files) into
+Excalidraw JSON and PPTX files, using Vuetify-style grid / padding / margin / container layout.
 It also provides an `add service` command for appending AWS service icons to existing `.excalidraw` files.
 
 ## Module Information
@@ -24,7 +24,8 @@ Key dependencies: github.com/spf13/cobra v1.8.1
 ```
 xaligo/
 ├── cmd/
-│   └── main.go                   # Entry point
+│   ├── main.go                   # Native CLI entry point
+│   └── wasm/                     # Go/WASM bridge used by the Node package/PPTX exporter
 ├── pkg/
 │   ├── command.go                # Root cobra command (wires subcommands)
 │   └── controller/
@@ -44,11 +45,13 @@ xaligo/
 │   ├── entity/
 │   │   ├── scene.go              # Scene struct (for add command)
 │   │   └── service.go            # ServiceEntry struct
+│   ├── pptxplan/                 # PPTX paper scaling, routing, draw plan, legend data
 │   ├── repository/
 │   │   ├── builder.go            # MakeText / MakeImage element builders
 │   │   ├── scene.go              # ReadScene / WriteScene
 │   │   ├── icon.go               # SvgToDataURL / FileID / LoadFromCSV / SVGBGColor
-│   │   └── service_list.go       # ReadServiceList (CSV/TXT parser)
+│   │   ├── service_list.go       # ReadServiceList (CSV/TXT parser)
+│   │   └── pptx.go               # Repository-layer Node/PptxGenJS invocation
 │   └── config/
 │       └── config.go             # Config struct + findProjectRoot + etc/resources/aws/app.yaml loading
 ├── examples/
@@ -66,6 +69,8 @@ xaligo/
 │   ├── gen_service_catalog.py   # Regenerate service-catalog.csv
 │   └── gen_group_templates.py   # Regenerate etc/resources/aws/templates/{excalidraw,xal}/
 ├── Makefile
+├── packages/
+│   └── xaligo/                   # Node package, WASM assets, PptxGenJS drawing layer
 ├── go.mod / go.sum
 └── README.md
 ```
@@ -76,6 +81,8 @@ xaligo/
 - `internal/` packages are only referenced from `pkg/`; never directly from `cmd/`.
 - Each `controller` file exports an `Init<Cmd>Cmd() *cobra.Command` factory function, registered in `pkg/command.go`.
 - Business logic stays in `internal/`; cobra flag handling is the responsibility of the `controller` layer.
+- `xaligo generate pptx` must call Node from the repository layer (`internal/repository/pptx.go`).
+- PPTX geometry is resolved by Go/WASM `internal/pptxplan`; TypeScript only draws the resolved plan with PptxGenJS.
 
 ## Coding Conventions
 
@@ -101,7 +108,7 @@ legend:
   icon_size: 32
   font_size: 12
 item:
-  icon_size: 48   # default max icon size for <item> elements (px). Overridable with <frame item-size="N">
+  icon_size: 32   # default max icon size for <item> elements (px). Overridable with <frame item-size="N">
 ```
 
 ## Icon Label Resolution
@@ -112,7 +119,8 @@ When rendering `<item>` icons, the short label below each icon is determined in 
 2. **Built-in `itemAbbreviations` table** (`internal/entity/service.go`) — fallback for any ID not covered by services.csv, and the only source when using `render` directly.
 
 This means `services.csv` is the single source of truth for icon labels in `generate excalidraw` workflows.  
-The `OfficialName` column is only used for the full-text label in the right-side legend — never as an icon label.
+The `OfficialName` column is used for full-name legend text — never as an icon label.
+In PPTX export, legend entries are rendered on separate 4-column legend slides.
 
 ## CLI Command Reference
 
@@ -124,12 +132,15 @@ The `OfficialName` column is only used for the full-text label in the right-side
 | `xaligo add service --name <name> --file <file>` | Add a single AWS service icon |
 | `xaligo add service --list <csv> --file <file>` | Bulk-add AWS service icons |
 | `xaligo generate xal --clouds N --accounts N --regions N --azs N --az-layout grid\|staggered --subnets N --spacing vertical\|horizontal\|both --start top\|left --paper A4 --orientation portrait\|landscape -o out.xal` | Generate a .xal for an AWS infrastructure hierarchy |
-| `xaligo generate excalidraw --xal <file.xal> -o <out.excalidraw> --services <csv>` | Convert .xal to .excalidraw with service legend |
+| `xaligo generate excalidraw --xal <file.xal> -o <out.excalidraw> --services <csv>` | Convert .xal to .excalidraw |
+| `xaligo generate pptx --xal <file.xal> -o <out.pptx> --services <csv> --paper A3 --orientation landscape` | Convert .xal to PPTX with routed lines and legend pages |
 
 ## Build & Test
 
 ```bash
 make build   # build .bin/xaligo
+make build-wasm # build packages/xaligo/wasm/xaligo.wasm
+npm run build --workspace packages/xaligo
 make run     # examples/sample.xal → output/sample.excalidraw
 make clean   # remove .bin/ and output/
 go test ./...            # run all tests

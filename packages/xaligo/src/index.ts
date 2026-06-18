@@ -18,8 +18,33 @@
  *
  * // Render with services.csv for legend / icon abbreviations
  * const json = await xaligo.renderWithServices(xalSrc, servicesCsvContent);
+ *
+ * // Render .xal DSL string → PPTX bytes
+ * const pptx = await xaligo.renderPptx(xalSrc);
  * ```
  */
+
+import {
+  drawPlanToPptx,
+  pptxPlanOptionsJSON,
+  type ArrowStyle,
+  type PaperSize,
+  type PaperOrientation,
+  type PptxExportOptions,
+  type PptxExportResult,
+  type PptxOutputType,
+} from './pptx';
+
+export {
+  drawPlanToPptx,
+  pptxPlanOptionsJSON,
+  type ArrowStyle,
+  type PaperSize,
+  type PaperOrientation,
+  type PptxExportOptions,
+  type PptxExportResult,
+  type PptxOutputType,
+};
 
 // ---------------------------------------------------------------------------
 // Types
@@ -54,6 +79,32 @@ export interface XaligoWasm {
    * @throws Error if the DSL is invalid or rendering fails
    */
   renderWithServices(xal: string, servicesCsv: string): Promise<string>;
+
+  /**
+   * Convert a `.xal` DSL string into PPTX bytes.
+   * Internally renders to Excalidraw JSON first, then exports that scene with
+   * PptxGenJS.
+   *
+   * @param xal - Contents of a `.xal` file
+   * @param options - PPTX export options
+   * @returns PPTX content; defaults to Uint8Array
+   */
+  renderPptx(xal: string, options?: PptxExportOptions): Promise<PptxExportResult>;
+
+  /**
+   * Convert a `.xal` DSL string into PPTX bytes, applying the same services.csv
+   * overrides used by `renderWithServices`.
+   *
+   * @param xal - Contents of a `.xal` file
+   * @param servicesCsv - Contents of a `services.csv` file
+   * @param options - PPTX export options
+   * @returns PPTX content; defaults to Uint8Array
+   */
+  renderWithServicesPptx(
+    xal: string,
+    servicesCsv: string,
+    options?: PptxExportOptions,
+  ): Promise<PptxExportResult>;
 }
 
 // ---------------------------------------------------------------------------
@@ -68,6 +119,7 @@ declare global {
   };
   function xaligoRender(xal: string): WasmResult;
   function xaligoRenderWithServices(xal: string, servicesCsv: string): WasmResult;
+  function xaligoBuildPptxPlan(xal: string, servicesCsv: string, optionsJson: string): WasmResult;
 }
 
 // ---------------------------------------------------------------------------
@@ -105,7 +157,8 @@ export async function loadXaligo(wasmUrl?: string): Promise<XaligoWasm> {
   const go = new globalThis.Go();
 
   let wasmBytes: ArrayBuffer;
-  if (typeof globalThis.fetch !== 'undefined') {
+  const isNode = typeof process !== 'undefined' && !!process.versions?.node;
+  if (!isNode && typeof globalThis.fetch !== 'undefined') {
     // Browser / worker
     const resp = await fetch(resolvedUrl);
     if (!resp.ok) throw new Error(`Failed to fetch xaligo.wasm: ${resp.statusText}`);
@@ -141,6 +194,26 @@ export async function loadXaligo(wasmUrl?: string): Promise<XaligoWasm> {
       if (res.error) throw new Error(res.error);
       if (!res.result) throw new Error('xaligoRenderWithServices returned empty result');
       return Promise.resolve(res.result);
+    },
+
+    async renderPptx(xal: string, options?: PptxExportOptions): Promise<PptxExportResult> {
+      const optsJson = pptxPlanOptionsJSON(options);
+      const res: WasmResult = globalThis.xaligoBuildPptxPlan(xal, '', optsJson);
+      if (res.error) throw new Error(res.error);
+      if (!res.result) throw new Error('xaligoBuildPptxPlan returned empty result');
+      return drawPlanToPptx(res.result, options);
+    },
+
+    async renderWithServicesPptx(
+      xal: string,
+      servicesCsv: string,
+      options?: PptxExportOptions,
+    ): Promise<PptxExportResult> {
+      const optsJson = pptxPlanOptionsJSON(options);
+      const res: WasmResult = globalThis.xaligoBuildPptxPlan(xal, servicesCsv, optsJson);
+      if (res.error) throw new Error(res.error);
+      if (!res.result) throw new Error('xaligoBuildPptxPlan returned empty result');
+      return drawPlanToPptx(res.result, options);
     },
   };
 

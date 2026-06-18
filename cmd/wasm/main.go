@@ -17,21 +17,25 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"syscall/js"
 
 	awsassets "github.com/ryo-arima/xaligo/etc/resources/aws"
+	"github.com/ryo-arima/xaligo/internal/entity"
 	"github.com/ryo-arima/xaligo/internal/excalidraw"
 	"github.com/ryo-arima/xaligo/internal/layout"
 	"github.com/ryo-arima/xaligo/internal/model"
 	"github.com/ryo-arima/xaligo/internal/parser"
+	"github.com/ryo-arima/xaligo/internal/pptxplan"
 	"github.com/ryo-arima/xaligo/internal/repository"
 )
 
 func main() {
 	js.Global().Set("xaligoRender", js.FuncOf(jsRender))
 	js.Global().Set("xaligoRenderWithServices", js.FuncOf(jsRenderWithServices))
+	js.Global().Set("xaligoBuildPptxPlan", js.FuncOf(jsBuildPptxPlan))
 
 	// Keep the WASM module alive until the page unloads.
 	<-make(chan struct{})
@@ -98,7 +102,7 @@ func jsRenderWithServices(_ js.Value, args []js.Value) any {
 	xal := args[0].String()
 	csvContent := args[1].String()
 
-	abbrevMap, err := parseServicesCsv(csvContent)
+	_, abbrevMap, err := parseServicesCsv(csvContent)
 	if err != nil {
 		return jsResult("", fmt.Errorf("parse servicesCsv: %w", err))
 	}
@@ -107,12 +111,62 @@ func jsRenderWithServices(_ js.Value, args []js.Value) any {
 	return jsResult(result, err)
 }
 
+// jsBuildPptxPlan handles xaligoBuildPptxPlan(xal, servicesCsv, optionsJson).
+//
+// It renders the .xal to an Excalidraw scene (applying services.csv overrides
+// when provided) and then builds a fully-resolved PPTX draw plan in Go — every
+// geometry calculation (bounds, paper scaling, routing, anchoring, colour and
+// coordinate conversion) happens here, so the JS side only issues PptxGenJS
+// drawing calls. servicesCsv may be empty. optionsJson is a JSON object of
+// pptxplan.Options (may be empty/"" for defaults).
+//
+// Returns { result: <plan JSON> } or { error }.
+func jsBuildPptxPlan(_ js.Value, args []js.Value) any {
+	if len(args) < 1 {
+		return jsResult("", fmt.Errorf("xaligoBuildPptxPlan: expected at least 1 argument (xal)"))
+	}
+	xal := args[0].String()
+
+	var entries []entity.ServiceEntry
+	var abbrevMap map[int]string
+	if len(args) >= 2 && !args[1].IsUndefined() && !args[1].IsNull() {
+		if csv := args[1].String(); strings.TrimSpace(csv) != "" {
+			parsedEntries, m, err := parseServicesCsv(csv)
+			if err != nil {
+				return jsResult("", fmt.Errorf("parse servicesCsv: %w", err))
+			}
+			entries = parsedEntries
+			abbrevMap = m
+		}
+	}
+
+	var opts pptxplan.Options
+	if len(args) >= 3 && !args[2].IsUndefined() && !args[2].IsNull() {
+		if optJSON := args[2].String(); strings.TrimSpace(optJSON) != "" {
+			if err := json.Unmarshal([]byte(optJSON), &opts); err != nil {
+				return jsResult("", fmt.Errorf("parse options: %w", err))
+			}
+		}
+	}
+
+	sceneJSON, err := renderXAL(xal, abbrevMap)
+	if err != nil {
+		return jsResult("", err)
+	}
+	opts.LegendEntries = legendEntries(entries)
+	planJSON, err := pptxplan.BuildPlanJSON(sceneJSON, opts)
+	if err != nil {
+		return jsResult("", fmt.Errorf("build pptx plan: %w", err))
+	}
+	return jsResult(string(planJSON), nil)
+}
+
 // parseServicesCsv parses the in-memory content of a services.csv into a
 // catalog-ID → abbreviation map (same format as repository.ReadServiceList).
-func parseServicesCsv(content string) (map[int]string, error) {
+func parseServicesCsv(content string) ([]entity.ServiceEntry, map[int]string, error) {
 	entries, err := repository.ReadServiceListFromReader(strings.NewReader(content))
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	m := make(map[int]string, len(entries))
 	for _, e := range entries {
@@ -120,5 +174,20 @@ func parseServicesCsv(content string) (map[int]string, error) {
 			m[e.CatalogID] = e.Abbreviation
 		}
 	}
-	return m, nil
+	return entries, m, nil
+}
+
+func legendEntries(entries []entity.ServiceEntry) []pptxplan.LegendEntry {
+	out := make([]pptxplan.LegendEntry, 0, len(entries))
+	for _, e := range entries {
+		if e.CatalogID <= 0 || e.OfficialName == "" {
+			continue
+		}
+		out = append(out, pptxplan.LegendEntry{
+			CatalogID:    e.CatalogID,
+			Abbreviation: e.Abbreviation,
+			OfficialName: e.OfficialName,
+		})
+	}
+	return out
 }
