@@ -10,6 +10,7 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -62,10 +63,42 @@ var awsGroups = map[string]groupDef{
 }
 
 const (
-	groupIconSize   = 32
-	groupFontSize   = 14
-	groupFontFamily = 2 // Helvetica (normal)
+	groupIconSize           = 32
+	groupHeaderLeftOverflow = 2
+	groupHeaderTextInset    = 4
+	groupHeaderPadEnd       = 18
+	groupHeaderTipMax       = 14
+	groupHeaderBorderGap    = 4
+	groupFontSize           = 14
+	groupTextHeight         = groupFontSize + 4
+	groupHeaderTextPadY     = 3
+	groupFontFamily         = 2 // Helvetica (normal)
+	groupLabelCharW         = 9.6
 )
+
+var svgTintColorRE = regexp.MustCompile(`(?i)#[0-9a-f]{3,8}|currentColor`)
+
+// tintSVGDataURL makes a group header icon use the same semantic colour as
+// its group border and title. White and transparent portions are preserved.
+func tintSVGDataURL(dataURL, color string) string {
+	const prefix = "data:image/svg+xml;base64,"
+	if !strings.HasPrefix(dataURL, prefix) {
+		return dataURL
+	}
+	raw, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(dataURL, prefix))
+	if err != nil {
+		return dataURL
+	}
+	tinted := svgTintColorRE.ReplaceAllStringFunc(string(raw), func(found string) string {
+		switch strings.ToLower(found) {
+		case "#fff", "#ffffff", "#ffffffff":
+			return found
+		default:
+			return color
+		}
+	})
+	return prefix + base64.StdEncoding.EncodeToString([]byte(tinted))
+}
 
 // staggerFills are background fill colors for staggered AZ layers.
 // Index = StaggerDepth (0 = front/white, 1/2 = progressively darker teal).
@@ -92,7 +125,11 @@ const (
 	itemLabelFontPx = itemLabelFontPt * 96.0 / 72.0
 	itemLabelH      = 14.0
 	itemLabelW      = 56.0 // text box width for item labels (wider than icon, centred on icon)
+	itemLabelCharW  = 6.2
 	itemGap         = 8.0
+	// Mirrors pptxplan's visual anchor-grid expansion so groups reserve enough
+	// top clearance before PPTX adds the grid around each item.
+	itemAnchorGridVisualPadPx = 6.0
 )
 
 // paperSizeNames maps (short-side, long-side) → paper name for reverse lookup.
@@ -210,6 +247,7 @@ func BuildJSON(root *layout.Box, svgGroupDir string, catalogCSV string, projectR
 		renderItemGrid(items, ancestorBoxes[ancID], &elements, files, catalogCSV, projectRoot, fsys, itemIconSize, r, itemImgRects, itemLblRects, itemImgIDs, itemLblIDs, abbrevMap)
 	}
 	renderConnections(connections, itemImgRects, itemLblRects, itemImgIDs, itemLblIDs, &elements, r)
+	elements = orderGroupHeaderLayers(elements)
 
 	out := file{
 		Type:     "excalidraw",
@@ -223,6 +261,87 @@ func BuildJSON(root *layout.Box, svgGroupDir string, catalogCSV string, projectR
 		Files: files,
 	}
 	return json.MarshalIndent(out, "", "  ")
+}
+
+// orderGroupHeaderLayers keeps title tags above every group border while
+// preserving connector priority. Header icons and labels are placed last so
+// neither nested borders nor connectors can make the title unreadable.
+func orderGroupHeaderLayers(elements []map[string]any) []map[string]any {
+	base := make([]map[string]any, 0, len(elements))
+	headShapes := make([]map[string]any, 0)
+	connectors := make([]map[string]any, 0)
+	headContent := make([]map[string]any, 0)
+	for _, el := range elements {
+		custom, _ := el["customData"].(map[string]any)
+		if isHeader, _ := custom["xaligoGroupHeader"].(bool); isHeader {
+			headShapes = append(headShapes, el)
+			continue
+		}
+		if isContent, _ := custom["xaligoGroupHeaderContent"].(bool); isContent {
+			headContent = append(headContent, el)
+			continue
+		}
+		typ, _ := el["type"].(string)
+		if typ == "arrow" || typ == "line" {
+			connectors = append(connectors, el)
+			continue
+		}
+		base = append(base, el)
+	}
+	ordered := append(base, headShapes...)
+	ordered = append(ordered, connectors...)
+	return append(ordered, headContent...)
+}
+
+func avoidGroupHeaderBorderOverlap(x, y, w, h float64, ownBorderID string, elements []map[string]any) float64 {
+	adjustedY := y
+	for pass := 0; pass < 4; pass++ {
+		nextY := adjustedY
+		for _, el := range elements {
+			if id, _ := el["id"].(string); id == ownBorderID {
+				continue
+			}
+			custom, _ := el["customData"].(map[string]any)
+			if isBorder, _ := custom["xaligoGroupBorder"].(bool); !isBorder {
+				continue
+			}
+			bx, okX := el["x"].(float64)
+			by, okY := el["y"].(float64)
+			bw, okW := el["width"].(float64)
+			bh, okH := el["height"].(float64)
+			if !okX || !okY || !okW || !okH || horizontalOverlap(x, x+w, bx, bx+bw) <= 0 {
+				continue
+			}
+			for _, lineY := range []float64{by, by + bh} {
+				if lineY >= adjustedY-float64(groupHeaderBorderGap) && lineY <= adjustedY+h+float64(groupHeaderBorderGap) {
+					nextY = math.Max(nextY, lineY+float64(groupHeaderBorderGap))
+				}
+			}
+		}
+		if math.Abs(nextY-adjustedY) < 0.01 {
+			break
+		}
+		adjustedY = nextY
+	}
+	return adjustedY
+}
+
+func horizontalOverlap(a0, a1, b0, b1 float64) float64 {
+	return math.Max(0, math.Min(math.Max(a0, a1), math.Max(b0, b1))-math.Max(math.Min(a0, a1), math.Min(b0, b1)))
+}
+
+func alignGroupBorderTopToHeader(borderID string, topY, bottomY float64, elements []map[string]any) {
+	for i := range elements {
+		id, _ := elements[i]["id"].(string)
+		if id != borderID {
+			continue
+		}
+		if topY <= bottomY-layout.MinBoxHeight {
+			elements[i]["y"] = topY
+			elements[i]["height"] = bottomY - topY
+		}
+		return
+	}
 }
 
 func walk(b *layout.Box, elements *[]map[string]any, files map[string]any, svgGroupDir string, catalogCSV string, projectRoot string, fsys fs.FS, r *rand.Rand, visibleAncestor *layout.Box, itemGroups map[string][]*layout.Box, ancestorBoxes map[string]*layout.Box) {
@@ -280,56 +399,112 @@ func walk(b *layout.Box, elements *[]map[string]any, files map[string]any, svgGr
 				"versionNonce": r.Intn(99999999),
 				"isDeleted":    false, "boundElements": nil,
 				"updated": updated, "link": nil, "locked": false,
+				"customData": map[string]any{"xaligoGroupBorder": true},
 			})
 
-			// ── AWS group icon ──────────────────────────────────────
-			textX := b.X + 4
-			if gd.IconFile != "" && svgGroupDir != "" {
+			// ── Group icon ──────────────────────────────────────────
+			headerX := b.X - groupHeaderLeftOverflow
+			textX := headerX + groupHeaderTextInset
+			var iconDataURL, iconFileID, iconBackground string
+			if b.Tag == "generic-group" && strings.TrimSpace(b.Attrs["icon-id"]) != "" {
+				catalogID, _ := strconv.Atoi(strings.TrimSpace(b.Attrs["icon-id"]))
+				var entry repository.CatalogEntry
+				var err error
+				if fsys != nil {
+					entry, err = repository.LookupCatalogByIDFS(fsys, catalogCSV, catalogID)
+				} else {
+					entry, err = repository.LookupCatalogByID(catalogCSV, catalogID)
+				}
+				if err == nil && entry.DataURL == "" && entry.RelPath != "" && projectRoot != "" {
+					entry.DataURL, err = svgDataURL(filepath.Join(projectRoot, entry.RelPath))
+				}
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "WARNING: <generic-group icon-id=%d>: %v\n", catalogID, err)
+				} else {
+					iconDataURL = entry.DataURL
+					iconFileID = fmt.Sprintf("group-cat-%d", catalogID)
+					iconBackground = repository.SVGBGColor(entry.DataURL)
+				}
+			} else if gd.IconFile != "" && svgGroupDir != "" {
 				iconPath := filepath.Join(svgGroupDir, gd.IconFile)
-				var dataURL string
 				var err error
 				if fsys != nil {
 					// In embedded mode, use forward slashes even on Windows.
 					iconPath = svgGroupDir + "/" + gd.IconFile
-					dataURL, err = svgDataURLFS(fsys, iconPath)
+					iconDataURL, err = svgDataURLFS(fsys, iconPath)
 				} else {
-					dataURL, err = svgDataURL(iconPath)
+					iconDataURL, err = svgDataURL(iconPath)
 				}
-				if err == nil {
-					fid := svgFileID(gd.IconFile)
-					*elements = append(*elements, map[string]any{
-						"id": fmt.Sprintf("%s-icon", b.ID), "type": "image",
-						"x": b.X, "y": b.Y,
-						"width": float64(groupIconSize), "height": float64(groupIconSize),
-						"fileId": fid, "status": "saved",
-						"scale":       []int{1, 1},
-						"strokeColor": "transparent", "backgroundColor": "transparent",
-						"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
-						"roughness": 0, "opacity": 100, "angle": 0,
-						"version": 1, "versionNonce": r.Intn(99999999),
-						"isDeleted": false, "groupIds": []string{},
-						"frameId": nil, "boundElements": nil,
-						"updated": updated, "link": nil, "locked": false,
-					})
-					if _, exists := files[fid]; !exists {
-						files[fid] = map[string]any{
-							"mimeType": "image/svg+xml", "id": fid,
-							"dataURL": dataURL,
-							"created": updated, "lastRetrieved": updated,
-						}
+				if err != nil {
+					iconDataURL = ""
+				}
+				iconFileID = svgFileID(gd.IconFile)
+				iconBackground = "transparent"
+			}
+			if iconDataURL != "" {
+				iconDataURL = tintSVGDataURL(iconDataURL, gd.StrokeColor)
+				iconBackground = "transparent"
+				textX = headerX + float64(groupIconSize) + groupHeaderTextInset
+			}
+			lblW := textWidth(b.Label, groupLabelCharW)
+			headerBackground := staggerBGColor(b)
+			if headerBackground == "transparent" {
+				headerBackground = "#ffffff"
+			}
+			// Extend the opaque header mask beyond the group's left border so the
+			// vertical border cannot show through beside a catalog icon.
+			headerH := float64(groupTextHeight + groupHeaderTextPadY*2)
+			if iconDataURL != "" {
+				headerH = float64(groupIconSize)
+			}
+			headerTip := math.Min(groupHeaderTipMax, headerH/2)
+			headerW := textX + lblW + groupHeaderPadEnd + headerTip - headerX
+			headerY := avoidGroupHeaderBorderOverlap(headerX, b.Y-headerH/2, headerW, headerH, rectID, *elements)
+			alignGroupBorderTopToHeader(rectID, headerY+headerH/2, b.Y+b.H, *elements)
+			*elements = append(*elements, map[string]any{
+				"id": fmt.Sprintf("%s-header-bg", b.ID), "type": "line",
+				"x": headerX, "y": headerY,
+				"width": headerW, "height": headerH,
+				"points": [][]float64{{0, 0}, {headerW - headerTip, 0}, {headerW, headerH / 2}, {headerW - headerTip, headerH}, {0, headerH}, {0, 0}},
+				"angle":  0, "strokeColor": gd.StrokeColor, "backgroundColor": headerBackground,
+				"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
+				"roughness": 0, "opacity": 100,
+				"groupIds": []string{}, "roundness": nil,
+				"seed": r.Intn(99999999), "version": 1, "versionNonce": r.Intn(99999999),
+				"isDeleted": false, "boundElements": nil,
+				"updated": updated, "link": nil, "locked": false,
+				"customData": map[string]any{"xaligoGroupHeader": true},
+			})
+			if iconDataURL != "" {
+				*elements = append(*elements, map[string]any{
+					"id": fmt.Sprintf("%s-icon", b.ID), "type": "image",
+					"x": headerX, "y": headerY + (headerH-float64(groupIconSize))/2,
+					"width": float64(groupIconSize), "height": float64(groupIconSize),
+					"fileId": iconFileID, "status": "saved", "scale": []int{1, 1},
+					"strokeColor": "transparent", "backgroundColor": iconBackground,
+					"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
+					"roughness": 0, "opacity": 100, "angle": 0,
+					"version": 1, "versionNonce": r.Intn(99999999),
+					"isDeleted": false, "groupIds": []string{},
+					"frameId": nil, "boundElements": nil,
+					"updated": updated, "link": nil, "locked": false,
+					"customData": map[string]any{"xaligoGroupHeaderContent": true},
+				})
+				if _, exists := files[iconFileID]; !exists {
+					files[iconFileID] = map[string]any{
+						"mimeType": "image/svg+xml", "id": iconFileID, "dataURL": iconDataURL,
+						"created": updated, "lastRetrieved": updated,
 					}
-					textX = b.X + float64(groupIconSize) + 4
 				}
 			}
 
 			// ── AWS group label ─────────────────────────────────────
-			textY := b.Y + float64(groupIconSize-groupFontSize)/2
+			textY := headerY + (headerH-float64(groupTextHeight))/2
 			// groupFontFamily=2 (Helvetica 14px): ~7.5px/rune
-			lblW := textWidth(b.Label, 7.5)
 			*elements = append(*elements, map[string]any{
 				"id": fmt.Sprintf("%s-label", b.ID), "type": "text",
 				"x": textX, "y": textY,
-				"width": lblW, "height": float64(groupFontSize + 4),
+				"width": lblW, "height": float64(groupTextHeight),
 				"angle":       0,
 				"strokeColor": gd.StrokeColor, "backgroundColor": "transparent",
 				"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
@@ -342,6 +517,7 @@ func walk(b *layout.Box, elements *[]map[string]any, files map[string]any, svgGr
 				"text": b.Label, "fontSize": groupFontSize, "fontFamily": groupFontFamily,
 				"textAlign": "left", "verticalAlign": "middle",
 				"containerId": nil, "originalText": b.Label, "lineHeight": 1.25,
+				"customData": map[string]any{"xaligoGroupHeaderContent": true},
 			})
 		} else if !isLayoutTag(b.Tag) {
 			// ── Generic tag: rectangle + label ──────────────────────
@@ -412,6 +588,20 @@ func textWidth(s string, charW float64) float64 {
 	return math.Ceil(float64(len([]rune(s)))*charW) + 8
 }
 
+func itemLabelHeight(label string) float64 {
+	lines := 1
+	for _, line := range strings.Split(label, "\n") {
+		lineRunes := len([]rune(line))
+		wrapped := int(math.Ceil(float64(lineRunes) * itemLabelCharW / itemLabelW))
+		if wrapped < 1 {
+			wrapped = 1
+		}
+		lines += wrapped - 1
+	}
+	lineH := itemLabelFontPx * 1.25
+	return math.Max(itemLabelH, math.Ceil(float64(lines)*lineH))
+}
+
 // parseItemAlign parses an align attribute value (e.g. "top-left", "middle-center")
 // into vertical ("top"/"middle"/"bottom") and horizontal ("left"/"center"/"right") parts.
 // Defaults to "middle" / "center" when absent or unrecognised.
@@ -452,11 +642,16 @@ func renderItemGrid(items []*layout.Box, ancestor *layout.Box, elements *[]map[s
 		}
 
 		if allItemChildren {
-			// No topInset: treat like a generic container but respect side insets.
+			// Reserve the group tag band plus the PPTX anchor-grid expansion. Without
+			// this, the later PPTX-only anchor grid can extend into the tag area.
+			topClearance := groupHeaderHeightForItems(ancestor)/2 + itemAnchorGridVisualPadPx + float64(groupHeaderBorderGap)
+			if topClearance < itemGap {
+				topClearance = itemGap
+			}
 			areaX = ancestor.X + layout.GroupSideInset
-			areaY = ancestor.Y + itemGap
+			areaY = ancestor.Y + topClearance
 			areaW = ancestor.W - layout.GroupSideInset*2
-			areaH = ancestor.H - itemGap*2
+			areaH = ancestor.H - topClearance - itemGap
 		} else {
 			// Content area: below the header row.
 			areaX = ancestor.X + layout.GroupSideInset
@@ -472,11 +667,11 @@ func renderItemGrid(items []*layout.Box, ancestor *layout.Box, elements *[]map[s
 		areaH = ancestor.H - itemGap*2
 	}
 
-	cols, rows, iconSize := chooseItemGrid(nItems, areaW, areaH, maxSize)
+	labelBoxH := estimateMaxItemLabelHeight(items, catalogCSV, fsys, abbrevMap)
+	cols, rows, iconSize := chooseItemGrid(nItems, areaW, areaH, maxSize, labelBoxH)
 	if cols <= 0 || rows <= 0 {
 		return
 	}
-	labelBoxH := itemLabelH
 	cellW := iconSize
 	cellH := iconSize + 4 + labelBoxH
 	totalW := cellW*float64(cols) + itemGap*float64(cols-1)
@@ -494,11 +689,52 @@ func renderItemGrid(items []*layout.Box, ancestor *layout.Box, elements *[]map[s
 	}
 }
 
-func chooseItemGrid(n int, areaW, areaH, maxSize float64) (cols int, rows int, iconSize float64) {
+func groupHeaderHeightForItems(ancestor *layout.Box) float64 {
+	headerH := float64(groupTextHeight + groupHeaderTextPadY*2)
+	if ancestor == nil {
+		return headerH
+	}
+	if ancestor.Tag == "generic-group" && strings.TrimSpace(ancestor.Attrs["icon-id"]) != "" {
+		return float64(groupIconSize)
+	}
+	if gd, ok := awsGroups[ancestor.Tag]; ok && gd.IconFile != "" {
+		return float64(groupIconSize)
+	}
+	return headerH
+}
+
+func estimateMaxItemLabelHeight(items []*layout.Box, catalogCSV string, fsys fs.FS, abbrevMap map[int]string) float64 {
+	maxH := itemLabelH
+	for _, item := range items {
+		id, err := strconv.Atoi(strings.TrimSpace(item.Attrs["id"]))
+		if err != nil {
+			continue
+		}
+		label := ""
+		if abbrevMap != nil {
+			label = abbrevMap[id]
+		}
+		if label == "" {
+			var ce repository.CatalogEntry
+			if fsys != nil {
+				ce, err = repository.LookupCatalogByIDFS(fsys, catalogCSV, id)
+			} else {
+				ce, err = repository.LookupCatalogByID(catalogCSV, id)
+			}
+			if err != nil {
+				continue
+			}
+			label = entity.ItemShortName(ce.Service)
+		}
+		maxH = math.Max(maxH, itemLabelHeight(label))
+	}
+	return maxH
+}
+
+func chooseItemGrid(n int, areaW, areaH, maxSize float64, labelBoxH float64) (cols int, rows int, iconSize float64) {
 	if n <= 0 || areaW <= 0 || areaH <= 0 {
 		return 0, 0, 0
 	}
-	labelBoxH := itemLabelH
 	bestScore := -1.0
 	for c := 1; c <= n; c++ {
 		r := int(math.Ceil(float64(n) / float64(c)))
@@ -628,18 +864,19 @@ func renderIconAt(boxID, idAttr string, iconX, iconY, iconSize float64, elements
 	if label == "" {
 		label = entity.ItemShortName(ce.Service)
 	}
+	labelH := itemLabelHeight(label)
 	labelY := iconY + iconSize + 4
 	labelX := iconX + (iconSize-itemLabelW)/2 // centre label on icon
 	// Record label bounding rect for bottom-side connection binding.
 	if itemLblRects != nil {
-		itemLblRects[id] = [4]float64{labelX, labelY, itemLabelW, itemLabelH}
+		itemLblRects[id] = [4]float64{labelX, labelY, itemLabelW, labelH}
 		itemLblIDs[id] = iconID + "-lbl"
 	}
 	textSeed := r.Intn(99999999)
 	*elements = append(*elements, map[string]any{
 		"id": iconID + "-lbl", "type": "text",
 		"x": labelX, "y": labelY,
-		"width": itemLabelW, "height": itemLabelH,
+		"width": itemLabelW, "height": labelH,
 		"angle":       0,
 		"strokeColor": "#1e1e1e", "backgroundColor": "transparent",
 		"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
@@ -969,19 +1206,14 @@ func resolveConnectionStyle(conn *model.Node) resolvedConnectionStyle {
 	kind := connectionKind(conn)
 	style := resolvedConnectionStyle{
 		Kind: kind, Color: "#1e1e1e", Width: 1, StrokeStyle: "solid",
-		StartArrowhead: "none", EndArrowhead: "arrow",
+		StartArrowhead: "none", EndArrowhead: "stealth",
 		ExcalidrawStartArrowhead: nil, ExcalidrawEndArrowhead: "arrow",
 	}
 	switch kind {
 	case "route":
 		style.Color = "#64748b"
-		style.StartArrowhead = "oval"
-		style.EndArrowhead = "oval"
-		style.ExcalidrawStartArrowhead = "dot"
-		style.ExcalidrawEndArrowhead = "dot"
 	case "traffic":
 		style.Color = "#2563eb"
-		style.Width = 2
 	}
 	if color := strings.TrimSpace(conn.Attrs["color"]); color != "" {
 		style.Color = color

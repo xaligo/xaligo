@@ -155,25 +155,30 @@ func RunGenerate(
 }
 
 type PptxGenerateOptions struct {
-	XalPath      string
-	Output       string
-	ServicesFile string
-	Title        string
-	Author       string
-	Company      string
-	Subject      string
-	Compression  *bool
-	PxPerInch    float64
-	ArrowStyle   string
-	ArrowStub    float64
-	ArrowMargin  float64
-	Paper        string
-	Orientation  string
-	ExporterWASM string
-	Theme        string
-	Mode         string
-	Stdout       *os.File
-	Stderr       *os.File
+	XalPath           string
+	Output            string
+	ServicesFile      string
+	Title             string
+	Author            string
+	Company           string
+	Subject           string
+	Compression       *bool
+	PxPerInch         float64
+	ArrowStyle        string
+	ArrowStub         float64
+	ArrowMargin       float64
+	Paper             string
+	Orientation       string
+	PaperMargin       float64
+	PaperMarginTop    float64
+	PaperMarginRight  float64
+	PaperMarginBottom float64
+	PaperMarginLeft   float64
+	ExporterWASM      string
+	Theme             string
+	Mode              string
+	Stdout            *os.File
+	Stderr            *os.File
 }
 
 // RunGeneratePptx builds a resolved Go PPTX plan, then asks the repository layer
@@ -187,6 +192,9 @@ func RunGeneratePptx(opts PptxGenerateOptions) error {
 	}
 	if opts.PxPerInch < 0 {
 		return fmt.Errorf("--px-per-inch must be positive")
+	}
+	if opts.PaperMargin < 0 || opts.PaperMarginTop < 0 || opts.PaperMarginRight < 0 || opts.PaperMarginBottom < 0 || opts.PaperMarginLeft < 0 {
+		return fmt.Errorf("paper margins must be non-negative")
 	}
 	planJSON, err := buildPptxPlanJSON(opts)
 	if err != nil {
@@ -207,7 +215,11 @@ func RunGeneratePptx(opts PptxGenerateOptions) error {
 }
 
 func buildPptxPlanJSON(opts PptxGenerateOptions) ([]byte, error) {
-	if err := xaligoapi.ValidateRenderOptions(xaligoapi.RenderOptions{Mode: xaligoapi.Mode(opts.Mode), Format: xaligoapi.FormatPPTX, Theme: opts.Theme}); err != nil {
+	if err := xaligoapi.ValidateRenderOptions(xaligoapi.RenderOptions{
+		Mode: xaligoapi.Mode(opts.Mode), Format: xaligoapi.FormatPPTX, Theme: opts.Theme,
+		PaperMarginIn: opts.PaperMargin, PaperMarginTopIn: opts.PaperMarginTop, PaperMarginRightIn: opts.PaperMarginRight,
+		PaperMarginBottomIn: opts.PaperMarginBottom, PaperMarginLeftIn: opts.PaperMarginLeft,
+	}); err != nil {
 		return nil, err
 	}
 	xalFile, err := os.Open(opts.XalPath)
@@ -259,14 +271,19 @@ func buildPptxPlanJSON(opts PptxGenerateOptions) ([]byte, error) {
 	}
 
 	return pptxplan.BuildPlanJSON(string(sceneJSON), pptxplan.Options{
-		Theme:         opts.Theme,
-		PxPerInch:     opts.PxPerInch,
-		ArrowStyle:    opts.ArrowStyle,
-		ArrowStubPx:   opts.ArrowStub,
-		ArrowMargin:   opts.ArrowMargin,
-		PaperSize:     opts.Paper,
-		Orientation:   opts.Orientation,
-		LegendEntries: pptxLegendEntries(entries),
+		Theme:             opts.Theme,
+		PxPerInch:         opts.PxPerInch,
+		ArrowStyle:        opts.ArrowStyle,
+		ArrowStubPx:       opts.ArrowStub,
+		ArrowMargin:       opts.ArrowMargin,
+		PaperSize:         opts.Paper,
+		Orientation:       opts.Orientation,
+		PaperMargin:       opts.PaperMargin,
+		PaperMarginTop:    opts.PaperMarginTop,
+		PaperMarginRight:  opts.PaperMarginRight,
+		PaperMarginBottom: opts.PaperMarginBottom,
+		PaperMarginLeft:   opts.PaperMarginLeft,
+		LegendEntries:     pptxLegendEntries(entries),
 	})
 }
 

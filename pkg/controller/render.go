@@ -14,24 +14,29 @@ import (
 
 func InitRenderCmd() *cobra.Command {
 	var (
-		output        string
-		format        string
-		servicesFile  string
-		title         string
-		author        string
-		company       string
-		subject       string
-		compression   bool
-		noCompression bool
-		pxPerInch     float64
-		arrowStyle    string
-		arrowStub     float64
-		arrowMargin   float64
-		paper         string
-		orientation   string
-		exporterWASM  string
-		theme         string
-		mode          string
+		output            string
+		format            string
+		servicesFile      string
+		title             string
+		author            string
+		company           string
+		subject           string
+		compression       bool
+		noCompression     bool
+		pxPerInch         float64
+		arrowStyle        string
+		arrowStub         float64
+		arrowMargin       float64
+		paper             string
+		orientation       string
+		paperMargin       float64
+		paperMarginTop    float64
+		paperMarginRight  float64
+		paperMarginBottom float64
+		paperMarginLeft   float64
+		exporterWASM      string
+		theme             string
+		mode              string
 	)
 
 	cmd := &cobra.Command{
@@ -48,32 +53,37 @@ func InitRenderCmd() *cobra.Command {
 				compression = false
 			}
 			return RunRenderFormat(RenderOptions{
-				InputPath:    input,
-				OutputPath:   output,
-				Format:       format,
-				ServicesFile: servicesFile,
-				Title:        title,
-				Author:       author,
-				Company:      company,
-				Subject:      subject,
-				Compression:  &compression,
-				PxPerInch:    pxPerInch,
-				ArrowStyle:   arrowStyle,
-				ArrowStub:    arrowStub,
-				ArrowMargin:  arrowMargin,
-				Paper:        paper,
-				Orientation:  orientation,
-				ExporterWASM: exporterWASM,
-				Theme:        theme,
-				Mode:         mode,
-				Stdout:       os.Stdout,
-				Stderr:       os.Stderr,
+				InputPath:         input,
+				OutputPath:        output,
+				Format:            format,
+				ServicesFile:      servicesFile,
+				Title:             title,
+				Author:            author,
+				Company:           company,
+				Subject:           subject,
+				Compression:       &compression,
+				PxPerInch:         pxPerInch,
+				ArrowStyle:        arrowStyle,
+				ArrowStub:         arrowStub,
+				ArrowMargin:       arrowMargin,
+				Paper:             paper,
+				Orientation:       orientation,
+				PaperMargin:       paperMargin,
+				PaperMarginTop:    paperMarginTop,
+				PaperMarginRight:  paperMarginRight,
+				PaperMarginBottom: paperMarginBottom,
+				PaperMarginLeft:   paperMarginLeft,
+				ExporterWASM:      exporterWASM,
+				Theme:             theme,
+				Mode:              mode,
+				Stdout:            os.Stdout,
+				Stderr:            os.Stderr,
 			})
 		},
 	}
 
 	cmd.Flags().StringVarP(&output, "output", "o", "", "output file path")
-	cmd.Flags().StringVar(&format, "format", "excalidraw", "output format: excalidraw | svg | pptx")
+	cmd.Flags().StringVar(&format, "format", "excalidraw", "output format: excalidraw | svg | pptx | xyflow")
 	cmd.Flags().StringVar(&servicesFile, "services", "", "optional services.csv for icon labels, Excalidraw legend, and PPTX legend slides")
 	cmd.Flags().StringVar(&title, "title", "", "optional PPTX title metadata")
 	cmd.Flags().StringVar(&author, "author", "", "optional PPTX author metadata")
@@ -87,6 +97,11 @@ func InitRenderCmd() *cobra.Command {
 	cmd.Flags().Float64Var(&arrowMargin, "arrow-margin", 0, "clear margin in px reserved on both sides of each line (default 8)")
 	cmd.Flags().StringVar(&paper, "paper", "", "slide paper size: A5 A4 A3 A2 A1 Letter Legal Tabloid (default: match .xal frame)")
 	cmd.Flags().StringVar(&orientation, "orientation", "", "slide orientation: portrait | landscape (default: auto-fit)")
+	cmd.Flags().Float64Var(&paperMargin, "paper-margin", 0, "paper margin in inches on all sides for paper fitting (default 0)")
+	cmd.Flags().Float64Var(&paperMarginTop, "paper-margin-top", 0, "paper top margin in inches for paper fitting")
+	cmd.Flags().Float64Var(&paperMarginRight, "paper-margin-right", 0, "paper right margin in inches for paper fitting")
+	cmd.Flags().Float64Var(&paperMarginBottom, "paper-margin-bottom", 0, "paper bottom margin in inches for paper fitting")
+	cmd.Flags().Float64Var(&paperMarginLeft, "paper-margin-left", 0, "paper left margin in inches for paper fitting")
 	cmd.Flags().StringVar(&exporterWASM, "pptx-exporter-wasm", "", "path to the WASM PPTX exporter (default: packages/xaligo/wasm/pptx_exporter.wasm or XALIGO_PPTX_EXPORTER_WASM)")
 	cmd.Flags().StringVar(&theme, "theme", "light", "color theme: light | dark")
 	cmd.Flags().StringVar(&mode, "mode", "standard", "rendering mode: standard | network | aws")
@@ -100,32 +115,41 @@ func RunRender(inputPath, outputPath string, abbrevMap map[int]string) error {
 }
 
 type RenderOptions struct {
-	InputPath    string
-	OutputPath   string
-	Format       string
-	ServicesFile string
-	Title        string
-	Author       string
-	Company      string
-	Subject      string
-	Compression  *bool
-	PxPerInch    float64
-	ArrowStyle   string
-	ArrowStub    float64
-	ArrowMargin  float64
-	Paper        string
-	Orientation  string
-	ExporterWASM string
-	Theme        string
-	Mode         string
-	Stdout       *os.File
-	Stderr       *os.File
+	InputPath         string
+	OutputPath        string
+	Format            string
+	ServicesFile      string
+	Title             string
+	Author            string
+	Company           string
+	Subject           string
+	Compression       *bool
+	PxPerInch         float64
+	ArrowStyle        string
+	ArrowStub         float64
+	ArrowMargin       float64
+	Paper             string
+	Orientation       string
+	PaperMargin       float64
+	PaperMarginTop    float64
+	PaperMarginRight  float64
+	PaperMarginBottom float64
+	PaperMarginLeft   float64
+	ExporterWASM      string
+	Theme             string
+	Mode              string
+	Stdout            *os.File
+	Stderr            *os.File
 }
 
 // RunRenderFormat renders a .xal file into the requested output format. It is
 // the public controller entry point for format-based rendering.
 func RunRenderFormat(opts RenderOptions) error {
-	if err := xaligoapi.ValidateRenderOptions(xaligoapi.RenderOptions{Mode: xaligoapi.Mode(opts.Mode), Format: xaligoapi.Format(opts.Format), Theme: opts.Theme}); err != nil {
+	if err := xaligoapi.ValidateRenderOptions(xaligoapi.RenderOptions{
+		Mode: xaligoapi.Mode(opts.Mode), Format: xaligoapi.Format(opts.Format), Theme: opts.Theme,
+		PaperMarginIn: opts.PaperMargin, PaperMarginTopIn: opts.PaperMarginTop, PaperMarginRightIn: opts.PaperMarginRight,
+		PaperMarginBottomIn: opts.PaperMarginBottom, PaperMarginLeftIn: opts.PaperMarginLeft,
+	}); err != nil {
 		return err
 	}
 	theme, err := excalidraw.NormalizeTheme(opts.Theme)
@@ -159,31 +183,42 @@ func RunRenderFormat(opts RenderOptions) error {
 		if opts.ServicesFile != "" {
 			warnServiceMismatch(opts.InputPath, opts.ServicesFile)
 		}
-		return runRenderSVG(opts.InputPath, opts.OutputPath, abbrevMap, opts.Mode, theme, opts.PxPerInch, opts.ArrowStyle, opts.ArrowStub, opts.ArrowMargin, opts.Paper, opts.Orientation)
+		return runRenderSVG(opts.InputPath, opts.OutputPath, abbrevMap, opts.Mode, theme, opts.PxPerInch, opts.ArrowStyle, opts.ArrowStub, opts.ArrowMargin, opts.Paper, opts.Orientation, opts.PaperMargin, opts.PaperMarginTop, opts.PaperMarginRight, opts.PaperMarginBottom, opts.PaperMarginLeft)
 	case "pptx":
 		return RunGeneratePptx(PptxGenerateOptions{
-			XalPath:      opts.InputPath,
-			Output:       opts.OutputPath,
-			ServicesFile: opts.ServicesFile,
-			Title:        opts.Title,
-			Author:       opts.Author,
-			Company:      opts.Company,
-			Subject:      opts.Subject,
-			Compression:  opts.Compression,
-			PxPerInch:    opts.PxPerInch,
-			ArrowStyle:   opts.ArrowStyle,
-			ArrowStub:    opts.ArrowStub,
-			ArrowMargin:  opts.ArrowMargin,
-			Paper:        opts.Paper,
-			Orientation:  opts.Orientation,
-			ExporterWASM: opts.ExporterWASM,
-			Theme:        theme,
-			Mode:         opts.Mode,
-			Stdout:       opts.Stdout,
-			Stderr:       opts.Stderr,
+			XalPath:           opts.InputPath,
+			Output:            opts.OutputPath,
+			ServicesFile:      opts.ServicesFile,
+			Title:             opts.Title,
+			Author:            opts.Author,
+			Company:           opts.Company,
+			Subject:           opts.Subject,
+			Compression:       opts.Compression,
+			PxPerInch:         opts.PxPerInch,
+			ArrowStyle:        opts.ArrowStyle,
+			ArrowStub:         opts.ArrowStub,
+			ArrowMargin:       opts.ArrowMargin,
+			Paper:             opts.Paper,
+			Orientation:       opts.Orientation,
+			PaperMargin:       opts.PaperMargin,
+			PaperMarginTop:    opts.PaperMarginTop,
+			PaperMarginRight:  opts.PaperMarginRight,
+			PaperMarginBottom: opts.PaperMarginBottom,
+			PaperMarginLeft:   opts.PaperMarginLeft,
+			ExporterWASM:      opts.ExporterWASM,
+			Theme:             theme,
+			Mode:              opts.Mode,
+			Stdout:            opts.Stdout,
+			Stderr:            opts.Stderr,
 		})
+	case "xyflow":
+		abbrevMap, err := serviceAbbrevMap(opts.ServicesFile)
+		if err != nil {
+			return err
+		}
+		return runRenderXYFlow(opts.InputPath, opts.OutputPath, abbrevMap, opts.Mode, theme)
 	default:
-		return fmt.Errorf("unknown render format %q; valid: excalidraw, svg, pptx", opts.Format)
+		return fmt.Errorf("unknown render format %q; valid: excalidraw, svg, pptx, xyflow", opts.Format)
 	}
 }
 
@@ -201,9 +236,29 @@ func defaultRenderOutput(format string) string {
 		return "output.svg"
 	case "pptx":
 		return "output.pptx"
+	case "xyflow":
+		return "output.xyflow.json"
 	default:
 		return "output.excalidraw"
 	}
+}
+
+func runRenderXYFlow(inputPath, outputPath string, abbrevMap map[int]string, mode, theme string) error {
+	input, err := os.ReadFile(inputPath)
+	if err != nil {
+		return fmt.Errorf("read input file: %w", err)
+	}
+	out, err := xaligoapi.RenderXYFlow(context.Background(), input, xaligoapi.RenderOptions{
+		Mode: xaligoapi.Mode(mode), Theme: theme, Abbreviations: abbrevMap,
+	})
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(outputPath, out, 0644); err != nil {
+		return fmt.Errorf("write output file: %w", err)
+	}
+	fmt.Printf("generated: %s\n", outputPath)
+	return nil
 }
 
 func serviceAbbrevMap(servicesFile string) (map[int]string, error) {
@@ -236,7 +291,7 @@ func runRenderExcalidraw(inputPath, outputPath string, abbrevMap map[int]string,
 	return nil
 }
 
-func runRenderSVG(inputPath, outputPath string, abbrevMap map[int]string, mode, theme string, pxPerInch float64, arrowStyle string, arrowStub, arrowMargin float64, paper, orientation string) error {
+func runRenderSVG(inputPath, outputPath string, abbrevMap map[int]string, mode, theme string, pxPerInch float64, arrowStyle string, arrowStub, arrowMargin float64, paper, orientation string, paperMargin, paperMarginTop, paperMarginRight, paperMarginBottom, paperMarginLeft float64) error {
 	input, err := os.ReadFile(inputPath)
 	if err != nil {
 		return fmt.Errorf("read input file: %w", err)
@@ -245,6 +300,8 @@ func runRenderSVG(inputPath, outputPath string, abbrevMap map[int]string, mode, 
 		Mode: xaligoapi.Mode(mode), Theme: theme, Abbreviations: abbrevMap, PxPerInch: pxPerInch,
 		ArrowStyle: arrowStyle, ArrowStubPx: arrowStub, ArrowMarginPx: arrowMargin,
 		PaperSize: paper, Orientation: orientation,
+		PaperMarginIn: paperMargin, PaperMarginTopIn: paperMarginTop, PaperMarginRightIn: paperMarginRight,
+		PaperMarginBottomIn: paperMarginBottom, PaperMarginLeftIn: paperMarginLeft,
 	})
 	if err != nil {
 		return err

@@ -258,9 +258,20 @@ func SVGBGColor(dataURL string) string {
 	matches := svgFillRe.FindAllSubmatch(svgBytes, -1)
 	for _, m := range matches {
 		color := strings.ToLower(strings.Trim(string(m[1]), `"'`))
-		if color != "" && color != "none" && color != "transparent" && color != "white" && color != "#ffffff" && color != "#fff" {
+		if svgBackgroundFillCandidate(color) {
 			return color
 		}
 	}
 	return "transparent"
+}
+
+func svgBackgroundFillCandidate(color string) bool {
+	switch color {
+	case "", "none", "transparent", "white", "#ffffff", "#fff", "#ffffffff":
+		return false
+	case "#231815", "#6e6e6e":
+		return false
+	default:
+		return true
+	}
 }

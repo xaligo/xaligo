@@ -63,6 +63,8 @@ type CustomData struct {
 	ConnectorStartArrowhead string `json:"xaligoConnectorStartArrowhead"`
 	ConnectorEndArrowhead   string `json:"xaligoConnectorEndArrowhead"`
 	Junction                bool   `json:"xaligoJunction,omitempty"`
+	GroupBorder             bool   `json:"xaligoGroupBorder,omitempty"`
+	GroupHeader             bool   `json:"xaligoGroupHeader,omitempty"`
 }
 
 // ── Options driving the calculations ─────────────────────────────────────────
@@ -71,14 +73,19 @@ type CustomData struct {
 // They originate from the CLI / Go controller and are passed verbatim to the
 // WASM plan builder as JSON.
 type Options struct {
-	Theme         string        `json:"theme,omitempty"`
-	PxPerInch     float64       `json:"pxPerInch"`
-	ArrowStyle    string        `json:"arrowStyle"`
-	ArrowStubPx   float64       `json:"arrowStubPx"`
-	ArrowMargin   float64       `json:"arrowMarginPx"`
-	PaperSize     string        `json:"paperSize"`
-	Orientation   string        `json:"orientation"`
-	LegendEntries []LegendEntry `json:"legendEntries"`
+	Theme             string        `json:"theme,omitempty"`
+	PxPerInch         float64       `json:"pxPerInch"`
+	ArrowStyle        string        `json:"arrowStyle"`
+	ArrowStubPx       float64       `json:"arrowStubPx"`
+	ArrowMargin       float64       `json:"arrowMarginPx"`
+	PaperSize         string        `json:"paperSize"`
+	Orientation       string        `json:"orientation"`
+	PaperMargin       float64       `json:"paperMargin"`
+	PaperMarginTop    float64       `json:"paperMarginTop"`
+	PaperMarginRight  float64       `json:"paperMarginRight"`
+	PaperMarginBottom float64       `json:"paperMarginBottom"`
+	PaperMarginLeft   float64       `json:"paperMarginLeft"`
+	LegendEntries     []LegendEntry `json:"legendEntries"`
 }
 
 // ── Output: the PPTX draw plan ───────────────────────────────────────────────
@@ -86,9 +93,10 @@ type Options struct {
 // Plan is the complete, ordered list of drawing operations plus slide metadata.
 // Every coordinate is already in inches and every colour is a 6-hex string.
 type Plan struct {
-	Slide  PlanSlide     `json:"slide"`
-	Ops    []DrawOp      `json:"ops"`
-	Legend []LegendEntry `json:"legend,omitempty"`
+	Slide           PlanSlide              `json:"slide"`
+	Ops             []DrawOp               `json:"ops"`
+	Legend          []LegendEntry          `json:"legend,omitempty"`
+	ConnectorLegend []ConnectorLegendEntry `json:"connectorLegend,omitempty"`
 }
 
 type LegendEntry struct {
@@ -98,6 +106,16 @@ type LegendEntry struct {
 	Data         string `json:"data,omitempty"`
 }
 
+type ConnectorLegendEntry struct {
+	ID          string    `json:"id"`
+	Kind        string    `json:"kind"`
+	Label       string    `json:"label"`
+	Description string    `json:"description"`
+	Source      string    `json:"source,omitempty"`
+	Target      string    `json:"target,omitempty"`
+	Line        LineStyle `json:"line"`
+}
+
 type PlanSlide struct {
 	W          float64 `json:"w"`
 	H          float64 `json:"h"`
@@ -105,14 +123,17 @@ type PlanSlide struct {
 }
 
 // DrawOp is a single PptxGenJS drawing call. Kind selects the dispatch:
-// "rect" | "ellipse" | "text" | "image" | "line".
+// "rect" | "ellipse" | "polygon" | "text" | "image" | "line".
 type DrawOp struct {
-	Kind   string  `json:"kind"`
-	X      float64 `json:"x"`
-	Y      float64 `json:"y"`
-	W      float64 `json:"w"`
-	H      float64 `json:"h"`
-	Rotate float64 `json:"rotate,omitempty"`
+	ID         string  `json:"id,omitempty"`
+	GroupID    string  `json:"groupId,omitempty"`
+	FrontLayer bool    `json:"frontLayer,omitempty"`
+	Kind       string  `json:"kind"`
+	X          float64 `json:"x"`
+	Y          float64 `json:"y"`
+	W          float64 `json:"w"`
+	H          float64 `json:"h"`
+	Rotate     float64 `json:"rotate,omitempty"`
 
 	// rect / ellipse / line
 	Line *LineStyle `json:"line,omitempty"`

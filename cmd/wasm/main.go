@@ -17,11 +17,13 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
 	"syscall/js"
 
+	xaligoapi "github.com/ryo-arima/xaligo"
 	awsassets "github.com/ryo-arima/xaligo/etc/resources/aws"
 	"github.com/ryo-arima/xaligo/internal/entity"
 	"github.com/ryo-arima/xaligo/internal/excalidraw"
@@ -30,15 +32,48 @@ import (
 	"github.com/ryo-arima/xaligo/internal/parser"
 	"github.com/ryo-arima/xaligo/internal/pptxplan"
 	"github.com/ryo-arima/xaligo/internal/repository"
+	xyflowrenderer "github.com/ryo-arima/xaligo/internal/xyflow"
 )
 
 func main() {
 	js.Global().Set("xaligoRender", js.FuncOf(jsRender))
 	js.Global().Set("xaligoRenderWithServices", js.FuncOf(jsRenderWithServices))
 	js.Global().Set("xaligoBuildPptxPlan", js.FuncOf(jsBuildPptxPlan))
+	js.Global().Set("xaligoDiagnose", js.FuncOf(jsDiagnose))
+	js.Global().Set("xaligoRenderXYFlow", js.FuncOf(jsRenderXYFlow))
 
 	// Keep the WASM module alive until the page unloads.
 	<-make(chan struct{})
+}
+
+func jsRenderXYFlow(_ js.Value, args []js.Value) any {
+	if len(args) < 1 {
+		return jsResult("", fmt.Errorf("xaligoRenderXYFlow: expected 1 argument (xal)"))
+	}
+	sceneJSON, err := renderXAL(args[0].String(), nil)
+	if err != nil {
+		return jsResult("", err)
+	}
+	out, err := xyflowrenderer.Render([]byte(sceneJSON))
+	if err != nil {
+		return jsResult("", err)
+	}
+	return jsResult(string(out), nil)
+}
+
+func jsDiagnose(_ js.Value, args []js.Value) any {
+	if len(args) < 1 {
+		return jsResult("", fmt.Errorf("xaligoDiagnose: expected 1 argument (xal)"))
+	}
+	diagnostics, err := xaligoapi.Diagnose(context.Background(), []byte(args[0].String()))
+	if err != nil {
+		return jsResult("", err)
+	}
+	encoded, err := json.Marshal(diagnostics)
+	if err != nil {
+		return jsResult("", fmt.Errorf("encode diagnostics: %w", err))
+	}
+	return jsResult(string(encoded), nil)
 }
 
 // jsResult returns { result, error } objects back to JavaScript.

@@ -43,7 +43,7 @@ func TestServerRefreshAndDiagnostics(t *testing.T) {
 	statusReq := httptest.NewRequest(http.MethodGet, "/api/status", nil)
 	statusRec := httptest.NewRecorder()
 	server.Handler().ServeHTTP(statusRec, statusReq)
-	if !strings.Contains(statusRec.Body.String(), `"error"`) {
+	if !strings.Contains(statusRec.Body.String(), `"error"`) || !strings.Contains(statusRec.Body.String(), `"line":1`) {
 		t.Fatalf("status has no diagnostic: %s", statusRec.Body.String())
 	}
 }

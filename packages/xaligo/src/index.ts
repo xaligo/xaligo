@@ -56,8 +56,55 @@ interface WasmResult {
   error?: string;
 }
 
+export interface XaligoDiagnostic {
+  severity: 'error';
+  message: string;
+  offset?: number;
+  line?: number;
+  column?: number;
+}
+
+export interface XYFlowNode {
+  id: string;
+  type: string;
+  position: { x: number; y: number };
+  width: number;
+  height: number;
+  parentId?: string;
+  extent?: 'parent';
+  data: Record<string, unknown>;
+  style?: Record<string, unknown>;
+}
+
+export interface XYFlowEdge {
+  id: string;
+  source: string;
+  target: string;
+  sourceHandle?: string;
+  targetHandle?: string;
+  type: string;
+  zIndex?: number;
+  data: Record<string, unknown>;
+  style?: Record<string, unknown>;
+  markerStart?: { type: string; color?: string };
+  markerEnd?: { type: string; color?: string };
+}
+
+export interface XYFlowDocument {
+  nodes: XYFlowNode[];
+  edges: XYFlowEdge[];
+  viewport: { x: number; y: number; zoom: number };
+  width: number;
+  height: number;
+  background: string;
+}
+
 /** Public API exposed after the WASM module is loaded. */
 export interface XaligoWasm {
+  /** Validate `.xal` and return editor-friendly source diagnostics. */
+  diagnose(xal: string): Promise<XaligoDiagnostic[]>;
+  /** Convert `.xal` to React Flow / XYFlow compatible nodes and edges. */
+  renderXYFlow(xal: string): Promise<XYFlowDocument>;
   /**
    * Convert a `.xal` DSL string into an Excalidraw JSON string.
    * Uses the embedded AWS service-catalog and SVG assets.
@@ -120,6 +167,8 @@ declare global {
   function xaligoRender(xal: string): WasmResult;
   function xaligoRenderWithServices(xal: string, servicesCsv: string): WasmResult;
   function xaligoBuildPptxPlan(xal: string, servicesCsv: string, optionsJson: string): WasmResult;
+  function xaligoDiagnose(xal: string): WasmResult;
+  function xaligoRenderXYFlow(xal: string): WasmResult;
 }
 
 // ---------------------------------------------------------------------------
@@ -182,6 +231,19 @@ export async function loadXaligo(wasmUrl?: string): Promise<XaligoWasm> {
   await waitFor(() => typeof globalThis.xaligoRender === 'function', 5000);
 
   _instance = {
+    diagnose(xal: string): Promise<XaligoDiagnostic[]> {
+      const res: WasmResult = globalThis.xaligoDiagnose(xal);
+      if (res.error) throw new Error(res.error);
+      return Promise.resolve(JSON.parse(res.result ?? '[]') as XaligoDiagnostic[]);
+    },
+
+    renderXYFlow(xal: string): Promise<XYFlowDocument> {
+      const res: WasmResult = globalThis.xaligoRenderXYFlow(xal);
+      if (res.error) throw new Error(res.error);
+      if (!res.result) throw new Error('xaligoRenderXYFlow returned empty result');
+      return Promise.resolve(JSON.parse(res.result) as XYFlowDocument);
+    },
+
     render(xal: string): Promise<string> {
       const res: WasmResult = globalThis.xaligoRender(xal);
       if (res.error) throw new Error(res.error);

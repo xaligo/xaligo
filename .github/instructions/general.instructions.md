@@ -146,10 +146,17 @@ In PPTX export, legend entries are rendered on separate 4-column legend slides.
 | `xaligo generate xal --clouds N --accounts N --regions N --azs N --az-layout grid\|staggered --subnets N --spacing vertical\|horizontal\|both --start top\|left --paper A4 --orientation portrait\|landscape -o out.xal` | Generate a .xal for an AWS infrastructure hierarchy |
 | `xaligo render <file.xal> --format excalidraw -o <out.excalidraw> --services <csv>` | Convert .xal to .excalidraw |
 | `xaligo serve <file.xal> --mode network` | Serve an auto-reloading SVG preview at `127.0.0.1:8080` |
-| `xaligo render <file.xal> --format pptx -o <out.pptx> --services <csv> --paper A3 --orientation landscape` | Convert .xal to PPTX when `pptx_exporter.wasm` is configured |
+| `xaligo render <file.xal> --format xyflow -o <out.json>` | Export React Flow/XYFlow nodes and edges |
+
+The public `Diagnose(ctx, source)` API returns line, column, offset, severity,
+and message fields. `xaligo serve` exposes the same diagnostics from
+`/api/status` for editor integrations.
+| `xaligo render <file.xal> --format pptx -o <out.pptx> --services <csv> --paper A3 --orientation landscape --paper-margin-top 0.75 --paper-margin-bottom 0.75` | Convert .xal to PPTX when `pptx_exporter.wasm` is configured |
 
 The npm/WASM API can generate PPTX through PptxGenJS. Native CLI PPTX output
 requires the separate WASI `pptx_exporter.wasm`; Excalidraw and SVG do not.
+PPTX paper margins are inch-based fitting insets. `--paper-margin` applies to
+all sides; `--paper-margin-top/right/bottom/left` override individual sides.
 
 ## Build & Test
 

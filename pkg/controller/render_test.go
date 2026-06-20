@@ -22,6 +22,7 @@ func TestDefaultRenderOutput(t *testing.T) {
 		"excalidraw": "output.excalidraw",
 		"svg":        "output.svg",
 		"pptx":       "output.pptx",
+		"xyflow":     "output.xyflow.json",
 	}
 	for format, want := range tests {
 		if got := defaultRenderOutput(format); got != want {

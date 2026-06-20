@@ -30,3 +30,35 @@ func TestFrameBorderReservationPrefersMargin(t *testing.T) {
 		t.Fatalf("clear path score %.2f should be lower than near-border score %.2f", clearScore, nearScore)
 	}
 }
+
+func TestPaperMarginsInsetFittedContent(t *testing.T) {
+	scene := Scene{Elements: []Element{
+		{ID: "paper-frame", Type: "frame", Width: 100, Height: 50},
+		{ID: "box", Type: "rectangle", Width: 100, Height: 50, StrokeColor: "#000000", BackgroundColor: "#ffffff"},
+	}}
+	plan := BuildPlan(&scene, Options{
+		PxPerInch:         100,
+		PaperSize:         "A4",
+		Orientation:       "portrait",
+		PaperMarginTop:    2,
+		PaperMarginRight:  1,
+		PaperMarginBottom: 2,
+		PaperMarginLeft:   1,
+	})
+	if plan.Slide.W != 8.27 || plan.Slide.H != 11.69 {
+		t.Fatalf("slide = %.2fx%.2f, want A4 portrait", plan.Slide.W, plan.Slide.H)
+	}
+	var box *DrawOp
+	for i := range plan.Ops {
+		if plan.Ops[i].Kind == "rect" && plan.Ops[i].W > 0 && plan.Ops[i].H > 0 {
+			box = &plan.Ops[i]
+			break
+		}
+	}
+	if box == nil {
+		t.Fatal("box op was not generated")
+	}
+	if box.X < 0.99 || box.Y < 1.99 {
+		t.Fatalf("box was not inset by paper margins: %#v", box)
+	}
+}

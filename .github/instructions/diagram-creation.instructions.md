@@ -205,7 +205,10 @@ icon label overrides and service metadata.
   exports through PptxGenJS.
 - PPTX export adds separate legend slide(s) after the diagram slide.
 - Legend pages use 4 columns and show icon, abbreviation, and official name.
-- Use `--paper A3 --orientation landscape` for the current large AWS sample.
+- Use `--paper A3 --orientation landscape --paper-margin-top 0.75 --paper-margin-bottom 0.75`
+  for the current large AWS sample.
 - Connector routing is resolved in Go/WASM and avoids icon/label obstacles.
+- Group header tag labels are intentionally single-line in PPTX output; keep
+  tag background width and label width in sync when adjusting tag text metrics.
 - Keep `examples/sample.xal` and `examples/services.csv` in sync so the legend
   includes every diagram service.

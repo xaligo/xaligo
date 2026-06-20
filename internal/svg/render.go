@@ -45,6 +45,8 @@ func writeOp(b *bytes.Buffer, op pptxplan.DrawOp, ppi float64) {
 		fmt.Fprintf(b, `<rect x="%s" y="%s" width="%s" height="%s"%s%s%s/>`+"\n", num(x), num(y), num(w), num(h), fillAttrs(op.Fill), lineAttrs(op.Line), transform)
 	case "ellipse":
 		fmt.Fprintf(b, `<ellipse cx="%s" cy="%s" rx="%s" ry="%s"%s%s%s/>`+"\n", num(x+w/2), num(y+h/2), num(w/2), num(h/2), fillAttrs(op.Fill), lineAttrs(op.Line), transform)
+	case "polygon":
+		writePolygon(b, op, x, y, w, h, ppi, transform)
 	case "text":
 		writeText(b, op, x, y, w, h, ppi, transform)
 	case "image":
@@ -55,6 +57,21 @@ func writeOp(b *bytes.Buffer, op pptxplan.DrawOp, ppi float64) {
 	case "line":
 		writeLine(b, op, x, y, w, h, ppi)
 	}
+}
+
+func writePolygon(b *bytes.Buffer, op pptxplan.DrawOp, x, y, w, h, ppi float64, transform string) {
+	points := absolutePoints(op, x, y, w, h, ppi)
+	if len(points) < 3 {
+		return
+	}
+	var value strings.Builder
+	for i, p := range points {
+		if i > 0 {
+			value.WriteByte(' ')
+		}
+		fmt.Fprintf(&value, "%s,%s", num(p.x), num(p.y))
+	}
+	fmt.Fprintf(b, `<polygon points="%s"%s%s%s/>`+"\n", value.String(), fillAttrs(op.Fill), lineAttrs(op.Line), transform)
 }
 
 func writeText(b *bytes.Buffer, op pptxplan.DrawOp, x, y, w, h, ppi float64, transform string) {

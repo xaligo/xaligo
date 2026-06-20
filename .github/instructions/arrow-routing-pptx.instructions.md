@@ -97,7 +97,8 @@ Do not spend implementation time replacing the repository-layer exporter with
 
 ## Paper / Scaling
 
-- PPTX export supports `--paper` and `--orientation`.
+- PPTX export supports `--paper`, `--orientation`, and paper-margin fitting
+  flags.
 - A3 landscape is generated with:
 
 ```bash
@@ -106,10 +107,18 @@ Do not spend implementation time replacing the repository-layer exporter with
   --services examples/services.csv \
   -o out.pptx \
   --paper A3 \
-  --orientation landscape
+  --orientation landscape \
+  --paper-margin-top 0.75 \
+  --paper-margin-bottom 0.75
 ```
 
 - Go `pptxplan` resolves paper size and computes the pixel-to-inch conversion.
+- `--paper-margin N` applies an inch-based margin to every side before fitting
+  the diagram to the selected paper.
+- `--paper-margin-top`, `--paper-margin-right`, `--paper-margin-bottom`, and
+  `--paper-margin-left` override the all-side value for individual sides.
+- Paper margins do not change the slide size; they reduce the available fit
+  area and centre the diagram within that inset area.
 - The `paper-frame` element remains the content frame for scaling.
 - Root `<frame margin="N">` or `class="ma-N"` is content outer whitespace: it
   insets diagram content without shrinking the paper frame itself.
@@ -212,6 +221,22 @@ Behavior:
 | `--arrow-stub` | Pixel stub before the first/last bend |
 | `--arrow-margin` | Pixel margin reserved around existing line lanes |
 | `--px-per-inch` | Layout scaling base, default 96 |
+| `--paper` | Named slide paper size: `A5`, `A4`, `A3`, `A2`, `A1`, `Letter`, `Legal`, `Tabloid` |
+| `--orientation` | `portrait` or `landscape`; auto-fit when omitted |
+| `--paper-margin` | Inch margin applied to all sides before paper fitting |
+| `--paper-margin-top/right/bottom/left` | Inch margin override for one side |
+
+## Group Header Tags
+
+- Group header tag labels are single-line in PPTX output. The TS drawing layer
+  sets `wrap: false` for group header label ops only; item labels and connector
+  ID labels keep their normal wrapping behaviour.
+- Excalidraw scene generation must reserve conservative tag label width before
+  PPTX export. `groupLabelCharW` is intentionally larger than the average
+  Excalidraw text metric so PowerPoint no-wrap text stays inside the tag
+  background.
+- When changing group tag font size, font family, padding, or tag geometry,
+  update both the scene width estimate and the group-header regression tests.
 
 ## Item Labels
 

@@ -1,0 +1,154 @@
+<!--
+  Hybrid enterprise platform showcasing the currently implemented xaligo DSL:
+  AWS/Tabler/Yamaha icons, catalog-backed group icons, nested AWS boundaries,
+  grid and flex layout, route/traffic lanes, orthogonal routing, automatic
+  junctions, line jumps, custom strokes, and independent arrowheads.
+-->
+<frame width="1920" height="1440" class="pa-3" item-size="40">
+  <row gap="24">
+    <col span="3">
+      <corporate-data-center title="On-premises Headquarters">
+        <generic-group title="Employees &amp; Devices" icon-id="104764" align="middle-spread">
+          <item id="200025" name="employee" />     <!-- Yamaha: network_user -->
+          <item id="200005" name="office-pc" />    <!-- Yamaha: desktop_pc -->
+          <item id="200046" name="mobile" />       <!-- Yamaha: smartphone -->
+        </generic-group>
+
+        <generic-group title="Campus Network" icon-id="104635" align="middle-spread">
+          <item id="200013" name="access-switch" /> <!-- Yamaha: l2_switch_general -->
+          <item id="200036" name="site-router" />   <!-- Yamaha: router_general -->
+          <item id="104915" name="internet" />      <!-- Tabler: world-www -->
+        </generic-group>
+
+        <server-contents title="Local Operations" align="middle-spread">
+          <item id="200041" name="local-monitor" /> <!-- Yamaha: server -->
+          <item id="104109" name="admin-server" />  <!-- Tabler: server -->
+        </server-contents>
+      </corporate-data-center>
+    </col>
+
+    <col span="9">
+      <aws-cloud title="AWS Cloud">
+        <generic-group title="Global Edge, Identity &amp; Protection" icon-id="100648" align="middle-spread" row="1">
+          <item id="1179" name="dns" />          <!-- Route 53 -->
+          <item id="1178" name="cdn" />          <!-- CloudFront -->
+          <item id="227" name="waf" />           <!-- AWS WAF -->
+          <item id="216" name="iam" />           <!-- IAM -->
+          <item id="604" name="cloudwatch" />    <!-- CloudWatch -->
+        </generic-group>
+
+        <region title="ap-northeast-1" row="10">
+          <generic-group title="Regional Integration &amp; Delivery" icon-id="104022" align="middle-spread" row="1">
+            <item id="441" name="pipeline" />     <!-- CodePipeline -->
+            <item id="722" name="event-bus" />    <!-- EventBridge -->
+            <item id="706" name="queue" />        <!-- SQS -->
+            <item id="705" name="notifications" /><!-- SNS -->
+            <item id="1020" name="assets" />      <!-- S3 -->
+          </generic-group>
+
+          <vpc title="Production VPC · 10.20.0.0/16" row="10">
+            <generic-group title="VPC Edge &amp; Shared Security" icon-id="104032" align="middle-spread" row="1">
+              <item id="1581" name="igw" />       <!-- Internet Gateway -->
+              <item id="1182" name="alb" />       <!-- Application Load Balancer -->
+              <item id="1582" name="nat" />       <!-- NAT Gateway -->
+              <item id="1579" name="endpoint" />  <!-- VPC Endpoint -->
+              <item id="222" name="secrets" />    <!-- Secrets Manager -->
+            </generic-group>
+
+            <row gap="16" row="10">
+              <col span="6">
+                <availability-zone title="AZ ap-northeast-1a · Primary">
+                  <public-subnet title="Public Subnet · 10.20.0.0/24" align="middle-center">
+                    <item id="1542" name="public-acl" /> <!-- Network ACL resource -->
+                  </public-subnet>
+                  <private-subnet title="Application Subnet · 10.20.10.0/24">
+                    <auto-scaling-group title="Elastic Application Tier" align="middle-spread">
+                      <item id="27" name="web-app" />    <!-- EC2 -->
+                      <item id="547" name="containers" /><!-- ECS -->
+                      <item id="13" name="functions" />  <!-- Lambda -->
+                    </auto-scaling-group>
+                  </private-subnet>
+                  <private-subnet title="Data Subnet · 10.20.20.0/24" align="middle-spread">
+                    <item id="110" name="aurora-primary" /> <!-- Aurora -->
+                    <item id="113" name="cache" />          <!-- ElastiCache -->
+                  </private-subnet>
+                </availability-zone>
+              </col>
+
+              <col span="6">
+                <availability-zone title="AZ ap-northeast-1c · Resilience">
+                  <public-subnet title="Public Subnet · 10.20.1.0/24" align="middle-center">
+                    <item id="1580" name="flow-logs" /> <!-- VPC Flow Logs -->
+                  </public-subnet>
+                  <private-subnet title="Application Subnet · 10.20.11.0/24">
+                    <security-group title="Container Platform" align="middle-spread">
+                      <item id="548" name="kubernetes" /> <!-- EKS -->
+                      <item id="1685" name="worker-task" /><!-- ECS Task resource -->
+                    </security-group>
+                  </private-subnet>
+                  <private-subnet title="Data Subnet · 10.20.21.0/24" align="middle-spread">
+                    <item id="117" name="rds-standby" /> <!-- RDS -->
+                    <item id="112" name="dynamodb" />   <!-- DynamoDB -->
+                  </private-subnet>
+                </availability-zone>
+              </col>
+            </row>
+          </vpc>
+        </region>
+      </aws-cloud>
+    </col>
+  </row>
+
+  <!-- Campus access: fan-in/fan-out creates shared trunks and junction dots. -->
+  <connection src="200025" dst="200005" kind="route" />
+  <connection src="200025" dst="200046" kind="route" />
+  <connection src="200005" dst="200013" kind="traffic" color="#2563eb" />
+  <connection src="200046" dst="200013" kind="traffic" color="#2563eb" />
+  <connection src="200013" dst="200036" kind="route" />
+  <connection src="200036" dst="104915" kind="route" />
+  <connection src="200036" dst="104915" kind="traffic" color="#0f766e" />
+
+  <!-- Public request path: DNS → CDN → WAF → VPC ingress → load balancer. -->
+  <connection src="104915" dst="1179" kind="traffic" color="#0284c7" />
+  <connection src="1179" dst="1178" kind="route" />
+  <connection src="1178" dst="227" kind="traffic" color="#0284c7" />
+  <connection src="227" dst="1581" kind="traffic" color="#dc2626"
+              stroke-style="dashed" />
+  <connection src="1581" dst="1182" kind="route" />
+  <connection src="1581" dst="1182" kind="traffic" color="#7c3aed" />
+
+  <!-- ALB fan-out demonstrates automatic junction routing. -->
+  <connection src="1182" dst="27" kind="traffic" color="#7c3aed" />
+  <connection src="1182" dst="547" kind="traffic" color="#7c3aed" />
+  <connection src="1182" dst="548" kind="traffic" color="#7c3aed" />
+
+  <!-- Application, event, storage, and data paths. -->
+  <connection src="27" dst="110" kind="traffic" color="#059669" />
+  <connection src="547" dst="113" kind="traffic" color="#059669" />
+  <connection src="548" dst="117" kind="traffic" color="#059669" />
+  <connection src="13" dst="112" kind="traffic" color="#059669" />
+  <connection src="547" dst="706" kind="traffic" color="#d97706" stroke-style="dashed" />
+  <connection src="722" dst="706" kind="traffic" color="#d97706" />
+  <connection src="706" dst="13" kind="traffic" color="#d97706" />
+  <connection src="13" dst="705" kind="traffic" color="#d97706" />
+  <connection src="27" dst="1020" kind="traffic" color="#0891b2" />
+  <connection src="27" dst="1579" kind="route" />
+  <connection src="222" dst="27" kind="traffic" color="#db2777" />
+
+  <!-- Replication line exercises dotted traffic styling. -->
+  <connection src="110" dst="117" kind="traffic" color="#9333ea"
+              stroke-style="dotted" />
+
+  <!-- Delivery and observability lines cross service paths, producing line jumps. -->
+  <connection src="441" dst="547" kind="traffic" color="#ea580c"
+              stroke-style="dashed" />
+  <connection src="604" dst="705" kind="traffic" color="#475569" />
+  <connection src="1580" dst="604" kind="route" color="#64748b" stroke-style="dotted" />
+  <connection src="200041" dst="604" kind="traffic" color="#334155"
+              stroke-style="dashed" />
+  <connection src="104109" dst="216" kind="traffic" color="#334155" />
+
+  <!-- Private outbound route and its offset traffic lane. -->
+  <connection src="548" dst="1582" kind="route" />
+  <connection src="548" dst="1582" kind="traffic" color="#0f766e" />
+</frame>

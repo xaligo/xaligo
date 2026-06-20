@@ -26,7 +26,7 @@ The parser uses `encoding/xml` and handles attributes, nested tags, and text con
 | `layout` | string | — | Set to `"horizontal"` to arrange children horizontally |
 | `gap` | float | `16` | Gap between child elements (px) |
 | `item-size` | float | `32` (config value) | Max icon size (px) applied to all `<item>` elements in this file. Overrides `item.icon_size` in `app.yaml` |
-| `margin` / `margin-*` | float | — | Outer content whitespace. On root `<frame>`, paper size is preserved and content is inset |
+| `margin` / `margin-*` | float | — | DSL content whitespace in pixels. On root `<frame>`, paper-frame size is preserved and content is inset. This is separate from PPTX CLI `--paper-margin*` flags, which are inch-based export fitting margins |
 | `content-width` / `content-height` | float | — | Shrink usable inner layout area |
 | `align` | string | — | Align usable content area (`top|middle|bottom` + `left|center|right`) |
 
@@ -163,19 +163,45 @@ Use the same catalog IDs as `<item id="N">` for `src` / `dst`.
 | `start-arrowhead` / `end-arrowhead` | string | — | Independently set either end to `none`, `arrow`, `triangle`, `stealth`, `diamond`, or `oval` |
 | `arrowhead` | string | — | Backward-compatible alias for `end-arrowhead` |
 
-`kind="route"` defaults both arrowheads to `oval`. Set
-`start-arrowhead="none" end-arrowhead="none"` to suppress the connectors.
+Default connections, `kind="route"`, and `kind="traffic"` all use a thin 1px
+line with `start-arrowhead="none"` and a slender `stealth` end arrowhead.
+Default colors are `#1e1e1e` for normal connections, `#64748b` for routes, and
+`#2563eb` for traffic. Explicit `stroke-width`, color, stroke style, and
+arrowhead attributes are preserved.
+
+Items may define a connection reference with `name` or `ref`:
+
+```xml
+<item id="1178" name="web" />
+<item id="1189" name="db" />
+web --- db
+web ==> db
+```
+
+- `---` expands to `kind="route"`.
+- `==>` expands to `kind="traffic"`.
+- Operands may also be numeric item IDs.
+- Shorthands must be direct text children of `<frame>`.
+- References must be unique and must belong to an item with a non-empty ID.
+- Use an explicit `<connection>` for color, width, stroke, or arrowhead overrides.
 
 **Arrow spec:**
 - `elbowed: true` — always right-angle connectors (Excalidraw "elbow connector")
-- Arrowhead at end only (`endArrowhead: "arrow"`, `startArrowhead: null`)
-- Stroke color `#1e1e1e`, stroke width `2px`
+- Arrowhead at end only by default. Excalidraw stores this as
+  `endArrowhead: "arrow"` plus `endArrowheadSize: "s"`; xaligo metadata records
+  the logical PPTX/SVG head as `stealth`.
+- Stroke color `#1e1e1e`, stroke width `1px` for normal connections
+- `kind="route"` defaults to `#64748b`, `1px`, lower route layer
+- `kind="traffic"` defaults to `#2563eb`, `1px`, higher traffic layer
 - Start/end connect to the **edge midpoint** of the element
   - When direction is **downward**: label text element (`{id}-item-lbl`) bottom edge
   - Otherwise: icon image element (`{id}-item`) corresponding edge
 - Edges are fixed with normalized coordinates via `fixedPoint`, so arrows snap correctly when the file is opened
 - Arrow ID format: `conn-{src}-{dst}-{index}`
 - Arrow ID is registered in `boundElements` of the bound elements
+- SVG/PPTX routing may add lane offsets, automatic junction markers, and line
+  jump masks after the Excalidraw scene is built. These are export-layer
+  rendering features, not extra `.xal` tags.
 
 **Edge selection logic:**
 
@@ -224,9 +250,27 @@ Icon SVGs are sourced from `etc/resources/aws/svg/Architecture-Group-Icons/`.
 | `<aws-iot-greengrass>` | AWS IoT Greengrass | `#3F8624` | solid | — |
 | `<elastic-beanstalk-container>` | Elastic Beanstalk container | `#E7601B` | solid | — |
 | `<aws-step-functions-workflow>` | AWS Step Functions workflow | `#E7008A` | solid | — |
-| `<generic-group>` | Generic group | `#AAB7B8` | dashed | — |
+| `<generic-group>` | Generic group | `#AAB7B8` | dashed | Configurable with `icon-id` |
 
 Attributes are the same as `container` (`title`, `class`, `gap`, etc.).
+
+`generic-group` additionally accepts `icon-id`, a positive ID from
+`service-catalog.csv`. It uses the same embedded AWS, Tabler, and Yamaha icon
+catalog as `<item>` and renders a 32px icon to the left of the title.
+This matches the built-in group icon size. Every group header receives an
+opaque mask matching its local background behind the icon and label, preventing
+solid or dashed border strokes from crossing the header content.
+In PPTX output, group header tag labels are intentionally kept on a single line.
+The tag background and label box use a conservative width estimate so PowerPoint
+no-wrap text remains inside the tag. Keep group tag text concise; if changing
+group tag font, padding, or geometry, update the renderer width estimate and
+regression tests together.
+
+```xml
+<generic-group title="Network Topology" icon-id="104635">
+  <item id="200036" />
+</generic-group>
+```
 
 ### Layout Control Attributes (shared by all containers)
 

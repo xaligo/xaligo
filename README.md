@@ -42,6 +42,12 @@ import { loadXaligo } from "@ryo-arima/xaligo";
 
 const xaligo = await loadXaligo();                         // loads xaligo.wasm on first call
 
+// Validate with line/column diagnostics for editors
+const diagnostics = await xaligo.diagnose(xalSource);
+
+// Export React Flow / XYFlow nodes and edges
+const flow = await xaligo.renderXYFlow(xalSource);
+
 // Convert .xal DSL string → Excalidraw JSON string
 const json = await xaligo.render(xalSource);
 
@@ -73,6 +79,7 @@ packages/
 | `xaligo render <file.xal> --format excalidraw -o <out.excalidraw> [--mode standard\|network\|aws] [--theme light\|dark] [--services <csv>]` | Convert .xal → .excalidraw |
 | `xaligo render <file.xal> --format svg -o <out.svg> [--mode standard\|network\|aws] [--theme light\|dark] [--services <csv>]` | Convert .xal → SVG |
 | `xaligo render <file.xal> --format pptx -o <out.pptx> [--mode standard\|network\|aws] [--theme light\|dark] [--services <csv>] [pptx flags]` | Convert .xal → .pptx via the WASM PPTX exporter |
+| `xaligo render <file.xal> --format xyflow -o <out.json> [--mode standard\|network\|aws]` | Export React Flow/XYFlow nodes and edges |
 | `xaligo generate xal [flags] -o <out.xal>` | Auto-generate an AWS infrastructure hierarchy .xal |
 | `xaligo validate <file.xal>` | Validate .xal syntax and layout |
 | `xaligo serve <file.xal> [--address 127.0.0.1:8080]` | Serve an SVG live preview with automatic reload |
@@ -128,10 +135,12 @@ mkdir -p output
 
 # Optional native CLI PPTX export (requires pptx_exporter.wasm)
 .bin/xaligo render examples/sample.xal --format pptx \
-  -o output/sample.pptx --services examples/services.csv
+  -o output/sample.pptx --services examples/services.csv \
+  --paper A3 --orientation landscape \
+  --paper-margin-top 0.75 --paper-margin-bottom 0.75
 ```
 
-PPTX flags: `--title`, `--author`, `--company`, `--subject`, `--compression true|false`, `--px-per-inch`.
+PPTX flags: `--title`, `--author`, `--company`, `--subject`, `--compression true|false`, `--px-per-inch`, `--paper`, `--orientation`, `--paper-margin`, `--paper-margin-top`, `--paper-margin-right`, `--paper-margin-bottom`, `--paper-margin-left`. Paper margins are in inches and are applied before fitting the diagram to the selected paper.
 
 ## Go API
 
@@ -144,11 +153,17 @@ svg, err := xaligo.RenderSVG(ctx, source, xaligo.RenderOptions{
 })
 
 err = xaligo.Validate(ctx, source)
+
+diagnostics, err := xaligo.Diagnose(ctx, source)
+// diagnostics[0].Line / Column / Message are editor-friendly.
 ```
 
-`Render`, `RenderExcalidraw`, `RenderSVG`, and `RenderPPTX` are available now.
-`RenderXYFlow` and `RenderIsoflow` return `ErrNotImplemented` until their
-roadmap phases are implemented.
+`Render`, `RenderExcalidraw`, `RenderSVG`, `RenderPPTX`, and `RenderXYFlow` are
+available now. `RenderIsoflow` returns `ErrNotImplemented` until its roadmap
+phase is implemented.
+
+XYFlow output contains nested group nodes, icon data URLs, labels, connection
+handles, route/traffic metadata, layer order, line styles, and arrow markers.
 
 ## Live Preview
 
@@ -166,9 +181,12 @@ Reusable endpoints:
 |---|---|
 | `/` | Browser preview page |
 | `/diagram.svg` | Current SVG or HTTP 422 with the current diagnostic |
-| `/api/status` | JSON version and render error state |
+| `/api/status` | JSON version, render error, and source-positioned diagnostics |
 | `/events` | SSE `update` events for editor integrations |
 | `/healthz` | Health check |
+
+The VS Code extension is maintained in a separate repository and consumes the
+WASM diagnostics API and this HTTP/SSE preview protocol.
 
 ### Option B — Auto-generate an AWS hierarchy
 
@@ -224,12 +242,35 @@ Tags rendered with AWS architecture diagram group border styles.
 | `<auto-scaling-group>` | Auto Scaling Group | `#E7601B` |
 | `<server-contents>` | Server Contents | `#7A7C7F` |
 | `<corporate-data-center>` | Corporate Data Center | `#7A7C7F` |
+| `<generic-group>` | Generic dashed group; supports a catalog `icon-id` | `#AAB7B8` |
 | others | See xal-spec for details | — |
+
+Set a header icon on `generic-group` using the same catalog IDs as `<item>`:
+
+```xml
+<generic-group title="Network Topology" icon-id="104635">
+  <!-- AWS, Tabler, and Yamaha catalog IDs are supported -->
+</generic-group>
+```
+
+The icon uses the same 32px size as built-in group icons. Group headers use a
+right-pointing tag shape whose border, icon, and title share the group's
+semantic colour. The opaque tag is layered above all nested group borders so
+the title remains readable. Tags with an icon match its 32px height and left
+edge; icon-less tags shrink to the title's text height to preserve diagram
+space. The icon is embedded in Excalidraw, SVG, PPTX, and
+XYFlow output through the shared asset mechanism.
 
 ### `<item>` tag
 
 Embeds a catalog icon by specifying its ID from `service-catalog.csv`.
 Omitting or leaving `id` empty makes the element a spacer (no icon rendered).
+Use `name` or `ref` to assign a readable connection reference:
+
+```xml
+<item id="1178" name="web" />
+<item id="1189" name="db" />
+```
 
 Tabler Icons are available through the same catalog mechanism as AWS icons.
 Their stable catalog IDs start at `100000`; see
@@ -297,9 +338,23 @@ between the lower and upper lines. The color follows the uppermost opaque
 container at that point and otherwise uses the slide background. The mask stays
 smaller than the standard 8px lane gap so adjacent lines are not erased.
 Endpoint touches and parallel overlaps are not treated as crossings.
+At group-border crossings, an opaque white mask removes the lower-priority
+border before the connector is drawn. The resulting layer priority is
+**traffic > route > group border**.
 Start and end points connect to the **midpoint of the nearest edge** of the icon image or label text element.  
 When the connection direction is downward, the label text element edge is used; otherwise the icon image edge is used.  
 Edges are fixed with Excalidraw's `fixedPoint` binding, so arrows snap correctly when the file is opened.
+
+Connections can also use textual shorthand as direct text inside `<frame>`:
+
+```xml
+web --- db  <!-- route -->
+web ==> db  <!-- traffic -->
+```
+
+Operands resolve through an item's `name`, `ref`, or numeric `id`. Unknown or
+duplicate references produce source-positioned diagnostics. Use explicit
+`<connection>` elements when per-line style attributes are required.
 
 ### Key attributes
 

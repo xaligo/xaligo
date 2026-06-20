@@ -18,6 +18,11 @@ interface CliArgs {
   arrowMargin?: number;
   paper?: PaperSize;
   orientation?: PaperOrientation;
+  paperMargin?: number;
+  paperMarginTop?: number;
+  paperMarginRight?: number;
+  paperMarginBottom?: number;
+  paperMarginLeft?: number;
   help?: boolean;
 }
 
@@ -50,6 +55,11 @@ async function main(): Promise<void> {
   if (args.arrowMargin !== undefined) options.arrowMarginPx = args.arrowMargin;
   if (args.paper !== undefined) options.paperSize = args.paper;
   if (args.orientation !== undefined) options.orientation = args.orientation;
+  if (args.paperMargin !== undefined) options.paperMargin = args.paperMargin;
+  if (args.paperMarginTop !== undefined) options.paperMarginTop = args.paperMarginTop;
+  if (args.paperMarginRight !== undefined) options.paperMarginRight = args.paperMarginRight;
+  if (args.paperMarginBottom !== undefined) options.paperMarginBottom = args.paperMarginBottom;
+  if (args.paperMarginLeft !== undefined) options.paperMarginLeft = args.paperMarginLeft;
   const pptx = services
     ? await xaligo.renderWithServicesPptx(xal, services, options)
     : await xaligo.renderPptx(xal, options);
@@ -123,6 +133,26 @@ function parseArgs(argv: string[]): CliArgs {
         out.orientation = parseOrientation(nextValue(argv, i, arg), arg);
         i += 1;
         break;
+      case '--paper-margin':
+        out.paperMargin = parseNonNegativeNumber(nextValue(argv, i, arg), arg);
+        i += 1;
+        break;
+      case '--paper-margin-top':
+        out.paperMarginTop = parseNonNegativeNumber(nextValue(argv, i, arg), arg);
+        i += 1;
+        break;
+      case '--paper-margin-right':
+        out.paperMarginRight = parseNonNegativeNumber(nextValue(argv, i, arg), arg);
+        i += 1;
+        break;
+      case '--paper-margin-bottom':
+        out.paperMarginBottom = parseNonNegativeNumber(nextValue(argv, i, arg), arg);
+        i += 1;
+        break;
+      case '--paper-margin-left':
+        out.paperMarginLeft = parseNonNegativeNumber(nextValue(argv, i, arg), arg);
+        i += 1;
+        break;
       case '-h':
       case '--help':
         out.help = true;
@@ -152,6 +182,14 @@ function parsePositiveNumber(value: string, option: string): number {
   const parsed = Number(value);
   if (!Number.isFinite(parsed) || parsed <= 0) {
     throw new Error(`${option} must be a positive number`);
+  }
+  return parsed;
+}
+
+function parseNonNegativeNumber(value: string, option: string): number {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    throw new Error(`${option} must be a non-negative number`);
   }
   return parsed;
 }
@@ -203,6 +241,11 @@ Options:
   --arrow-margin <number> clear margin in px reserved on both sides of each line (default: 8)
   --paper <A5|A4|A3|A2|A1|Letter|Legal|Tabloid>  size the slide to this paper and fit the diagram
   --orientation <portrait|landscape>             paper orientation (default: auto-fit)
+  --paper-margin <number>                        paper margin in inches on all sides (default: 0)
+  --paper-margin-top <number>                    paper top margin in inches
+  --paper-margin-right <number>                  paper right margin in inches
+  --paper-margin-bottom <number>                 paper bottom margin in inches
+  --paper-margin-left <number>                   paper left margin in inches
 `);
 }
 

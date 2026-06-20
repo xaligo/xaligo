@@ -21,8 +21,9 @@ type Options struct {
 }
 
 type Status struct {
-	Version uint64 `json:"version"`
-	Error   string `json:"error,omitempty"`
+	Version     uint64              `json:"version"`
+	Error       string              `json:"error,omitempty"`
+	Diagnostics []xaligo.Diagnostic `json:"diagnostics,omitempty"`
 }
 
 type Server struct {
@@ -117,9 +118,16 @@ func (s *Server) refresh(force bool) error {
 	s.status.Version++
 	if renderErr != nil {
 		s.status.Error = renderErr.Error()
+		diagnostics, diagnoseErr := xaligo.Diagnose(context.Background(), source)
+		if diagnoseErr == nil && len(diagnostics) > 0 {
+			s.status.Diagnostics = diagnostics
+		} else {
+			s.status.Diagnostics = []xaligo.Diagnostic{{Severity: xaligo.SeverityError, Message: renderErr.Error()}}
+		}
 		s.svg = nil
 	} else {
 		s.status.Error = ""
+		s.status.Diagnostics = nil
 		s.svg = append(s.svg[:0], svg...)
 	}
 	version := s.status.Version
@@ -225,6 +233,6 @@ const indexHTML = `<!doctype html>
 </style></head><body><header>xaligo live preview</header><main><img id="diagram" alt="xaligo diagram"><pre id="error" class="error" hidden></pre></main>
 <script>
 const image=document.querySelector('#diagram'), error=document.querySelector('#error');
-async function reload(v){const status=await fetch('/api/status?'+v,{cache:'no-store'}).then(r=>r.json());if(status.error){image.hidden=true;error.hidden=false;error.textContent=status.error}else{error.hidden=true;image.hidden=false;image.src='/diagram.svg?v='+status.version}}
+async function reload(v){const status=await fetch('/api/status?'+v,{cache:'no-store'}).then(r=>r.json());if(status.error){image.hidden=true;error.hidden=false;const d=status.diagnostics?.[0];error.textContent=d?.line?'Line '+d.line+', column '+d.column+': '+d.message:status.error}else{error.hidden=true;image.hidden=false;image.src='/diagram.svg?v='+status.version}}
 new EventSource('/events').addEventListener('update',e=>reload(e.data));
 </script></body></html>`

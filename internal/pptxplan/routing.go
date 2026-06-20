@@ -35,6 +35,8 @@ type routeRequest struct {
 	DstAnchor *pt
 	SrcGap    float64
 	DstGap    float64
+	SrcLane   float64
+	DstLane   float64
 }
 
 type routedPath struct {
@@ -83,10 +85,193 @@ func routeConnections(requests []routeRequest, obstacles []rect, opt routerOptio
 	for _, req := range requests {
 		local := filterObstacles(obstacles, req)
 		path := routeOne(req, local, placed, opt)
+		if req.Kind != "route" {
+			path.Points = separateExactOverlaps(path.Points, placed[len(opt.Reserved):], local, opt)
+		}
+		visualMargin := math.Min(opt.LineMargin, opt.Clearance) / 2
+		path.Points = separateObstacleHits(path.Points, placed[len(opt.Reserved):], inflateRects(local, visualMargin), opt)
+		path.Points = rerouteEndpointApproach(path.Points, req, opt)
 		results = append(results, path)
 		placed = append(placed, toSegments(path.Points))
 	}
 	return results
+}
+
+// separateExactOverlaps moves only an internal trunk segment onto an adjacent
+// lane when the chosen route would otherwise share the exact same coordinates
+// with an earlier connector. Endpoints and endpoint stubs remain fixed.
+func separateExactOverlaps(points []pt, placed [][]segment, obstacles []rect, opt routerOptions) []pt {
+	if len(points) < 3 || len(placed) == 0 || opt.LaneGap <= 0 {
+		return points
+	}
+	inflated := make([]rect, len(obstacles))
+	for i, obstacle := range obstacles {
+		inflated[i] = inflate(obstacle, opt.Clearance)
+	}
+	best := append([]pt(nil), points...)
+	bestOverlap := exactOverlapLength(toSegments(best), placed)
+	if bestOverlap <= eps {
+		return best
+	}
+	bestScore := scorePath(best, inflated, placed, opt.LineMargin)
+	// An overlapping endpoint stub is escaped with a short local jog. Because the
+	// jog is brief and hugs the endpoint, it only needs a light visual gap from
+	// the actual icon rectangles rather than the full routing clearance halo,
+	// which is too strict in crowded corners (e.g. WAF at the top row sharing the
+	// IAM approach lane).
+	stubMargin := math.Min(opt.LineMargin, opt.Clearance) / 2
+	stubObstacles := make([]rect, len(obstacles))
+	for i, obstacle := range obstacles {
+		stubObstacles[i] = inflate(obstacle, stubMargin)
+	}
+	if candidate, ok := offsetFirstStub(best, placed, stubObstacles, opt.LaneGap); ok {
+		overlap := exactOverlapLength(toSegments(candidate), placed)
+		if overlap < bestOverlap-eps {
+			best, bestOverlap = candidate, overlap
+			bestScore = scorePath(candidate, inflated, placed, opt.LineMargin)
+		}
+	}
+	for segmentIndex := 1; segmentIndex < len(best)-2; segmentIndex++ {
+		segment := segment{A: best[segmentIndex], B: best[segmentIndex+1]}
+		for _, direction := range []float64{-1, 1} {
+			candidate := append([]pt(nil), best...)
+			offset := direction * opt.LaneGap
+			if isHorizontal(segment) {
+				candidate[segmentIndex].Y += offset
+				candidate[segmentIndex+1].Y += offset
+			} else {
+				candidate[segmentIndex].X += offset
+				candidate[segmentIndex+1].X += offset
+			}
+			candidate = simplify(candidate)
+			if obstacleHitCount(candidate, inflated) > 0 {
+				continue
+			}
+			overlap := exactOverlapLength(toSegments(candidate), placed)
+			score := scorePath(candidate, inflated, placed, opt.LineMargin)
+			if overlap < bestOverlap-eps || (math.Abs(overlap-bestOverlap) < eps && score < bestScore) {
+				best, bestOverlap, bestScore = candidate, overlap, score
+			}
+		}
+	}
+	return best
+}
+
+// separateObstacleHits reuses the lane-offset post-processing for routes that
+// still clip a visual obstacle after candidate search. This is intentionally
+// limited to internal segments so endpoint bindings and their short stubs stay
+// stable; it is mainly used for crowded group-header tag bands.
+func separateObstacleHits(points []pt, placed [][]segment, obstacles []rect, opt routerOptions) []pt {
+	if len(points) < 4 || len(obstacles) == 0 || opt.LaneGap <= 0 {
+		return points
+	}
+	best := append([]pt(nil), points...)
+	bestHits := obstacleHitCount(best, obstacles)
+	if bestHits <= eps {
+		return best
+	}
+	bestOverlap := exactOverlapLength(toSegments(best), placed)
+	bestScore := scorePath(best, obstacles, placed, opt.LineMargin)
+	for segmentIndex := 1; segmentIndex < len(best)-2; segmentIndex++ {
+		base := append([]pt(nil), best...)
+		seg := segment{A: base[segmentIndex], B: base[segmentIndex+1]}
+		for _, direction := range []float64{-1, 1} {
+			for _, mult := range []float64{1, 2, 3} {
+				candidate := append([]pt(nil), base...)
+				offset := direction * mult * opt.LaneGap
+				if isHorizontal(seg) {
+					candidate[segmentIndex].Y += offset
+					candidate[segmentIndex+1].Y += offset
+				} else {
+					candidate[segmentIndex].X += offset
+					candidate[segmentIndex+1].X += offset
+				}
+				candidate = simplify(candidate)
+				hits := obstacleHitCount(candidate, obstacles)
+				overlap := exactOverlapLength(toSegments(candidate), placed)
+				score := scorePath(candidate, obstacles, placed, opt.LineMargin)
+				if hits < bestHits-eps || (math.Abs(hits-bestHits) < eps && (overlap < bestOverlap-eps || (math.Abs(overlap-bestOverlap) < eps && score < bestScore))) {
+					best, bestHits, bestOverlap, bestScore = candidate, hits, overlap, score
+				}
+			}
+		}
+	}
+	return best
+}
+
+// offsetFirstStub escapes an overlapping source stub with a short local jog onto
+// an adjacent lane. The endpoint (points[0]) is preserved; only the run leaving
+// it is shifted. Both perpendicular directions and a few lane multiples are
+// tried, and the obstacle-free candidate that removes the most stub overlap is
+// returned. obstacles are pre-inflated by the caller's stub margin.
+func offsetFirstStub(points []pt, placed [][]segment, obstacles []rect, laneGap float64) ([]pt, bool) {
+	if len(points) < 3 || laneGap <= 0 {
+		return nil, false
+	}
+	first := segment{A: points[0], B: points[1]}
+	baseOverlap := exactOverlapLength([]segment{first}, placed)
+	if baseOverlap <= eps {
+		return nil, false
+	}
+	const exitPx = 2.0
+	var bestCandidate []pt
+	bestOverlap := baseOverlap
+	for _, direction := range []float64{-1, 1} {
+		for _, mult := range []float64{1, 2, 3} {
+			offset := direction * mult * laneGap
+			near := first.A
+			offsetNear := first.A
+			offsetEnd := first.B
+			if isHorizontal(first) {
+				near.X += math.Copysign(math.Min(exitPx, math.Abs(first.B.X-first.A.X)/2), first.B.X-first.A.X)
+				offsetNear = near
+				offsetNear.Y += offset
+				offsetEnd.Y += offset
+			} else {
+				near.Y += math.Copysign(math.Min(exitPx, math.Abs(first.B.Y-first.A.Y)/2), first.B.Y-first.A.Y)
+				offsetNear = near
+				offsetNear.X += offset
+				offsetEnd.X += offset
+			}
+			candidate := []pt{first.A, near, offsetNear, offsetEnd, first.B}
+			candidate = append(candidate, points[2:]...)
+			candidate = simplify(candidate)
+			if obstacleHitCount(candidate, obstacles) > 0 {
+				continue
+			}
+			overlap := exactOverlapLength(toSegments(candidate), placed)
+			if overlap < bestOverlap-eps {
+				bestCandidate, bestOverlap = candidate, overlap
+			}
+		}
+	}
+	if bestCandidate == nil {
+		return nil, false
+	}
+	return bestCandidate, true
+}
+
+func exactOverlapLength(path []segment, placed [][]segment) float64 {
+	total := 0.0
+	for _, current := range path {
+		for _, otherPath := range placed {
+			for _, other := range otherPath {
+				total += collinearOverlap(current, other)
+			}
+		}
+	}
+	return total
+}
+
+func inflateRects(rects []rect, margin float64) []rect {
+	if margin <= 0 {
+		return rects
+	}
+	out := make([]rect, len(rects))
+	for i, r := range rects {
+		out[i] = inflate(r, margin)
+	}
+	return out
 }
 
 func filterObstacles(obstacles []rect, req routeRequest) []rect {
@@ -119,8 +304,8 @@ func routeOne(req routeRequest, obstacles []rect, placed [][]segment, opt router
 	if req.DstGap > 0 {
 		d = extend(d, req.DstSide, req.DstGap)
 	}
-	s2 := extend(s, req.SrcSide, opt.Stub)
-	d2 := extend(d, req.DstSide, opt.Stub)
+	s2 := extend(s, req.SrcSide, math.Max(opt.LaneGap, opt.Stub+req.SrcLane*opt.LaneGap))
+	d2 := extend(d, req.DstSide, math.Max(opt.LaneGap, opt.Stub+req.DstLane*opt.LaneGap))
 
 	candidates := buildCandidates(s, d, s2, d2, inflated, placed, opt)
 
@@ -128,8 +313,14 @@ func routeOne(req routeRequest, obstacles []rect, placed [][]segment, opt router
 	bestCost := math.Inf(1)
 	foundClean := false
 	for _, raw := range candidates {
-		points := simplify(raw)
+		if reversesEndpointStub(raw, s, s2, d2, d) {
+			continue
+		}
+		points := simplifyRouteCandidate(raw)
 		if len(points) < 2 {
+			continue
+		}
+		if endpointApproachHitsTarget(points, req) {
 			continue
 		}
 		hits := obstacleHitCount(points, inflated)
@@ -148,9 +339,168 @@ func routeOne(req routeRequest, obstacles []rect, placed [][]segment, opt router
 		}
 	}
 	if best == nil {
-		return routedPath{ID: req.ID, Points: []pt{s, d}}
+		return routedPath{ID: req.ID, Points: fallbackOrthogonalRoute(s, d, s2, d2)}
 	}
 	return routedPath{ID: req.ID, Points: best}
+}
+
+func fallbackOrthogonalRoute(s, d, s2, d2 pt) []pt {
+	viaHorizontal := []pt{s, s2, {X: d2.X, Y: s2.Y}, d2, d}
+	viaVertical := []pt{s, s2, {X: s2.X, Y: d2.Y}, d2, d}
+	if pathLength(viaVertical) < pathLength(viaHorizontal) {
+		return simplifyRouteCandidate(viaVertical)
+	}
+	return simplifyRouteCandidate(viaHorizontal)
+}
+
+func endpointApproachHitsTarget(points []pt, req routeRequest) bool {
+	if len(points) >= 2 {
+		if segIntersectsRect(segment{A: points[0], B: points[1]}, req.Src) {
+			return true
+		}
+		last := len(points) - 1
+		if segIntersectsRect(segment{A: points[last-1], B: points[last]}, req.Dst) {
+			return true
+		}
+	}
+	return false
+}
+
+func rerouteEndpointApproach(points []pt, req routeRequest, opt routerOptions) []pt {
+	points = rerouteDstApproach(points, req, opt)
+	points = reversePoints(rerouteDstApproach(reversePoints(points), reverseRequest(req), opt))
+	return orthogonalizeEndpointStubs(points, req)
+}
+
+func orthogonalizeEndpointStubs(points []pt, req routeRequest) []pt {
+	if len(points) < 2 {
+		return points
+	}
+	out := append([]pt(nil), points...)
+	if !aligned(out[0], out[1]) {
+		out = append(out[:1], append([]pt{endpointStubBend(out[0], out[1], req.SrcSide)}, out[1:]...)...)
+	}
+	last := len(out) - 1
+	if last >= 1 && !aligned(out[last-1], out[last]) {
+		bend := endpointStubBend(out[last], out[last-1], req.DstSide)
+		out = append(out[:last], append([]pt{bend}, out[last:]...)...)
+	}
+	return simplifyRouteCandidate(out)
+}
+
+func aligned(a, b pt) bool {
+	return math.Abs(a.X-b.X) < eps || math.Abs(a.Y-b.Y) < eps
+}
+
+func endpointStubBend(endpoint, next pt, s side) pt {
+	switch s {
+	case sideTop, sideBottom:
+		return pt{X: endpoint.X, Y: next.Y}
+	default:
+		return pt{X: next.X, Y: endpoint.Y}
+	}
+}
+
+func rerouteDstApproach(points []pt, req routeRequest, opt routerOptions) []pt {
+	if len(points) < 4 || !pathIntersectsRect(points, req.Dst) {
+		return points
+	}
+	end := points[len(points)-1]
+	anchorIndex := len(points) - 4
+	if anchorIndex < 0 {
+		anchorIndex = 0
+	}
+	anchor := points[anchorIndex]
+	out := append([]pt(nil), points[:anchorIndex+1]...)
+	margin := math.Max(opt.LineMargin, opt.LaneGap)
+	switch req.DstSide {
+	case sideTop, sideBottom:
+		railX := req.Dst.X - margin
+		if anchor.X >= req.Dst.X+req.Dst.W/2 {
+			railX = req.Dst.X + req.Dst.W + margin
+		}
+		out = append(out, pt{X: railX, Y: anchor.Y}, pt{X: railX, Y: end.Y}, end)
+	case sideLeft, sideRight:
+		railY := req.Dst.Y - margin
+		if anchor.Y >= req.Dst.Y+req.Dst.H/2 {
+			railY = req.Dst.Y + req.Dst.H + margin
+		}
+		out = append(out, pt{X: anchor.X, Y: railY}, pt{X: end.X, Y: railY}, end)
+	default:
+		return points
+	}
+	return simplifyRouteCandidate(out)
+}
+
+func pathIntersectsRect(points []pt, r rect) bool {
+	for _, seg := range toSegments(points) {
+		if segIntersectsRect(seg, r) {
+			return true
+		}
+	}
+	return false
+}
+
+func reversePoints(points []pt) []pt {
+	out := make([]pt, len(points))
+	for i := range points {
+		out[i] = points[len(points)-1-i]
+	}
+	return out
+}
+
+func reverseRequest(req routeRequest) routeRequest {
+	return routeRequest{ID: req.ID, Kind: req.Kind, Src: req.Dst, Dst: req.Src, SrcSide: req.DstSide, DstSide: req.SrcSide, SrcGap: req.DstGap, DstGap: req.SrcGap}
+}
+
+func simplifyRouteCandidate(points []pt) []pt {
+	out := []pt{}
+	for _, p := range points {
+		if len(out) > 0 {
+			last := out[len(out)-1]
+			if math.Abs(last.X-p.X) < eps && math.Abs(last.Y-p.Y) < eps {
+				continue
+			}
+		}
+		out = append(out, p)
+	}
+	i := 1
+	for i < len(out)-1 {
+		if i == 1 || i == len(out)-2 {
+			i++
+			continue
+		}
+		a, b, c := out[i-1], out[i], out[i+1]
+		collinearH := math.Abs(a.Y-b.Y) < eps && math.Abs(b.Y-c.Y) < eps
+		collinearV := math.Abs(a.X-b.X) < eps && math.Abs(b.X-c.X) < eps
+		if collinearH || collinearV {
+			out = append(out[:i], out[i+1:]...)
+		} else {
+			i++
+		}
+	}
+	return out
+}
+
+// reversesEndpointStub rejects a zero-width U-turn immediately after the
+// source stub or immediately before the destination stub. Besides producing an
+// unnecessary detour, simplification would erase the shared junction point.
+func reversesEndpointStub(points []pt, s, s2, d2, d pt) bool {
+	if len(points) < 3 {
+		return false
+	}
+	if vectorsReverse(s2.X-s.X, s2.Y-s.Y, points[2].X-s2.X, points[2].Y-s2.Y) {
+		return true
+	}
+	previous := points[len(points)-3]
+	return vectorsReverse(d2.X-previous.X, d2.Y-previous.Y, d.X-d2.X, d.Y-d2.Y)
+}
+
+func vectorsReverse(ax, ay, bx, by float64) bool {
+	if math.Abs(ax*by-ay*bx) > eps {
+		return false
+	}
+	return ax*bx+ay*by < -eps
 }
 
 func buildCandidates(s, d, s2, d2 pt, inflated []rect, placed [][]segment, opt routerOptions) [][]pt {
@@ -204,7 +554,10 @@ func buildCandidates(s, d, s2, d2 pt, inflated []rect, placed [][]segment, opt r
 }
 
 func placedLaneCoords(placed [][]segment, horizontal bool, opt routerOptions) []float64 {
-	offsets := []float64{opt.LineMargin, opt.LineMargin + opt.LaneGap, opt.LineMargin + 2*opt.LaneGap}
+	offsets := make([]float64, 0, 3)
+	for lane := 0; lane < 3; lane++ {
+		offsets = append(offsets, opt.LineMargin+float64(lane)*opt.LaneGap)
+	}
 	out := []float64{}
 	for _, path := range placed {
 		for _, seg := range path {

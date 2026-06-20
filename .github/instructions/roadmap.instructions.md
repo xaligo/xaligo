@@ -104,8 +104,9 @@ Status: complete.
 
 ### Phase 2: Network Diagram Features
 
-Status: all seven steps have initial shared implementations. Continue with
-hardening, DSL shorthands, and cross-renderer visual regression coverage.
+Status: all seven steps and textual connection shorthands have initial shared
+implementations. Continue with hardening and cross-renderer visual regression
+coverage.
 
 Implement shared model/routing concepts in this order where dependencies allow:
 
@@ -123,8 +124,8 @@ implemented as PPTX-only corrections.
 ### Phase 3: Live Preview
 
 Status: initial implementation complete. `xaligo serve` polls `.xal` sources,
-renders through the public SVG API, reports render errors, and publishes SSE
-reload events. Browser polish and source-positioned diagnostics remain.
+renders through the public SVG API, reports source-positioned diagnostics, and
+publishes SSE reload events. Browser polish remains.
 
 - Add `xaligo serve` on top of public render/validate APIs. (implemented)
 - Watch `.xal` files and automatically re-render. (implemented)
@@ -133,10 +134,14 @@ reload events. Browser polish and source-positioned diagnostics remain.
 
 ## VS Code Extension Preconditions
 
+The VS Code extension is developed in a separate repository. This repository
+owns the reusable Go/WASM APIs and HTTP/SSE preview protocol only; do not add
+extension packaging or VS Code-specific parser/rendering forks here.
+
 The extension target includes:
 
 - `.xal` syntax highlighting.
-- Validation and source-positioned diagnostics.
+- Validation and source-positioned diagnostics. (Go and TypeScript/WASM APIs implemented)
 - Live Preview and a Preview Panel.
 - SVG preview first; Excalidraw, XYFlow, Isoflow, and 2.5D views later.
 
@@ -164,7 +169,7 @@ usable without a specific UI framework.
 
 Primary formats remain SVG, Excalidraw, and PPTX. Add:
 
-- XYFlow export for React Flow-style GUI editors.
+- XYFlow export for React Flow-style GUI editors. (initial implementation complete)
 - Isoflow export for isometric and 2.5D integrations.
 
 Both exports should consume the shared resolved model; they must not become
@@ -200,6 +205,8 @@ Implemented or partially implemented:
 - Repository-layer PPTX export has been redirected toward a WASM exporter
   adapter in `internal/repository/pptx.go`.
 - `xaligo render --format excalidraw|svg|pptx` is implemented.
+- `xaligo render --format xyflow` and TypeScript/WASM `renderXYFlow()` export
+  nested React Flow-compatible nodes and edges.
 - `xaligo validate` reuses parser and layout validation.
 - The first SVG renderer is implemented in `internal/svg` over the shared draw
   plan.
@@ -216,9 +223,7 @@ Implemented or partially implemented:
 Important gaps:
 
 - `packages/xaligo/wasm/pptx_exporter.wasm` is not yet implemented.
-- Route/traffic XML attributes and renderer styling are implemented; textual
-  `A -> B` / `A => B` shorthands remain future work.
-- Live preview and VS Code extension work has not started.
+- Cross-renderer visual regression coverage is still limited.
 
 ## Rebaselined Implementation Order
 
@@ -226,8 +231,7 @@ Use this order when starting new roadmap work from the current repository state:
 
 1. Complete the repository-layer WASM PPTX exporter contract by providing
    `pptx_exporter.wasm`; keep Go free of PPTX/OOXML writer code.
-2. Harden shared network routing with cross-renderer visual regression tests
-   and add textual connection shorthands.
+2. Harden shared network routing with cross-renderer visual regression tests.
 3. Build the VS Code preview on the reusable HTTP/SSE protocol exposed by
    `xaligo serve`.
 
@@ -313,8 +317,8 @@ xaligo render input.xal --format svg
 ## v0.3 Network Diagram Features
 
 Status: route/traffic kinds, circular route endpoints, styling, layer order,
-basic lane separation, and automatic route junctions are implemented across
-Excalidraw, SVG, and PPTX. Textual shorthands remain.
+basic lane separation, automatic route junctions, and textual connection
+shorthands are implemented across Excalidraw, SVG, and PPTX.
 
 ### Route Connector
 
@@ -360,6 +364,9 @@ o------o
 web --- db
 web ==> db
 ```
+
+Status: implemented using `<item name="...">`, `<item ref="...">`, or numeric
+item IDs. Shorthands expand into the shared connection model during parsing.
 
 ---
 
@@ -417,8 +424,8 @@ plan for SVG/PPTX. Curved bridge arcs and an Excalidraw approximation remain.
 
 ## v0.6 Live Preview
 
-Status: initial HTTP/SSE live preview implemented; source-positioned diagnostics
-and VS Code integration remain.
+Status: initial HTTP/SSE live preview and source-positioned parser diagnostics
+implemented; VS Code integration remains.
 
 ### xaligo serve
 
@@ -463,7 +470,7 @@ File Change
  ↓
 Re-render
  ↓
-WebSocket
+Server-Sent Events
  ↓
 Preview Refresh
 ```
@@ -472,7 +479,9 @@ Preview Refresh
 
 ## v0.7 VS Code Extension
 
-Status: not started; depends on validate and stable SVG preview output.
+Status: maintained in a separate repository. This core repository now provides
+the required WASM diagnostics API, source positions, stable SVG rendering, and
+HTTP/SSE preview protocol.
 
 ### Language Support
 

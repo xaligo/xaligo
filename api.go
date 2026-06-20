@@ -21,10 +21,12 @@ import (
 	"github.com/ryo-arima/xaligo/internal/pptxplan"
 	"github.com/ryo-arima/xaligo/internal/repository"
 	svgrenderer "github.com/ryo-arima/xaligo/internal/svg"
+	xyflowrenderer "github.com/ryo-arima/xaligo/internal/xyflow"
 )
 
 type Mode string
 type Format string
+type DiagnosticSeverity string
 
 const (
 	ModeStandard Mode = "standard"
@@ -36,25 +38,55 @@ const (
 	FormatPPTX       Format = "pptx"
 	FormatXYFlow     Format = "xyflow"
 	FormatIsoflow    Format = "isoflow"
+
+	SeverityError DiagnosticSeverity = "error"
 )
 
 var ErrNotImplemented = errors.New("renderer not implemented")
+
+type Diagnostic struct {
+	Severity DiagnosticSeverity `json:"severity"`
+	Message  string             `json:"message"`
+	Offset   int                `json:"offset,omitempty"`
+	Line     int                `json:"line,omitempty"`
+	Column   int                `json:"column,omitempty"`
+}
+
+type DiagnosticsError struct {
+	Diagnostics []Diagnostic
+}
+
+func (e *DiagnosticsError) Error() string {
+	if len(e.Diagnostics) == 0 {
+		return "validation failed"
+	}
+	d := e.Diagnostics[0]
+	if d.Line > 0 {
+		return fmt.Sprintf("line %d, column %d: %s", d.Line, d.Column, d.Message)
+	}
+	return d.Message
+}
 
 // RenderOptions contains renderer-independent presentation and routing options.
 // Abbreviations is primarily useful to adapters that already parsed a
 // services.csv file; ServicesCSV is the convenient in-memory equivalent.
 type RenderOptions struct {
-	Mode          Mode
-	Format        Format
-	Theme         string
-	ServicesCSV   []byte
-	Abbreviations map[int]string
-	PxPerInch     float64
-	ArrowStyle    string
-	ArrowStubPx   float64
-	ArrowMarginPx float64
-	PaperSize     string
-	Orientation   string
+	Mode                Mode
+	Format              Format
+	Theme               string
+	ServicesCSV         []byte
+	Abbreviations       map[int]string
+	PxPerInch           float64
+	ArrowStyle          string
+	ArrowStubPx         float64
+	ArrowMarginPx       float64
+	PaperSize           string
+	Orientation         string
+	PaperMarginIn       float64
+	PaperMarginTopIn    float64
+	PaperMarginRightIn  float64
+	PaperMarginBottomIn float64
+	PaperMarginLeftIn   float64
 
 	Title            string
 	Author           string
@@ -97,6 +129,9 @@ func Render(ctx context.Context, input []byte, opts RenderOptions) ([]byte, erro
 func ValidateRenderOptions(opts RenderOptions) error {
 	if err := validateMode(opts.Mode); err != nil {
 		return err
+	}
+	if opts.PaperMarginIn < 0 || opts.PaperMarginTopIn < 0 || opts.PaperMarginRightIn < 0 || opts.PaperMarginBottomIn < 0 || opts.PaperMarginLeftIn < 0 {
+		return fmt.Errorf("paper margins must be non-negative")
 	}
 	if _, err := excalidraw.NormalizeTheme(opts.Theme); err != nil {
 		return err
@@ -160,8 +195,12 @@ func RenderPPTX(ctx context.Context, input []byte, opts RenderOptions) ([]byte, 
 	return os.ReadFile(path)
 }
 
-func RenderXYFlow(context.Context, []byte, RenderOptions) ([]byte, error) {
-	return nil, fmt.Errorf("xyflow: %w", ErrNotImplemented)
+func RenderXYFlow(ctx context.Context, input []byte, opts RenderOptions) ([]byte, error) {
+	scene, _, err := buildScene(ctx, input, opts)
+	if err != nil {
+		return nil, err
+	}
+	return xyflowrenderer.Render(scene)
 }
 
 func RenderIsoflow(context.Context, []byte, RenderOptions) ([]byte, error) {
@@ -170,17 +209,44 @@ func RenderIsoflow(context.Context, []byte, RenderOptions) ([]byte, error) {
 
 // Validate runs the same parser and layout validation used by Render.
 func Validate(ctx context.Context, input []byte) error {
-	if err := checkContext(ctx); err != nil {
+	diagnostics, err := Diagnose(ctx, input)
+	if err != nil {
 		return err
+	}
+	if len(diagnostics) > 0 {
+		return &DiagnosticsError{Diagnostics: diagnostics}
+	}
+	return nil
+}
+
+// Diagnose validates a document and returns editor-friendly source positions.
+func Diagnose(ctx context.Context, input []byte) ([]Diagnostic, error) {
+	if err := checkContext(ctx); err != nil {
+		return nil, err
 	}
 	doc, err := parser.Parse(bytes.NewReader(input))
 	if err != nil {
-		return fmt.Errorf("parse DSL: %w", err)
+		return []Diagnostic{diagnosticFromError(err)}, nil
 	}
 	if _, err := layout.Build(doc); err != nil {
-		return fmt.Errorf("build layout: %w", err)
+		return []Diagnostic{{Severity: SeverityError, Message: err.Error()}}, nil
 	}
-	return checkContext(ctx)
+	if err := checkContext(ctx); err != nil {
+		return nil, err
+	}
+	return nil, nil
+}
+
+func diagnosticFromError(err error) Diagnostic {
+	diagnostic := Diagnostic{Severity: SeverityError, Message: err.Error()}
+	var positioned *parser.Error
+	if errors.As(err, &positioned) {
+		diagnostic.Message = positioned.Err.Error()
+		diagnostic.Offset = positioned.Position.Offset
+		diagnostic.Line = positioned.Position.Line
+		diagnostic.Column = positioned.Position.Column
+	}
+	return diagnostic
 }
 
 func buildScene(ctx context.Context, input []byte, opts RenderOptions) ([]byte, []entity.ServiceEntry, error) {
@@ -251,7 +317,9 @@ func planOptions(opts RenderOptions, entries []entity.ServiceEntry) pptxplan.Opt
 	return pptxplan.Options{
 		Theme: opts.Theme, PxPerInch: opts.PxPerInch, ArrowStyle: opts.ArrowStyle,
 		ArrowStubPx: opts.ArrowStubPx, ArrowMargin: opts.ArrowMarginPx,
-		PaperSize: opts.PaperSize, Orientation: opts.Orientation, LegendEntries: legend,
+		PaperSize: opts.PaperSize, Orientation: opts.Orientation,
+		PaperMargin: opts.PaperMarginIn, PaperMarginTop: opts.PaperMarginTopIn, PaperMarginRight: opts.PaperMarginRightIn,
+		PaperMarginBottom: opts.PaperMarginBottomIn, PaperMarginLeft: opts.PaperMarginLeftIn, LegendEntries: legend,
 	}
 }
 

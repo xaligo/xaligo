@@ -1,22 +1,22 @@
 <frame width="960" height="540" class="pa-4">
-  <generic-group title="Automatic Route Junction">
+  <generic-group title="Automatic Route Junction" icon-id="104635">
     <row gap="80">
       <col span="4" class="pa-2">
-        <generic-group title="Route Origin" border="none" align="middle-center">
-          <item id="200036" /> <!-- router_general -->
+        <generic-group title="Route Origin" icon-id="104032" align="middle-center">
+          <item id="200036" name="router" /> <!-- router_general -->
         </generic-group>
       </col>
 
       <col span="8" class="pa-2">
         <container gap="24">
-          <generic-group title="Branch A: Access Switch" border="none" align="middle-center">
-            <item id="200013" /> <!-- l2_switch_general -->
+          <generic-group title="Branch A: Access Switch" icon-id="104504" align="middle-center">
+            <item id="200013" name="access-switch" /> <!-- l2_switch_general -->
           </generic-group>
-          <generic-group title="Branch B: Server" border="none" align="middle-center">
-            <item id="200041" /> <!-- server -->
+          <generic-group title="Branch B: Server" icon-id="104109" align="middle-center">
+            <item id="200041" name="server" /> <!-- server -->
           </generic-group>
-          <generic-group title="Branch C: Client" border="none" align="middle-center">
-            <item id="200005" /> <!-- desktop_pc -->
+          <generic-group title="Branch C: Client" icon-id="101804" align="middle-center">
+            <item id="200005" name="client" /> <!-- desktop_pc -->
           </generic-group>
         </container>
       </col>
@@ -25,7 +25,7 @@
 
   <!-- Routes sharing the router's right edge automatically use one trunk and
        a circular fan-out junction. -->
-  <connection src="200036" dst="200013" kind="route" />
-  <connection src="200036" dst="200041" kind="route" />
-  <connection src="200036" dst="200005" kind="route" />
+  router --- access-switch
+  router --- server
+  router --- client
 </frame>
