@@ -99,12 +99,83 @@ export interface XYFlowDocument {
   background: string;
 }
 
+export interface IsoflowCoords { x: number; y: number; }
+
+export interface IsoflowModelItem {
+  id: string;
+  name: string;
+  description?: string;
+  icon?: string;
+}
+
+export interface IsoflowViewItem {
+  id: string;
+  tile: IsoflowCoords;
+}
+
+export interface IsoflowRectangle {
+  id: string;
+  color?: string;
+  from: IsoflowCoords;
+  to: IsoflowCoords;
+}
+
+export interface IsoflowConnectorAnchor {
+  id: string;
+  ref: { item?: string; anchor?: string; tile?: IsoflowCoords };
+}
+
+export interface IsoflowConnector {
+  id: string;
+  description?: string;
+  color?: string;
+  width?: number;
+  style?: 'SOLID' | 'DOTTED' | 'DASHED';
+  anchors: IsoflowConnectorAnchor[];
+}
+
+export interface IsoflowView {
+  id: string;
+  lastUpdated?: string;
+  name: string;
+  description?: string;
+  items: IsoflowViewItem[];
+  rectangles?: IsoflowRectangle[];
+  connectors?: IsoflowConnector[];
+}
+
+export interface IsoflowIcon {
+  id: string;
+  name: string;
+  url: string;
+  collection?: string;
+  isIsometric?: boolean;
+}
+
+export interface IsoflowColor {
+  id: string;
+  value: string;
+}
+
+export interface IsoflowDocument {
+  version: string;
+  title: string;
+  description?: string;
+  items: IsoflowModelItem[];
+  views: IsoflowView[];
+  icons: IsoflowIcon[];
+  colors: IsoflowColor[];
+  fitToView?: boolean;
+}
+
 /** Public API exposed after the WASM module is loaded. */
 export interface XaligoWasm {
   /** Validate `.xal` and return editor-friendly source diagnostics. */
   diagnose(xal: string): Promise<XaligoDiagnostic[]>;
   /** Convert `.xal` to React Flow / XYFlow compatible nodes and edges. */
   renderXYFlow(xal: string): Promise<XYFlowDocument>;
+  /** Convert `.xal` to an initial Isoflow / 2.5D compatible document. */
+  renderIsoflow(xal: string): Promise<IsoflowDocument>;
   /**
    * Convert a `.xal` DSL string into an Excalidraw JSON string.
    * Uses the embedded AWS service-catalog and SVG assets.
@@ -169,6 +240,7 @@ declare global {
   function xaligoBuildPptxPlan(xal: string, servicesCsv: string, optionsJson: string): WasmResult;
   function xaligoDiagnose(xal: string): WasmResult;
   function xaligoRenderXYFlow(xal: string): WasmResult;
+  function xaligoRenderIsoflow(xal: string): WasmResult;
 }
 
 // ---------------------------------------------------------------------------
@@ -242,6 +314,13 @@ export async function loadXaligo(wasmUrl?: string): Promise<XaligoWasm> {
       if (res.error) throw new Error(res.error);
       if (!res.result) throw new Error('xaligoRenderXYFlow returned empty result');
       return Promise.resolve(JSON.parse(res.result) as XYFlowDocument);
+    },
+
+    renderIsoflow(xal: string): Promise<IsoflowDocument> {
+      const res: WasmResult = globalThis.xaligoRenderIsoflow(xal);
+      if (res.error) throw new Error(res.error);
+      if (!res.result) throw new Error('xaligoRenderIsoflow returned empty result');
+      return Promise.resolve(JSON.parse(res.result) as IsoflowDocument);
     },
 
     render(xal: string): Promise<string> {

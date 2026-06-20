@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="124" viewBox="0 0 160 124" role="img">
+  <title>AWS CodePipeline</title>
+  <defs>
+    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="7" stdDeviation="5" flood-color="#571d68" flood-opacity="0.30" />
+    </filter>
+    <filter id="glyph-shadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="1" stdDeviation="1.1" flood-color="#0f172a" flood-opacity="0.36" />
+    </filter>
+  </defs>
+  <g filter="url(#soft-shadow)">
+    <polygon points="24,38 80,72 80,124 24,90" fill="#832090" />
+    <polygon points="136,38 80,72 80,124 136,90" fill="#a823b2" />
+    <polygon points="80,6 136,38 80,72 24,38" fill="#ffffff" />
+    <image href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iNDBweCIgaGVpZ2h0PSI0MHB4IiB2aWV3Qm94PSIwIDAgNDAgNDAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1BcmNoaXRlY3R1cmUvMzIvQXJjaF9BV1MtQ29kZVBpcGVsaW5lXzMyPC90aXRsZT4KICAgIDxnIGlkPSJJY29uLUFyY2hpdGVjdHVyZS8zMi9BcmNoX0FXUy1Db2RlUGlwZWxpbmVfMzIiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIxIiBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPgogICAgICAgIDxnIGlkPSJJY29uLUFyY2hpdGVjdHVyZS1CRy8zMi9EZXZlbG9wZXItVG9vbHMiIGZpbGw9IiNDOTI1RDEiPgogICAgICAgICAgICA8cmVjdCBpZD0iUmVjdGFuZ2xlIiB4PSIwIiB5PSIwIiB3aWR0aD0iNDAiIGhlaWdodD0iNDAiPjwvcmVjdD4KICAgICAgICA8L2c+CiAgICAgICAgPHBhdGggZD0iTTE0LDE0IEwxNywxNCBMMTcsMTMgTDE0LDEzIEwxNCwxNCBaIE0xOC45NTIsMjkuNzk5IEwxOC4wMjIsMjkuNDMzIEwyMS42MTEsMjAuMzA3IEwyMi41NDEsMjAuNjczIEwxOC45NTIsMjkuNzk5IFogTTIzLjE5NSwyNy4zNjYgTDI1Ljg0OCwyNS4wNCBMMjMuMTk4LDIyLjc0MyBMMjMuODUzLDIxLjk4NyBMMjYuOTM2LDI0LjY2IEMyNy4wNDUsMjQuNzU0IDI3LjEwOCwyNC44OTIgMjcuMTA4LDI1LjAzNiBDMjcuMTA4LDI1LjE4MSAyNy4wNDcsMjUuMzE4IDI2LjkzOCwyNS40MTQgTDIzLjg1NSwyOC4xMTggTDIzLjE5NSwyNy4zNjYgWiBNMTMuNjE3LDI1LjI4NSBDMTMuNTE3LDI1LjE4OCAxMy40NjIsMjUuMDU0IDEzLjQ2NSwyNC45MTUgQzEzLjQ2OCwyNC43NzUgMTMuNTI5LDI0LjY0NCAxMy42MzQsMjQuNTUyIEwxNi43MDYsMjEuODM2IEwxNy4zNjgsMjIuNTg1IEwxNC43LDI0Ljk0MyBMMTcuMzc0LDI3LjUzNyBMMTYuNjc5LDI4LjI1NSBMMTMuNjE3LDI1LjI4NSBaIE0zMywxMyBMMTksMTMgTDE5LDE0IEwzMywxNCBMMzMsMTUuMjUxIEMzMywxNi4yMTYgMzIuMjE2LDE3IDMxLjI1MSwxNyBMOS4xMDgsMTcgQzcuOTQ2LDE3IDcsMTYuMDU0IDcsMTQuODkxIEw3LDE0IEwxMiwxNCBMMTIsMTMgTDcsMTMgTDcsOS4xMDkgQzcsNy45NDYgNy45NDYsNyA5LjEwOCw3IEwzMS4wMTIsNyBDMzIuMTA4LDcgMzMsNy44OTIgMzMsOC45ODkgTDMzLDEzIFogTTExLDMzIEwyOSwzMyBMMjksMTggTDExLDE4IEwxMSwzMyBaIE0zMS4wMTIsNiBMOS4xMDgsNiBDNy4zOTUsNiA2LDcuMzk1IDYsOS4xMDkgTDYsMTQuODkxIEM2LDE2LjYwNSA3LjM5NSwxOCA5LjEwOCwxOCBMMTAsMTggTDEwLDMzLjUgQzEwLDMzLjc3NiAxMC4yMjQsMzQgMTAuNSwzNCBMMjkuNSwzNCBDMjkuNzc2LDM0IDMwLDMzLjc3NiAzMCwzMy41IEwzMCwxOCBMMzEuMjUxLDE4IEMzMi43NjcsMTggMzQsMTYuNzY3IDM0LDE1LjI1MSBMMzQsOC45ODkgQzM0LDcuMzQxIDMyLjY1OSw2IDMxLjAxMiw2IEwzMS4wMTIsNiBaIiBpZD0iQVdTLUNvZGVQaXBlbGluZV9JY29uXzMyX1NxdWlkIiBmaWxsPSIjRkZGRkZGIj48L3BhdGg+CiAgICA8L2c+Cjwvc3ZnPg==" x="50" y="19" width="60" height="38" preserveAspectRatio="xMidYMid meet" filter="url(#glyph-shadow)" />
+    <polyline points="24,38 80,72 136,38" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.4" />
+    <polyline points="24,90 80,124 136,90" fill="none" stroke="rgba(15,23,42,0.28)" stroke-width="2" />
+    <line x1="80" y1="72" x2="80" y2="124" stroke="rgba(15,23,42,0.24)" stroke-width="1.6" />
+  </g>
+</svg>

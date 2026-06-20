@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="124" viewBox="0 0 160 124" role="img">
+  <title>Elastic Load Balancing</title>
+  <defs>
+    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="7" stdDeviation="5" flood-color="#402d79" flood-opacity="0.30" />
+    </filter>
+    <filter id="glyph-shadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="1" stdDeviation="1.1" flood-color="#0f172a" flood-opacity="0.36" />
+    </filter>
+  </defs>
+  <g filter="url(#soft-shadow)">
+    <polygon points="24,38 80,72 80,124 24,90" fill="#5d3aad" />
+    <polygon points="136,38 80,72 80,124 136,90" fill="#7645d8" />
+    <polygon points="80,6 136,38 80,72 24,38" fill="#ffffff" />
+    <image href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iNDBweCIgaGVpZ2h0PSI0MHB4IiB2aWV3Qm94PSIwIDAgNDAgNDAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1BcmNoaXRlY3R1cmUvMzIvQXJjaF9FbGFzdGljLUxvYWQtQmFsYW5jaW5nXzMyPC90aXRsZT4KICAgIDxnIGlkPSJJY29uLUFyY2hpdGVjdHVyZS8zMi9BcmNoX0VsYXN0aWMtTG9hZC1CYWxhbmNpbmdfMzIiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIxIiBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPgogICAgICAgIDxnIGlkPSJJY29uLUFyY2hpdGVjdHVyZS1CRy8zMi9OZXR3b3JraW5nLUNvbnRlbnQtRGVsaXZlcnkiIGZpbGw9IiM4QzRGRkYiPgogICAgICAgICAgICA8cmVjdCBpZD0iUmVjdGFuZ2xlIiB4PSIwIiB5PSIwIiB3aWR0aD0iNDAiIGhlaWdodD0iNDAiPjwvcmVjdD4KICAgICAgICA8L2c+CiAgICAgICAgPHBhdGggZD0iTTE1LDI3IEMxMS4xNDEsMjcgOCwyMy44NiA4LDIwIEM4LDE2LjE0IDExLjE0MSwxMyAxNSwxMyBDMTguODU5LDEzIDIyLDE2LjE0IDIyLDIwIEMyMiwyMy44NiAxOC44NTksMjcgMTUsMjcgTTI5LDI4IEMzMC4xMDMsMjggMzEsMjguODk3IDMxLDMwIEMzMSwzMS4xMDMgMzAuMTAzLDMyIDI5LDMyIEMyNy44OTcsMzIgMjcsMzEuMTAzIDI3LDMwIEMyNywyOC44OTcgMjcuODk3LDI4IDI5LDI4IE0yOSw4IEMzMC4xMDMsOCAzMSw4Ljg5NyAzMSwxMCBDMzEsMTEuMTAzIDMwLjEwMywxMiAyOSwxMiBDMjcuODk3LDEyIDI3LDExLjEwMyAyNywxMCBDMjcsOC44OTcgMjcuODk3LDggMjksOCBNMzAsMTguNSBDMzEuMTAzLDE4LjUgMzIsMTkuMzk3IDMyLDIwLjUgQzMyLDIxLjYwMyAzMS4xMDMsMjIuNSAzMCwyMi41IEMyOC44OTcsMjIuNSAyOCwyMS42MDMgMjgsMjAuNSBDMjgsMTkuMzk3IDI4Ljg5NywxOC41IDMwLDE4LjUgTTIyLjkzMSwyMSBMMjcuMDUxLDIxIEMyNy4yOSwyMi40MTYgMjguNTE3LDIzLjUgMzAsMjMuNSBDMzEuNjU0LDIzLjUgMzMsMjIuMTU0IDMzLDIwLjUgQzMzLDE4Ljg0NiAzMS42NTQsMTcuNSAzMCwxNy41IEMyOC41MTcsMTcuNSAyNy4yOSwxOC41ODQgMjcuMDUxLDIwIEwyMywyMCBDMjMsMTguNTExIDIyLjU4NCwxNy4xMiAyMS44NzIsMTUuOTI1IEwyNi42OTksMTEuOTAyIEMyNy4yNSwxMi41NjcgMjguMDcxLDEzIDI5LDEzIEMzMC42NTQsMTMgMzIsMTEuNjU0IDMyLDEwIEMzMiw4LjM0NiAzMC42NTQsNyAyOSw3IEMyNy4zNDYsNyAyNiw4LjM0NiAyNiwxMCBDMjYsMTAuMzYxIDI2LjA3NCwxMC43MDIgMjYuMTkxLDExLjAyMiBMMjEuMzA2LDE1LjA5NCBDMTkuODQsMTMuMjE1IDE3LjU2MiwxMiAxNSwxMiBDMTAuNTg5LDEyIDcsMTUuNTg5IDcsMjAgQzcsMjQuNDExIDEwLjU4OSwyOCAxNSwyOCBDMTcuNTYyLDI4IDE5Ljg0LDI2Ljc4NSAyMS4zMDYsMjQuOTA2IEwyNi4xOTEsMjguOTc4IEMyNi4wNzQsMjkuMjk4IDI2LDI5LjYzOSAyNiwzMCBDMjYsMzEuNjU0IDI3LjM0NiwzMyAyOSwzMyBDMzAuNjU0LDMzIDMyLDMxLjY1NCAzMiwzMCBDMzIsMjguMzQ2IDMwLjY1NCwyNyAyOSwyNyBDMjguMDcxLDI3IDI3LjI1LDI3LjQzMyAyNi42OTksMjguMDk4IEwyMS44NzIsMjQuMDc1IEMyMi40MjIsMjMuMTUyIDIyLjc5MSwyMi4xMTMgMjIuOTMxLDIxIiBpZD0iRWxhc3RpYy1Mb2FkLUJhbGFuY2luZ19JY29uXzMyX1NxdWlkIiBmaWxsPSIjRkZGRkZGIj48L3BhdGg+CiAgICA8L2c+Cjwvc3ZnPg==" x="50" y="19" width="60" height="38" preserveAspectRatio="xMidYMid meet" filter="url(#glyph-shadow)" />
+    <polyline points="24,38 80,72 136,38" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.4" />
+    <polyline points="24,90 80,124 136,90" fill="none" stroke="rgba(15,23,42,0.28)" stroke-width="2" />
+    <line x1="80" y1="72" x2="80" y2="124" stroke="rgba(15,23,42,0.24)" stroke-width="1.6" />
+  </g>
+</svg>

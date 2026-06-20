@@ -170,7 +170,7 @@ usable without a specific UI framework.
 Primary formats remain SVG, Excalidraw, and PPTX. Add:
 
 - XYFlow export for React Flow-style GUI editors. (initial implementation complete)
-- Isoflow export for isometric and 2.5D integrations.
+- Isoflow export for isometric and 2.5D integrations. (initial upstream model export complete)
 
 Both exports should consume the shared resolved model; they must not become
 alternative parsers for `.xal`.
@@ -207,14 +207,17 @@ Implemented or partially implemented:
 - `xaligo render --format excalidraw|svg|pptx` is implemented.
 - `xaligo render --format xyflow` and TypeScript/WASM `renderXYFlow()` export
   nested React Flow-compatible nodes and edges.
+- `xaligo render --format isoflow`, Go `RenderIsoflow`, and TypeScript/WASM
+  `renderIsoflow()` export an upstream Isoflow-compatible model from the shared
+  scene.
 - `xaligo validate` reuses parser and layout validation.
 - The first SVG renderer is implemented in `internal/svg` over the shared draw
   plan.
 - Shared `light` and `dark` themes are implemented for Excalidraw, SVG, and
   PPTX via `xaligo render --theme`.
 - Stable Go APIs expose `Render`, `RenderExcalidraw`, `RenderSVG`, `RenderPPTX`,
-  future-format entry points, and `Validate`; CLI SVG/Excalidraw/validation use
-  the same pipeline.
+  `RenderXYFlow`, `RenderIsoflow`, and `Validate`; CLI SVG/Excalidraw/validation
+  use the same pipeline.
 - Route connectors default to circular endpoints across Excalidraw, SVG, and
   PPTX.
 - Node/PptxGenJS can still generate `out.pptx` as a temporary development path,

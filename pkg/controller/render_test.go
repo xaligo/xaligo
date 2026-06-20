@@ -23,6 +23,7 @@ func TestDefaultRenderOutput(t *testing.T) {
 		"svg":        "output.svg",
 		"pptx":       "output.pptx",
 		"xyflow":     "output.xyflow.json",
+		"isoflow":    "output.isoflow.json",
 	}
 	for format, want := range tests {
 		if got := defaultRenderOutput(format); got != want {

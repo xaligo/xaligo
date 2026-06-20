@@ -83,7 +83,7 @@ func InitRenderCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&output, "output", "o", "", "output file path")
-	cmd.Flags().StringVar(&format, "format", "excalidraw", "output format: excalidraw | svg | pptx | xyflow")
+	cmd.Flags().StringVar(&format, "format", "excalidraw", "output format: excalidraw | svg | pptx | xyflow | isoflow")
 	cmd.Flags().StringVar(&servicesFile, "services", "", "optional services.csv for icon labels, Excalidraw legend, and PPTX legend slides")
 	cmd.Flags().StringVar(&title, "title", "", "optional PPTX title metadata")
 	cmd.Flags().StringVar(&author, "author", "", "optional PPTX author metadata")
@@ -217,8 +217,14 @@ func RunRenderFormat(opts RenderOptions) error {
 			return err
 		}
 		return runRenderXYFlow(opts.InputPath, opts.OutputPath, abbrevMap, opts.Mode, theme)
+	case "isoflow":
+		abbrevMap, err := serviceAbbrevMap(opts.ServicesFile)
+		if err != nil {
+			return err
+		}
+		return runRenderIsoflow(opts.InputPath, opts.OutputPath, abbrevMap, opts.Mode, theme)
 	default:
-		return fmt.Errorf("unknown render format %q; valid: excalidraw, svg, pptx, xyflow", opts.Format)
+		return fmt.Errorf("unknown render format %q; valid: excalidraw, svg, pptx, xyflow, isoflow", opts.Format)
 	}
 }
 
@@ -238,9 +244,29 @@ func defaultRenderOutput(format string) string {
 		return "output.pptx"
 	case "xyflow":
 		return "output.xyflow.json"
+	case "isoflow":
+		return "output.isoflow.json"
 	default:
 		return "output.excalidraw"
 	}
+}
+
+func runRenderIsoflow(inputPath, outputPath string, abbrevMap map[int]string, mode, theme string) error {
+	input, err := os.ReadFile(inputPath)
+	if err != nil {
+		return fmt.Errorf("read input file: %w", err)
+	}
+	out, err := xaligoapi.RenderIsoflow(context.Background(), input, xaligoapi.RenderOptions{
+		Mode: xaligoapi.Mode(mode), Theme: theme, Abbreviations: abbrevMap,
+	})
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(outputPath, out, 0644); err != nil {
+		return fmt.Errorf("write output file: %w", err)
+	}
+	fmt.Printf("generated: %s\n", outputPath)
+	return nil
 }
 
 func runRenderXYFlow(inputPath, outputPath string, abbrevMap map[int]string, mode, theme string) error {

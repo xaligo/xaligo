@@ -15,6 +15,7 @@ import (
 	"github.com/ryo-arima/xaligo/internal/config"
 	"github.com/ryo-arima/xaligo/internal/entity"
 	"github.com/ryo-arima/xaligo/internal/excalidraw"
+	isoflowrenderer "github.com/ryo-arima/xaligo/internal/isoflow"
 	"github.com/ryo-arima/xaligo/internal/layout"
 	"github.com/ryo-arima/xaligo/internal/model"
 	"github.com/ryo-arima/xaligo/internal/parser"
@@ -203,8 +204,14 @@ func RenderXYFlow(ctx context.Context, input []byte, opts RenderOptions) ([]byte
 	return xyflowrenderer.Render(scene)
 }
 
-func RenderIsoflow(context.Context, []byte, RenderOptions) ([]byte, error) {
-	return nil, fmt.Errorf("isoflow: %w", ErrNotImplemented)
+func RenderIsoflow(ctx context.Context, input []byte, opts RenderOptions) ([]byte, error) {
+	scene, _, err := buildScene(ctx, input, opts)
+	if err != nil {
+		return nil, err
+	}
+	cfg := config.New()
+	icons, _ := isoflowrenderer.LoadIconManifest(filepath.Join(cfg.ProjectRoot, "etc", "resources", "aws", "isoflow-icons.json"))
+	return isoflowrenderer.RenderWithIcons(scene, icons)
 }
 
 // Validate runs the same parser and layout validation used by Render.

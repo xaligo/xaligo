@@ -27,6 +27,7 @@ import (
 	awsassets "github.com/ryo-arima/xaligo/etc/resources/aws"
 	"github.com/ryo-arima/xaligo/internal/entity"
 	"github.com/ryo-arima/xaligo/internal/excalidraw"
+	isoflowrenderer "github.com/ryo-arima/xaligo/internal/isoflow"
 	"github.com/ryo-arima/xaligo/internal/layout"
 	"github.com/ryo-arima/xaligo/internal/model"
 	"github.com/ryo-arima/xaligo/internal/parser"
@@ -41,9 +42,26 @@ func main() {
 	js.Global().Set("xaligoBuildPptxPlan", js.FuncOf(jsBuildPptxPlan))
 	js.Global().Set("xaligoDiagnose", js.FuncOf(jsDiagnose))
 	js.Global().Set("xaligoRenderXYFlow", js.FuncOf(jsRenderXYFlow))
+	js.Global().Set("xaligoRenderIsoflow", js.FuncOf(jsRenderIsoflow))
 
 	// Keep the WASM module alive until the page unloads.
 	<-make(chan struct{})
+}
+
+func jsRenderIsoflow(_ js.Value, args []js.Value) any {
+	if len(args) < 1 {
+		return jsResult("", fmt.Errorf("xaligoRenderIsoflow: expected 1 argument (xal)"))
+	}
+	sceneJSON, err := renderXAL(args[0].String(), nil)
+	if err != nil {
+		return jsResult("", err)
+	}
+	icons, _ := isoflowrenderer.LoadIconManifestFS(awsassets.Assets, awsassets.IsoflowIconsJSON)
+	out, err := isoflowrenderer.RenderWithIcons([]byte(sceneJSON), icons)
+	if err != nil {
+		return jsResult("", err)
+	}
+	return jsResult(string(out), nil)
 }
 
 func jsRenderXYFlow(_ js.Value, args []js.Value) any {

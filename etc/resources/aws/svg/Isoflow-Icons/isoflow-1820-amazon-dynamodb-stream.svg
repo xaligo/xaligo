@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="124" viewBox="0 0 160 124" role="img">
+  <title>Amazon DynamoDB Stream</title>
+  <defs>
+    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="7" stdDeviation="5" flood-color="#571d68" flood-opacity="0.30" />
+    </filter>
+    <filter id="glyph-shadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="1" stdDeviation="1.1" flood-color="#0f172a" flood-opacity="0.36" />
+    </filter>
+  </defs>
+  <g filter="url(#soft-shadow)">
+    <polygon points="24,38 80,72 80,124 24,90" fill="#832090" />
+    <polygon points="136,38 80,72 80,124 136,90" fill="#a823b2" />
+    <polygon points="80,6 136,38 80,72 24,38" fill="#ffffff" />
+    <image href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iNDhweCIgaGVpZ2h0PSI0OHB4IiB2aWV3Qm94PSIwIDAgNDggNDgiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1SZXNvdXJjZS9EYXRhYmFzZS9SZXNfQW1hem9uLUR5bmFtb0RCX1N0cmVhbV80ODwvdGl0bGU+CiAgICA8ZyBpZD0iSWNvbi1SZXNvdXJjZS9EYXRhYmFzZS9SZXNfQW1hem9uLUR5bmFtb0RCX1N0cmVhbV80OCIgc3Ryb2tlPSJub25lIiBzdHJva2Utd2lkdGg9IjEiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+CiAgICAgICAgPHBhdGggZD0iTTIsNCBMNDYsNCBMNDYsMiBMMiwyIEwyLDQgWiBNMiw0NiBMNDYsNDYgTDQ2LDQ0IEwyLDQ0IEwyLDQ2IFogTTMwLjg4NywzMy42MTYgTDM4LjYxMSwzNS42OTYgTDQzLjgxMywxNi4zODQgTDM2LjA4OCwxNC4zMDQgTDMwLjg4NywzMy42MTYgWiBNMzkuMzE3LDM3LjkyMiBDMzkuMjMsMzcuOTIyIDM5LjE0MywzNy45MTEgMzkuMDU4LDM3Ljg4OCBMMjkuNDAxLDM1LjI4NyBDMjkuMTQ1LDM1LjIxOCAyOC45MjcsMzUuMDUgMjguNzk1LDM0LjgyIEMyOC42NjIsMzQuNTkgMjguNjI3LDM0LjMxNyAyOC42OTUsMzQuMDYxIEwzNC40MTcsMTIuODE4IEMzNC40ODYsMTIuNTYyIDM0LjY1NCwxMi4zNDQgMzQuODg0LDEyLjIxMSBDMzUuMTEzLDEyLjA4IDM1LjM4NywxMi4wNDMgMzUuNjQzLDEyLjExMiBMNDUuMjk4LDE0LjcxMyBDNDUuODMxLDE0Ljg1NyA0Ni4xNDcsMTUuNDA1IDQ2LjAwNCwxNS45MzkgTDQwLjI4MywzNy4xODIgQzQwLjIxNCwzNy40MzggNDAuMDQ2LDM3LjY1NiAzOS44MTYsMzcuNzg5IEMzOS42NjMsMzcuODc2IDM5LjQ5MSwzNy45MjIgMzkuMzE3LDM3LjkyMiBMMzkuMzE3LDM3LjkyMiBaIE0xNywzNCBMMjUsMzQgTDI1LDE0IEwxNywxNCBMMTcsMzQgWiBNMjYsMzYgTDE2LDM2IEMxNS40NDcsMzYgMTUsMzUuNTUyIDE1LDM1IEwxNSwxMyBDMTUsMTIuNDQ4IDE1LjQ0NywxMiAxNiwxMiBMMjYsMTIgQzI2LjU1MywxMiAyNywxMi40NDggMjcsMTMgTDI3LDM1IEMyNywzNS41NTIgMjYuNTUzLDM2IDI2LDM2IEwyNiwzNiBaIE00LDM0IEwxMiwzNCBMMTIsMTQgTDQsMTQgTDQsMzQgWiBNMTMsMzYgTDMsMzYgQzIuNDQ3LDM2IDIsMzUuNTUyIDIsMzUgTDIsMTMgQzIsMTIuNDQ4IDIuNDQ3LDEyIDMsMTIgTDEzLDEyIEMxMy41NTMsMTIgMTQsMTIuNDQ4IDE0LDEzIEwxNCwzNSBDMTQsMzUuNTUyIDEzLjU1MywzNiAxMywzNiBMMTMsMzYgWiIgaWQ9IkZpbGwtMSIgZmlsbD0iI0M5MjVEMSI+PC9wYXRoPgogICAgPC9nPgo8L3N2Zz4=" x="50" y="19" width="60" height="38" preserveAspectRatio="xMidYMid meet" filter="url(#glyph-shadow)" />
+    <polyline points="24,38 80,72 136,38" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.4" />
+    <polyline points="24,90 80,124 136,90" fill="none" stroke="rgba(15,23,42,0.28)" stroke-width="2" />
+    <line x1="80" y1="72" x2="80" y2="124" stroke="rgba(15,23,42,0.24)" stroke-width="1.6" />
+  </g>
+</svg>

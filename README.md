@@ -80,6 +80,7 @@ packages/
 | `xaligo render <file.xal> --format svg -o <out.svg> [--mode standard\|network\|aws] [--theme light\|dark] [--services <csv>]` | Convert .xal → SVG |
 | `xaligo render <file.xal> --format pptx -o <out.pptx> [--mode standard\|network\|aws] [--theme light\|dark] [--services <csv>] [pptx flags]` | Convert .xal → .pptx via the WASM PPTX exporter |
 | `xaligo render <file.xal> --format xyflow -o <out.json> [--mode standard\|network\|aws]` | Export React Flow/XYFlow nodes and edges |
+| `xaligo render <file.xal> --format isoflow -o <out.json> [--mode standard\|network\|aws]` | Export an Isoflow-compatible model JSON |
 | `xaligo generate xal [flags] -o <out.xal>` | Auto-generate an AWS infrastructure hierarchy .xal |
 | `xaligo validate <file.xal>` | Validate .xal syntax and layout |
 | `xaligo serve <file.xal> [--address 127.0.0.1:8080]` | Serve an SVG live preview with automatic reload |
@@ -158,12 +159,13 @@ diagnostics, err := xaligo.Diagnose(ctx, source)
 // diagnostics[0].Line / Column / Message are editor-friendly.
 ```
 
-`Render`, `RenderExcalidraw`, `RenderSVG`, `RenderPPTX`, and `RenderXYFlow` are
-available now. `RenderIsoflow` returns `ErrNotImplemented` until its roadmap
-phase is implemented.
+`Render`, `RenderExcalidraw`, `RenderSVG`, `RenderPPTX`, `RenderXYFlow`, and
+`RenderIsoflow` are available now.
 
 XYFlow output contains nested group nodes, icon data URLs, labels, connection
 handles, route/traffic metadata, layer order, line styles, and arrow markers.
+Isoflow output follows the upstream Isoflow model shape with `items`, `views`,
+`icons`, `colors`, and view `connectors`.
 
 ## Live Preview
 

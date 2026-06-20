@@ -59,9 +59,9 @@ func TestXYFlowPublicFormat(t *testing.T) {
 	}
 }
 
-func TestFutureFormatReturnsStableSentinel(t *testing.T) {
-	_, err := Render(context.Background(), apiTestXAL, RenderOptions{Format: FormatIsoflow})
-	if !errors.Is(err, ErrNotImplemented) {
-		t.Fatalf("Isoflow error = %v", err)
+func TestIsoflowPublicFormat(t *testing.T) {
+	out, err := Render(context.Background(), apiTestXAL, RenderOptions{Format: FormatIsoflow})
+	if err != nil || !bytes.Contains(out, []byte(`"version": "3.3.0"`)) || !bytes.Contains(out, []byte(`"items"`)) || !bytes.Contains(out, []byte(`"views"`)) {
+		t.Fatalf("Isoflow output = %s, err = %v", out, err)
 	}
 }

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="124" viewBox="0 0 160 124" role="img">
+  <title>Amazon Elastic Container Registry Image</title>
+  <defs>
+    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="7" stdDeviation="5" flood-color="#653a18" flood-opacity="0.30" />
+    </filter>
+    <filter id="glyph-shadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="1" stdDeviation="1.1" flood-color="#0f172a" flood-opacity="0.36" />
+    </filter>
+  </defs>
+  <g filter="url(#soft-shadow)">
+    <polygon points="24,38 80,72 80,124 24,90" fill="#994f0f" />
+    <polygon points="136,38 80,72 80,124 136,90" fill="#c56107" />
+    <polygon points="80,6 136,38 80,72 24,38" fill="#ffffff" />
+    <image href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iNDhweCIgaGVpZ2h0PSI0OHB4IiB2aWV3Qm94PSIwIDAgNDggNDgiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1SZXNvdXJjZS9Db250YWluZXJzL1Jlc19BbWF6b24tRWxhc3RpYy1Db250YWluZXItUmVnaXN0cnlfSW1hZ2VfNDg8L3RpdGxlPgogICAgPGcgaWQ9Ikljb24tUmVzb3VyY2UvQ29udGFpbmVycy9SZXNfQW1hem9uLUVsYXN0aWMtQ29udGFpbmVyLVJlZ2lzdHJ5X0ltYWdlXzQ4IiBzdHJva2U9Im5vbmUiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj4KICAgICAgICA8cGF0aCBkPSJNMTkuOTk5OCwxNC45OTk4IEMyMS42NTM4LDE0Ljk5OTggMjIuOTk5OCwxNi4zNDU4IDIyLjk5OTgsMTcuOTk5OCBDMjIuOTk5OCwxOS42NTM4IDIxLjY1MzgsMjAuOTk5OCAxOS45OTk4LDIwLjk5OTggQzE4LjM0NTgsMjAuOTk5OCAxNi45OTk4LDE5LjY1MzggMTYuOTk5OCwxNy45OTk4IEMxNi45OTk4LDE2LjM0NTggMTguMzQ1OCwxNC45OTk4IDE5Ljk5OTgsMTQuOTk5OCBMMTkuOTk5OCwxNC45OTk4IFogTTE5Ljk5OTgsMjIuOTk5OCBDMjIuNzU2OCwyMi45OTk4IDI0Ljk5OTgsMjAuNzU2OCAyNC45OTk4LDE3Ljk5OTggQzI0Ljk5OTgsMTUuMjQyOCAyMi43NTY4LDEyLjk5OTggMTkuOTk5OCwxMi45OTk4IEMxNy4yNDI4LDEyLjk5OTggMTQuOTk5OCwxNS4yNDI4IDE0Ljk5OTgsMTcuOTk5OCBDMTQuOTk5OCwyMC43NTY4IDE3LjI0MjgsMjIuOTk5OCAxOS45OTk4LDIyLjk5OTggTDE5Ljk5OTgsMjIuOTk5OCBaIE0zLjk5OTgsNDMuOTk5OCBMMy45OTk4LDM0LjQxMzggTDExLjk5OTgsMjYuNDEzOCBMMjcuMjkyOCw0MS43MDY4IEwyOC43MDY4LDQwLjI5MjggTDIwLjkxMzgsMzIuNDk5OCBMMzEuOTk5OCwyMS40MTM4IEw0My45OTk4LDMzLjQxMzggTDQzLjk5OTgsNDMuOTk5OCBMMy45OTk4LDQzLjk5OTggWiBNNDMuOTk5OCwzLjk5OTggTDQzLjk5OTgsMzAuNTg1OCBMMzIuNzA2OCwxOS4yOTI4IEMzMi4zMTU4LDE4LjkwMTggMzEuNjgzOCwxOC45MDE4IDMxLjI5MjgsMTkuMjkyOCBMMTkuNDk5OCwzMS4wODU4IEwxMi43MDY4LDI0LjI5MjggQzEyLjMxNTgsMjMuOTAxOCAxMS42ODM4LDIzLjkwMTggMTEuMjkyOCwyNC4yOTI4IEwzLjk5OTgsMzEuNTg1OCBMMy45OTk4LDMuOTk5OCBMNDMuOTk5OCwzLjk5OTggWiBNNDQuOTk5OCwxLjk5OTggTDIuOTk5OCwxLjk5OTggQzIuNDQ2OCwxLjk5OTggMS45OTk4LDIuNDQ2OCAxLjk5OTgsMi45OTk4IEwxLjk5OTgsNDQuOTk5OCBDMS45OTk4LDQ1LjU1MjggMi40NDY4LDQ1Ljk5OTggMi45OTk4LDQ1Ljk5OTggTDQ0Ljk5OTgsNDUuOTk5OCBDNDUuNTUyOCw0NS45OTk4IDQ1Ljk5OTgsNDUuNTUyOCA0NS45OTk4LDQ0Ljk5OTggTDQ1Ljk5OTgsMi45OTk4IEM0NS45OTk4LDIuNDQ2OCA0NS41NTI4LDEuOTk5OCA0NC45OTk4LDEuOTk5OCBMNDQuOTk5OCwxLjk5OTggWiIgaWQ9IkFtYXpvbi1FbGFzdGljLUNvbnRhaW5lci1SZWdpc3RyeV9JbWFnZV9SZXNvdXJjZS1JY29uX2xpZ2h0LWJnIiBmaWxsPSIjRUQ3MTAwIj48L3BhdGg+CiAgICA8L2c+Cjwvc3ZnPg==" x="50" y="19" width="60" height="38" preserveAspectRatio="xMidYMid meet" filter="url(#glyph-shadow)" />
+    <polyline points="24,38 80,72 136,38" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.4" />
+    <polyline points="24,90 80,124 136,90" fill="none" stroke="rgba(15,23,42,0.28)" stroke-width="2" />
+    <line x1="80" y1="72" x2="80" y2="124" stroke="rgba(15,23,42,0.24)" stroke-width="1.6" />
+  </g>
+</svg>

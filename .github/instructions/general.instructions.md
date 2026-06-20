@@ -147,6 +147,7 @@ In PPTX export, legend entries are rendered on separate 4-column legend slides.
 | `xaligo render <file.xal> --format excalidraw -o <out.excalidraw> --services <csv>` | Convert .xal to .excalidraw |
 | `xaligo serve <file.xal> --mode network` | Serve an auto-reloading SVG preview at `127.0.0.1:8080` |
 | `xaligo render <file.xal> --format xyflow -o <out.json>` | Export React Flow/XYFlow nodes and edges |
+| `xaligo render <file.xal> --format isoflow -o <out.json>` | Export an Isoflow-compatible model JSON |
 
 The public `Diagnose(ctx, source)` API returns line, column, offset, severity,
 and message fields. `xaligo serve` exposes the same diagnostics from
