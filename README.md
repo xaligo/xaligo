@@ -143,6 +143,35 @@ mkdir -p output
 
 PPTX flags: `--title`, `--author`, `--company`, `--subject`, `--compression true|false`, `--px-per-inch`, `--paper`, `--orientation`, `--paper-margin`, `--paper-margin-top`, `--paper-margin-right`, `--paper-margin-bottom`, `--paper-margin-left`. Paper margins are in inches and are applied before fitting the diagram to the selected paper.
 
+## Sample Gallery
+
+### Hybrid enterprise architecture
+
+![Hybrid enterprise architecture sample](docs/images/complex-hybrid-architecture.svg)
+
+Source: [examples/complex-hybrid-architecture.xal](examples/complex-hybrid-architecture.xal)
+
+```bash
+.bin/xaligo render examples/complex-hybrid-architecture.xal \
+  --format svg \
+  --mode network \
+  -o output/complex-hybrid-architecture.svg
+```
+
+### Isoflow export sample
+
+![Isoflow editor rendering the hybrid architecture sample](docs/images/isoflow-complex-hybrid-architecture.png)
+
+Use the same `.xal` source to generate the Isoflow-compatible model JSON shown
+in the editor screenshot:
+
+```bash
+.bin/xaligo render examples/complex-hybrid-architecture.xal \
+  --format isoflow \
+  --mode network \
+  -o output/complex-hybrid-architecture.isoflow.json
+```
+
 ## Go API
 
 The root package exposes the same parse/layout/render pipeline used by the CLI:
