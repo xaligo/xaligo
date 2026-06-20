@@ -1,11 +1,30 @@
 <frame width="960" height="540" class="pa-4">
-  <generic-group title="Automatic Route Junction" align="middle-spread">
-    <item id="200036" /> <!-- router_general -->
-    <item id="200013" /> <!-- l2_switch_general -->
-    <item id="200041" /> <!-- server -->
-    <item id="200005" /> <!-- desktop_pc -->
+  <generic-group title="Automatic Route Junction">
+    <row gap="80">
+      <col span="4" class="pa-2">
+        <generic-group title="Route Origin" border="none" align="middle-center">
+          <item id="200036" /> <!-- router_general -->
+        </generic-group>
+      </col>
+
+      <col span="8" class="pa-2">
+        <container gap="24">
+          <generic-group title="Branch A: Access Switch" border="none" align="middle-center">
+            <item id="200013" /> <!-- l2_switch_general -->
+          </generic-group>
+          <generic-group title="Branch B: Server" border="none" align="middle-center">
+            <item id="200041" /> <!-- server -->
+          </generic-group>
+          <generic-group title="Branch C: Client" border="none" align="middle-center">
+            <item id="200005" /> <!-- desktop_pc -->
+          </generic-group>
+        </container>
+      </col>
+    </row>
   </generic-group>
 
+  <!-- Routes sharing the router's right edge automatically use one trunk and
+       a circular fan-out junction. -->
   <connection src="200036" dst="200013" kind="route" />
   <connection src="200036" dst="200041" kind="route" />
   <connection src="200036" dst="200005" kind="route" />

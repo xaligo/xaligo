@@ -75,6 +75,7 @@ packages/
 | `xaligo render <file.xal> --format pptx -o <out.pptx> [--mode standard\|network\|aws] [--theme light\|dark] [--services <csv>] [pptx flags]` | Convert .xal → .pptx via the WASM PPTX exporter |
 | `xaligo generate xal [flags] -o <out.xal>` | Auto-generate an AWS infrastructure hierarchy .xal |
 | `xaligo validate <file.xal>` | Validate .xal syntax and layout |
+| `xaligo serve <file.xal> [--address 127.0.0.1:8080]` | Serve an SVG live preview with automatic reload |
 | `xaligo add service --name <name> --file <file>` | Add a single AWS service icon to an existing file |
 | `xaligo add service --list <csv> --file <file>` | Bulk-add AWS service icons to an existing file |
 | `xaligo init [-o <dir>]` | Generate a sample.xal |
@@ -148,6 +149,26 @@ err = xaligo.Validate(ctx, source)
 `Render`, `RenderExcalidraw`, `RenderSVG`, and `RenderPPTX` are available now.
 `RenderXYFlow` and `RenderIsoflow` return `ErrNotImplemented` until their
 roadmap phases are implemented.
+
+## Live Preview
+
+```bash
+.bin/xaligo serve examples/junctions.xal --mode network
+```
+
+Open `http://127.0.0.1:8080`. The server watches the source, re-renders through
+the public SVG API, and publishes changes over Server-Sent Events. Parse/layout
+errors appear in the preview without stopping the watcher.
+
+Reusable endpoints:
+
+| Endpoint | Purpose |
+|---|---|
+| `/` | Browser preview page |
+| `/diagram.svg` | Current SVG or HTTP 422 with the current diagnostic |
+| `/api/status` | JSON version and render error state |
+| `/events` | SSE `update` events for editor integrations |
+| `/healthz` | Health check |
 
 ### Option B — Auto-generate an AWS hierarchy
 

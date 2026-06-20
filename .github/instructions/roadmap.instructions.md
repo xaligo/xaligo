@@ -122,9 +122,13 @@ implemented as PPTX-only corrections.
 
 ### Phase 3: Live Preview
 
-- Add `xaligo serve` on top of public render/validate APIs.
-- Watch `.xal` files and automatically re-render.
-- Serve an SVG-first browser preview with incremental refresh.
+Status: initial implementation complete. `xaligo serve` polls `.xal` sources,
+renders through the public SVG API, reports render errors, and publishes SSE
+reload events. Browser polish and source-positioned diagnostics remain.
+
+- Add `xaligo serve` on top of public render/validate APIs. (implemented)
+- Watch `.xal` files and automatically re-render. (implemented)
+- Serve an SVG-first browser preview with incremental refresh. (implemented)
 - Keep the protocol reusable by the VS Code extension.
 
 ## VS Code Extension Preconditions
@@ -224,8 +228,8 @@ Use this order when starting new roadmap work from the current repository state:
    `pptx_exporter.wasm`; keep Go free of PPTX/OOXML writer code.
 2. Harden shared network routing with cross-renderer visual regression tests
    and add textual connection shorthands.
-3. Build `xaligo serve` and VS Code preview on top of `render --format svg` and
-   `validate`.
+3. Build the VS Code preview on the reusable HTTP/SSE protocol exposed by
+   `xaligo serve`.
 
 ## v0.1 Foundation
 
@@ -413,7 +417,8 @@ plan for SVG/PPTX. Curved bridge arcs and an Excalidraw approximation remain.
 
 ## v0.6 Live Preview
 
-Status: not started; depends on SVG renderer and validate.
+Status: initial HTTP/SSE live preview implemented; source-positioned diagnostics
+and VS Code integration remain.
 
 ### xaligo serve
 

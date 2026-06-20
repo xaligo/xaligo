@@ -145,6 +145,7 @@ In PPTX export, legend entries are rendered on separate 4-column legend slides.
 | `xaligo add service --list <csv> --file <file>` | Bulk-add AWS service icons |
 | `xaligo generate xal --clouds N --accounts N --regions N --azs N --az-layout grid\|staggered --subnets N --spacing vertical\|horizontal\|both --start top\|left --paper A4 --orientation portrait\|landscape -o out.xal` | Generate a .xal for an AWS infrastructure hierarchy |
 | `xaligo render <file.xal> --format excalidraw -o <out.excalidraw> --services <csv>` | Convert .xal to .excalidraw |
+| `xaligo serve <file.xal> --mode network` | Serve an auto-reloading SVG preview at `127.0.0.1:8080` |
 | `xaligo render <file.xal> --format pptx -o <out.pptx> --services <csv> --paper A3 --orientation landscape` | Convert .xal to PPTX when `pptx_exporter.wasm` is configured |
 
 The npm/WASM API can generate PPTX through PptxGenJS. Native CLI PPTX output
