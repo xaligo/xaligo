@@ -26,6 +26,7 @@ const (
 
 type routeRequest struct {
 	ID        string
+	Kind      string
 	Src       rect
 	Dst       rect
 	SrcSide   side
@@ -49,6 +50,10 @@ type routerOptions struct {
 	Stub       float64
 	LaneGap    float64
 	LineMargin float64
+	// Reserved paths participate in lane selection and overlap/proximity
+	// scoring, but are not solid obstacles. Container borders use this so a
+	// connector may cross a frame while avoiding running along its stroke.
+	Reserved [][]segment
 }
 
 func defaultRouterOptions() routerOptions {
@@ -70,7 +75,10 @@ const (
 // routeConnections routes every request against a shared obstacle set. Requests
 // are processed in order; each finalised path informs later ones.
 func routeConnections(requests []routeRequest, obstacles []rect, opt routerOptions) []routedPath {
-	placed := [][]segment{}
+	placed := make([][]segment, len(opt.Reserved))
+	for i := range opt.Reserved {
+		placed[i] = append([]segment(nil), opt.Reserved[i]...)
+	}
 	results := make([]routedPath, 0, len(requests))
 	for _, req := range requests {
 		local := filterObstacles(obstacles, req)
@@ -401,6 +409,46 @@ func segmentsCross(p, q segment) bool {
 	vy1 := math.Min(v.A.Y, v.B.Y)
 	vy2 := math.Max(v.A.Y, v.B.Y)
 	return vx > hx1+eps && vx < hx2-eps && hy > vy1+eps && hy < vy2-eps
+}
+
+// crossingPoint returns the interior intersection of two orthogonal segments.
+// Endpoint touches and collinear overlaps are deliberately not line jumps.
+func crossingPoint(p, q segment) (pt, bool) {
+	if !segmentsCross(p, q) {
+		return pt{}, false
+	}
+	h, v := p, q
+	if !isHorizontal(p) {
+		h, v = q, p
+	}
+	return pt{X: v.A.X, Y: h.A.Y}, true
+}
+
+// pathCrossings returns deduplicated intersections between the path drawn on
+// top and all previously drawn paths below it.
+func pathCrossings(top routedPath, below []routedPath) []pt {
+	var out []pt
+	for _, topSeg := range toSegments(top.Points) {
+		for _, lower := range below {
+			for _, lowerSeg := range toSegments(lower.Points) {
+				p, ok := crossingPoint(topSeg, lowerSeg)
+				if !ok {
+					continue
+				}
+				duplicate := false
+				for _, existing := range out {
+					if math.Abs(existing.X-p.X) < eps && math.Abs(existing.Y-p.Y) < eps {
+						duplicate = true
+						break
+					}
+				}
+				if !duplicate {
+					out = append(out, p)
+				}
+			}
+		}
+	}
+	return out
 }
 
 func collinearOverlap(p, q segment) float64 {

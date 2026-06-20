@@ -1,0 +1,8 @@
+Yamaha Network Diagram Icons
+
+Source: https://network.yamaha.com/support/download/tool/network_iconset.zip
+Creator: Yamaha Corporation
+License: Creative Commons Attribution-NoDerivatives 4.0 International
+License URL: https://creativecommons.org/licenses/by-nd/4.0/
+
+The SVG files in this directory are redistributed unchanged.

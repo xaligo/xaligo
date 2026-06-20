@@ -1,0 +1,8 @@
+<frame width="640" height="320" class="pa-4">
+  <generic-group title="Tabler Icons" align="middle-spread">
+    <item id="104109" /> <!-- server -->
+    <item id="101767" /> <!-- database -->
+    <item id="101518" /> <!-- cloud -->
+    <item id="100648" /> <!-- brand-aws -->
+  </generic-group>
+</frame>

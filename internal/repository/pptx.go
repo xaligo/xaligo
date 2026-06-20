@@ -1,101 +1,156 @@
 package repository
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
+
+	"github.com/ryo-arima/xaligo/internal/config"
+	"github.com/tetratelabs/wazero"
+	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 )
 
-// PptxExportOptions contains the inputs passed to the Node/PptxGenJS exporter.
+const pptxExporterWasmRel = "packages/xaligo/wasm/pptx_exporter.wasm"
+
+// PptxExportOptions contains the resolved plan and write options passed to the
+// WASM PPTX exporter. The repository layer is only an adapter: it does not parse
+// .xal files, calculate geometry, or write PPTX/OOXML directly.
 type PptxExportOptions struct {
-	XalPath      string
+	PlanJSON     []byte
 	Output       string
-	ServicesFile string
 	Title        string
 	Author       string
 	Company      string
 	Subject      string
 	Compression  *bool
-	PxPerInch    float64
-	ArrowStyle   string
-	ArrowStub    float64
-	ArrowMargin  float64
-	Paper        string
-	Orientation  string
+	ExporterWASM string
 	Stdout       io.Writer
 	Stderr       io.Writer
 }
 
-// ExportPptx shells out to the Node/PptxGenJS exporter.
+type pptxWasmRequest struct {
+	Plan    json.RawMessage `json:"plan"`
+	Options pptxWasmOptions `json:"options,omitempty"`
+}
+
+type pptxWasmOptions struct {
+	Title       string `json:"title,omitempty"`
+	Author      string `json:"author,omitempty"`
+	Company     string `json:"company,omitempty"`
+	Subject     string `json:"subject,omitempty"`
+	Compression *bool  `json:"compression,omitempty"`
+}
+
+// ExportPptx invokes the WASM PPTX exporter and writes the returned PPTX bytes.
 func ExportPptx(opts PptxExportOptions) error {
-	cmdName, args, err := pptxExporterCommand()
+	if len(bytes.TrimSpace(opts.PlanJSON)) == 0 {
+		return fmt.Errorf("PPTX plan JSON is required")
+	}
+	if opts.Output == "" {
+		return fmt.Errorf("output path is required")
+	}
+	req := pptxWasmRequest{
+		Plan: json.RawMessage(opts.PlanJSON),
+		Options: pptxWasmOptions{
+			Title:       opts.Title,
+			Author:      opts.Author,
+			Company:     opts.Company,
+			Subject:     opts.Subject,
+			Compression: opts.Compression,
+		},
+	}
+	reqJSON, err := json.Marshal(req)
+	if err != nil {
+		return fmt.Errorf("encode PPTX WASM request: %w", err)
+	}
+
+	wasmPath, err := resolvePptxExporterWASM(opts.ExporterWASM)
 	if err != nil {
 		return err
 	}
-	args = append(args, "--xal", opts.XalPath, "-o", opts.Output)
-	if opts.ServicesFile != "" {
-		args = append(args, "--services", opts.ServicesFile)
+
+	pptxBytes, stderr, err := runPptxExporterWASM(wasmPath, reqJSON)
+	if len(stderr) > 0 {
+		if opts.Stderr != nil {
+			_, _ = opts.Stderr.Write(stderr)
+		}
 	}
-	if opts.Title != "" {
-		args = append(args, "--title", opts.Title)
+	if err != nil {
+		return err
 	}
-	if opts.Author != "" {
-		args = append(args, "--author", opts.Author)
-	}
-	if opts.Company != "" {
-		args = append(args, "--company", opts.Company)
-	}
-	if opts.Subject != "" {
-		args = append(args, "--subject", opts.Subject)
-	}
-	if opts.Compression != nil {
-		args = append(args, "--compression", fmt.Sprintf("%t", *opts.Compression))
-	}
-	if opts.PxPerInch > 0 {
-		args = append(args, "--px-per-inch", fmt.Sprintf("%g", opts.PxPerInch))
-	}
-	if opts.ArrowStyle != "" {
-		args = append(args, "--arrow-style", opts.ArrowStyle)
-	}
-	if opts.ArrowStub > 0 {
-		args = append(args, "--arrow-stub", fmt.Sprintf("%g", opts.ArrowStub))
-	}
-	if opts.ArrowMargin > 0 {
-		args = append(args, "--arrow-margin", fmt.Sprintf("%g", opts.ArrowMargin))
-	}
-	if opts.Paper != "" {
-		args = append(args, "--paper", opts.Paper)
-	}
-	if opts.Orientation != "" {
-		args = append(args, "--orientation", opts.Orientation)
+	if len(pptxBytes) == 0 {
+		return fmt.Errorf("PPTX WASM exporter produced no output")
 	}
 
-	cmd := exec.Command(cmdName, args...)
-	cmd.Stdout = opts.Stdout
-	cmd.Stderr = opts.Stderr
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("run PPTX exporter: %w", err)
+	if err := os.WriteFile(opts.Output, pptxBytes, 0644); err != nil {
+		return fmt.Errorf("write PPTX output %s: %w", opts.Output, err)
+	}
+	if opts.Stdout != nil {
+		_, _ = fmt.Fprintf(opts.Stdout, "generated: %s\n", opts.Output)
 	}
 	return nil
 }
 
-func pptxExporterCommand() (string, []string, error) {
-	if cliPath, ok := findPptxExporterCLI(); ok {
-		if _, err := exec.LookPath("node"); err != nil {
-			return "", nil, fmt.Errorf("node executable not found; install Node.js to use `xaligo generate pptx`")
-		}
-		return "node", []string{cliPath}, nil
+func runPptxExporterWASM(wasmPath string, stdin []byte) ([]byte, []byte, error) {
+	ctx := context.Background()
+	runtime := wazero.NewRuntime(ctx)
+	defer runtime.Close(ctx)
+
+	if _, err := wasi_snapshot_preview1.Instantiate(ctx, runtime); err != nil {
+		return nil, nil, fmt.Errorf("instantiate WASI imports: %w", err)
 	}
-	if binPath, err := exec.LookPath("xaligo-pptx"); err == nil {
-		return binPath, nil, nil
+	wasmBytes, err := os.ReadFile(wasmPath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("read PPTX WASM exporter %s: %w", wasmPath, err)
 	}
-	return "", nil, fmt.Errorf("PPTX exporter not found; run `npm run build --workspace packages/xaligo` and `make build-wasm`, or install the npm package so `xaligo-pptx` is on PATH")
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cfg := wazero.NewModuleConfig().
+		WithName("xaligo-pptx-exporter").
+		WithArgs(wasmPath).
+		WithStdin(bytes.NewReader(stdin)).
+		WithStdout(&stdout).
+		WithStderr(&stderr)
+
+	if _, err := runtime.InstantiateWithConfig(ctx, wasmBytes, cfg); err != nil {
+		return nil, stderr.Bytes(), fmt.Errorf("run PPTX WASM exporter: %w", err)
+	}
+	return stdout.Bytes(), stderr.Bytes(), nil
 }
 
-func findPptxExporterCLI() (string, bool) {
-	const rel = "packages/xaligo/dist/cli.mjs"
+func resolvePptxExporterWASM(explicit string) (string, error) {
+	candidates := []string{}
+	if explicit != "" {
+		candidates = append(candidates, explicit)
+	}
+	if env := os.Getenv("XALIGO_PPTX_EXPORTER_WASM"); env != "" {
+		candidates = append(candidates, env)
+	}
+	if cfgPath := config.New().PptxExporterWASM; cfgPath != "" {
+		candidates = append(candidates, cfgPath)
+	}
+	for _, base := range searchBases() {
+		candidates = append(candidates, filepath.Join(base, pptxExporterWasmRel))
+	}
+	seen := map[string]bool{}
+	for _, candidate := range candidates {
+		if candidate == "" || seen[candidate] {
+			continue
+		}
+		seen[candidate] = true
+		if st, err := os.Stat(candidate); err == nil && !st.IsDir() {
+			return candidate, nil
+		}
+	}
+	return "", fmt.Errorf("PPTX WASM exporter not found; configure paths.pptx_exporter_wasm, provide %s, or set XALIGO_PPTX_EXPORTER_WASM", pptxExporterWasmRel)
+}
+
+func searchBases() []string {
 	var bases []string
 	if wd, err := os.Getwd(); err == nil {
 		bases = append(bases, wd)
@@ -105,15 +160,13 @@ func findPptxExporterCLI() (string, bool) {
 		bases = append(bases, dir, filepath.Dir(dir))
 	}
 
+	var out []string
 	seen := map[string]bool{}
 	for _, base := range bases {
 		for dir := base; ; dir = filepath.Dir(dir) {
-			candidate := filepath.Join(dir, rel)
-			if !seen[candidate] {
-				seen[candidate] = true
-				if st, err := os.Stat(candidate); err == nil && !st.IsDir() {
-					return candidate, true
-				}
+			if !seen[dir] {
+				out = append(out, dir)
+				seen[dir] = true
 			}
 			next := filepath.Dir(dir)
 			if next == dir {
@@ -121,5 +174,5 @@ func findPptxExporterCLI() (string, bool) {
 			}
 		}
 	}
-	return "", false
+	return out
 }

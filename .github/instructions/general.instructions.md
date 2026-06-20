@@ -51,7 +51,7 @@ xaligo/
 │   │   ├── scene.go              # ReadScene / WriteScene
 │   │   ├── icon.go               # SvgToDataURL / FileID / LoadFromCSV / SVGBGColor
 │   │   ├── service_list.go       # ReadServiceList (CSV/TXT parser)
-│   │   └── pptx.go               # Repository-layer Node/PptxGenJS invocation
+│   │   └── pptx.go               # Repository-layer WASM PPTX exporter invocation
 │   └── config/
 │       └── config.go             # Config struct + findProjectRoot + etc/resources/aws/app.yaml loading
 ├── examples/
@@ -70,19 +70,31 @@ xaligo/
 │   └── gen_group_templates.py   # Regenerate etc/resources/aws/templates/{excalidraw,xal}/
 ├── Makefile
 ├── packages/
-│   └── xaligo/                   # Node package, WASM assets, PptxGenJS drawing layer
+│   └── xaligo/                   # npm package, WASM assets, PPTX export support
 ├── go.mod / go.sum
 └── README.md
 ```
 
 ## Architecture Guidelines
 
+- Use `roadmap.instructions.md` as the long-term implementation direction when
+  prioritizing renderer, routing, preview, extension, and export work.
 - **cmd → pkg/command.go → pkg/controller/ → internal/**: Keep dependencies unidirectional.
 - `internal/` packages are only referenced from `pkg/`; never directly from `cmd/`.
 - Each `controller` file exports an `Init<Cmd>Cmd() *cobra.Command` factory function, registered in `pkg/command.go`.
 - Business logic stays in `internal/`; cobra flag handling is the responsibility of the `controller` layer.
-- `xaligo generate pptx` must call Node from the repository layer (`internal/repository/pptx.go`).
-- PPTX geometry is resolved by Go/WASM `internal/pptxplan`; TypeScript only draws the resolved plan with PptxGenJS.
+- `xaligo render --format pptx` must invoke a WASM-compiled PPTX exporter from the
+  repository layer (`internal/repository/pptx.go`).
+- PPTX geometry is resolved by Go `internal/pptxplan`; the WASM exporter only
+  turns the resolved plan into PPTX bytes.
+- Repository/controller Go code must not contain a PPTX/OOXML writer. Keep Go
+  limited to plan construction, WASM invocation, and writing returned bytes.
+- Avoid `goja` and V8 for PPTX export execution.
+- Avoid a long-term Node.js subprocess dependency in repository-layer PPTX
+  export. Node may remain a development/build tool while the WASM exporter is
+  being prepared.
+- Keep HTTP, gRPC, and stdin/stdout RPC as future alternatives only unless the
+  architecture is intentionally changed.
 
 ## Coding Conventions
 
@@ -115,10 +127,10 @@ item:
 
 When rendering `<item>` icons, the short label below each icon is determined in the following priority order:
 
-1. **`Abbreviation` column in services.csv** — used when `generate excalidraw --services <csv>` is invoked and the entry for that catalog ID has a non-empty `Abbreviation`.
+1. **`Abbreviation` column in services.csv** — used when `render --format excalidraw --services <csv>` is invoked and the entry for that catalog ID has a non-empty `Abbreviation`.
 2. **Built-in `itemAbbreviations` table** (`internal/entity/service.go`) — fallback for any ID not covered by services.csv, and the only source when using `render` directly.
 
-This means `services.csv` is the single source of truth for icon labels in `generate excalidraw` workflows.  
+This means `services.csv` is the single source of truth for icon labels in `render --format excalidraw` workflows.
 The `OfficialName` column is used for full-name legend text — never as an icon label.
 In PPTX export, legend entries are rendered on separate 4-column legend slides.
 
@@ -132,8 +144,11 @@ In PPTX export, legend entries are rendered on separate 4-column legend slides.
 | `xaligo add service --name <name> --file <file>` | Add a single AWS service icon |
 | `xaligo add service --list <csv> --file <file>` | Bulk-add AWS service icons |
 | `xaligo generate xal --clouds N --accounts N --regions N --azs N --az-layout grid\|staggered --subnets N --spacing vertical\|horizontal\|both --start top\|left --paper A4 --orientation portrait\|landscape -o out.xal` | Generate a .xal for an AWS infrastructure hierarchy |
-| `xaligo generate excalidraw --xal <file.xal> -o <out.excalidraw> --services <csv>` | Convert .xal to .excalidraw |
-| `xaligo generate pptx --xal <file.xal> -o <out.pptx> --services <csv> --paper A3 --orientation landscape` | Convert .xal to PPTX with routed lines and legend pages |
+| `xaligo render <file.xal> --format excalidraw -o <out.excalidraw> --services <csv>` | Convert .xal to .excalidraw |
+| `xaligo render <file.xal> --format pptx -o <out.pptx> --services <csv> --paper A3 --orientation landscape` | Convert .xal to PPTX when `pptx_exporter.wasm` is configured |
+
+The npm/WASM API can generate PPTX through PptxGenJS. Native CLI PPTX output
+requires the separate WASI `pptx_exporter.wasm`; Excalidraw and SVG do not.
 
 ## Build & Test
 

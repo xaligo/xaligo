@@ -9,8 +9,9 @@
 > Licensed under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/).  
 > This illustration is a derivative work inspired by the original Go Gopher design.
 
-A Go CLI tool that converts a Vue-style DSL (`.xal`) into **Excalidraw JSON**.  
-Includes Vuetify-style spacing/grid layout and AWS architecture diagram group tags.
+A Diagram-as-Code engine that renders the Vue-style `.xal` DSL to Excalidraw,
+SVG, and PPTX. It includes Vuetify-style layout, AWS/network icon catalogs,
+orthogonal routing, route/traffic layers, line jumps, and automatic junctions.
 
 > **For automated agents (codex-cli, GPT, etc.):** see [docs/agents/general.md](docs/agents/general.md) for detailed step-by-step procedures.
 
@@ -46,6 +47,9 @@ const json = await xaligo.render(xalSource);
 
 // Convert with a services CSV for the legend
 const json = await xaligo.renderWithServices(xalSource, servicesCsv);
+
+// Render directly to PPTX bytes through PptxGenJS
+const pptx = await xaligo.renderPptx(xalSource, { theme: "dark" });
 ```
 
 **Build the WASM artifact:**
@@ -66,14 +70,23 @@ packages/
 
 | Command | Description |
 |---|---|
-| `xaligo generate excalidraw --xal <file.xal> -o <out.excalidraw> --services <csv>` | Convert .xal → .excalidraw with service legend (`--services` required) |
-| `xaligo generate pptx --xal <file.xal> -o <out.pptx> [--services <csv>] [pptx flags]` | Convert .xal → .pptx via the Node/PptxGenJS exporter |
+| `xaligo render <file.xal> --format excalidraw -o <out.excalidraw> [--mode standard\|network\|aws] [--theme light\|dark] [--services <csv>]` | Convert .xal → .excalidraw |
+| `xaligo render <file.xal> --format svg -o <out.svg> [--mode standard\|network\|aws] [--theme light\|dark] [--services <csv>]` | Convert .xal → SVG |
+| `xaligo render <file.xal> --format pptx -o <out.pptx> [--mode standard\|network\|aws] [--theme light\|dark] [--services <csv>] [pptx flags]` | Convert .xal → .pptx via the WASM PPTX exporter |
 | `xaligo generate xal [flags] -o <out.xal>` | Auto-generate an AWS infrastructure hierarchy .xal |
-| `xaligo render <file.xal> -o <out.excalidraw>` | Convert .xal → .excalidraw without legend |
+| `xaligo validate <file.xal>` | Validate .xal syntax and layout |
 | `xaligo add service --name <name> --file <file>` | Add a single AWS service icon to an existing file |
 | `xaligo add service --list <csv> --file <file>` | Bulk-add AWS service icons to an existing file |
 | `xaligo init [-o <dir>]` | Generate a sample.xal |
 | `xaligo version` | Print version |
+
+`mode` controls layout/presentation semantics while `format` controls the output
+container. `standard`, `network`, and `aws` currently share the resolved 2D
+pipeline; `aws-2.5d` and `topology` are reserved for later roadmap phases.
+
+Native CLI PPTX output requires the separately configured WASI exporter
+`pptx_exporter.wasm`. The npm/WASM API can generate PPTX now through
+PptxGenJS; Excalidraw and SVG do not require the PPTX exporter.
 
 ### generate xal flags
 
@@ -107,23 +120,34 @@ grep -i "ec2\|rds\|cloudfront" etc/resources/aws/service-index.csv
 
 # 4. Generate
 mkdir -p output
-.bin/xaligo generate excalidraw \
-  --xal examples/sample.xal \
+.bin/xaligo render examples/sample.xal \
+  --format excalidraw \
   -o output/sample.excalidraw \
   --services examples/services.csv
 
-# Optional: generate a PowerPoint file
-npm run build --workspace packages/xaligo
-make build-wasm
-.bin/xaligo generate pptx \
-  --xal examples/sample.xal \
-  -o output/sample.pptx \
-  --services examples/services.csv \
-  --title "Sample Architecture" \
-  --author "xaligo"
+# Optional native CLI PPTX export (requires pptx_exporter.wasm)
+.bin/xaligo render examples/sample.xal --format pptx \
+  -o output/sample.pptx --services examples/services.csv
 ```
 
 PPTX flags: `--title`, `--author`, `--company`, `--subject`, `--compression true|false`, `--px-per-inch`.
+
+## Go API
+
+The root package exposes the same parse/layout/render pipeline used by the CLI:
+
+```go
+svg, err := xaligo.RenderSVG(ctx, source, xaligo.RenderOptions{
+    Mode:  xaligo.ModeNetwork,
+    Theme: "dark",
+})
+
+err = xaligo.Validate(ctx, source)
+```
+
+`Render`, `RenderExcalidraw`, `RenderSVG`, and `RenderPPTX` are available now.
+`RenderXYFlow` and `RenderIsoflow` return `ErrNotImplemented` until their
+roadmap phases are implemented.
 
 ### Option B — Auto-generate an AWS hierarchy
 
@@ -134,8 +158,8 @@ PPTX flags: `--title`, `--author`, `--company`, `--subject`, `--compression true
   --paper A4 --orientation landscape -o output/infra.xal
 
 # Convert to .excalidraw
-.bin/xaligo generate excalidraw \
-  --xal output/infra.xal \
+.bin/xaligo render output/infra.xal \
+  --format excalidraw \
   -o output/infra.excalidraw \
   --services examples/services.csv
 ```
@@ -183,8 +207,31 @@ Tags rendered with AWS architecture diagram group border styles.
 
 ### `<item>` tag
 
-Embeds an AWS service icon by specifying its ID from `service-catalog.csv`.  
+Embeds a catalog icon by specifying its ID from `service-catalog.csv`.
 Omitting or leaving `id` empty makes the element a spacer (no icon rendered).
+
+Tabler Icons are available through the same catalog mechanism as AWS icons.
+Their stable catalog IDs start at `100000`; see
+`etc/resources/aws/service-index.csv` for the name-to-ID mapping.
+
+```xml
+<item id="104109" /> <!-- Tabler: server -->
+```
+
+Refresh the vendored SVG files and catalog entries with
+`npm run import:tabler-icons` after updating `@tabler/icons`.
+Tabler Icons are distributed under the MIT license included with the assets.
+
+Yamaha Network Diagram Icons use the same catalog mechanism with IDs starting
+at `200000`. The original SVG files are redistributed unchanged under CC BY-ND
+4.0; attribution is included alongside the assets.
+
+```xml
+<item id="200000" /> <!-- Yamaha network icon -->
+```
+
+Refresh them from Yamaha's official ZIP with `npm run import:yamaha-icons`.
+See the bundled `ATTRIBUTION.txt` for Yamaha's CC BY-ND 4.0 terms.
 
 ```xml
 <public-subnet title="Public Subnet">
@@ -211,8 +258,24 @@ Draws an elbowed arrow between `<item>` elements. Must be a direct child of `<fr
 |---|---|
 | `src` | Catalog ID of the arrow start item |
 | `dst` | Catalog ID of the arrow end item |
+| `kind` | `route` (thin structural path) or `traffic` (strong directional flow) |
+| `color` | Per-line CSS/hex stroke color |
+| `stroke-width` | Per-line stroke width; defaults to 1 for route and 2 for traffic |
+| `stroke-style` | `solid`, `dashed`, or `dotted` |
+| `start-arrowhead` / `end-arrowhead` | Independently set each end to `none`, `arrow`, `triangle`, `stealth`, `diamond`, or `oval` |
+| `arrowhead` | Backward-compatible alias for `end-arrowhead` |
 
-Arrows are always rendered in **elbowed (right-angle)** style.  
+Connections are always rendered in **elbowed (right-angle)** style. Route lines
+use circular endpoints by default and are drawn below traffic lines; traffic
+sharing a route is assigned a separate candidate lane where space permits.
+Routes that fan out from or converge on the same side of an item automatically
+share a short trunk and render a circular junction at the branch point.
+
+At an interior crossing, SVG and PPTX place a 6px background-colored rectangle
+between the lower and upper lines. The color follows the uppermost opaque
+container at that point and otherwise uses the slide background. The mask stays
+smaller than the standard 8px lane gap so adjacent lines are not erased.
+Endpoint touches and parallel overlaps are not treated as crossings.
 Start and end points connect to the **midpoint of the nearest edge** of the icon image or label text element.  
 When the connection direction is downward, the label text element edge is used; otherwise the icon image edge is used.  
 Edges are fixed with Excalidraw's `fixedPoint` binding, so arrows snap correctly when the file is opened.
@@ -305,6 +368,7 @@ paths:
   asset_package:       etc/resources/aws/svg
   service_catalog_csv: etc/resources/aws/service-catalog.csv
   output_frames:       output/aws-frames
+  pptx_exporter_wasm:  packages/xaligo/wasm/pptx_exporter.wasm
 
 legend:
   offset_x:  120

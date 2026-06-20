@@ -1,0 +1,16 @@
+<frame width="960" height="480" class="pa-4">
+  <generic-group title="Yamaha Network Icons" align="middle-spread">
+    <item id="200025" /> <!-- network_user -->
+    <item id="200005" /> <!-- desktop_pc -->
+    <item id="200046" /> <!-- smartphone -->
+    <item id="200036" /> <!-- router_general -->
+    <item id="200013" /> <!-- l2_switch_general -->
+    <item id="200041" /> <!-- server -->
+  </generic-group>
+
+  <connection src="200025" dst="200005" />
+  <connection src="200005" dst="200036" />
+  <connection src="200046" dst="200036" />
+  <connection src="200036" dst="200013" />
+  <connection src="200013" dst="200041" />
+</frame>

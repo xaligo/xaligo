@@ -2,6 +2,7 @@ paths:
   asset_package:        etc/resources/aws/svg
   service_catalog_csv:  etc/resources/aws/service-catalog.csv
   output_frames:        output/aws-frames
+  pptx_exporter_wasm:   packages/xaligo/wasm/pptx_exporter.wasm
 
 legend:
   offset_x:  120

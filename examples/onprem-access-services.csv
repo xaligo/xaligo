@@ -1,0 +1,12 @@
+# On-premises access sample
+# id,OfficialName,Abbreviation,Summary,Usage,Notes
+104733,User,User,On-premises user,Uses the system,
+101804,Desktop PC,PC,Corporate desktop device,Access from office LAN,
+101897,Smartphone,Mobile,Mobile device,Access over site network,
+104032,Site Router,Router,On-premises edge router,Internet uplink,
+104915,Internet,Internet,Public internet,Path to AWS edge,
+1178,Amazon CloudFront,CloudFront,Content delivery network,Public entry point,
+227,AWS WAF,WAF,Web application firewall,Application protection,
+1182,Elastic Load Balancing,ALB,Application load balancing,Distributes requests,
+27,Amazon EC2,EC2,Application server,Runs the web application,
+117,Amazon RDS,RDS,Managed relational database,Stores application data,

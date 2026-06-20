@@ -153,8 +153,12 @@ func jsBuildPptxPlan(_ js.Value, args []js.Value) any {
 	if err != nil {
 		return jsResult("", err)
 	}
+	themedSceneJSON, err := excalidraw.ApplyThemeJSON([]byte(sceneJSON), opts.Theme)
+	if err != nil {
+		return jsResult("", err)
+	}
 	opts.LegendEntries = legendEntries(entries)
-	planJSON, err := pptxplan.BuildPlanJSON(sceneJSON, opts)
+	planJSON, err := pptxplan.BuildPlanJSON(string(themedSceneJSON), opts)
 	if err != nil {
 		return jsResult("", fmt.Errorf("build pptx plan: %w", err))
 	}

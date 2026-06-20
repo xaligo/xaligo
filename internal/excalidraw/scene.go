@@ -10,6 +10,7 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -726,8 +727,21 @@ func renderConnections(connections []*model.Node, itemImgRects map[int][4]float6
 	// into each referenced element's boundElements array.
 	// key = element ID, value = slice of {"type":"arrow","id":<arrowID>}
 	boundMap := map[string][]map[string]any{}
+	type junctionCandidate struct {
+		edge  [2]float64
+		side  string
+		color string
+		count int
+		seed  int
+	}
+	junctionCandidates := map[string]*junctionCandidate{}
 
-	for i, conn := range connections {
+	orderedConnections := append([]*model.Node(nil), connections...)
+	sort.SliceStable(orderedConnections, func(i, j int) bool {
+		return connectionKindPriority(connectionKind(orderedConnections[i])) < connectionKindPriority(connectionKind(orderedConnections[j]))
+	})
+
+	for i, conn := range orderedConnections {
 		srcIDStr := strings.TrimSpace(conn.Attrs["src"])
 		dstIDStr := strings.TrimSpace(conn.Attrs["dst"])
 		srcID, err1 := strconv.Atoi(srcIDStr)
@@ -797,6 +811,24 @@ func renderConnections(connections []*model.Node, itemImgRects map[int][4]float6
 		seed := srcID*1_000_000 + dstID*1_000 + i + 1
 		connID := fmt.Sprintf("conn-%d-%d-%d", srcID, dstID, i)
 
+		style := resolveConnectionStyle(conn)
+		if style.Kind == "route" {
+			for _, endpoint := range []struct {
+				id   string
+				edge [2]float64
+				side string
+				seed int
+			}{{srcElemID, srcEdge, srcSide, seed}, {dstElemID, dstEdge, dstSide, seed + 1}} {
+				key := endpoint.id + "|" + endpoint.side
+				candidate := junctionCandidates[key]
+				if candidate == nil {
+					candidate = &junctionCandidate{edge: endpoint.edge, side: endpoint.side, color: style.Color, seed: endpoint.seed}
+					junctionCandidates[key] = candidate
+				}
+				candidate.count++
+			}
+		}
+
 		// arrowhead-size 属性: "s" / "m" / "l"。未指定時は最小 "s" を使用する。
 		ahSize := strings.TrimSpace(conn.Attrs["arrowhead-size"])
 		if ahSize != "s" && ahSize != "m" && ahSize != "l" {
@@ -808,8 +840,8 @@ func renderConnections(connections []*model.Node, itemImgRects map[int][4]float6
 			"x": srcEdge[0], "y": srcEdge[1],
 			"width": math.Abs(dx), "height": math.Abs(dy),
 			"angle":       0,
-			"strokeColor": "#1e1e1e", "backgroundColor": "transparent",
-			"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
+			"strokeColor": style.Color, "backgroundColor": "transparent",
+			"fillStyle": "solid", "strokeWidth": style.Width, "strokeStyle": style.StrokeStyle,
 			"roughness": 0, "opacity": 100,
 			"groupIds": []string{}, "roundness": map[string]any{"type": 2},
 			"seed": seed, "version": 1, "versionNonce": seed,
@@ -829,17 +861,47 @@ func renderConnections(connections []*model.Node, itemImgRects map[int][4]float6
 				"gap":        5.0,
 				"fixedPoint": []float64{dstFP[0], dstFP[1]},
 			},
-			"startArrowhead":     nil,
-			"endArrowhead":       "arrow",
+			"startArrowhead":     style.ExcalidrawStartArrowhead,
+			"endArrowhead":       style.ExcalidrawEndArrowhead,
 			"endArrowheadSize":   ahSize,
 			"startArrowheadSize": ahSize,
 			"elbowed":            true,
+			"customData": map[string]any{
+				"xaligoConnectorKind":           style.Kind,
+				"xaligoConnectorStartArrowhead": style.StartArrowhead,
+				"xaligoConnectorEndArrowhead":   style.EndArrowhead,
+			},
 		})
 
 		// Register this arrow in boundMap for both endpoints.
 		entry := map[string]any{"type": "arrow", "id": connID}
 		boundMap[srcElemID] = append(boundMap[srcElemID], entry)
 		boundMap[dstElemID] = append(boundMap[dstElemID], entry)
+	}
+
+	junctionKeys := make([]string, 0, len(junctionCandidates))
+	for key, candidate := range junctionCandidates {
+		if candidate.count >= 2 {
+			junctionKeys = append(junctionKeys, key)
+		}
+	}
+	sort.Strings(junctionKeys)
+	for i, key := range junctionKeys {
+		candidate := junctionCandidates[key]
+		point := extendConnectionPoint(candidate.edge, candidate.side, 25)
+		const diameter = 8.0
+		*elements = append(*elements, map[string]any{
+			"id": fmt.Sprintf("junction-%d", i), "type": "ellipse",
+			"x": point[0] - diameter/2, "y": point[1] - diameter/2,
+			"width": diameter, "height": diameter, "angle": 0,
+			"strokeColor": candidate.color, "backgroundColor": candidate.color,
+			"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
+			"roughness": 0, "opacity": 100, "groupIds": []string{}, "roundness": nil,
+			"seed": candidate.seed, "version": 1, "versionNonce": candidate.seed,
+			"isDeleted": false, "boundElements": nil, "updated": updated,
+			"link": nil, "locked": false, "frameId": nil,
+			"customData": map[string]any{"xaligoJunction": true},
+		})
 	}
 
 	// Second pass: write back boundElements into each referenced element so that
@@ -856,5 +918,105 @@ func renderConnections(connections []*model.Node, itemImgRects map[int][4]float6
 			elem["boundElements"] = append(existing, entries...)
 			(*elements)[idx] = elem
 		}
+	}
+}
+
+func extendConnectionPoint(point [2]float64, side string, distance float64) [2]float64 {
+	switch side {
+	case "top":
+		point[1] -= distance
+	case "bottom":
+		point[1] += distance
+	case "left":
+		point[0] -= distance
+	default:
+		point[0] += distance
+	}
+	return point
+}
+
+type resolvedConnectionStyle struct {
+	Kind                     string
+	Color                    string
+	Width                    float64
+	StrokeStyle              string
+	StartArrowhead           string
+	EndArrowhead             string
+	ExcalidrawStartArrowhead any
+	ExcalidrawEndArrowhead   any
+}
+
+func connectionKind(conn *model.Node) string {
+	kind := strings.ToLower(strings.TrimSpace(conn.Attrs["kind"]))
+	if kind == "route" || kind == "traffic" {
+		return kind
+	}
+	return "connection"
+}
+
+func connectionKindPriority(kind string) int {
+	switch kind {
+	case "route":
+		return 0
+	case "traffic":
+		return 2
+	default:
+		return 1
+	}
+}
+
+func resolveConnectionStyle(conn *model.Node) resolvedConnectionStyle {
+	kind := connectionKind(conn)
+	style := resolvedConnectionStyle{
+		Kind: kind, Color: "#1e1e1e", Width: 1, StrokeStyle: "solid",
+		StartArrowhead: "none", EndArrowhead: "arrow",
+		ExcalidrawStartArrowhead: nil, ExcalidrawEndArrowhead: "arrow",
+	}
+	switch kind {
+	case "route":
+		style.Color = "#64748b"
+		style.StartArrowhead = "oval"
+		style.EndArrowhead = "oval"
+		style.ExcalidrawStartArrowhead = "dot"
+		style.ExcalidrawEndArrowhead = "dot"
+	case "traffic":
+		style.Color = "#2563eb"
+		style.Width = 2
+	}
+	if color := strings.TrimSpace(conn.Attrs["color"]); color != "" {
+		style.Color = color
+	}
+	widthValue := strings.TrimSpace(conn.Attrs["stroke-width"])
+	if widthValue == "" {
+		widthValue = strings.TrimSpace(conn.Attrs["width"])
+	}
+	if width, err := strconv.ParseFloat(widthValue, 64); err == nil && width > 0 {
+		style.Width = width
+	}
+	if strokeStyle := strings.ToLower(strings.TrimSpace(conn.Attrs["stroke-style"])); strokeStyle == "solid" || strokeStyle == "dashed" || strokeStyle == "dotted" {
+		style.StrokeStyle = strokeStyle
+	}
+	endArrowhead := strings.TrimSpace(conn.Attrs["end-arrowhead"])
+	if endArrowhead == "" {
+		endArrowhead = strings.TrimSpace(conn.Attrs["arrowhead"])
+	}
+	style.StartArrowhead, style.ExcalidrawStartArrowhead = resolveArrowhead(conn.Attrs["start-arrowhead"], style.StartArrowhead, style.ExcalidrawStartArrowhead)
+	style.EndArrowhead, style.ExcalidrawEndArrowhead = resolveArrowhead(endArrowhead, style.EndArrowhead, style.ExcalidrawEndArrowhead)
+	return style
+}
+
+func resolveArrowhead(value, current string, currentExcalidraw any) (string, any) {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "none":
+		return "none", nil
+	case "arrow", "triangle", "diamond":
+		value = strings.ToLower(strings.TrimSpace(value))
+		return value, value
+	case "stealth":
+		return "stealth", "arrow"
+	case "oval":
+		return "oval", "dot"
+	default:
+		return current, currentExcalidraw
 	}
 }

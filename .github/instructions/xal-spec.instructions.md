@@ -156,6 +156,15 @@ Use the same catalog IDs as `<item id="N">` for `src` / `dst`.
 | `src` | int | ✓ | Catalog ID of the arrow start icon |
 | `dst` | int | ✓ | Catalog ID of the arrow end icon |
 | `arrowhead-size` | string | — | Arrowhead size: `"s"` (small) / `"m"` (medium) / `"l"` (large). Default `"s"` |
+| `kind` | string | — | `route` for a structural path with circular endpoints, `traffic` for directional flow |
+| `color` | string | — | Stroke color override |
+| `stroke-width` | float | — | Positive stroke width override |
+| `stroke-style` | string | — | `solid`, `dashed`, or `dotted` |
+| `start-arrowhead` / `end-arrowhead` | string | — | Independently set either end to `none`, `arrow`, `triangle`, `stealth`, `diamond`, or `oval` |
+| `arrowhead` | string | — | Backward-compatible alias for `end-arrowhead` |
+
+`kind="route"` defaults both arrowheads to `oval`. Set
+`start-arrowhead="none" end-arrowhead="none"` to suppress the connectors.
 
 **Arrow spec:**
 - `elbowed: true` — always right-angle connectors (Excalidraw "elbow connector")

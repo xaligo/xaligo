@@ -1,0 +1,21 @@
+<frame width="960" height="540" class="pa-4">
+  <generic-group title="Route and Traffic" align="middle-spread">
+    <item id="200005" /> <!-- desktop_pc -->
+    <item id="200036" /> <!-- router_general -->
+    <item id="200013" /> <!-- l2_switch_general -->
+    <item id="200041" /> <!-- server -->
+  </generic-group>
+
+  <!-- Structural path: thin gray line without an arrowhead. -->
+  <connection src="200036" dst="200013" kind="route" />
+
+  <!-- Traffic over the same path: stronger blue arrow on an offset lane. -->
+  <connection src="200036" dst="200013" kind="traffic" />
+
+  <!-- Per-line style overrides. -->
+  <connection src="200005" dst="200036" kind="traffic"
+              color="#16a34a" stroke-width="3" arrowhead="triangle" />
+  <connection src="200013" dst="200041" kind="traffic"
+              color="#dc2626" stroke-style="dotted"
+              start-arrowhead="oval" end-arrowhead="diamond" />
+</frame>

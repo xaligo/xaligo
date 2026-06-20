@@ -6,10 +6,15 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
-    "clean": "npm run clean --workspaces --if-present"
+    "clean": "npm run clean --workspaces --if-present",
+    "import:tabler-icons": "node scripts/import_tabler_icons.mjs",
+    "import:yamaha-icons": "node scripts/import_yamaha_icons.mjs"
   },
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=9.0.0"
+  },
+  "devDependencies": {
+    "jszip": "^3.10.1"
   }
 }

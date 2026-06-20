@@ -16,6 +16,7 @@ func NewRootCmd() *cobra.Command {
 	}
 
 	root.AddCommand(controller.InitRenderCmd())
+	root.AddCommand(controller.InitValidateCmd())
 	root.AddCommand(controller.InitInitCmd())
 	root.AddCommand(controller.InitVersionCmd())
 	root.AddCommand(controller.InitAddCmd())

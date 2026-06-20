@@ -1,4 +1,9 @@
 .DS_Store
+*.swp
+~$*
+
+# Generated presentation artifacts
+*.pptx
 .bin/
 
 # Generated Excalidraw output

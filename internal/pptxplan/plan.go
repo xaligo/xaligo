@@ -15,6 +15,9 @@ import (
 const (
 	defaultPxPerInch = 96.0
 	anchorGrid       = 5
+	// Keep the mask smaller than the default 8 px lane gap so a jump does not
+	// accidentally erase a nearby parallel lane.
+	lineJumpSizePx = 6.0
 )
 
 // paperSizeIn lists portrait paper dimensions in inches (width × height).
@@ -137,6 +140,7 @@ func BuildPlan(scene *Scene, opt Options) Plan {
 	}
 
 	style := resolveConnectorStyle(opt.ArrowStyle)
+	background := normalizeColor(backgroundColor(scene), "FFFFFF")
 	stubPx := 20.0
 	if opt.ArrowStubPx > 0 {
 		stubPx = opt.ArrowStubPx
@@ -172,12 +176,15 @@ func BuildPlan(scene *Scene, opt Options) Plan {
 	}
 	sort.Strings(gridIDs)
 	for _, id := range gridIDs {
-		ops = append(ops, anchorGridOps(prepared.gridRects[id], frame, ppi)...)
+		ops = append(ops, anchorGridOps(prepared.gridRects[id], frame, ppi, background)...)
 	}
 
 	// 2) Containers/shapes in scene order.
 	for _, el := range elements {
 		if el.ID == "paper-frame" {
+			continue
+		}
+		if el.CustomData != nil && el.CustomData.Junction {
 			continue
 		}
 		switch el.Type {
@@ -197,27 +204,47 @@ func BuildPlan(scene *Scene, opt Options) Plan {
 
 	ordered := make([]preparedConnector, len(prepared.routed))
 	copy(ordered, prepared.routed)
-	sort.Slice(ordered, func(i, j int) bool { return ordered[i].req.ID < ordered[j].req.ID })
+	sort.Slice(ordered, func(i, j int) bool {
+		pi := connectorKindPriority(ordered[i].req.Kind)
+		pj := connectorKindPriority(ordered[j].req.Kind)
+		if pi != pj {
+			return pi < pj
+		}
+		return ordered[i].req.ID < ordered[j].req.ID
+	})
 	reqs := make([]routeRequest, len(ordered))
 	for i, pc := range ordered {
 		reqs[i] = pc.req
 	}
+	junctions := applyRouteJunctions(reqs, stubPx)
 	rOpt := defaultRouterOptions()
 	rOpt.Stub = stubPx
 	rOpt.LineMargin = marginPx
+	rOpt.Reserved = collectContainerBorderPaths(elements)
 	routed := routeConnections(reqs, obstacles, rOpt)
 	elByConn := map[string]*Element{}
 	for _, pc := range ordered {
 		elByConn[pc.req.ID] = pc.el
 	}
-	for _, path := range routed {
+	for i, path := range routed {
 		el := elByConn[path.ID]
 		if el == nil {
 			continue
 		}
+		for _, crossing := range pathCrossings(path, routed[:i]) {
+			maskColor := lineJumpBackground(crossing, elements, background)
+			ops = append(ops, lineJumpMaskOp(crossing, frame, ppi, maskColor))
+		}
 		if op, ok := polylineOp(el, path.Points, frame, ppi, style); ok {
 			ops = append(ops, op)
 		}
+	}
+	for _, junction := range junctions {
+		el := elByConn[junction.ConnectorID]
+		if el == nil {
+			continue
+		}
+		ops = append(ops, junctionOp(junction.Point, frame, ppi, connectorLine(el, style)))
 	}
 
 	// 4) Icons and labels on top so routed lines never visually cover them.
@@ -241,11 +268,141 @@ func BuildPlan(scene *Scene, opt Options) Plan {
 		Slide: PlanSlide{
 			W:          layoutW,
 			H:          layoutH,
-			Background: normalizeColor(backgroundColor(scene), "FFFFFF"),
+			Background: background,
 		},
 		Ops:    ops,
 		Legend: buildLegend(scene, opt.LegendEntries),
 	}
+}
+
+type routeJunction struct {
+	Point       pt
+	ConnectorID string
+}
+
+type junctionEndpoint struct {
+	requestIndex int
+	rect         rect
+	side         side
+	gap          float64
+	source       bool
+}
+
+// applyRouteJunctions makes route fan-out/fan-in connections share a centered
+// anchor and stub. The returned points are drawn after the route lines, making
+// the branch visually explicit. Traffic and ordinary connections stay
+// independent.
+func applyRouteJunctions(requests []routeRequest, stub float64) []routeJunction {
+	groups := map[string][]junctionEndpoint{}
+	keys := []string{}
+	add := func(key string, endpoint junctionEndpoint) {
+		if _, exists := groups[key]; !exists {
+			keys = append(keys, key)
+		}
+		groups[key] = append(groups[key], endpoint)
+	}
+	for i, req := range requests {
+		if req.Kind != "route" {
+			continue
+		}
+		add(junctionGroupKey("src", req.Src, req.SrcSide), junctionEndpoint{i, req.Src, req.SrcSide, req.SrcGap, true})
+		add(junctionGroupKey("dst", req.Dst, req.DstSide), junctionEndpoint{i, req.Dst, req.DstSide, req.DstGap, false})
+	}
+
+	junctions := []routeJunction{}
+	seen := map[string]bool{}
+	for _, key := range keys {
+		group := groups[key]
+		if len(group) < 2 {
+			continue
+		}
+		first := group[0]
+		anchor := anchorPoint(first.rect, first.side, anchorGrid/2)
+		for _, endpoint := range group {
+			copyPoint := anchor
+			if endpoint.source {
+				requests[endpoint.requestIndex].SrcAnchor = &copyPoint
+			} else {
+				requests[endpoint.requestIndex].DstAnchor = &copyPoint
+			}
+		}
+		point := anchor
+		if first.gap > 0 {
+			point = extend(point, first.side, first.gap)
+		}
+		point = extend(point, first.side, stub)
+		pointKey := fmt.Sprintf("%.4f|%.4f", point.X, point.Y)
+		if !seen[pointKey] {
+			junctions = append(junctions, routeJunction{Point: point, ConnectorID: requests[first.requestIndex].ID})
+			seen[pointKey] = true
+		}
+	}
+	return junctions
+}
+
+func junctionGroupKey(prefix string, r rect, side side) string {
+	return fmt.Sprintf("%s|%.4f|%.4f|%.4f|%.4f|%s", prefix, r.X, r.Y, r.W, r.H, side)
+}
+
+func junctionOp(point pt, frame rect, ppi float64, line LineStyle) DrawOp {
+	const diameterPx = 8.0
+	diameter := diameterPx / ppi
+	return DrawOp{
+		Kind: "ellipse",
+		X:    (point.X-frame.X)/ppi - diameter/2,
+		Y:    (point.Y-frame.Y)/ppi - diameter/2,
+		W:    diameter,
+		H:    diameter,
+		Fill: &FillStyle{Color: line.Color, Transparency: line.Transparency},
+		Line: &LineStyle{Color: line.Color, Width: math.Max(0.75, line.Width), Dash: "solid", Transparency: line.Transparency},
+	}
+}
+
+func lineJumpMaskOp(crossing pt, frame rect, ppi float64, background string) DrawOp {
+	size := lineJumpSizePx / ppi
+	return DrawOp{
+		Kind: "rect",
+		X:    (crossing.X-frame.X)/ppi - size/2,
+		Y:    (crossing.Y-frame.Y)/ppi - size/2,
+		W:    size,
+		H:    size,
+		Fill: &FillStyle{Color: background, Transparency: 0},
+		Line: &LineStyle{Color: background, Width: 0.25, Transparency: 100},
+	}
+}
+
+// lineJumpBackground returns the uppermost opaque shape fill beneath a crossing.
+// Transparent or partially transparent fills fall back to the slide background,
+// as reproducing their composited color would require renderer-specific blending.
+func lineJumpBackground(crossing pt, elements []*Element, fallback string) string {
+	color := fallback
+	for _, el := range elements {
+		if el.Type != "frame" && el.Type != "rectangle" && el.Type != "ellipse" {
+			continue
+		}
+		if el.BackgroundColor == "" || el.BackgroundColor == "transparent" {
+			continue
+		}
+		if el.Opacity != nil && *el.Opacity < 100 {
+			continue
+		}
+		inside := crossing.X >= el.X && crossing.X <= el.X+el.Width &&
+			crossing.Y >= el.Y && crossing.Y <= el.Y+el.Height
+		if el.Type == "ellipse" && inside {
+			rx, ry := el.Width/2, el.Height/2
+			if rx <= 0 || ry <= 0 {
+				inside = false
+			} else {
+				cx, cy := el.X+rx, el.Y+ry
+				dx, dy := (crossing.X-cx)/rx, (crossing.Y-cy)/ry
+				inside = dx*dx+dy*dy <= 1
+			}
+		}
+		if inside {
+			color = normalizeColor(el.BackgroundColor, color)
+		}
+	}
+	return color
 }
 
 func buildLegend(scene *Scene, entries []LegendEntry) []LegendEntry {
@@ -382,6 +539,7 @@ func prepareConnectors(connectors []*Element, byID map[string]*Element) prepared
 		it := items[id]
 		req := routeRequest{
 			ID:      id,
+			Kind:    connectorKind(it.el),
 			Src:     it.src,
 			Dst:     it.dst,
 			SrcSide: it.srcSide,
@@ -515,6 +673,38 @@ func collectObstacles(elements []*Element) []rect {
 		rects = append(rects, r)
 	}
 	return rects
+}
+
+// collectContainerBorderPaths reserves a clear lane beside visible container
+// strokes. Borders are routing guides rather than solid obstacles: connectors
+// can cross them to move between nested groups, but parallel overlap and paths
+// inside LineMargin are penalised by the normal lane-scoring logic.
+func collectContainerBorderPaths(elements []*Element) [][]segment {
+	paths := make([][]segment, 0)
+	for _, el := range elements {
+		if el.ID == "paper-frame" || (el.Type != "frame" && el.Type != "rectangle") {
+			continue
+		}
+		stroke := strings.ToLower(strings.TrimSpace(el.StrokeColor))
+		if stroke == "" || stroke == "transparent" || stroke == "#00000000" {
+			continue
+		}
+		r, ok := rectOf(el)
+		if !ok {
+			continue
+		}
+		topLeft := pt{X: r.X, Y: r.Y}
+		topRight := pt{X: r.X + r.W, Y: r.Y}
+		bottomLeft := pt{X: r.X, Y: r.Y + r.H}
+		bottomRight := pt{X: r.X + r.W, Y: r.Y + r.H}
+		paths = append(paths,
+			[]segment{{A: topLeft, B: topRight}},
+			[]segment{{A: bottomLeft, B: bottomRight}},
+			[]segment{{A: topLeft, B: bottomLeft}},
+			[]segment{{A: topRight, B: bottomRight}},
+		)
+	}
+	return paths
 }
 
 func sideFromFixedPoint(fp []float64) (side, bool) {
@@ -692,7 +882,7 @@ func imageOp(el *Element, files map[string]SceneFile, frame rect, ppi float64) (
 	}, true
 }
 
-func anchorGridOps(r rect, frame rect, ppi float64) []DrawOp {
+func anchorGridOps(r rect, frame rect, ppi float64, background string) []DrawOp {
 	cellW := r.W / float64(anchorGrid)
 	cellH := r.H / float64(anchorGrid)
 	ops := make([]DrawOp, 0, anchorGrid*anchorGrid)
@@ -706,8 +896,8 @@ func anchorGridOps(r rect, frame rect, ppi float64) []DrawOp {
 				Y:    (cy - frame.Y) / ppi,
 				W:    cellW / ppi,
 				H:    cellH / ppi,
-				Fill: &FillStyle{Color: "FFFFFF", Transparency: 0},
-				Line: &LineStyle{Color: "FFFFFF", Width: 0.25, Dash: "solid", Transparency: 0},
+				Fill: &FillStyle{Color: background, Transparency: 0},
+				Line: &LineStyle{Color: background, Width: 0.25, Dash: "solid", Transparency: 0},
 			})
 		}
 	}
@@ -782,17 +972,69 @@ func rawLineOp(el *Element, frame rect, ppi float64, style connectorStyle) (Draw
 
 func connectorLine(el *Element, style connectorStyle) LineStyle {
 	base := lineProps(el)
-	head := "none"
-	if el.Type == "arrow" {
-		head = style.Head
-	}
+	kind := connectorKind(el)
+	beginHead, endHead := connectorArrowheads(el)
 	width := base.Width
-	if style.HasWidth {
-		width = style.Width
+	switch kind {
+	case "route":
+		if beginHead == "" {
+			beginHead = "oval"
+		}
+		if endHead == "" {
+			endHead = "oval"
+		}
+	case "traffic":
+		if endHead == "" {
+			endHead = style.Head
+		}
+	default:
+		if endHead == "" && el.Type == "arrow" {
+			endHead = style.Head
+		}
+		if style.HasWidth {
+			width = style.Width
+		}
+	}
+	if beginHead == "" {
+		beginHead = "none"
+	}
+	if endHead == "" {
+		endHead = "none"
 	}
 	base.Width = width
-	base.EndArrowType = head
+	base.BeginArrowType = beginHead
+	base.EndArrowType = endHead
 	return base
+}
+
+func connectorKind(el *Element) string {
+	if el.CustomData == nil {
+		return "connection"
+	}
+	switch el.CustomData.ConnectorKind {
+	case "route", "traffic":
+		return el.CustomData.ConnectorKind
+	default:
+		return "connection"
+	}
+}
+
+func connectorKindPriority(kind string) int {
+	switch kind {
+	case "route":
+		return 0
+	case "traffic":
+		return 2
+	default:
+		return 1
+	}
+}
+
+func connectorArrowheads(el *Element) (string, string) {
+	if el.CustomData == nil {
+		return "", ""
+	}
+	return el.CustomData.ConnectorStartArrowhead, el.CustomData.ConnectorEndArrowhead
 }
 
 // ── Styling helpers ──────────────────────────────────────────────────────────
@@ -802,6 +1044,8 @@ func lineProps(el *Element) LineStyle {
 	dash := "solid"
 	if el.StrokeStyle == "dashed" {
 		dash = "dash"
+	} else if el.StrokeStyle == "dotted" {
+		dash = "dot"
 	}
 	transparency := opacityToTransparency(el.Opacity)
 	if color == "FFFFFF" && el.StrokeColor == "transparent" {

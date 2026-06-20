@@ -13,6 +13,7 @@ type appYAML struct {
 		AssetPackage      string `yaml:"asset_package"`
 		ServiceCatalogCSV string `yaml:"service_catalog_csv"`
 		OutputFrames      string `yaml:"output_frames"`
+		PptxExporterWASM  string `yaml:"pptx_exporter_wasm"`
 	} `yaml:"paths"`
 	Legend struct {
 		OffsetX  float64 `yaml:"offset_x"`
@@ -35,12 +36,13 @@ type LegendConfig struct {
 
 // Config holds application-wide configuration resolved from etc/app.yaml.
 type Config struct {
-	ProjectRoot   string
-	AssetDir_     string // absolute path to Asset-Package
-	OutFramesDir  string // absolute path to generated frames output dir
-	SvcCatalogCSV string // absolute path to service-catalog.csv
-	Legend        LegendConfig
-	ItemIconSize  float64 // default max icon size for <item> elements (px)
+	ProjectRoot      string
+	AssetDir_        string // absolute path to Asset-Package
+	OutFramesDir     string // absolute path to generated frames output dir
+	SvcCatalogCSV    string // absolute path to service-catalog.csv
+	PptxExporterWASM string // absolute path to the PPTX WASM exporter
+	Legend           LegendConfig
+	ItemIconSize     float64 // default max icon size for <item> elements (px)
 }
 
 // New loads etc/app.yaml from the project root and returns a resolved Config.
@@ -52,6 +54,7 @@ func New() *Config {
 	def.Paths.AssetPackage = "etc/resources/aws/svg"
 	def.Paths.ServiceCatalogCSV = "etc/resources/aws/service-catalog.csv"
 	def.Paths.OutputFrames = "output/aws-frames"
+	def.Paths.PptxExporterWASM = "packages/xaligo/wasm/pptx_exporter.wasm"
 	def.Legend.OffsetX = 120
 	def.Legend.OffsetY = 0
 	def.Legend.IconSize = 32
@@ -71,11 +74,12 @@ func New() *Config {
 	}
 
 	return &Config{
-		ProjectRoot:   root,
-		AssetDir_:     abs(def.Paths.AssetPackage),
-		OutFramesDir:  abs(def.Paths.OutputFrames),
-		SvcCatalogCSV: abs(def.Paths.ServiceCatalogCSV),
-		ItemIconSize:  def.Item.IconSize,
+		ProjectRoot:      root,
+		AssetDir_:        abs(def.Paths.AssetPackage),
+		OutFramesDir:     abs(def.Paths.OutputFrames),
+		SvcCatalogCSV:    abs(def.Paths.ServiceCatalogCSV),
+		PptxExporterWASM: abs(def.Paths.PptxExporterWASM),
+		ItemIconSize:     def.Item.IconSize,
 		Legend: LegendConfig{
 			OffsetX:  def.Legend.OffsetX,
 			OffsetY:  def.Legend.OffsetY,

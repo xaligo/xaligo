@@ -54,7 +54,7 @@ Example output:
 113,Amazon ElastiCache,EC,In-memory caching,Session and query cache,
 ```
 
-> **Note:** `generate excalidraw` warns to stderr when an `<item id="N">` in the .xal
+> **Note:** `render --format excalidraw` warns to stderr when an `<item id="N">` in the .xal
 > is not listed in services.csv, or when a services.csv entry has no corresponding
 > `<item>` in the diagram.  Keep both files in sync to suppress these warnings.
 
@@ -170,16 +170,16 @@ DSL specification: [xal-spec.instructions.md](xal-spec.instructions.md)
 
 ---
 
-## Step 4 — Generate the Excalidraw file
+## Step 4 — Render the Excalidraw file
 
 ```bash
-xaligo generate excalidraw \
-  --xal examples/sample.xal \
+xaligo render examples/sample.xal \
+  --format excalidraw \
   -o output/sample.excalidraw \
   --services examples/services.csv
 ```
 
-`--services` is a **required parameter** for this workflow. The CSV provides
+`--services` is strongly recommended for this workflow. The CSV provides
 icon label overrides and service metadata.
 
 > **Note:** Create the output directory if it does not already exist.
@@ -194,13 +194,15 @@ icon label overrides and service metadata.
 | Command | Description |
 |---|---|
 | `grep -i "<name>" etc/resources/aws/service-index.csv` | Search for a service ID |
-| `xaligo generate excalidraw --xal <xal> -o <out> --services <csv>` | Convert .xal → .excalidraw with legend |
-| `xaligo generate pptx --xal <xal> -o <out.pptx> --services <csv> --paper A3 --orientation landscape` | Convert .xal → PPTX with routed connectors and 4-column legend pages |
+| `xaligo render <xal> --format excalidraw -o <out> --services <csv>` | Convert .xal → .excalidraw with legend |
+| `xaligo render <xal> --format pptx -o <out.pptx> --services <csv> --paper A3 --orientation landscape` | Convert .xal → PPTX when the WASI exporter is configured |
 | `xaligo add service --list <csv> --file <excalidraw>` | Add service icons to an existing file |
 | `xaligo render <xal> -o <excalidraw>` | Convert .xal → .excalidraw without legend |
 
 ## PPTX Notes
 
+- Native CLI export requires `pptx_exporter.wasm`; the npm/WASM API currently
+  exports through PptxGenJS.
 - PPTX export adds separate legend slide(s) after the diagram slide.
 - Legend pages use 4 columns and show icon, abbreviation, and official name.
 - Use `--paper A3 --orientation landscape` for the current large AWS sample.

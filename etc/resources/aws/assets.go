@@ -14,6 +14,8 @@ import "embed"
 //   - svg/Architecture-Service-Icons/  — AWS service architecture icon SVGs
 //   - svg/Category-Icons/              — AWS category icon SVGs
 //   - svg/Resource-Icons/              — AWS resource icon SVGs
+//   - svg/Tabler-Icons/                — vendored Tabler outline icons (MIT)
+//   - svg/Yamaha-Network-Icons/        — Yamaha network diagram icons (CC BY-ND 4.0)
 //
 //go:embed service-catalog.csv svg
 var Assets embed.FS

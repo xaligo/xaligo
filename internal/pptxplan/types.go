@@ -55,6 +55,14 @@ type Element struct {
 	IsDeleted       bool        `json:"isDeleted"`
 	StartBinding    *Binding    `json:"startBinding"`
 	EndBinding      *Binding    `json:"endBinding"`
+	CustomData      *CustomData `json:"customData"`
+}
+
+type CustomData struct {
+	ConnectorKind           string `json:"xaligoConnectorKind"`
+	ConnectorStartArrowhead string `json:"xaligoConnectorStartArrowhead"`
+	ConnectorEndArrowhead   string `json:"xaligoConnectorEndArrowhead"`
+	Junction                bool   `json:"xaligoJunction,omitempty"`
 }
 
 // ── Options driving the calculations ─────────────────────────────────────────
@@ -63,6 +71,7 @@ type Element struct {
 // They originate from the CLI / Go controller and are passed verbatim to the
 // WASM plan builder as JSON.
 type Options struct {
+	Theme         string        `json:"theme,omitempty"`
 	PxPerInch     float64       `json:"pxPerInch"`
 	ArrowStyle    string        `json:"arrowStyle"`
 	ArrowStubPx   float64       `json:"arrowStubPx"`
@@ -129,11 +138,12 @@ type DrawOp struct {
 }
 
 type LineStyle struct {
-	Color        string  `json:"color"`
-	Width        float64 `json:"width"`
-	Dash         string  `json:"dash"`
-	Transparency float64 `json:"transparency"`
-	EndArrowType string  `json:"endArrowType,omitempty"`
+	Color          string  `json:"color"`
+	Width          float64 `json:"width"`
+	Dash           string  `json:"dash"`
+	Transparency   float64 `json:"transparency"`
+	BeginArrowType string  `json:"beginArrowType,omitempty"`
+	EndArrowType   string  `json:"endArrowType,omitempty"`
 }
 
 type FillStyle struct {

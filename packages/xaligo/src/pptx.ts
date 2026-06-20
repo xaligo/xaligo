@@ -47,6 +47,8 @@ export interface PptxExportOptions {
   compression?: boolean;
 
   // Geometry options forwarded to the Go plan builder:
+  /** Shared renderer color theme. Default `'light'`. */
+  theme?: 'light' | 'dark';
   /** Pixels per inch for layout scaling. Default 96. */
   pxPerInch?: number;
   /** Connector arrowhead style. Default `'thin'` (a slender stealth arrow). */
@@ -89,8 +91,9 @@ interface PlanLegendEntry {
 interface PlanLine {
   color: string;
   width: number;
-  dash: string;
+  dash: 'solid' | 'dash' | 'dot';
   transparency: number;
+  beginArrowType?: ArrowHeadType;
   endArrowType?: ArrowHeadType;
 }
 
@@ -147,6 +150,7 @@ const CUST_GEOM = 'custGeom' as Parameters<pptxgen.Slide['addShape']>[0];
  */
 export function pptxPlanOptionsJSON(options: PptxExportOptions = {}): string {
   const o: Record<string, unknown> = {};
+  if (options.theme !== undefined) o.theme = options.theme;
   if (options.pxPerInch !== undefined) o.pxPerInch = options.pxPerInch;
   if (options.arrowStyle !== undefined) o.arrowStyle = options.arrowStyle;
   if (options.arrowStubPx !== undefined) o.arrowStubPx = options.arrowStubPx;
@@ -179,9 +183,9 @@ export async function drawPlanToPptx(
   slide.background = { color: parsed.slide.background || 'FFFFFF' };
 
   for (const op of parsed.ops) {
-    drawOp(slide, pptx, op);
+    await drawOp(slide, pptx, op);
   }
-  drawLegendSlides(pptx, parsed);
+  await drawLegendSlides(pptx, parsed);
 
   return pptx.write({
     outputType: options.outputType ?? 'uint8array',
@@ -189,7 +193,7 @@ export async function drawPlanToPptx(
   }) as Promise<PptxExportResult>;
 }
 
-function drawLegendSlides(pptx: pptxgen, plan: PptxPlan): void {
+async function drawLegendSlides(pptx: pptxgen, plan: PptxPlan): Promise<void> {
   const entries = (plan.legend ?? []).filter((e) => e.data && e.officialName);
   if (entries.length === 0) return;
 
@@ -233,13 +237,13 @@ function drawLegendSlides(pptx: pptxgen, plan: PptxPlan): void {
       slide.addText('Official name', { x: x + 1.05, y, w: Math.max(0.5, colW - 1.08), h: headerH, fontSize: 7, bold: true, color: '666666', margin: 0 });
     }
 
-    pageEntries.forEach((entry, i) => {
+    for (const [i, entry] of pageEntries.entries()) {
       const col = Math.floor(i / rowsPerCol);
       const row = i % rowsPerCol;
       const x = marginX + col * colW;
       const y = marginTop + titleH + headerH + row * rowH;
       if (entry.data) {
-        slide.addImage({ data: entry.data, x, y: y + 0.04, w: 0.2, h: 0.2 });
+        slide.addImage({ data: await imageDataForPptx(entry.data, 0.2), x, y: y + 0.04, w: 0.2, h: 0.2 });
       }
       slide.addText(entry.abbreviation || String(entry.catalogId), {
         x: x + 0.28,
@@ -265,7 +269,7 @@ function drawLegendSlides(pptx: pptxgen, plan: PptxPlan): void {
         fit: 'shrink',
         breakLine: false,
       });
-    });
+    }
   }
 }
 
@@ -273,7 +277,7 @@ function drawLegendSlides(pptx: pptxgen, plan: PptxPlan): void {
 // Op dispatch
 // ---------------------------------------------------------------------------
 
-function drawOp(slide: pptxgen.Slide, pptx: pptxgen, op: PlanOp): void {
+async function drawOp(slide: pptxgen.Slide, pptx: pptxgen, op: PlanOp): Promise<void> {
   switch (op.kind) {
     case 'rect':
     case 'ellipse':
@@ -283,7 +287,7 @@ function drawOp(slide: pptxgen.Slide, pptx: pptxgen, op: PlanOp): void {
       drawText(slide, op);
       break;
     case 'image':
-      drawImage(slide, op);
+      await drawImage(slide, op);
       break;
     case 'line':
       drawLine(slide, pptx, op);
@@ -327,17 +331,46 @@ function drawText(slide: pptxgen.Slide, op: PlanOp): void {
   });
 }
 
-function drawImage(slide: pptxgen.Slide, op: PlanOp): void {
+async function drawImage(slide: pptxgen.Slide, op: PlanOp): Promise<void> {
   if (!op.data) return;
   slide.addImage({
     x: op.x,
     y: op.y,
     w: op.w,
     h: op.h,
-    data: op.data,
+    data: await imageDataForPptx(op.data, op.w),
     rotate: op.rotate ?? 0,
     transparency: op.transparency ?? 0,
   });
+}
+
+const pngDataCache = new Map<string, string>();
+
+// PptxGenJS cannot create a real PNG fallback for SVG data in Node. Viewers
+// that do not consume Office's svgBlip then display a broken-image marker.
+// Rasterise only in Node; browsers retain the native SVG path and its vector
+// quality because they have Canvas available for fallback generation.
+async function imageDataForPptx(data: string, widthInches: number): Promise<string> {
+  const isNode =
+    typeof process !== 'undefined' &&
+    process.release?.name === 'node';
+  if (!isNode || !data.startsWith('data:image/svg+xml;base64,')) return data;
+
+  const targetWidth = Math.max(32, Math.round(widthInches * 192));
+  const cacheKey = `${targetWidth}:${data}`;
+  const cached = pngDataCache.get(cacheKey);
+  if (cached) return cached;
+
+  const encoded = data.slice(data.indexOf(',') + 1);
+  const svg = Buffer.from(encoded, 'base64');
+  const { Resvg } = await import('@resvg/resvg-js');
+  const png = new Resvg(svg, {
+    fitTo: { mode: 'width', value: targetWidth },
+    font: { loadSystemFonts: false },
+  }).render().asPng();
+  const result = `data:image/png;base64,${png.toString('base64')}`;
+  pngDataCache.set(cacheKey, result);
+  return result;
 }
 
 function drawLine(slide: pptxgen.Slide, pptx: pptxgen, op: PlanOp): void {
@@ -376,15 +409,17 @@ function lineOptions(line: PlanLine | undefined) {
   const opts: {
     color: string;
     width: number;
-    dashType: 'solid' | 'dash';
+    dashType: 'solid' | 'dash' | 'sysDot';
     transparency: number;
+    beginArrowType?: ArrowHeadType;
     endArrowType?: ArrowHeadType;
   } = {
     color: line.color,
     width: line.width,
-    dashType: line.dash === 'dash' ? 'dash' : 'solid',
+    dashType: line.dash === 'dash' ? 'dash' : line.dash === 'dot' ? 'sysDot' : 'solid',
     transparency: line.transparency,
   };
+  if (line.beginArrowType) opts.beginArrowType = line.beginArrowType;
   if (line.endArrowType) opts.endArrowType = line.endArrowType;
   return opts;
 }

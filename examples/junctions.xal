@@ -1,0 +1,12 @@
+<frame width="960" height="540" class="pa-4">
+  <generic-group title="Automatic Route Junction" align="middle-spread">
+    <item id="200036" /> <!-- router_general -->
+    <item id="200013" /> <!-- l2_switch_general -->
+    <item id="200041" /> <!-- server -->
+    <item id="200005" /> <!-- desktop_pc -->
+  </generic-group>
+
+  <connection src="200036" dst="200013" kind="route" />
+  <connection src="200036" dst="200041" kind="route" />
+  <connection src="200036" dst="200005" kind="route" />
+</frame>

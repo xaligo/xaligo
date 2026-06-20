@@ -48,6 +48,7 @@
     "access": "public"
   },
   "devDependencies": {
+    "@tabler/icons": "3.34.1",
     "@types/node": "^20.0.0",
     "rimraf": "^5.0.0",
     "tsup": "^8.0.0",
@@ -57,6 +58,7 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "pptxgenjs": "^4.0.1"
   }
 }

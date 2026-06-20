@@ -1,0 +1,52 @@
+<!-- On-premises users accessing a web system hosted on AWS. -->
+<frame width="1600" height="900" class="pa-4">
+  <row gap="24">
+    <col span="4">
+      <corporate-data-center title="On-premises Site" row="8">
+        <generic-group title="User Access Lane" align="middle-spread">
+          <item id="104733" /> <!-- Tabler: user -->
+          <item id="101804" /> <!-- Tabler: device-desktop -->
+          <item id="101897" /> <!-- Tabler: device-mobile -->
+          <item id="104032" /> <!-- Tabler: router -->
+          <item id="104915" /> <!-- Tabler: world-www -->
+        </generic-group>
+      </corporate-data-center>
+    </col>
+
+    <col span="8">
+      <aws-cloud title="AWS Cloud" row="8">
+        <generic-group title="Global Edge &amp; Security" align="middle-spread">
+          <item id="1178" /> <!-- Amazon CloudFront -->
+          <item id="227" />  <!-- AWS WAF -->
+        </generic-group>
+
+        <region title="ap-northeast-1" row="8">
+          <vpc title="VPC (10.0.0.0/16)" row="8">
+            <generic-group title="VPC Edge" align="middle-spread">
+              <item id="1182" /> <!-- Elastic Load Balancing -->
+            </generic-group>
+            <availability-zone title="AZ: ap-northeast-1a" row="8">
+              <private-subnet title="Application Subnet" align="middle-spread">
+                <item id="27" />  <!-- Amazon EC2 -->
+              </private-subnet>
+              <private-subnet title="Database Subnet" align="middle-spread">
+                <item id="117" /> <!-- Amazon RDS -->
+              </private-subnet>
+            </availability-zone>
+          </vpc>
+        </region>
+      </aws-cloud>
+    </col>
+  </row>
+
+  <connection src="104733" dst="101804" /> <!-- User to PC -->
+  <connection src="104733" dst="101897" /> <!-- User to smartphone -->
+  <connection src="101804" dst="104032" /> <!-- PC to router -->
+  <connection src="101897" dst="104032" /> <!-- Smartphone to router -->
+  <connection src="104032" dst="104915" /> <!-- Site edge to internet -->
+  <connection src="104915" dst="1178" />   <!-- Internet to CloudFront -->
+  <connection src="1178" dst="227" />      <!-- CloudFront to WAF -->
+  <connection src="227" dst="1182" />      <!-- WAF to load balancer -->
+  <connection src="1182" dst="27" />       <!-- Load balancer to EC2 -->
+  <connection src="27" dst="117" />        <!-- EC2 to RDS -->
+</frame>

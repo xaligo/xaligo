@@ -3,11 +3,18 @@ package controller
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
+	xaligoapi "github.com/ryo-arima/xaligo"
+	"github.com/ryo-arima/xaligo/internal/config"
+	"github.com/ryo-arima/xaligo/internal/entity"
+	"github.com/ryo-arima/xaligo/internal/excalidraw"
+	"github.com/ryo-arima/xaligo/internal/layout"
 	"github.com/ryo-arima/xaligo/internal/model"
 	"github.com/ryo-arima/xaligo/internal/parser"
+	"github.com/ryo-arima/xaligo/internal/pptxplan"
 	"github.com/ryo-arima/xaligo/internal/repository"
 	"github.com/spf13/cobra"
 )
@@ -24,17 +31,15 @@ var paperSizes = map[string][2]int{
 }
 
 // InitGenerateCmd returns the `xaligo generate` parent command with subcommands:
-//   - xaligo generate xal        … generate an AWS hierarchy .xal
-//   - xaligo generate excalidraw … render a .xal into .excalidraw
-//   - xaligo generate pptx       … render a .xal into .pptx via the Node exporter
+//   - xaligo generate xal … generate an AWS hierarchy .xal
+//
+// Format conversion belongs to `xaligo render --format ...`.
 func InitGenerateCmd() *cobra.Command {
 	parent := &cobra.Command{
 		Use:   "generate",
-		Short: "Generate AWS infrastructure files",
+		Short: "Generate source files",
 	}
 	parent.AddCommand(initGenerateXalCmd())
-	parent.AddCommand(initGenerateExcalidrawCmd())
-	parent.AddCommand(initGeneratePptxCmd())
 	return parent
 }
 
@@ -105,119 +110,6 @@ Parameters correspond to options in generate_aws_frames.py:
 	return cmd
 }
 
-// ── xaligo generate excalidraw ───────────────────────────────────────────────
-
-func initGenerateExcalidrawCmd() *cobra.Command {
-	var (
-		xalPath      string
-		output       string
-		servicesFile string
-	)
-
-	cmd := &cobra.Command{
-		Use:   "excalidraw",
-		Short: "Render a .xal file into a .excalidraw file",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			warnServiceMismatch(xalPath, servicesFile)
-			entries, err := repository.ReadServiceList(servicesFile)
-			if err != nil {
-				return fmt.Errorf("read services %s: %w", servicesFile, err)
-			}
-			abbrevMap := make(map[int]string, len(entries))
-			for _, e := range entries {
-				if e.CatalogID > 0 && e.Abbreviation != "" {
-					abbrevMap[e.CatalogID] = e.Abbreviation
-				}
-			}
-			if err := RunRender(xalPath, output, abbrevMap); err != nil {
-				return err
-			}
-			return RunAddServiceBatch(output, servicesFile)
-		},
-	}
-
-	cmd.Flags().StringVar(&xalPath, "xal", "", "input .xal file path")
-	cmd.Flags().StringVarP(&output, "output", "o", "", "output .excalidraw file path")
-	cmd.Flags().StringVar(&servicesFile, "services", "", "services.csv listing AWS service icons to embed as legend")
-
-	_ = cmd.MarkFlagRequired("xal")
-	_ = cmd.MarkFlagRequired("output")
-	_ = cmd.MarkFlagRequired("services")
-
-	return cmd
-}
-
-// ── xaligo generate pptx ────────────────────────────────────────────────────
-
-func initGeneratePptxCmd() *cobra.Command {
-	var (
-		xalPath       string
-		output        string
-		servicesFile  string
-		title         string
-		author        string
-		company       string
-		subject       string
-		compression   bool
-		noCompression bool
-		pxPerInch     float64
-		arrowStyle    string
-		arrowStub     float64
-		arrowMargin   float64
-		paper         string
-		orientation   string
-	)
-
-	cmd := &cobra.Command{
-		Use:   "pptx",
-		Short: "Render a .xal file into a .pptx file via the Node exporter",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if noCompression {
-				compression = false
-			}
-			return RunGeneratePptx(repository.PptxExportOptions{
-				XalPath:      xalPath,
-				Output:       output,
-				ServicesFile: servicesFile,
-				Title:        title,
-				Author:       author,
-				Company:      company,
-				Subject:      subject,
-				Compression:  &compression,
-				PxPerInch:    pxPerInch,
-				ArrowStyle:   arrowStyle,
-				ArrowStub:    arrowStub,
-				ArrowMargin:  arrowMargin,
-				Paper:        paper,
-				Orientation:  orientation,
-				Stdout:       os.Stdout,
-				Stderr:       os.Stderr,
-			})
-		},
-	}
-
-	cmd.Flags().StringVar(&xalPath, "xal", "", "input .xal file path")
-	cmd.Flags().StringVarP(&output, "output", "o", "", "output .pptx file path")
-	cmd.Flags().StringVar(&servicesFile, "services", "", "optional services.csv listing AWS service icons to embed as legend")
-	cmd.Flags().StringVar(&title, "title", "", "optional PPTX title metadata")
-	cmd.Flags().StringVar(&author, "author", "", "optional PPTX author metadata")
-	cmd.Flags().StringVar(&company, "company", "", "optional PPTX company metadata")
-	cmd.Flags().StringVar(&subject, "subject", "", "optional PPTX subject metadata")
-	cmd.Flags().BoolVar(&compression, "compression", true, "compress PPTX output")
-	cmd.Flags().BoolVar(&noCompression, "no-compression", false, "disable PPTX output compression")
-	cmd.Flags().Float64Var(&pxPerInch, "px-per-inch", 0, "pixels per inch for PPTX layout scaling (default 96)")
-	cmd.Flags().StringVar(&arrowStyle, "arrow-style", "", "connector arrow style: thin|standard|triangle|stealth|arrow|diamond|oval|none (default thin)")
-	cmd.Flags().Float64Var(&arrowStub, "arrow-stub", 0, "stub length in px before the first/last bend (default 20)")
-	cmd.Flags().Float64Var(&arrowMargin, "arrow-margin", 0, "clear margin in px reserved on both sides of each line (default 8)")
-	cmd.Flags().StringVar(&paper, "paper", "", "slide paper size: A5 A4 A3 A2 A1 Letter Legal Tabloid (default: match .xal frame)")
-	cmd.Flags().StringVar(&orientation, "orientation", "", "slide orientation: portrait | landscape (default: auto-fit)")
-
-	_ = cmd.MarkFlagRequired("xal")
-	_ = cmd.MarkFlagRequired("output")
-
-	return cmd
-}
-
 // ── RunGenerate ──────────────────────────────────────────────────────────────
 
 // RunGenerate validates parameters and writes the generated .xal to output.
@@ -262,8 +154,31 @@ func RunGenerate(
 	return nil
 }
 
-// RunGeneratePptx asks the repository layer to export PPTX via the Node/PptxGenJS exporter.
-func RunGeneratePptx(opts repository.PptxExportOptions) error {
+type PptxGenerateOptions struct {
+	XalPath      string
+	Output       string
+	ServicesFile string
+	Title        string
+	Author       string
+	Company      string
+	Subject      string
+	Compression  *bool
+	PxPerInch    float64
+	ArrowStyle   string
+	ArrowStub    float64
+	ArrowMargin  float64
+	Paper        string
+	Orientation  string
+	ExporterWASM string
+	Theme        string
+	Mode         string
+	Stdout       *os.File
+	Stderr       *os.File
+}
+
+// RunGeneratePptx builds a resolved Go PPTX plan, then asks the repository layer
+// to invoke the WASM exporter that turns the plan into PPTX bytes.
+func RunGeneratePptx(opts PptxGenerateOptions) error {
 	if opts.XalPath == "" {
 		return fmt.Errorf("--xal is required")
 	}
@@ -273,7 +188,101 @@ func RunGeneratePptx(opts repository.PptxExportOptions) error {
 	if opts.PxPerInch < 0 {
 		return fmt.Errorf("--px-per-inch must be positive")
 	}
-	return repository.ExportPptx(opts)
+	planJSON, err := buildPptxPlanJSON(opts)
+	if err != nil {
+		return err
+	}
+	return repository.ExportPptx(repository.PptxExportOptions{
+		PlanJSON:     planJSON,
+		Output:       opts.Output,
+		Title:        opts.Title,
+		Author:       opts.Author,
+		Company:      opts.Company,
+		Subject:      opts.Subject,
+		Compression:  opts.Compression,
+		ExporterWASM: opts.ExporterWASM,
+		Stdout:       opts.Stdout,
+		Stderr:       opts.Stderr,
+	})
+}
+
+func buildPptxPlanJSON(opts PptxGenerateOptions) ([]byte, error) {
+	if err := xaligoapi.ValidateRenderOptions(xaligoapi.RenderOptions{Mode: xaligoapi.Mode(opts.Mode), Format: xaligoapi.FormatPPTX, Theme: opts.Theme}); err != nil {
+		return nil, err
+	}
+	xalFile, err := os.Open(opts.XalPath)
+	if err != nil {
+		return nil, fmt.Errorf("open input file: %w", err)
+	}
+	defer xalFile.Close()
+
+	doc, err := parser.Parse(xalFile)
+	if err != nil {
+		return nil, fmt.Errorf("parse DSL: %w", err)
+	}
+	root, err := layout.Build(doc)
+	if err != nil {
+		return nil, fmt.Errorf("build layout: %w", err)
+	}
+
+	var entries []entity.ServiceEntry
+	var abbrevMap map[int]string
+	if opts.ServicesFile != "" {
+		warnServiceMismatch(opts.XalPath, opts.ServicesFile)
+		entries, err = repository.ReadServiceList(opts.ServicesFile)
+		if err != nil {
+			return nil, fmt.Errorf("read services %s: %w", opts.ServicesFile, err)
+		}
+		abbrevMap = make(map[int]string, len(entries))
+		for _, e := range entries {
+			if e.CatalogID > 0 && e.Abbreviation != "" {
+				abbrevMap[e.CatalogID] = e.Abbreviation
+			}
+		}
+	}
+
+	var connections []*model.Node
+	for _, child := range doc.Root.Children {
+		if child.Tag == "connection" {
+			connections = append(connections, child)
+		}
+	}
+
+	cfg := config.New()
+	sceneJSON, err := excalidraw.BuildJSON(root, filepath.Join(cfg.AssetDir_, "Architecture-Group-Icons"), cfg.SvcCatalogCSV, cfg.ProjectRoot, cfg.ItemIconSize, connections, abbrevMap, nil)
+	if err != nil {
+		return nil, fmt.Errorf("build excalidraw JSON: %w", err)
+	}
+	sceneJSON, err = excalidraw.ApplyThemeJSON(sceneJSON, opts.Theme)
+	if err != nil {
+		return nil, err
+	}
+
+	return pptxplan.BuildPlanJSON(string(sceneJSON), pptxplan.Options{
+		Theme:         opts.Theme,
+		PxPerInch:     opts.PxPerInch,
+		ArrowStyle:    opts.ArrowStyle,
+		ArrowStubPx:   opts.ArrowStub,
+		ArrowMargin:   opts.ArrowMargin,
+		PaperSize:     opts.Paper,
+		Orientation:   opts.Orientation,
+		LegendEntries: pptxLegendEntries(entries),
+	})
+}
+
+func pptxLegendEntries(entries []entity.ServiceEntry) []pptxplan.LegendEntry {
+	out := make([]pptxplan.LegendEntry, 0, len(entries))
+	for _, e := range entries {
+		if e.CatalogID <= 0 || e.OfficialName == "" {
+			continue
+		}
+		out = append(out, pptxplan.LegendEntry{
+			CatalogID:    e.CatalogID,
+			Abbreviation: e.Abbreviation,
+			OfficialName: e.OfficialName,
+		})
+	}
+	return out
 }
 
 // ── xal builder ─────────────────────────────────────────────────────────────
