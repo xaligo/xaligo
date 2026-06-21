@@ -1,12 +1,11 @@
-package controller
+package entity
 
 import (
 	"os"
-
-	"github.com/ryo-arima/xaligo/internal/usecase"
+	"time"
 )
 
-type RenderOptions struct {
+type ControllerRenderOptions struct {
 	InputPath         string
 	OutputPath        string
 	Format            string
@@ -34,7 +33,7 @@ type RenderOptions struct {
 	Stderr            *os.File
 }
 
-type PptxGenerateOptions struct {
+type ControllerPptxGenerateOptions struct {
 	XalPath           string
 	Output            string
 	ServicesFile      string
@@ -61,9 +60,10 @@ type PptxGenerateOptions struct {
 	Stderr            *os.File
 }
 
-func defaultUseCase(uc usecase.API) usecase.API {
-	if uc != nil {
-		return uc
-	}
-	return usecase.New(usecase.Dependencies{})
+type ControllerServeOptions struct {
+	InputPath    string
+	Address      string
+	Mode         string
+	Theme        string
+	PollInterval time.Duration
 }

@@ -22,92 +22,9 @@ const (
 	maxEmbeddedLabelLen = 12
 )
 
-type IsoflowDocument struct {
-	Version     string             `json:"version"`
-	Title       string             `json:"title"`
-	Description string             `json:"description,omitempty"`
-	Items       []IsoflowModelItem `json:"items"`
-	Views       []IsoflowView      `json:"views"`
-	Icons       []IsoflowIcon      `json:"icons"`
-	Colors      []IsoflowColor     `json:"colors"`
-	FitToView   bool               `json:"fitToView,omitempty"`
-}
-
-type IsoflowModelItem struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description,omitempty"`
-	IsoflowIcon string `json:"icon,omitempty"`
-}
-
-type IsoflowView struct {
-	ID          string             `json:"id"`
-	Name        string             `json:"name"`
-	Description string             `json:"description,omitempty"`
-	Items       []IsoflowViewItem  `json:"items"`
-	Rectangles  []IsoflowRectangle `json:"rectangles,omitempty"`
-	Connectors  []IsoflowConnector `json:"connectors,omitempty"`
-}
-
-type IsoflowViewItem struct {
-	ID          string        `json:"id"`
-	Tile        IsoflowCoords `json:"tile"`
-	LabelHeight float64       `json:"labelHeight"`
-}
-
-type IsoflowRectangle struct {
-	ID           string        `json:"id"`
-	IsoflowColor string        `json:"color,omitempty"`
-	From         IsoflowCoords `json:"from"`
-	To           IsoflowCoords `json:"to"`
-}
-
-type IsoflowConnector struct {
-	ID           string                   `json:"id"`
-	IsoflowColor string                   `json:"color,omitempty"`
-	Width        float64                  `json:"width,omitempty"`
-	Style        string                   `json:"style,omitempty"`
-	Anchors      []IsoflowConnectorAnchor `json:"anchors"`
-}
-
-type IsoflowConnectorAnchor struct {
-	ID  string           `json:"id"`
-	Ref IsoflowAnchorRef `json:"ref"`
-}
-
-type IsoflowAnchorRef struct {
-	Item string `json:"item,omitempty"`
-}
-
-type IsoflowIcon struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	URL         string `json:"url"`
-	Collection  string `json:"collection,omitempty"`
-	IsIsometric bool   `json:"isIsometric,omitempty"`
-}
-
-type IsoflowColor struct {
-	ID    string `json:"id"`
-	Value string `json:"value"`
-}
-
-type IsoflowCoords struct {
-	X float64 `json:"x"`
-	Y float64 `json:"y"`
-}
-
 type colorRegistry struct {
 	ids    map[string]string
-	colors []IsoflowColor
-}
-
-type IsoflowIconManifest struct {
-	Icons map[string]IsoflowIconManifestEntry `json:"icons"`
-}
-
-type IsoflowIconManifestEntry struct {
-	DataURL string `json:"dataURL"`
+	colors []entity.IsoflowColor
 }
 
 // Render converts the shared Excalidraw scene into an initial Isoflow document.
@@ -123,13 +40,13 @@ func RenderIsoflowWithIcons(sceneJSON []byte, iconOverrides map[string]string) (
 		return nil, fmt.Errorf("decode resolved scene for Isoflow: %w", err)
 	}
 	labels := itemLabels(scene.Elements)
-	colors := colorRegistry{ids: map[string]string{}, colors: []IsoflowColor{}}
+	colors := colorRegistry{ids: map[string]string{}, colors: []entity.IsoflowColor{}}
 	rectangles := groupRectangles(scene.Elements, &colors)
 
 	itemIDs := map[string]bool{}
-	modelItems := []IsoflowModelItem{}
-	viewItems := []IsoflowViewItem{}
-	iconsByID := map[string]IsoflowIcon{}
+	modelItems := []entity.IsoflowModelItem{}
+	viewItems := []entity.IsoflowViewItem{}
+	iconsByID := map[string]entity.IsoflowIcon{}
 	placer := newTilePlacer()
 	for _, element := range scene.Elements {
 		if element.IsDeleted || element.Type != "image" || !strings.HasSuffix(element.ID, "-item") {
@@ -139,21 +56,21 @@ func RenderIsoflowWithIcons(sceneJSON []byte, iconOverrides map[string]string) (
 		if label == "" {
 			label = strings.TrimSuffix(element.ID, "-item")
 		}
-		item := IsoflowModelItem{ID: element.ID, Name: label}
+		item := entity.IsoflowModelItem{ID: element.ID, Name: label}
 		if file, ok := scene.Files[element.FileID]; ok && file.DataURL != "" {
 			item.IsoflowIcon = element.FileID
 			iconURL := file.DataURL
 			if override := iconOverrides[element.FileID]; override != "" {
 				iconURL = embedIconLabel(override, label)
 			}
-			iconsByID[element.FileID] = IsoflowIcon{ID: element.FileID, Name: label, URL: iconURL, Collection: "xaligo", IsIsometric: true}
+			iconsByID[element.FileID] = entity.IsoflowIcon{ID: element.FileID, Name: label, URL: iconURL, Collection: "xaligo", IsIsometric: true}
 		}
 		modelItems = append(modelItems, item)
-		viewItems = append(viewItems, IsoflowViewItem{ID: element.ID, Tile: placer.place(pixelToTile(element.X+element.Width/2, element.Y+element.Height/2)), LabelHeight: defaultLabelHeight})
+		viewItems = append(viewItems, entity.IsoflowViewItem{ID: element.ID, Tile: placer.place(pixelToTile(element.X+element.Width/2, element.Y+element.Height/2)), LabelHeight: defaultLabelHeight})
 		itemIDs[element.ID] = true
 	}
 
-	connectors := []IsoflowConnector{}
+	connectors := []entity.IsoflowConnector{}
 	for _, element := range scene.Elements {
 		if element.IsDeleted || (element.Type != "arrow" && element.Type != "line") || element.StartBinding == nil || element.EndBinding == nil {
 			continue
@@ -163,28 +80,28 @@ func RenderIsoflowWithIcons(sceneJSON []byte, iconOverrides map[string]string) (
 		if !itemIDs[source] || !itemIDs[target] {
 			continue
 		}
-		connectors = append(connectors, IsoflowConnector{
+		connectors = append(connectors, entity.IsoflowConnector{
 			ID:           element.ID,
 			IsoflowColor: colors.idFor(element.StrokeColor),
 			Width:        PositiveWidth(element.StrokeWidth),
 			Style:        isoflowConnectorStyle(element.StrokeStyle),
-			Anchors: []IsoflowConnectorAnchor{
-				{ID: element.ID + "-source", Ref: IsoflowAnchorRef{Item: source}},
-				{ID: element.ID + "-target", Ref: IsoflowAnchorRef{Item: target}},
+			Anchors: []entity.IsoflowConnectorAnchor{
+				{ID: element.ID + "-source", Ref: entity.IsoflowAnchorRef{Item: source}},
+				{ID: element.ID + "-target", Ref: entity.IsoflowAnchorRef{Item: target}},
 			},
 		})
 	}
 
-	icons := make([]IsoflowIcon, 0, len(iconsByID))
+	icons := make([]entity.IsoflowIcon, 0, len(iconsByID))
 	for _, icon := range iconsByID {
 		icons = append(icons, icon)
 	}
 	sort.Slice(icons, func(i, j int) bool { return icons[i].ID < icons[j].ID })
-	document := IsoflowDocument{
+	document := entity.IsoflowDocument{
 		Version: documentVersion,
 		Title:   "xaligo export",
 		Items:   modelItems,
-		Views: []IsoflowView{
+		Views: []entity.IsoflowView{
 			{ID: "main", Name: "Main", Items: viewItems, Rectangles: rectangles, Connectors: connectors},
 		},
 		Icons:     icons,
@@ -197,8 +114,8 @@ func RenderIsoflowWithIcons(sceneJSON []byte, iconOverrides map[string]string) (
 // groupRectangles preserves xaligo's visible container boundaries in Isoflow.
 // The GroupBorder marker is intentionally required: ordinary Excalidraw
 // rectangles may be decorations and must not become Isoflow floor regions.
-func groupRectangles(elements []entity.Element, colors *colorRegistry) []IsoflowRectangle {
-	rectangles := []IsoflowRectangle{}
+func groupRectangles(elements []entity.Element, colors *colorRegistry) []entity.IsoflowRectangle {
+	rectangles := []entity.IsoflowRectangle{}
 	for _, element := range elements {
 		if element.IsDeleted || element.Type != "rectangle" || element.Width <= 0 || element.Height <= 0 ||
 			element.CustomData == nil || !element.CustomData.GroupBorder || element.StrokeColor == "transparent" {
@@ -215,7 +132,7 @@ func groupRectangles(elements []entity.Element, colors *colorRegistry) []Isoflow
 		if from.Y > to.Y {
 			from.Y, to.Y = to.Y, from.Y
 		}
-		rectangles = append(rectangles, IsoflowRectangle{
+		rectangles = append(rectangles, entity.IsoflowRectangle{
 			ID: element.ID, IsoflowColor: colors.idFor(element.StrokeColor), From: from, To: to,
 		})
 	}
@@ -239,7 +156,7 @@ func LoadIsoflowIconManifestFS(fsys fs.FS, path string) (map[string]string, erro
 }
 
 func decodeIconManifest(data []byte) (map[string]string, error) {
-	var manifest IsoflowIconManifest
+	var manifest entity.IsoflowIconManifest
 	if err := json.Unmarshal(data, &manifest); err != nil {
 		return nil, fmt.Errorf("decode Isoflow icon manifest: %w", err)
 	}
@@ -309,8 +226,8 @@ func isoflowConnectorStyle(style string) string {
 	}
 }
 
-func pixelToTile(x, y float64) IsoflowCoords {
-	return IsoflowCoords{X: math.Round(x/tileSize) * 2, Y: math.Round(y/tileSize) * 2}
+func pixelToTile(x, y float64) entity.IsoflowCoords {
+	return entity.IsoflowCoords{X: math.Round(x/tileSize) * 2, Y: math.Round(y/tileSize) * 2}
 }
 
 type tilePlacer struct {
@@ -326,7 +243,7 @@ func newTilePlacer() *tilePlacer {
 	return &tilePlacer{occupied: map[tileKey]bool{}}
 }
 
-func (placer *tilePlacer) place(preferred IsoflowCoords) IsoflowCoords {
+func (placer *tilePlacer) place(preferred entity.IsoflowCoords) entity.IsoflowCoords {
 	base := tileKey{x: int(math.Round(preferred.X)), y: int(math.Round(preferred.Y))}
 	for radius := 0; radius < 512; radius++ {
 		for dy := -radius; dy <= radius; dy++ {
@@ -337,13 +254,13 @@ func (placer *tilePlacer) place(preferred IsoflowCoords) IsoflowCoords {
 				candidate := tileKey{x: base.x + dx, y: base.y + dy}
 				if placer.available(candidate) {
 					placer.reserve(candidate)
-					return IsoflowCoords{X: float64(candidate.x), Y: float64(candidate.y)}
+					return entity.IsoflowCoords{X: float64(candidate.x), Y: float64(candidate.y)}
 				}
 			}
 		}
 	}
 	placer.reserve(base)
-	return IsoflowCoords{X: float64(base.x), Y: float64(base.y)}
+	return entity.IsoflowCoords{X: float64(base.x), Y: float64(base.y)}
 }
 
 func (placer *tilePlacer) available(key tileKey) bool {
@@ -382,6 +299,6 @@ func (registry *colorRegistry) idFor(color string) string {
 	}
 	id := fmt.Sprintf("color%d", len(registry.colors)+1)
 	registry.ids[value] = id
-	registry.colors = append(registry.colors, IsoflowColor{ID: id, Value: value})
+	registry.colors = append(registry.colors, entity.IsoflowColor{ID: id, Value: value})
 	return id
 }

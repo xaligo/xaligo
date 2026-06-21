@@ -11,32 +11,29 @@ import (
 	"os"
 	"sync"
 	"time"
+
+	"github.com/ryo-arima/xaligo/internal/entity"
 )
 
-type PreviewOptions struct {
-	Render       RenderOptions
-	PollInterval time.Duration
+type PreviewServer interface {
+	Handler() http.Handler
+	Run(context.Context, string) error
+	Refresh() error
 }
 
-type PreviewStatus struct {
-	Version     uint64       `json:"version"`
-	Error       string       `json:"error,omitempty"`
-	Diagnostics []Diagnostic `json:"diagnostics,omitempty"`
-}
-
-type PreviewServer struct {
+type previewServer struct {
 	path     string
-	opts     PreviewOptions
+	opts     entity.PreviewOptions
 	mu       sync.RWMutex
 	hash     [sha256.Size]byte
 	haveHash bool
 	svg      []byte
-	status   PreviewStatus
+	status   entity.PreviewStatus
 	nextSub  uint64
 	subs     map[uint64]chan uint64
 }
 
-func NewPreviewServer(path string, opts PreviewOptions) (*PreviewServer, error) {
+func NewPreviewServer(path string, opts entity.PreviewOptions) (PreviewServer, error) {
 	if path == "" {
 		return nil, fmt.Errorf("preview input path is required")
 	}
@@ -47,14 +44,14 @@ func NewPreviewServer(path string, opts PreviewOptions) (*PreviewServer, error) 
 	if err := ValidateRenderOptions(opts.Render); err != nil {
 		return nil, err
 	}
-	s := &PreviewServer{path: path, opts: opts, subs: map[uint64]chan uint64{}}
+	s := &previewServer{path: path, opts: opts, subs: map[uint64]chan uint64{}}
 	if err := s.refresh(true); err != nil {
 		return nil, err
 	}
 	return s, nil
 }
 
-func (s *PreviewServer) Handler() http.Handler {
+func (s *previewServer) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", s.handleIndex)
 	mux.HandleFunc("/diagram.svg", s.handleSVG)
@@ -67,7 +64,7 @@ func (s *PreviewServer) Handler() http.Handler {
 	return mux
 }
 
-func (s *PreviewServer) Run(ctx context.Context, address string) error {
+func (s *previewServer) Run(ctx context.Context, address string) error {
 	if address == "" {
 		address = "127.0.0.1:8080"
 	}
@@ -94,9 +91,9 @@ func (s *PreviewServer) Run(ctx context.Context, address string) error {
 	return err
 }
 
-func (s *PreviewServer) Refresh() error { return s.refresh(false) }
+func (s *previewServer) Refresh() error { return s.refresh(false) }
 
-func (s *PreviewServer) refresh(force bool) error {
+func (s *previewServer) refresh(force bool) error {
 	source, err := os.ReadFile(s.path)
 	if err != nil {
 		return fmt.Errorf("read preview input: %w", err)
@@ -120,7 +117,7 @@ func (s *PreviewServer) refresh(force bool) error {
 		if diagnoseErr == nil && len(diagnostics) > 0 {
 			s.status.Diagnostics = diagnostics
 		} else {
-			s.status.Diagnostics = []Diagnostic{{Severity: SeverityError, Message: renderErr.Error()}}
+			s.status.Diagnostics = []entity.Diagnostic{{Severity: SeverityError, Message: renderErr.Error()}}
 		}
 		s.svg = nil
 	} else {
@@ -143,7 +140,7 @@ func (s *PreviewServer) refresh(force bool) error {
 	return nil
 }
 
-func (s *PreviewServer) watch(ctx context.Context) {
+func (s *previewServer) watch(ctx context.Context) {
 	ticker := time.NewTicker(s.opts.PollInterval)
 	defer ticker.Stop()
 	for {
@@ -156,7 +153,7 @@ func (s *PreviewServer) watch(ctx context.Context) {
 	}
 }
 
-func (s *PreviewServer) handleIndex(w http.ResponseWriter, r *http.Request) {
+func (s *previewServer) handleIndex(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
 		return
@@ -165,7 +162,7 @@ func (s *PreviewServer) handleIndex(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte(indexHTML))
 }
 
-func (s *PreviewServer) handleSVG(w http.ResponseWriter, _ *http.Request) {
+func (s *previewServer) handleSVG(w http.ResponseWriter, _ *http.Request) {
 	s.mu.RLock()
 	svg := append([]byte(nil), s.svg...)
 	errText := s.status.Error
@@ -179,7 +176,7 @@ func (s *PreviewServer) handleSVG(w http.ResponseWriter, _ *http.Request) {
 	_, _ = w.Write(svg)
 }
 
-func (s *PreviewServer) handleStatus(w http.ResponseWriter, _ *http.Request) {
+func (s *previewServer) handleStatus(w http.ResponseWriter, _ *http.Request) {
 	s.mu.RLock()
 	status := s.status
 	s.mu.RUnlock()
@@ -188,7 +185,7 @@ func (s *PreviewServer) handleStatus(w http.ResponseWriter, _ *http.Request) {
 	_ = json.NewEncoder(w).Encode(status)
 }
 
-func (s *PreviewServer) handleEvents(w http.ResponseWriter, r *http.Request) {
+func (s *previewServer) handleEvents(w http.ResponseWriter, r *http.Request) {
 	flusher, ok := w.(http.Flusher)
 	if !ok {
 		http.Error(w, "streaming unsupported", http.StatusInternalServerError)

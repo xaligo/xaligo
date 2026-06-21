@@ -104,7 +104,7 @@ var staggerFills = []string{"#ffffff", "#c8e8e8", "#92cecd"}
 // staggerBGColor returns the appropriate backgroundColor for a box.
 // Boxes that participate in a staggered group get a solid fill so that
 // overlapping back-layers are visually distinct.
-func staggerBGColor(b *Box) string {
+func staggerBGColor(b *entity.Box) string {
 	if !b.InStagger {
 		return "transparent"
 	}
@@ -182,11 +182,11 @@ func svgDataURLFS(fsys fs.FS, path string) (string, error) {
 // It uses fsys (typically an embed.FS) for all asset reads instead of the OS
 // filesystem.  catalogCSV and svgGroupDir are resolved relative to the root
 // of fsys (e.g. "service-catalog.csv" and "svg/Architecture-Group-Icons").
-func BuildJSONWithFS(root *Box, fsys fs.FS, catalogCSV, svgGroupDir string, itemIconSize float64, connections []*entity.Node, abbrevMap map[int]string) ([]byte, error) {
+func BuildJSONWithFS(root *entity.Box, fsys fs.FS, catalogCSV, svgGroupDir string, itemIconSize float64, connections []*entity.Node, abbrevMap map[int]string) ([]byte, error) {
 	return BuildJSON(root, svgGroupDir, catalogCSV, "", itemIconSize, connections, abbrevMap, fsys)
 }
 
-// BuildJSON converts a Box layout tree into Excalidraw JSON.
+// BuildJSON converts a entity.Box layout tree into Excalidraw JSON.
 // svgGroupDir:  absolute path to Architecture-Group-Icons/ (or FS-relative path when fsys≠nil)
 // catalogCSV:   absolute path to service-catalog.csv (or FS-relative path when fsys≠nil)
 // projectRoot:  project root directory (used to resolve rel_path from catalog; ignored when fsys≠nil)
@@ -194,7 +194,7 @@ func BuildJSONWithFS(root *Box, fsys fs.FS, catalogCSV, svgGroupDir string, item
 // connections:  <connection> nodes extracted from the DSL (may be nil).
 // abbrevMap:    optional catalog-ID → abbreviation map derived from services.csv.
 // fsys:         when non-nil, all asset reads go through this fs.FS (WASM / embedded mode).
-func BuildJSON(root *Box, svgGroupDir string, catalogCSV string, projectRoot string, itemIconSize float64, connections []*entity.Node, abbrevMap map[int]string, fsys fs.FS) ([]byte, error) {
+func BuildJSON(root *entity.Box, svgGroupDir string, catalogCSV string, projectRoot string, itemIconSize float64, connections []*entity.Node, abbrevMap map[int]string, fsys fs.FS) ([]byte, error) {
 	if root == nil {
 		return nil, fmt.Errorf("root layout is nil")
 	}
@@ -222,8 +222,8 @@ func BuildJSON(root *Box, svgGroupDir string, catalogCSV string, projectRoot str
 	files := map[string]any{}
 
 	// 2パス: 1) item を visibleAncestorID ごとに収集, 2) グリッド一括描画
-	itemGroups := map[string][]*Box{}
-	ancestorBoxes := map[string]*Box{}
+	itemGroups := map[string][]*entity.Box{}
+	ancestorBoxes := map[string]*entity.Box{}
 	// <frame item-size="N"> overrides the global itemIconSize.
 	if v := root.Attrs["item-size"]; v != "" {
 		if f, err := strconv.ParseFloat(v, 64); err == nil && f > 0 {
@@ -341,7 +341,7 @@ func alignGroupBorderTopToHeader(borderID string, topY, bottomY float64, element
 	}
 }
 
-func walk(b *Box, elements *[]map[string]any, files map[string]any, svgGroupDir string, catalogCSV string, projectRoot string, fsys fs.FS, r *rand.Rand, visibleAncestor *Box, itemGroups map[string][]*Box, ancestorBoxes map[string]*Box) {
+func walk(b *entity.Box, elements *[]map[string]any, files map[string]any, svgGroupDir string, catalogCSV string, projectRoot string, fsys fs.FS, r *rand.Rand, visibleAncestor *entity.Box, itemGroups map[string][]*entity.Box, ancestorBoxes map[string]*entity.Box) {
 	if IsItemLike(b.Tag) {
 		// 描画はしない: visibleAncestor に結び付けて収集のみ (<item> / <spacer> 共通)
 		key := visibleAncestor.ID
@@ -618,7 +618,7 @@ func parseItemAlign(align string) (vert, horiz string) {
 
 // renderItemGrid lays out all items collected under the same visibleAncestor as
 // a compact grid within the ancestor's content area.
-func renderItemGrid(items []*Box, ancestor *Box, elements *[]map[string]any, files map[string]any, catalogCSV string, projectRoot string, fsys fs.FS, maxSize float64, r *rand.Rand, itemImgRects map[int][4]float64, itemLblRects map[int][4]float64, itemImgIDs map[int]string, itemLblIDs map[int]string, abbrevMap map[int]string) {
+func renderItemGrid(items []*entity.Box, ancestor *entity.Box, elements *[]map[string]any, files map[string]any, catalogCSV string, projectRoot string, fsys fs.FS, maxSize float64, r *rand.Rand, itemImgRects map[int][4]float64, itemLblRects map[int][4]float64, itemImgIDs map[int]string, itemLblIDs map[int]string, abbrevMap map[int]string) {
 	if catalogCSV == "" || len(items) == 0 || ancestor == nil {
 		return
 	}
@@ -686,7 +686,7 @@ func renderItemGrid(items []*Box, ancestor *Box, elements *[]map[string]any, fil
 	}
 }
 
-func groupHeaderHeightForItems(ancestor *Box) float64 {
+func groupHeaderHeightForItems(ancestor *entity.Box) float64 {
 	headerH := float64(groupTextHeight + groupHeaderTextPadY*2)
 	if ancestor == nil {
 		return headerH
@@ -700,7 +700,7 @@ func groupHeaderHeightForItems(ancestor *Box) float64 {
 	return headerH
 }
 
-func estimateMaxItemLabelHeight(items []*Box, catalogCSV string, fsys fs.FS, abbrevMap map[int]string) float64 {
+func estimateMaxItemLabelHeight(items []*entity.Box, catalogCSV string, fsys fs.FS, abbrevMap map[int]string) float64 {
 	maxH := itemLabelH
 	for _, item := range items {
 		id, err := strconv.Atoi(strings.TrimSpace(item.Attrs["id"]))

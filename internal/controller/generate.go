@@ -150,11 +150,11 @@ func RunGenerate(
 
 // RunGeneratePptx builds a resolved Go PPTX plan, then asks the repository layer
 // to invoke the WASM exporter that turns the plan into PPTX bytes.
-func RunGeneratePptx(opts PptxGenerateOptions) error {
+func RunGeneratePptx(opts entity.ControllerPptxGenerateOptions) error {
 	return RunGeneratePptxWithUseCase(nil, opts)
 }
 
-func RunGeneratePptxWithUseCase(uc usecase.API, opts PptxGenerateOptions) error {
+func RunGeneratePptxWithUseCase(uc usecase.API, opts entity.ControllerPptxGenerateOptions) error {
 	uc = defaultUseCase(uc)
 	if opts.XalPath == "" {
 		return fmt.Errorf("--xal is required")
@@ -186,14 +186,14 @@ func RunGeneratePptxWithUseCase(uc usecase.API, opts PptxGenerateOptions) error 
 	})
 }
 
-func buildPptxPlanJSON(opts PptxGenerateOptions) ([]byte, error) {
+func buildPptxPlanJSON(opts entity.ControllerPptxGenerateOptions) ([]byte, error) {
 	return buildPptxPlanJSONWithUseCase(nil, opts)
 }
 
-func buildPptxPlanJSONWithUseCase(uc usecase.API, opts PptxGenerateOptions) ([]byte, error) {
+func buildPptxPlanJSONWithUseCase(uc usecase.API, opts entity.ControllerPptxGenerateOptions) ([]byte, error) {
 	uc = defaultUseCase(uc)
-	if err := uc.ValidateRenderOptions(usecase.RenderOptions{
-		Mode: usecase.Mode(opts.Mode), Format: usecase.FormatPPTX, Theme: opts.Theme,
+	if err := uc.ValidateRenderOptions(entity.RenderOptions{
+		Mode: entity.Mode(opts.Mode), Format: usecase.FormatPPTX, Theme: opts.Theme,
 		PaperMarginIn: opts.PaperMargin, PaperMarginTopIn: opts.PaperMarginTop, PaperMarginRightIn: opts.PaperMarginRight,
 		PaperMarginBottomIn: opts.PaperMarginBottom, PaperMarginLeftIn: opts.PaperMarginLeft,
 	}); err != nil {
@@ -211,8 +211,8 @@ func buildPptxPlanJSONWithUseCase(uc usecase.API, opts PptxGenerateOptions) ([]b
 			return nil, fmt.Errorf("read services %s: %w", opts.ServicesFile, err)
 		}
 	}
-	return uc.BuildPPTXPlan(context.Background(), input, usecase.RenderOptions{
-		Mode:                usecase.Mode(opts.Mode),
+	return uc.BuildPPTXPlan(context.Background(), input, entity.RenderOptions{
+		Mode:                entity.Mode(opts.Mode),
 		Format:              usecase.FormatPPTX,
 		Theme:               opts.Theme,
 		PxPerInch:           opts.PxPerInch,

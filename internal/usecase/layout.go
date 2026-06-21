@@ -32,16 +32,13 @@ const (
 	GroupSideInset = defaultGroupSideInset
 )
 
-type Box = entity.Box
-type Spacing = entity.Spacing
-
-func Build(doc entity.Document) (*Box, error) {
+func Build(doc entity.Document) (*entity.Box, error) {
 	if doc.Root == nil {
 		return nil, fmt.Errorf("document root is nil")
 	}
 	w := attrFloat(doc.Root.Attr("width"), 1280)
 	h := attrFloat(doc.Root.Attr("height"), 720)
-	root := &Box{ID: "frame", Tag: "frame", Label: "frame", X: 0, Y: 0, W: w, H: h}
+	root := &entity.Box{ID: "frame", Tag: "frame", Label: "frame", X: 0, Y: 0, W: w, H: h}
 	layoutNode(doc.Root, root, 0, 0, w, h)
 	return root, nil
 }
@@ -59,13 +56,13 @@ func layoutKids(node *entity.Node) []*entity.Node {
 	return kids
 }
 
-func layoutNode(node *entity.Node, target *Box, x, y, w, h float64) {
+func layoutNode(node *entity.Node, target *entity.Box, x, y, w, h float64) {
 	target.Attrs = node.Attrs
 	pad, classMar := parseClassSpacing(node.Attr("class"))
 
 	// 直接 px 指定マージン属性をクラスベースマージンに加算する
 	attrMar := parseAttrMargin(node.Attrs)
-	mar := Spacing{
+	mar := entity.Spacing{
 		Top:    classMar.Top + attrMar.Top,
 		Right:  classMar.Right + attrMar.Right,
 		Bottom: classMar.Bottom + attrMar.Bottom,
@@ -169,7 +166,7 @@ func layoutNode(node *entity.Node, target *Box, x, y, w, h float64) {
 	}
 }
 
-func layoutStack(node *entity.Node, target *Box, x, y, w, h float64) {
+func layoutStack(node *entity.Node, target *entity.Box, x, y, w, h float64) {
 	children := layoutKids(node)
 	if len(children) == 0 {
 		return
@@ -195,7 +192,7 @@ func layoutStack(node *entity.Node, target *Box, x, y, w, h float64) {
 		// 子への割り当て = 比率に応じた content 高さ + その子自身の上下 margin
 		childH := availH * (row / totalRow)
 		alloc := childH + childMar.Top + childMar.Bottom
-		cb := &Box{ID: childID(target.ID, i), Tag: child.Tag, Label: labelOf(child)}
+		cb := &entity.Box{ID: childID(target.ID, i), Tag: child.Tag, Label: labelOf(child)}
 		layoutNode(child, cb, x, curY, w, alloc)
 		target.Children = append(target.Children, cb)
 		curY += alloc + gap
@@ -205,7 +202,7 @@ func layoutStack(node *entity.Node, target *Box, x, y, w, h float64) {
 // layoutFlexH lays out children horizontally with free ratio weights.
 // Each child's width share is determined by its `col` attribute (default 1.0).
 // This mirrors layoutStack but in the horizontal direction.
-func layoutFlexH(node *entity.Node, target *Box, x, y, w, h float64) {
+func layoutFlexH(node *entity.Node, target *entity.Box, x, y, w, h float64) {
 	children := layoutKids(node)
 	if len(children) == 0 {
 		return
@@ -230,14 +227,14 @@ func layoutFlexH(node *entity.Node, target *Box, x, y, w, h float64) {
 		// 子への割り当て = 比率に応じた content 幅 + その子自身の左右 margin
 		childW := availW * (col / totalCol)
 		alloc := childW + childMar.Left + childMar.Right
-		cb := &Box{ID: childID(target.ID, i), Tag: child.Tag, Label: labelOf(child)}
+		cb := &entity.Box{ID: childID(target.ID, i), Tag: child.Tag, Label: labelOf(child)}
 		layoutNode(child, cb, curX, y, alloc, h)
 		target.Children = append(target.Children, cb)
 		curX += alloc + gap
 	}
 }
 
-func layoutRow(node *entity.Node, target *Box, x, y, w, h float64) {
+func layoutRow(node *entity.Node, target *entity.Box, x, y, w, h float64) {
 	children := layoutKids(node)
 	if len(children) == 0 {
 		return
@@ -257,7 +254,7 @@ func layoutRow(node *entity.Node, target *Box, x, y, w, h float64) {
 		childMar := effectiveMargin(child)
 		span := attrFloat(child.Attr("span"), 12/float64(len(children)))
 		cw := remainingW*(span/12.0) + childMar.Left + childMar.Right
-		cb := &Box{ID: childID(target.ID, i), Tag: child.Tag, Label: labelOf(child)}
+		cb := &entity.Box{ID: childID(target.ID, i), Tag: child.Tag, Label: labelOf(child)}
 		layoutNode(child, cb, curX, y, cw, h)
 		target.Children = append(target.Children, cb)
 		curX += cw + gap
@@ -269,7 +266,7 @@ func layoutRow(node *entity.Node, target *Box, x, y, w, h float64) {
 // Children are appended to target.Children in back-to-front render order
 // (highest StaggerDepth first = rendered behind, depth 0 last = on top).
 // Falls back to layoutStack when fewer than 2 children.
-func layoutStagger(node *entity.Node, target *Box, x, y, w, h float64) {
+func layoutStagger(node *entity.Node, target *entity.Box, x, y, w, h float64) {
 	children := layoutKids(node)
 	n := len(children)
 	if n < 2 {
@@ -290,7 +287,7 @@ func layoutStagger(node *entity.Node, target *Box, x, y, w, h float64) {
 		child := children[i]
 		cX := x + float64(i)*staggerOffset
 		cY := y + float64(i)*staggerOffset
-		cb := &Box{
+		cb := &entity.Box{
 			ID:           childID(target.ID, i),
 			Tag:          child.Tag,
 			Label:        labelOf(child),
@@ -303,7 +300,7 @@ func layoutStagger(node *entity.Node, target *Box, x, y, w, h float64) {
 	}
 }
 
-func layoutLeaf(node *entity.Node, target *Box, x, y, w, h float64) {
+func layoutLeaf(node *entity.Node, target *entity.Box, x, y, w, h float64) {
 	target.X = x
 	target.Y = y
 	target.W = w
@@ -360,17 +357,17 @@ func attrFloat(v string, fallback float64) float64 {
 	return f
 }
 
-func parseClassSpacing(class string) (Spacing, Spacing) {
-	pad := Spacing{}
-	mar := Spacing{}
+func parseClassSpacing(class string) (entity.Spacing, entity.Spacing) {
+	pad := entity.Spacing{}
+	mar := entity.Spacing{}
 	for _, tok := range strings.Fields(class) {
 		switch {
 		case strings.HasPrefix(tok, "pa-"):
 			v := spacingValue(tok[3:])
-			pad = Spacing{Top: v, Right: v, Bottom: v, Left: v}
+			pad = entity.Spacing{Top: v, Right: v, Bottom: v, Left: v}
 		case strings.HasPrefix(tok, "ma-"):
 			v := spacingValue(tok[3:])
-			mar = Spacing{Top: v, Right: v, Bottom: v, Left: v}
+			mar = entity.Spacing{Top: v, Right: v, Bottom: v, Left: v}
 		// 軸別一括: px=左右, py=上下
 		case strings.HasPrefix(tok, "px-"):
 			v := spacingValue(tok[3:])
@@ -448,14 +445,14 @@ func spacingValue(s string) float64 {
 // margin-bottom, margin-left. Values are in pixels (floats).
 // When `margin` and a directional key (e.g. `margin-top`) are both present,
 // the directional key overrides the corresponding side from `margin`.
-func parseAttrMargin(attrs map[string]string) Spacing {
+func parseAttrMargin(attrs map[string]string) entity.Spacing {
 	if len(attrs) == 0 {
-		return Spacing{}
+		return entity.Spacing{}
 	}
-	m := Spacing{}
+	m := entity.Spacing{}
 	if v := attrs["margin"]; v != "" {
 		val := attrFloat(v, 0)
-		m = Spacing{Top: val, Right: val, Bottom: val, Left: val}
+		m = entity.Spacing{Top: val, Right: val, Bottom: val, Left: val}
 	}
 	if v := attrs["margin-top"]; v != "" {
 		m.Top = attrFloat(v, 0)
@@ -475,10 +472,10 @@ func parseAttrMargin(attrs map[string]string) Spacing {
 // effectiveMargin returns the combined margin for a node by summing
 // class-based spacing (ma-N, mt-N …) and direct px-value attributes
 // (margin, margin-top …).
-func effectiveMargin(node *entity.Node) Spacing {
+func effectiveMargin(node *entity.Node) entity.Spacing {
 	_, classMar := parseClassSpacing(node.Attr("class"))
 	attrMar := parseAttrMargin(node.Attrs)
-	return Spacing{
+	return entity.Spacing{
 		Top:    classMar.Top + attrMar.Top,
 		Right:  classMar.Right + attrMar.Right,
 		Bottom: classMar.Bottom + attrMar.Bottom,

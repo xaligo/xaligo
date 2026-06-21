@@ -14,6 +14,16 @@ import (
 	"github.com/ryo-arima/xaligo/internal/entity"
 )
 
+const svgDataURLPrefix = "data:image/svg+xml;base64,"
+
+func svgDataURL(raw string) string {
+	raw = strings.TrimSpace(raw)
+	if raw == "" || strings.HasPrefix(raw, "data:") {
+		return raw
+	}
+	return svgDataURLPrefix + raw
+}
+
 // SvgToDataURL reads an SVG file and returns it as a base64 data URL.
 func SvgToDataURL(path string) (string, error) {
 	data, err := os.ReadFile(path)

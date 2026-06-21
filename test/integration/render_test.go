@@ -8,20 +8,21 @@ import (
 	"testing"
 	"testing/fstest"
 
+	"github.com/ryo-arima/xaligo/internal/entity"
 	"github.com/ryo-arima/xaligo/internal/usecase"
 )
 
 var apiTestXAL = []byte(`<frame width="320" height="180"><box title="API" /></frame>`)
 
 func TestRenderFormats(t *testing.T) {
-	excal, err := usecase.RenderExcalidraw(context.Background(), apiTestXAL, usecase.RenderOptions{Theme: "dark"})
+	excal, err := usecase.RenderExcalidraw(context.Background(), apiTestXAL, entity.RenderOptions{Theme: "dark"})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !bytes.Contains(excal, []byte(`"viewBackgroundColor": "#111827"`)) {
 		t.Fatalf("dark Excalidraw theme missing")
 	}
-	svg, err := usecase.Render(context.Background(), apiTestXAL, usecase.RenderOptions{Format: usecase.FormatSVG})
+	svg, err := usecase.Render(context.Background(), apiTestXAL, entity.RenderOptions{Format: usecase.FormatSVG})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,31 +57,31 @@ func TestDiagnoseReturnsSourcePosition(t *testing.T) {
 }
 
 func TestXYFlowFormat(t *testing.T) {
-	out, err := usecase.Render(context.Background(), apiTestXAL, usecase.RenderOptions{Format: usecase.FormatXYFlow})
+	out, err := usecase.Render(context.Background(), apiTestXAL, entity.RenderOptions{Format: usecase.FormatXYFlow})
 	if err != nil || !bytes.Contains(out, []byte(`"nodes"`)) || !bytes.Contains(out, []byte(`"edges"`)) {
 		t.Fatalf("XYFlow output = %s, err = %v", out, err)
 	}
 }
 
 func TestIsoflowFormat(t *testing.T) {
-	out, err := usecase.Render(context.Background(), apiTestXAL, usecase.RenderOptions{Format: usecase.FormatIsoflow})
+	out, err := usecase.Render(context.Background(), apiTestXAL, entity.RenderOptions{Format: usecase.FormatIsoflow})
 	if err != nil || !bytes.Contains(out, []byte(`"version": "3.3.0"`)) || !bytes.Contains(out, []byte(`"items"`)) || !bytes.Contains(out, []byte(`"views"`)) {
 		t.Fatalf("Isoflow output = %s, err = %v", out, err)
 	}
 }
 
 func TestRenderWithVirtualAssetSource(t *testing.T) {
-	assets := &usecase.AssetSource{
+	assets := &entity.AssetSource{
 		FS: fstest.MapFS{}, CatalogCSV: "catalog.csv", GroupIconsDir: "groups", ItemIconSize: 48,
 	}
-	out, err := usecase.Render(context.Background(), apiTestXAL, usecase.RenderOptions{Format: usecase.FormatExcalidraw, Assets: assets})
+	out, err := usecase.Render(context.Background(), apiTestXAL, entity.RenderOptions{Format: usecase.FormatExcalidraw, Assets: assets})
 	if err != nil || !bytes.Contains(out, []byte(`"type": "excalidraw"`)) {
 		t.Fatalf("virtual asset render = %s, err = %v", out, err)
 	}
 }
 
 func TestBuildPPTXPlanUseCase(t *testing.T) {
-	out, err := usecase.BuildPPTXPlan(context.Background(), apiTestXAL, usecase.RenderOptions{Theme: "dark", PaperSize: "A4"})
+	out, err := usecase.BuildPPTXPlan(context.Background(), apiTestXAL, entity.RenderOptions{Theme: "dark", PaperSize: "A4"})
 	if err != nil || !bytes.Contains(out, []byte(`"slide"`)) || !bytes.Contains(out, []byte(`"ops"`)) {
 		t.Fatalf("PPTX plan = %s, err = %v", out, err)
 	}

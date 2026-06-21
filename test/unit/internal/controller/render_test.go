@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/ryo-arima/xaligo/internal/controller"
+	"github.com/ryo-arima/xaligo/internal/entity"
 )
 
 func TestRenderCommandDefaults(t *testing.T) {
@@ -26,7 +27,7 @@ func TestRenderCommandDefaults(t *testing.T) {
 }
 
 func TestRunRenderFormatRejectsUnknownFormat(t *testing.T) {
-	err := controller.RunRenderFormat(controller.RenderOptions{Format: "unknown", Theme: "light"})
+	err := controller.RunRenderFormat(entity.ControllerRenderOptions{Format: "unknown", Theme: "light"})
 	if err == nil || !strings.Contains(err.Error(), "unknown render format") {
 		t.Fatalf("RunRenderFormat() error = %v, want unknown format", err)
 	}

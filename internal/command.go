@@ -5,17 +5,18 @@ import (
 	"os"
 
 	"github.com/ryo-arima/xaligo/internal/controller"
+	"github.com/ryo-arima/xaligo/internal/entity"
 	"github.com/ryo-arima/xaligo/internal/usecase"
 	"github.com/spf13/cobra"
 )
 
 func NewRootCmd() *cobra.Command {
-	return NewRootCmdWithUseCase(usecase.New(usecase.Dependencies{}))
+	return NewRootCmdWithUseCase(usecase.New(entity.UseCaseDependencies{}))
 }
 
 func NewRootCmdWithUseCase(uc usecase.API) *cobra.Command {
 	if uc == nil {
-		uc = usecase.New(usecase.Dependencies{})
+		uc = usecase.New(entity.UseCaseDependencies{})
 	}
 	var root = &cobra.Command{
 		Use:   "xaligo",

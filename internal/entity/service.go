@@ -2,6 +2,16 @@ package entity
 
 import "strings"
 
+// ServiceEntry represents a single service in a list or catalog.
+type ServiceEntry struct {
+	CatalogID    int
+	OfficialName string
+	Abbreviation string
+	Summary      string
+	Usage        string
+	Note         string
+}
+
 // itemAbbreviations maps the service name after stripping the "Amazon " or
 // "AWS " prefix to its well-known abbreviation.
 var itemAbbreviations = map[string]string{

@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ryo-arima/xaligo/internal/entity"
 	"github.com/ryo-arima/xaligo/internal/usecase"
 )
 
@@ -23,9 +24,9 @@ func TestParseStoresNodePositions(t *testing.T) {
 
 func TestParseValidationErrorHasPosition(t *testing.T) {
 	_, err := usecase.Parse(strings.NewReader("<frame>\n  <item id=\"bad\" />\n</frame>"))
-	var parseErr *usecase.Error
+	var parseErr *entity.ParseError
 	if !errors.As(err, &parseErr) {
-		t.Fatalf("error = %T %v, want *usecase.Error", err, err)
+		t.Fatalf("error = %T %v, want *entity.ParseError", err, err)
 	}
 	if parseErr.Position.Line != 2 || parseErr.Position.Column != 3 {
 		t.Fatalf("error position = %#v", parseErr.Position)
@@ -63,7 +64,7 @@ func TestParseShorthandReportsUnknownReference(t *testing.T) {
   <item id="1" name="web" />
   web --- missing
 </frame>`))
-	var parseErr *usecase.Error
+	var parseErr *entity.ParseError
 	if !errors.As(err, &parseErr) {
 		t.Fatalf("error = %T %v", err, err)
 	}
@@ -74,7 +75,7 @@ func TestParseShorthandReportsUnknownReference(t *testing.T) {
 
 func TestParseRejectsInvalidGenericGroupIconID(t *testing.T) {
 	_, err := usecase.Parse(strings.NewReader(`<frame><generic-group icon-id="router" /></frame>`))
-	var parseErr *usecase.Error
+	var parseErr *entity.ParseError
 	if !errors.As(err, &parseErr) || !strings.Contains(err.Error(), "positive catalog ID") {
 		t.Fatalf("error = %T %v", err, err)
 	}

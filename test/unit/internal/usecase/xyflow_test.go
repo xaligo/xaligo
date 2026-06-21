@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/ryo-arima/xaligo/internal/entity"
 	"github.com/ryo-arima/xaligo/internal/usecase"
 )
 
@@ -29,7 +30,7 @@ func TestRenderBuildsNestedNodesAndEdges(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	var document usecase.XYFlowDocument
+	var document entity.XYFlowDocument
 	if err := json.Unmarshal(out, &document); err != nil {
 		t.Fatal(err)
 	}
@@ -39,7 +40,7 @@ func TestRenderBuildsNestedNodesAndEdges(t *testing.T) {
 	if document.Nodes[0].ID != "xyFlowGroup-rect" || document.Nodes[0].Data["icon"] != "data:image/svg+xml;base64,Rw==" {
 		t.Fatalf("xyFlowGroup icon data = %#v", document.Nodes[0])
 	}
-	var item usecase.XYFlowNode
+	var item entity.XYFlowNode
 	for _, node := range document.Nodes {
 		if node.ID == "a-item" {
 			item = node

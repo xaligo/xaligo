@@ -1,41 +1,10 @@
 package entity
 
-import (
-	"fmt"
-	"io/fs"
-	"strings"
-)
+import "io/fs"
 
 type Mode string
 type Format string
 type DiagnosticSeverity string
-
-// ServiceEntry represents a single service in a list or catalog.
-type ServiceEntry struct {
-	CatalogID    int
-	OfficialName string
-	Abbreviation string
-	Summary      string
-	Usage        string
-	Note         string
-}
-
-const (
-	ThemeLight = "light"
-	ThemeDark  = "dark"
-)
-
-// NormalizeTheme validates a renderer theme and supplies the default.
-func NormalizeTheme(value string) (string, error) {
-	value = strings.ToLower(strings.TrimSpace(value))
-	if value == "" {
-		return ThemeLight, nil
-	}
-	if value != ThemeLight && value != ThemeDark {
-		return "", fmt.Errorf("unknown theme %q; valid: light, dark", value)
-	}
-	return value, nil
-}
 
 // AssetSource describes an embedded or virtual asset tree.
 type AssetSource struct {
@@ -73,27 +42,4 @@ type RenderOptions struct {
 	Subject          string `json:"subject,omitempty"`
 	Compression      *bool  `json:"compression,omitempty"`
 	PPTXExporterWASM string `json:"pptxExporterWasm,omitempty"`
-}
-
-type Diagnostic struct {
-	Severity DiagnosticSeverity `json:"severity"`
-	Message  string             `json:"message"`
-	Offset   int                `json:"offset,omitempty"`
-	Line     int                `json:"line,omitempty"`
-	Column   int                `json:"column,omitempty"`
-}
-
-type DiagnosticsError struct {
-	Diagnostics []Diagnostic
-}
-
-func (e *DiagnosticsError) Error() string {
-	if len(e.Diagnostics) == 0 {
-		return "validation failed"
-	}
-	d := e.Diagnostics[0]
-	if d.Line > 0 {
-		return fmt.Sprintf("line %d, column %d: %s", d.Line, d.Column, d.Message)
-	}
-	return d.Message
 }

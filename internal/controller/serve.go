@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/ryo-arima/xaligo/internal/entity"
 	"github.com/ryo-arima/xaligo/internal/usecase"
 	"github.com/spf13/cobra"
 )
@@ -25,7 +26,7 @@ func InitServeCmdWithUseCase(uc usecase.API) *cobra.Command {
 		Short: "Serve a live SVG preview and reload it when the source changes",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return RunServeWithUseCase(uc, cmd.Context(), ServeOptions{
+			return RunServeWithUseCase(uc, cmd.Context(), entity.ControllerServeOptions{
 				InputPath: args[0], Address: address, Mode: mode, Theme: theme,
 				PollInterval: poll,
 			})
@@ -38,22 +39,14 @@ func InitServeCmdWithUseCase(uc usecase.API) *cobra.Command {
 	return cmd
 }
 
-type ServeOptions struct {
-	InputPath    string
-	Address      string
-	Mode         string
-	Theme        string
-	PollInterval time.Duration
-}
-
-func RunServe(ctx context.Context, opts ServeOptions) error {
+func RunServe(ctx context.Context, opts entity.ControllerServeOptions) error {
 	return RunServeWithUseCase(nil, ctx, opts)
 }
 
-func RunServeWithUseCase(uc usecase.API, ctx context.Context, opts ServeOptions) error {
+func RunServeWithUseCase(uc usecase.API, ctx context.Context, opts entity.ControllerServeOptions) error {
 	uc = defaultUseCase(uc)
-	server, err := uc.NewPreviewServer(opts.InputPath, usecase.PreviewOptions{
-		Render:       usecase.RenderOptions{Mode: usecase.Mode(opts.Mode), Format: usecase.FormatSVG, Theme: opts.Theme},
+	server, err := uc.NewPreviewServer(opts.InputPath, entity.PreviewOptions{
+		Render:       entity.RenderOptions{Mode: entity.Mode(opts.Mode), Format: usecase.FormatSVG, Theme: opts.Theme},
 		PollInterval: opts.PollInterval,
 	})
 	if err != nil {

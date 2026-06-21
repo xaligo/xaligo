@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+
+	"github.com/ryo-arima/xaligo/internal/entity"
 )
 
 // plan.go — builds a fully-resolved PPTX draw plan from an Excalidraw scene.
@@ -48,8 +50,8 @@ type paperMargins struct {
 
 // BuildPlanJSON parses an Excalidraw JSON scene and returns the PPTX draw plan
 // as JSON, applying every geometry option in opt.
-func BuildPlanJSON(sceneJSON string, opt Options) ([]byte, error) {
-	var scene Scene
+func BuildPlanJSON(sceneJSON string, opt entity.PptxOptions) ([]byte, error) {
+	var scene entity.PptxScene
 	if err := json.Unmarshal([]byte(sceneJSON), &scene); err != nil {
 		return nil, err
 	}
@@ -110,7 +112,7 @@ func resolvePaper(size, orientation string, contentWIn, contentHIn float64, marg
 	return pw, ph, true
 }
 
-func resolvePaperMargins(opt Options) paperMargins {
+func resolvePaperMargins(opt entity.PptxOptions) paperMargins {
 	all := math.Max(0, opt.PaperMargin)
 	margins := paperMargins{Top: all, Right: all, Bottom: all, Left: all}
 	if opt.PaperMarginTop > 0 {
@@ -134,8 +136,8 @@ func (m paperMargins) available(w, h float64) (float64, float64) {
 }
 
 // BuildPlan converts a parsed scene into a draw plan.
-func BuildPlan(scene *Scene, opt Options) Plan {
-	elements := make([]*Element, 0, len(scene.Elements))
+func BuildPlan(scene *entity.PptxScene, opt entity.PptxOptions) entity.Plan {
+	elements := make([]*entity.Element, 0, len(scene.Elements))
 	for i := range scene.Elements {
 		if !scene.Elements[i].IsDeleted {
 			elements = append(elements, &scene.Elements[i])
@@ -188,7 +190,7 @@ func BuildPlan(scene *Scene, opt Options) Plan {
 		marginPx = opt.ArrowMargin
 	}
 
-	elementsByID := map[string]*Element{}
+	elementsByID := map[string]*entity.Element{}
 	for _, el := range elements {
 		if el.ID != "" {
 			elementsByID[el.ID] = el
@@ -197,7 +199,7 @@ func BuildPlan(scene *Scene, opt Options) Plan {
 
 	obstacles := collectObstacles(elements)
 
-	connectors := []*Element{}
+	connectors := []*entity.Element{}
 	for _, el := range elements {
 		if (el.Type == "arrow" || el.Type == "line") && (el.CustomData == nil || !el.CustomData.GroupHeader) {
 			connectors = append(connectors, el)
@@ -205,7 +207,7 @@ func BuildPlan(scene *Scene, opt Options) Plan {
 	}
 	prepared := prepareConnectors(connectors, elementsByID)
 
-	ops := []DrawOp{}
+	ops := []entity.DrawOp{}
 
 	// 1) Anchor grids first → behind the icons drawn on top.
 	gridIDs := make([]string, 0, len(prepared.gridRects))
@@ -220,7 +222,7 @@ func BuildPlan(scene *Scene, opt Options) Plan {
 
 	// 2) Containers/shapes in scene order. Group title tags are deferred until
 	// after every group border so a nested child border cannot cover a parent tag.
-	headerShapes := []*Element{}
+	headerShapes := []*entity.Element{}
 	for _, el := range elements {
 		if el.ID == "paper-frame" {
 			continue
@@ -267,13 +269,13 @@ func BuildPlan(scene *Scene, opt Options) Plan {
 	rOpt.Reserved = collectContainerBorderPaths(elements)
 	groupBorders := collectGroupBorderPaths(elements)
 	routed := routeConnections(reqs, obstacles, rOpt)
-	elByConn := map[string]*Element{}
+	elByConn := map[string]*entity.Element{}
 	for _, pc := range ordered {
 		elByConn[pc.req.ID] = pc.el
 	}
-	connectorLabels := []DrawOp{}
+	connectorLabels := []entity.DrawOp{}
 	connectorLabelRects := []rect{}
-	connectorLegend := []ConnectorLegendEntry{}
+	connectorLegend := []entity.ConnectorLegendEntry{}
 	for i, path := range routed {
 		el := elByConn[path.ID]
 		if el == nil {
@@ -332,8 +334,8 @@ func BuildPlan(scene *Scene, opt Options) Plan {
 	}
 	ops = append(ops, connectorLabels...)
 
-	return Plan{
-		Slide: PlanSlide{
+	return entity.Plan{
+		Slide: entity.PlanSlide{
 			W:          layoutW,
 			H:          layoutH,
 			Background: background,
@@ -415,10 +417,10 @@ func junctionGroupKey(prefix string, r rect, side side) string {
 	return fmt.Sprintf("%s|%.4f|%.4f|%.4f|%.4f|%s", prefix, r.X, r.Y, r.W, r.H, side)
 }
 
-func junctionOp(id string, point pt, frame rect, ppi float64, line LineStyle) DrawOp {
+func junctionOp(id string, point pt, frame rect, ppi float64, line entity.LineStyle) entity.DrawOp {
 	const diameterPx = 8.0
 	diameter := diameterPx / ppi
-	return DrawOp{
+	return entity.DrawOp{
 		ID:         id + "-junction",
 		FrontLayer: true,
 		Kind:       "ellipse",
@@ -426,14 +428,14 @@ func junctionOp(id string, point pt, frame rect, ppi float64, line LineStyle) Dr
 		Y:          (point.Y-frame.Y)/ppi - diameter/2,
 		W:          diameter,
 		H:          diameter,
-		Fill:       &FillStyle{Color: line.Color, Transparency: line.Transparency},
-		Line:       &LineStyle{Color: line.Color, Width: math.Max(0.75, line.Width), Dash: "solid", Transparency: line.Transparency},
+		Fill:       &entity.FillStyle{Color: line.Color, Transparency: line.Transparency},
+		Line:       &entity.LineStyle{Color: line.Color, Width: math.Max(0.75, line.Width), Dash: "solid", Transparency: line.Transparency},
 	}
 }
 
-func lineJumpMaskOp(id string, crossing pt, frame rect, ppi float64, background string) DrawOp {
+func lineJumpMaskOp(id string, crossing pt, frame rect, ppi float64, background string) entity.DrawOp {
 	size := lineJumpSizePx / ppi
-	return DrawOp{
+	return entity.DrawOp{
 		ID:         id,
 		FrontLayer: true,
 		Kind:       "rect",
@@ -441,14 +443,14 @@ func lineJumpMaskOp(id string, crossing pt, frame rect, ppi float64, background 
 		Y:          (crossing.Y-frame.Y)/ppi - size/2,
 		W:          size,
 		H:          size,
-		Fill:       &FillStyle{Color: background, Transparency: 0},
-		Line:       &LineStyle{Color: background, Width: 0.25, Transparency: 100},
+		Fill:       &entity.FillStyle{Color: background, Transparency: 0},
+		Line:       &entity.LineStyle{Color: background, Width: 0.25, Transparency: 100},
 	}
 }
 
-func groupBorderMaskOp(id string, crossing pt, frame rect, ppi float64) DrawOp {
+func groupBorderMaskOp(id string, crossing pt, frame rect, ppi float64) entity.DrawOp {
 	size := groupBorderMaskSizePx / ppi
-	return DrawOp{
+	return entity.DrawOp{
 		ID:         id,
 		FrontLayer: true,
 		Kind:       "rect",
@@ -456,15 +458,15 @@ func groupBorderMaskOp(id string, crossing pt, frame rect, ppi float64) DrawOp {
 		Y:          (crossing.Y-frame.Y)/ppi - size/2,
 		W:          size,
 		H:          size,
-		Fill:       &FillStyle{Color: "FFFFFF", Transparency: 0},
-		Line:       &LineStyle{Color: "FFFFFF", Width: 0.25, Transparency: 100},
+		Fill:       &entity.FillStyle{Color: "FFFFFF", Transparency: 0},
+		Line:       &entity.LineStyle{Color: "FFFFFF", Width: 0.25, Transparency: 100},
 	}
 }
 
 // lineJumpBackground returns the uppermost opaque shape fill beneath a crossing.
 // Transparent or partially transparent fills fall back to the slide background,
 // as reproducing their composited color would require renderer-specific blending.
-func lineJumpBackground(crossing pt, elements []*Element, fallback string) string {
+func lineJumpBackground(crossing pt, elements []*entity.Element, fallback string) string {
 	color := fallback
 	for _, el := range elements {
 		if el.Type != "frame" && el.Type != "rectangle" && el.Type != "ellipse" {
@@ -495,11 +497,11 @@ func lineJumpBackground(crossing pt, elements []*Element, fallback string) strin
 	return color
 }
 
-func buildLegend(scene *Scene, entries []LegendEntry) []LegendEntry {
+func buildLegend(scene *entity.PptxScene, entries []entity.LegendEntry) []entity.LegendEntry {
 	if scene == nil || len(entries) == 0 {
 		return nil
 	}
-	out := make([]LegendEntry, 0, len(entries))
+	out := make([]entity.LegendEntry, 0, len(entries))
 	seen := map[int]bool{}
 	for _, entry := range entries {
 		if entry.CatalogID <= 0 || seen[entry.CatalogID] {
@@ -519,9 +521,9 @@ func buildLegend(scene *Scene, entries []LegendEntry) []LegendEntry {
 	return out
 }
 
-func connectorLegendEntry(id string, el *Element, line LineStyle) ConnectorLegendEntry {
+func connectorLegendEntry(id string, el *entity.Element, line entity.LineStyle) entity.ConnectorLegendEntry {
 	kind := connectorKind(el)
-	entry := ConnectorLegendEntry{ID: id, Kind: kind, Line: line, Source: bindingElementID(el.StartBinding), Target: bindingElementID(el.EndBinding)}
+	entry := entity.ConnectorLegendEntry{ID: id, Kind: kind, Line: line, Source: bindingElementID(el.StartBinding), Target: bindingElementID(el.EndBinding)}
 	switch kind {
 	case "route":
 		entry.Label = "Route line"
@@ -536,25 +538,25 @@ func connectorLegendEntry(id string, el *Element, line LineStyle) ConnectorLegen
 	return entry
 }
 
-func bindingElementID(binding *Binding) string {
+func bindingElementID(binding *entity.Binding) string {
 	if binding == nil {
 		return ""
 	}
 	return binding.ElementID
 }
 
-func connectorIDLabelOp(id string, path routedPath, allPaths []routedPath, obstacles []rect, placedLabels []rect, frame rect, ppi float64, line LineStyle) (DrawOp, rect, bool) {
+func connectorIDLabelOp(id string, path routedPath, allPaths []routedPath, obstacles []rect, placedLabels []rect, frame rect, ppi float64, line entity.LineStyle) (entity.DrawOp, rect, bool) {
 	if len(path.Points) < 2 {
-		return DrawOp{}, rect{}, false
+		return entity.DrawOp{}, rect{}, false
 	}
 	p, ok := connectorLabelPoint(path, allPaths, obstacles, placedLabels)
 	if !ok {
-		return DrawOp{}, rect{}, false
+		return entity.DrawOp{}, rect{}, false
 	}
 	w := 0.22
 	h := 0.12
 	labelRect := connectorIDLabelRect(p)
-	return DrawOp{
+	return entity.DrawOp{
 		ID:         id + "-label",
 		FrontLayer: true,
 		Kind:       "text",
@@ -707,7 +709,7 @@ func distancePointToSegment(p pt, seg segment) float64 {
 	return math.Hypot(p.X-closest.X, p.Y-closest.Y)
 }
 
-func backgroundColor(scene *Scene) string {
+func backgroundColor(scene *entity.PptxScene) string {
 	if scene.AppState != nil {
 		return scene.AppState.ViewBackgroundColor
 	}
@@ -717,7 +719,7 @@ func backgroundColor(scene *Scene) string {
 // ── Connector preparation (anchors + sides) ──────────────────────────────────
 
 type preparedConnector struct {
-	el  *Element
+	el  *entity.Element
 	req routeRequest
 }
 
@@ -731,7 +733,7 @@ type endpoint struct {
 
 type preparedResult struct {
 	routed    []preparedConnector
-	raw       []*Element
+	raw       []*entity.Element
 	gridRects map[string]anchorGridRect
 }
 
@@ -740,13 +742,13 @@ type anchorGridRect struct {
 	background string
 }
 
-func prepareConnectors(connectors []*Element, byID map[string]*Element) preparedResult {
-	raw := []*Element{}
+func prepareConnectors(connectors []*entity.Element, byID map[string]*entity.Element) preparedResult {
+	raw := []*entity.Element{}
 	gridRects := map[string]anchorGridRect{}
 	groupKeys := []string{}
 	groups := map[string][]endpoint{}
 	type item struct {
-		el      *Element
+		el      *entity.Element
 		src     rect
 		dst     rect
 		srcSide side
@@ -851,7 +853,7 @@ func prepareConnectors(connectors []*Element, byID map[string]*Element) prepared
 	return preparedResult{routed: routed, raw: raw, gridRects: gridRects}
 }
 
-func anchorGridForElement(id string, el *Element, base rect, byID map[string]*Element) anchorGridRect {
+func anchorGridForElement(id string, el *entity.Element, base rect, byID map[string]*entity.Element) anchorGridRect {
 	grid := anchorGridRect{rect: base, background: el.BackgroundColor}
 	if strings.HasSuffix(id, "-lbl") {
 		if imageEl := byID[strings.TrimSuffix(id, "-lbl")]; imageEl != nil {
@@ -886,7 +888,7 @@ func unionRect(a, b rect) rect {
 	return rect{X: minX, Y: minY, W: maxX - minX, H: maxY - minY}
 }
 
-type anchorPair = struct {
+type anchorPair struct {
 	src     *pt
 	dst     *pt
 	srcLane float64
@@ -995,7 +997,7 @@ func anchorPoint(r rect, s side, slot int) pt {
 
 // ── Obstacles + side inference ───────────────────────────────────────────────
 
-func collectObstacles(elements []*Element) []rect {
+func collectObstacles(elements []*entity.Element) []rect {
 	rects := []rect{}
 	for _, el := range elements {
 		if el.ID == "paper-frame" {
@@ -1018,7 +1020,7 @@ func collectObstacles(elements []*Element) []rect {
 // strokes. Borders are routing guides rather than solid obstacles: connectors
 // can cross them to move between nested groups, but parallel overlap and paths
 // inside LineMargin are penalised by the normal lane-scoring logic.
-func collectContainerBorderPaths(elements []*Element) [][]segment {
+func collectContainerBorderPaths(elements []*entity.Element) [][]segment {
 	paths := make([][]segment, 0)
 	for _, el := range elements {
 		if el.ID == "paper-frame" || (el.Type != "frame" && el.Type != "rectangle") {
@@ -1046,7 +1048,7 @@ func collectContainerBorderPaths(elements []*Element) [][]segment {
 	return paths
 }
 
-func collectGroupBorderPaths(elements []*Element) []segment {
+func collectGroupBorderPaths(elements []*entity.Element) []segment {
 	var paths []segment
 	for _, el := range elements {
 		if el.CustomData == nil || !el.CustomData.GroupBorder {
@@ -1112,7 +1114,7 @@ func sideFromFixedPoint(fp []float64) (side, bool) {
 	return "", false
 }
 
-func rectOf(el *Element) (rect, bool) {
+func rectOf(el *entity.Element) (rect, bool) {
 	if el == nil {
 		return rect{}, false
 	}
@@ -1139,7 +1141,7 @@ func inferSides(src, dst rect) (srcSide, dstSide side) {
 
 // ── Op builders (pixel → inch) ───────────────────────────────────────────────
 
-func findPaperFrame(elements []*Element) *rect {
+func findPaperFrame(elements []*entity.Element) *rect {
 	for _, el := range elements {
 		if el.ID == "paper-frame" || el.Type == "frame" {
 			return &rect{
@@ -1153,8 +1155,8 @@ func findPaperFrame(elements []*Element) *rect {
 	return nil
 }
 
-func contentBounds(elements []*Element) rect {
-	visible := []*Element{}
+func contentBounds(elements []*entity.Element) rect {
+	visible := []*entity.Element{}
 	for _, el := range elements {
 		if el.Type != "arrow" && el.Type != "line" {
 			visible = append(visible, el)
@@ -1176,7 +1178,7 @@ func contentBounds(elements []*Element) rect {
 
 type pos struct{ X, Y, W, H float64 }
 
-func toPos(el *Element, frame rect, ppi float64) (pos, bool) {
+func toPos(el *entity.Element, frame rect, ppi float64) (pos, bool) {
 	w := el.Width / ppi
 	h := el.Height / ppi
 	if w <= 0 || h <= 0 {
@@ -1190,10 +1192,10 @@ func toPos(el *Element, frame rect, ppi float64) (pos, bool) {
 	}, true
 }
 
-func shapeOp(el *Element, frame rect, ppi float64) (DrawOp, bool) {
+func shapeOp(el *entity.Element, frame rect, ppi float64) (entity.DrawOp, bool) {
 	p, ok := toPos(el, frame, ppi)
 	if !ok {
-		return DrawOp{}, false
+		return entity.DrawOp{}, false
 	}
 	kind := "rect"
 	if el.Type == "ellipse" {
@@ -1201,7 +1203,7 @@ func shapeOp(el *Element, frame rect, ppi float64) (DrawOp, bool) {
 	}
 	ln := lineProps(el)
 	fl := fillProps(el.BackgroundColor, opacityToTransparency(el.Opacity))
-	return DrawOp{
+	return entity.DrawOp{
 		Kind:   kind,
 		X:      p.X,
 		Y:      p.Y,
@@ -1213,43 +1215,43 @@ func shapeOp(el *Element, frame rect, ppi float64) (DrawOp, bool) {
 	}, true
 }
 
-func polygonOp(el *Element, frame rect, ppi float64) (DrawOp, bool) {
+func polygonOp(el *entity.Element, frame rect, ppi float64) (entity.DrawOp, bool) {
 	p, ok := toPos(el, frame, ppi)
 	if !ok || len(el.Points) < 3 {
-		return DrawOp{}, false
+		return entity.DrawOp{}, false
 	}
-	points := make([]PtIn, 0, len(el.Points))
+	points := make([]entity.PtIn, 0, len(el.Points))
 	for i, point := range el.Points {
 		if len(point) < 2 {
 			continue
 		}
-		points = append(points, PtIn{X: point[0] / ppi, Y: point[1] / ppi, MoveTo: i == 0})
+		points = append(points, entity.PtIn{X: point[0] / ppi, Y: point[1] / ppi, MoveTo: i == 0})
 	}
 	if len(points) < 3 {
-		return DrawOp{}, false
+		return entity.DrawOp{}, false
 	}
 	ln := lineProps(el)
 	fl := fillProps(el.BackgroundColor, opacityToTransparency(el.Opacity))
-	return DrawOp{Kind: "polygon", X: p.X, Y: p.Y, W: p.W, H: p.H, Rotate: el.Angle, Points: points, Line: &ln, Fill: &fl}, true
+	return entity.DrawOp{Kind: "polygon", X: p.X, Y: p.Y, W: p.W, H: p.H, Rotate: el.Angle, Points: points, Line: &ln, Fill: &fl}, true
 }
 
-func textOp(el *Element, frame rect, ppi float64) (DrawOp, bool) {
+func textOp(el *entity.Element, frame rect, ppi float64) (entity.DrawOp, bool) {
 	p, ok := toPos(el, frame, ppi)
 	if !ok {
-		return DrawOp{}, false
+		return entity.DrawOp{}, false
 	}
 	text := el.Text
 	if text == "" {
 		text = el.RawText
 	}
 	if text == "" {
-		return DrawOp{}, false
+		return entity.DrawOp{}, false
 	}
 	fontSize := 12.0
 	if el.FontSize != nil {
 		fontSize = *el.FontSize
 	}
-	return DrawOp{
+	return entity.DrawOp{
 		ID:       el.ID,
 		Kind:     "text",
 		X:        p.X,
@@ -1267,16 +1269,16 @@ func textOp(el *Element, frame rect, ppi float64) (DrawOp, bool) {
 	}, true
 }
 
-func imageOp(el *Element, files map[string]SceneFile, frame rect, ppi float64) (DrawOp, bool) {
+func imageOp(el *entity.Element, files map[string]entity.SceneFile, frame rect, ppi float64) (entity.DrawOp, bool) {
 	p, ok := toPos(el, frame, ppi)
 	if !ok || el.FileID == "" {
-		return DrawOp{}, false
+		return entity.DrawOp{}, false
 	}
 	f, ok := files[el.FileID]
 	if !ok || f.DataURL == "" {
-		return DrawOp{}, false
+		return entity.DrawOp{}, false
 	}
-	return DrawOp{
+	return entity.DrawOp{
 		ID:           el.ID,
 		Kind:         "image",
 		X:            p.X,
@@ -1289,17 +1291,17 @@ func imageOp(el *Element, files map[string]SceneFile, frame rect, ppi float64) (
 	}, true
 }
 
-func anchorGridOps(id string, r rect, frame rect, ppi float64, background string) []DrawOp {
+func anchorGridOps(id string, r rect, frame rect, ppi float64, background string) []entity.DrawOp {
 	cellW := r.W / float64(anchorGrid)
 	cellH := r.H / float64(anchorGrid)
-	ops := make([]DrawOp, 0, anchorGrid*anchorGrid)
+	ops := make([]entity.DrawOp, 0, anchorGrid*anchorGrid)
 	baseID := anchorBaseID(id)
 	groupID := anchorGroupID(baseID)
 	for i := 0; i < anchorGrid; i++ {
 		for j := 0; j < anchorGrid; j++ {
 			cx := r.X + float64(i)*cellW
 			cy := r.Y + float64(j)*cellH
-			ops = append(ops, DrawOp{
+			ops = append(ops, entity.DrawOp{
 				ID:      fmt.Sprintf("%s-grid-%02d-%02d", baseID, i, j),
 				GroupID: groupID,
 				Kind:    "rect",
@@ -1307,8 +1309,8 @@ func anchorGridOps(id string, r rect, frame rect, ppi float64, background string
 				Y:       (cy - frame.Y) / ppi,
 				W:       cellW / ppi,
 				H:       cellH / ppi,
-				Fill:    &FillStyle{Color: background, Transparency: 0},
-				Line:    &LineStyle{Color: background, Width: 0.25, Dash: "solid", Transparency: 0},
+				Fill:    &entity.FillStyle{Color: background, Transparency: 0},
+				Line:    &entity.LineStyle{Color: background, Width: 0.25, Dash: "solid", Transparency: 0},
 			})
 		}
 	}
@@ -1324,7 +1326,7 @@ func anchorGroups(grids map[string]anchorGridRect) map[string]string {
 	return out
 }
 
-func applyAnchorGroup(op *DrawOp, elementID string, groups map[string]string) {
+func applyAnchorGroup(op *entity.DrawOp, elementID string, groups map[string]string) {
 	if op == nil || elementID == "" {
 		return
 	}
@@ -1344,9 +1346,9 @@ func anchorGroupID(baseID string) string {
 	return "xaligo-anchor-" + baseID
 }
 
-func polylineOp(el *Element, points []pt, frame rect, ppi float64, style connectorStyle) (DrawOp, bool) {
+func polylineOp(el *entity.Element, points []pt, frame rect, ppi float64, style connectorStyle) (entity.DrawOp, bool) {
 	if len(points) < 2 {
-		return DrawOp{}, false
+		return entity.DrawOp{}, false
 	}
 	inch := make([]pt, len(points))
 	for i, p := range points {
@@ -1362,12 +1364,12 @@ func polylineOp(el *Element, points []pt, frame rect, ppi float64, style connect
 	}
 	w := math.Max(maxX-minX, 0.0001)
 	h := math.Max(maxY-minY, 0.0001)
-	rel := make([]PtIn, len(inch))
+	rel := make([]entity.PtIn, len(inch))
 	for i, p := range inch {
-		rel[i] = PtIn{X: p.X - minX, Y: p.Y - minY, MoveTo: i == 0}
+		rel[i] = entity.PtIn{X: p.X - minX, Y: p.Y - minY, MoveTo: i == 0}
 	}
 	ln := connectorLine(el, style)
-	return DrawOp{
+	return entity.DrawOp{
 		ID:         el.ID,
 		FrontLayer: true,
 		Kind:       "line",
@@ -1380,7 +1382,7 @@ func polylineOp(el *Element, points []pt, frame rect, ppi float64, style connect
 	}, true
 }
 
-func rawLineOp(el *Element, frame rect, ppi float64, style connectorStyle) (DrawOp, bool) {
+func rawLineOp(el *entity.Element, frame rect, ppi float64, style connectorStyle) (entity.DrawOp, bool) {
 	startX := el.X - frame.X
 	startY := el.Y - frame.Y
 	points := el.Points
@@ -1397,10 +1399,10 @@ func rawLineOp(el *Element, frame rect, ppi float64, style connectorStyle) (Draw
 	w := math.Abs(dx) / ppi
 	h := math.Abs(dy) / ppi
 	if w <= 0 && h <= 0 {
-		return DrawOp{}, false
+		return entity.DrawOp{}, false
 	}
 	ln := connectorLine(el, style)
-	return DrawOp{
+	return entity.DrawOp{
 		ID:         el.ID,
 		FrontLayer: true,
 		Kind:       "line",
@@ -1414,7 +1416,7 @@ func rawLineOp(el *Element, frame rect, ppi float64, style connectorStyle) (Draw
 	}, true
 }
 
-func connectorLine(el *Element, style connectorStyle) LineStyle {
+func connectorLine(el *entity.Element, style connectorStyle) entity.LineStyle {
 	base := lineProps(el)
 	kind := connectorKind(el)
 	beginHead, endHead := connectorArrowheads(el)
@@ -1451,7 +1453,7 @@ func connectorLine(el *Element, style connectorStyle) LineStyle {
 	return base
 }
 
-func connectorKind(el *Element) string {
+func connectorKind(el *entity.Element) string {
 	if el.CustomData == nil {
 		return "connection"
 	}
@@ -1474,7 +1476,7 @@ func connectorKindPriority(kind string) int {
 	}
 }
 
-func connectorArrowheads(el *Element) (string, string) {
+func connectorArrowheads(el *entity.Element) (string, string) {
 	if el.CustomData == nil {
 		return "", ""
 	}
@@ -1483,7 +1485,7 @@ func connectorArrowheads(el *Element) (string, string) {
 
 // ── Styling helpers ──────────────────────────────────────────────────────────
 
-func lineProps(el *Element) LineStyle {
+func lineProps(el *entity.Element) entity.LineStyle {
 	color := normalizeColor(el.StrokeColor, "1E1E1E")
 	dash := "solid"
 	if el.StrokeStyle == "dashed" {
@@ -1500,14 +1502,14 @@ func lineProps(el *Element) LineStyle {
 		width = 1
 	}
 	width = math.Max(0.25, width)
-	return LineStyle{Color: color, Width: width, Dash: dash, Transparency: transparency}
+	return entity.LineStyle{Color: color, Width: width, Dash: dash, Transparency: transparency}
 }
 
-func fillProps(color string, transparency float64) FillStyle {
+func fillProps(color string, transparency float64) entity.FillStyle {
 	if color == "" || color == "transparent" {
-		return FillStyle{Color: "FFFFFF", Transparency: 100}
+		return entity.FillStyle{Color: "FFFFFF", Transparency: 100}
 	}
-	return FillStyle{Color: normalizeColor(color, "FFFFFF"), Transparency: transparency}
+	return entity.FillStyle{Color: normalizeColor(color, "FFFFFF"), Transparency: transparency}
 }
 
 func normalizeColor(color, fallback string) string {

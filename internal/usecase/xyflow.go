@@ -10,57 +10,6 @@ import (
 	"github.com/ryo-arima/xaligo/internal/entity"
 )
 
-type XYFlowDocument struct {
-	Nodes          []XYFlowNode   `json:"nodes"`
-	Edges          []XYFlowEdge   `json:"edges"`
-	XYFlowViewport XYFlowViewport `json:"viewport"`
-	Width          float64        `json:"width"`
-	Height         float64        `json:"height"`
-	Background     string         `json:"background"`
-}
-
-type XYFlowViewport struct {
-	X    float64 `json:"x"`
-	Y    float64 `json:"y"`
-	Zoom float64 `json:"zoom"`
-}
-
-type XYFlowPosition struct {
-	X float64 `json:"x"`
-	Y float64 `json:"y"`
-}
-
-type XYFlowNode struct {
-	ID             string         `json:"id"`
-	Type           string         `json:"type"`
-	XYFlowPosition XYFlowPosition `json:"position"`
-	Width          float64        `json:"width"`
-	Height         float64        `json:"height"`
-	ParentID       string         `json:"parentId,omitempty"`
-	Extent         string         `json:"extent,omitempty"`
-	Data           map[string]any `json:"data"`
-	Style          map[string]any `json:"style,omitempty"`
-}
-
-type XYFlowEdge struct {
-	ID           string         `json:"id"`
-	Source       string         `json:"source"`
-	Target       string         `json:"target"`
-	SourceHandle string         `json:"sourceHandle,omitempty"`
-	TargetHandle string         `json:"targetHandle,omitempty"`
-	Type         string         `json:"type"`
-	ZIndex       int            `json:"zIndex,omitempty"`
-	Data         map[string]any `json:"data"`
-	Style        map[string]any `json:"style,omitempty"`
-	MarkerStart  *XYFlowMarker  `json:"markerStart,omitempty"`
-	MarkerEnd    *XYFlowMarker  `json:"markerEnd,omitempty"`
-}
-
-type XYFlowMarker struct {
-	Type  string `json:"type"`
-	Color string `json:"color,omitempty"`
-}
-
 type xyFlowGroup struct {
 	element entity.Element
 	parent  string
@@ -85,10 +34,10 @@ func RenderXYFlowScene(sceneJSON []byte) ([]byte, error) {
 	}
 
 	groups := collectGroups(scene.Elements)
-	nodes := make([]XYFlowNode, 0, len(groups))
+	nodes := make([]entity.XYFlowNode, 0, len(groups))
 	for _, candidate := range groups {
 		element := candidate.element
-		position := XYFlowPosition{X: element.X, Y: element.Y}
+		position := entity.XYFlowPosition{X: element.X, Y: element.Y}
 		if candidate.parent != "" {
 			if parent, ok := groupByID(groups, candidate.parent); ok {
 				position.X -= parent.element.X
@@ -99,7 +48,7 @@ func RenderXYFlowScene(sceneJSON []byte) ([]byte, error) {
 		if icon := groupIcons[element.ID]; icon != "" {
 			data["icon"] = icon
 		}
-		node := XYFlowNode{
+		node := entity.XYFlowNode{
 			ID: element.ID, Type: "xyFlowGroup", XYFlowPosition: position,
 			Width: element.Width, Height: element.Height, ParentID: candidate.parent,
 			Data: data,
@@ -120,7 +69,7 @@ func RenderXYFlowScene(sceneJSON []byte) ([]byte, error) {
 			continue
 		}
 		parent := smallestContainingGroup(groups, element)
-		position := XYFlowPosition{X: element.X, Y: element.Y}
+		position := entity.XYFlowPosition{X: element.X, Y: element.Y}
 		if parent != "" {
 			if candidate, ok := groupByID(groups, parent); ok {
 				position.X -= candidate.element.X
@@ -131,7 +80,7 @@ func RenderXYFlowScene(sceneJSON []byte) ([]byte, error) {
 		if file, ok := scene.Files[element.FileID]; ok && file.DataURL != "" {
 			data["image"] = file.DataURL
 		}
-		node := XYFlowNode{ID: element.ID, Type: "xaligoItem", XYFlowPosition: position, Width: element.Width, Height: element.Height, ParentID: parent, Data: data}
+		node := entity.XYFlowNode{ID: element.ID, Type: "xaligoItem", XYFlowPosition: position, Width: element.Width, Height: element.Height, ParentID: parent, Data: data}
 		if parent != "" {
 			node.Extent = "parent"
 		}
@@ -139,7 +88,7 @@ func RenderXYFlowScene(sceneJSON []byte) ([]byte, error) {
 		itemIDs[element.ID] = true
 	}
 
-	edges := []XYFlowEdge{}
+	edges := []entity.XYFlowEdge{}
 	for _, element := range scene.Elements {
 		if element.IsDeleted || (element.Type != "arrow" && element.Type != "line") || element.StartBinding == nil || element.EndBinding == nil {
 			continue
@@ -151,7 +100,7 @@ func RenderXYFlowScene(sceneJSON []byte) ([]byte, error) {
 		}
 		kind, startHead, endHead := connectorData(element)
 		color := xyFlowNormalizedColor(element.StrokeColor, "#1e1e1e")
-		edge := XYFlowEdge{
+		edge := entity.XYFlowEdge{
 			ID: element.ID, Source: source, Target: target,
 			SourceHandle: bindingSide(element.StartBinding.FixedPoint), TargetHandle: bindingSide(element.EndBinding.FixedPoint),
 			Type: "smoothstep", ZIndex: edgeZIndex(kind),
@@ -167,7 +116,7 @@ func RenderXYFlowScene(sceneJSON []byte) ([]byte, error) {
 	if scene.AppState != nil && scene.AppState.ViewBackgroundColor != "" {
 		background = scene.AppState.ViewBackgroundColor
 	}
-	document := XYFlowDocument{Nodes: nodes, Edges: edges, XYFlowViewport: XYFlowViewport{Zoom: 1}, Width: width, Height: height, Background: background}
+	document := entity.XYFlowDocument{Nodes: nodes, Edges: edges, XYFlowViewport: entity.XYFlowViewport{Zoom: 1}, Width: width, Height: height, Background: background}
 	return json.MarshalIndent(document, "", "  ")
 }
 
@@ -248,10 +197,10 @@ func bindingSide(point []float64) string {
 	return ""
 }
 
-func marker(arrowhead, color string) *XYFlowMarker {
+func marker(arrowhead, color string) *entity.XYFlowMarker {
 	switch arrowhead {
 	case "arrow", "triangle", "stealth":
-		return &XYFlowMarker{Type: "arrowclosed", Color: color}
+		return &entity.XYFlowMarker{Type: "arrowclosed", Color: color}
 	default:
 		return nil
 	}

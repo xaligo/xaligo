@@ -5,6 +5,7 @@ import (
 	"math"
 	"testing"
 
+	"github.com/ryo-arima/xaligo/internal/entity"
 	"github.com/ryo-arima/xaligo/internal/usecase"
 )
 
@@ -29,7 +30,7 @@ func TestRenderBuildsIsometricDocument(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	var document usecase.IsoflowDocument
+	var document entity.IsoflowDocument
 	if err := json.Unmarshal(out, &document); err != nil {
 		t.Fatal(err)
 	}
@@ -46,7 +47,7 @@ func TestRenderBuildsIsometricDocument(t *testing.T) {
 	if len(view.Items) != 2 || len(view.Rectangles) != 0 || len(view.Connectors) != 1 {
 		t.Fatalf("view = %#v", view)
 	}
-	var item usecase.IsoflowModelItem
+	var item entity.IsoflowModelItem
 	for _, candidate := range document.Items {
 		if candidate.ID == "a-item" {
 			item = candidate
@@ -81,7 +82,7 @@ func TestRenderKeepsOneTileAroundEachItem(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	var document usecase.IsoflowDocument
+	var document entity.IsoflowDocument
 	if err := json.Unmarshal(out, &document); err != nil {
 		t.Fatal(err)
 	}
@@ -109,7 +110,7 @@ func TestRenderWithGeneratedIconsPreservesServiceNameLabels(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	var document usecase.IsoflowDocument
+	var document entity.IsoflowDocument
 	if err := json.Unmarshal(out, &document); err != nil {
 		t.Fatal(err)
 	}
@@ -135,7 +136,7 @@ func TestRenderExportsOnlyMarkedGroupRectangles(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	var document usecase.IsoflowDocument
+	var document entity.IsoflowDocument
 	if err := json.Unmarshal(out, &document); err != nil {
 		t.Fatal(err)
 	}
@@ -143,7 +144,7 @@ func TestRenderExportsOnlyMarkedGroupRectangles(t *testing.T) {
 		t.Fatalf("views = %#v", document.Views)
 	}
 	rectangle := document.Views[0].Rectangles[0]
-	if rectangle.ID != "vpc-rect" || rectangle.From != (usecase.IsoflowCoords{X: 2, Y: 2}) || rectangle.To != (usecase.IsoflowCoords{X: 10, Y: 6}) {
+	if rectangle.ID != "vpc-rect" || rectangle.From != (entity.IsoflowCoords{X: 2, Y: 2}) || rectangle.To != (entity.IsoflowCoords{X: 10, Y: 6}) {
 		t.Fatalf("rectangle = %#v", rectangle)
 	}
 	if rectangle.IsoflowColor == "" || len(document.Colors) != 1 || document.Colors[0].Value != "#8C4FFF" {
@@ -166,7 +167,7 @@ func TestRenderSortsIconsForStableOutput(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	var document usecase.IsoflowDocument
+	var document entity.IsoflowDocument
 	if err := json.Unmarshal(out, &document); err != nil {
 		t.Fatal(err)
 	}

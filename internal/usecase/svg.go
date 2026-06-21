@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/xml"
 	"fmt"
 	"math"
@@ -11,6 +12,11 @@ import (
 )
 
 const svgDefaultPxPerInch = 96.0
+const svgDataURLPrefix = "data:image/svg+xml;base64,"
+
+func svgDataURLFromBytes(data []byte) string {
+	return svgDataURLPrefix + base64.StdEncoding.EncodeToString(data)
+}
 
 // RenderPlan converts the shared draw plan into an SVG document.
 func RenderSVGPlan(plan entity.Plan, pxPerInch float64) ([]byte, error) {

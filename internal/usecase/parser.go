@@ -13,17 +13,6 @@ import (
 
 var connectionShorthandPattern = regexp.MustCompile(`^([A-Za-z0-9_.:-]+)\s*(---|==>)\s*([A-Za-z0-9_.:-]+)$`)
 
-type Error struct {
-	Position entity.Position
-	Err      error
-}
-
-func (e *Error) Error() string {
-	return fmt.Sprintf("line %d, column %d: %v", e.Position.Line, e.Position.Column, e.Err)
-}
-
-func (e *Error) Unwrap() error { return e.Err }
-
 func Parse(r io.Reader) (entity.Document, error) {
 	data, err := io.ReadAll(r)
 	if err != nil {
@@ -40,7 +29,7 @@ func Parse(r io.Reader) (entity.Document, error) {
 			break
 		}
 		if err != nil {
-			return entity.Document{}, &Error{Position: positionAt(data, offset), Err: fmt.Errorf("parse xml-like token: %w", err)}
+			return entity.Document{}, &entity.ParseError{Position: positionAt(data, offset), Err: fmt.Errorf("parse xml-like token: %w", err)}
 		}
 
 		switch t := tok.(type) {
@@ -51,17 +40,17 @@ func Parse(r io.Reader) (entity.Document, error) {
 			}
 			if node.Tag == "item" {
 				if err := validateItemNode(node); err != nil {
-					return entity.Document{}, &Error{Position: node.Position, Err: fmt.Errorf("parse <item>: %w", err)}
+					return entity.Document{}, &entity.ParseError{Position: node.Position, Err: fmt.Errorf("parse <item>: %w", err)}
 				}
 			}
 			if node.Tag == "connection" {
 				if err := validateConnectionNode(node); err != nil {
-					return entity.Document{}, &Error{Position: node.Position, Err: fmt.Errorf("parse <connection>: %w", err)}
+					return entity.Document{}, &entity.ParseError{Position: node.Position, Err: fmt.Errorf("parse <connection>: %w", err)}
 				}
 			}
 			if node.Tag == "generic-group" {
 				if err := validateGenericGroupNode(node); err != nil {
-					return entity.Document{}, &Error{Position: node.Position, Err: fmt.Errorf("parse <generic-group>: %w", err)}
+					return entity.Document{}, &entity.ParseError{Position: node.Position, Err: fmt.Errorf("parse <generic-group>: %w", err)}
 				}
 			}
 			if len(stack) == 0 {
@@ -87,17 +76,17 @@ func Parse(r io.Reader) (entity.Document, error) {
 			}
 		case xml.EndElement:
 			if len(stack) == 0 {
-				return entity.Document{}, &Error{Position: positionAt(data, offset), Err: fmt.Errorf("unexpected closing tag: %s", t.Name.Local)}
+				return entity.Document{}, &entity.ParseError{Position: positionAt(data, offset), Err: fmt.Errorf("unexpected closing tag: %s", t.Name.Local)}
 			}
 			stack = stack[:len(stack)-1]
 		}
 	}
 
 	if root == nil {
-		return entity.Document{}, &Error{Position: entity.Position{Line: 1, Column: 1}, Err: fmt.Errorf("empty document")}
+		return entity.Document{}, &entity.ParseError{Position: entity.Position{Line: 1, Column: 1}, Err: fmt.Errorf("empty document")}
 	}
 	if root.Tag != "frame" {
-		return entity.Document{}, &Error{Position: root.Position, Err: fmt.Errorf("root tag must be <frame>, got <%s>", root.Tag)}
+		return entity.Document{}, &entity.ParseError{Position: root.Position, Err: fmt.Errorf("root tag must be <frame>, got <%s>", root.Tag)}
 	}
 	if err := expandConnectionShorthands(root, data); err != nil {
 		return entity.Document{}, err
@@ -134,10 +123,10 @@ func expandConnectionShorthands(root *entity.Node, data []byte) error {
 					continue
 				}
 				if id == "" {
-					return &Error{Position: node.Position, Err: fmt.Errorf("<item %s=%q> requires a non-empty id", key, alias)}
+					return &entity.ParseError{Position: node.Position, Err: fmt.Errorf("<item %s=%q> requires a non-empty id", key, alias)}
 				}
 				if previous, exists := aliases[alias]; exists && previous != id {
-					return &Error{Position: node.Position, Err: fmt.Errorf("duplicate item reference %q", alias)}
+					return &entity.ParseError{Position: node.Position, Err: fmt.Errorf("duplicate item reference %q", alias)}
 				}
 				aliases[alias] = id
 			}
@@ -167,17 +156,17 @@ func expandConnectionShorthands(root *entity.Node, data []byte) error {
 			match := connectionShorthandPattern.FindStringSubmatch(trimmed)
 			if match == nil {
 				if strings.Contains(trimmed, "---") || strings.Contains(trimmed, "==>") {
-					return &Error{Position: position, Err: fmt.Errorf("invalid connection shorthand %q; expected 'source --- destination' or 'source ==> destination'", trimmed)}
+					return &entity.ParseError{Position: position, Err: fmt.Errorf("invalid connection shorthand %q; expected 'source --- destination' or 'source ==> destination'", trimmed)}
 				}
 				continue
 			}
 			src, ok := aliases[match[1]]
 			if !ok || src == "" {
-				return &Error{Position: position, Err: fmt.Errorf("connection shorthand source %q does not match an <item name=...>, <item ref=...>, or item ID", match[1])}
+				return &entity.ParseError{Position: position, Err: fmt.Errorf("connection shorthand source %q does not match an <item name=...>, <item ref=...>, or item ID", match[1])}
 			}
 			dst, ok := aliases[match[3]]
 			if !ok || dst == "" {
-				return &Error{Position: position, Err: fmt.Errorf("connection shorthand destination %q does not match an <item name=...>, <item ref=...>, or item ID", match[3])}
+				return &entity.ParseError{Position: position, Err: fmt.Errorf("connection shorthand destination %q does not match an <item name=...>, <item ref=...>, or item ID", match[3])}
 			}
 			kind := "route"
 			if match[2] == "==>" {

@@ -15,14 +15,14 @@ import (
 )
 
 // Render validates and renders a .xal document to the selected format.
-func Render(ctx context.Context, input []byte, opts RenderOptions) ([]byte, error) {
+func Render(ctx context.Context, input []byte, opts entity.RenderOptions) ([]byte, error) {
 	if err := checkContext(ctx); err != nil {
 		return nil, err
 	}
 	if err := ValidateRenderOptions(opts); err != nil {
 		return nil, err
 	}
-	format := Format(strings.ToLower(strings.TrimSpace(string(opts.Format))))
+	format := entity.Format(strings.ToLower(strings.TrimSpace(string(opts.Format))))
 	if format == "" {
 		format = FormatExcalidraw
 	}
@@ -42,12 +42,12 @@ func Render(ctx context.Context, input []byte, opts RenderOptions) ([]byte, erro
 	}
 }
 
-func RenderExcalidraw(ctx context.Context, input []byte, opts RenderOptions) ([]byte, error) {
+func RenderExcalidraw(ctx context.Context, input []byte, opts entity.RenderOptions) ([]byte, error) {
 	scene, _, err := buildScene(ctx, input, opts)
 	return scene, err
 }
 
-func RenderSVG(ctx context.Context, input []byte, opts RenderOptions) ([]byte, error) {
+func RenderSVG(ctx context.Context, input []byte, opts entity.RenderOptions) ([]byte, error) {
 	planJSON, err := BuildPPTXPlan(ctx, input, opts)
 	if err != nil {
 		return nil, fmt.Errorf("build SVG plan: %w", err)
@@ -61,7 +61,7 @@ func RenderSVG(ctx context.Context, input []byte, opts RenderOptions) ([]byte, e
 
 // BuildPPTXPlan produces the shared resolved draw plan used by native SVG,
 // native PPTX, and the TypeScript PptxGenJS adapter.
-func BuildPPTXPlan(ctx context.Context, input []byte, opts RenderOptions) ([]byte, error) {
+func BuildPPTXPlan(ctx context.Context, input []byte, opts entity.RenderOptions) ([]byte, error) {
 	scene, entries, err := buildScene(ctx, input, opts)
 	if err != nil {
 		return nil, err
@@ -73,7 +73,7 @@ func BuildPPTXPlan(ctx context.Context, input []byte, opts RenderOptions) ([]byt
 	return planJSON, nil
 }
 
-func RenderPPTX(ctx context.Context, input []byte, opts RenderOptions) ([]byte, error) {
+func RenderPPTX(ctx context.Context, input []byte, opts entity.RenderOptions) ([]byte, error) {
 	planJSON, err := BuildPPTXPlan(ctx, input, opts)
 	if err != nil {
 		return nil, err
@@ -98,7 +98,7 @@ func RenderPPTX(ctx context.Context, input []byte, opts RenderOptions) ([]byte, 
 	return os.ReadFile(path)
 }
 
-func RenderXYFlow(ctx context.Context, input []byte, opts RenderOptions) ([]byte, error) {
+func RenderXYFlow(ctx context.Context, input []byte, opts entity.RenderOptions) ([]byte, error) {
 	scene, _, err := buildScene(ctx, input, opts)
 	if err != nil {
 		return nil, err
@@ -106,7 +106,7 @@ func RenderXYFlow(ctx context.Context, input []byte, opts RenderOptions) ([]byte
 	return RenderXYFlowScene(scene)
 }
 
-func RenderIsoflow(ctx context.Context, input []byte, opts RenderOptions) ([]byte, error) {
+func RenderIsoflow(ctx context.Context, input []byte, opts entity.RenderOptions) ([]byte, error) {
 	scene, _, err := buildScene(ctx, input, opts)
 	if err != nil {
 		return nil, err
@@ -121,7 +121,7 @@ func RenderIsoflow(ctx context.Context, input []byte, opts RenderOptions) ([]byt
 	return RenderIsoflowWithIcons(scene, icons)
 }
 
-func buildScene(ctx context.Context, input []byte, opts RenderOptions) ([]byte, []entity.ServiceEntry, error) {
+func buildScene(ctx context.Context, input []byte, opts entity.RenderOptions) ([]byte, []entity.ServiceEntry, error) {
 	if err := checkContext(ctx); err != nil {
 		return nil, nil, err
 	}
@@ -165,7 +165,7 @@ func buildScene(ctx context.Context, input []byte, opts RenderOptions) ([]byte, 
 	return scene, entries, err
 }
 
-func serviceOptions(opts RenderOptions) ([]entity.ServiceEntry, map[int]string, error) {
+func serviceOptions(opts entity.RenderOptions) ([]entity.ServiceEntry, map[int]string, error) {
 	abbreviations := make(map[int]string, len(opts.Abbreviations))
 	for id, value := range opts.Abbreviations {
 		abbreviations[id] = value
@@ -185,7 +185,7 @@ func serviceOptions(opts RenderOptions) ([]entity.ServiceEntry, map[int]string, 
 	return entries, abbreviations, nil
 }
 
-func planOptions(opts RenderOptions, entries []entity.ServiceEntry) entity.PptxOptions {
+func planOptions(opts entity.RenderOptions, entries []entity.ServiceEntry) entity.PptxOptions {
 	legend := make([]entity.LegendEntry, 0, len(entries))
 	for _, entry := range entries {
 		if entry.CatalogID > 0 && entry.OfficialName != "" {

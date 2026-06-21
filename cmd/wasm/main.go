@@ -11,10 +11,11 @@ import (
 	"syscall/js"
 
 	awsassets "github.com/ryo-arima/xaligo/etc/resources/aws"
+	"github.com/ryo-arima/xaligo/internal/entity"
 	"github.com/ryo-arima/xaligo/internal/usecase"
 )
 
-var embeddedAssets = &usecase.AssetSource{
+var embeddedAssets = &entity.AssetSource{
 	FS: awsassets.Assets, CatalogCSV: awsassets.CatalogCSV,
 	GroupIconsDir: awsassets.GroupIconsDir, IsoflowIconsJSON: awsassets.IsoflowIconsJSON,
 	ItemIconSize: 48,
@@ -49,11 +50,11 @@ func jsRenderIsoflow(_ js.Value, args []js.Value) any {
 	return renderResult("xaligoRenderIsoflow", args, usecase.FormatIsoflow, nil)
 }
 
-func renderResult(name string, args []js.Value, format usecase.Format, servicesCSV []byte) any {
+func renderResult(name string, args []js.Value, format entity.Format, servicesCSV []byte) any {
 	if len(args) < 1 {
 		return jsResult(nil, fmt.Errorf("%s: expected 1 argument (xal)", name))
 	}
-	out, err := usecase.Render(context.Background(), []byte(args[0].String()), usecase.RenderOptions{
+	out, err := usecase.Render(context.Background(), []byte(args[0].String()), entity.RenderOptions{
 		Format: format, ServicesCSV: servicesCSV, Assets: embeddedAssets,
 	})
 	return jsResult(out, err)
@@ -75,7 +76,7 @@ func jsBuildPptxPlan(_ js.Value, args []js.Value) any {
 	if len(args) < 1 {
 		return jsResult(nil, fmt.Errorf("xaligoBuildPptxPlan: expected at least 1 argument (xal)"))
 	}
-	opts := usecase.RenderOptions{Assets: embeddedAssets}
+	opts := entity.RenderOptions{Assets: embeddedAssets}
 	if len(args) >= 2 && !args[1].IsUndefined() && !args[1].IsNull() {
 		opts.ServicesCSV = []byte(args[1].String())
 	}

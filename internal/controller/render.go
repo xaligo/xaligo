@@ -57,7 +57,7 @@ func InitRenderCmdWithUseCase(uc usecase.API) *cobra.Command {
 			if noCompression {
 				compression = false
 			}
-			return RunRenderFormatWithUseCase(uc, RenderOptions{
+			return RunRenderFormatWithUseCase(uc, entity.ControllerRenderOptions{
 				InputPath:         input,
 				OutputPath:        output,
 				Format:            format,
@@ -121,14 +121,14 @@ func RunRender(inputPath, outputPath string, abbrevMap map[int]string) error {
 
 // RunRenderFormat renders a .xal file into the requested output format. It is
 // the public controller entry point for format-based rendering.
-func RunRenderFormat(opts RenderOptions) error {
+func RunRenderFormat(opts entity.ControllerRenderOptions) error {
 	return RunRenderFormatWithUseCase(nil, opts)
 }
 
-func RunRenderFormatWithUseCase(uc usecase.API, opts RenderOptions) error {
+func RunRenderFormatWithUseCase(uc usecase.API, opts entity.ControllerRenderOptions) error {
 	uc = defaultUseCase(uc)
-	if err := uc.ValidateRenderOptions(usecase.RenderOptions{
-		Mode: usecase.Mode(opts.Mode), Format: usecase.Format(opts.Format), Theme: opts.Theme,
+	if err := uc.ValidateRenderOptions(entity.RenderOptions{
+		Mode: entity.Mode(opts.Mode), Format: entity.Format(opts.Format), Theme: opts.Theme,
 		PaperMarginIn: opts.PaperMargin, PaperMarginTopIn: opts.PaperMarginTop, PaperMarginRightIn: opts.PaperMarginRight,
 		PaperMarginBottomIn: opts.PaperMarginBottom, PaperMarginLeftIn: opts.PaperMarginLeft,
 	}); err != nil {
@@ -167,7 +167,7 @@ func RunRenderFormatWithUseCase(uc usecase.API, opts RenderOptions) error {
 		}
 		return runRenderSVG(uc, opts.InputPath, opts.OutputPath, abbrevMap, opts.Mode, theme, opts.PxPerInch, opts.ArrowStyle, opts.ArrowStub, opts.ArrowMargin, opts.Paper, opts.Orientation, opts.PaperMargin, opts.PaperMarginTop, opts.PaperMarginRight, opts.PaperMarginBottom, opts.PaperMarginLeft)
 	case "pptx":
-		return RunGeneratePptxWithUseCase(uc, PptxGenerateOptions{
+		return RunGeneratePptxWithUseCase(uc, entity.ControllerPptxGenerateOptions{
 			XalPath:           opts.InputPath,
 			Output:            opts.OutputPath,
 			ServicesFile:      opts.ServicesFile,
@@ -238,8 +238,8 @@ func runRenderIsoflow(uc usecase.API, inputPath, outputPath string, abbrevMap ma
 	if err != nil {
 		return fmt.Errorf("read input file: %w", err)
 	}
-	out, err := uc.RenderIsoflow(context.Background(), input, usecase.RenderOptions{
-		Mode: usecase.Mode(mode), Theme: theme, Abbreviations: abbrevMap,
+	out, err := uc.RenderIsoflow(context.Background(), input, entity.RenderOptions{
+		Mode: entity.Mode(mode), Theme: theme, Abbreviations: abbrevMap,
 	})
 	if err != nil {
 		return err
@@ -256,8 +256,8 @@ func runRenderXYFlow(uc usecase.API, inputPath, outputPath string, abbrevMap map
 	if err != nil {
 		return fmt.Errorf("read input file: %w", err)
 	}
-	out, err := uc.RenderXYFlow(context.Background(), input, usecase.RenderOptions{
-		Mode: usecase.Mode(mode), Theme: theme, Abbreviations: abbrevMap,
+	out, err := uc.RenderXYFlow(context.Background(), input, entity.RenderOptions{
+		Mode: entity.Mode(mode), Theme: theme, Abbreviations: abbrevMap,
 	})
 	if err != nil {
 		return err
@@ -304,8 +304,8 @@ func runRenderSVG(uc usecase.API, inputPath, outputPath string, abbrevMap map[in
 	if err != nil {
 		return fmt.Errorf("read input file: %w", err)
 	}
-	out, err := uc.RenderSVG(context.Background(), input, usecase.RenderOptions{
-		Mode: usecase.Mode(mode), Theme: theme, Abbreviations: abbrevMap, PxPerInch: pxPerInch,
+	out, err := uc.RenderSVG(context.Background(), input, entity.RenderOptions{
+		Mode: entity.Mode(mode), Theme: theme, Abbreviations: abbrevMap, PxPerInch: pxPerInch,
 		ArrowStyle: arrowStyle, ArrowStubPx: arrowStub, ArrowMarginPx: arrowMargin,
 		PaperSize: paper, Orientation: orientation,
 		PaperMarginIn: paperMargin, PaperMarginTopIn: paperMarginTop, PaperMarginRightIn: paperMarginRight,
@@ -330,7 +330,7 @@ func buildExcalidrawJSONWithUseCase(uc usecase.API, inputPath string, abbrevMap 
 	if err != nil {
 		return nil, fmt.Errorf("read input file: %w", err)
 	}
-	return uc.RenderExcalidraw(context.Background(), input, usecase.RenderOptions{Mode: usecase.Mode(mode), Theme: theme, Abbreviations: abbrevMap})
+	return uc.RenderExcalidraw(context.Background(), input, entity.RenderOptions{Mode: entity.Mode(mode), Theme: theme, Abbreviations: abbrevMap})
 }
 
 func applyThemeFile(path, theme string) error {
