@@ -88,11 +88,11 @@ Do not spend implementation time replacing the repository-layer exporter with
 
 | Area | Owner |
 |---|---|
-| DSL parse/layout | `internal/parser`, `internal/layout` |
-| Excalidraw scene and item metadata | `internal/excalidraw/scene.go` |
-| PPTX geometry, paper scaling, routing, legend data | `internal/pptxplan` |
+| DSL parse/layout | `internal/usecase/parser.go`, `internal/usecase/layout.go` |
+| Excalidraw scene and item metadata | `internal/usecase/excalidraw_scene.go` |
+| PPTX geometry, paper scaling, routing, legend data | `internal/usecase/pptxplan_*.go` |
 | WASM exporter invocation from Go | `internal/repository/pptx.go` |
-| WASM-compatible PPTX drawing/export | `packages/xaligo` or a replacement exporter package |
+| WASM-compatible PPTX drawing/export | `external` TypeScript package and implementation |
 | WASM bridge | `cmd/wasm/main.go` |
 
 ## Paper / Scaling
@@ -125,7 +125,7 @@ Do not spend implementation time replacing the repository-layer exporter with
 
 ## Routing Rules
 
-- Route calculation is in `internal/pptxplan/routing.go`.
+- Route calculation is in `internal/usecase/pptxplan_routing.go`.
 - Obstacles include image and text rectangles from the Excalidraw scene.
 - Start/end rectangles are excluded from obstacle checks for that connection.
 - Binding `gap` from Excalidraw arrows must be honored in PPTX routing.
@@ -284,7 +284,7 @@ Before considering PPTX routing/layout changes complete:
 go test ./...
 make build
 make build-wasm
-npm run build --workspace packages/xaligo
+npm run build --workspace @ryo-arima/xaligo
 .bin/xaligo render examples/sample.xal --format pptx --services examples/services.csv -o out.pptx --paper A3 --orientation landscape --arrow-style thin
 unzip -t out.pptx
 ```

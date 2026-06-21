@@ -38,7 +38,8 @@ Example output:
 - Column 1 (`id`) as a number → icon is fetched from service-catalog.csv.
 - Lines starting with `#` are treated as comments and ignored.
 - `Abbreviation`, when set, is used as the **icon label inside the diagram** and in the standalone legend icon below the frame.
-  - Takes priority over the built-in abbreviation table in `entity/service.go`.
+  - Takes priority over the built-in abbreviation table in
+    `internal/entity/service.go`.
   - When empty, the built-in table is used as fallback.
 - `OfficialName` is displayed as the full-name text in legends.
 

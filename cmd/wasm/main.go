@@ -1,40 +1,24 @@
 //go:build js
 
-// Package main is the WebAssembly entry point for xaligo.
-// Build with:
-//
-//	GOOS=js GOARCH=wasm go build -o xaligo.wasm ./cmd/wasm
-//
-// The resulting xaligo.wasm exposes the following functions on the global JS object:
-//
-//	xaligoRender(xal: string): { result?: string; error?: string }
-//	  Converts a .xal DSL string into Excalidraw JSON.
-//	  Uses the embedded service-catalog.csv and Architecture-Group-Icons assets.
-//
-//	xaligoRenderWithServices(xal: string, servicesCsv: string): { result?: string; error?: string }
-//	  Same as xaligoRender but also parses a services.csv string and adds the
-//	  service legend sidebar (abbreviation overrides from the CSV are applied).
+// Package main adapts the shared render use case to synchronous JavaScript globals.
+// Parsing, layout, validation, and rendering remain owned by internal/usecase.
 package main
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"syscall/js"
 
-	xaligoapi "github.com/ryo-arima/xaligo"
 	awsassets "github.com/ryo-arima/xaligo/etc/resources/aws"
-	"github.com/ryo-arima/xaligo/internal/entity"
-	"github.com/ryo-arima/xaligo/internal/excalidraw"
-	isoflowrenderer "github.com/ryo-arima/xaligo/internal/isoflow"
-	"github.com/ryo-arima/xaligo/internal/layout"
-	"github.com/ryo-arima/xaligo/internal/model"
-	"github.com/ryo-arima/xaligo/internal/parser"
-	"github.com/ryo-arima/xaligo/internal/pptxplan"
-	"github.com/ryo-arima/xaligo/internal/repository"
-	xyflowrenderer "github.com/ryo-arima/xaligo/internal/xyflow"
+	"github.com/ryo-arima/xaligo/internal/usecase"
 )
+
+var embeddedAssets = &usecase.AssetSource{
+	FS: awsassets.Assets, CatalogCSV: awsassets.CatalogCSV,
+	GroupIconsDir: awsassets.GroupIconsDir, IsoflowIconsJSON: awsassets.IsoflowIconsJSON,
+	ItemIconSize: 48,
+}
 
 func main() {
 	js.Global().Set("xaligoRender", js.FuncOf(jsRender))
@@ -43,208 +27,71 @@ func main() {
 	js.Global().Set("xaligoDiagnose", js.FuncOf(jsDiagnose))
 	js.Global().Set("xaligoRenderXYFlow", js.FuncOf(jsRenderXYFlow))
 	js.Global().Set("xaligoRenderIsoflow", js.FuncOf(jsRenderIsoflow))
-
-	// Keep the WASM module alive until the page unloads.
 	<-make(chan struct{})
 }
 
-func jsRenderIsoflow(_ js.Value, args []js.Value) any {
-	if len(args) < 1 {
-		return jsResult("", fmt.Errorf("xaligoRenderIsoflow: expected 1 argument (xal)"))
+func jsRender(_ js.Value, args []js.Value) any {
+	return renderResult("xaligoRender", args, usecase.FormatExcalidraw, nil)
+}
+
+func jsRenderWithServices(_ js.Value, args []js.Value) any {
+	if len(args) < 2 {
+		return jsResult(nil, fmt.Errorf("xaligoRenderWithServices: expected 2 arguments (xal, servicesCsv)"))
 	}
-	sceneJSON, err := renderXAL(args[0].String(), nil)
-	if err != nil {
-		return jsResult("", err)
-	}
-	icons, _ := isoflowrenderer.LoadIconManifestFS(awsassets.Assets, awsassets.IsoflowIconsJSON)
-	out, err := isoflowrenderer.RenderWithIcons([]byte(sceneJSON), icons)
-	if err != nil {
-		return jsResult("", err)
-	}
-	return jsResult(string(out), nil)
+	return renderResult("xaligoRenderWithServices", args, usecase.FormatExcalidraw, []byte(args[1].String()))
 }
 
 func jsRenderXYFlow(_ js.Value, args []js.Value) any {
+	return renderResult("xaligoRenderXYFlow", args, usecase.FormatXYFlow, nil)
+}
+
+func jsRenderIsoflow(_ js.Value, args []js.Value) any {
+	return renderResult("xaligoRenderIsoflow", args, usecase.FormatIsoflow, nil)
+}
+
+func renderResult(name string, args []js.Value, format usecase.Format, servicesCSV []byte) any {
 	if len(args) < 1 {
-		return jsResult("", fmt.Errorf("xaligoRenderXYFlow: expected 1 argument (xal)"))
+		return jsResult(nil, fmt.Errorf("%s: expected 1 argument (xal)", name))
 	}
-	sceneJSON, err := renderXAL(args[0].String(), nil)
-	if err != nil {
-		return jsResult("", err)
-	}
-	out, err := xyflowrenderer.Render([]byte(sceneJSON))
-	if err != nil {
-		return jsResult("", err)
-	}
-	return jsResult(string(out), nil)
+	out, err := usecase.Render(context.Background(), []byte(args[0].String()), usecase.RenderOptions{
+		Format: format, ServicesCSV: servicesCSV, Assets: embeddedAssets,
+	})
+	return jsResult(out, err)
 }
 
 func jsDiagnose(_ js.Value, args []js.Value) any {
 	if len(args) < 1 {
-		return jsResult("", fmt.Errorf("xaligoDiagnose: expected 1 argument (xal)"))
+		return jsResult(nil, fmt.Errorf("xaligoDiagnose: expected 1 argument (xal)"))
 	}
-	diagnostics, err := xaligoapi.Diagnose(context.Background(), []byte(args[0].String()))
+	diagnostics, err := usecase.Diagnose(context.Background(), []byte(args[0].String()))
 	if err != nil {
-		return jsResult("", err)
+		return jsResult(nil, err)
 	}
 	encoded, err := json.Marshal(diagnostics)
-	if err != nil {
-		return jsResult("", fmt.Errorf("encode diagnostics: %w", err))
-	}
-	return jsResult(string(encoded), nil)
+	return jsResult(encoded, err)
 }
 
-// jsResult returns { result, error } objects back to JavaScript.
-func jsResult(result string, err error) any {
+func jsBuildPptxPlan(_ js.Value, args []js.Value) any {
+	if len(args) < 1 {
+		return jsResult(nil, fmt.Errorf("xaligoBuildPptxPlan: expected at least 1 argument (xal)"))
+	}
+	opts := usecase.RenderOptions{Assets: embeddedAssets}
+	if len(args) >= 2 && !args[1].IsUndefined() && !args[1].IsNull() {
+		opts.ServicesCSV = []byte(args[1].String())
+	}
+	if len(args) >= 3 && !args[2].IsUndefined() && !args[2].IsNull() && args[2].String() != "" {
+		if err := json.Unmarshal([]byte(args[2].String()), &opts); err != nil {
+			return jsResult(nil, fmt.Errorf("parse options: %w", err))
+		}
+		opts.Assets = embeddedAssets
+	}
+	out, err := usecase.BuildPPTXPlan(context.Background(), []byte(args[0].String()), opts)
+	return jsResult(out, err)
+}
+
+func jsResult(result []byte, err error) any {
 	if err != nil {
 		return map[string]any{"error": err.Error()}
 	}
-	return map[string]any{"result": result}
-}
-
-// renderXAL is the core conversion logic shared by both exported functions.
-func renderXAL(xalSrc string, abbrevMap map[int]string) (string, error) {
-	doc, err := parser.Parse(strings.NewReader(xalSrc))
-	if err != nil {
-		return "", fmt.Errorf("parse DSL: %w", err)
-	}
-
-	root, err := layout.Build(doc)
-	if err != nil {
-		return "", fmt.Errorf("build layout: %w", err)
-	}
-
-	var connections []*model.Node
-	for _, child := range doc.Root.Children {
-		if child.Tag == "connection" {
-			connections = append(connections, child)
-		}
-	}
-
-	out, err := excalidraw.BuildJSONWithFS(
-		root,
-		awsassets.Assets,
-		awsassets.CatalogCSV,
-		awsassets.GroupIconsDir,
-		48.0,
-		connections,
-		abbrevMap,
-	)
-	if err != nil {
-		return "", fmt.Errorf("build excalidraw: %w", err)
-	}
-	return string(out), nil
-}
-
-// jsRender handles xaligoRender(xal).
-func jsRender(_ js.Value, args []js.Value) any {
-	if len(args) < 1 {
-		return jsResult("", fmt.Errorf("xaligoRender: expected 1 argument (xal string)"))
-	}
-	result, err := renderXAL(args[0].String(), nil)
-	return jsResult(result, err)
-}
-
-// jsRenderWithServices handles xaligoRenderWithServices(xal, servicesCsv).
-// servicesCsv is the text content of a services.csv file (same format used by
-// the --services flag of the CLI command `xaligo generate excalidraw`).
-func jsRenderWithServices(_ js.Value, args []js.Value) any {
-	if len(args) < 2 {
-		return jsResult("", fmt.Errorf("xaligoRenderWithServices: expected 2 arguments (xal, servicesCsv)"))
-	}
-	xal := args[0].String()
-	csvContent := args[1].String()
-
-	_, abbrevMap, err := parseServicesCsv(csvContent)
-	if err != nil {
-		return jsResult("", fmt.Errorf("parse servicesCsv: %w", err))
-	}
-
-	result, err := renderXAL(xal, abbrevMap)
-	return jsResult(result, err)
-}
-
-// jsBuildPptxPlan handles xaligoBuildPptxPlan(xal, servicesCsv, optionsJson).
-//
-// It renders the .xal to an Excalidraw scene (applying services.csv overrides
-// when provided) and then builds a fully-resolved PPTX draw plan in Go — every
-// geometry calculation (bounds, paper scaling, routing, anchoring, colour and
-// coordinate conversion) happens here, so the JS side only issues PptxGenJS
-// drawing calls. servicesCsv may be empty. optionsJson is a JSON object of
-// pptxplan.Options (may be empty/"" for defaults).
-//
-// Returns { result: <plan JSON> } or { error }.
-func jsBuildPptxPlan(_ js.Value, args []js.Value) any {
-	if len(args) < 1 {
-		return jsResult("", fmt.Errorf("xaligoBuildPptxPlan: expected at least 1 argument (xal)"))
-	}
-	xal := args[0].String()
-
-	var entries []entity.ServiceEntry
-	var abbrevMap map[int]string
-	if len(args) >= 2 && !args[1].IsUndefined() && !args[1].IsNull() {
-		if csv := args[1].String(); strings.TrimSpace(csv) != "" {
-			parsedEntries, m, err := parseServicesCsv(csv)
-			if err != nil {
-				return jsResult("", fmt.Errorf("parse servicesCsv: %w", err))
-			}
-			entries = parsedEntries
-			abbrevMap = m
-		}
-	}
-
-	var opts pptxplan.Options
-	if len(args) >= 3 && !args[2].IsUndefined() && !args[2].IsNull() {
-		if optJSON := args[2].String(); strings.TrimSpace(optJSON) != "" {
-			if err := json.Unmarshal([]byte(optJSON), &opts); err != nil {
-				return jsResult("", fmt.Errorf("parse options: %w", err))
-			}
-		}
-	}
-
-	sceneJSON, err := renderXAL(xal, abbrevMap)
-	if err != nil {
-		return jsResult("", err)
-	}
-	themedSceneJSON, err := excalidraw.ApplyThemeJSON([]byte(sceneJSON), opts.Theme)
-	if err != nil {
-		return jsResult("", err)
-	}
-	opts.LegendEntries = legendEntries(entries)
-	planJSON, err := pptxplan.BuildPlanJSON(string(themedSceneJSON), opts)
-	if err != nil {
-		return jsResult("", fmt.Errorf("build pptx plan: %w", err))
-	}
-	return jsResult(string(planJSON), nil)
-}
-
-// parseServicesCsv parses the in-memory content of a services.csv into a
-// catalog-ID → abbreviation map (same format as repository.ReadServiceList).
-func parseServicesCsv(content string) ([]entity.ServiceEntry, map[int]string, error) {
-	entries, err := repository.ReadServiceListFromReader(strings.NewReader(content))
-	if err != nil {
-		return nil, nil, err
-	}
-	m := make(map[int]string, len(entries))
-	for _, e := range entries {
-		if e.CatalogID > 0 && e.Abbreviation != "" {
-			m[e.CatalogID] = e.Abbreviation
-		}
-	}
-	return entries, m, nil
-}
-
-func legendEntries(entries []entity.ServiceEntry) []pptxplan.LegendEntry {
-	out := make([]pptxplan.LegendEntry, 0, len(entries))
-	for _, e := range entries {
-		if e.CatalogID <= 0 || e.OfficialName == "" {
-			continue
-		}
-		out = append(out, pptxplan.LegendEntry{
-			CatalogID:    e.CatalogID,
-			Abbreviation: e.Abbreviation,
-			OfficialName: e.OfficialName,
-		})
-	}
-	return out
+	return map[string]any{"result": string(result)}
 }

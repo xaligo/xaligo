@@ -5,32 +5,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 
 	"github.com/ryo-arima/xaligo/internal/config"
+	"github.com/ryo-arima/xaligo/internal/entity"
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 )
 
-const pptxExporterWasmRel = "packages/xaligo/wasm/pptx_exporter.wasm"
-
-// PptxExportOptions contains the resolved plan and write options passed to the
-// WASM PPTX exporter. The repository layer is only an adapter: it does not parse
-// .xal files, calculate geometry, or write PPTX/OOXML directly.
-type PptxExportOptions struct {
-	PlanJSON     []byte
-	Output       string
-	Title        string
-	Author       string
-	Company      string
-	Subject      string
-	Compression  *bool
-	ExporterWASM string
-	Stdout       io.Writer
-	Stderr       io.Writer
-}
+const pptxExporterWasmRel = "external/wasm/pptx_exporter.wasm"
 
 type pptxWasmRequest struct {
 	Plan    json.RawMessage `json:"plan"`
@@ -46,7 +30,7 @@ type pptxWasmOptions struct {
 }
 
 // ExportPptx invokes the WASM PPTX exporter and writes the returned PPTX bytes.
-func ExportPptx(opts PptxExportOptions) error {
+func ExportPptx(opts entity.PptxExportOptions) error {
 	if len(bytes.TrimSpace(opts.PlanJSON)) == 0 {
 		return fmt.Errorf("PPTX plan JSON is required")
 	}

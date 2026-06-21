@@ -54,7 +54,7 @@ func New() *Config {
 	def.Paths.AssetPackage = "etc/resources/aws/svg"
 	def.Paths.ServiceCatalogCSV = "etc/resources/aws/service-catalog.csv"
 	def.Paths.OutputFrames = "output/aws-frames"
-	def.Paths.PptxExporterWASM = "packages/xaligo/wasm/pptx_exporter.wasm"
+	def.Paths.PptxExporterWASM = "external/wasm/pptx_exporter.wasm"
 	def.Legend.OffsetX = 120
 	def.Legend.OffsetY = 0
 	def.Legend.IconSize = 32

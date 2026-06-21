@@ -11,6 +11,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/ryo-arima/xaligo/internal/entity"
 )
 
 // SvgToDataURL reads an SVG file and returns it as a base64 data URL.
@@ -121,22 +123,12 @@ func LoadFromCSVByID(csvPath string, id int, name string) (string, string, error
 	return "", "", fmt.Errorf("catalog ID %d not found in CSV", id)
 }
 
-// CatalogEntry holds resolved data for one row of service-catalog.csv.
-type CatalogEntry struct {
-	ID       int
-	Category string
-	Service  string
-	SVGFile  string
-	RelPath  string
-	DataURL  string
-}
-
 // LookupCatalogByID finds the first entry with the given ID in service-catalog.csv
 // and returns its data including the pre-encoded SVG data URL.
-func LookupCatalogByID(csvPath string, id int) (CatalogEntry, error) {
+func LookupCatalogByID(csvPath string, id int) (entity.CatalogEntry, error) {
 	f, err := os.Open(csvPath)
 	if err != nil {
-		return CatalogEntry{}, fmt.Errorf("open catalog CSV %s: %w", csvPath, err)
+		return entity.CatalogEntry{}, fmt.Errorf("open catalog CSV %s: %w", csvPath, err)
 	}
 	defer f.Close()
 	r := csv.NewReader(f)
@@ -164,7 +156,7 @@ func LookupCatalogByID(csvPath string, id int) (CatalogEntry, error) {
 		} else if raw != "" {
 			dataURL = "data:image/svg+xml;base64," + raw
 		}
-		return CatalogEntry{
+		return entity.CatalogEntry{
 			ID:       rowID,
 			Category: strings.TrimSpace(rec[1]),
 			Service:  strings.TrimSpace(rec[2]),
@@ -173,16 +165,16 @@ func LookupCatalogByID(csvPath string, id int) (CatalogEntry, error) {
 			DataURL:  dataURL,
 		}, nil
 	}
-	return CatalogEntry{}, fmt.Errorf("catalog ID %d not found", id)
+	return entity.CatalogEntry{}, fmt.Errorf("catalog ID %d not found", id)
 }
 
 // LookupCatalogByIDFS is the fs.FS-aware variant of LookupCatalogByID.
 // It opens csvPath inside fsys instead of the OS filesystem.
 // Use this in contexts where assets are embedded (e.g. the WASM build).
-func LookupCatalogByIDFS(fsys fs.FS, csvPath string, id int) (CatalogEntry, error) {
+func LookupCatalogByIDFS(fsys fs.FS, csvPath string, id int) (entity.CatalogEntry, error) {
 	f, err := fsys.Open(csvPath)
 	if err != nil {
-		return CatalogEntry{}, fmt.Errorf("open catalog CSV %s: %w", csvPath, err)
+		return entity.CatalogEntry{}, fmt.Errorf("open catalog CSV %s: %w", csvPath, err)
 	}
 	defer f.Close()
 	r := csv.NewReader(f)
@@ -210,7 +202,7 @@ func LookupCatalogByIDFS(fsys fs.FS, csvPath string, id int) (CatalogEntry, erro
 		} else if raw != "" {
 			dataURL = "data:image/svg+xml;base64," + raw
 		}
-		return CatalogEntry{
+		return entity.CatalogEntry{
 			ID:       rowID,
 			Category: strings.TrimSpace(rec[1]),
 			Service:  strings.TrimSpace(rec[2]),
@@ -219,7 +211,7 @@ func LookupCatalogByIDFS(fsys fs.FS, csvPath string, id int) (CatalogEntry, erro
 			DataURL:  dataURL,
 		}, nil
 	}
-	return CatalogEntry{}, fmt.Errorf("catalog ID %d not found", id)
+	return entity.CatalogEntry{}, fmt.Errorf("catalog ID %d not found", id)
 }
 
 // SvgToDataURLFS is the fs.FS-aware variant of SvgToDataURL.

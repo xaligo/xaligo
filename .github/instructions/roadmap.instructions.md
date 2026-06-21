@@ -72,9 +72,9 @@ xaligo render input.xal --mode aws-2.5d --format pptx -o output.pptx
 Backward compatibility: omitting `--mode` must retain the current standard/AWS
 behavior until an explicit default-mode migration is released.
 
-### Public Rendering APIs
+### Shared Rendering APIs
 
-The public API boundary should support at least:
+The shared in-repository use-case boundary should support at least:
 
 ```go
 RenderSVG()
@@ -100,7 +100,7 @@ Status: complete.
 - Stabilize `xaligo render` and `xaligo validate`.
 - Complete the SVG renderer as the primary preview surface.
 - Add shared Light and Dark themes.
-- Extract stable renderer-facing public APIs.
+- Extract stable renderer-facing shared use cases.
 
 ### Phase 2: Network Diagram Features
 
@@ -192,13 +192,13 @@ The repository is already beyond a blank v0.1 baseline in several areas.
 
 Implemented or partially implemented:
 
-- `.xal` XML-style parser exists in `internal/parser`.
-- Vuetify-like layout engine exists in `internal/layout`.
-- Excalidraw renderer exists in `internal/excalidraw`.
+- `.xal` XML-style parser exists in `internal/usecase/parser.go`.
+- Vuetify-like layout engine exists in `internal/usecase/layout.go`.
+- Excalidraw renderer exists in `internal/usecase/excalidraw_*.go`.
 - Native CLI exists with `render`, `generate`, `add`, `init`, and `version`.
 - `render --format excalidraw` supports `services.csv` abbreviation/legend
   workflows.
-- PPTX geometry/routing plan generation exists in `internal/pptxplan`.
+- PPTX geometry/routing plan generation exists in `internal/usecase/pptxplan_*.go`.
 - PPTX routing already includes obstacle avoidance, binding gap handling,
   arrow margin/lane avoidance, A3 paper options, item label sizing, and legend
   slide data.
@@ -211,13 +211,18 @@ Implemented or partially implemented:
   `renderIsoflow()` export an upstream Isoflow-compatible model from the shared
   scene.
 - `xaligo validate` reuses parser and layout validation.
-- The first SVG renderer is implemented in `internal/svg` over the shared draw
+- The first SVG renderer is implemented in `internal/usecase/svg.go` over the shared draw
   plan.
 - Shared `light` and `dark` themes are implemented for Excalidraw, SVG, and
   PPTX via `xaligo render --theme`.
-- Stable Go APIs expose `Render`, `RenderExcalidraw`, `RenderSVG`, `RenderPPTX`,
+- Stable Go use cases in `internal/usecase` expose `Render`, `RenderExcalidraw`, `RenderSVG`, `RenderPPTX`,
   `RenderXYFlow`, `RenderIsoflow`, and `Validate`; CLI SVG/Excalidraw/validation
   use the same pipeline.
+- CLI, preview, and WASM adapters now use the same render use case. Embedded
+  environments inject an `AssetSource` instead of reimplementing parser,
+  layout, or scene construction.
+- Isoflow exports shared group borders as view rectangles and produces stable
+  icon ordering.
 - Route connectors default to circular endpoints across Excalidraw, SVG, and
   PPTX.
 - Node/PptxGenJS can still generate `out.pptx` as a temporary development path,
@@ -225,7 +230,7 @@ Implemented or partially implemented:
 
 Important gaps:
 
-- `packages/xaligo/wasm/pptx_exporter.wasm` is not yet implemented.
+- `external/wasm/pptx_exporter.wasm` is not yet implemented.
 - Cross-renderer visual regression coverage is still limited.
 
 ## Rebaselined Implementation Order
@@ -240,7 +245,7 @@ Use this order when starting new roadmap work from the current repository state:
 
 ## v0.1 Foundation
 
-Status: complete. CLI and public APIs share parser/layout/render paths for
+Status: complete. CLI and shared use cases share parser/layout/render paths for
 validation, Excalidraw, and SVG.
 
 ### Rendering Engine Refactoring
