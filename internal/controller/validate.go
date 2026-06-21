@@ -11,13 +11,11 @@ import (
 )
 
 func InitValidateCmd() *cobra.Command {
-	return InitValidateCmdWithUseCase(usecase.New(usecase.Dependencies{}))
+	return InitValidateCmdWithUseCase(nil)
 }
 
 func InitValidateCmdWithUseCase(uc usecase.API) *cobra.Command {
-	if uc == nil {
-		uc = usecase.New(usecase.Dependencies{})
-	}
+	uc = defaultUseCase(uc)
 	cmd := &cobra.Command{
 		Use:   "validate <input.xal>",
 		Short: "Validate xaligo DSL syntax and layout",
@@ -30,13 +28,11 @@ func InitValidateCmdWithUseCase(uc usecase.API) *cobra.Command {
 }
 
 func RunValidate(inputPath string, stdout io.Writer) error {
-	return RunValidateWithUseCase(usecase.New(usecase.Dependencies{}), inputPath, stdout)
+	return RunValidateWithUseCase(nil, inputPath, stdout)
 }
 
 func RunValidateWithUseCase(uc usecase.API, inputPath string, stdout io.Writer) error {
-	if uc == nil {
-		uc = usecase.New(usecase.Dependencies{})
-	}
+	uc = defaultUseCase(uc)
 	input, err := os.ReadFile(inputPath)
 	if err != nil {
 		return fmt.Errorf("open input file: %w", err)

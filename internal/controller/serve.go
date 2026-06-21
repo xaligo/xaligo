@@ -13,13 +13,11 @@ import (
 )
 
 func InitServeCmd() *cobra.Command {
-	return InitServeCmdWithUseCase(usecase.New(usecase.Dependencies{}))
+	return InitServeCmdWithUseCase(nil)
 }
 
 func InitServeCmdWithUseCase(uc usecase.API) *cobra.Command {
-	if uc == nil {
-		uc = usecase.New(usecase.Dependencies{})
-	}
+	uc = defaultUseCase(uc)
 	var address, mode, theme string
 	var poll time.Duration
 	cmd := &cobra.Command{
@@ -49,13 +47,11 @@ type ServeOptions struct {
 }
 
 func RunServe(ctx context.Context, opts ServeOptions) error {
-	return RunServeWithUseCase(usecase.New(usecase.Dependencies{}), ctx, opts)
+	return RunServeWithUseCase(nil, ctx, opts)
 }
 
 func RunServeWithUseCase(uc usecase.API, ctx context.Context, opts ServeOptions) error {
-	if uc == nil {
-		uc = usecase.New(usecase.Dependencies{})
-	}
+	uc = defaultUseCase(uc)
 	server, err := uc.NewPreviewServer(opts.InputPath, usecase.PreviewOptions{
 		Render:       usecase.RenderOptions{Mode: usecase.Mode(opts.Mode), Format: usecase.FormatSVG, Theme: opts.Theme},
 		PollInterval: opts.PollInterval,

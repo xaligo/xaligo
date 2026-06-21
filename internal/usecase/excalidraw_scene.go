@@ -79,11 +79,10 @@ var svgTintColorRE = regexp.MustCompile(`(?i)#[0-9a-f]{3,8}|currentColor`)
 // tintSVGDataURL makes a group header icon use the same semantic colour as
 // its group border and title. White and transparent portions are preserved.
 func tintSVGDataURL(dataURL, color string) string {
-	const prefix = "data:image/svg+xml;base64,"
-	if !strings.HasPrefix(dataURL, prefix) {
+	if !strings.HasPrefix(dataURL, svgDataURLPrefix) {
 		return dataURL
 	}
-	raw, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(dataURL, prefix))
+	raw, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(dataURL, svgDataURLPrefix))
 	if err != nil {
 		return dataURL
 	}
@@ -95,7 +94,7 @@ func tintSVGDataURL(dataURL, color string) string {
 			return color
 		}
 	})
-	return prefix + base64.StdEncoding.EncodeToString([]byte(tinted))
+	return svgDataURLFromBytes([]byte(tinted))
 }
 
 // staggerFills are background fill colors for staggered AZ layers.
@@ -167,7 +166,7 @@ func svgDataURL(path string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return "data:image/svg+xml;base64," + base64.StdEncoding.EncodeToString(data), nil
+	return svgDataURLFromBytes(data), nil
 }
 
 // svgDataURLFS reads an SVG from an fs.FS and returns it as a base64 data URL.
@@ -176,7 +175,7 @@ func svgDataURLFS(fsys fs.FS, path string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return "data:image/svg+xml;base64," + base64.StdEncoding.EncodeToString(data), nil
+	return svgDataURLFromBytes(data), nil
 }
 
 // BuildJSONWithFS is a convenience wrapper for WASM / embedded builds.

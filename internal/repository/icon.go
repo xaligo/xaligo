@@ -3,7 +3,6 @@ package repository
 import (
 	"crypto/md5"
 	"encoding/base64"
-	"encoding/csv"
 	"fmt"
 	"io"
 	"io/fs"
@@ -22,7 +21,7 @@ func SvgToDataURL(path string) (string, error) {
 		return "", fmt.Errorf("read SVG %s: %w", path, err)
 	}
 	encoded := base64.StdEncoding.EncodeToString(data)
-	return "data:image/svg+xml;base64," + encoded, nil
+	return svgDataURL(encoded), nil
 }
 
 // FileID derives a stable 16-char hex ID from a file path (MD5-based).
@@ -40,9 +39,7 @@ func LoadFromCSV(csvPath, svgFilename string) (string, error) {
 	}
 	defer f.Close()
 
-	r := csv.NewReader(f)
-	r.Comment = '#'
-	r.FieldsPerRecord = -1
+	r := newCatalogCSVReader(f)
 
 	for {
 		rec, err := r.Read()
@@ -61,10 +58,7 @@ func LoadFromCSV(csvPath, svgFilename string) (string, error) {
 			if raw == "" {
 				return "", fmt.Errorf("empty base64 for %s", svgFilename)
 			}
-			if strings.HasPrefix(raw, "data:") {
-				return raw, nil
-			}
-			return "data:image/svg+xml;base64," + raw, nil
+			return svgDataURL(raw), nil
 		}
 	}
 	return "", fmt.Errorf("SVG %q not found in catalog CSV", svgFilename)
@@ -79,9 +73,7 @@ func LoadFromCSVByID(csvPath string, id int, name string) (string, string, error
 	}
 	defer f.Close()
 
-	r := csv.NewReader(f)
-	r.Comment = '#'
-	r.FieldsPerRecord = -1
+	r := newCatalogCSVReader(f)
 
 	for {
 		rec, err := r.Read()
@@ -112,13 +104,7 @@ func LoadFromCSVByID(csvPath string, id int, name string) (string, string, error
 		if raw == "" {
 			return relPath, "", fmt.Errorf("empty base64 for catalog ID %d", id)
 		}
-		var dataURL string
-		if strings.HasPrefix(raw, "data:") {
-			dataURL = raw
-		} else {
-			dataURL = "data:image/svg+xml;base64," + raw
-		}
-		return relPath, dataURL, nil
+		return relPath, svgDataURL(raw), nil
 	}
 	return "", "", fmt.Errorf("catalog ID %d not found in CSV", id)
 }
@@ -131,9 +117,7 @@ func LookupCatalogByID(csvPath string, id int) (entity.CatalogEntry, error) {
 		return entity.CatalogEntry{}, fmt.Errorf("open catalog CSV %s: %w", csvPath, err)
 	}
 	defer f.Close()
-	r := csv.NewReader(f)
-	r.Comment = '#'
-	r.FieldsPerRecord = -1
+	r := newCatalogCSVReader(f)
 	for {
 		rec, err := r.Read()
 		if err == io.EOF {
@@ -150,19 +134,13 @@ func LookupCatalogByID(csvPath string, id int) (entity.CatalogEntry, error) {
 			continue
 		}
 		raw := strings.TrimSpace(rec[5])
-		var dataURL string
-		if strings.HasPrefix(raw, "data:") {
-			dataURL = raw
-		} else if raw != "" {
-			dataURL = "data:image/svg+xml;base64," + raw
-		}
 		return entity.CatalogEntry{
 			ID:       rowID,
 			Category: strings.TrimSpace(rec[1]),
 			Service:  strings.TrimSpace(rec[2]),
 			SVGFile:  strings.TrimSpace(rec[3]),
 			RelPath:  strings.TrimSpace(rec[4]),
-			DataURL:  dataURL,
+			DataURL:  svgDataURL(raw),
 		}, nil
 	}
 	return entity.CatalogEntry{}, fmt.Errorf("catalog ID %d not found", id)
@@ -177,9 +155,7 @@ func LookupCatalogByIDFS(fsys fs.FS, csvPath string, id int) (entity.CatalogEntr
 		return entity.CatalogEntry{}, fmt.Errorf("open catalog CSV %s: %w", csvPath, err)
 	}
 	defer f.Close()
-	r := csv.NewReader(f)
-	r.Comment = '#'
-	r.FieldsPerRecord = -1
+	r := newCatalogCSVReader(f)
 	for {
 		rec, err := r.Read()
 		if err == io.EOF {
@@ -196,19 +172,13 @@ func LookupCatalogByIDFS(fsys fs.FS, csvPath string, id int) (entity.CatalogEntr
 			continue
 		}
 		raw := strings.TrimSpace(rec[5])
-		var dataURL string
-		if strings.HasPrefix(raw, "data:") {
-			dataURL = raw
-		} else if raw != "" {
-			dataURL = "data:image/svg+xml;base64," + raw
-		}
 		return entity.CatalogEntry{
 			ID:       rowID,
 			Category: strings.TrimSpace(rec[1]),
 			Service:  strings.TrimSpace(rec[2]),
 			SVGFile:  strings.TrimSpace(rec[3]),
 			RelPath:  strings.TrimSpace(rec[4]),
-			DataURL:  dataURL,
+			DataURL:  svgDataURL(raw),
 		}, nil
 	}
 	return entity.CatalogEntry{}, fmt.Errorf("catalog ID %d not found", id)
@@ -227,7 +197,7 @@ func SvgToDataURLFS(fsys fs.FS, path string) (string, error) {
 		return "", fmt.Errorf("read SVG %s: %w", path, err)
 	}
 	encoded := base64.StdEncoding.EncodeToString(data)
-	return "data:image/svg+xml;base64," + encoded, nil
+	return svgDataURL(encoded), nil
 }
 
 var svgFillRe = regexp.MustCompile(`(?i)fill[=:]["']?(#[0-9a-fA-F]{3,8}|[a-zA-Z]+)`)
@@ -236,9 +206,8 @@ var svgFillRe = regexp.MustCompile(`(?i)fill[=:]["']?(#[0-9a-fA-F]{3,8}|[a-zA-Z]
 // Falls back to "transparent" if none is found.
 func SVGBGColor(dataURL string) string {
 	var svgBytes []byte
-	const prefix = "data:image/svg+xml;base64,"
-	if strings.HasPrefix(dataURL, prefix) {
-		b64 := dataURL[len(prefix):]
+	if strings.HasPrefix(dataURL, svgDataURLPrefix) {
+		b64 := dataURL[len(svgDataURLPrefix):]
 		decoded, err := base64.StdEncoding.DecodeString(b64)
 		if err == nil {
 			svgBytes = decoded

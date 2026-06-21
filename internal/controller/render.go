@@ -13,13 +13,11 @@ import (
 )
 
 func InitRenderCmd() *cobra.Command {
-	return InitRenderCmdWithUseCase(usecase.New(usecase.Dependencies{}))
+	return InitRenderCmdWithUseCase(nil)
 }
 
 func InitRenderCmdWithUseCase(uc usecase.API) *cobra.Command {
-	if uc == nil {
-		uc = usecase.New(usecase.Dependencies{})
-	}
+	uc = defaultUseCase(uc)
 	var (
 		output            string
 		format            string
@@ -118,47 +116,17 @@ func InitRenderCmdWithUseCase(uc usecase.API) *cobra.Command {
 // abbrevMap is an optional catalog-ID → abbreviation override derived from services.csv.
 // Pass nil to use only the built-in abbreviation table.
 func RunRender(inputPath, outputPath string, abbrevMap map[int]string) error {
-	return runRenderExcalidraw(usecase.New(usecase.Dependencies{}), inputPath, outputPath, abbrevMap, string(usecase.ModeStandard), entity.ThemeLight)
-}
-
-type RenderOptions struct {
-	InputPath         string
-	OutputPath        string
-	Format            string
-	ServicesFile      string
-	Title             string
-	Author            string
-	Company           string
-	Subject           string
-	Compression       *bool
-	PxPerInch         float64
-	ArrowStyle        string
-	ArrowStub         float64
-	ArrowMargin       float64
-	Paper             string
-	Orientation       string
-	PaperMargin       float64
-	PaperMarginTop    float64
-	PaperMarginRight  float64
-	PaperMarginBottom float64
-	PaperMarginLeft   float64
-	ExporterWASM      string
-	Theme             string
-	Mode              string
-	Stdout            *os.File
-	Stderr            *os.File
+	return runRenderExcalidraw(defaultUseCase(nil), inputPath, outputPath, abbrevMap, string(usecase.ModeStandard), entity.ThemeLight)
 }
 
 // RunRenderFormat renders a .xal file into the requested output format. It is
 // the public controller entry point for format-based rendering.
 func RunRenderFormat(opts RenderOptions) error {
-	return RunRenderFormatWithUseCase(usecase.New(usecase.Dependencies{}), opts)
+	return RunRenderFormatWithUseCase(nil, opts)
 }
 
 func RunRenderFormatWithUseCase(uc usecase.API, opts RenderOptions) error {
-	if uc == nil {
-		uc = usecase.New(usecase.Dependencies{})
-	}
+	uc = defaultUseCase(uc)
 	if err := uc.ValidateRenderOptions(usecase.RenderOptions{
 		Mode: usecase.Mode(opts.Mode), Format: usecase.Format(opts.Format), Theme: opts.Theme,
 		PaperMarginIn: opts.PaperMargin, PaperMarginTopIn: opts.PaperMarginTop, PaperMarginRightIn: opts.PaperMarginRight,
@@ -354,7 +322,7 @@ func runRenderSVG(uc usecase.API, inputPath, outputPath string, abbrevMap map[in
 }
 
 func buildExcalidrawJSON(inputPath string, abbrevMap map[int]string, mode, theme string) ([]byte, error) {
-	return buildExcalidrawJSONWithUseCase(usecase.New(usecase.Dependencies{}), inputPath, abbrevMap, mode, theme)
+	return buildExcalidrawJSONWithUseCase(defaultUseCase(nil), inputPath, abbrevMap, mode, theme)
 }
 
 func buildExcalidrawJSONWithUseCase(uc usecase.API, inputPath string, abbrevMap map[int]string, mode, theme string) ([]byte, error) {

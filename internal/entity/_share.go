@@ -10,6 +10,16 @@ type Mode string
 type Format string
 type DiagnosticSeverity string
 
+// ServiceEntry represents a single service in a list or catalog.
+type ServiceEntry struct {
+	CatalogID    int
+	OfficialName string
+	Abbreviation string
+	Summary      string
+	Usage        string
+	Note         string
+}
+
 const (
 	ThemeLight = "light"
 	ThemeDark  = "dark"

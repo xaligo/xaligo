@@ -148,43 +148,14 @@ func RunGenerate(
 	return nil
 }
 
-type PptxGenerateOptions struct {
-	XalPath           string
-	Output            string
-	ServicesFile      string
-	Title             string
-	Author            string
-	Company           string
-	Subject           string
-	Compression       *bool
-	PxPerInch         float64
-	ArrowStyle        string
-	ArrowStub         float64
-	ArrowMargin       float64
-	Paper             string
-	Orientation       string
-	PaperMargin       float64
-	PaperMarginTop    float64
-	PaperMarginRight  float64
-	PaperMarginBottom float64
-	PaperMarginLeft   float64
-	ExporterWASM      string
-	Theme             string
-	Mode              string
-	Stdout            *os.File
-	Stderr            *os.File
-}
-
 // RunGeneratePptx builds a resolved Go PPTX plan, then asks the repository layer
 // to invoke the WASM exporter that turns the plan into PPTX bytes.
 func RunGeneratePptx(opts PptxGenerateOptions) error {
-	return RunGeneratePptxWithUseCase(usecase.New(usecase.Dependencies{}), opts)
+	return RunGeneratePptxWithUseCase(nil, opts)
 }
 
 func RunGeneratePptxWithUseCase(uc usecase.API, opts PptxGenerateOptions) error {
-	if uc == nil {
-		uc = usecase.New(usecase.Dependencies{})
-	}
+	uc = defaultUseCase(uc)
 	if opts.XalPath == "" {
 		return fmt.Errorf("--xal is required")
 	}
@@ -216,13 +187,11 @@ func RunGeneratePptxWithUseCase(uc usecase.API, opts PptxGenerateOptions) error 
 }
 
 func buildPptxPlanJSON(opts PptxGenerateOptions) ([]byte, error) {
-	return buildPptxPlanJSONWithUseCase(usecase.New(usecase.Dependencies{}), opts)
+	return buildPptxPlanJSONWithUseCase(nil, opts)
 }
 
 func buildPptxPlanJSONWithUseCase(uc usecase.API, opts PptxGenerateOptions) ([]byte, error) {
-	if uc == nil {
-		uc = usecase.New(usecase.Dependencies{})
-	}
+	uc = defaultUseCase(uc)
 	if err := uc.ValidateRenderOptions(usecase.RenderOptions{
 		Mode: usecase.Mode(opts.Mode), Format: usecase.FormatPPTX, Theme: opts.Theme,
 		PaperMarginIn: opts.PaperMargin, PaperMarginTopIn: opts.PaperMarginTop, PaperMarginRightIn: opts.PaperMarginRight,

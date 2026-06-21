@@ -1,6 +1,49 @@
 package usecase
 
-import "context"
+import (
+	"context"
+	"encoding/base64"
+	"errors"
+
+	"github.com/ryo-arima/xaligo/internal/entity"
+)
+
+type Mode = entity.Mode
+type Format = entity.Format
+type DiagnosticSeverity = entity.DiagnosticSeverity
+
+const (
+	ModeStandard Mode = "standard"
+	ModeNetwork  Mode = "network"
+	ModeAWS      Mode = "aws"
+
+	FormatExcalidraw Format = "excalidraw"
+	FormatSVG        Format = "svg"
+	FormatPPTX       Format = "pptx"
+	FormatXYFlow     Format = "xyflow"
+	FormatIsoflow    Format = "isoflow"
+
+	SeverityError DiagnosticSeverity = "error"
+)
+
+var ErrNotImplemented = errors.New("renderer not implemented")
+
+const svgDataURLPrefix = "data:image/svg+xml;base64,"
+
+func svgDataURLFromBytes(data []byte) string {
+	return svgDataURLPrefix + base64.StdEncoding.EncodeToString(data)
+}
+
+// AssetSource describes an embedded or virtual asset tree. Leave Assets nil
+// to use the native project configuration and filesystem paths.
+type AssetSource = entity.AssetSource
+
+// RenderOptions contains renderer-independent presentation, routing, and
+// output options. Assets is intended for filesystem-less adapters such as
+// WebAssembly; native callers normally leave it nil.
+type RenderOptions = entity.RenderOptions
+type Diagnostic = entity.Diagnostic
+type DiagnosticsError = entity.DiagnosticsError
 
 // API is the application boundary consumed by controllers and adapters.
 type API interface {

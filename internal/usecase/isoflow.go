@@ -19,7 +19,6 @@ const (
 	tileSize            = 100.0
 	defaultLabelHeight  = 60.0
 	iconLabelToken      = "__XALIGO_LABEL__"
-	svgDataURLPrefix    = "data:image/svg+xml;base64,"
 	maxEmbeddedLabelLen = 12
 )
 
@@ -271,7 +270,7 @@ func embedIconLabel(dataURL, label string) string {
 		label = string(runes[:maxEmbeddedLabelLen-1]) + "…"
 	}
 	text = strings.ReplaceAll(text, iconLabelToken, escapeXML(label))
-	return svgDataURLPrefix + base64.StdEncoding.EncodeToString([]byte(text))
+	return svgDataURLFromBytes([]byte(text))
 }
 
 func escapeXML(value string) string {
