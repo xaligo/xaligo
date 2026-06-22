@@ -4,19 +4,42 @@ import (
 	"crypto/rand"
 	"fmt"
 	"math"
-	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/ryo-arima/xaligo/internal/config"
 	"github.com/ryo-arima/xaligo/internal/entity"
 	"github.com/ryo-arima/xaligo/internal/repository"
+	"github.com/ryo-arima/xaligo/internal/share"
 	"github.com/ryo-arima/xaligo/internal/usecase"
 	"github.com/spf13/cobra"
 )
 
+var (
+	ICAIC001   = share.NewMCode("ICAIC-001", "Init add command start")
+	ICAISC001  = share.NewMCode("ICAISC-001", "Init add service command default target branch")
+	ICAISC002  = share.NewMCode("ICAISC-002", "Init add service command explicit target branch")
+	ICAISC003  = share.NewMCode("ICAISC-003", "Init add service command batch branch")
+	ICAISC004  = share.NewMCode("ICAISC-004", "Init add service command read list failed")
+	ICAISC005  = share.NewMCode("ICAISC-005", "Init add service command single branch")
+	ICAISC006  = share.NewMCode("ICAISC-006", "Init add service command missing name branch")
+	ICARASB001 = share.NewMCode("ICARASB-001", "Run add service batch read list failed")
+	ICARAB001  = share.NewMCode("ICARAB-001", "Run add batch read scene failed")
+	ICARAB002  = share.NewMCode("ICARAB-002", "Run add batch catalog lookup warning")
+	ICARAB003  = share.NewMCode("ICARAB-003", "Run add batch find service icon warning")
+	ICARAB004  = share.NewMCode("ICARAB-004", "Run add batch SVG data URL warning")
+	ICARAB005  = share.NewMCode("ICARAB-005", "Run add batch official name branch")
+	ICARAB006  = share.NewMCode("ICARAB-006", "Run add batch initialize files branch")
+	ICARAB007  = share.NewMCode("ICARAB-007", "Run add batch add file branch")
+	ICARAB008  = share.NewMCode("ICARAB-008", "Run add batch main icon branch")
+	ICARAB009  = share.NewMCode("ICARAB-009", "Run add batch legend branch")
+	ICARAB010  = share.NewMCode("ICARAB-010", "Run add batch write scene failed")
+	ICARAB011  = share.NewMCode("ICARAB-011", "Run add batch completed")
+)
+
 // InitAddCmd returns the 'add' parent command.
 func InitAddCmd() *cobra.Command {
+	logger.DEBUG(ICAIC001, "start")
 	cmd := &cobra.Command{
 		Use:   "add",
 		Short: "Add elements to an existing .excalidraw file",
@@ -59,19 +82,26 @@ Examples:
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := config.New()
 			if targetFile == "" {
+				logger.DEBUG(ICAISC001, "branch default target")
 				targetFile = filepath.Join(cfg.OutputFramesDir(), "A4-landscape.excalidraw")
+			} else {
+				logger.DEBUG(ICAISC002, "branch explicit target", map[string]any{"targetFile": targetFile})
 			}
 			isBatch := listFile != ""
 
 			var entries []entity.ServiceEntry
 			if isBatch {
+				logger.DEBUG(ICAISC003, "branch batch", map[string]any{"listFile": listFile})
 				var err error
 				entries, err = repository.ReadServiceList(listFile)
 				if err != nil {
+					logger.ERROR(ICAISC004, "read list failed", map[string]any{"listFile": listFile, "error": err})
 					return fmt.Errorf("read list %s: %w", listFile, err)
 				}
 			} else {
+				logger.DEBUG(ICAISC005, "branch single", map[string]any{"name": name})
 				if name == "" {
+					logger.ERROR(ICAISC006, "branch missing name")
 					return fmt.Errorf("--name or --list required")
 				}
 				entries = []entity.ServiceEntry{{OfficialName: name}}
@@ -100,6 +130,7 @@ Examples:
 func RunAddServiceBatch(targetFile, listFile string) error {
 	entries, err := repository.ReadServiceList(listFile)
 	if err != nil {
+		logger.ERROR(ICARASB001, "read list failed", map[string]any{"listFile": listFile, "error": err})
 		return fmt.Errorf("read list %s: %w", listFile, err)
 	}
 	return runAddBatch(targetFile, entries, "", 32, false, true, false)
@@ -114,6 +145,7 @@ func runAddBatch(targetFile string, entries []entity.ServiceEntry, category stri
 	cfg := config.New()
 	scene, err := repository.ReadScene(targetFile)
 	if err != nil {
+		logger.ERROR(ICARAB001, "read scene failed", map[string]any{"targetFile": targetFile, "error": err})
 		return err
 	}
 
@@ -130,7 +162,7 @@ func runAddBatch(targetFile string, entries []entity.ServiceEntry, category stri
 		if entry.CatalogID > 0 {
 			ce, cerr := repository.LookupCatalogByID(cfg.ServiceCatalogCSVPath(), entry.CatalogID)
 			if cerr != nil {
-				_, _ = fmt.Fprintf(os.Stderr, "warn: catalog ID %d: %v\n", entry.CatalogID, cerr)
+				logger.WARN(ICARAB002, "catalog lookup failed", map[string]any{"catalogID": entry.CatalogID, "error": cerr})
 				continue
 			}
 			dataURL = ce.DataURL
@@ -138,28 +170,31 @@ func runAddBatch(targetFile string, entries []entity.ServiceEntry, category stri
 		} else {
 			svgPath, svgName, serr := findServiceIcon(cfg.AssetDir(), category, entry.OfficialName, size)
 			if serr != nil {
-				_, _ = fmt.Fprintf(os.Stderr, "warn: %v\n", serr)
+				logger.WARN(ICARAB003, "find service icon failed", map[string]any{"name": entry.OfficialName, "error": serr})
 				continue
 			}
 			displayName = svgName
 			var derr error
 			dataURL, derr = repository.SvgToDataURL(svgPath)
 			if derr != nil {
-				_, _ = fmt.Fprintf(os.Stderr, "warn: %v\n", derr)
+				logger.WARN(ICARAB004, "svg data URL failed", map[string]any{"path": svgPath, "error": derr})
 				continue
 			}
 		}
 
 		if entry.OfficialName != "" {
+			logger.DEBUG(ICARAB005, "branch official name", map[string]any{"name": entry.OfficialName})
 			displayName = entry.OfficialName
 		}
 
 		fileID := repository.FileID(dataURL)
 		bgColor := repository.SVGBGColor(dataURL)
 		if scene.Files == nil {
+			logger.DEBUG(ICARAB006, "branch initialize files")
 			scene.Files = map[string]map[string]interface{}{}
 		}
 		if _, exists := scene.Files[fileID]; !exists {
+			logger.DEBUG(ICARAB007, "branch add file", map[string]any{"fileID": fileID})
 			scene.Files[fileID] = map[string]interface{}{
 				"mimeType": "image/svg+xml",
 				"id":       fileID,
@@ -174,6 +209,7 @@ func runAddBatch(targetFile string, entries []entity.ServiceEntry, category stri
 
 		// Main icon (outside-bottom of frame) — omitted in legend-only mode.
 		if !legendOnly {
+			logger.DEBUG(ICARAB008, "branch main icon", map[string]any{"displayName": displayName})
 			ix, iy := nextIconPos(scene, fb, iconSize, gap)
 			iconID := "svc-" + randomHex(8)
 			seedVal = int(ix*100 + iy)
@@ -194,6 +230,7 @@ func runAddBatch(targetFile string, entries []entity.ServiceEntry, category stri
 
 		// Legend entry — shows official name for readability.
 		if !noLegend {
+			logger.DEBUG(ICARAB009, "branch legend", map[string]any{"displayName": displayName, "legendRight": legendRight})
 			var lgX, lgY float64
 			if legendRight {
 				lgX, lgY = nextLegendPosRight(scene, fb, lgSz, lgLabelW, gap)
@@ -216,7 +253,12 @@ func runAddBatch(targetFile string, entries []entity.ServiceEntry, category stri
 		}
 	}
 
-	return repository.WriteScene(scene, targetFile)
+	if err := repository.WriteScene(scene, targetFile); err != nil {
+		logger.ERROR(ICARAB010, "write scene failed", map[string]any{"targetFile": targetFile, "error": err})
+		return err
+	}
+	logger.DEBUG(ICARAB011, "completed", map[string]any{"targetFile": targetFile, "entries": len(entries)})
+	return nil
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

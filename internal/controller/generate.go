@@ -9,8 +9,28 @@ import (
 
 	"github.com/ryo-arima/xaligo/internal/entity"
 	"github.com/ryo-arima/xaligo/internal/repository"
+	"github.com/ryo-arima/xaligo/internal/share"
 	"github.com/ryo-arima/xaligo/internal/usecase"
 	"github.com/spf13/cobra"
+)
+
+var (
+	ICGIGC001  = share.NewMCode("ICGIGC-001", "Init generate command start")
+	ICGIGXC001 = share.NewMCode("ICGIGXC-001", "Init generate XAL command start")
+	ICGRG001   = share.NewMCode("ICGRG-001", "Run generate unknown paper size branch")
+	ICGRG002   = share.NewMCode("ICGRG-002", "Run generate landscape branch")
+	ICGRG003   = share.NewMCode("ICGRG-003", "Run generate invalid orientation branch")
+	ICGRG004   = share.NewMCode("ICGRG-004", "Run generate invalid AZ layout branch")
+	ICGRG005   = share.NewMCode("ICGRG-005", "Run generate invalid spacing branch")
+	ICGRG006   = share.NewMCode("ICGRG-006", "Run generate invalid start branch")
+	ICGRG007   = share.NewMCode("ICGRG-007", "Run generate value out of range branch")
+	ICGRG008   = share.NewMCode("ICGRG-008", "Run generate write output failed")
+	ICGRG009   = share.NewMCode("ICGRG-009", "Run generate generated output")
+	ICGWMS001  = share.NewMCode("ICGWMS-001", "Warn service mismatch open XAL failed")
+	ICGWMS002  = share.NewMCode("ICGWMS-002", "Warn service mismatch parse XAL failed")
+	ICGWMS003  = share.NewMCode("ICGWMS-003", "Warn service mismatch read services failed")
+	ICGWMS004  = share.NewMCode("ICGWMS-004", "Warn service mismatch item missing from services")
+	ICGWMS005  = share.NewMCode("ICGWMS-005", "Warn service mismatch service missing from diagram")
 )
 
 var paperSizes = map[string][2]int{
@@ -29,6 +49,7 @@ var paperSizes = map[string][2]int{
 //
 // Format conversion belongs to `xaligo render --format ...`.
 func InitGenerateCmd() *cobra.Command {
+	logger.DEBUG(ICGIGC001, "start")
 	parent := &cobra.Command{
 		Use:   "generate",
 		Short: "Generate source files",
@@ -40,6 +61,7 @@ func InitGenerateCmd() *cobra.Command {
 // ── xaligo generate xal ──────────────────────────────────────────────────────
 
 func initGenerateXalCmd() *cobra.Command {
+	logger.DEBUG(ICGIGXC001, "start")
 	var (
 		nClouds     int
 		nAccounts   int
@@ -115,25 +137,32 @@ func RunGenerate(
 	// ── validate ────────────────────────────────────────────────────────────
 	size, ok := paperSizes[paper]
 	if !ok {
+		logger.ERROR(ICGRG001, "branch unknown paper size", map[string]any{"paper": paper})
 		return fmt.Errorf("unknown paper size %q; valid: A5 A4 A3 A2 A1 Letter Legal Tabloid", paper)
 	}
 	W, H := size[0], size[1]
 	if strings.EqualFold(orientation, "landscape") {
+		logger.DEBUG(ICGRG002, "branch landscape")
 		W, H = H, W
 	} else if !strings.EqualFold(orientation, "portrait") {
+		logger.ERROR(ICGRG003, "branch invalid orientation", map[string]any{"orientation": orientation})
 		return fmt.Errorf("orientation must be portrait or landscape")
 	}
 	if azLayout != "grid" && azLayout != "staggered" {
+		logger.ERROR(ICGRG004, "branch invalid AZ layout", map[string]any{"azLayout": azLayout})
 		return fmt.Errorf("az-layout must be grid or staggered")
 	}
 	if spacingMode != "vertical" && spacingMode != "horizontal" && spacingMode != "both" {
+		logger.ERROR(ICGRG005, "branch invalid spacing", map[string]any{"spacing": spacingMode})
 		return fmt.Errorf("spacing must be vertical, horizontal, or both")
 	}
 	if startMode != "top" && startMode != "left" {
+		logger.ERROR(ICGRG006, "branch invalid start", map[string]any{"start": startMode})
 		return fmt.Errorf("start must be top or left")
 	}
 	for _, pair := range [][2]int{{nClouds, 2}, {nAccounts, 3}, {nRegions, 2}, {nAZs, 3}, {nSubnets, 4}} {
 		if pair[0] < 1 || pair[0] > pair[1] {
+			logger.ERROR(ICGRG007, "branch value out of range", map[string]any{"value": pair[0], "max": pair[1]})
 			return fmt.Errorf("value %d out of valid range (1–%d)", pair[0], pair[1])
 		}
 	}
@@ -142,9 +171,10 @@ func RunGenerate(
 	xal := buildXAL(W, H, nClouds, nAccounts, nRegions, nAZs, azLayout, nSubnets, spacingMode, startMode)
 
 	if err := os.WriteFile(output, []byte(xal), 0644); err != nil {
+		logger.ERROR(ICGRG008, "write output failed", map[string]any{"output": output, "error": err})
 		return fmt.Errorf("write output file: %w", err)
 	}
-	fmt.Printf("generated: %s\n", output)
+	logger.INFO(ICGRG009, "generated", map[string]any{"output": output})
 	return nil
 }
 
@@ -155,7 +185,9 @@ func RunGeneratePptx(opts entity.ControllerPptxGenerateOptions) error {
 }
 
 func RunGeneratePptxWithUseCase(uc usecase.API, opts entity.ControllerPptxGenerateOptions) error {
-	uc = defaultUseCase(uc)
+	if uc == nil {
+		uc = usecase.New()
+	}
 	if opts.XalPath == "" {
 		return fmt.Errorf("--xal is required")
 	}
@@ -191,7 +223,9 @@ func buildPptxPlanJSON(opts entity.ControllerPptxGenerateOptions) ([]byte, error
 }
 
 func buildPptxPlanJSONWithUseCase(uc usecase.API, opts entity.ControllerPptxGenerateOptions) ([]byte, error) {
-	uc = defaultUseCase(uc)
+	if uc == nil {
+		uc = usecase.New()
+	}
 	if err := uc.ValidateRenderOptions(entity.RenderOptions{
 		Mode: entity.Mode(opts.Mode), Format: usecase.FormatPPTX, Theme: opts.Theme,
 		PaperMarginIn: opts.PaperMargin, PaperMarginTopIn: opts.PaperMarginTop, PaperMarginRightIn: opts.PaperMarginRight,
@@ -362,12 +396,14 @@ func warnServiceMismatch(xalPath, servicesFile string) {
 	// ── collect item IDs from .xal ───────────────────────────────────────────
 	xalFile, err := os.Open(xalPath)
 	if err != nil {
+		logger.WARN(ICGWMS001, "open XAL failed", map[string]any{"xalPath": xalPath, "error": err})
 		return
 	}
 	defer xalFile.Close()
 
 	doc, err := usecase.Parse(xalFile)
 	if err != nil {
+		logger.WARN(ICGWMS002, "parse XAL failed", map[string]any{"xalPath": xalPath, "error": err})
 		return
 	}
 	itemIDs := collectItemIDs(doc.Root)
@@ -379,6 +415,7 @@ func warnServiceMismatch(xalPath, servicesFile string) {
 	// ── collect IDs from services CSV ────────────────────────────────────────
 	entries, err := repository.ReadServiceList(servicesFile)
 	if err != nil {
+		logger.WARN(ICGWMS003, "read services failed", map[string]any{"servicesFile": servicesFile, "error": err})
 		return
 	}
 	svcIDSet := make(map[int]string, len(entries)) // id → OfficialName
@@ -391,14 +428,14 @@ func warnServiceMismatch(xalPath, servicesFile string) {
 	// ── warn: in diagram but not in services.csv ─────────────────────────────
 	for id := range itemIDSet {
 		if _, ok := svcIDSet[id]; !ok {
-			fmt.Fprintf(os.Stderr, "warn: <item id=%d> appears in the diagram but is not listed in services.csv\n", id)
+			logger.WARN(ICGWMS004, "item appears in diagram but is not listed in services", map[string]any{"catalogID": id, "xalPath": xalPath, "servicesFile": servicesFile})
 		}
 	}
 
 	// ── warn: in services.csv but not in diagram ─────────────────────────────
 	for id, name := range svcIDSet {
 		if !itemIDSet[id] {
-			fmt.Fprintf(os.Stderr, "warn: service %q (id=%d) is listed in services.csv but has no <item> in the diagram\n", name, id)
+			logger.WARN(ICGWMS005, "service is listed in services but has no item in diagram", map[string]any{"catalogID": id, "name": name, "xalPath": xalPath, "servicesFile": servicesFile})
 		}
 	}
 }

@@ -7,15 +7,40 @@ import {
   type PptxExportResult,
   type PptxOutputType,
 } from '../entity/pptx';
+import { NewEnvLogger } from '../share/logger';
+import { NewMCode } from '../share/mcode';
+
+const logger = NewEnvLogger('external/repository', 'pptx_package');
+const ERPPGAOIP001 = NewMCode('ERPPGAOIP-001', 'Group anchor objects in PPTX no groups branch');
+const ERPPGAOIP002 = NewMCode('ERPPGAOIP-002', 'Group anchor objects in PPTX missing slide branch');
+const ERPPGAOIP003 = NewMCode('ERPPGAOIP-003', 'Group anchor objects in PPTX completed');
+const ERPPCPO001 = NewMCode('ERPPCPO-001', 'Convert PPTX output arraybuffer branch');
+const ERPPCPO002 = NewMCode('ERPPCPO-002', 'Convert PPTX output base64 branch');
+const ERPPCPO003 = NewMCode('ERPPCPO-003', 'Convert PPTX output blob branch');
+const ERPPCPO004 = NewMCode('ERPPCPO-004', 'Convert PPTX output nodebuffer branch');
+const ERPPCPO005 = NewMCode('ERPPCPO-005', 'Convert PPTX output uint8array branch');
+const ERPPGSO001 = NewMCode('ERPPGSO-001', 'Group slide objects insufficient objects branch');
+const ERPPGSO002 = NewMCode('ERPPGSO-002', 'Group slide objects missing bounds branch');
+const ERPPGSO003 = NewMCode('ERPPGSO-003', 'Group slide objects completed');
+const ERPPMAALOTF001 = NewMCode('ERPPMAALOTF-001', 'Move anchor and line objects to front empty branch');
+const ERPPMAALOTF002 = NewMCode('ERPPMAALOTF-002', 'Move anchor and line objects to front missing tree branch');
+const ERPPMAALOTF003 = NewMCode('ERPPMAALOTF-003', 'Move anchor and line objects to front completed');
+const ERPPGB001 = NewMCode('ERPPGB-001', 'Group bounds missing branch');
 
 export async function groupAnchorObjectsInPptx(bytes: Uint8Array, ops: PlanOp[], compression: boolean): Promise<Uint8Array> {
   const groupIds = [...new Set(ops.map((op) => op.groupId).filter((id): id is string => !!id))];
-  if (groupIds.length === 0) return bytes;
+  if (groupIds.length === 0) {
+    logger.DEBUG(ERPPGAOIP001, 'branch no groups');
+    return bytes;
+  }
 
   const zip = await JSZip.loadAsync(bytes);
   const slidePath = 'ppt/slides/slide1.xml';
   const slide = zip.file(slidePath);
-  if (!slide) return bytes;
+  if (!slide) {
+    logger.WARN(ERPPGAOIP002, 'branch missing slide', { slidePath });
+    return bytes;
+  }
 
   let xml = await slide.async('string');
   xml = applySlenderStealthArrowheads(xml);
@@ -24,21 +49,28 @@ export async function groupAnchorObjectsInPptx(bytes: Uint8Array, ops: PlanOp[],
   }
   xml = moveAnchorAndLineObjectsToFront(xml);
   zip.file(slidePath, xml);
-  return zip.generateAsync({ type: 'uint8array', compression: compression ? 'DEFLATE' : 'STORE' });
+  const out = await zip.generateAsync({ type: 'uint8array', compression: compression ? 'DEFLATE' : 'STORE' });
+  logger.DEBUG(ERPPGAOIP003, 'completed', { groups: groupIds.length, bytes: out.length });
+  return out;
 }
 
 export function convertPptxOutput(bytes: Uint8Array, outputType: PptxOutputType): PptxExportResult {
   switch (outputType) {
     case 'arraybuffer':
+      logger.DEBUG(ERPPCPO001, 'branch arraybuffer');
       return toArrayBuffer(bytes);
     case 'base64':
+      logger.DEBUG(ERPPCPO002, 'branch base64');
       return bytesToBase64(bytes);
     case 'blob':
+      logger.DEBUG(ERPPCPO003, 'branch blob');
       return new Blob([toArrayBuffer(bytes)], { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
     case 'nodebuffer':
+      logger.DEBUG(ERPPCPO004, 'branch nodebuffer');
       return Buffer.from(bytes);
     case 'uint8array':
     default:
+      logger.DEBUG(ERPPCPO005, 'branch uint8array');
       return bytes;
   }
 }
@@ -62,11 +94,17 @@ function groupSlideObjects(xml: string, groupId: string): string {
   const groupedIndexes = blocks
     .map((block, index) => (block.groupId === groupId ? index : -1))
     .filter((index) => index >= 0);
-  if (groupedIndexes.length < 2) return xml;
+  if (groupedIndexes.length < 2) {
+    logger.DEBUG(ERPPGSO001, 'branch insufficient objects', { groupId, objects: groupedIndexes.length });
+    return xml;
+  }
 
   const groupedBlocks = groupedIndexes.map((index) => blocks[index]).filter((block): block is XmlObjectBlock => !!block);
   const bounds = groupBounds(groupedBlocks);
-  if (!bounds) return xml;
+  if (!bounds) {
+    logger.WARN(ERPPGSO002, 'branch missing bounds', { groupId });
+    return xml;
+  }
 
   const groupedSet = new Set(groupedIndexes);
   const insertionIndex = groupedIndexes[0];
@@ -85,6 +123,7 @@ function groupSlideObjects(xml: string, groupId: string): string {
     if (index === insertionIndex) out += groupXML;
   });
   out += xml.slice(cursor);
+  logger.DEBUG(ERPPGSO003, 'completed', { groupId, objects: groupedBlocks.length });
   return out;
 }
 
@@ -119,7 +158,10 @@ function moveAnchorAndLineObjectsToFront(xml: string): string {
   const movingIndexes = blocks
     .map((block, index) => (isAnchorGroupBlock(block.xml) || isFrontLayerBlock(block.xml) ? index : -1))
     .filter((index) => index >= 0);
-  if (movingIndexes.length === 0) return xml;
+  if (movingIndexes.length === 0) {
+    logger.DEBUG(ERPPMAALOTF001, 'branch empty');
+    return xml;
+  }
 
   const movingSet = new Set(movingIndexes);
   const movingXML = movingIndexes.map((index) => blocks[index]?.xml ?? '').join('');
@@ -136,7 +178,11 @@ function moveAnchorAndLineObjectsToFront(xml: string): string {
   });
   out += xml.slice(cursor);
   const spTreeClose = out.lastIndexOf('</p:spTree>');
-  if (spTreeClose < 0) return out;
+  if (spTreeClose < 0) {
+    logger.WARN(ERPPMAALOTF002, 'branch missing tree');
+    return out;
+  }
+  logger.DEBUG(ERPPMAALOTF003, 'completed', { objects: movingIndexes.length });
   return `${out.slice(0, spTreeClose)}${movingXML}${out.slice(spTreeClose)}`;
 }
 
@@ -170,7 +216,10 @@ function groupBounds(blocks: XmlObjectBlock[]): XmlBounds | undefined {
     maxX = Math.max(maxX, bounds.x + bounds.cx);
     maxY = Math.max(maxY, bounds.y + bounds.cy);
   }
-  if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) return undefined;
+  if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) {
+    logger.WARN(ERPPGB001, 'branch missing bounds', { blocks: blocks.length });
+    return undefined;
+  }
   return { x: minX, y: minY, cx: maxX - minX, cy: maxY - minY };
 }
 

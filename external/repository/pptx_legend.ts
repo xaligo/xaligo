@@ -6,13 +6,31 @@ import type {
   PlanLine,
   PptxPlan,
 } from '../entity/pptx';
+import { NewEnvLogger } from '../share/logger';
+import { NewMCode } from '../share/mcode';
 import { imageDataForPptx } from './pptx_image';
 
 type LegendLineOptions = pptxgen.ShapeLineProps;
 
+const logger = NewEnvLogger('external/repository', 'pptx_legend');
+const ERPLDCLS001 = NewMCode('ERPLDCLS-001', 'Draw connector legend slide empty branch');
+const ERPLDCLS002 = NewMCode('ERPLDCLS-002', 'Draw connector legend slide page branch');
+const ERPLDLS001 = NewMCode('ERPLDLS-001', 'Draw legend slides empty branch');
+const ERPLDLS002 = NewMCode('ERPLDLS-002', 'Draw legend slides page branch');
+const ERPLDLS003 = NewMCode('ERPLDLS-003', 'Draw legend slides image branch');
+const ERPLGCLE001 = NewMCode('ERPLGCLE-001', 'Group connector legend entries existing branch');
+const ERPLGCLE002 = NewMCode('ERPLGCLE-002', 'Group connector legend entries new branch');
+const ERPLFCI001 = NewMCode('ERPLFCI-001', 'Format connector legend IDs non numeric branch');
+const ERPLFCI002 = NewMCode('ERPLFCI-002', 'Format connector legend IDs range branch');
+const ERPLFCI003 = NewMCode('ERPLFCI-003', 'Format connector legend IDs single branch');
+const ERPLLO001 = NewMCode('ERPLLO-001', 'Legend line options default branch');
+
 export function drawConnectorLegendSlide(pptx: pptxgen, plan: PptxPlan): void {
   const rows = groupConnectorLegendEntries(plan.connectorLegend ?? []);
-  if (rows.length === 0) return;
+  if (rows.length === 0) {
+    logger.DEBUG(ERPLDCLS001, 'branch empty');
+    return;
+  }
 
   const slideW = plan.slide.w;
   const slideH = plan.slide.h;
@@ -37,6 +55,7 @@ export function drawConnectorLegendSlide(pptx: pptxgen, plan: PptxPlan): void {
 
   for (let start = 0; start < rows.length; start += rowsPerSlide) {
     const pageRows = rows.slice(start, start + rowsPerSlide);
+    logger.DEBUG(ERPLDCLS002, 'branch page', { start, rows: pageRows.length });
     const slide = pptx.addSlide();
     slide.background = { color: plan.slide.background || 'FFFFFF' };
 
@@ -126,7 +145,10 @@ export function drawConnectorLegendSlide(pptx: pptxgen, plan: PptxPlan): void {
 
 export async function drawLegendSlides(pptx: pptxgen, plan: PptxPlan): Promise<void> {
   const entries = (plan.legend ?? []).filter((e) => e.data && e.officialName);
-  if (entries.length === 0) return;
+  if (entries.length === 0) {
+    logger.DEBUG(ERPLDLS001, 'branch empty');
+    return;
+  }
 
   const slideW = plan.slide.w;
   const slideH = plan.slide.h;
@@ -143,6 +165,7 @@ export async function drawLegendSlides(pptx: pptxgen, plan: PptxPlan): Promise<v
 
   for (let start = 0; start < entries.length; start += entriesPerSlide) {
     const pageEntries = entries.slice(start, start + entriesPerSlide);
+    logger.DEBUG(ERPLDLS002, 'branch page', { start, entries: pageEntries.length });
     const cols = colsPerSlide;
     const colW = (slideW - marginX * 2) / cols;
     const slide = pptx.addSlide();
@@ -174,6 +197,7 @@ export async function drawLegendSlides(pptx: pptxgen, plan: PptxPlan): Promise<v
       const x = marginX + col * colW;
       const y = marginTop + titleH + headerH + row * rowH;
       if (entry.data) {
+        logger.DEBUG(ERPLDLS003, 'branch image', { catalogId: entry.catalogId });
         slide.addImage({ data: await imageDataForPptx(entry.data, 0.2), x, y: y + 0.04, w: 0.2, h: 0.2 });
       }
       slide.addText(entry.abbreviation || String(entry.catalogId), {
@@ -217,6 +241,7 @@ function groupConnectorLegendEntries(entries: PlanConnectorLegendEntry[]): Conne
     });
     const existing = byKey.get(key);
     if (existing) {
+      logger.DEBUG(ERPLGCLE001, 'branch existing', { id: entry.id });
       existing.ids.push(entry.id);
       continue;
     }
@@ -227,6 +252,7 @@ function groupConnectorLegendEntries(entries: PlanConnectorLegendEntry[]): Conne
       description: entry.description,
       line: entry.line,
     };
+    logger.DEBUG(ERPLGCLE002, 'branch new', { id: entry.id, kind: entry.kind });
     rows.push(row);
     byKey.set(key, row);
   }
@@ -252,6 +278,7 @@ function formatConnectorLegendIDs(ids: string[]): string {
     const current = parsed[i];
     if (!current) break;
     if (Number.isNaN(current.number)) {
+      logger.DEBUG(ERPLFCI001, 'branch non numeric', { id: current.id });
       ranges.push(current.id);
       i++;
       continue;
@@ -266,8 +293,10 @@ function formatConnectorLegendIDs(ids: string[]): string {
     const last = parsed[end];
     if (!last) break;
     if (end > i) {
+      logger.DEBUG(ERPLFCI002, 'branch range', { start: current.id, end: last.id });
       ranges.push(`${format(current.number, current.width)} - ${format(last.number, last.width)}`);
     } else {
+      logger.DEBUG(ERPLFCI003, 'branch single', { id: current.id });
       ranges.push(format(current.number, current.width));
     }
     i = end + 1;
@@ -284,7 +313,10 @@ function lineStyleSummary(line: PlanLine): string {
 }
 
 function lineOptions(line: PlanLine | undefined): LegendLineOptions {
-  if (!line) return { color: '1E1E1E', width: 1 };
+  if (!line) {
+    logger.DEBUG(ERPLLO001, 'branch default line');
+    return { color: '1E1E1E', width: 1 };
+  }
 
   const options: LegendLineOptions = {
     color: line.color,

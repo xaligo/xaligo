@@ -7,6 +7,7 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -77,9 +78,59 @@ type logger struct {
 	output io.Writer
 }
 
+var (
+	defaultLoggerOnce sync.Once
+	defaultLogger     Logger
+)
+
+// DefaultLogger returns the shared environment-configured logger.
+func DefaultLogger() Logger {
+	defaultLoggerOnce.Do(func() {
+		defaultLogger = NewEnvLogger("", "")
+	})
+	return defaultLogger
+}
+
+// DEBUG writes a debug log through the default environment-configured logger.
+func DEBUG(mcode MCode, optionalMessage string, fields ...map[string]any) {
+	DefaultLogger().DEBUG(mcode, optionalMessage, fields...)
+}
+
+// INFO writes an info log through the default environment-configured logger.
+func INFO(mcode MCode, optionalMessage string, fields ...map[string]any) {
+	DefaultLogger().INFO(mcode, optionalMessage, fields...)
+}
+
+// WARN writes a warning log through the default environment-configured logger.
+func WARN(mcode MCode, optionalMessage string, fields ...map[string]any) {
+	DefaultLogger().WARN(mcode, optionalMessage, fields...)
+}
+
+// ERROR writes an error log through the default environment-configured logger.
+func ERROR(mcode MCode, optionalMessage string, fields ...map[string]any) {
+	DefaultLogger().ERROR(mcode, optionalMessage, fields...)
+}
+
+// FATAL writes a fatal log through the default environment-configured logger and exits.
+func FATAL(mcode MCode, optionalMessage string, fields ...map[string]any) {
+	DefaultLogger().FATAL(mcode, optionalMessage, fields...)
+}
+
 // NewLogger creates a shared logger from config.
 func NewLogger(config LoggerConfig) Logger {
 	return newLogger(config, nil)
+}
+
+// NewEnvLogger creates a logger configured by XALIGO_LOG_* environment variables.
+func NewEnvLogger(component, service string) Logger {
+	return NewLogger(LoggerConfig{
+		Component:    component,
+		Service:      service,
+		Level:        os.Getenv("XALIGO_LOG_LEVEL"),
+		Structured:   truthyEnv(os.Getenv("XALIGO_LOG_STRUCTURED")),
+		EnableCaller: truthyEnv(os.Getenv("XALIGO_LOG_CALLER")),
+		Output:       os.Getenv("XALIGO_LOG_OUTPUT"),
+	})
 }
 
 func newLogger(config LoggerConfig, output io.Writer) Logger {
@@ -92,6 +143,15 @@ func newLogger(config LoggerConfig, output io.Writer) Logger {
 		logger.output = openLogOutput(config.Output)
 	}
 	return logger
+}
+
+func truthyEnv(value string) bool {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "1", "true", "yes", "y", "on":
+		return true
+	default:
+		return false
+	}
 }
 
 func parseLogLevel(level string) LogLevel {

@@ -10,11 +10,17 @@ import (
 
 	"github.com/ryo-arima/xaligo/internal/config"
 	"github.com/ryo-arima/xaligo/internal/entity"
+	"github.com/ryo-arima/xaligo/internal/share"
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 )
 
 const pptxExporterWasmRel = "external/wasm/xaligo.wasm"
+
+var (
+	logger     = share.DefaultLogger()
+	IRPEPWX001 = share.NewMCode("IRPEPWX-001", "Export PPTX with exporter generated output")
+)
 
 type PptxExporter interface {
 	Export(ctx context.Context, requestJSON []byte) (stdout []byte, stderr []byte, err error)
@@ -83,9 +89,7 @@ func ExportPptxWithExporter(ctx context.Context, opts entity.PptxExportOptions, 
 	if err := os.WriteFile(opts.Output, pptxBytes, 0644); err != nil {
 		return fmt.Errorf("write PPTX output %s: %w", opts.Output, err)
 	}
-	if opts.Stdout != nil {
-		_, _ = fmt.Fprintf(opts.Stdout, "generated: %s\n", opts.Output)
-	}
+	logger.INFO(IRPEPWX001, "generated", map[string]any{"output": opts.Output})
 	return nil
 }
 

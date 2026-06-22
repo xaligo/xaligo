@@ -18,6 +18,7 @@ import (
 
 	"github.com/ryo-arima/xaligo/internal/entity"
 	"github.com/ryo-arima/xaligo/internal/repository"
+	"github.com/ryo-arima/xaligo/internal/share"
 )
 
 type file struct {
@@ -75,6 +76,17 @@ const (
 )
 
 var svgTintColorRE = regexp.MustCompile(`(?i)#[0-9a-f]{3,8}|currentColor`)
+
+var (
+	IUESW001   = share.NewMCode("IUESW-001", "Walk skip too small warning")
+	IUESW002   = share.NewMCode("IUESW-002", "Walk generic group icon lookup warning")
+	IUESRIA001 = share.NewMCode("IUESRIA-001", "Render icon at invalid item ID warning")
+	IUESRIA002 = share.NewMCode("IUESRIA-002", "Render icon at catalog lookup warning")
+	IUESRIA003 = share.NewMCode("IUESRIA-003", "Render icon at load SVG warning")
+	IUESRC001  = share.NewMCode("IUESRC-001", "Render connections invalid source or destination warning")
+	IUESRC002  = share.NewMCode("IUESRC-002", "Render connections source item not rendered warning")
+	IUESRC003  = share.NewMCode("IUESRC-003", "Render connections destination item not rendered warning")
+)
 
 // tintSVGDataURL makes a group header icon use the same semantic colour as
 // its group border and title. White and transparent portions are preserved.
@@ -355,9 +367,7 @@ func walk(b *entity.Box, elements *[]map[string]any, files map[string]any, svgGr
 	selfVisible := b.Attrs["visible"] != "false"
 
 	if b.Tag != "frame" && (b.W < MinBoxWidth || b.H < MinBoxHeight) {
-		fmt.Fprintf(os.Stderr,
-			"WARNING: skipping %q (%s) — too small to display (%.1f x %.1f, min %.0f x %.0f)\n",
-			b.Label, b.Tag, b.W, b.H, MinBoxWidth, MinBoxHeight)
+		logger.WARN(IUESW001, "skipping too small element", map[string]any{"label": b.Label, "tag": b.Tag, "width": b.W, "height": b.H, "minWidth": MinBoxWidth, "minHeight": MinBoxHeight})
 		// 子の item も同じ visibleAncestor に結び付けて収集
 		for _, c := range b.Children {
 			if IsItemLike(c.Tag) {
@@ -416,7 +426,7 @@ func walk(b *entity.Box, elements *[]map[string]any, files map[string]any, svgGr
 					entry.DataURL, err = svgDataURL(filepath.Join(projectRoot, entry.RelPath))
 				}
 				if err != nil {
-					fmt.Fprintf(os.Stderr, "WARNING: <generic-group icon-id=%d>: %v\n", catalogID, err)
+					logger.WARN(IUESW002, "generic group icon lookup failed", map[string]any{"catalogID": catalogID, "error": err})
 				} else {
 					iconDataURL = entry.DataURL
 					iconFileID = fmt.Sprintf("group-cat-%d", catalogID)
@@ -799,7 +809,7 @@ func renderIconAt(boxID, idAttr string, iconX, iconY, iconSize float64, elements
 	// 1:1 — id は単一の整数
 	id, err := strconv.Atoi(idAttr)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "WARNING: <item id=%q>: id must be a single integer: %v\n", idAttr, err)
+		logger.WARN(IUESRIA001, "item ID must be a single integer", map[string]any{"id": idAttr, "error": err})
 		return
 	}
 	var ce entity.CatalogEntry
@@ -809,7 +819,7 @@ func renderIconAt(boxID, idAttr string, iconX, iconY, iconSize float64, elements
 		ce, err = repository.LookupCatalogByID(catalogCSV, id)
 	}
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "WARNING: <item id=%d>: %v\n", id, err)
+		logger.WARN(IUESRIA002, "catalog lookup failed", map[string]any{"id": id, "error": err})
 		return
 	}
 	if ce.DataURL == "" && ce.RelPath != "" && projectRoot != "" {
@@ -817,7 +827,7 @@ func renderIconAt(boxID, idAttr string, iconX, iconY, iconSize float64, elements
 		if du, err2 := svgDataURL(svgPath); err2 == nil {
 			ce.DataURL = du
 		} else {
-			fmt.Fprintf(os.Stderr, "WARNING: <item id=%d>: cannot load SVG %s: %v\n", id, svgPath, err2)
+			logger.WARN(IUESRIA003, "cannot load SVG", map[string]any{"id": id, "path": svgPath, "error": err2})
 		}
 	}
 	if ce.DataURL == "" {
@@ -981,17 +991,17 @@ func renderConnections(connections []*entity.Node, itemImgRects map[int][4]float
 		srcID, err1 := strconv.Atoi(srcIDStr)
 		dstID, err2 := strconv.Atoi(dstIDStr)
 		if err1 != nil || err2 != nil {
-			fmt.Fprintf(os.Stderr, "WARNING: <connection> invalid src/dst: %v %v\n", err1, err2)
+			logger.WARN(IUESRC001, "invalid connection source or destination", map[string]any{"src": srcIDStr, "dst": dstIDStr, "srcError": err1, "dstError": err2})
 			continue
 		}
 		srcImgRect, srcOk := itemImgRects[srcID]
 		dstImgRect, dstOk := itemImgRects[dstID]
 		if !srcOk {
-			fmt.Fprintf(os.Stderr, "WARNING: <connection src=%d>: item not found or not rendered\n", srcID)
+			logger.WARN(IUESRC002, "source item not found or not rendered", map[string]any{"src": srcID})
 			continue
 		}
 		if !dstOk {
-			fmt.Fprintf(os.Stderr, "WARNING: <connection dst=%d>: item not found or not rendered\n", dstID)
+			logger.WARN(IUESRC003, "destination item not found or not rendered", map[string]any{"dst": dstID})
 			continue
 		}
 

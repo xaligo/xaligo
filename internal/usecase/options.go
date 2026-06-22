@@ -1,11 +1,13 @@
 package usecase
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/ryo-arima/xaligo/internal/entity"
+	"github.com/ryo-arima/xaligo/internal/repository"
 )
 
 const (
@@ -62,5 +64,46 @@ func validateMode(mode entity.Mode) error {
 		return fmt.Errorf("mode %q: %w", normalized, ErrNotImplemented)
 	default:
 		return fmt.Errorf("unknown render mode %q", normalized)
+	}
+}
+
+func serviceOptions(opts entity.RenderOptions) ([]entity.ServiceEntry, map[int]string, error) {
+	abbreviations := make(map[int]string, len(opts.Abbreviations))
+	for id, value := range opts.Abbreviations {
+		abbreviations[id] = value
+	}
+	if len(bytes.TrimSpace(opts.ServicesCSV)) == 0 {
+		logger.DEBUG(IURSO001, "branch no services csv", map[string]any{"abbreviations": len(abbreviations)})
+		return nil, abbreviations, nil
+	}
+	logger.DEBUG(IURSO002, "branch services csv", map[string]any{"bytes": len(opts.ServicesCSV)})
+	entries, err := repository.ReadServiceListFromReader(bytes.NewReader(opts.ServicesCSV))
+	if err != nil {
+		logger.ERROR(IURSO003, "read services csv failed", map[string]any{"error": err})
+		return nil, nil, fmt.Errorf("read services CSV: %w", err)
+	}
+	for _, entry := range entries {
+		if entry.CatalogID > 0 && entry.Abbreviation != "" {
+			logger.DEBUG(IURSO004, "branch service abbreviation", map[string]any{"catalogID": entry.CatalogID})
+			abbreviations[entry.CatalogID] = entry.Abbreviation
+		}
+	}
+	return entries, abbreviations, nil
+}
+
+func planOptions(opts entity.RenderOptions, entries []entity.ServiceEntry) entity.PptxOptions {
+	legend := make([]entity.LegendEntry, 0, len(entries))
+	for _, entry := range entries {
+		if entry.CatalogID > 0 && entry.OfficialName != "" {
+			logger.DEBUG(IURPO001, "branch legend entry", map[string]any{"catalogID": entry.CatalogID})
+			legend = append(legend, entity.LegendEntry{CatalogID: entry.CatalogID, Abbreviation: entry.Abbreviation, OfficialName: entry.OfficialName})
+		}
+	}
+	return entity.PptxOptions{
+		Theme: opts.Theme, PxPerInch: opts.PxPerInch, ArrowStyle: opts.ArrowStyle,
+		ArrowStubPx: opts.ArrowStubPx, ArrowMargin: opts.ArrowMarginPx,
+		PaperSize: opts.PaperSize, Orientation: opts.Orientation,
+		PaperMargin: opts.PaperMarginIn, PaperMarginTop: opts.PaperMarginTopIn, PaperMarginRight: opts.PaperMarginRightIn,
+		PaperMarginBottom: opts.PaperMarginBottomIn, PaperMarginLeft: opts.PaperMarginLeftIn, LegendEntries: legend,
 	}
 }

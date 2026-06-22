@@ -25,7 +25,7 @@ func (f *fakePptxExporter) Export(_ context.Context, requestJSON []byte) ([]byte
 	return f.stdout, f.stderr, f.err
 }
 
-func TestExportPptxWithExporterWritesWasmStdout(t *testing.T) {
+func TestExportPptxWithExporterWritesPptxOutput(t *testing.T) {
 	output := filepath.Join(t.TempDir(), "out.pptx")
 	compression := false
 	stdout := &bytes.Buffer{}
@@ -55,7 +55,7 @@ func TestExportPptxWithExporterWritesWasmStdout(t *testing.T) {
 	if string(written) != "pptx-bytes" {
 		t.Fatalf("written PPTX = %q", written)
 	}
-	if !bytes.Contains(stdout.Bytes(), []byte("generated: ")) {
+	if stdout.Len() != 0 {
 		t.Fatalf("stdout = %q", stdout.String())
 	}
 	if stderr.String() != "exporter warning\n" {

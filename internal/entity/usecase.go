@@ -2,8 +2,6 @@ package entity
 
 import "time"
 
-type UseCaseDependencies struct{}
-
 type PreviewOptions struct {
 	Render       RenderOptions
 	PollInterval time.Duration

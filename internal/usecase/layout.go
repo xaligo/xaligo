@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/ryo-arima/xaligo/internal/entity"
+	"github.com/ryo-arima/xaligo/internal/share"
 )
 
 const spacingUnit = 8
@@ -32,13 +33,77 @@ const (
 	GroupSideInset = defaultGroupSideInset
 )
 
+var (
+	IULB001   = share.NewMCode("IULB-001", "Build nil root branch")
+	IULB002   = share.NewMCode("IULB-002", "Build layout root branch")
+	IULLK001  = share.NewMCode("IULLK-001", "Layout kids skip connection branch")
+	IULN001   = share.NewMCode("IULN-001", "Layout node frame margin branch")
+	IULN002   = share.NewMCode("IULN-002", "Layout node explicit width branch")
+	IULN003   = share.NewMCode("IULN-003", "Layout node explicit height branch")
+	IULN004   = share.NewMCode("IULN-004", "Layout node frame inner margin branch")
+	IULN005   = share.NewMCode("IULN-005", "Layout node frame horizontal branch")
+	IULN006   = share.NewMCode("IULN-006", "Layout node frame stack branch")
+	IULN007   = share.NewMCode("IULN-007", "Layout node row branch")
+	IULN008   = share.NewMCode("IULN-008", "Layout node col horizontal branch")
+	IULN009   = share.NewMCode("IULN-009", "Layout node col stack branch")
+	IULN010   = share.NewMCode("IULN-010", "Layout node default container branch")
+	IULN011   = share.NewMCode("IULN-011", "Layout node default all items branch")
+	IULN012   = share.NewMCode("IULN-012", "Layout node default staggered branch")
+	IULN013   = share.NewMCode("IULN-013", "Layout node default horizontal branch")
+	IULN014   = share.NewMCode("IULN-014", "Layout node default stack branch")
+	IULN015   = share.NewMCode("IULN-015", "Layout node leaf branch")
+	IULS001   = share.NewMCode("IULS-001", "Layout stack empty children branch")
+	IULFH001  = share.NewMCode("IULFH-001", "Layout flex horizontal empty children branch")
+	IULR001   = share.NewMCode("IULR-001", "Layout row empty children branch")
+	IULST001  = share.NewMCode("IULST-001", "Layout stagger fallback branch")
+	IULST002  = share.NewMCode("IULST-002", "Layout stagger minimum width branch")
+	IULST003  = share.NewMCode("IULST-003", "Layout stagger minimum height branch")
+	IULACA001 = share.NewMCode("IULACA-001", "Align content area width clamp branch")
+	IULACA002 = share.NewMCode("IULACA-002", "Align content area height clamp branch")
+	IULACA003 = share.NewMCode("IULACA-003", "Align content area right branch")
+	IULACA004 = share.NewMCode("IULACA-004", "Align content area center branch")
+	IULACA005 = share.NewMCode("IULACA-005", "Align content area bottom branch")
+	IULACA006 = share.NewMCode("IULACA-006", "Align content area middle branch")
+	IULLO001  = share.NewMCode("IULLO-001", "Label of title branch")
+	IULLO002  = share.NewMCode("IULLO-002", "Label of text branch")
+	IULLO003  = share.NewMCode("IULLO-003", "Label of tag branch")
+	IULAF001  = share.NewMCode("IULAF-001", "Attribute float fallback empty branch")
+	IULAF002  = share.NewMCode("IULAF-002", "Attribute float parse failed branch")
+	IULPCS001 = share.NewMCode("IULPCS-001", "Parse class spacing padding all branch")
+	IULPCS002 = share.NewMCode("IULPCS-002", "Parse class spacing margin all branch")
+	IULPCS003 = share.NewMCode("IULPCS-003", "Parse class spacing padding x branch")
+	IULPCS004 = share.NewMCode("IULPCS-004", "Parse class spacing padding y branch")
+	IULPCS005 = share.NewMCode("IULPCS-005", "Parse class spacing margin x branch")
+	IULPCS006 = share.NewMCode("IULPCS-006", "Parse class spacing margin y branch")
+	IULPCS007 = share.NewMCode("IULPCS-007", "Parse class spacing padding top branch")
+	IULPCS008 = share.NewMCode("IULPCS-008", "Parse class spacing padding right branch")
+	IULPCS009 = share.NewMCode("IULPCS-009", "Parse class spacing padding bottom branch")
+	IULPCS010 = share.NewMCode("IULPCS-010", "Parse class spacing padding left branch")
+	IULPCS011 = share.NewMCode("IULPCS-011", "Parse class spacing margin top branch")
+	IULPCS012 = share.NewMCode("IULPCS-012", "Parse class spacing margin right branch")
+	IULPCS013 = share.NewMCode("IULPCS-013", "Parse class spacing margin bottom branch")
+	IULPCS014 = share.NewMCode("IULPCS-014", "Parse class spacing margin left branch")
+	IULPA001  = share.NewMCode("IULPA-001", "Parse align invalid branch")
+	IULPA002  = share.NewMCode("IULPA-002", "Parse align vertical branch")
+	IULPA003  = share.NewMCode("IULPA-003", "Parse align horizontal branch")
+	IULSV001  = share.NewMCode("IULSV-001", "Spacing value parse failed branch")
+	IULPAM001 = share.NewMCode("IULPAM-001", "Parse attribute margin empty branch")
+	IULPAM002 = share.NewMCode("IULPAM-002", "Parse attribute margin all branch")
+	IULPAM003 = share.NewMCode("IULPAM-003", "Parse attribute margin top branch")
+	IULPAM004 = share.NewMCode("IULPAM-004", "Parse attribute margin right branch")
+	IULPAM005 = share.NewMCode("IULPAM-005", "Parse attribute margin bottom branch")
+	IULPAM006 = share.NewMCode("IULPAM-006", "Parse attribute margin left branch")
+)
+
 func Build(doc entity.Document) (*entity.Box, error) {
 	if doc.Root == nil {
+		logger.DEBUG(IULB001, "branch nil root")
 		return nil, fmt.Errorf("document root is nil")
 	}
 	w := attrFloat(doc.Root.Attr("width"), 1280)
 	h := attrFloat(doc.Root.Attr("height"), 720)
 	root := &entity.Box{ID: "frame", Tag: "frame", Label: "frame", X: 0, Y: 0, W: w, H: h}
+	logger.DEBUG(IULB002, "branch layout root", map[string]any{"width": w, "height": h})
 	layoutNode(doc.Root, root, 0, 0, w, h)
 	return root, nil
 }
@@ -49,6 +114,7 @@ func layoutKids(node *entity.Node) []*entity.Node {
 	var kids []*entity.Node
 	for _, c := range node.Children {
 		if c.Tag == "connection" {
+			logger.DEBUG(IULLK001, "branch skip connection")
 			continue
 		}
 		kids = append(kids, c)
@@ -76,6 +142,7 @@ func layoutNode(node *entity.Node, target *entity.Box, x, y, w, h float64) {
 	boxW := w - mar.Left - mar.Right
 	boxH := h - mar.Top - mar.Bottom
 	if node.Tag == "frame" {
+		logger.DEBUG(IULN001, "branch frame margin")
 		boxX = x
 		boxY = y
 		boxW = w
@@ -86,11 +153,13 @@ func layoutNode(node *entity.Node, target *entity.Box, x, y, w, h float64) {
 	if node.Tag != "frame" {
 		if wv := node.Attr("width"); wv != "" {
 			if ew := attrFloat(wv, 0); ew > 0 {
+				logger.DEBUG(IULN002, "branch explicit width", map[string]any{"tag": node.Tag, "width": ew})
 				boxW = ew
 			}
 		}
 		if hv := node.Attr("height"); hv != "" {
 			if eh := attrFloat(hv, 0); eh > 0 {
+				logger.DEBUG(IULN003, "branch explicit height", map[string]any{"tag": node.Tag, "height": eh})
 				boxH = eh
 			}
 		}
@@ -107,6 +176,7 @@ func layoutNode(node *entity.Node, target *entity.Box, x, y, w, h float64) {
 	innerW := boxW - pad.Left - pad.Right
 	innerH := boxH - pad.Top - pad.Bottom
 	if node.Tag == "frame" {
+		logger.DEBUG(IULN004, "branch frame inner margin")
 		innerX += mar.Left
 		innerY += mar.Top
 		innerW -= mar.Left + mar.Right
@@ -117,16 +187,21 @@ func layoutNode(node *entity.Node, target *entity.Box, x, y, w, h float64) {
 	switch node.Tag {
 	case "frame", "container":
 		if node.Attr("layout") == "horizontal" {
+			logger.DEBUG(IULN005, "branch frame/container horizontal", map[string]any{"tag": node.Tag})
 			layoutFlexH(node, target, innerX, innerY, innerW, innerH)
 		} else {
+			logger.DEBUG(IULN006, "branch frame/container stack", map[string]any{"tag": node.Tag})
 			layoutStack(node, target, innerX, innerY, innerW, innerH)
 		}
 	case "row":
+		logger.DEBUG(IULN007, "branch row")
 		layoutRow(node, target, innerX, innerY, innerW, innerH)
 	case "col":
 		if node.Attr("layout") == "horizontal" {
+			logger.DEBUG(IULN008, "branch col horizontal")
 			layoutFlexH(node, target, innerX, innerY, innerW, innerH)
 		} else {
+			logger.DEBUG(IULN009, "branch col stack")
 			layoutStack(node, target, innerX, innerY, innerW, innerH)
 		}
 	default:
@@ -134,6 +209,7 @@ func layoutNode(node *entity.Node, target *entity.Box, x, y, w, h float64) {
 		// 子要素があればコンテナ, なければリーフとして扱う。
 		kids := layoutKids(node)
 		if len(kids) > 0 {
+			logger.DEBUG(IULN010, "branch default container", map[string]any{"tag": node.Tag, "children": len(kids)})
 			// <item> / <spacer> のみの親はグループアイコン/ラベルがないので topInset を適用しない
 			allItems := true
 			for _, ch := range kids {
@@ -143,6 +219,7 @@ func layoutNode(node *entity.Node, target *entity.Box, x, y, w, h float64) {
 				}
 			}
 			if allItems {
+				logger.DEBUG(IULN011, "branch all item children", map[string]any{"tag": node.Tag})
 				layoutRow(node, target, innerX, innerY, innerW, innerH)
 				break
 			}
@@ -154,13 +231,17 @@ func layoutNode(node *entity.Node, target *entity.Box, x, y, w, h float64) {
 			gInnerH := boxH - defaultGroupTopInset - defaultGroupSideInset - pad.Top - pad.Bottom
 			gInnerX, gInnerY, gInnerW, gInnerH = alignContentArea(node, gInnerX, gInnerY, gInnerW, gInnerH)
 			if node.Attr("layout") == "staggered" {
+				logger.DEBUG(IULN012, "branch staggered", map[string]any{"tag": node.Tag})
 				layoutStagger(node, target, gInnerX, gInnerY, gInnerW, gInnerH)
 			} else if node.Attr("layout") == "horizontal" {
+				logger.DEBUG(IULN013, "branch horizontal", map[string]any{"tag": node.Tag})
 				layoutFlexH(node, target, gInnerX, gInnerY, gInnerW, gInnerH)
 			} else {
+				logger.DEBUG(IULN014, "branch stack", map[string]any{"tag": node.Tag})
 				layoutStack(node, target, gInnerX, gInnerY, gInnerW, gInnerH)
 			}
 		} else {
+			logger.DEBUG(IULN015, "branch leaf", map[string]any{"tag": node.Tag})
 			layoutLeaf(node, target, innerX, innerY, innerW, innerH)
 		}
 	}
@@ -169,6 +250,7 @@ func layoutNode(node *entity.Node, target *entity.Box, x, y, w, h float64) {
 func layoutStack(node *entity.Node, target *entity.Box, x, y, w, h float64) {
 	children := layoutKids(node)
 	if len(children) == 0 {
+		logger.DEBUG(IULS001, "branch empty children", map[string]any{"tag": node.Tag})
 		return
 	}
 	gap := attrFloat(node.Attr("gap"), 16)
@@ -205,6 +287,7 @@ func layoutStack(node *entity.Node, target *entity.Box, x, y, w, h float64) {
 func layoutFlexH(node *entity.Node, target *entity.Box, x, y, w, h float64) {
 	children := layoutKids(node)
 	if len(children) == 0 {
+		logger.DEBUG(IULFH001, "branch empty children", map[string]any{"tag": node.Tag})
 		return
 	}
 	gap := attrFloat(node.Attr("gap"), 16)
@@ -237,6 +320,7 @@ func layoutFlexH(node *entity.Node, target *entity.Box, x, y, w, h float64) {
 func layoutRow(node *entity.Node, target *entity.Box, x, y, w, h float64) {
 	children := layoutKids(node)
 	if len(children) == 0 {
+		logger.DEBUG(IULR001, "branch empty children", map[string]any{"tag": node.Tag})
 		return
 	}
 	gap := attrFloat(node.Attr("gap"), 16)
@@ -270,6 +354,7 @@ func layoutStagger(node *entity.Node, target *entity.Box, x, y, w, h float64) {
 	children := layoutKids(node)
 	n := len(children)
 	if n < 2 {
+		logger.DEBUG(IULST001, "branch fallback stack", map[string]any{"tag": node.Tag, "children": n})
 		layoutStack(node, target, x, y, w, h)
 		return
 	}
@@ -277,9 +362,11 @@ func layoutStagger(node *entity.Node, target *entity.Box, x, y, w, h float64) {
 	childW := w - staggerOffset*float64(n-1)
 	childH := h - staggerOffset*float64(n-1)
 	if childW < MinBoxWidth {
+		logger.DEBUG(IULST002, "branch min width", map[string]any{"width": childW, "minWidth": MinBoxWidth})
 		childW = MinBoxWidth
 	}
 	if childH < MinBoxHeight {
+		logger.DEBUG(IULST003, "branch min height", map[string]any{"height": childH, "minHeight": MinBoxHeight})
 		childH = MinBoxHeight
 	}
 	// Render back-to-front: highest depth first → behind, depth 0 last → front.
@@ -311,22 +398,28 @@ func alignContentArea(node *entity.Node, x, y, w, h float64) (float64, float64, 
 	contentW := attrFloat(node.Attr("content-width"), w)
 	contentH := attrFloat(node.Attr("content-height"), h)
 	if contentW <= 0 || contentW > w {
+		logger.DEBUG(IULACA001, "branch clamp width", map[string]any{"tag": node.Tag, "contentWidth": contentW, "width": w})
 		contentW = w
 	}
 	if contentH <= 0 || contentH > h {
+		logger.DEBUG(IULACA002, "branch clamp height", map[string]any{"tag": node.Tag, "contentHeight": contentH, "height": h})
 		contentH = h
 	}
 	vert, horiz := parseAlign(node.Attr("align"))
 	switch horiz {
 	case "right":
+		logger.DEBUG(IULACA003, "branch right", map[string]any{"tag": node.Tag})
 		x += w - contentW
 	case "center":
+		logger.DEBUG(IULACA004, "branch center", map[string]any{"tag": node.Tag})
 		x += (w - contentW) / 2
 	}
 	switch vert {
 	case "bottom":
+		logger.DEBUG(IULACA005, "branch bottom", map[string]any{"tag": node.Tag})
 		y += h - contentH
 	case "middle":
+		logger.DEBUG(IULACA006, "branch middle", map[string]any{"tag": node.Tag})
 		y += (h - contentH) / 2
 	}
 	return x, y, contentW, contentH
@@ -338,20 +431,25 @@ func childID(parent string, index int) string {
 
 func labelOf(n *entity.Node) string {
 	if title := n.Attr("title"); title != "" {
+		logger.DEBUG(IULLO001, "branch title", map[string]any{"tag": n.Tag})
 		return title
 	}
 	if n.Text != "" {
+		logger.DEBUG(IULLO002, "branch text", map[string]any{"tag": n.Tag})
 		return n.Text
 	}
+	logger.DEBUG(IULLO003, "branch tag", map[string]any{"tag": n.Tag})
 	return n.Tag
 }
 
 func attrFloat(v string, fallback float64) float64 {
 	if strings.TrimSpace(v) == "" {
+		logger.DEBUG(IULAF001, "branch fallback empty")
 		return fallback
 	}
 	f, err := strconv.ParseFloat(v, 64)
 	if err != nil {
+		logger.WARN(IULAF002, "branch parse failed", map[string]any{"value": v, "error": err})
 		return fallback
 	}
 	return f
@@ -363,44 +461,58 @@ func parseClassSpacing(class string) (entity.Spacing, entity.Spacing) {
 	for _, tok := range strings.Fields(class) {
 		switch {
 		case strings.HasPrefix(tok, "pa-"):
+			logger.DEBUG(IULPCS001, "branch padding all", map[string]any{"token": tok})
 			v := spacingValue(tok[3:])
 			pad = entity.Spacing{Top: v, Right: v, Bottom: v, Left: v}
 		case strings.HasPrefix(tok, "ma-"):
+			logger.DEBUG(IULPCS002, "branch margin all", map[string]any{"token": tok})
 			v := spacingValue(tok[3:])
 			mar = entity.Spacing{Top: v, Right: v, Bottom: v, Left: v}
 		// 軸別一括: px=左右, py=上下
 		case strings.HasPrefix(tok, "px-"):
+			logger.DEBUG(IULPCS003, "branch padding x", map[string]any{"token": tok})
 			v := spacingValue(tok[3:])
 			pad.Left = v
 			pad.Right = v
 		case strings.HasPrefix(tok, "py-"):
+			logger.DEBUG(IULPCS004, "branch padding y", map[string]any{"token": tok})
 			v := spacingValue(tok[3:])
 			pad.Top = v
 			pad.Bottom = v
 		case strings.HasPrefix(tok, "mx-"):
+			logger.DEBUG(IULPCS005, "branch margin x", map[string]any{"token": tok})
 			v := spacingValue(tok[3:])
 			mar.Left = v
 			mar.Right = v
 		case strings.HasPrefix(tok, "my-"):
+			logger.DEBUG(IULPCS006, "branch margin y", map[string]any{"token": tok})
 			v := spacingValue(tok[3:])
 			mar.Top = v
 			mar.Bottom = v
 		// 個別方向
 		case strings.HasPrefix(tok, "pt-"):
+			logger.DEBUG(IULPCS007, "branch padding top", map[string]any{"token": tok})
 			pad.Top = spacingValue(tok[3:])
 		case strings.HasPrefix(tok, "pr-"):
+			logger.DEBUG(IULPCS008, "branch padding right", map[string]any{"token": tok})
 			pad.Right = spacingValue(tok[3:])
 		case strings.HasPrefix(tok, "pb-"):
+			logger.DEBUG(IULPCS009, "branch padding bottom", map[string]any{"token": tok})
 			pad.Bottom = spacingValue(tok[3:])
 		case strings.HasPrefix(tok, "pl-"):
+			logger.DEBUG(IULPCS010, "branch padding left", map[string]any{"token": tok})
 			pad.Left = spacingValue(tok[3:])
 		case strings.HasPrefix(tok, "mt-"):
+			logger.DEBUG(IULPCS011, "branch margin top", map[string]any{"token": tok})
 			mar.Top = spacingValue(tok[3:])
 		case strings.HasPrefix(tok, "mr-"):
+			logger.DEBUG(IULPCS012, "branch margin right", map[string]any{"token": tok})
 			mar.Right = spacingValue(tok[3:])
 		case strings.HasPrefix(tok, "mb-"):
+			logger.DEBUG(IULPCS013, "branch margin bottom", map[string]any{"token": tok})
 			mar.Bottom = spacingValue(tok[3:])
 		case strings.HasPrefix(tok, "ml-"):
+			logger.DEBUG(IULPCS014, "branch margin left", map[string]any{"token": tok})
 			mar.Left = spacingValue(tok[3:])
 		}
 	}
@@ -421,12 +533,15 @@ func parseAlign(align string) (vert, horiz string) {
 	vert, horiz = "top", "left"
 	parts := strings.SplitN(strings.ToLower(strings.TrimSpace(align)), "-", 2)
 	if len(parts) != 2 {
+		logger.WARN(IULPA001, "branch invalid align", map[string]any{"align": align})
 		return vert, horiz
 	}
 	if parts[0] == "top" || parts[0] == "middle" || parts[0] == "bottom" {
+		logger.DEBUG(IULPA002, "branch vertical", map[string]any{"vertical": parts[0]})
 		vert = parts[0]
 	}
 	if parts[1] == "left" || parts[1] == "center" || parts[1] == "right" {
+		logger.DEBUG(IULPA003, "branch horizontal", map[string]any{"horizontal": parts[1]})
 		horiz = parts[1]
 	}
 	return vert, horiz
@@ -435,6 +550,7 @@ func parseAlign(align string) (vert, horiz string) {
 func spacingValue(s string) float64 {
 	n, err := strconv.Atoi(s)
 	if err != nil {
+		logger.WARN(IULSV001, "branch parse failed", map[string]any{"value": s, "error": err})
 		return 0
 	}
 	return float64(n * spacingUnit)
@@ -447,23 +563,29 @@ func spacingValue(s string) float64 {
 // the directional key overrides the corresponding side from `margin`.
 func parseAttrMargin(attrs map[string]string) entity.Spacing {
 	if len(attrs) == 0 {
+		logger.DEBUG(IULPAM001, "branch empty attrs")
 		return entity.Spacing{}
 	}
 	m := entity.Spacing{}
 	if v := attrs["margin"]; v != "" {
+		logger.DEBUG(IULPAM002, "branch margin all", map[string]any{"value": v})
 		val := attrFloat(v, 0)
 		m = entity.Spacing{Top: val, Right: val, Bottom: val, Left: val}
 	}
 	if v := attrs["margin-top"]; v != "" {
+		logger.DEBUG(IULPAM003, "branch margin top", map[string]any{"value": v})
 		m.Top = attrFloat(v, 0)
 	}
 	if v := attrs["margin-right"]; v != "" {
+		logger.DEBUG(IULPAM004, "branch margin right", map[string]any{"value": v})
 		m.Right = attrFloat(v, 0)
 	}
 	if v := attrs["margin-bottom"]; v != "" {
+		logger.DEBUG(IULPAM005, "branch margin bottom", map[string]any{"value": v})
 		m.Bottom = attrFloat(v, 0)
 	}
 	if v := attrs["margin-left"]; v != "" {
+		logger.DEBUG(IULPAM006, "branch margin left", map[string]any{"value": v})
 		m.Left = attrFloat(v, 0)
 	}
 	return m

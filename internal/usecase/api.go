@@ -23,9 +23,8 @@ type API interface {
 
 type service struct{}
 
-// New creates a usecase service. Dependencies is intentionally small for now;
-// add collaborators here instead of letting controllers import lower layers.
-func New(_ entity.UseCaseDependencies) API {
+// New creates a usecase service for controllers and adapters.
+func New() API {
 	return &service{}
 }
 
