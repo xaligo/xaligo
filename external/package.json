@@ -25,9 +25,6 @@
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "bin": {
-    "xaligo-pptx": "./dist/cli.js"
-  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -40,6 +37,7 @@
   ],
   "scripts": {
     "build": "tsup",
+    "build:pptx-exporter-wasm": "npm run build && ${JAVY:-javy} build -J event-loop=y dist/cli.js -o wasm/xaligo.wasm",
     "dev": "tsup --watch",
     "clean": "rimraf dist"
   },

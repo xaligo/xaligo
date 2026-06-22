@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const root = path.resolve(import.meta.dirname, '..');
+const root = path.resolve(import.meta.dirname, '../..');
 const catalogPath = path.join(root, 'etc/resources/aws/service-catalog.csv');
 const defaultOutDir = path.join(root, 'etc/resources/aws/svg/Isoflow-Icons');
 const defaultManifestPath = path.join(root, 'etc/resources/aws/isoflow-icons.json');

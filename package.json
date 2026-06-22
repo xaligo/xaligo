@@ -4,9 +4,9 @@
   "scripts": {
     "build": "npm --prefix external run build",
     "clean": "npm --prefix external run clean",
-    "gen:isoflow-icons": "node scripts/gen_isoflow_icons.mjs",
-    "import:tabler-icons": "node scripts/import_tabler_icons.mjs",
-    "import:yamaha-icons": "node scripts/import_yamaha_icons.mjs"
+    "gen:isoflow-icons": "node scripts/tool/gen_isoflow_icons.mjs",
+    "import:tabler-icons": "node scripts/tool/import_tabler_icons.mjs",
+    "import:yamaha-icons": "node scripts/tool/import_yamaha_icons.mjs"
   },
   "engines": {
     "node": ">=18.0.0",

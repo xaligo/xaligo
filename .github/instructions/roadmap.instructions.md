@@ -230,7 +230,7 @@ Implemented or partially implemented:
 
 Important gaps:
 
-- `external/wasm/pptx_exporter.wasm` is not yet implemented.
+- `external/wasm/xaligo.wasm` is the PPTX exporter WASM artifact.
 - Cross-renderer visual regression coverage is still limited.
 
 ## Rebaselined Implementation Order
@@ -238,7 +238,7 @@ Important gaps:
 Use this order when starting new roadmap work from the current repository state:
 
 1. Complete the repository-layer WASM PPTX exporter contract by providing
-   `pptx_exporter.wasm`; keep Go free of PPTX/OOXML writer code.
+  `xaligo.wasm`; keep Go free of PPTX/OOXML writer code.
 2. Harden shared network routing with cross-renderer visual regression tests.
 3. Build the VS Code preview on the reusable HTTP/SSE protocol exposed by
    `xaligo serve`.
@@ -556,7 +556,7 @@ xaligo render --format excalidraw
 
 Status: partially implemented ahead of schedule. Go-side geometry/routing plan
 generation exists, and Node/PptxGenJS can generate PPTX as a temporary
-development path. The required long-term gap is `pptx_exporter.wasm`, invoked
+development path. The required long-term gap is `xaligo.wasm`, invoked
 from the Go repository layer with resolved plan JSON.
 
 ### PPTX Export

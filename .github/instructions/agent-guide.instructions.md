@@ -15,11 +15,11 @@ preconditions before changing code:
 
 - Go 1.22 module: `github.com/ryo-arima/xaligo`
 - CLI entry point: `cmd/main.go`
-- WASM entry point: `cmd/wasm/main.go`
+- PPTX exporter WASM entry point: `external/command.ts`
 - TypeScript package and implementation: `external`
 - Shared application boundary: `internal/usecase`
 - Generated CLI: `.bin/xaligo`
-- Generated WASM: `external/wasm/xaligo.wasm`
+- Generated PPTX exporter WASM: `external/wasm/xaligo.wasm`
 
 ## Working rules
 
@@ -59,7 +59,7 @@ npm run build --workspace=@ryo-arima/xaligo
 make clean
 ```
 
-Native PPTX export additionally requires the configured `pptx_exporter.wasm`.
+Native PPTX export additionally requires the configured `xaligo.wasm` PPTX exporter.
 The TypeScript package consumes `BuildPPTXPlan` through WASM and creates PPTX
 with PptxGenJS.
 

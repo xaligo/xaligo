@@ -7,7 +7,7 @@ Output:
   etc/resources/aws/templates/xal/         *.xal
 
 Run from the project root:
-  python3 scripts/gen_group_templates.py
+    python3 scripts/tool/gen_group_templates.py
 """
 
 import base64

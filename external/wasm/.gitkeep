@@ -1,4 +1,3 @@
-# Build artifacts — placed here by `make build-wasm`.
-# These files are intentionally excluded from git (see ../.gitignore).
-# wasm/xaligo.wasm   — compiled Go WASM binary  (~90 MB, embed all SVGs)
-# wasm/wasm_exec.js  — Go runtime glue (from $(go env GOROOT)/lib/wasm/)
+# Build artifacts are placed here by `make build-wasm`.
+# These files are intentionally excluded from git (see ../../.gitignore).
+# wasm/xaligo.wasm — TS/PptxGenJS exporter compiled for Go's WASI adapter.

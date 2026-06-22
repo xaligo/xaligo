@@ -1,32 +1,12 @@
-import type {
-  IsoflowDocument,
-  WasmResult,
-  XaligoDiagnostic,
-  XaligoWasm,
-  XYFlowDocument,
-} from '../entity/api';
 import type { PptxExportOptions, PptxExportResult } from '../entity/pptx';
-import { createWasmGateway, type WasmGateway } from '../repository/wasm';
+import type { PptxExporterRequest } from '../entity/pptx_exporter';
 import { drawPlanToPptx, pptxPlanOptionsJSON } from './pptx';
+import { exportPptxFromRequest } from './pptx_exporter';
+import { parsePptxExporterRequest } from './pptx_exporter_request';
 
 export { drawPlanToPptx, pptxPlanOptionsJSON } from './pptx';
-export type {
-  IsoflowColor,
-  IsoflowConnector,
-  IsoflowConnectorAnchor,
-  IsoflowCoords,
-  IsoflowDocument,
-  IsoflowIcon,
-  IsoflowModelItem,
-  IsoflowRectangle,
-  IsoflowView,
-  IsoflowViewItem,
-  XaligoDiagnostic,
-  XaligoWasm,
-  XYFlowDocument,
-  XYFlowEdge,
-  XYFlowNode,
-} from '../entity/api';
+export { exportPptxFromRequest } from './pptx_exporter';
+export { parsePptxExporterRequest } from './pptx_exporter_request';
 export type {
   ArrowStyle,
   PaperOrientation,
@@ -35,60 +15,19 @@ export type {
   PptxExportResult,
   PptxOutputType,
 } from '../entity/pptx';
+export type { PptxExporterOptions, PptxExporterRequest } from '../entity/pptx_exporter';
 
-let instance: XaligoWasm | undefined;
-
-export async function loadXaligo(wasmUrl?: string): Promise<XaligoWasm> {
-  if (instance) return instance;
-  instance = createXaligoUseCase(await createWasmGateway(wasmUrl));
-  return instance;
+export async function renderPptxPlan(
+  plan: string | PptxExporterRequest['plan'],
+  options?: PptxExportOptions,
+): Promise<PptxExportResult> {
+  return drawPlanToPptx(plan, options);
 }
 
-export function createXaligoUseCase(wasm: WasmGateway): XaligoWasm {
-  return {
-    diagnose(xal: string): Promise<XaligoDiagnostic[]> {
-      const res = ensureResult(wasm.diagnose(xal), 'xaligoDiagnose');
-      return Promise.resolve(JSON.parse(res) as XaligoDiagnostic[]);
-    },
-
-    renderXYFlow(xal: string): Promise<XYFlowDocument> {
-      const res = ensureResult(wasm.renderXYFlow(xal), 'xaligoRenderXYFlow');
-      return Promise.resolve(JSON.parse(res) as XYFlowDocument);
-    },
-
-    renderIsoflow(xal: string): Promise<IsoflowDocument> {
-      const res = ensureResult(wasm.renderIsoflow(xal), 'xaligoRenderIsoflow');
-      return Promise.resolve(JSON.parse(res) as IsoflowDocument);
-    },
-
-    render(xal: string): Promise<string> {
-      return Promise.resolve(ensureResult(wasm.render(xal), 'xaligoRender'));
-    },
-
-    renderWithServices(xal: string, servicesCsv: string): Promise<string> {
-      return Promise.resolve(ensureResult(wasm.renderWithServices(xal, servicesCsv), 'xaligoRenderWithServices'));
-    },
-
-    async renderPptx(xal: string, options?: PptxExportOptions): Promise<PptxExportResult> {
-      const optsJson = pptxPlanOptionsJSON(options);
-      const plan = ensureResult(wasm.buildPptxPlan(xal, '', optsJson), 'xaligoBuildPptxPlan');
-      return drawPlanToPptx(plan, options);
-    },
-
-    async renderWithServicesPptx(
-      xal: string,
-      servicesCsv: string,
-      options?: PptxExportOptions,
-    ): Promise<PptxExportResult> {
-      const optsJson = pptxPlanOptionsJSON(options);
-      const plan = ensureResult(wasm.buildPptxPlan(xal, servicesCsv, optsJson), 'xaligoBuildPptxPlan');
-      return drawPlanToPptx(plan, options);
-    },
-  };
+export async function renderPptxExporterRequest(request: PptxExporterRequest): Promise<Uint8Array> {
+  return exportPptxFromRequest(request);
 }
 
-function ensureResult(res: WasmResult, functionName: string): string {
-  if (res.error) throw new Error(res.error);
-  if (!res.result) throw new Error(`${functionName} returned empty result`);
-  return res.result;
+export async function renderPptxExporterRequestJSON(input: string): Promise<Uint8Array> {
+  return exportPptxFromRequest(parsePptxExporterRequest(input));
 }

@@ -117,8 +117,8 @@ refreshed through the scripts declared in the root `package.json`.
 ```bash
 go test ./...
 go build ./...
-GOOS=js GOARCH=wasm go build -o /tmp/xaligo.wasm ./cmd/wasm
 npm install
 npm run build --workspace=@ryo-arima/xaligo
+npm --prefix external run build:pptx-exporter-wasm
 git diff --check
 ```

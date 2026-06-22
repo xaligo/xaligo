@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-const root = path.resolve(import.meta.dirname, '..');
+const root = path.resolve(import.meta.dirname, '../..');
 const pkgDir = path.join(root, 'node_modules/@tabler/icons');
 const metadata = JSON.parse(fs.readFileSync(path.join(pkgDir, 'icons.json'), 'utf8'));
 const nodes = JSON.parse(fs.readFileSync(path.join(pkgDir, 'tabler-nodes-outline.json'), 'utf8'));

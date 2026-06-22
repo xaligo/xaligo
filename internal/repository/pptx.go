@@ -14,7 +14,15 @@ import (
 	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 )
 
-const pptxExporterWasmRel = "external/wasm/pptx_exporter.wasm"
+const pptxExporterWasmRel = "external/wasm/xaligo.wasm"
+
+type PptxExporter interface {
+	Export(ctx context.Context, requestJSON []byte) (stdout []byte, stderr []byte, err error)
+}
+
+type WASMPptxExporter struct {
+	Path string
+}
 
 type pptxWasmRequest struct {
 	Plan    json.RawMessage `json:"plan"`
@@ -31,11 +39,18 @@ type pptxWasmOptions struct {
 
 // ExportPptx invokes the WASM PPTX exporter and writes the returned PPTX bytes.
 func ExportPptx(opts entity.PptxExportOptions) error {
+	return ExportPptxWithExporter(context.Background(), opts, WASMPptxExporter{Path: opts.ExporterWASM})
+}
+
+func ExportPptxWithExporter(ctx context.Context, opts entity.PptxExportOptions, exporter PptxExporter) error {
 	if len(bytes.TrimSpace(opts.PlanJSON)) == 0 {
 		return fmt.Errorf("PPTX plan JSON is required")
 	}
 	if opts.Output == "" {
 		return fmt.Errorf("output path is required")
+	}
+	if exporter == nil {
+		exporter = WASMPptxExporter{Path: opts.ExporterWASM}
 	}
 	req := pptxWasmRequest{
 		Plan: json.RawMessage(opts.PlanJSON),
@@ -52,12 +67,7 @@ func ExportPptx(opts entity.PptxExportOptions) error {
 		return fmt.Errorf("encode PPTX WASM request: %w", err)
 	}
 
-	wasmPath, err := resolvePptxExporterWASM(opts.ExporterWASM)
-	if err != nil {
-		return err
-	}
-
-	pptxBytes, stderr, err := runPptxExporterWASM(wasmPath, reqJSON)
+	pptxBytes, stderr, err := exporter.Export(ctx, reqJSON)
 	if len(stderr) > 0 {
 		if opts.Stderr != nil {
 			_, _ = opts.Stderr.Write(stderr)
@@ -79,8 +89,15 @@ func ExportPptx(opts entity.PptxExportOptions) error {
 	return nil
 }
 
-func runPptxExporterWASM(wasmPath string, stdin []byte) ([]byte, []byte, error) {
-	ctx := context.Background()
+func (rcvr WASMPptxExporter) Export(ctx context.Context, requestJSON []byte) ([]byte, []byte, error) {
+	wasmPath, err := resolvePptxExporterWASM(rcvr.Path)
+	if err != nil {
+		return nil, nil, err
+	}
+	return runPptxExporterWASM(ctx, wasmPath, requestJSON)
+}
+
+func runPptxExporterWASM(ctx context.Context, wasmPath string, stdin []byte) ([]byte, []byte, error) {
 	runtime := wazero.NewRuntime(ctx)
 	defer runtime.Close(ctx)
 
@@ -96,7 +113,7 @@ func runPptxExporterWASM(wasmPath string, stdin []byte) ([]byte, []byte, error) 
 	var stderr bytes.Buffer
 	cfg := wazero.NewModuleConfig().
 		WithName("xaligo-pptx-exporter").
-		WithArgs(wasmPath).
+		WithArgs(wasmPath, "pptx-exporter").
 		WithStdin(bytes.NewReader(stdin)).
 		WithStdout(&stdout).
 		WithStderr(&stderr)
