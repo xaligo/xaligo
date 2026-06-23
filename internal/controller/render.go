@@ -76,7 +76,6 @@ var (
 	ICRRRSVG002  = share.NewMCode("ICRRRSVG-002", "Run render SVG render failed")
 	ICRRRSVG003  = share.NewMCode("ICRRRSVG-003", "Run render SVG write output failed")
 	ICRRRSVG004  = share.NewMCode("ICRRRSVG-004", "Run render SVG generated output")
-	ICRBEJ001    = share.NewMCode("ICRBEJ-001", "Build Excalidraw JSON start")
 	ICRBEJWUC001 = share.NewMCode("ICRBEJWUC-001", "Build Excalidraw JSON with use case read input failed")
 	ICRBEJWUC002 = share.NewMCode("ICRBEJWUC-002", "Build Excalidraw JSON with use case render branch")
 	ICRATF001    = share.NewMCode("ICRATF-001", "Apply theme file read failed")
@@ -449,11 +448,6 @@ func runRenderSVG(uc usecase.API, inputPath, outputPath string, abbrevMap map[in
 	}
 	logger.INFO(ICRRRSVG004, "generated", map[string]any{"output": outputPath})
 	return nil
-}
-
-func buildExcalidrawJSON(inputPath string, abbrevMap map[int]string, mode, theme string) ([]byte, error) {
-	logger.DEBUG(ICRBEJ001, "start", map[string]any{"input": inputPath})
-	return buildExcalidrawJSONWithUseCase(usecase.New(), inputPath, abbrevMap, mode, theme)
 }
 
 func buildExcalidrawJSONWithUseCase(uc usecase.API, inputPath string, abbrevMap map[int]string, mode, theme string) ([]byte, error) {

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/ryo-arima/xaligo/internal/entity"
@@ -99,6 +100,30 @@ func TestExportPptxWithExporterRejectsEmptyExporterOutput(t *testing.T) {
 		Output:   filepath.Join(t.TempDir(), "out.pptx"),
 	}, exporter)
 	if err == nil || err.Error() != "PPTX WASM exporter produced no output" {
+		t.Fatalf("err = %v", err)
+	}
+}
+
+func TestExportPptxUsesWASMExporterAndReportsMissingPath(t *testing.T) {
+	t.Setenv("XALIGO_PPTX_EXPORTER_WASM", filepath.Join(t.TempDir(), "missing-env.wasm"))
+	err := repository.ExportPptx(entity.PptxExportOptions{
+		PlanJSON:     []byte(`{"slides":[]}`),
+		Output:       filepath.Join(t.TempDir(), "out.pptx"),
+		ExporterWASM: filepath.Join(t.TempDir(), "missing-explicit.wasm"),
+	})
+	if err == nil || (!strings.Contains(err.Error(), "PPTX WASM exporter not found") && !strings.Contains(err.Error(), "produced no output")) {
+		t.Fatalf("err = %v", err)
+	}
+}
+
+func TestWASMPptxExporterReportsInvalidWASM(t *testing.T) {
+	wasmPath := filepath.Join(t.TempDir(), "bad.wasm")
+	if err := os.WriteFile(wasmPath, []byte("not wasm"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	exporter := repository.WASMPptxExporter{Path: wasmPath}
+	_, _, err := exporter.Export(context.Background(), []byte(`{}`))
+	if err == nil || !strings.Contains(err.Error(), "run PPTX WASM exporter") {
 		t.Fatalf("err = %v", err)
 	}
 }

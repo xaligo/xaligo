@@ -218,10 +218,6 @@ func RunGeneratePptxWithUseCase(uc usecase.API, opts entity.ControllerPptxGenera
 	})
 }
 
-func buildPptxPlanJSON(opts entity.ControllerPptxGenerateOptions) ([]byte, error) {
-	return buildPptxPlanJSONWithUseCase(nil, opts)
-}
-
 func buildPptxPlanJSONWithUseCase(uc usecase.API, opts entity.ControllerPptxGenerateOptions) ([]byte, error) {
 	if uc == nil {
 		uc = usecase.New()
@@ -262,21 +258,6 @@ func buildPptxPlanJSONWithUseCase(uc usecase.API, opts entity.ControllerPptxGene
 		PaperMarginLeftIn:   opts.PaperMarginLeft,
 		ServicesCSV:         servicesCSV,
 	})
-}
-
-func pptxLegendEntries(entries []entity.ServiceEntry) []entity.LegendEntry {
-	out := make([]entity.LegendEntry, 0, len(entries))
-	for _, e := range entries {
-		if e.CatalogID <= 0 || e.OfficialName == "" {
-			continue
-		}
-		out = append(out, entity.LegendEntry{
-			CatalogID:    e.CatalogID,
-			Abbreviation: e.Abbreviation,
-			OfficialName: e.OfficialName,
-		})
-	}
-	return out
 }
 
 // ── xal builder ─────────────────────────────────────────────────────────────
