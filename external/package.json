@@ -1,0 +1,63 @@
+{
+  "name": "@ryo-arima/xaligo",
+  "version": "0.0.1",
+  "description": "WebAssembly build of xaligo — convert .xal DSL to Excalidraw JSON from TypeScript/JavaScript",
+  "keywords": [
+    "xaligo",
+    "excalidraw",
+    "aws",
+    "architecture-diagram",
+    "wasm",
+    "webassembly",
+    "vscode-extension"
+  ],
+  "homepage": "https://github.com/ryo-arima/xaligo",
+  "bugs": {
+    "url": "https://github.com/ryo-arima/xaligo/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ryo-arima/xaligo.git",
+    "directory": "external"
+  },
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "wasm"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "build:pptx-exporter-wasm": "npm run build && ${JAVY:-javy} build -J event-loop=y dist/cli.js -o wasm/xaligo.wasm",
+    "dev": "tsup --watch",
+    "clean": "rimraf dist"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "public"
+  },
+  "devDependencies": {
+    "@tabler/icons": "3.34.1",
+    "@types/node": "^20.0.0",
+    "rimraf": "^5.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "jszip": "^3.10.1",
+    "pptxgenjs": "^4.0.1"
+  }
+}

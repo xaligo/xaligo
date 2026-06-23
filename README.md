@@ -13,7 +13,9 @@ A Diagram-as-Code engine that renders the Vue-style `.xal` DSL to Excalidraw,
 SVG, and PPTX. It includes Vuetify-style layout, AWS/network icon catalogs,
 orthogonal routing, route/traffic layers, line jumps, and automatic junctions.
 
-> **For automated agents (codex-cli, GPT, etc.):** see [docs/agents/general.md](docs/agents/general.md) for detailed step-by-step procedures.
+See [Architecture](.github/instructions/architecture.instructions.md) for
+implementation boundaries and [Agent Guide](.github/instructions/agent-guide.instructions.md)
+for repository working conventions.
 
 ## Installation
 
@@ -35,41 +37,25 @@ A WebAssembly package is provided for environments where spawning a child proces
 npm install @ryo-arima/xaligo
 ```
 
-After building the WASM artifact (`make build-wasm`), use it from TypeScript:
+The native Go CLI computes the PPTX plan and calls the TS/PptxGenJS exporter
+through `external/wasm/xaligo.wasm`.
 
 ```typescript
-import { loadXaligo } from "@ryo-arima/xaligo";
+import { renderPptxPlan } from "@ryo-arima/xaligo";
 
-const xaligo = await loadXaligo();                         // loads xaligo.wasm on first call
-
-// Validate with line/column diagnostics for editors
-const diagnostics = await xaligo.diagnose(xalSource);
-
-// Export React Flow / XYFlow nodes and edges
-const flow = await xaligo.renderXYFlow(xalSource);
-
-// Convert .xal DSL string → Excalidraw JSON string
-const json = await xaligo.render(xalSource);
-
-// Convert with a services CSV for the legend
-const json = await xaligo.renderWithServices(xalSource, servicesCsv);
-
-// Render directly to PPTX bytes through PptxGenJS
-const pptx = await xaligo.renderPptx(xalSource, { theme: "dark" });
+const pptx = await renderPptxPlan(planJson, { title: "Architecture" });
 ```
 
-**Build the WASM artifact:**
+**Build the PPTX exporter WASM artifact:**
 
 ```bash
-make build-wasm   # outputs packages/xaligo/wasm/xaligo.wasm
-                  #         and packages/xaligo/wasm/wasm_exec.js
+make build-wasm   # outputs external/wasm/xaligo.wasm
 ```
 
 ## npm Package Layout
 
 ```
-packages/
-└── xaligo/   @ryo-arima/xaligo   — WASM + TypeScript wrapper
+external/   @ryo-arima/xaligo   — TS/PptxGenJS PPTX exporter wrapper
 ```
 
 ## Commands
@@ -94,8 +80,8 @@ container. `standard`, `network`, and `aws` currently share the resolved 2D
 pipeline; `aws-2.5d` and `topology` are reserved for later roadmap phases.
 
 Native CLI PPTX output requires the separately configured WASI exporter
-`pptx_exporter.wasm`. The npm/WASM API can generate PPTX now through
-PptxGenJS; Excalidraw and SVG do not require the PPTX exporter.
+`xaligo.wasm`. Go builds the PPTX plan and invokes that exporter;
+Excalidraw and SVG do not require the PPTX exporter.
 
 ### generate xal flags
 
@@ -134,7 +120,7 @@ mkdir -p output
   -o output/sample.excalidraw \
   --services examples/services.csv
 
-# Optional native CLI PPTX export (requires pptx_exporter.wasm)
+# Optional native CLI PPTX export (requires xaligo.wasm)
 .bin/xaligo render examples/sample.xal --format pptx \
   -o output/sample.pptx --services examples/services.csv \
   --paper A3 --orientation landscape \
@@ -172,9 +158,11 @@ in the editor screenshot:
   -o output/complex-hybrid-architecture.isoflow.json
 ```
 
-## Go API
+## Internal Go API
 
-The root package exposes the same parse/layout/render pipeline used by the CLI:
+In-repository adapters use `internal/usecase` for the same
+parse/layout/render pipeline as the CLI. External consumers should use the CLI,
+preview protocol, or TypeScript/WASM package:
 
 ```go
 svg, err := xaligo.RenderSVG(ctx, source, xaligo.RenderOptions{
@@ -194,7 +182,7 @@ diagnostics, err := xaligo.Diagnose(ctx, source)
 XYFlow output contains nested group nodes, icon data URLs, labels, connection
 handles, route/traffic metadata, layer order, line styles, and arrow markers.
 Isoflow output follows the upstream Isoflow model shape with `items`, `views`,
-`icons`, `colors`, and view `connectors`.
+`icons`, `colors`, and view `rectangles` / `connectors`.
 
 ## Live Preview
 
@@ -203,8 +191,9 @@ Isoflow output follows the upstream Isoflow model shape with `items`, `views`,
 ```
 
 Open `http://127.0.0.1:8080`. The server watches the source, re-renders through
-the public SVG API, and publishes changes over Server-Sent Events. Parse/layout
-errors appear in the preview without stopping the watcher.
+the shared `internal/usecase` SVG path, and publishes changes over
+Server-Sent Events. Parse/layout errors appear in the preview without stopping
+the watcher.
 
 Reusable endpoints:
 
@@ -475,7 +464,7 @@ paths:
   asset_package:       etc/resources/aws/svg
   service_catalog_csv: etc/resources/aws/service-catalog.csv
   output_frames:       output/aws-frames
-  pptx_exporter_wasm:  packages/xaligo/wasm/pptx_exporter.wasm
+  pptx_exporter_wasm:  external/wasm/xaligo.wasm
 
 legend:
   offset_x:  120
@@ -490,8 +479,8 @@ item:
 ## Build & Test
 
 ```bash
-make build        # build .bin/xaligo (native Go binary)
-make build-wasm   # build WASM artifact + copy wasm_exec.js into packages/xaligo/wasm/
+make build        # build .bin/xaligo (native Go binary) and external/wasm/xaligo.wasm
+make build-wasm   # build external/wasm/xaligo.wasm
 make run          # examples/sample.xal → output/sample.excalidraw
 make clean        # remove .bin/, output/, and WASM artifacts
 go test ./...

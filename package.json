@@ -1,21 +1,15 @@
 {
   "name": "xaligo-workspace",
   "private": true,
-  "workspaces": [
-    "packages/xaligo"
-  ],
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
-    "clean": "npm run clean --workspaces --if-present",
-    "gen:isoflow-icons": "node scripts/gen_isoflow_icons.mjs",
-    "import:tabler-icons": "node scripts/import_tabler_icons.mjs",
-    "import:yamaha-icons": "node scripts/import_yamaha_icons.mjs"
+    "build": "npm --prefix external run build",
+    "clean": "npm --prefix external run clean",
+    "gen:isoflow-icons": "node scripts/tool/gen_isoflow_icons.mjs",
+    "import:tabler-icons": "node scripts/tool/import_tabler_icons.mjs",
+    "import:yamaha-icons": "node scripts/tool/import_yamaha_icons.mjs"
   },
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=9.0.0"
-  },
-  "devDependencies": {
-    "jszip": "^3.10.1"
   }
 }

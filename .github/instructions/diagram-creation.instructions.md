@@ -38,7 +38,8 @@ Example output:
 - Column 1 (`id`) as a number → icon is fetched from service-catalog.csv.
 - Lines starting with `#` are treated as comments and ignored.
 - `Abbreviation`, when set, is used as the **icon label inside the diagram** and in the standalone legend icon below the frame.
-  - Takes priority over the built-in abbreviation table in `entity/service.go`.
+  - Takes priority over the built-in abbreviation table in
+    `internal/entity/service.go`.
   - When empty, the built-in table is used as fallback.
 - `OfficialName` is displayed as the full-name text in legends.
 
@@ -201,7 +202,7 @@ icon label overrides and service metadata.
 
 ## PPTX Notes
 
-- Native CLI export requires `pptx_exporter.wasm`; the npm/WASM API currently
+- Native CLI export requires `xaligo.wasm`; the npm/WASM API currently
   exports through PptxGenJS.
 - PPTX export adds separate legend slide(s) after the diagram slide.
 - Legend pages use 4 columns and show icon, abbreviation, and official name.

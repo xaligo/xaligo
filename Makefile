@@ -2,25 +2,21 @@
 
 BIN_DIR  := .bin
 BINARY   := $(BIN_DIR)/xaligo
-WASM_OUT      := packages/xaligo/wasm
-WASM_EXEC_JS  := $(shell find "$(shell go env GOROOT)" -name "wasm_exec.js" 2>/dev/null | head -1)
+WASM_OUT      := external/wasm
 
 help: ## Show commands
 	@echo "Available targets:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2}'
 
-build: build-wasm ## Build CLI binary and WASM bundle
+build: build-wasm ## Build CLI binary and PPTX exporter WASM bundle
 	@mkdir -p $(BIN_DIR)
 	go build -o $(BINARY) ./cmd
 	@echo "Built: $(BINARY)"
 
-build-wasm: ## Build WASM binary and copy Go runtime glue into packages/xaligo/wasm/
+build-wasm: ## Build TS/WASI PPTX exporter into external/wasm/
 	@mkdir -p $(WASM_OUT)
-	GOOS=js GOARCH=wasm go build -o $(WASM_OUT)/xaligo.wasm ./cmd/wasm
-	@test -n "$(WASM_EXEC_JS)" || { echo "ERROR: wasm_exec.js not found under GOROOT"; exit 1; }
-	cp "$(WASM_EXEC_JS)" $(WASM_OUT)/wasm_exec.js
+	npm --prefix external run build:pptx-exporter-wasm
 	@echo "Built: $(WASM_OUT)/xaligo.wasm"
-	@echo "Copied: $(WASM_OUT)/wasm_exec.js (from $(WASM_EXEC_JS))"
 
 test: ## Run tests
 	go test ./...
@@ -40,4 +36,4 @@ init: build ## Create starter template under examples/
 
 clean: ## Remove build artifacts
 	rm -rf $(BIN_DIR)
-	rm -f $(WASM_OUT)/xaligo.wasm $(WASM_OUT)/wasm_exec.js
+	rm -f $(WASM_OUT)/xaligo.wasm
