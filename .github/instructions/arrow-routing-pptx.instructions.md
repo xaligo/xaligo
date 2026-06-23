@@ -89,9 +89,9 @@ Do not spend implementation time replacing the repository-layer exporter with
 | Area | Owner |
 |---|---|
 | DSL parse/layout | `internal/usecase/parser.go`, `internal/usecase/layout.go` |
-| Excalidraw scene and item metadata | `internal/usecase/excalidraw_scene.go` |
-| PPTX geometry, paper scaling, routing, legend data | `internal/usecase/pptxplan_*.go` |
-| WASM exporter invocation from Go | `internal/repository/pptx.go` |
+| Canonical scene and item metadata | `internal/usecase/scene.go` |
+| Plan geometry, paper scaling, routing, legend data | `internal/usecase/plan.go`, `internal/usecase/routing.go` |
+| WASM exporter invocation from Go | `internal/repository/powerpoint.go` |
 | WASM-compatible PPTX drawing/export | `external` TypeScript package and implementation |
 | WASM bridge | `cmd/wasm/main.go` |
 
@@ -125,7 +125,7 @@ Do not spend implementation time replacing the repository-layer exporter with
 
 ## Routing Rules
 
-- Route calculation is in `internal/usecase/pptxplan_routing.go`.
+- Route calculation is in `internal/usecase/routing.go`.
 - Obstacles include image and text rectangles from the Excalidraw scene.
 - Start/end rectangles are excluded from obstacle checks for that connection.
 - Binding `gap` from Excalidraw arrows must be honored in PPTX routing.

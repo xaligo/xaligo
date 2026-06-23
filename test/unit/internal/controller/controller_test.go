@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ryo-arima/xaligo/internal/config"
 	"github.com/ryo-arima/xaligo/internal/controller"
 	"github.com/ryo-arima/xaligo/internal/entity"
 	"github.com/ryo-arima/xaligo/internal/repository"
@@ -22,6 +23,7 @@ type fakeUseCase struct {
 	validateOptsErr  error
 	renderErr        error
 	previewErr       error
+	exportErr        error
 	lastRenderOpts   entity.RenderOptions
 	lastPlanOpts     entity.RenderOptions
 	lastPreviewPath  string
@@ -33,72 +35,129 @@ type fakeUseCase struct {
 	planJSON         []byte
 }
 
-func (f *fakeUseCase) ValidateRenderOptions(opts entity.RenderOptions) error {
-	if f.validateOptsErr != nil {
-		return f.validateOptsErr
+func (rcvr *fakeUseCase) ValidateRenderOptions(opts entity.RenderOptions) error {
+	if rcvr.validateOptsErr != nil {
+		return rcvr.validateOptsErr
 	}
 	return usecase.ValidateRenderOptions(opts)
 }
 
-func (f *fakeUseCase) Validate(context.Context, []byte) error { return f.validateErr }
+func (rcvr *fakeUseCase) Validate(context.Context, []byte) error { return rcvr.validateErr }
 
-func (f *fakeUseCase) Diagnose(context.Context, []byte) ([]entity.Diagnostic, error) { return nil, nil }
-
-func (f *fakeUseCase) Render(context.Context, []byte, entity.RenderOptions) ([]byte, error) {
-	return []byte(`render`), f.renderErr
+func (rcvr *fakeUseCase) Diagnose(context.Context, []byte) ([]entity.Diagnostic, error) {
+	return nil, nil
 }
 
-func (f *fakeUseCase) RenderExcalidraw(_ context.Context, _ []byte, opts entity.RenderOptions) ([]byte, error) {
-	f.lastRenderOpts = opts
-	if f.renderExcalidraw != nil {
-		return f.renderExcalidraw, f.renderErr
+func (rcvr *fakeUseCase) Render(context.Context, []byte, entity.RenderOptions) ([]byte, error) {
+	return []byte(`render`), rcvr.renderErr
+}
+
+func (rcvr *fakeUseCase) RenderExcalidraw(_ context.Context, _ []byte, opts entity.RenderOptions) ([]byte, error) {
+	rcvr.lastRenderOpts = opts
+	if rcvr.renderExcalidraw != nil {
+		return rcvr.renderExcalidraw, rcvr.renderErr
 	}
-	return []byte(`{"type":"excalidraw","elements":[],"files":{}}`), f.renderErr
+	return []byte(`{"type":"excalidraw","elements":[],"files":{}}`), rcvr.renderErr
 }
 
-func (f *fakeUseCase) RenderSVG(_ context.Context, _ []byte, opts entity.RenderOptions) ([]byte, error) {
-	f.lastRenderOpts = opts
-	if f.renderSVG != nil {
-		return f.renderSVG, f.renderErr
+func (rcvr *fakeUseCase) RenderSVG(_ context.Context, _ []byte, opts entity.RenderOptions) ([]byte, error) {
+	rcvr.lastRenderOpts = opts
+	if rcvr.renderSVG != nil {
+		return rcvr.renderSVG, rcvr.renderErr
 	}
-	return []byte(`<svg></svg>`), f.renderErr
+	return []byte(`<svg></svg>`), rcvr.renderErr
 }
 
-func (f *fakeUseCase) RenderPPTX(context.Context, []byte, entity.RenderOptions) ([]byte, error) {
-	return []byte(`pptx`), f.renderErr
+func (rcvr *fakeUseCase) RenderPPTX(context.Context, []byte, entity.RenderOptions) ([]byte, error) {
+	return []byte(`pptx`), rcvr.renderErr
 }
 
-func (f *fakeUseCase) RenderXYFlow(_ context.Context, _ []byte, opts entity.RenderOptions) ([]byte, error) {
-	f.lastRenderOpts = opts
-	if f.renderXYFlow != nil {
-		return f.renderXYFlow, f.renderErr
+func (rcvr *fakeUseCase) RenderXYFlow(_ context.Context, _ []byte, opts entity.RenderOptions) ([]byte, error) {
+	rcvr.lastRenderOpts = opts
+	if rcvr.renderXYFlow != nil {
+		return rcvr.renderXYFlow, rcvr.renderErr
 	}
-	return []byte(`{"nodes":[],"edges":[]}`), f.renderErr
+	return []byte(`{"nodes":[],"edges":[]}`), rcvr.renderErr
 }
 
-func (f *fakeUseCase) RenderIsoflow(_ context.Context, _ []byte, opts entity.RenderOptions) ([]byte, error) {
-	f.lastRenderOpts = opts
-	if f.renderIsoflow != nil {
-		return f.renderIsoflow, f.renderErr
+func (rcvr *fakeUseCase) RenderIsoflow(_ context.Context, _ []byte, opts entity.RenderOptions) ([]byte, error) {
+	rcvr.lastRenderOpts = opts
+	if rcvr.renderIsoflow != nil {
+		return rcvr.renderIsoflow, rcvr.renderErr
 	}
-	return []byte(`{"version":"3.3.0"}`), f.renderErr
+	return []byte(`{"version":"3.3.0"}`), rcvr.renderErr
 }
 
-func (f *fakeUseCase) BuildPPTXPlan(_ context.Context, _ []byte, opts entity.RenderOptions) ([]byte, error) {
-	f.lastPlanOpts = opts
-	if f.planJSON != nil {
-		return f.planJSON, f.renderErr
+func (rcvr *fakeUseCase) BuildPPTXPlan(_ context.Context, _ []byte, opts entity.RenderOptions) ([]byte, error) {
+	rcvr.lastPlanOpts = opts
+	if rcvr.planJSON != nil {
+		return rcvr.planJSON, rcvr.renderErr
 	}
-	return []byte(`{"slide":{"w":1,"h":1}}`), f.renderErr
+	return []byte(`{"slide":{"w":1,"h":1}}`), rcvr.renderErr
 }
 
-func (f *fakeUseCase) NewPreviewServer(path string, opts entity.PreviewOptions) (usecase.PreviewServer, error) {
-	f.lastPreviewPath = path
-	f.lastPreviewOpts = opts
-	if f.previewErr != nil {
-		return nil, f.previewErr
+func (rcvr *fakeUseCase) NewPreviewServer(path string, opts entity.PreviewOptions) (usecase.PreviewServer, error) {
+	rcvr.lastPreviewPath = path
+	rcvr.lastPreviewOpts = opts
+	if rcvr.previewErr != nil {
+		return nil, rcvr.previewErr
 	}
 	return fakePreviewServer{}, nil
+}
+
+func (rcvr *fakeUseCase) ReadScene(path string) (*entity.Scene, error) {
+	return repository.NewExcalidrawRepository().ReadScene(path)
+}
+
+func (rcvr *fakeUseCase) WriteScene(scene *entity.Scene, path string) error {
+	return repository.NewExcalidrawRepository().WriteScene(scene, path)
+}
+
+func (rcvr *fakeUseCase) ReadServiceList(path string) ([]entity.ServiceEntry, error) {
+	return repository.NewXaligoRepository().ReadServiceList(path)
+}
+
+func (rcvr *fakeUseCase) LookupCatalogByID(path string, id int) (entity.CatalogEntry, error) {
+	return repository.NewXaligoRepository().LookupCatalogByID(path, id)
+}
+
+func (rcvr *fakeUseCase) SvgToDataURL(path string) (string, error) {
+	return repository.NewExcalidrawRepository().SvgToDataURL(path)
+}
+
+func (rcvr *fakeUseCase) FileID(value string) string {
+	return repository.NewExcalidrawRepository().FileID(value)
+}
+
+func (rcvr *fakeUseCase) SVGBGColor(value string) string {
+	return repository.NewExcalidrawRepository().SVGBGColor(value)
+}
+
+func (rcvr *fakeUseCase) ExportPptx(context.Context, entity.PptxExportOptions) error {
+	return rcvr.exportErr
+}
+
+func newAddController(uc usecase.XaligoUsecase) *controller.AddController {
+	return controller.NewAddController(config.New(), uc)
+}
+
+func newGenerateController(uc usecase.XaligoUsecase) *controller.GenerateController {
+	return controller.NewGenerateController(uc)
+}
+
+func newRenderController(uc usecase.XaligoUsecase) *controller.RenderController {
+	return controller.NewRenderController(config.New(), uc)
+}
+
+func newRealUsecase() usecase.XaligoUsecase {
+	return usecase.NewXaligoUsecase(
+		repository.NewExcalidrawRepository(),
+		repository.NewXaligoRepository(),
+		repository.NewPowerpointRepository(),
+		repository.NewIsoflowRepository(),
+		repository.NewSVGRepository(),
+		repository.NewXYFlowRepository(),
+	)
 }
 
 type fakePreviewServer struct{}
@@ -117,15 +176,14 @@ func writeTempXAL(t *testing.T, dir string) string {
 }
 
 func TestControllerCommandInitializers(t *testing.T) {
+	uc := &fakeUseCase{}
 	commands := []*cobra.Command{
-		controller.InitAddCmd(),
-		controller.InitGenerateCmd(),
-		controller.InitInitCmd(),
-		controller.InitServeCmd(),
-		controller.InitServeCmdWithUseCase(&fakeUseCase{}),
-		controller.InitValidateCmd(),
-		controller.InitValidateCmdWithUseCase(&fakeUseCase{}),
-		controller.InitVersionCmd(),
+		newAddController(uc).Command(),
+		newGenerateController(uc).Command(),
+		controller.NewInitController().Command(),
+		controller.NewServeController(uc).Command(),
+		controller.NewValidateController(uc).Command(),
+		controller.NewVersionController().Command(),
 	}
 	for _, cmd := range commands {
 		if cmd.Use == "" || cmd.Short == "" {
@@ -136,16 +194,13 @@ func TestControllerCommandInitializers(t *testing.T) {
 
 func TestRunValidateWithUseCase(t *testing.T) {
 	input := writeTempXAL(t, t.TempDir())
-	if err := controller.RunValidate(input, nil); err != nil {
+	if err := controller.NewValidateController(&fakeUseCase{}).Run(input, nil); err != nil {
 		t.Fatal(err)
 	}
-	if err := controller.RunValidateWithUseCase(&fakeUseCase{}, input, nil); err != nil {
-		t.Fatal(err)
-	}
-	if err := controller.RunValidateWithUseCase(&fakeUseCase{validateErr: errors.New("invalid")}, input, nil); err == nil || !strings.Contains(err.Error(), "invalid") {
+	if err := controller.NewValidateController(&fakeUseCase{validateErr: errors.New("invalid")}).Run(input, nil); err == nil || !strings.Contains(err.Error(), "invalid") {
 		t.Fatalf("validation error = %v", err)
 	}
-	if err := controller.RunValidateWithUseCase(&fakeUseCase{}, filepath.Join(t.TempDir(), "missing.xal"), nil); err == nil {
+	if err := controller.NewValidateController(&fakeUseCase{}).Run(filepath.Join(t.TempDir(), "missing.xal"), nil); err == nil {
 		t.Fatal("missing input error = nil")
 	}
 }
@@ -162,7 +217,7 @@ func TestRunRenderFormatWithUseCaseWritesFormats(t *testing.T) {
 		t.Run(format, func(t *testing.T) {
 			output := filepath.Join(dir, "out."+format)
 			fake := &fakeUseCase{}
-			err := controller.RunRenderFormatWithUseCase(fake, entity.ControllerRenderOptions{
+			err := newRenderController(fake).RunFormat(entity.ControllerRenderOptions{
 				InputPath: input, OutputPath: output, Format: format, ServicesFile: services, Theme: "light", Mode: "standard",
 			})
 			if err != nil {
@@ -199,7 +254,7 @@ func TestRenderCommandUsesDefaultOutputs(t *testing.T) {
 	}
 	for format, output := range formats {
 		t.Run(format, func(t *testing.T) {
-			cmd := controller.InitRenderCmdWithUseCase(&fakeUseCase{})
+			cmd := newRenderController(&fakeUseCase{}).Command()
 			cmd.SetArgs([]string{input, "--format", format, "--no-compression"})
 			if err := cmd.Execute(); err != nil {
 				t.Fatal(err)
@@ -211,7 +266,7 @@ func TestRenderCommandUsesDefaultOutputs(t *testing.T) {
 
 		explicit := filepath.Join(dir, "explicit.svg")
 		fake := &fakeUseCase{}
-		cmd := controller.InitRenderCmdWithUseCase(fake)
+		cmd := newRenderController(fake).Command()
 		cmd.SetArgs([]string{input, "--format", "svg", "--output", explicit, "--compression", "--theme", "dark", "--mode", "network", "--px-per-inch", "120", "--arrow-style", "standard", "--arrow-stub", "22", "--arrow-margin", "11", "--paper", "A4", "--orientation", "landscape", "--paper-margin-left", "0.25"})
 		if err := cmd.Execute(); err != nil {
 			t.Fatal(err)
@@ -228,22 +283,22 @@ func TestRenderCommandUsesDefaultOutputs(t *testing.T) {
 func TestRunRenderFormatWithUseCaseErrors(t *testing.T) {
 	dir := t.TempDir()
 	input := writeTempXAL(t, dir)
-	if err := controller.RunRenderFormatWithUseCase(&fakeUseCase{validateOptsErr: errors.New("bad options")}, entity.ControllerRenderOptions{InputPath: input, Format: "svg", Theme: "light"}); err == nil {
+	if err := newRenderController(&fakeUseCase{validateOptsErr: errors.New("bad options")}).RunFormat(entity.ControllerRenderOptions{InputPath: input, Format: "svg", Theme: "light"}); err == nil {
 		t.Fatal("ValidateRenderOptions error = nil")
 	}
-	if err := controller.RunRenderFormatWithUseCase(&fakeUseCase{}, entity.ControllerRenderOptions{InputPath: input, Format: "unknown", Theme: "light"}); err == nil {
+	if err := newRenderController(&fakeUseCase{}).RunFormat(entity.ControllerRenderOptions{InputPath: input, Format: "unknown", Theme: "light"}); err == nil {
 		t.Fatal("unknown format error = nil")
 	}
-	if err := controller.RunRenderFormatWithUseCase(&fakeUseCase{}, entity.ControllerRenderOptions{InputPath: filepath.Join(dir, "missing.xal"), OutputPath: filepath.Join(dir, "out.svg"), Format: "svg", Theme: "light"}); err == nil {
+	if err := newRenderController(&fakeUseCase{}).RunFormat(entity.ControllerRenderOptions{InputPath: filepath.Join(dir, "missing.xal"), OutputPath: filepath.Join(dir, "out.svg"), Format: "svg", Theme: "light"}); err == nil {
 		t.Fatal("missing input error = nil")
 	}
-	if err := controller.RunRenderFormatWithUseCase(&fakeUseCase{}, entity.ControllerRenderOptions{InputPath: input, Format: "pptx", Theme: "light"}); err == nil || !strings.Contains(err.Error(), "--output") {
+	if err := newRenderController(&fakeUseCase{}).RunFormat(entity.ControllerRenderOptions{InputPath: input, Format: "pptx", Theme: "light"}); err == nil || !strings.Contains(err.Error(), "--output") {
 		t.Fatalf("pptx missing output error = %v", err)
 	}
 	missingServices := filepath.Join(dir, "missing-services.csv")
 	for _, format := range []string{"excalidraw", "svg", "xyflow", "isoflow"} {
 		t.Run(format+" services", func(t *testing.T) {
-			err := controller.RunRenderFormatWithUseCase(&fakeUseCase{}, entity.ControllerRenderOptions{InputPath: input, OutputPath: filepath.Join(dir, format+".out"), Format: format, Theme: "light", ServicesFile: missingServices})
+			err := newRenderController(&fakeUseCase{}).RunFormat(entity.ControllerRenderOptions{InputPath: input, OutputPath: filepath.Join(dir, format+".out"), Format: format, Theme: "light", ServicesFile: missingServices})
 			if err == nil || !strings.Contains(err.Error(), "read services") {
 				t.Fatalf("missing services err = %v", err)
 			}
@@ -251,7 +306,7 @@ func TestRunRenderFormatWithUseCaseErrors(t *testing.T) {
 	}
 	for _, format := range []string{"excalidraw", "svg", "xyflow", "isoflow"} {
 		t.Run(format+" render", func(t *testing.T) {
-			err := controller.RunRenderFormatWithUseCase(&fakeUseCase{renderErr: errors.New("render failed")}, entity.ControllerRenderOptions{InputPath: input, OutputPath: filepath.Join(dir, format+"-render.out"), Format: format, Theme: "light"})
+			err := newRenderController(&fakeUseCase{renderErr: errors.New("render failed")}).RunFormat(entity.ControllerRenderOptions{InputPath: input, OutputPath: filepath.Join(dir, format+"-render.out"), Format: format, Theme: "light"})
 			if err == nil || !strings.Contains(err.Error(), "render failed") {
 				t.Fatalf("render err = %v", err)
 			}
@@ -259,7 +314,7 @@ func TestRunRenderFormatWithUseCaseErrors(t *testing.T) {
 	}
 	for _, format := range []string{"excalidraw", "svg", "xyflow", "isoflow"} {
 		t.Run(format+" write", func(t *testing.T) {
-			err := controller.RunRenderFormatWithUseCase(&fakeUseCase{}, entity.ControllerRenderOptions{InputPath: input, OutputPath: dir, Format: format, Theme: "light"})
+			err := newRenderController(&fakeUseCase{}).RunFormat(entity.ControllerRenderOptions{InputPath: input, OutputPath: dir, Format: format, Theme: "light"})
 			if err == nil || !strings.Contains(err.Error(), "write output file") {
 				t.Fatalf("write err = %v", err)
 			}
@@ -269,17 +324,17 @@ func TestRunRenderFormatWithUseCaseErrors(t *testing.T) {
 
 func TestRunServeWithUseCase(t *testing.T) {
 	fake := &fakeUseCase{}
-	if err := controller.RunServe(context.Background(), entity.ControllerServeOptions{InputPath: filepath.Join(t.TempDir(), "missing.xal"), Theme: "light"}); err == nil {
+	if err := controller.NewServeController(&fakeUseCase{previewErr: errors.New("missing")}).Run(context.Background(), entity.ControllerServeOptions{InputPath: filepath.Join(t.TempDir(), "missing.xal"), Theme: "light"}); err == nil {
 		t.Fatal("RunServe missing input error = nil")
 	}
-	err := controller.RunServeWithUseCase(fake, context.Background(), entity.ControllerServeOptions{InputPath: "input.xal", Theme: "light", PollInterval: time.Millisecond})
+	err := controller.NewServeController(fake).Run(context.Background(), entity.ControllerServeOptions{InputPath: "input.xal", Theme: "light", PollInterval: time.Millisecond})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if fake.lastPreviewPath != "input.xal" || fake.lastPreviewOpts.Render.Format != usecase.FormatSVG {
 		t.Fatalf("preview path=%q opts=%#v", fake.lastPreviewPath, fake.lastPreviewOpts)
 	}
-	if err := controller.RunServeWithUseCase(&fakeUseCase{previewErr: errors.New("preview failed")}, nil, entity.ControllerServeOptions{InputPath: "input.xal", Theme: "light"}); err == nil {
+	if err := controller.NewServeController(&fakeUseCase{previewErr: errors.New("preview failed")}).Run(nil, entity.ControllerServeOptions{InputPath: "input.xal", Theme: "light"}); err == nil {
 		t.Fatal("preview creation error = nil")
 	}
 }
@@ -324,7 +379,7 @@ func TestRunGenerateAndInit(t *testing.T) {
 	}
 
 	initDir := filepath.Join(dir, "starter")
-	if err := controller.RunInit(initDir); err != nil {
+	if err := controller.NewInitController().Run(initDir); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := os.Stat(filepath.Join(initDir, "sample.xal")); err != nil {
@@ -334,22 +389,23 @@ func TestRunGenerateAndInit(t *testing.T) {
 
 func TestRunAddServiceBatchAddsIconsAndLegend(t *testing.T) {
 	dir := t.TempDir()
+	repo := repository.NewExcalidrawRepository()
 	target := filepath.Join(dir, "diagram.excalidraw")
 	scene := entity.NewScene()
 	scene.Elements = append(scene.Elements, map[string]interface{}{
 		"id": "paper-frame", "type": "frame", "x": float64(0), "y": float64(0), "width": float64(300), "height": float64(200),
 	})
-	if err := repository.WriteScene(scene, target); err != nil {
+	if err := repo.WriteScene(scene, target); err != nil {
 		t.Fatal(err)
 	}
 	services := filepath.Join(dir, "services.csv")
 	if err := os.WriteFile(services, []byte("27,Amazon EC2,EC2\n"), 0644); err != nil {
 		t.Fatal(err)
 	}
-	if err := controller.RunAddServiceBatch(target, services); err != nil {
+	if err := newAddController(&fakeUseCase{}).RunServiceBatch(target, services); err != nil {
 		t.Fatal(err)
 	}
-	updated, err := repository.ReadScene(target)
+	updated, err := repo.ReadScene(target)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -367,27 +423,28 @@ func TestRunAddServiceBatchAddsIconsAndLegend(t *testing.T) {
 	if !foundLegend {
 		t.Fatalf("legend icon not found in %#v", updated.Elements)
 	}
-	if err := controller.RunAddServiceBatch(target, filepath.Join(dir, "missing.csv")); err == nil {
+	if err := newAddController(&fakeUseCase{}).RunServiceBatch(target, filepath.Join(dir, "missing.csv")); err == nil {
 		t.Fatal("missing service list error = nil")
 	}
 }
 
 func TestAddServiceCommandSingleModeFindsIcon(t *testing.T) {
 	dir := t.TempDir()
+	repo := repository.NewExcalidrawRepository()
 	target := filepath.Join(dir, "diagram.excalidraw")
 	scene := entity.NewScene()
 	scene.Elements = append(scene.Elements, map[string]interface{}{
 		"id": "box", "type": "rectangle", "x": float64(10), "y": float64(20), "width": float64(300), "height": float64(200),
 	})
-	if err := repository.WriteScene(scene, target); err != nil {
+	if err := repo.WriteScene(scene, target); err != nil {
 		t.Fatal(err)
 	}
-	cmd := controller.InitAddCmd()
+	cmd := newAddController(&fakeUseCase{}).Command()
 	cmd.SetArgs([]string{"service", "--file", target, "--name", "Amazon EC2", "--category", "Arch_Compute", "--size", "48", "--no-legend"})
 	if err := cmd.Execute(); err != nil {
 		t.Fatal(err)
 	}
-	updated, err := repository.ReadScene(target)
+	updated, err := repo.ReadScene(target)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -400,15 +457,15 @@ func TestAddServiceCommandSingleModeFindsIcon(t *testing.T) {
 	legendScene.Elements = append(legendScene.Elements, map[string]interface{}{
 		"id": "paper-frame", "type": "frame", "x": float64(50), "y": float64(10), "width": float64(300), "height": float64(80),
 	})
-	if err := repository.WriteScene(legendScene, withLegend); err != nil {
+	if err := repo.WriteScene(legendScene, withLegend); err != nil {
 		t.Fatal(err)
 	}
-	cmd = controller.InitAddCmd()
+	cmd = newAddController(&fakeUseCase{}).Command()
 	cmd.SetArgs([]string{"service", "--file", withLegend, "--name", "Amazon EC2", "--category", "Arch_Compute", "--size", "48"})
 	if err := cmd.Execute(); err != nil {
 		t.Fatal(err)
 	}
-	legendUpdated, err := repository.ReadScene(withLegend)
+	legendUpdated, err := repo.ReadScene(withLegend)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -427,15 +484,15 @@ func TestAddServiceCommandSingleModeFindsIcon(t *testing.T) {
 
 	noFrame := filepath.Join(dir, "diagram-no-frame.excalidraw")
 	noFrameScene := entity.NewScene()
-	if err := repository.WriteScene(noFrameScene, noFrame); err != nil {
+	if err := repo.WriteScene(noFrameScene, noFrame); err != nil {
 		t.Fatal(err)
 	}
-	cmd = controller.InitAddCmd()
+	cmd = newAddController(&fakeUseCase{}).Command()
 	cmd.SetArgs([]string{"service", "--file", noFrame, "--name", "Amazon Simple Storage Service", "--size", "48", "--no-legend"})
 	if err := cmd.Execute(); err != nil {
 		t.Fatal(err)
 	}
-	noFrameUpdated, err := repository.ReadScene(noFrame)
+	noFrameUpdated, err := repo.ReadScene(noFrame)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -466,8 +523,8 @@ func TestRunGeneratePptxWithUseCaseReachesPlanBuild(t *testing.T) {
 	if err := os.WriteFile(badWASM, []byte("not wasm"), 0644); err != nil {
 		t.Fatal(err)
 	}
-	fake := &fakeUseCase{planJSON: []byte(`{"slide":{"w":1,"h":1}}`)}
-	err := controller.RunGeneratePptxWithUseCase(fake, entity.ControllerPptxGenerateOptions{
+	fake := &fakeUseCase{planJSON: []byte(`{"slide":{"w":1,"h":1}}`), exportErr: errors.New("run PPTX WASM exporter")}
+	err := newGenerateController(fake).RunPptx(entity.ControllerPptxGenerateOptions{
 		XalPath: input, Output: filepath.Join(dir, "out.pptx"), ServicesFile: services, Theme: "dark", Mode: "network", ExporterWASM: badWASM,
 		PxPerInch: 120, ArrowStyle: "orthogonal", ArrowStub: 24, ArrowMargin: 12, Paper: "A3", Orientation: "landscape",
 		PaperMargin: 0.5, PaperMarginTop: 0.25, PaperMarginRight: 0.3, PaperMarginBottom: 0.35, PaperMarginLeft: 0.4,
@@ -478,16 +535,16 @@ func TestRunGeneratePptxWithUseCaseReachesPlanBuild(t *testing.T) {
 	if fake.lastPlanOpts.Theme != "dark" || fake.lastPlanOpts.Mode != entity.Mode("network") || fake.lastPlanOpts.PxPerInch != 120 || fake.lastPlanOpts.PaperMarginLeftIn != 0.4 || fake.lastPlanOpts.ServicesCSV == nil {
 		t.Fatalf("plan opts = %#v", fake.lastPlanOpts)
 	}
-	if err := controller.RunGeneratePptx(entity.ControllerPptxGenerateOptions{}); err == nil || !strings.Contains(err.Error(), "--xal") {
+	if err := newGenerateController(fake).RunPptx(entity.ControllerPptxGenerateOptions{}); err == nil || !strings.Contains(err.Error(), "--xal") {
 		t.Fatalf("RunGeneratePptx missing xal err = %v", err)
 	}
-	if err := controller.RunGeneratePptx(entity.ControllerPptxGenerateOptions{XalPath: input, Output: filepath.Join(dir, "real.pptx"), ServicesFile: services, Theme: "light", ExporterWASM: badWASM}); err == nil || !strings.Contains(err.Error(), "run PPTX WASM exporter") {
+	if err := newGenerateController(newRealUsecase()).RunPptx(entity.ControllerPptxGenerateOptions{XalPath: input, Output: filepath.Join(dir, "real.pptx"), ServicesFile: services, Theme: "light", ExporterWASM: badWASM}); err == nil || !strings.Contains(err.Error(), "run PPTX WASM exporter") {
 		t.Fatalf("RunGeneratePptx real planner err = %v", err)
 	}
-	if err := controller.RunGeneratePptxWithUseCase(fake, entity.ControllerPptxGenerateOptions{XalPath: input, Output: filepath.Join(dir, "out.pptx"), PxPerInch: -1}); err == nil || !strings.Contains(err.Error(), "px-per-inch") {
+	if err := newGenerateController(fake).RunPptx(entity.ControllerPptxGenerateOptions{XalPath: input, Output: filepath.Join(dir, "out.pptx"), PxPerInch: -1}); err == nil || !strings.Contains(err.Error(), "px-per-inch") {
 		t.Fatalf("negative px err = %v", err)
 	}
-	if err := controller.RunGeneratePptxWithUseCase(fake, entity.ControllerPptxGenerateOptions{XalPath: input, Output: filepath.Join(dir, "out.pptx"), PaperMargin: -1}); err == nil || !strings.Contains(err.Error(), "paper margins") {
+	if err := newGenerateController(fake).RunPptx(entity.ControllerPptxGenerateOptions{XalPath: input, Output: filepath.Join(dir, "out.pptx"), PaperMargin: -1}); err == nil || !strings.Contains(err.Error(), "paper margins") {
 		t.Fatalf("negative margin err = %v", err)
 	}
 }
@@ -496,14 +553,14 @@ func TestRunRenderWritesExcalidraw(t *testing.T) {
 	dir := t.TempDir()
 	input := writeTempXAL(t, dir)
 	output := filepath.Join(dir, "out.excalidraw")
-	if err := controller.RunRender(input, output, nil); err != nil {
+	if err := newRenderController(&fakeUseCase{}).Run(input, output, nil); err != nil {
 		t.Fatal(err)
 	}
 	data, err := os.ReadFile(output)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(data), `"type": "excalidraw"`) {
+	if !strings.Contains(string(data), `"type":"excalidraw"`) {
 		t.Fatalf("render output = %s", data)
 	}
 }

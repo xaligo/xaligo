@@ -12,6 +12,7 @@ import (
 
 	awsassets "github.com/ryo-arima/xaligo/etc/resources/aws"
 	"github.com/ryo-arima/xaligo/internal/entity"
+	"github.com/ryo-arima/xaligo/internal/repository"
 	"github.com/ryo-arima/xaligo/internal/usecase"
 )
 
@@ -20,6 +21,15 @@ var embeddedAssets = &entity.AssetSource{
 	GroupIconsDir: awsassets.GroupIconsDir, IsoflowIconsJSON: awsassets.IsoflowIconsJSON,
 	ItemIconSize: 48,
 }
+
+var xaligoUsecase = usecase.NewXaligoUsecase(
+	repository.NewExcalidrawRepository(),
+	repository.NewXaligoRepository(),
+	repository.NewPowerpointRepository(),
+	repository.NewIsoflowRepository(),
+	repository.NewSVGRepository(),
+	repository.NewXYFlowRepository(),
+)
 
 func main() {
 	js.Global().Set("xaligoRender", js.FuncOf(jsRender))
@@ -54,7 +64,7 @@ func renderResult(name string, args []js.Value, format entity.Format, servicesCS
 	if len(args) < 1 {
 		return jsResult(nil, fmt.Errorf("%s: expected 1 argument (xal)", name))
 	}
-	out, err := usecase.Render(context.Background(), []byte(args[0].String()), entity.RenderOptions{
+	out, err := xaligoUsecase.Render(context.Background(), []byte(args[0].String()), entity.RenderOptions{
 		Format: format, ServicesCSV: servicesCSV, Assets: embeddedAssets,
 	})
 	return jsResult(out, err)
@@ -86,7 +96,7 @@ func jsBuildPptxPlan(_ js.Value, args []js.Value) any {
 		}
 		opts.Assets = embeddedAssets
 	}
-	out, err := usecase.BuildPPTXPlan(context.Background(), []byte(args[0].String()), opts)
+	out, err := xaligoUsecase.BuildPPTXPlan(context.Background(), []byte(args[0].String()), opts)
 	return jsResult(out, err)
 }
 

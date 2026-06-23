@@ -9,7 +9,6 @@ import (
 
 	"github.com/ryo-arima/xaligo/internal/config"
 	"github.com/ryo-arima/xaligo/internal/entity"
-	"github.com/ryo-arima/xaligo/internal/repository"
 	"github.com/ryo-arima/xaligo/internal/share"
 	"github.com/ryo-arima/xaligo/internal/usecase"
 	"github.com/spf13/cobra"
@@ -37,21 +36,30 @@ var (
 	ICARAB011  = share.NewMCode("ICARAB-011", "Run add batch completed")
 )
 
-// InitAddCmd returns the 'add' parent command.
-func InitAddCmd() *cobra.Command {
+type AddController struct {
+	config  *config.Config
+	usecase usecase.XaligoUsecase
+}
+
+func NewAddController(cfg *config.Config, uc usecase.XaligoUsecase) *AddController {
+	return &AddController{config: cfg, usecase: uc}
+}
+
+// Command returns the 'add' parent command.
+func (rcvr *AddController) Command() *cobra.Command {
 	logger.DEBUG(ICAIC001, "start")
 	cmd := &cobra.Command{
 		Use:   "add",
 		Short: "Add elements to an existing .excalidraw file",
 	}
-	cmd.AddCommand(initAddServiceCmd())
+	cmd.AddCommand(rcvr.initAddServiceCmd())
 	return cmd
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // add service
 
-func initAddServiceCmd() *cobra.Command {
+func (rcvr *AddController) initAddServiceCmd() *cobra.Command {
 	var (
 		targetFile string
 		listFile   string
@@ -80,7 +88,7 @@ Examples:
   xaligo add service --name "Amazon EC2" --file output/my.excalidraw
   xaligo add service --list services.csv --file output/my.excalidraw`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg := config.New()
+			cfg := rcvr.config
 			if targetFile == "" {
 				logger.DEBUG(ICAISC001, "branch default target")
 				targetFile = filepath.Join(cfg.OutputFramesDir(), "A4-landscape.excalidraw")
@@ -93,7 +101,7 @@ Examples:
 			if isBatch {
 				logger.DEBUG(ICAISC003, "branch batch", map[string]any{"listFile": listFile})
 				var err error
-				entries, err = repository.ReadServiceList(listFile)
+				entries, err = rcvr.usecase.ReadServiceList(listFile)
 				if err != nil {
 					logger.ERROR(ICAISC004, "read list failed", map[string]any{"listFile": listFile, "error": err})
 					return fmt.Errorf("read list %s: %w", listFile, err)
@@ -107,7 +115,7 @@ Examples:
 				entries = []entity.ServiceEntry{{OfficialName: name}}
 			}
 
-			return runAddBatch(targetFile, entries, category, size, noLegend, isBatch, false)
+			return runAddBatch(rcvr.config, rcvr.usecase, targetFile, entries, category, size, noLegend, isBatch, false)
 		},
 	}
 
@@ -127,13 +135,17 @@ Examples:
 
 // RunAddServiceBatch reads listFile (services.csv) and adds all listed service
 // icons to targetFile with legend entries stacked on the right side of the frame.
-func RunAddServiceBatch(targetFile, listFile string) error {
-	entries, err := repository.ReadServiceList(listFile)
+func (rcvr *AddController) RunServiceBatch(targetFile, listFile string) error {
+	return runAddServiceBatch(rcvr.config, rcvr.usecase, targetFile, listFile)
+}
+
+func runAddServiceBatch(cfg *config.Config, uc usecase.XaligoUsecase, targetFile, listFile string) error {
+	entries, err := uc.ReadServiceList(listFile)
 	if err != nil {
 		logger.ERROR(ICARASB001, "read list failed", map[string]any{"listFile": listFile, "error": err})
 		return fmt.Errorf("read list %s: %w", listFile, err)
 	}
-	return runAddBatch(targetFile, entries, "", 32, false, true, false)
+	return runAddBatch(cfg, uc, targetFile, entries, "", 32, false, true, false)
 }
 
 // runAddBatch is the shared implementation used by both the --list flag and
@@ -141,9 +153,8 @@ func RunAddServiceBatch(targetFile, listFile string) error {
 // the frame; false places them on the left. legendOnly=true skips the standalone
 // main icon placed outside the frame (used by generate excalidraw, where <item>
 // tags already render icons inside the frame via the render path).
-func runAddBatch(targetFile string, entries []entity.ServiceEntry, category string, size int, noLegend, legendRight, legendOnly bool) error {
-	cfg := config.New()
-	scene, err := repository.ReadScene(targetFile)
+func runAddBatch(cfg *config.Config, uc usecase.XaligoUsecase, targetFile string, entries []entity.ServiceEntry, category string, size int, noLegend, legendRight, legendOnly bool) error {
+	scene, err := uc.ReadScene(targetFile)
 	if err != nil {
 		logger.ERROR(ICARAB001, "read scene failed", map[string]any{"targetFile": targetFile, "error": err})
 		return err
@@ -160,7 +171,7 @@ func runAddBatch(targetFile string, entries []entity.ServiceEntry, category stri
 		var displayName string
 
 		if entry.CatalogID > 0 {
-			ce, cerr := repository.LookupCatalogByID(cfg.ServiceCatalogCSVPath(), entry.CatalogID)
+			ce, cerr := uc.LookupCatalogByID(cfg.ServiceCatalogCSVPath(), entry.CatalogID)
 			if cerr != nil {
 				logger.WARN(ICARAB002, "catalog lookup failed", map[string]any{"catalogID": entry.CatalogID, "error": cerr})
 				continue
@@ -175,7 +186,7 @@ func runAddBatch(targetFile string, entries []entity.ServiceEntry, category stri
 			}
 			displayName = svgName
 			var derr error
-			dataURL, derr = repository.SvgToDataURL(svgPath)
+			dataURL, derr = uc.SvgToDataURL(svgPath)
 			if derr != nil {
 				logger.WARN(ICARAB004, "svg data URL failed", map[string]any{"path": svgPath, "error": derr})
 				continue
@@ -187,8 +198,8 @@ func runAddBatch(targetFile string, entries []entity.ServiceEntry, category stri
 			displayName = entry.OfficialName
 		}
 
-		fileID := repository.FileID(dataURL)
-		bgColor := repository.SVGBGColor(dataURL)
+		fileID := uc.FileID(dataURL)
+		bgColor := uc.SVGBGColor(dataURL)
 		if scene.Files == nil {
 			logger.DEBUG(ICARAB006, "branch initialize files")
 			scene.Files = map[string]map[string]interface{}{}
@@ -253,7 +264,7 @@ func runAddBatch(targetFile string, entries []entity.ServiceEntry, category stri
 		}
 	}
 
-	if err := repository.WriteScene(scene, targetFile); err != nil {
+	if err := uc.WriteScene(scene, targetFile); err != nil {
 		logger.ERROR(ICARAB010, "write scene failed", map[string]any{"targetFile": targetFile, "error": err})
 		return err
 	}

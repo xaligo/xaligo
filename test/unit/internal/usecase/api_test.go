@@ -10,13 +10,58 @@ import (
 
 	awsassets "github.com/ryo-arima/xaligo/etc/resources/aws"
 	"github.com/ryo-arima/xaligo/internal/entity"
+	"github.com/ryo-arima/xaligo/internal/repository"
 	"github.com/ryo-arima/xaligo/internal/usecase"
 )
 
 const simpleXAL = `<frame width="240" height="120"><blank /></frame>`
 
+type fakePPTXExporter struct {
+	seen entity.PptxExportOptions
+}
+
+func newUsecase() usecase.XaligoUsecase {
+	return newUsecaseWithPPTX(repository.NewPowerpointRepository())
+}
+
+func newUsecaseWithPPTX(powerpointRepository repository.PowerpointRepository) usecase.XaligoUsecase {
+	return usecase.NewXaligoUsecase(
+		repository.NewExcalidrawRepository(),
+		repository.NewXaligoRepository(),
+		powerpointRepository,
+		repository.NewIsoflowRepository(),
+		repository.NewSVGRepository(),
+		repository.NewXYFlowRepository(),
+	)
+}
+
+func newSceneDependencies() usecase.SceneDependencies {
+	return usecase.SceneDependencies{
+		XaligoRepository:     repository.NewXaligoRepository(),
+		ExcalidrawRepository: repository.NewExcalidrawRepository(),
+	}
+}
+
+func (rcvr *fakePPTXExporter) WritePptx(_ entity.PptxExportOptions) error {
+	return nil
+}
+
+func (rcvr *fakePPTXExporter) WritePptxWithExporter(_ context.Context, _ entity.PptxExportOptions, _ repository.PptxExporter) error {
+	return nil
+}
+
+func (rcvr *fakePPTXExporter) ExportPptxBytes(_ context.Context, opts entity.PptxExportOptions) ([]byte, error) {
+	rcvr.seen = opts
+	return []byte("pptx-from-fake"), nil
+}
+
+func (rcvr *fakePPTXExporter) ExportPptxBytesWithExporter(_ context.Context, opts entity.PptxExportOptions, _ repository.PptxExporter) ([]byte, error) {
+	rcvr.seen = opts
+	return []byte("pptx-from-fake"), nil
+}
+
 func TestUseCaseAPIRendersStableFormats(t *testing.T) {
-	uc := usecase.New()
+	uc := newUsecase()
 	ctx := context.Background()
 	if err := uc.ValidateRenderOptions(entity.RenderOptions{Format: usecase.FormatSVG, Theme: "light"}); err != nil {
 		t.Fatal(err)
@@ -55,11 +100,12 @@ func TestUseCaseAPIRendersStableFormats(t *testing.T) {
 }
 
 func TestUseCaseRenderDispatcherBranches(t *testing.T) {
+	uc := newUsecase()
 	ctx := context.Background()
 	formats := []entity.Format{usecase.FormatSVG, usecase.FormatXYFlow, usecase.FormatIsoflow}
 	for _, format := range formats {
 		t.Run(string(format), func(t *testing.T) {
-			out, err := usecase.Render(ctx, []byte(simpleXAL), entity.RenderOptions{Format: format, Theme: "light"})
+			out, err := uc.Render(ctx, []byte(simpleXAL), entity.RenderOptions{Format: format, Theme: "light"})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -68,12 +114,12 @@ func TestUseCaseRenderDispatcherBranches(t *testing.T) {
 			}
 		})
 	}
-	if _, err := usecase.Render(ctx, []byte(simpleXAL), entity.RenderOptions{Format: "unknown", Theme: "light"}); err == nil || !strings.Contains(err.Error(), "unknown render format") {
+	if _, err := uc.Render(ctx, []byte(simpleXAL), entity.RenderOptions{Format: "unknown", Theme: "light"}); err == nil || !strings.Contains(err.Error(), "unknown render format") {
 		t.Fatalf("unknown format err = %v", err)
 	}
 	canceled, cancel := context.WithCancel(ctx)
 	cancel()
-	if _, err := usecase.Render(canceled, []byte(simpleXAL), entity.RenderOptions{Format: usecase.FormatSVG, Theme: "light"}); err == nil {
+	if _, err := uc.Render(canceled, []byte(simpleXAL), entity.RenderOptions{Format: usecase.FormatSVG, Theme: "light"}); err == nil {
 		t.Fatal("canceled Render error = nil")
 	}
 }
@@ -83,24 +129,50 @@ func TestUseCaseRenderPPTXExportErrorAfterPlanBuild(t *testing.T) {
 	if err := os.WriteFile(badWASM, []byte("not wasm"), 0644); err != nil {
 		t.Fatal(err)
 	}
-	_, err := usecase.RenderPPTX(context.Background(), []byte(simpleXAL), entity.RenderOptions{Format: usecase.FormatPPTX, Theme: "light", PPTXExporterWASM: badWASM})
+	_, err := newUsecase().RenderPPTX(context.Background(), []byte(simpleXAL), entity.RenderOptions{Format: usecase.FormatPPTX, Theme: "light", PPTXExporterWASM: badWASM})
 	if err == nil || !strings.Contains(err.Error(), "run PPTX WASM exporter") {
 		t.Fatalf("RenderPPTX err = %v", err)
 	}
 }
 
+func TestUseCaseRenderPPTXUsesInjectedExporter(t *testing.T) {
+	exporter := &fakePPTXExporter{}
+	uc := newUsecaseWithPPTX(exporter)
+	compression := false
+	out, err := uc.RenderPPTX(context.Background(), []byte(simpleXAL), entity.RenderOptions{
+		Format:           usecase.FormatPPTX,
+		Theme:            "light",
+		Title:            "Injected",
+		Compression:      &compression,
+		PPTXExporterWASM: "custom.wasm",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(out) != "pptx-from-fake" {
+		t.Fatalf("RenderPPTX output = %q", out)
+	}
+	if exporter.seen.Title != "Injected" || exporter.seen.ExporterWASM != "custom.wasm" || exporter.seen.Compression == nil || *exporter.seen.Compression {
+		t.Fatalf("exporter opts = %#v", exporter.seen)
+	}
+	if !strings.Contains(string(exporter.seen.PlanJSON), `"slide"`) {
+		t.Fatalf("exporter plan = %s", exporter.seen.PlanJSON)
+	}
+}
+
 func TestUseCaseRenderFunctionsReportBuildSceneErrors(t *testing.T) {
+	uc := newUsecase()
 	badInput := []byte(`<frame><item id="abc" /></frame>`)
 	cases := []struct {
 		name string
 		call func(context.Context, []byte, entity.RenderOptions) ([]byte, error)
 	}{
-		{"RenderExcalidraw", usecase.RenderExcalidraw},
-		{"RenderSVG", usecase.RenderSVG},
-		{"BuildPPTXPlan", usecase.BuildPPTXPlan},
-		{"RenderPPTX", usecase.RenderPPTX},
-		{"RenderXYFlow", usecase.RenderXYFlow},
-		{"RenderIsoflow", usecase.RenderIsoflow},
+		{"RenderExcalidraw", uc.RenderExcalidraw},
+		{"RenderSVG", uc.RenderSVG},
+		{"BuildPPTXPlan", uc.BuildPPTXPlan},
+		{"RenderPPTX", uc.RenderPPTX},
+		{"RenderXYFlow", uc.RenderXYFlow},
+		{"RenderIsoflow", uc.RenderIsoflow},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -113,7 +185,7 @@ func TestUseCaseRenderFunctionsReportBuildSceneErrors(t *testing.T) {
 }
 
 func TestUseCaseRenderIsoflowUsesEmbeddedManifest(t *testing.T) {
-	out, err := usecase.RenderIsoflow(context.Background(), []byte(simpleXAL), entity.RenderOptions{
+	out, err := newUsecase().RenderIsoflow(context.Background(), []byte(simpleXAL), entity.RenderOptions{
 		Format: usecase.FormatIsoflow,
 		Theme:  "light",
 		Assets: &entity.AssetSource{
@@ -133,7 +205,7 @@ func TestUseCaseRenderIsoflowUsesEmbeddedManifest(t *testing.T) {
 
 func TestRenderExcalidrawStaggeredBackgrounds(t *testing.T) {
 	input := []byte(`<frame width="600" height="300"><aws-cloud title="AWS"><region title="Region"><vpc title="VPC" layout="staggered"><availability-zone title="AZ 1"><blank /></availability-zone><availability-zone title="AZ 2"><blank /></availability-zone><availability-zone title="AZ 3"><blank /></availability-zone><availability-zone title="AZ 4"><blank /></availability-zone><availability-zone title="AZ 5"><blank /></availability-zone></vpc></region></aws-cloud></frame>`)
-	out, err := usecase.RenderExcalidraw(context.Background(), input, entity.RenderOptions{Theme: "light"})
+	out, err := newUsecase().RenderExcalidraw(context.Background(), input, entity.RenderOptions{Theme: "light"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -146,7 +218,7 @@ func TestRenderExcalidrawStaggeredBackgrounds(t *testing.T) {
 }
 
 func TestUseCaseAPIRenderPPTXHonorsCanceledContext(t *testing.T) {
-	uc := usecase.New()
+	uc := newUsecase()
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	if _, err := uc.RenderPPTX(ctx, []byte(simpleXAL), entity.RenderOptions{Format: usecase.FormatPPTX}); err == nil {
@@ -155,7 +227,7 @@ func TestUseCaseAPIRenderPPTXHonorsCanceledContext(t *testing.T) {
 }
 
 func TestUseCaseAPINewPreviewServer(t *testing.T) {
-	uc := usecase.New()
+	uc := newUsecase()
 	if _, err := uc.NewPreviewServer("", entity.PreviewOptions{}); err == nil {
 		t.Fatal("NewPreviewServer empty path error = nil")
 	}
@@ -176,7 +248,7 @@ func TestUseCaseAPINewPreviewServer(t *testing.T) {
 }
 
 func TestBuildPPTXPlanUsesServiceLegend(t *testing.T) {
-	planJSON, err := usecase.BuildPPTXPlan(context.Background(), []byte(`<frame width="240" height="120"><item id="27" /></frame>`), entity.RenderOptions{
+	planJSON, err := newUsecase().BuildPPTXPlan(context.Background(), []byte(`<frame width="240" height="120"><item id="27" /></frame>`), entity.RenderOptions{
 		Format: usecase.FormatPPTX,
 		Theme:  "light",
 		ServicesCSV: []byte(strings.Join([]string{

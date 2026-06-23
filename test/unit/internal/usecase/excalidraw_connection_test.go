@@ -47,7 +47,7 @@ func buildConnectionArrow(t *testing.T, attrs string) map[string]any {
 	if err != nil {
 		t.Fatal(err)
 	}
-	out, err := usecase.BuildJSONWithFS(root, awsassets.Assets, awsassets.CatalogCSV, awsassets.GroupIconsDir, 32, doc.Root.Children[2:], nil)
+	out, err := usecase.BuildJSONWithFS(root, awsassets.Assets, awsassets.CatalogCSV, awsassets.GroupIconsDir, 32, doc.Root.Children[2:], nil, newSceneDependencies())
 	if err != nil {
 		t.Fatal(err)
 	}

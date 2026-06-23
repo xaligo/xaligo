@@ -11,11 +11,12 @@ import (
 )
 
 func TestReadSceneInitializesMissingCollections(t *testing.T) {
+	repo := repository.NewExcalidrawRepository()
 	path := filepath.Join(t.TempDir(), "scene.excalidraw")
 	if err := os.WriteFile(path, []byte(`{"type":"excalidraw","version":2}`), 0644); err != nil {
 		t.Fatal(err)
 	}
-	scene, err := repository.ReadScene(path)
+	scene, err := repo.ReadScene(path)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -25,13 +26,14 @@ func TestReadSceneInitializesMissingCollections(t *testing.T) {
 }
 
 func TestWriteSceneRoundTrip(t *testing.T) {
+	repo := repository.NewExcalidrawRepository()
 	path := filepath.Join(t.TempDir(), "scene.excalidraw")
 	scene := entity.NewScene()
 	scene.Elements = append(scene.Elements, map[string]interface{}{"id": "box", "type": "rectangle"})
-	if err := repository.WriteScene(scene, path); err != nil {
+	if err := repo.WriteScene(scene, path); err != nil {
 		t.Fatal(err)
 	}
-	read, err := repository.ReadScene(path)
+	read, err := repo.ReadScene(path)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,21 +43,22 @@ func TestWriteSceneRoundTrip(t *testing.T) {
 }
 
 func TestReadSceneAndWriteSceneErrors(t *testing.T) {
+	repo := repository.NewExcalidrawRepository()
 	dir := t.TempDir()
 	badJSON := filepath.Join(dir, "bad.excalidraw")
 	if err := os.WriteFile(badJSON, []byte(`{"elements":`), 0644); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := repository.ReadScene(filepath.Join(dir, "missing.excalidraw")); err == nil {
+	if _, err := repo.ReadScene(filepath.Join(dir, "missing.excalidraw")); err == nil {
 		t.Fatal("ReadScene missing file error = nil")
 	}
-	if _, err := repository.ReadScene(badJSON); err == nil {
+	if _, err := repo.ReadScene(badJSON); err == nil {
 		t.Fatal("ReadScene invalid JSON error = nil")
 	}
-	if err := repository.WriteScene(&entity.Scene{Files: map[string]map[string]interface{}{"bad": {"fn": func() {}}}}, filepath.Join(dir, "out.excalidraw")); err == nil {
+	if err := repo.WriteScene(&entity.Scene{Files: map[string]map[string]interface{}{"bad": {"fn": func() {}}}}, filepath.Join(dir, "out.excalidraw")); err == nil {
 		t.Fatal("WriteScene marshal error = nil")
 	}
-	if err := repository.WriteScene(entity.NewScene(), filepath.Join(dir, "missing", "out.excalidraw")); err == nil {
+	if err := repo.WriteScene(entity.NewScene(), filepath.Join(dir, "missing", "out.excalidraw")); err == nil {
 		t.Fatal("WriteScene write error = nil")
 	}
 	var decoded entity.Scene

@@ -34,11 +34,15 @@ SPEC_PATH="${RPM_TOP}/SPECS/${PACKAGE_NAME}.spec"
 BINARY_PATH="${BUILD_ROOT}/usr/bin/${PACKAGE_NAME}"
 ABS_BINARY_PATH="${ROOT}/${BINARY_PATH}"
 ABS_LICENSE_PATH="${ROOT}/${BUILD_ROOT}/usr/share/doc/${PACKAGE_NAME}/LICENSE"
+RUNTIME_PATH="${BUILD_ROOT}/${RUNTIME_REL}"
+ABS_RUNTIME_PATH="${ROOT}/${RUNTIME_PATH}"
 
 rm -rf "$BUILD_ROOT" "$RPM_TOP"
 mkdir -p "$BUILD_ROOT/usr/bin" "$BUILD_ROOT/usr/share/doc/${PACKAGE_NAME}" "$RPM_TOP/BUILD" "$RPM_TOP/BUILDROOT" "$RPM_TOP/RPMS" "$RPM_TOP/SOURCES" "$RPM_TOP/SPECS" "$RPM_TOP/SRPMS"
 
 build_linux_binary "$VERSION_VALUE" "$BINARY_PATH"
+build_wasm_exporter
+install_runtime_files "$RUNTIME_PATH"
 chmod 0755 "$BINARY_PATH"
 install -m 0644 LICENSE "$BUILD_ROOT/usr/share/doc/${PACKAGE_NAME}/LICENSE"
 
@@ -56,12 +60,15 @@ xaligo renders the .xal diagram DSL to Excalidraw, SVG, PPTX, XYFlow, and Isoflo
 %install
 mkdir -p %{buildroot}/usr/bin
 mkdir -p %{buildroot}/usr/share/doc/%{name}
+mkdir -p %{buildroot}/usr/lib/%{name}
 install -m 0755 ${ABS_BINARY_PATH} %{buildroot}/usr/bin/%{name}
 install -m 0644 ${ABS_LICENSE_PATH} %{buildroot}/usr/share/doc/%{name}/LICENSE
+cp -a ${ABS_RUNTIME_PATH}/. %{buildroot}/usr/lib/%{name}/
 chmod 0644 %{buildroot}/usr/share/doc/%{name}/LICENSE
 
 %files
 /usr/bin/%{name}
+/usr/lib/%{name}
 %doc /usr/share/doc/%{name}/LICENSE
 
 %changelog

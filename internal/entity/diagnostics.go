@@ -14,11 +14,11 @@ type DiagnosticsError struct {
 	Diagnostics []Diagnostic
 }
 
-func (e *DiagnosticsError) Error() string {
-	if len(e.Diagnostics) == 0 {
+func (rcvr *DiagnosticsError) Error() string {
+	if len(rcvr.Diagnostics) == 0 {
 		return "validation failed"
 	}
-	d := e.Diagnostics[0]
+	d := rcvr.Diagnostics[0]
 	if d.Line > 0 {
 		return fmt.Sprintf("line %d, column %d: %s", d.Line, d.Column, d.Message)
 	}

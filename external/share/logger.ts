@@ -106,19 +106,25 @@ export function NewLogger(config: LoggerConfig): Logger {
 }
 
 export function NewEnvLogger(component: string, service: string): Logger {
+  const env = processEnv();
   const config: LoggerConfig = {
     component,
     service,
-    structured: truthyEnv(process.env.XALIGO_LOG_STRUCTURED),
-    enableCaller: truthyEnv(process.env.XALIGO_LOG_CALLER),
+    structured: truthyEnv(env.XALIGO_LOG_STRUCTURED),
+    enableCaller: truthyEnv(env.XALIGO_LOG_CALLER),
   };
-  if (process.env.XALIGO_LOG_LEVEL !== undefined) config.level = process.env.XALIGO_LOG_LEVEL;
-  if (process.env.XALIGO_LOG_OUTPUT !== undefined) config.output = process.env.XALIGO_LOG_OUTPUT;
+  if (env.XALIGO_LOG_LEVEL !== undefined) config.level = env.XALIGO_LOG_LEVEL;
+  if (env.XALIGO_LOG_OUTPUT !== undefined) config.output = env.XALIGO_LOG_OUTPUT;
   return NewLogger(config);
 }
 
 export function newLogger(config: LoggerConfig, output?: LogWriter): Logger {
   return new SharedLogger(config, output);
+}
+
+function processEnv(): Record<string, string | undefined> {
+  if (typeof process === 'undefined') return {};
+  return process.env;
 }
 
 function truthyEnv(value: string | undefined): boolean {

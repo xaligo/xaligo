@@ -3,45 +3,61 @@ package command
 import (
 	"os"
 
+	"github.com/ryo-arima/xaligo/internal/config"
 	"github.com/ryo-arima/xaligo/internal/controller"
+	"github.com/ryo-arima/xaligo/internal/repository"
 	"github.com/ryo-arima/xaligo/internal/share"
 	"github.com/ryo-arima/xaligo/internal/usecase"
 	"github.com/spf13/cobra"
 )
 
 var (
-	logger      = share.DefaultLogger()
-	ICNRC001    = share.NewMCode("ICNRC-001", "New root command start")
-	ICNRCWUC001 = share.NewMCode("ICNRCWUC-001", "New root command with use case nil use case branch")
-	ICNRCWUC002 = share.NewMCode("ICNRCWUC-002", "New root command with use case configured")
-	ICE001      = share.NewMCode("ICE-001", "Execute failed")
+	logger   = share.DefaultLogger()
+	ICNRC001 = share.NewMCode("ICNRC-001", "New root command start")
+	ICE001   = share.NewMCode("ICE-001", "Execute failed")
 )
 
 func NewRootCmd() *cobra.Command {
 	logger.DEBUG(ICNRC001, "start")
-	return NewRootCmdWithUseCase(usecase.New())
-}
+	cfg := config.New()
 
-func NewRootCmdWithUseCase(uc usecase.API) *cobra.Command {
-	if uc == nil {
-		logger.DEBUG(ICNRCWUC001, "branch nil use case")
-		uc = usecase.New()
-	} else {
-		logger.DEBUG(ICNRCWUC002, "branch configured use case")
-	}
-	var root = &cobra.Command{
+	excalidrawRepository := repository.NewExcalidrawRepository()
+	xaligoRepository := repository.NewXaligoRepository()
+	powerpointRepository := repository.NewPowerpointRepository()
+	isoflowRepository := repository.NewIsoflowRepository()
+	svgRepository := repository.NewSVGRepository()
+	xyFlowRepository := repository.NewXYFlowRepository()
+
+	xaligoUsecase := usecase.NewXaligoUsecase(
+		excalidrawRepository,
+		xaligoRepository,
+		powerpointRepository,
+		isoflowRepository,
+		svgRepository,
+		xyFlowRepository,
+	)
+
+	addController := controller.NewAddController(cfg, xaligoUsecase)
+	generateController := controller.NewGenerateController(xaligoUsecase)
+	renderController := controller.NewRenderController(cfg, xaligoUsecase)
+	validateController := controller.NewValidateController(xaligoUsecase)
+	serveController := controller.NewServeController(xaligoUsecase)
+	initController := controller.NewInitController()
+	versionController := controller.NewVersionController()
+
+	root := &cobra.Command{
 		Use:   "xaligo",
 		Short: "Vue-like DSL to Excalidraw layout generator",
 		Long:  "xaligo renders a Vue-like layout DSL into an Excalidraw JSON file.",
 	}
 
-	root.AddCommand(controller.InitRenderCmdWithUseCase(uc))
-	root.AddCommand(controller.InitValidateCmdWithUseCase(uc))
-	root.AddCommand(controller.InitServeCmdWithUseCase(uc))
-	root.AddCommand(controller.InitInitCmd())
-	root.AddCommand(controller.InitVersionCmd())
-	root.AddCommand(controller.InitAddCmd())
-	root.AddCommand(controller.InitGenerateCmd())
+	root.AddCommand(renderController.Command())
+	root.AddCommand(validateController.Command())
+	root.AddCommand(serveController.Command())
+	root.AddCommand(initController.Command())
+	root.AddCommand(versionController.Command())
+	root.AddCommand(addController.Command())
+	root.AddCommand(generateController.Command())
 	return root
 }
 

@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/ryo-arima/xaligo/internal/config"
 	"github.com/ryo-arima/xaligo/internal/entity"
-	"github.com/ryo-arima/xaligo/internal/repository"
 	"github.com/ryo-arima/xaligo/internal/share"
 	"github.com/ryo-arima/xaligo/internal/usecase"
 	"github.com/spf13/cobra"
@@ -84,16 +84,17 @@ var (
 	ICRATF004    = share.NewMCode("ICRATF-004", "Apply theme file completed")
 )
 
-func InitRenderCmd() *cobra.Command {
-	logger.DEBUG(ICRIRC001, "start")
-	return InitRenderCmdWithUseCase(nil)
+type RenderController struct {
+	config  *config.Config
+	usecase usecase.XaligoUsecase
 }
 
-func InitRenderCmdWithUseCase(uc usecase.API) *cobra.Command {
+func NewRenderController(cfg *config.Config, uc usecase.XaligoUsecase) *RenderController {
+	return &RenderController{config: cfg, usecase: uc}
+}
+
+func (rcvr *RenderController) Command() *cobra.Command {
 	logger.DEBUG(ICRIRCWUC001, "start")
-	if uc == nil {
-		uc = usecase.New()
-	}
 	var (
 		output            string
 		format            string
@@ -140,7 +141,7 @@ func InitRenderCmdWithUseCase(uc usecase.API) *cobra.Command {
 			} else {
 				logger.DEBUG(ICRIRCWUC006, "branch compression", map[string]any{"compression": compression})
 			}
-			return RunRenderFormatWithUseCase(uc, entity.ControllerRenderOptions{
+			return rcvr.RunFormat(entity.ControllerRenderOptions{
 				InputPath:         input,
 				OutputPath:        output,
 				Format:            format,
@@ -199,24 +200,17 @@ func InitRenderCmdWithUseCase(uc usecase.API) *cobra.Command {
 
 // abbrevMap is an optional catalog-ID → abbreviation override derived from services.csv.
 // Pass nil to use only the built-in abbreviation table.
-func RunRender(inputPath, outputPath string, abbrevMap map[int]string) error {
+func (rcvr *RenderController) Run(inputPath, outputPath string, abbrevMap map[int]string) error {
 	logger.DEBUG(ICRR001, "start", map[string]any{"input": inputPath, "output": outputPath})
-	return runRenderExcalidraw(usecase.New(), inputPath, outputPath, abbrevMap, string(usecase.ModeStandard), entity.ThemeLight)
+	return runRenderExcalidraw(rcvr.usecase, inputPath, outputPath, abbrevMap, string(usecase.ModeStandard), entity.ThemeLight)
 }
 
 // RunRenderFormat renders a .xal file into the requested output format. It is
 // the public controller entry point for format-based rendering.
-func RunRenderFormat(opts entity.ControllerRenderOptions) error {
+func (rcvr *RenderController) RunFormat(opts entity.ControllerRenderOptions) error {
 	logger.DEBUG(ICRRRF001, "start", map[string]any{"format": opts.Format, "input": opts.InputPath, "output": opts.OutputPath})
-	return RunRenderFormatWithUseCase(nil, opts)
-}
-
-func RunRenderFormatWithUseCase(uc usecase.API, opts entity.ControllerRenderOptions) error {
-	if uc == nil {
-		uc = usecase.New()
-	}
 	logger.DEBUG(ICRRRFWUC001, "start", map[string]any{"format": opts.Format, "input": opts.InputPath, "output": opts.OutputPath})
-	if err := uc.ValidateRenderOptions(entity.RenderOptions{
+	if err := rcvr.usecase.ValidateRenderOptions(entity.RenderOptions{
 		Mode: entity.Mode(opts.Mode), Format: entity.Format(opts.Format), Theme: opts.Theme,
 		PaperMarginIn: opts.PaperMargin, PaperMarginTopIn: opts.PaperMarginTop, PaperMarginRightIn: opts.PaperMarginRight,
 		PaperMarginBottomIn: opts.PaperMarginBottom, PaperMarginLeftIn: opts.PaperMarginLeft,
@@ -232,22 +226,22 @@ func RunRenderFormatWithUseCase(uc usecase.API, opts entity.ControllerRenderOpti
 	switch normalizeRenderFormat(opts.Format) {
 	case "excalidraw":
 		logger.DEBUG(ICRRRFWUC004, "branch excalidraw", map[string]any{"services": opts.ServicesFile != ""})
-		abbrevMap, err := serviceAbbrevMap(opts.ServicesFile)
+		abbrevMap, err := rcvr.serviceAbbrevMap(opts.ServicesFile)
 		if err != nil {
 			logger.ERROR(ICRRRFWUC005, "service abbreviations failed", map[string]any{"format": "excalidraw", "error": err})
 			return err
 		}
 		if opts.ServicesFile != "" {
 			logger.DEBUG(ICRRRFWUC006, "branch excalidraw services file", map[string]any{"servicesFile": opts.ServicesFile})
-			warnServiceMismatch(opts.InputPath, opts.ServicesFile)
+			warnServiceMismatch(rcvr.usecase, opts.InputPath, opts.ServicesFile)
 		}
-		if err := runRenderExcalidraw(uc, opts.InputPath, opts.OutputPath, abbrevMap, opts.Mode, theme); err != nil {
+		if err := runRenderExcalidraw(rcvr.usecase, opts.InputPath, opts.OutputPath, abbrevMap, opts.Mode, theme); err != nil {
 			logger.ERROR(ICRRRFWUC007, "render excalidraw failed", map[string]any{"error": err})
 			return err
 		}
 		if opts.ServicesFile != "" {
 			logger.DEBUG(ICRRRFWUC008, "branch add service batch", map[string]any{"servicesFile": opts.ServicesFile})
-			if err := RunAddServiceBatch(opts.OutputPath, opts.ServicesFile); err != nil {
+			if err := runAddServiceBatch(rcvr.config, rcvr.usecase, opts.OutputPath, opts.ServicesFile); err != nil {
 				logger.ERROR(ICRRRFWUC009, "add service batch failed", map[string]any{"error": err})
 				return err
 			}
@@ -257,19 +251,19 @@ func RunRenderFormatWithUseCase(uc usecase.API, opts entity.ControllerRenderOpti
 		return nil
 	case "svg":
 		logger.DEBUG(ICRRRFWUC011, "branch svg", map[string]any{"services": opts.ServicesFile != ""})
-		abbrevMap, err := serviceAbbrevMap(opts.ServicesFile)
+		abbrevMap, err := rcvr.serviceAbbrevMap(opts.ServicesFile)
 		if err != nil {
 			logger.ERROR(ICRRRFWUC012, "service abbreviations failed", map[string]any{"format": "svg", "error": err})
 			return err
 		}
 		if opts.ServicesFile != "" {
 			logger.DEBUG(ICRRRFWUC013, "branch svg services file", map[string]any{"servicesFile": opts.ServicesFile})
-			warnServiceMismatch(opts.InputPath, opts.ServicesFile)
+			warnServiceMismatch(rcvr.usecase, opts.InputPath, opts.ServicesFile)
 		}
-		return runRenderSVG(uc, opts.InputPath, opts.OutputPath, abbrevMap, opts.Mode, theme, opts.PxPerInch, opts.ArrowStyle, opts.ArrowStub, opts.ArrowMargin, opts.Paper, opts.Orientation, opts.PaperMargin, opts.PaperMarginTop, opts.PaperMarginRight, opts.PaperMarginBottom, opts.PaperMarginLeft)
+		return runRenderSVG(rcvr.usecase, opts.InputPath, opts.OutputPath, abbrevMap, opts.Mode, theme, opts.PxPerInch, opts.ArrowStyle, opts.ArrowStub, opts.ArrowMargin, opts.Paper, opts.Orientation, opts.PaperMargin, opts.PaperMarginTop, opts.PaperMarginRight, opts.PaperMarginBottom, opts.PaperMarginLeft)
 	case "pptx":
 		logger.DEBUG(ICRRRFWUC014, "branch pptx")
-		return RunGeneratePptxWithUseCase(uc, entity.ControllerPptxGenerateOptions{
+		return runGeneratePptx(rcvr.usecase, entity.ControllerPptxGenerateOptions{
 			XalPath:           opts.InputPath,
 			Output:            opts.OutputPath,
 			ServicesFile:      opts.ServicesFile,
@@ -297,20 +291,20 @@ func RunRenderFormatWithUseCase(uc usecase.API, opts entity.ControllerRenderOpti
 		})
 	case "xyflow":
 		logger.DEBUG(ICRRRFWUC015, "branch xyflow", map[string]any{"services": opts.ServicesFile != ""})
-		abbrevMap, err := serviceAbbrevMap(opts.ServicesFile)
+		abbrevMap, err := rcvr.serviceAbbrevMap(opts.ServicesFile)
 		if err != nil {
 			logger.ERROR(ICRRRFWUC016, "service abbreviations failed", map[string]any{"format": "xyflow", "error": err})
 			return err
 		}
-		return runRenderXYFlow(uc, opts.InputPath, opts.OutputPath, abbrevMap, opts.Mode, theme)
+		return runRenderXYFlow(rcvr.usecase, opts.InputPath, opts.OutputPath, abbrevMap, opts.Mode, theme)
 	case "isoflow":
 		logger.DEBUG(ICRRRFWUC017, "branch isoflow", map[string]any{"services": opts.ServicesFile != ""})
-		abbrevMap, err := serviceAbbrevMap(opts.ServicesFile)
+		abbrevMap, err := rcvr.serviceAbbrevMap(opts.ServicesFile)
 		if err != nil {
 			logger.ERROR(ICRRRFWUC018, "service abbreviations failed", map[string]any{"format": "isoflow", "error": err})
 			return err
 		}
-		return runRenderIsoflow(uc, opts.InputPath, opts.OutputPath, abbrevMap, opts.Mode, theme)
+		return runRenderIsoflow(rcvr.usecase, opts.InputPath, opts.OutputPath, abbrevMap, opts.Mode, theme)
 	default:
 		logger.ERROR(ICRRRFWUC019, "branch unknown format", map[string]any{"format": opts.Format})
 		return fmt.Errorf("unknown render format %q; valid: excalidraw, svg, pptx, xyflow, isoflow", opts.Format)
@@ -347,7 +341,7 @@ func defaultRenderOutput(format string) string {
 	}
 }
 
-func runRenderIsoflow(uc usecase.API, inputPath, outputPath string, abbrevMap map[int]string, mode, theme string) error {
+func runRenderIsoflow(uc usecase.XaligoUsecase, inputPath, outputPath string, abbrevMap map[int]string, mode, theme string) error {
 	input, err := os.ReadFile(inputPath)
 	if err != nil {
 		logger.ERROR(ICRRRI001, "read input failed", map[string]any{"input": inputPath, "error": err})
@@ -368,7 +362,7 @@ func runRenderIsoflow(uc usecase.API, inputPath, outputPath string, abbrevMap ma
 	return nil
 }
 
-func runRenderXYFlow(uc usecase.API, inputPath, outputPath string, abbrevMap map[int]string, mode, theme string) error {
+func runRenderXYFlow(uc usecase.XaligoUsecase, inputPath, outputPath string, abbrevMap map[int]string, mode, theme string) error {
 	input, err := os.ReadFile(inputPath)
 	if err != nil {
 		logger.ERROR(ICRRXYF001, "read input failed", map[string]any{"input": inputPath, "error": err})
@@ -389,12 +383,12 @@ func runRenderXYFlow(uc usecase.API, inputPath, outputPath string, abbrevMap map
 	return nil
 }
 
-func serviceAbbrevMap(servicesFile string) (map[int]string, error) {
+func (rcvr *RenderController) serviceAbbrevMap(servicesFile string) (map[int]string, error) {
 	if servicesFile == "" {
 		logger.DEBUG(ICRSAM001, "branch empty services file")
 		return nil, nil
 	}
-	entries, err := repository.ReadServiceList(servicesFile)
+	entries, err := rcvr.usecase.ReadServiceList(servicesFile)
 	if err != nil {
 		logger.ERROR(ICRSAM002, "read services failed", map[string]any{"servicesFile": servicesFile, "error": err})
 		return nil, fmt.Errorf("read services %s: %w", servicesFile, err)
@@ -410,7 +404,7 @@ func serviceAbbrevMap(servicesFile string) (map[int]string, error) {
 	return abbrevMap, nil
 }
 
-func runRenderExcalidraw(uc usecase.API, inputPath, outputPath string, abbrevMap map[int]string, mode, theme string) error {
+func runRenderExcalidraw(uc usecase.XaligoUsecase, inputPath, outputPath string, abbrevMap map[int]string, mode, theme string) error {
 	out, err := buildExcalidrawJSONWithUseCase(uc, inputPath, abbrevMap, mode, theme)
 	if err != nil {
 		logger.ERROR(ICRRRE001, "build failed", map[string]any{"error": err})
@@ -425,7 +419,7 @@ func runRenderExcalidraw(uc usecase.API, inputPath, outputPath string, abbrevMap
 	return nil
 }
 
-func runRenderSVG(uc usecase.API, inputPath, outputPath string, abbrevMap map[int]string, mode, theme string, pxPerInch float64, arrowStyle string, arrowStub, arrowMargin float64, paper, orientation string, paperMargin, paperMarginTop, paperMarginRight, paperMarginBottom, paperMarginLeft float64) error {
+func runRenderSVG(uc usecase.XaligoUsecase, inputPath, outputPath string, abbrevMap map[int]string, mode, theme string, pxPerInch float64, arrowStyle string, arrowStub, arrowMargin float64, paper, orientation string, paperMargin, paperMarginTop, paperMarginRight, paperMarginBottom, paperMarginLeft float64) error {
 	input, err := os.ReadFile(inputPath)
 	if err != nil {
 		logger.ERROR(ICRRRSVG001, "read input failed", map[string]any{"input": inputPath, "error": err})
@@ -450,7 +444,7 @@ func runRenderSVG(uc usecase.API, inputPath, outputPath string, abbrevMap map[in
 	return nil
 }
 
-func buildExcalidrawJSONWithUseCase(uc usecase.API, inputPath string, abbrevMap map[int]string, mode, theme string) ([]byte, error) {
+func buildExcalidrawJSONWithUseCase(uc usecase.XaligoUsecase, inputPath string, abbrevMap map[int]string, mode, theme string) ([]byte, error) {
 	input, err := os.ReadFile(inputPath)
 	if err != nil {
 		logger.ERROR(ICRBEJWUC001, "read input failed", map[string]any{"input": inputPath, "error": err})

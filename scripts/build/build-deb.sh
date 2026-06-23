@@ -31,11 +31,14 @@ ARCH="$(deb_arch)"
 OUT_DIR="$(output_dir)"
 WORK_DIR="${OUT_DIR}/deb/${PACKAGE_NAME}_${VERSION_VALUE}_${ARCH}"
 PACKAGE_PATH="${OUT_DIR}/${PACKAGE_NAME}_${VERSION_VALUE}_${ARCH}.deb"
+RUNTIME_DIR="${WORK_DIR}/${RUNTIME_REL}"
 
 rm -rf "$WORK_DIR"
 mkdir -p "$WORK_DIR/DEBIAN" "$WORK_DIR/usr/bin" "$WORK_DIR/usr/share/doc/${PACKAGE_NAME}"
 
 build_linux_binary "$VERSION_VALUE" "$WORK_DIR/usr/bin/${PACKAGE_NAME}"
+build_wasm_exporter
+install_runtime_files "$RUNTIME_DIR"
 chmod 0755 "$WORK_DIR/usr/bin/${PACKAGE_NAME}"
 install -m 0644 LICENSE "$WORK_DIR/usr/share/doc/${PACKAGE_NAME}/copyright"
 

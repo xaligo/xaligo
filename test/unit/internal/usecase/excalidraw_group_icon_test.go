@@ -18,7 +18,7 @@ func TestGenericGroupCatalogIcon(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	out, err := usecase.BuildJSONWithFS(root, awsassets.Assets, awsassets.CatalogCSV, awsassets.GroupIconsDir, 32, nil, nil)
+	out, err := usecase.BuildJSONWithFS(root, awsassets.Assets, awsassets.CatalogCSV, awsassets.GroupIconsDir, 32, nil, nil, newSceneDependencies())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -88,7 +88,7 @@ func TestGroupHeaderKeepsConservativeTextSpare(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	out, err := usecase.BuildJSONWithFS(root, awsassets.Assets, awsassets.CatalogCSV, awsassets.GroupIconsDir, 32, nil, nil)
+	out, err := usecase.BuildJSONWithFS(root, awsassets.Assets, awsassets.CatalogCSV, awsassets.GroupIconsDir, 32, nil, nil, newSceneDependencies())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -119,7 +119,7 @@ func TestItemLabelHeightExpandsForWrappedCatalogLabel(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	out, err := usecase.BuildJSONWithFS(root, awsassets.Assets, awsassets.CatalogCSV, awsassets.GroupIconsDir, 32, nil, nil)
+	out, err := usecase.BuildJSONWithFS(root, awsassets.Assets, awsassets.CatalogCSV, awsassets.GroupIconsDir, 32, nil, nil, newSceneDependencies())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -151,7 +151,7 @@ func TestGroupWithoutIconKeepsBalancedVerticalPadding(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	out, err := usecase.BuildJSONWithFS(root, awsassets.Assets, awsassets.CatalogCSV, awsassets.GroupIconsDir, 32, nil, nil)
+	out, err := usecase.BuildJSONWithFS(root, awsassets.Assets, awsassets.CatalogCSV, awsassets.GroupIconsDir, 32, nil, nil, newSceneDependencies())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -187,7 +187,7 @@ func TestItemOnlyGroupReservesAnchorGridClearanceBelowHeader(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	out, err := usecase.BuildJSONWithFS(root, awsassets.Assets, awsassets.CatalogCSV, awsassets.GroupIconsDir, 32, nil, nil)
+	out, err := usecase.BuildJSONWithFS(root, awsassets.Assets, awsassets.CatalogCSV, awsassets.GroupIconsDir, 32, nil, nil, newSceneDependencies())
 	if err != nil {
 		t.Fatal(err)
 	}

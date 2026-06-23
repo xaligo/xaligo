@@ -90,19 +90,26 @@ func New() *Config {
 }
 
 // AssetDir returns the absolute path to the Asset-Package directory.
-func (c *Config) AssetDir() string { return c.AssetDir_ }
+func (rcvr *Config) AssetDir() string { return rcvr.AssetDir_ }
 
 // OutputFramesDir returns the absolute path to the frames output directory.
-func (c *Config) OutputFramesDir() string { return c.OutFramesDir }
+func (rcvr *Config) OutputFramesDir() string { return rcvr.OutFramesDir }
 
 // ServiceCatalogCSVPath returns the absolute path to service-catalog.csv.
-func (c *Config) ServiceCatalogCSVPath() string { return c.SvcCatalogCSV }
+func (rcvr *Config) ServiceCatalogCSVPath() string { return rcvr.SvcCatalogCSV }
 
 // findProjectRoot walks up from cwd until it finds go.mod, then returns that dir.
 func findProjectRoot() string {
+	if home := os.Getenv("XALIGO_HOME"); home != "" {
+		if abs, err := filepath.Abs(home); err == nil {
+			return abs
+		}
+		return home
+	}
+
 	cwd, err := os.Getwd()
 	if err != nil {
-		return "."
+		cwd = "."
 	}
 	dir := cwd
 	for {
@@ -115,5 +122,23 @@ func findProjectRoot() string {
 		}
 		dir = parent
 	}
+
+	if executable, err := os.Executable(); err == nil {
+		binDir := filepath.Dir(executable)
+		candidates := []string{
+			filepath.Clean(filepath.Join(binDir, "..", "lib", "xaligo")),
+			filepath.Clean(filepath.Join(binDir, "..", "share", "xaligo")),
+		}
+		for _, candidate := range candidates {
+			if isRuntimeRoot(candidate) {
+				return candidate
+			}
+		}
+	}
 	return cwd
+}
+
+func isRuntimeRoot(root string) bool {
+	info, err := os.Stat(filepath.Join(root, "etc", "resources", "aws", "app.yaml"))
+	return err == nil && !info.IsDir()
 }

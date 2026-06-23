@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/ryo-arima/xaligo/internal/entity"
-	"github.com/ryo-arima/xaligo/internal/usecase"
 )
 
 func TestPreviewServerHandlers(t *testing.T) {
@@ -19,7 +18,7 @@ func TestPreviewServerHandlers(t *testing.T) {
 	if err := os.WriteFile(path, []byte(simpleXAL), 0644); err != nil {
 		t.Fatal(err)
 	}
-	server, err := usecase.NewPreviewServer(path, entity.PreviewOptions{Render: entity.RenderOptions{Theme: "light"}})
+	server, err := newUsecase().NewPreviewServer(path, entity.PreviewOptions{Render: entity.RenderOptions{Theme: "light"}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -76,7 +75,7 @@ func TestPreviewServerSVGHandlerReportsRenderError(t *testing.T) {
 	if err := os.WriteFile(path, []byte(`<frame><item id="bad" /></frame>`), 0644); err != nil {
 		t.Fatal(err)
 	}
-	server, err := usecase.NewPreviewServer(path, entity.PreviewOptions{Render: entity.RenderOptions{Theme: "light"}})
+	server, err := newUsecase().NewPreviewServer(path, entity.PreviewOptions{Render: entity.RenderOptions{Theme: "light"}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,7 +91,7 @@ func TestPreviewServerRunStopsWhenContextCanceled(t *testing.T) {
 	if err := os.WriteFile(path, []byte(simpleXAL), 0644); err != nil {
 		t.Fatal(err)
 	}
-	server, err := usecase.NewPreviewServer(path, entity.PreviewOptions{Render: entity.RenderOptions{Theme: "light"}})
+	server, err := newUsecase().NewPreviewServer(path, entity.PreviewOptions{Render: entity.RenderOptions{Theme: "light"}})
 	if err != nil {
 		t.Fatal(err)
 	}

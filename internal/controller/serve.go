@@ -25,16 +25,16 @@ var (
 	ICSRSWUC006  = share.NewMCode("ICSRSWUC-006", "Run serve with use case watching source")
 )
 
-func InitServeCmd() *cobra.Command {
-	logger.DEBUG(ICSISC001, "start")
-	return InitServeCmdWithUseCase(nil)
+type ServeController struct {
+	usecase usecase.XaligoUsecase
 }
 
-func InitServeCmdWithUseCase(uc usecase.API) *cobra.Command {
+func NewServeController(uc usecase.XaligoUsecase) *ServeController {
+	return &ServeController{usecase: uc}
+}
+
+func (rcvr *ServeController) Command() *cobra.Command {
 	logger.DEBUG(ICSISCWUC001, "start")
-	if uc == nil {
-		uc = usecase.New()
-	}
 	var address, mode, theme string
 	var poll time.Duration
 	cmd := &cobra.Command{
@@ -42,7 +42,7 @@ func InitServeCmdWithUseCase(uc usecase.API) *cobra.Command {
 		Short: "Serve a live SVG preview and reload it when the source changes",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return RunServeWithUseCase(uc, cmd.Context(), entity.ControllerServeOptions{
+			return rcvr.Run(cmd.Context(), entity.ControllerServeOptions{
 				InputPath: args[0], Address: address, Mode: mode, Theme: theme,
 				PollInterval: poll,
 			})
@@ -55,16 +55,9 @@ func InitServeCmdWithUseCase(uc usecase.API) *cobra.Command {
 	return cmd
 }
 
-func RunServe(ctx context.Context, opts entity.ControllerServeOptions) error {
+func (rcvr *ServeController) Run(ctx context.Context, opts entity.ControllerServeOptions) error {
 	logger.DEBUG(ICSRS001, "start", map[string]any{"input": opts.InputPath, "address": opts.Address})
-	return RunServeWithUseCase(nil, ctx, opts)
-}
-
-func RunServeWithUseCase(uc usecase.API, ctx context.Context, opts entity.ControllerServeOptions) error {
-	if uc == nil {
-		uc = usecase.New()
-	}
-	server, err := uc.NewPreviewServer(opts.InputPath, entity.PreviewOptions{
+	server, err := rcvr.usecase.NewPreviewServer(opts.InputPath, entity.PreviewOptions{
 		Render:       entity.RenderOptions{Mode: entity.Mode(opts.Mode), Format: usecase.FormatSVG, Theme: opts.Theme},
 		PollInterval: opts.PollInterval,
 	})

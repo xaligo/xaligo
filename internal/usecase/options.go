@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/ryo-arima/xaligo/internal/entity"
-	"github.com/ryo-arima/xaligo/internal/repository"
+	"github.com/ryo-arima/xaligo/internal/share"
 )
 
 const (
@@ -67,7 +67,14 @@ func validateMode(mode entity.Mode) error {
 	}
 }
 
-func serviceOptions(opts entity.RenderOptions) ([]entity.ServiceEntry, map[int]string, error) {
+var (
+	IURSO001 = share.NewMCode("IURSO-001", "Service options no services CSV branch")
+	IURSO002 = share.NewMCode("IURSO-002", "Service options services CSV branch")
+	IURSO003 = share.NewMCode("IURSO-003", "Service options read services CSV failed")
+	IURSO004 = share.NewMCode("IURSO-004", "Service options service abbreviation branch")
+)
+
+func (rcvr *xaligoUsecase) serviceOptions(opts entity.RenderOptions) ([]entity.ServiceEntry, map[int]string, error) {
 	abbreviations := make(map[int]string, len(opts.Abbreviations))
 	for id, value := range opts.Abbreviations {
 		abbreviations[id] = value
@@ -77,7 +84,7 @@ func serviceOptions(opts entity.RenderOptions) ([]entity.ServiceEntry, map[int]s
 		return nil, abbreviations, nil
 	}
 	logger.DEBUG(IURSO002, "branch services csv", map[string]any{"bytes": len(opts.ServicesCSV)})
-	entries, err := repository.ReadServiceListFromReader(bytes.NewReader(opts.ServicesCSV))
+	entries, err := rcvr.xaligoRepository.ReadServiceListFromReader(bytes.NewReader(opts.ServicesCSV))
 	if err != nil {
 		logger.ERROR(IURSO003, "read services csv failed", map[string]any{"error": err})
 		return nil, nil, fmt.Errorf("read services CSV: %w", err)
@@ -89,21 +96,4 @@ func serviceOptions(opts entity.RenderOptions) ([]entity.ServiceEntry, map[int]s
 		}
 	}
 	return entries, abbreviations, nil
-}
-
-func planOptions(opts entity.RenderOptions, entries []entity.ServiceEntry) entity.PptxOptions {
-	legend := make([]entity.LegendEntry, 0, len(entries))
-	for _, entry := range entries {
-		if entry.CatalogID > 0 && entry.OfficialName != "" {
-			logger.DEBUG(IURPO001, "branch legend entry", map[string]any{"catalogID": entry.CatalogID})
-			legend = append(legend, entity.LegendEntry{CatalogID: entry.CatalogID, Abbreviation: entry.Abbreviation, OfficialName: entry.OfficialName})
-		}
-	}
-	return entity.PptxOptions{
-		Theme: opts.Theme, PxPerInch: opts.PxPerInch, ArrowStyle: opts.ArrowStyle,
-		ArrowStubPx: opts.ArrowStubPx, ArrowMargin: opts.ArrowMarginPx,
-		PaperSize: opts.PaperSize, Orientation: opts.Orientation,
-		PaperMargin: opts.PaperMarginIn, PaperMarginTop: opts.PaperMarginTopIn, PaperMarginRight: opts.PaperMarginRightIn,
-		PaperMarginBottom: opts.PaperMarginBottomIn, PaperMarginLeft: opts.PaperMarginLeftIn, LegendEntries: legend,
-	}
 }

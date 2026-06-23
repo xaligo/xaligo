@@ -47,9 +47,6 @@ jobs:
       - name: Install Go dependencies
         run: go mod tidy
 
-      - name: Build WASM
-        run: make build-wasm
-
       - name: Bump version in external/package.json
         run: npm --prefix external version "${{ inputs.version }}" --no-git-tag-version
 

@@ -1,6 +1,7 @@
 FROM ubuntu:24.04
 
 ARG GO_VERSION=1.22.12
+ARG JAVY_VERSION=9.0.0
 ARG TARGETARCH
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -12,7 +13,10 @@ RUN apt-get update \
     curl \
     dpkg-dev \
     git \
+    gzip \
     make \
+    nodejs \
+    npm \
     tar \
   && rm -rf /var/lib/apt/lists/*
 
@@ -25,5 +29,19 @@ RUN case "${TARGETARCH}" in \
   && tar -C /usr/local -xzf /tmp/go.tgz \
   && rm /tmp/go.tgz \
   && go version
+
+RUN case "${TARGETARCH}" in \
+    amd64) javy_arch="x86_64" ;; \
+    arm64) javy_arch="arm" ;; \
+    *) echo "unsupported TARGETARCH: ${TARGETARCH}" >&2; exit 1 ;; \
+  esac \
+  && javy_asset="javy-${javy_arch}-linux-v${JAVY_VERSION}.gz" \
+  && curl -fsSL "https://github.com/bytecodealliance/javy/releases/download/v${JAVY_VERSION}/${javy_asset}" -o /tmp/javy.gz \
+  && curl -fsSL "https://github.com/bytecodealliance/javy/releases/download/v${JAVY_VERSION}/${javy_asset}.sha256" -o /tmp/javy.sha256 \
+  && printf '%s  %s\n' "$(cut -d ' ' -f 1 /tmp/javy.sha256)" /tmp/javy.gz | sha256sum -c - \
+  && gzip -dc /tmp/javy.gz > /usr/local/bin/javy \
+  && chmod 0755 /usr/local/bin/javy \
+  && rm /tmp/javy.gz /tmp/javy.sha256 \
+  && javy --version
 
 WORKDIR /workspace

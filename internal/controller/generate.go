@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/ryo-arima/xaligo/internal/entity"
-	"github.com/ryo-arima/xaligo/internal/repository"
 	"github.com/ryo-arima/xaligo/internal/share"
 	"github.com/ryo-arima/xaligo/internal/usecase"
 	"github.com/spf13/cobra"
@@ -44,11 +43,19 @@ var paperSizes = map[string][2]int{
 	"Tabloid": {1056, 1632},
 }
 
-// InitGenerateCmd returns the `xaligo generate` parent command with subcommands:
+type GenerateController struct {
+	usecase usecase.XaligoUsecase
+}
+
+func NewGenerateController(uc usecase.XaligoUsecase) *GenerateController {
+	return &GenerateController{usecase: uc}
+}
+
+// Command returns the `xaligo generate` parent command with subcommands:
 //   - xaligo generate xal … generate an AWS hierarchy .xal
 //
 // Format conversion belongs to `xaligo render --format ...`.
-func InitGenerateCmd() *cobra.Command {
+func (rcvr *GenerateController) Command() *cobra.Command {
 	logger.DEBUG(ICGIGC001, "start")
 	parent := &cobra.Command{
 		Use:   "generate",
@@ -180,14 +187,11 @@ func RunGenerate(
 
 // RunGeneratePptx builds a resolved Go PPTX plan, then asks the repository layer
 // to invoke the WASM exporter that turns the plan into PPTX bytes.
-func RunGeneratePptx(opts entity.ControllerPptxGenerateOptions) error {
-	return RunGeneratePptxWithUseCase(nil, opts)
+func (rcvr *GenerateController) RunPptx(opts entity.ControllerPptxGenerateOptions) error {
+	return runGeneratePptx(rcvr.usecase, opts)
 }
 
-func RunGeneratePptxWithUseCase(uc usecase.API, opts entity.ControllerPptxGenerateOptions) error {
-	if uc == nil {
-		uc = usecase.New()
-	}
+func runGeneratePptx(uc usecase.XaligoUsecase, opts entity.ControllerPptxGenerateOptions) error {
 	if opts.XalPath == "" {
 		return fmt.Errorf("--xal is required")
 	}
@@ -200,11 +204,11 @@ func RunGeneratePptxWithUseCase(uc usecase.API, opts entity.ControllerPptxGenera
 	if opts.PaperMargin < 0 || opts.PaperMarginTop < 0 || opts.PaperMarginRight < 0 || opts.PaperMarginBottom < 0 || opts.PaperMarginLeft < 0 {
 		return fmt.Errorf("paper margins must be non-negative")
 	}
-	planJSON, err := buildPptxPlanJSONWithUseCase(uc, opts)
+	planJSON, err := buildPptxPlanJSON(uc, opts)
 	if err != nil {
 		return err
 	}
-	return repository.ExportPptx(entity.PptxExportOptions{
+	return uc.ExportPptx(context.Background(), entity.PptxExportOptions{
 		PlanJSON:     planJSON,
 		Output:       opts.Output,
 		Title:        opts.Title,
@@ -218,10 +222,7 @@ func RunGeneratePptxWithUseCase(uc usecase.API, opts entity.ControllerPptxGenera
 	})
 }
 
-func buildPptxPlanJSONWithUseCase(uc usecase.API, opts entity.ControllerPptxGenerateOptions) ([]byte, error) {
-	if uc == nil {
-		uc = usecase.New()
-	}
+func buildPptxPlanJSON(uc usecase.XaligoUsecase, opts entity.ControllerPptxGenerateOptions) ([]byte, error) {
 	if err := uc.ValidateRenderOptions(entity.RenderOptions{
 		Mode: entity.Mode(opts.Mode), Format: usecase.FormatPPTX, Theme: opts.Theme,
 		PaperMarginIn: opts.PaperMargin, PaperMarginTopIn: opts.PaperMarginTop, PaperMarginRightIn: opts.PaperMarginRight,
@@ -235,7 +236,7 @@ func buildPptxPlanJSONWithUseCase(uc usecase.API, opts entity.ControllerPptxGene
 	}
 	var servicesCSV []byte
 	if opts.ServicesFile != "" {
-		warnServiceMismatch(opts.XalPath, opts.ServicesFile)
+		warnServiceMismatch(uc, opts.XalPath, opts.ServicesFile)
 		servicesCSV, err = os.ReadFile(opts.ServicesFile)
 		if err != nil {
 			return nil, fmt.Errorf("read services %s: %w", opts.ServicesFile, err)
@@ -269,32 +270,32 @@ type xalBuilder struct {
 	azLayout    string // "grid" or "staggered"
 }
 
-func (b *xalBuilder) ind(level int) string {
+func (rcvr *xalBuilder) ind(level int) string {
 	return strings.Repeat("  ", level)
 }
 
-func (b *xalBuilder) group(tag, title string, level int, fn func()) {
-	b.sb.WriteString(fmt.Sprintf("%s<%s title=%q>\n", b.ind(level), tag, title))
+func (rcvr *xalBuilder) group(tag, title string, level int, fn func()) {
+	rcvr.sb.WriteString(fmt.Sprintf("%s<%s title=%q>\n", rcvr.ind(level), tag, title))
 	fn()
-	b.sb.WriteString(fmt.Sprintf("%s</%s>\n", b.ind(level), tag))
+	rcvr.sb.WriteString(fmt.Sprintf("%s</%s>\n", rcvr.ind(level), tag))
 }
 
-func (b *xalBuilder) groupAttrs(tag, title, extraAttrs string, level int, fn func()) {
+func (rcvr *xalBuilder) groupAttrs(tag, title, extraAttrs string, level int, fn func()) {
 	if extraAttrs != "" {
-		b.sb.WriteString(fmt.Sprintf("%s<%s title=%q %s>\n", b.ind(level), tag, title, extraAttrs))
+		rcvr.sb.WriteString(fmt.Sprintf("%s<%s title=%q %s>\n", rcvr.ind(level), tag, title, extraAttrs))
 	} else {
-		b.sb.WriteString(fmt.Sprintf("%s<%s title=%q>\n", b.ind(level), tag, title))
+		rcvr.sb.WriteString(fmt.Sprintf("%s<%s title=%q>\n", rcvr.ind(level), tag, title))
 	}
 	fn()
-	b.sb.WriteString(fmt.Sprintf("%s</%s>\n", b.ind(level), tag))
+	rcvr.sb.WriteString(fmt.Sprintf("%s</%s>\n", rcvr.ind(level), tag))
 }
 
-func (b *xalBuilder) leaf(tag, title string, level int) {
-	b.sb.WriteString(fmt.Sprintf("%s<%s title=%q />\n", b.ind(level), tag, title))
+func (rcvr *xalBuilder) leaf(tag, title string, level int) {
+	rcvr.sb.WriteString(fmt.Sprintf("%s<%s title=%q />\n", rcvr.ind(level), tag, title))
 }
 
-func (b *xalBuilder) spacingClass() string {
-	switch b.spacingMode {
+func (rcvr *xalBuilder) spacingClass() string {
+	switch rcvr.spacingMode {
 	case "vertical":
 		return "pt-2 pb-2"
 	case "horizontal":
@@ -304,16 +305,16 @@ func (b *xalBuilder) spacingClass() string {
 	}
 }
 
-func (b *xalBuilder) many(level, n int, fn func(i, level int)) {
-	if b.startMode == "left" && n > 1 {
+func (rcvr *xalBuilder) many(level, n int, fn func(i, level int)) {
+	if rcvr.startMode == "left" && n > 1 {
 		span := 12 / n
-		b.sb.WriteString(fmt.Sprintf("%s<row gap=\"16\">\n", b.ind(level)))
+		rcvr.sb.WriteString(fmt.Sprintf("%s<row gap=\"16\">\n", rcvr.ind(level)))
 		for i := range n {
-			b.sb.WriteString(fmt.Sprintf("%s  <col span=\"%d\" class=%q>\n", b.ind(level), span, b.spacingClass()))
+			rcvr.sb.WriteString(fmt.Sprintf("%s  <col span=\"%d\" class=%q>\n", rcvr.ind(level), span, rcvr.spacingClass()))
 			fn(i, level+2)
-			b.sb.WriteString(fmt.Sprintf("%s  </col>\n", b.ind(level)))
+			rcvr.sb.WriteString(fmt.Sprintf("%s  </col>\n", rcvr.ind(level)))
 		}
-		b.sb.WriteString(fmt.Sprintf("%s</row>\n", b.ind(level)))
+		rcvr.sb.WriteString(fmt.Sprintf("%s</row>\n", rcvr.ind(level)))
 	} else {
 		for i := range n {
 			fn(i, level)
@@ -373,7 +374,7 @@ func buildXAL(W, H, nClouds, nAccounts, nRegions, nAZs int, azLayout string, nSu
 // catalog IDs listed in the services CSV and prints a warning to stderr for any
 // ID that appears in one source but not the other.  Errors are silently ignored
 // so that a bad path never blocks the main generate command.
-func warnServiceMismatch(xalPath, servicesFile string) {
+func warnServiceMismatch(uc usecase.XaligoUsecase, xalPath, servicesFile string) {
 	// ── collect item IDs from .xal ───────────────────────────────────────────
 	xalFile, err := os.Open(xalPath)
 	if err != nil {
@@ -394,7 +395,7 @@ func warnServiceMismatch(xalPath, servicesFile string) {
 	}
 
 	// ── collect IDs from services CSV ────────────────────────────────────────
-	entries, err := repository.ReadServiceList(servicesFile)
+	entries, err := uc.ReadServiceList(servicesFile)
 	if err != nil {
 		logger.WARN(ICGWMS003, "read services failed", map[string]any{"servicesFile": servicesFile, "error": err})
 		return

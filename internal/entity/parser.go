@@ -7,8 +7,8 @@ type ParseError struct {
 	Err      error
 }
 
-func (e *ParseError) Error() string {
-	return fmt.Sprintf("line %d, column %d: %v", e.Position.Line, e.Position.Column, e.Err)
+func (rcvr *ParseError) Error() string {
+	return fmt.Sprintf("line %d, column %d: %v", rcvr.Position.Line, rcvr.Position.Column, rcvr.Err)
 }
 
-func (e *ParseError) Unwrap() error { return e.Err }
+func (rcvr *ParseError) Unwrap() error { return rcvr.Err }

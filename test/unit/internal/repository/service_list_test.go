@@ -17,7 +17,8 @@ func (failingReader) Read([]byte) (int, error) {
 }
 
 func TestReadServiceListFromReaderParsesSupportedForms(t *testing.T) {
-	entries, err := repository.ReadServiceListFromReader(strings.NewReader(`
+	repo := repository.NewXaligoRepository()
+	entries, err := repo.ReadServiceListFromReader(strings.NewReader(`
 # comment
 
 Amazon S3
@@ -53,11 +54,12 @@ Custom Service,CS,Custom summary
 }
 
 func TestReadServiceListUsesFilePath(t *testing.T) {
+	repo := repository.NewXaligoRepository()
 	path := filepath.Join(t.TempDir(), "services.csv")
 	if err := osWriteFile(path, "1020,Amazon S3,S3\n"); err != nil {
 		t.Fatal(err)
 	}
-	entries, err := repository.ReadServiceList(path)
+	entries, err := repo.ReadServiceList(path)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -67,11 +69,31 @@ func TestReadServiceListUsesFilePath(t *testing.T) {
 }
 
 func TestReadServiceListErrors(t *testing.T) {
-	if _, err := repository.ReadServiceList(filepath.Join(t.TempDir(), "missing.csv")); err == nil {
+	repo := repository.NewXaligoRepository()
+	if _, err := repo.ReadServiceList(filepath.Join(t.TempDir(), "missing.csv")); err == nil {
 		t.Fatal("ReadServiceList missing file error = nil")
 	}
-	if _, err := repository.ReadServiceListFromReader(failingReader{}); err == nil {
+	if _, err := repo.ReadServiceListFromReader(failingReader{}); err == nil {
 		t.Fatal("ReadServiceListFromReader scanner error = nil")
+	}
+}
+
+func TestReadSource(t *testing.T) {
+	repo := repository.NewXaligoRepository()
+	path := filepath.Join(t.TempDir(), "source.xal")
+	want := `<frame width="10" height="10" />`
+	if err := osWriteFile(path, want); err != nil {
+		t.Fatal(err)
+	}
+	got, err := repo.ReadSource(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != want {
+		t.Fatalf("ReadSource() = %q, want %q", got, want)
+	}
+	if _, err := repo.ReadSource(filepath.Join(t.TempDir(), "missing.xal")); err == nil {
+		t.Fatal("ReadSource() missing file error = nil")
 	}
 }
 

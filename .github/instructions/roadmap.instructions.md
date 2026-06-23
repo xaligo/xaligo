@@ -194,16 +194,17 @@ Implemented or partially implemented:
 
 - `.xal` XML-style parser exists in `internal/usecase/parser.go`.
 - Vuetify-like layout engine exists in `internal/usecase/layout.go`.
-- Excalidraw renderer exists in `internal/usecase/excalidraw_*.go`.
+- Canonical scene construction exists in `internal/usecase/scene.go`.
 - Native CLI exists with `render`, `generate`, `add`, `init`, and `version`.
 - `render --format excalidraw` supports `services.csv` abbreviation/legend
   workflows.
-- PPTX geometry/routing plan generation exists in `internal/usecase/pptxplan_*.go`.
+- Draw-plan geometry and routing exist in `internal/usecase/plan.go` and
+  `internal/usecase/routing.go`.
 - PPTX routing already includes obstacle avoidance, binding gap handling,
   arrow margin/lane avoidance, A3 paper options, item label sizing, and legend
   slide data.
 - Repository-layer PPTX export has been redirected toward a WASM exporter
-  adapter in `internal/repository/pptx.go`.
+  adapter in `internal/repository/powerpoint.go`.
 - `xaligo render --format excalidraw|svg|pptx` is implemented.
 - `xaligo render --format xyflow` and TypeScript/WASM `renderXYFlow()` export
   nested React Flow-compatible nodes and edges.
@@ -211,8 +212,8 @@ Implemented or partially implemented:
   `renderIsoflow()` export an upstream Isoflow-compatible model from the shared
   scene.
 - `xaligo validate` reuses parser and layout validation.
-- The first SVG renderer is implemented in `internal/usecase/svg.go` over the shared draw
-  plan.
+- The SVG encoder is implemented in `internal/repository/svg.go` over the
+  shared draw plan.
 - Shared `light` and `dark` themes are implemented for Excalidraw, SVG, and
   PPTX via `xaligo render --theme`.
 - Stable Go use cases in `internal/usecase` expose `Render`, `RenderExcalidraw`, `RenderSVG`, `RenderPPTX`,

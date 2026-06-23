@@ -5,6 +5,7 @@ PACKAGE_NAME="xaligo"
 PACKAGE_DESCRIPTION="Diagram-as-Code CLI for rendering .xal diagrams"
 PACKAGE_URL="https://github.com/ryo-arima/xaligo"
 PACKAGE_MAINTAINER="${PACKAGE_MAINTAINER:-Ryo Arima <ryo-arima@users.noreply.github.com>}"
+RUNTIME_REL="usr/lib/${PACKAGE_NAME}"
 
 repo_root() {
   local source_dir
@@ -79,4 +80,41 @@ require_command() {
     printf 'ERROR: required command not found: %s\n' "$command_name" >&2
     exit 1
   fi
+}
+
+build_wasm_exporter() {
+  local build_dir
+  require_command npm
+  require_command javy
+  build_dir="$(mktemp -d)"
+  tar \
+    --exclude='./node_modules' \
+    --exclude='./package-lock.json' \
+    --exclude='./dist' \
+    --exclude='./wasm' \
+    -C external -cf - . | tar -C "$build_dir" -xf -
+  mkdir -p "$build_dir/wasm"
+  npm --prefix "$build_dir" install --no-audit --no-fund
+  npm --prefix "$build_dir" run build:pptx-exporter-wasm
+  mkdir -p external/wasm
+  install -m 0644 "$build_dir/wasm/xaligo.wasm" external/wasm/xaligo.wasm
+  rm -rf "$build_dir"
+  if [[ ! -s external/wasm/xaligo.wasm ]]; then
+    printf 'ERROR: WASM exporter was not generated\n' >&2
+    exit 1
+  fi
+}
+
+install_runtime_files() {
+  local destination
+  destination="$1"
+  mkdir -p \
+    "$destination/etc/resources/aws" \
+    "$destination/external/wasm"
+  install -m 0644 etc/resources/aws/app.yaml "$destination/etc/resources/aws/app.yaml"
+  install -m 0644 etc/resources/aws/service-catalog.csv "$destination/etc/resources/aws/service-catalog.csv"
+  install -m 0644 etc/resources/aws/service-index.csv "$destination/etc/resources/aws/service-index.csv"
+  install -m 0644 etc/resources/aws/isoflow-icons.json "$destination/etc/resources/aws/isoflow-icons.json"
+  cp -R etc/resources/aws/svg "$destination/etc/resources/aws/svg"
+  install -m 0644 external/wasm/xaligo.wasm "$destination/external/wasm/xaligo.wasm"
 }

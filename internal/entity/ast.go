@@ -26,9 +26,9 @@ type TextRun struct {
 	Position Position
 }
 
-func (n *Node) Attr(key string) string {
-	if n == nil || n.Attrs == nil {
+func (rcvr *Node) Attr(key string) string {
+	if rcvr == nil || rcvr.Attrs == nil {
 		return ""
 	}
-	return n.Attrs[key]
+	return rcvr.Attrs[key]
 }

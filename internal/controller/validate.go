@@ -21,42 +21,35 @@ var (
 	ICVALIDATERVWUC004  = share.NewMCode("ICVALIDATERVWUC-004", "Run validate with use case nil stdout branch")
 )
 
-func InitValidateCmd() *cobra.Command {
-	logger.DEBUG(ICVALIDATEIVC001, "start")
-	return InitValidateCmdWithUseCase(nil)
+type ValidateController struct {
+	usecase usecase.XaligoUsecase
 }
 
-func InitValidateCmdWithUseCase(uc usecase.API) *cobra.Command {
+func NewValidateController(uc usecase.XaligoUsecase) *ValidateController {
+	return &ValidateController{usecase: uc}
+}
+
+func (rcvr *ValidateController) Command() *cobra.Command {
 	logger.DEBUG(ICVALIDATEIVCWUC001, "start")
-	if uc == nil {
-		uc = usecase.New()
-	}
 	cmd := &cobra.Command{
 		Use:   "validate <input.xal>",
 		Short: "Validate xaligo DSL syntax and layout",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return RunValidateWithUseCase(uc, args[0], os.Stdout)
+			return rcvr.Run(args[0], os.Stdout)
 		},
 	}
 	return cmd
 }
 
-func RunValidate(inputPath string, stdout io.Writer) error {
+func (rcvr *ValidateController) Run(inputPath string, stdout io.Writer) error {
 	logger.DEBUG(ICVALIDATERV001, "start", map[string]any{"input": inputPath})
-	return RunValidateWithUseCase(nil, inputPath, stdout)
-}
-
-func RunValidateWithUseCase(uc usecase.API, inputPath string, stdout io.Writer) error {
-	if uc == nil {
-		uc = usecase.New()
-	}
 	input, err := os.ReadFile(inputPath)
 	if err != nil {
 		logger.ERROR(ICVALIDATERVWUC001, "read input failed", map[string]any{"input": inputPath, "error": err})
 		return fmt.Errorf("open input file: %w", err)
 	}
-	if err := uc.Validate(context.Background(), input); err != nil {
+	if err := rcvr.usecase.Validate(context.Background(), input); err != nil {
 		logger.ERROR(ICVALIDATERVWUC002, "validation failed", map[string]any{"input": inputPath, "error": err})
 		return err
 	}

@@ -30,16 +30,15 @@ xaligo/
 │   ├── controller/              CLI flags and file-I/O adapters
 │   ├── entity/                  internal structures; independent entity layer
 │   ├── usecase/
+│   │   ├── xaligo.go            constructor-injected application facade
 │   │   ├── parser.go            .xal parser
-│   │   ├── render.go            render orchestration and validation
+│   │   ├── render.go            render orchestration and dispatch
+│   │   ├── scene.go             shared scene construction
 │   │   ├── layout.go            resolved layout calculations
-│   │   ├── excalidraw_*.go      canonical editable scene builder
-│   │   ├── pptxplan_*.go        shared geometry and routing calculations
-│   │   ├── svg.go               SVG encoder
-│   │   ├── xyflow.go            XYFlow encoder
-│   │   ├── isoflow.go           Isoflow encoder
-│   │   └── preview.go           HTTP/SSE preview adapter
-│   ├── repository/              native filesystem/export adapters
+│   │   ├── plan.go              shared draw-plan calculations
+│   │   ├── routing.go           shared connector routing
+│   │   └── theme.go             canonical scene theming
+│   ├── repository/              filesystem and output-format adapters
 │   └── config/                  project configuration
 ├── test/
 │   ├── unit/                    unit tests mirroring the project tree
@@ -69,6 +68,8 @@ adapter rather than an importable public Go package.
 - Preserve `.xal -> parser -> layout -> shared scene/plan -> encoder`.
 - Format-rendering adapters call `internal/usecase`; they do not create
   parallel parser or layout pipelines.
+- Input/output-format-specific encoding and persistence belong to
+  `internal/repository`; use-case filenames describe processing, not formats.
 - `internal/entity` owns structures exchanged between layers and contains no
   application orchestration. Shared value helpers such as theme names and
   service labels may live here when they are renderer-independent.

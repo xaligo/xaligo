@@ -67,3 +67,23 @@ func TestNewUsesProjectLocalYAMLAndAbsolutePaths(t *testing.T) {
 		t.Fatalf("values = %#v", cfg)
 	}
 }
+
+func TestNewUsesXaligoHome(t *testing.T) {
+	home := t.TempDir()
+	configDir := filepath.Join(home, "etc", "resources", "aws")
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(configDir, "app.yaml"), []byte("paths:\n  pptx_exporter_wasm: runtime/exporter.wasm\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("XALIGO_HOME", home)
+
+	cfg := config.New()
+	if cfg.ProjectRoot != home {
+		t.Fatalf("ProjectRoot = %q, want %q", cfg.ProjectRoot, home)
+	}
+	if cfg.PptxExporterWASM != filepath.Join(home, "runtime", "exporter.wasm") {
+		t.Fatalf("PptxExporterWASM = %q", cfg.PptxExporterWASM)
+	}
+}

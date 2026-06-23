@@ -39,21 +39,25 @@ const sampleDSL = `<frame width="1440" height="900" class="pa-4">
 </frame>
 `
 
-func InitInitCmd() *cobra.Command {
+type InitController struct{}
+
+func NewInitController() *InitController { return &InitController{} }
+
+func (rcvr *InitController) Command() *cobra.Command {
 	logger.DEBUG(ICIIIC001, "start")
 	var outputDir string
 	cmd := &cobra.Command{
 		Use:   "init",
 		Short: "Create starter xaligo template",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return RunInit(outputDir)
+			return rcvr.Run(outputDir)
 		},
 	}
 	cmd.Flags().StringVarP(&outputDir, "output", "o", ".", "output directory")
 	return cmd
 }
 
-func RunInit(outputDir string) error {
+func (rcvr *InitController) Run(outputDir string) error {
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
 		logger.ERROR(ICIRI001, "create output directory failed", map[string]any{"outputDir": outputDir, "error": err})
 		return fmt.Errorf("create output dir: %w", err)

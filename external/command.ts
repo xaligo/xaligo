@@ -35,7 +35,7 @@ async function main(): Promise<void> {
   installPptxWasiShims();
   const request = parsePptxExporterRequest(readAllText(0));
   const pptx = await exportPptxFromRequest(request);
-  writeAll(1, pptx);
+  writeAll(1, new TextEncoder().encode(bytesToBase64(pptx)));
   logger.DEBUG(ECM003, 'completed', { bytes: pptx.length });
 }
 
@@ -112,4 +112,19 @@ function writeAll(fd: number, bytes: Uint8Array): void {
     offset += chunk.length;
   }
   logger.DEBUG(ECWA002, 'completed', { fd, bytes: bytes.length });
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  let output = '';
+  for (let i = 0; i < bytes.length; i += 3) {
+    const a = bytes[i] ?? 0;
+    const b = bytes[i + 1] ?? 0;
+    const c = bytes[i + 2] ?? 0;
+    output += alphabet[a >> 2];
+    output += alphabet[((a & 0x03) << 4) | (b >> 4)];
+    output += i + 1 < bytes.length ? alphabet[((b & 0x0f) << 2) | (c >> 6)] : '=';
+    output += i + 2 < bytes.length ? alphabet[c & 0x3f] : '=';
+  }
+  return output;
 }

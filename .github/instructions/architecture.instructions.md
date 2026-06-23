@@ -14,14 +14,16 @@ direction lives in `roadmap.instructions.md`; DSL behavior lives in
 .xal source
    -> internal/usecase parser functions
    -> internal/usecase layout functions
-    -> resolved Excalidraw scene
-    -> shared draw plan / integration encoder
+    -> resolved canonical scene
+    -> internal/usecase plan calculations
+    -> internal/repository output encoder
     -> SVG | Excalidraw | PPTX | XYFlow | Isoflow
 ```
 
 The flat `internal/usecase` package is the shared rendering boundary.
-Format-rendering adapters (CLI, preview server, and WASM) call this use case
-instead of assembling a parallel parser/layout/render pipeline. Utility
+Format-rendering adapters (CLI, preview server, and WASM) call a
+constructor-injected use case instead of assembling a parallel
+parser/layout/render pipeline. Utility
 commands such as `generate xal` and `add service` may use their focused internal
 builders and repositories directly.
 
@@ -30,8 +32,8 @@ builders and repositories directly.
 | Path | Responsibility |
 |---|---|
 | `internal/entity` | Independent entity layer containing cross-layer structures |
-| `internal/usecase` | Parser, layout, rendering, validation, preview, and shared plan calculations; organized by filenames and constructor-injected API |
-| `internal/repository` | Native filesystem/catalog/PPTX adapter operations |
+| `internal/usecase` | Parser, layout, validation, scene/plan calculations, and orchestration; filenames describe processing only |
+| `internal/repository` | Filesystem, catalog, HTTP preview, and output-format encoding/export adapters |
 | `internal/command.go` | Root Cobra command assembly |
 | `internal/controller` | Cobra CLI argument and file-I/O adapters |
 | `cmd/wasm` | JavaScript-global adapter over shared use cases and embedded assets |
@@ -45,8 +47,7 @@ builders and repositories directly.
 1. `.xal` is the only source DSL. Do not add adapter-specific parsers.
 2. Mode selects visual semantics; format selects output serialization.
 3. Format-rendering production paths call parser and layout through
-   `internal/usecase`. Adapters use injected `usecase.API`, `Render`, `BuildPPTXPlan`,
-   `Validate`, or `Diagnose`.
+   `internal/usecase`. Adapters use an injected `usecase.XaligoUsecase`.
 4. Routing and connector behavior belongs in shared scene/plan layers, not in
    individual output adapters.
 5. Filesystem-less environments provide an `AssetSource`; they do not fork the
@@ -55,6 +56,11 @@ builders and repositories directly.
 7. New formats require a `Format` value, shared render function, CLI wiring,
    tests, and adapter documentation.
 8. Errors are returned and wrapped with context. Core packages do not panic.
+9. Native CLI dependency construction belongs in `NewRootCmd`; the WASM entry
+   point is its own composition root. Controllers depend on use cases, never on
+   other controllers.
+10. Input/output destination dependencies belong in `internal/repository` and
+    must not appear as use-case filenames.
 
 ## Dependency direction
 

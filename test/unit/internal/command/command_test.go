@@ -6,12 +6,11 @@ import (
 	"testing"
 
 	command "github.com/ryo-arima/xaligo/internal"
-	"github.com/ryo-arima/xaligo/internal/usecase"
 	"github.com/spf13/cobra"
 )
 
 func TestNewRootCmdAssemblesSubcommands(t *testing.T) {
-	for _, cmd := range []*cobra.Command{command.NewRootCmd(), command.NewRootCmdWithUseCase(nil), command.NewRootCmdWithUseCase(usecase.New())} {
+	for _, cmd := range []*cobra.Command{command.NewRootCmd()} {
 		if cmd.Use != "xaligo" || cmd.Short == "" || len(cmd.Commands()) < 7 {
 			t.Fatalf("root command = use %q short %q subcommands %d", cmd.Use, cmd.Short, len(cmd.Commands()))
 		}
