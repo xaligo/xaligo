@@ -145,9 +145,11 @@ const (
 	groupHeaderTextPadY     = 1
 	groupFontFamily         = 2 // Helvetica (normal)
 	groupLabelCharW         = 9.6
+	itemFallbackIconColor   = "#7758C1"
 )
 
 var svgTintColorRE = regexp.MustCompile(`(?i)#[0-9a-f]{3,8}|currentColor`)
+var svgCurrentColorRE = regexp.MustCompile(`(?i)currentColor`)
 
 var (
 	IUESW001   = share.NewMCode("IUESW-001", "Walk skip too small warning")
@@ -179,6 +181,22 @@ func tintSVGDataURL(dataURL, color string) string {
 		}
 	})
 	return share.SVGDataURLFromBytes([]byte(tinted))
+}
+
+// normalizeItemSVGDataURL resolves SVG currentColor for item icons. PowerPoint
+// does not reliably resolve currentColor when the WASM exporter embeds SVG
+// directly, so Tabler-style line icons can appear blank unless they carry an
+// explicit stroke color.
+func normalizeItemSVGDataURL(dataURL string) string {
+	if !strings.HasPrefix(dataURL, share.SVGDataURLPrefix) {
+		return dataURL
+	}
+	raw, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(dataURL, share.SVGDataURLPrefix))
+	if err != nil {
+		return dataURL
+	}
+	normalized := svgCurrentColorRE.ReplaceAllString(string(raw), itemFallbackIconColor)
+	return share.SVGDataURLFromBytes([]byte(normalized))
 }
 
 // staggerFills are background fill colors for staggered AZ layers.
@@ -895,6 +913,7 @@ func renderIconAt(boxID, idAttr string, iconX, iconY, iconSize float64, elements
 	if ce.DataURL == "" {
 		return
 	}
+	ce.DataURL = normalizeItemSVGDataURL(ce.DataURL)
 
 	updated := time.Now().UnixMilli()
 	fid := fmt.Sprintf("item-cat-%d", id)
