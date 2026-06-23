@@ -1,0 +1,6 @@
+.git
+external/dist
+external/node_modules
+external/wasm/*.wasm
+output
+vendor

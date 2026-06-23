@@ -84,6 +84,15 @@ require_command() {
 
 build_wasm_exporter() {
   local build_dir
+  if [[ -n "${PREBUILT_WASM:-}" ]]; then
+    if [[ ! -s "$PREBUILT_WASM" ]]; then
+      printf 'ERROR: prebuilt WASM exporter not found: %s\n' "$PREBUILT_WASM" >&2
+      exit 1
+    fi
+    mkdir -p external/wasm
+    install -m 0644 "$PREBUILT_WASM" external/wasm/xaligo.wasm
+    return
+  fi
   require_command npm
   require_command javy
   build_dir="$(mktemp -d)"

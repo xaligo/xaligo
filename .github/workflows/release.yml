@@ -1,105 +1,184 @@
 name: Release
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to release (e.g. 1.2.3 — without leading v)'
-        required: true
+        description: 'Version to release (e.g. 1.2.3 — without leading v). Defaults to internal CLI version.'
+        required: false
         type: string
 
+permissions:
+  contents: write
+
 jobs:
-  release:
+  metadata:
+    name: Resolve release metadata
     runs-on: ubuntu-latest
-    permissions:
-      contents: write   # needed to push the tag
-      packages: write   # needed to publish to GitHub Packages
+    outputs:
+      base_version: ${{ steps.meta.outputs.base_version }}
+      package_version: ${{ steps.meta.outputs.package_version }}
+      release_tag: ${{ steps.meta.outputs.release_tag }}
+      release_title: ${{ steps.meta.outputs.release_title }}
+      prerelease: ${{ steps.meta.outputs.prerelease }}
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Validate version format
+      - name: Resolve release metadata
+        id: meta
+        shell: bash
         run: |
-          echo "${{ inputs.version }}" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' \
-            || { echo "Invalid version: ${{ inputs.version }}. Must be X.Y.Z"; exit 1; }
+          input_version="${{ github.event.inputs.version || '' }}"
+          source_version="$(sed -n 's/^var version = "\(.*\)"/\1/p' internal/controller/version.go)"
+          base_version="${input_version:-$source_version}"
 
-      - name: Configure git
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [[ ! "$base_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid version: $base_version. Must be X.Y.Z" >&2
+            exit 1
+          fi
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
+          short_sha="$(git rev-parse --short=12 HEAD)"
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            package_version="${base_version}+main.${{ github.run_number }}"
+            release_tag="main-${{ github.run_number }}-${short_sha}"
+            release_title="xaligo ${base_version} main ${short_sha}"
+            prerelease="true"
+          else
+            package_version="$base_version"
+            release_tag="v${base_version}"
+            release_title="xaligo v${base_version}"
+            prerelease="false"
+          fi
+
+          {
+            echo "base_version=$base_version"
+            echo "package_version=$package_version"
+            echo "release_tag=$release_tag"
+            echo "release_title=$release_title"
+            echo "prerelease=$prerelease"
+          } >> "$GITHUB_OUTPUT"
+
+  package:
+    name: Build Linux packages (${{ matrix.goarch }})
+    runs-on: ubuntu-latest
+    needs: metadata
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - goarch: amd64
+            platform: linux/amd64
+          - goarch: arm64
+            platform: linux/arm64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
         with:
-          go-version: '1.22'
-          cache: true
+          platforms: amd64,arm64
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          registry-url: 'https://npm.pkg.github.com'
-          scope: '@ryo-arima'
-
-      - name: Install Go dependencies
-        run: go mod tidy
-
-      - name: Bump version in external/package.json
-        run: npm --prefix external version "${{ inputs.version }}" --no-git-tag-version
-
-      - name: Install npm dependencies
-        run: npm --prefix external install
-
-      - name: Build TypeScript package
-        run: npm --prefix external run build
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Build Ubuntu package image
-        run: docker build -f docker/ubuntu.Dockerfile -t xaligo-package-ubuntu .
+        run: |
+          docker buildx build \
+            --platform "${{ matrix.platform }}" \
+            --load \
+            -f docker/ubuntu.Dockerfile \
+            -t "xaligo-package-ubuntu:${{ matrix.goarch }}" \
+            .
 
       - name: Build Debian package
         run: |
           docker run --rm \
+            --platform "${{ matrix.platform }}" \
             -v "$PWD:/workspace" \
             -w /workspace \
-            -e VERSION="${{ inputs.version }}" \
-            xaligo-package-ubuntu \
+            -e VERSION="${{ needs.metadata.outputs.package_version }}" \
+            -e GOARCH="${{ matrix.goarch }}" \
+            "xaligo-package-ubuntu:${{ matrix.goarch }}" \
             scripts/build/build-deb.sh
 
       - name: Build Rocky package image
-        run: docker build -f docker/rocky.Dockerfile -t xaligo-package-rocky .
+        run: |
+          docker buildx build \
+            --platform "${{ matrix.platform }}" \
+            --load \
+            -f docker/rocky.Dockerfile \
+            -t "xaligo-package-rocky:${{ matrix.goarch }}" \
+            .
 
       - name: Build RPM package
         run: |
           docker run --rm \
+            --platform "${{ matrix.platform }}" \
             -v "$PWD:/workspace" \
             -w /workspace \
-            -e VERSION="${{ inputs.version }}" \
-            xaligo-package-rocky \
+            -e VERSION="${{ needs.metadata.outputs.package_version }}" \
+            -e GOARCH="${{ matrix.goarch }}" \
+            "xaligo-package-rocky:${{ matrix.goarch }}" \
             scripts/build/build-rpm.sh
 
       - name: Upload Linux packages
         uses: actions/upload-artifact@v4
         with:
-          name: xaligo-linux-packages-${{ inputs.version }}
+          name: xaligo-linux-packages-${{ matrix.goarch }}
           path: |
             output/packages/*.deb
             output/packages/*.rpm
           if-no-files-found: error
 
-      - name: Commit version bump
-        run: |
-          git add external/package.json
-          git commit -m "chore: release v${{ inputs.version }}"
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs:
+      - metadata
+      - package
 
-      - name: Create and push tag
-        run: |
-          git tag "v${{ inputs.version }}"
-          git push origin HEAD --follow-tags
+    steps:
+      - name: Download Linux packages
+        uses: actions/download-artifact@v4
+        with:
+          pattern: xaligo-linux-packages-*
+          path: output/release
+          merge-multiple: true
 
-      - name: Publish to GitHub Packages
-        run: npm --prefix external publish
+      - name: Create GitHub Release and upload packages
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.metadata.outputs.release_tag }}
+          RELEASE_TITLE: ${{ needs.metadata.outputs.release_title }}
+          PRERELEASE: ${{ needs.metadata.outputs.prerelease }}
+          PACKAGE_VERSION: ${{ needs.metadata.outputs.package_version }}
+        shell: bash
+        run: |
+          args=(
+            "$RELEASE_TAG"
+            output/release/*.deb
+            output/release/*.rpm
+            --target "$GITHUB_SHA"
+            --title "$RELEASE_TITLE"
+            --notes "Automated package build for ${GITHUB_SHA}. Package version: ${PACKAGE_VERSION}."
+            --repo "$GITHUB_REPOSITORY"
+          )
+
+          if [[ "$PRERELEASE" == "true" ]]; then
+            args+=(--prerelease)
+          fi
+
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" output/release/*.deb output/release/*.rpm --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            gh release create "${args[@]}"
+          fi
