@@ -523,6 +523,9 @@ func walk(b *entity.Box, elements *[]map[string]any, files map[string]any, svgGr
 			// Extend the opaque header mask beyond the group's left border so the
 			// vertical border cannot show through beside a catalog icon.
 			headerH := float64(groupTextHeight + groupHeaderTextPadY*2)
+			if iconDataURL != "" {
+				headerH = float64(groupIconSize)
+			}
 			headerTip := math.Min(groupHeaderTipMax, headerH/2)
 			headerW := textX + lblW + groupHeaderPadEnd + headerTip - headerX
 			headerY := avoidGroupHeaderBorderOverlap(headerX, b.Y-headerH/2, headerW, headerH, rectID, *elements)
@@ -755,8 +758,17 @@ func renderItemGrid(items []*entity.Box, ancestor *entity.Box, elements *[]map[s
 	}
 }
 
-func groupHeaderHeightForItems(_ *entity.Box) float64 {
+func groupHeaderHeightForItems(ancestor *entity.Box) float64 {
 	headerH := float64(groupTextHeight + groupHeaderTextPadY*2)
+	if ancestor == nil {
+		return headerH
+	}
+	if ancestor.Tag == "generic-group" && strings.TrimSpace(ancestor.Attrs["icon-id"]) != "" {
+		return float64(groupIconSize)
+	}
+	if gd, ok := awsGroups[ancestor.Tag]; ok && gd.IconFile != "" {
+		return float64(groupIconSize)
+	}
 	return headerH
 }
 

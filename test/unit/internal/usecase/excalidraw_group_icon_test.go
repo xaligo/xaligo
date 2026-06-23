@@ -67,14 +67,11 @@ func TestGenericGroupCatalogIcon(t *testing.T) {
 	if header["y"].(float64)+header["height"].(float64)/2 != borderY {
 		t.Fatalf("header and content centers do not align: header=%#v icon=%#v", header, icon)
 	}
-	if header["x"].(float64) != icon["x"].(float64) {
-		t.Fatalf("header and icon x positions do not align: header=%#v icon=%#v", header, icon)
+	if header["x"].(float64) != icon["x"].(float64) || header["y"].(float64) != icon["y"].(float64) || header["height"].(float64) != icon["height"].(float64) {
+		t.Fatalf("header and icon bounds do not align: header=%#v icon=%#v", header, icon)
 	}
-	if header["height"].(float64) != label["height"].(float64)+2 {
-		t.Fatalf("header height = %v, want label height + 2: header=%#v label=%#v", header["height"], header, label)
-	}
-	if !(header["x"].(float64) <= icon["x"].(float64) && header["x"].(float64)+header["width"].(float64) >= label["x"].(float64)+label["width"].(float64)) {
-		t.Fatalf("header does not cover icon start and label horizontally: header=%#v icon=%#v label=%#v", header, icon, label)
+	if !(header["x"].(float64) <= icon["x"].(float64) && header["y"].(float64) <= icon["y"].(float64) && header["x"].(float64)+header["width"].(float64) >= label["x"].(float64)+label["width"].(float64)) {
+		t.Fatalf("header does not cover icon and label: header=%#v icon=%#v label=%#v", header, icon, label)
 	}
 	wantRight := 18.0 + min(14.0, header["height"].(float64)/2)
 	if got := header["x"].(float64) + header["width"].(float64) - label["x"].(float64) - label["width"].(float64); got != wantRight {
