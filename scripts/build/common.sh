@@ -67,6 +67,7 @@ build_linux_binary() {
   mkdir -p "$(dirname "$output")"
   GOOS="$(go_os)" GOARCH="$(go_arch)" CGO_ENABLED=0 \
     go build \
+      -buildvcs=false \
       -trimpath \
       -ldflags "-X github.com/ryo-arima/xaligo/internal/controller.version=${version}" \
       -o "$output" \
