@@ -1,11 +1,13 @@
 package usecase_test
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"strings"
 	"testing"
 
 	awsassets "github.com/ryo-arima/xaligo/etc/resources/aws"
+	"github.com/ryo-arima/xaligo/internal/share"
 	"github.com/ryo-arima/xaligo/internal/usecase"
 )
 
@@ -142,6 +144,44 @@ func TestItemLabelHeightExpandsForWrappedCatalogLabel(t *testing.T) {
 	t.Fatal("item label not found")
 }
 
+func TestTablerItemIconCurrentColorIsResolved(t *testing.T) {
+	doc, err := usecase.Parse(strings.NewReader(`<frame width="200" height="160"><generic-group title="Network"><item id="104915" /></generic-group></frame>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	root, err := usecase.Build(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	out, err := usecase.BuildJSONWithFS(root, awsassets.Assets, awsassets.CatalogCSV, awsassets.GroupIconsDir, 32, nil, nil, newSceneDependencies())
+	if err != nil {
+		t.Fatal(err)
+	}
+	var scene sceneFile
+	if err := json.Unmarshal(out, &scene); err != nil {
+		t.Fatal(err)
+	}
+	file, ok := scene.Files["item-cat-104915"].(map[string]any)
+	if !ok {
+		t.Fatalf("item file missing: %#v", scene.Files)
+	}
+	dataURL, ok := file["dataURL"].(string)
+	if !ok || !strings.HasPrefix(dataURL, share.SVGDataURLPrefix) {
+		t.Fatalf("item dataURL = %#v", file["dataURL"])
+	}
+	raw, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(dataURL, share.SVGDataURLPrefix))
+	if err != nil {
+		t.Fatal(err)
+	}
+	svg := string(raw)
+	if strings.Contains(strings.ToLower(svg), "currentcolor") {
+		t.Fatalf("item SVG still contains currentColor: %s", svg)
+	}
+	if !strings.Contains(svg, "#7758C1") {
+		t.Fatalf("item SVG does not contain fallback icon color: %s", svg)
+	}
+}
+
 func TestGroupWithoutIconKeepsBalancedVerticalPadding(t *testing.T) {
 	doc, err := usecase.Parse(strings.NewReader(`<frame width="400" height="200"><generic-group title="Compact" /></frame>`))
 	if err != nil {
@@ -173,7 +213,7 @@ func TestGroupWithoutIconKeepsBalancedVerticalPadding(t *testing.T) {
 	}
 	top := label["y"].(float64) - header["y"].(float64)
 	bottom := header["y"].(float64) + header["height"].(float64) - label["y"].(float64) - label["height"].(float64)
-	if top != bottom || top != 3.0 {
+	if top != bottom || top != 1.0 {
 		t.Fatalf("compact header vertical padding top=%v bottom=%v: header=%#v label=%#v", top, bottom, header, label)
 	}
 }
