@@ -132,13 +132,37 @@ jobs:
             "xaligo-package-rocky:${{ matrix.goarch }}" \
             scripts/build/build-rpm.sh
 
-      - name: Upload Linux packages
+      - name: Build npm package
+        if: matrix.goarch == 'amd64'
+        run: |
+          docker run --rm \
+            --platform "${{ matrix.platform }}" \
+            -v "$PWD:/workspace" \
+            -w /workspace \
+            -e VERSION="${{ needs.metadata.outputs.package_version }}" \
+            -e RELEASE_TAG="${{ needs.metadata.outputs.release_tag }}" \
+            -e GOFLAGS="-buildvcs=false" \
+            -e NPM_PACKAGE_TARGETS="darwin/amd64 darwin/arm64 linux/amd64 linux/arm64 windows/amd64 windows/arm64" \
+            "xaligo-package-ubuntu:${{ matrix.goarch }}" \
+            sh -ec '
+              npm install --no-audit --no-fund
+              node -e "const fs=require(\"node:fs\"); const path=\"package.json\"; const pkg=JSON.parse(fs.readFileSync(path, \"utf8\")); pkg.version=process.env.VERSION; pkg.xaligo={...(pkg.xaligo || {}), releaseTag: process.env.RELEASE_TAG}; fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + \"\n\");"
+              npm run build
+              npm run build:npm-binaries
+              mkdir -p output/packages
+              npm pack --pack-destination output/packages
+              cp bin/native/xaligo-* output/packages/
+            '
+
+      - name: Upload packages
         uses: actions/upload-artifact@v4
         with:
-          name: xaligo-linux-packages-${{ matrix.goarch }}
+          name: xaligo-packages-${{ matrix.goarch }}
           path: |
             output/packages/*.deb
             output/packages/*.rpm
+            output/packages/*.tgz
+            output/packages/xaligo-*
           if-no-files-found: error
 
   release:
@@ -147,21 +171,14 @@ jobs:
     needs:
       - metadata
       - package
-      - npm-package
 
     steps:
-      - name: Download Linux packages
+      - name: Download packages
         uses: actions/download-artifact@v4
         with:
-          pattern: xaligo-linux-packages-*
+          pattern: xaligo-packages-*
           path: output/release
           merge-multiple: true
-
-      - name: Download npm package
-        uses: actions/download-artifact@v4
-        with:
-          name: xaligo-npm-package
-          path: output/release
 
       - name: Create GitHub Release and upload packages
         env:
@@ -203,67 +220,3 @@ jobs:
           else
             gh release create "${args[@]}"
           fi
-
-  npm-package:
-    name: Build npm package
-    runs-on: ubuntu-latest
-    needs: metadata
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Set up Go
-        uses: actions/setup-go@v6
-        with:
-          go-version: '1.22'
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '20'
-
-      - name: Install Javy
-        shell: bash
-        run: |
-          case "$(uname -m)" in
-            x86_64) javy_arch="x86_64" ;;
-            aarch64|arm64) javy_arch="arm" ;;
-            *) echo "unsupported runner architecture: $(uname -m)" >&2; exit 1 ;;
-          esac
-          javy_version="9.0.0"
-          javy_asset="javy-${javy_arch}-linux-v${javy_version}.gz"
-          curl -fsSL "https://github.com/bytecodealliance/javy/releases/download/v${javy_version}/${javy_asset}" -o /tmp/javy.gz
-          curl -fsSL "https://github.com/bytecodealliance/javy/releases/download/v${javy_version}/${javy_asset}.sha256" -o /tmp/javy.sha256
-          printf '%s  %s\n' "$(cut -d ' ' -f 1 /tmp/javy.sha256)" /tmp/javy.gz | sha256sum -c -
-          gzip -dc /tmp/javy.gz > /tmp/javy
-          sudo install -m 0755 /tmp/javy /usr/local/bin/javy
-          javy --version
-
-      - name: Install npm dependencies
-        run: npm install --no-audit --no-fund
-
-      - name: Set npm package version
-        env:
-          VERSION: ${{ needs.metadata.outputs.package_version }}
-        run: |
-          node -e "const fs=require('node:fs'); const path='package.json'; const pkg=JSON.parse(fs.readFileSync(path, 'utf8')); pkg.version=process.env.VERSION; fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n');"
-
-      - name: Build npm package assets
-        env:
-          VERSION: ${{ needs.metadata.outputs.package_version }}
-          NPM_PACKAGE_TARGETS: darwin/amd64 darwin/arm64 linux/amd64 linux/arm64 windows/amd64 windows/arm64
-        run: |
-          npm run build
-          npm run build:npm-binaries
-          mkdir -p output/packages
-          npm pack --pack-destination output/packages
-
-      - name: Upload npm package
-        uses: actions/upload-artifact@v4
-        with:
-          name: xaligo-npm-package
-          path: |
-            output/packages/*.tgz
-            bin/native/xaligo-*
-          if-no-files-found: error

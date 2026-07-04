@@ -6,6 +6,14 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const packageRoot = path.resolve(__dirname, '..');
+const supportedTargets = new Set([
+  'darwin/amd64',
+  'darwin/arm64',
+  'linux/amd64',
+  'linux/arm64',
+  'win32/amd64',
+  'win32/arm64',
+]);
 
 function goArch() {
   switch (process.arch) {
@@ -16,6 +24,15 @@ function goArch() {
     default:
       return process.arch;
   }
+}
+
+function target() {
+  return `${process.platform}/${goArch()}`;
+}
+
+if (!supportedTargets.has(target())) {
+  console.error(`xaligo does not provide a native binary for ${process.platform}/${process.arch}.`);
+  process.exit(1);
 }
 
 const executable = process.platform === 'win32'

@@ -36,7 +36,7 @@
     "xaligo": "bin/xaligo.cjs"
   },
   "files": [
-    "bin",
+    "bin/xaligo.cjs",
     "scripts/npm",
     "etc/resources/aws/app.yaml",
     "etc/resources/aws/isoflow-icons.json",
