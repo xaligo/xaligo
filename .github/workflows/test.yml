@@ -9,6 +9,48 @@ permissions:
   contents: read
 
 jobs:
+  version:
+    name: Version bump
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Check VERSION increased
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          current_version="$(sed -n '1{s/^v//;p;q;}' VERSION)"
+          if [[ ! "$current_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid VERSION: $current_version. Must be X.Y.Z" >&2
+            exit 1
+          fi
+
+          if ! base_version="$(git show '${{ github.event.pull_request.base.sha }}:VERSION' 2>/dev/null | sed -n '1{s/^v//;p;q;}')"; then
+            echo "Base branch has no VERSION file; only format was checked."
+            exit 0
+          fi
+          if [[ ! "$base_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid base VERSION: $base_version. Must be X.Y.Z" >&2
+            exit 1
+          fi
+
+          IFS=. read -r current_major current_minor current_patch <<< "$current_version"
+          IFS=. read -r base_major base_minor base_patch <<< "$base_version"
+          if (( current_major > base_major )) ||
+             (( current_major == base_major && current_minor > base_minor )) ||
+             (( current_major == base_major && current_minor == base_minor && current_patch > base_patch )); then
+            echo "VERSION increased: $base_version -> $current_version"
+            exit 0
+          fi
+
+          echo "VERSION must be increased for PRs to main: $base_version -> $current_version" >&2
+          exit 1
+
   test:
     name: Go test
     runs-on: ubuntu-latest

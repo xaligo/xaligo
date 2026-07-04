@@ -3,6 +3,8 @@
 BIN_DIR  := .bin
 BINARY   := $(BIN_DIR)/xaligo
 WASM_OUT      := external/wasm
+VERSION  := $(shell sed -n '1{s/^v//;p;q;}' VERSION)
+LDFLAGS  := -X github.com/xaligo/xaligo/internal/controller.version=$(VERSION)
 
 help: ## Show commands
 	@echo "Available targets:"
@@ -10,7 +12,7 @@ help: ## Show commands
 
 build: build-wasm ## Build CLI binary and PPTX exporter WASM bundle
 	@mkdir -p $(BIN_DIR)
-	go build -o $(BINARY) ./cmd
+	go build -ldflags "$(LDFLAGS)" -o $(BINARY) ./cmd
 	@echo "Built: $(BINARY)"
 
 build-wasm: ## Build TS/WASI PPTX exporter into external/wasm/

@@ -5,7 +5,7 @@ const { spawn } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const packageRoot = path.resolve(__dirname, '..', '..');
+const packageRoot = path.resolve(__dirname, '..');
 
 function goArch() {
   switch (process.arch) {
@@ -49,4 +49,3 @@ child.on('exit', (code, signal) => {
   }
   process.exit(code ?? 0);
 });
-
