@@ -13,7 +13,7 @@ import (
 const svgDefaultPxPerInch = 96.0
 
 type SVGRepository interface {
-	Render(plan entity.Plan, pxPerInch float64) ([]byte, error)
+	Render(plan entity.Plan, pxPerInch float64, legendPosition string) ([]byte, error)
 }
 
 type svgRepository struct{}
@@ -21,7 +21,7 @@ type svgRepository struct{}
 func NewSVGRepository() SVGRepository { return &svgRepository{} }
 
 // RenderPlan converts the shared draw plan into an SVG document.
-func (rcvr *svgRepository) Render(plan entity.Plan, pxPerInch float64) ([]byte, error) {
+func (rcvr *svgRepository) Render(plan entity.Plan, pxPerInch float64, legendPosition string) ([]byte, error) {
 	if pxPerInch <= 0 {
 		pxPerInch = svgDefaultPxPerInch
 	}
@@ -31,18 +31,108 @@ func (rcvr *svgRepository) Render(plan entity.Plan, pxPerInch float64) ([]byte, 
 
 	w := plan.Slide.W * pxPerInch
 	h := plan.Slide.H * pxPerInch
+	layout := svgLegendLayout(w, h, plan.Legend, legendPosition)
 
 	var b bytes.Buffer
 	b.WriteString(`<?xml version="1.0" encoding="UTF-8"?>` + "\n")
-	fmt.Fprintf(&b, `<svg xmlns="http://www.w3.org/2000/svg" width="%s" height="%s" viewBox="0 0 %s %s">`+"\n", num(w), num(h), num(w), num(h))
+	fmt.Fprintf(&b, `<svg xmlns="http://www.w3.org/2000/svg" width="%s" height="%s" viewBox="0 0 %s %s">`+"\n", num(layout.canvasW), num(layout.canvasH), num(layout.canvasW), num(layout.canvasH))
 	b.WriteString(`<defs><marker id="xaligo-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker><marker id="xaligo-oval" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto" markerUnits="strokeWidth"><circle cx="3.5" cy="3.5" r="2.5" fill="context-stroke"/></marker></defs>` + "\n")
-	fmt.Fprintf(&b, `<rect x="0" y="0" width="%s" height="%s" fill="#%s"/>`+"\n", num(w), num(h), color(plan.Slide.Background, "FFFFFF"))
+	fmt.Fprintf(&b, `<rect x="0" y="0" width="%s" height="%s" fill="#%s"/>`+"\n", num(layout.canvasW), num(layout.canvasH), color(plan.Slide.Background, "FFFFFF"))
 
+	if layout.diagramX != 0 || layout.diagramY != 0 {
+		fmt.Fprintf(&b, `<g transform="translate(%s %s)">`+"\n", num(layout.diagramX), num(layout.diagramY))
+	}
 	for _, op := range plan.Ops {
 		writeOp(&b, op, pxPerInch)
 	}
+	if layout.diagramX != 0 || layout.diagramY != 0 {
+		b.WriteString("</g>\n")
+	}
+	writeLegend(&b, plan.Legend, layout)
 	b.WriteString("</svg>\n")
 	return b.Bytes(), nil
+}
+
+type svgLegendBox struct {
+	canvasW  float64
+	canvasH  float64
+	diagramX float64
+	diagramY float64
+	legendX  float64
+	legendY  float64
+	legendW  float64
+	legendH  float64
+	visible  bool
+}
+
+func svgLegendLayout(w, h float64, entries []entity.LegendEntry, position string) svgLegendBox {
+	layout := svgLegendBox{canvasW: w, canvasH: h}
+	if len(entries) == 0 {
+		return layout
+	}
+	position = strings.ToLower(strings.TrimSpace(position))
+	if position == "" {
+		position = "bottom"
+	}
+	const (
+		gap       = 24.0
+		pad       = 16.0
+		rowH      = 38.0
+		sideW     = 280.0
+		bottomMin = 360.0
+	)
+	rows := float64(len(entries))
+	layout.visible = true
+	switch position {
+	case "top":
+		layout.legendW = math.Max(bottomMin, w)
+		layout.legendH = pad*2 + rows*rowH
+		layout.canvasW = math.Max(w, layout.legendW)
+		layout.canvasH = h + gap + layout.legendH
+		layout.diagramY = layout.legendH + gap
+	case "right":
+		layout.legendW = sideW
+		layout.legendH = pad*2 + rows*rowH
+		layout.canvasW = w + gap + layout.legendW
+		layout.canvasH = math.Max(h, layout.legendH)
+		layout.legendX = w + gap
+	case "left":
+		layout.legendW = sideW
+		layout.legendH = pad*2 + rows*rowH
+		layout.canvasW = w + gap + layout.legendW
+		layout.canvasH = math.Max(h, layout.legendH)
+		layout.diagramX = layout.legendW + gap
+	default:
+		layout.legendW = math.Max(bottomMin, w)
+		layout.legendH = pad*2 + rows*rowH
+		layout.canvasW = math.Max(w, layout.legendW)
+		layout.canvasH = h + gap + layout.legendH
+		layout.legendY = h + gap
+	}
+	return layout
+}
+
+func writeLegend(b *bytes.Buffer, entries []entity.LegendEntry, layout svgLegendBox) {
+	if !layout.visible {
+		return
+	}
+	const (
+		pad      = 16.0
+		rowH     = 38.0
+		iconSize = 24.0
+	)
+	fmt.Fprintf(b, `<g id="xaligo-svg-legend" transform="translate(%s %s)">`+"\n", num(layout.legendX), num(layout.legendY))
+	fmt.Fprintf(b, `<rect x="0" y="0" width="%s" height="%s" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>`+"\n", num(layout.legendW), num(layout.legendH))
+	for i, entry := range entries {
+		y := pad + float64(i)*rowH
+		if entry.Data != "" {
+			fmt.Fprintf(b, `<image x="%s" y="%s" width="%s" height="%s" href="%s"/>`+"\n", num(pad), num(y), num(iconSize), num(iconSize), attr(entry.Data))
+		}
+		textX := pad + iconSize + 10
+		fmt.Fprintf(b, `<text x="%s" y="%s" fill="#0F172A" font-family="Arial" font-size="12" font-weight="700">%s</text>`+"\n", num(textX), num(y+11), text(entry.Abbreviation))
+		fmt.Fprintf(b, `<text x="%s" y="%s" fill="#475569" font-family="Arial" font-size="10">%s</text>`+"\n", num(textX), num(y+25), text(entry.OfficialName))
+	}
+	b.WriteString("</g>\n")
 }
 
 func writeOp(b *bytes.Buffer, op entity.DrawOp, ppi float64) {

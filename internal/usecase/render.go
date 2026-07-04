@@ -85,7 +85,7 @@ func (rcvr *xaligoUsecase) renderSVG(ctx context.Context, input []byte, opts ent
 		logger.ERROR(IURRS002, "decode plan failed", map[string]any{"error": err})
 		return nil, fmt.Errorf("decode SVG plan: %w", err)
 	}
-	return rcvr.svgRepository.Render(plan, opts.PxPerInch)
+	return rcvr.svgRepository.Render(plan, opts.PxPerInch, opts.SVGLegendPosition)
 }
 
 var (

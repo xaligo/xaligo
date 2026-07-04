@@ -202,7 +202,9 @@ xaligo render examples/sample.xal \
 ```
 
 `--services` is strongly recommended for this workflow. The CSV provides
-icon label overrides and service metadata.
+icon label overrides and service metadata. SVG output also uses it to draw a
+service legend; place that legend with
+`--svg-legend-position top|right|bottom|left` (default `bottom`).
 
 > **Note:** Create the output directory if it does not already exist.
 > ```bash
@@ -217,6 +219,7 @@ icon label overrides and service metadata.
 |---|---|
 | `grep -i "<name>" etc/resources/aws/service-index.csv` | Search for a service ID |
 | `xaligo render <xal> --format excalidraw -o <out> --services <csv>` | Convert .xal → .excalidraw with legend |
+| `xaligo render <xal> --format svg -o <out.svg> --services <csv> --svg-legend-position right` | Convert .xal → SVG with a service legend |
 | `xaligo render <xal> --format pptx -o <out.pptx> --services <csv> --paper A3 --orientation landscape` | Convert .xal → PPTX when the WASI exporter is configured |
 | `xaligo add service --list <csv> --file <excalidraw>` | Add service icons to an existing file |
 | `xaligo render <xal> -o <excalidraw>` | Convert .xal → .excalidraw without legend |
