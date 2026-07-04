@@ -78,7 +78,7 @@ external/      @xaligo/xaligo-external — internal TS/PptxGenJS build workspace
 | Command | Description |
 |---|---|
 | `xaligo render <file.xal> --format excalidraw -o <out.excalidraw> [--mode standard\|network\|aws] [--theme light\|dark] [--services <csv>]` | Convert .xal → .excalidraw |
-| `xaligo render <file.xal> --format svg -o <out.svg> [--mode standard\|network\|aws] [--theme light\|dark] [--services <csv>]` | Convert .xal → SVG |
+| `xaligo render <file.xal> --format svg -o <out.svg> [--mode standard\|network\|aws] [--theme light\|dark] [--services <csv>] [--svg-legend-position top\|right\|bottom\|left]` | Convert .xal → SVG |
 | `xaligo render <file.xal> --format pptx -o <out.pptx> [--mode standard\|network\|aws] [--theme light\|dark] [--services <csv>] [pptx flags]` | Convert .xal → .pptx via the WASM PPTX exporter |
 | `xaligo render <file.xal> --format xyflow -o <out.json> [--mode standard\|network\|aws]` | Export React Flow/XYFlow nodes and edges |
 | `xaligo render <file.xal> --format isoflow -o <out.json> [--mode standard\|network\|aws]` | Export an Isoflow-compatible model JSON |
@@ -158,6 +158,10 @@ must have a positive numeric `id` and a non-empty `OfficialName`; duplicate IDs
 are rejected. `Abbreviation` is optional and, when present, is used for the
 short icon label and legend abbreviation. When it is empty, xaligo falls back to
 the built-in abbreviation table or the official name.
+
+SVG output draws a service legend when `--services` is provided. Use
+`--svg-legend-position top|right|bottom|left` to place it; the default is
+`bottom`.
 
 ## Sample Gallery
 

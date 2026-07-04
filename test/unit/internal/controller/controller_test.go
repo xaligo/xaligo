@@ -230,6 +230,9 @@ func TestRunRenderFormatWithUseCaseWritesFormats(t *testing.T) {
 			if len(data) == 0 || fake.lastRenderOpts.Abbreviations[27] != "EC2" {
 				t.Fatalf("data=%q opts=%#v", data, fake.lastRenderOpts)
 			}
+			if format == "svg" && !strings.Contains(string(fake.lastRenderOpts.ServicesCSV), "Amazon EC2") {
+				t.Fatalf("svg services CSV was not forwarded: %#v", fake.lastRenderOpts)
+			}
 		})
 	}
 }
@@ -267,11 +270,11 @@ func TestRenderCommandUsesDefaultOutputs(t *testing.T) {
 		explicit := filepath.Join(dir, "explicit.svg")
 		fake := &fakeUseCase{}
 		cmd := newRenderController(fake).Command()
-		cmd.SetArgs([]string{input, "--format", "svg", "--output", explicit, "--compression", "--theme", "dark", "--mode", "network", "--px-per-inch", "120", "--arrow-style", "standard", "--arrow-stub", "22", "--arrow-margin", "11", "--paper", "A4", "--orientation", "landscape", "--paper-margin-left", "0.25"})
+		cmd.SetArgs([]string{input, "--format", "svg", "--output", explicit, "--compression", "--theme", "dark", "--mode", "network", "--px-per-inch", "120", "--arrow-style", "standard", "--arrow-stub", "22", "--arrow-margin", "11", "--paper", "A4", "--orientation", "landscape", "--paper-margin-left", "0.25", "--svg-legend-position", "left"})
 		if err := cmd.Execute(); err != nil {
 			t.Fatal(err)
 		}
-		if fake.lastRenderOpts.Theme != "dark" || fake.lastRenderOpts.Mode != entity.Mode("network") || fake.lastRenderOpts.PxPerInch != 120 || fake.lastRenderOpts.ArrowStyle != "standard" || fake.lastRenderOpts.PaperMarginLeftIn != 0.25 {
+		if fake.lastRenderOpts.Theme != "dark" || fake.lastRenderOpts.Mode != entity.Mode("network") || fake.lastRenderOpts.PxPerInch != 120 || fake.lastRenderOpts.ArrowStyle != "standard" || fake.lastRenderOpts.PaperMarginLeftIn != 0.25 || fake.lastRenderOpts.SVGLegendPosition != "left" {
 			t.Fatalf("explicit render opts = %#v", fake.lastRenderOpts)
 		}
 		if _, err := os.Stat(explicit); err != nil {

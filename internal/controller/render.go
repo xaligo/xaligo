@@ -119,6 +119,7 @@ func (rcvr *RenderController) Command() *cobra.Command {
 		exporterWASM      string
 		theme             string
 		mode              string
+		svgLegendPosition string
 	)
 
 	cmd := &cobra.Command{
@@ -165,6 +166,7 @@ func (rcvr *RenderController) Command() *cobra.Command {
 				ExporterWASM:      exporterWASM,
 				Theme:             theme,
 				Mode:              mode,
+				SVGLegendPosition: svgLegendPosition,
 				Stdout:            os.Stdout,
 				Stderr:            os.Stderr,
 			})
@@ -194,6 +196,7 @@ func (rcvr *RenderController) Command() *cobra.Command {
 	cmd.Flags().StringVar(&exporterWASM, "pptx-exporter-wasm", "", "path to the WASM PPTX exporter (default: external/wasm/xaligo.wasm or XALIGO_PPTX_EXPORTER_WASM)")
 	cmd.Flags().StringVar(&theme, "theme", "light", "color theme: light | dark")
 	cmd.Flags().StringVar(&mode, "mode", "standard", "rendering mode: standard | network | aws")
+	cmd.Flags().StringVar(&svgLegendPosition, "svg-legend-position", "bottom", "SVG legend position when --services is provided: top | right | bottom | left")
 	logger.DEBUG(ICRIRCWUC007, "return command")
 	return cmd
 }
@@ -214,6 +217,7 @@ func (rcvr *RenderController) RunFormat(opts entity.ControllerRenderOptions) err
 		Mode: entity.Mode(opts.Mode), Format: entity.Format(opts.Format), Theme: opts.Theme,
 		PaperMarginIn: opts.PaperMargin, PaperMarginTopIn: opts.PaperMarginTop, PaperMarginRightIn: opts.PaperMarginRight,
 		PaperMarginBottomIn: opts.PaperMarginBottom, PaperMarginLeftIn: opts.PaperMarginLeft,
+		SVGLegendPosition: opts.SVGLegendPosition,
 	}); err != nil {
 		logger.ERROR(ICRRRFWUC002, "validate render options failed", map[string]any{"error": err})
 		return err
@@ -260,7 +264,7 @@ func (rcvr *RenderController) RunFormat(opts entity.ControllerRenderOptions) err
 			logger.DEBUG(ICRRRFWUC013, "branch svg services file", map[string]any{"servicesFile": opts.ServicesFile})
 			warnServiceMismatch(rcvr.usecase, opts.InputPath, opts.ServicesFile)
 		}
-		return runRenderSVG(rcvr.usecase, opts.InputPath, opts.OutputPath, abbrevMap, opts.Mode, theme, opts.PxPerInch, opts.ArrowStyle, opts.ArrowStub, opts.ArrowMargin, opts.Paper, opts.Orientation, opts.PaperMargin, opts.PaperMarginTop, opts.PaperMarginRight, opts.PaperMarginBottom, opts.PaperMarginLeft)
+		return runRenderSVG(rcvr.usecase, opts.InputPath, opts.OutputPath, opts.ServicesFile, abbrevMap, opts.Mode, theme, opts.PxPerInch, opts.ArrowStyle, opts.ArrowStub, opts.ArrowMargin, opts.Paper, opts.Orientation, opts.PaperMargin, opts.PaperMarginTop, opts.PaperMarginRight, opts.PaperMarginBottom, opts.PaperMarginLeft, opts.SVGLegendPosition)
 	case "pptx":
 		logger.DEBUG(ICRRRFWUC014, "branch pptx")
 		return runGeneratePptx(rcvr.usecase, entity.ControllerPptxGenerateOptions{
@@ -419,18 +423,27 @@ func runRenderExcalidraw(uc usecase.XaligoUsecase, inputPath, outputPath string,
 	return nil
 }
 
-func runRenderSVG(uc usecase.XaligoUsecase, inputPath, outputPath string, abbrevMap map[int]string, mode, theme string, pxPerInch float64, arrowStyle string, arrowStub, arrowMargin float64, paper, orientation string, paperMargin, paperMarginTop, paperMarginRight, paperMarginBottom, paperMarginLeft float64) error {
+func runRenderSVG(uc usecase.XaligoUsecase, inputPath, outputPath, servicesFile string, abbrevMap map[int]string, mode, theme string, pxPerInch float64, arrowStyle string, arrowStub, arrowMargin float64, paper, orientation string, paperMargin, paperMarginTop, paperMarginRight, paperMarginBottom, paperMarginLeft float64, svgLegendPosition string) error {
 	input, err := os.ReadFile(inputPath)
 	if err != nil {
 		logger.ERROR(ICRRRSVG001, "read input failed", map[string]any{"input": inputPath, "error": err})
 		return fmt.Errorf("read input file: %w", err)
 	}
+	var servicesCSV []byte
+	if servicesFile != "" {
+		servicesCSV, err = os.ReadFile(servicesFile)
+		if err != nil {
+			logger.ERROR(ICRRRSVG001, "read services failed", map[string]any{"servicesFile": servicesFile, "error": err})
+			return fmt.Errorf("read services %s: %w", servicesFile, err)
+		}
+	}
 	out, err := uc.RenderSVG(context.Background(), input, entity.RenderOptions{
-		Mode: entity.Mode(mode), Theme: theme, Abbreviations: abbrevMap, PxPerInch: pxPerInch,
+		Mode: entity.Mode(mode), Theme: theme, ServicesCSV: servicesCSV, Abbreviations: abbrevMap, PxPerInch: pxPerInch,
 		ArrowStyle: arrowStyle, ArrowStubPx: arrowStub, ArrowMarginPx: arrowMargin,
 		PaperSize: paper, Orientation: orientation,
 		PaperMarginIn: paperMargin, PaperMarginTopIn: paperMarginTop, PaperMarginRightIn: paperMarginRight,
 		PaperMarginBottomIn: paperMarginBottom, PaperMarginLeftIn: paperMarginLeft,
+		SVGLegendPosition: svgLegendPosition,
 	})
 	if err != nil {
 		logger.ERROR(ICRRRSVG002, "render failed", map[string]any{"error": err})

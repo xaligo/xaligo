@@ -50,7 +50,7 @@ jobs:
             release_tag="main-${{ github.run_number }}"
             release_title="xaligo ${base_version} main ${{ github.run_number }}"
             prerelease="true"
-            npm_tag="main"
+            npm_tag="latest"
           else
             package_version="$base_version"
             release_tag="v${base_version}"

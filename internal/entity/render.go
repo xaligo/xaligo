@@ -35,6 +35,7 @@ type RenderOptions struct {
 	PaperMarginRightIn  float64 `json:"paperMarginRight,omitempty"`
 	PaperMarginBottomIn float64 `json:"paperMarginBottom,omitempty"`
 	PaperMarginLeftIn   float64 `json:"paperMarginLeft,omitempty"`
+	SVGLegendPosition   string  `json:"svgLegendPosition,omitempty"`
 
 	Title            string `json:"title,omitempty"`
 	Author           string `json:"author,omitempty"`

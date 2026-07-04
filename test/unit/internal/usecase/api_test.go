@@ -267,6 +267,25 @@ func TestBuildPPTXPlanUsesServiceLegend(t *testing.T) {
 	}
 }
 
+func TestRenderSVGDrawsServiceLegend(t *testing.T) {
+	out, err := newUsecase().RenderSVG(context.Background(), []byte(`<frame width="240" height="120"><item id="27" /></frame>`), entity.RenderOptions{
+		Theme:             "light",
+		SVGLegendPosition: "right",
+		ServicesCSV: []byte(strings.Join([]string{
+			"27,Amazon EC2,EC2,Virtual server,Application tier,",
+		}, "\n")),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	svg := string(out)
+	for _, want := range []string{`id="xaligo-svg-legend"`, `EC2`, `Amazon EC2`} {
+		if !strings.Contains(svg, want) {
+			t.Fatalf("SVG missing %q:\n%s", want, svg)
+		}
+	}
+}
+
 func TestBuildPPTXPlanValidatesServiceLegend(t *testing.T) {
 	cases := []struct {
 		name     string

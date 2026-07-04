@@ -35,6 +35,11 @@ func ValidateRenderOptions(opts entity.RenderOptions) error {
 	if opts.PaperMarginIn < 0 || opts.PaperMarginTopIn < 0 || opts.PaperMarginRightIn < 0 || opts.PaperMarginBottomIn < 0 || opts.PaperMarginLeftIn < 0 {
 		return fmt.Errorf("paper margins must be non-negative")
 	}
+	switch strings.ToLower(strings.TrimSpace(opts.SVGLegendPosition)) {
+	case "", "top", "right", "bottom", "left":
+	default:
+		return fmt.Errorf("unknown SVG legend position %q; valid: top, right, bottom, left", opts.SVGLegendPosition)
+	}
 	if _, err := entity.NormalizeTheme(opts.Theme); err != nil {
 		return err
 	}

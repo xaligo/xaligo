@@ -17,7 +17,7 @@ func TestRenderPlanScalesTextWithRequestedPPI(t *testing.T) {
 		}},
 	}
 
-	out, err := repository.NewSVGRepository().Render(plan, 144)
+	out, err := repository.NewSVGRepository().Render(plan, 144, "")
 	if err != nil {
 		t.Fatalf("RenderSVGPlan() error = %v", err)
 	}
@@ -35,7 +35,7 @@ func TestRenderPlanScalesTextWithRequestedPPI(t *testing.T) {
 }
 
 func TestRenderPlanRejectsInvalidSlideSize(t *testing.T) {
-	_, err := repository.NewSVGRepository().Render(entity.Plan{}, 96)
+	_, err := repository.NewSVGRepository().Render(entity.Plan{}, 96, "")
 	if err == nil {
 		t.Fatal("RenderSVGPlan() error = nil, want invalid slide size error")
 	}
@@ -49,12 +49,41 @@ func TestRenderPlanUsesCircularRouteMarkers(t *testing.T) {
 			Line: &entity.LineStyle{Color: "64748B", Width: 1, BeginArrowType: "oval", EndArrowType: "oval"},
 		}},
 	}
-	out, err := repository.NewSVGRepository().Render(plan, 96)
+	out, err := repository.NewSVGRepository().Render(plan, 96, "")
 	if err != nil {
 		t.Fatal(err)
 	}
 	svg := string(out)
 	if !strings.Contains(svg, `marker-start="url(#xaligo-oval)"`) || !strings.Contains(svg, `marker-end="url(#xaligo-oval)"`) {
 		t.Fatalf("circular markers missing:\n%s", svg)
+	}
+}
+
+func TestRenderPlanDrawsServiceLegendAtRequestedPosition(t *testing.T) {
+	plan := entity.Plan{
+		Slide: entity.PlanSlide{W: 2, H: 1, Background: "ffffff"},
+		Legend: []entity.LegendEntry{{
+			CatalogID:    27,
+			Abbreviation: "EC2",
+			OfficialName: "Amazon EC2",
+			Data:         "data:image/svg+xml;base64,QQ==",
+		}},
+	}
+
+	out, err := repository.NewSVGRepository().Render(plan, 96, "left")
+	if err != nil {
+		t.Fatal(err)
+	}
+	svg := string(out)
+	for _, want := range []string{
+		`id="xaligo-svg-legend"`,
+		`width="496" height="96"`,
+		`transform="translate(304 0)"`,
+		`EC2`,
+		`Amazon EC2`,
+	} {
+		if !strings.Contains(svg, want) {
+			t.Fatalf("SVG missing %q:\n%s", want, svg)
+		}
 	}
 }
