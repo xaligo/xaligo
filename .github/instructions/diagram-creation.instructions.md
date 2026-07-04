@@ -37,10 +37,13 @@ Example output:
 
 - Column 1 (`id`) as a number → icon is fetched from service-catalog.csv.
 - Lines starting with `#` are treated as comments and ignored.
+- For `xaligo render --services`, every non-comment row must have a positive
+  numeric `id` and a non-empty `OfficialName`; duplicate IDs are rejected before
+  rendering.
 - `Abbreviation`, when set, is used as the **icon label inside the diagram** and in the standalone legend icon below the frame.
   - Takes priority over the built-in abbreviation table in
     `internal/entity/service.go`.
-  - When empty, the built-in table is used as fallback.
+  - When empty, the built-in table is used as fallback, then the official name.
 - `OfficialName` is displayed as the full-name text in legends.
 
 ```csv
@@ -166,6 +169,24 @@ Quick checklist:
 </frame>
 ```
 
+Every `<connection>` must be a direct child of `<frame>`, and each `src` / `dst`
+value must match exactly one `<item>` by catalog ID, `name`, or `ref`. If the
+same service icon appears multiple times, give the connected item a unique
+`name` or `ref` and use that value as the endpoint.
+
+For network diagrams, define structural paths and communication flows
+separately:
+
+```xml
+<connection src="client" dst="router" kind="route" />
+<connection src="client" dst="router" kind="traffic" color="#2563eb" />
+```
+
+Routes have no arrowheads. Traffic lines are directional and, when they share
+the same endpoints as a route, render beside the route lane. See
+[examples/route-traffic.xal](../../examples/route-traffic.xal) for a compact
+route/traffic example.
+
 Reference: [examples/sample.xal](../../examples/sample.xal)
 DSL specification: [xal-spec.instructions.md](xal-spec.instructions.md)
 
@@ -211,5 +232,8 @@ icon label overrides and service metadata.
 - Connector routing is resolved in Go/WASM and avoids icon/label obstacles.
 - Group header tag labels are intentionally single-line in PPTX output; keep
   tag background width and label width in sync when adjusting tag text metrics.
+- Group header and item label width estimates count East Asian full-width
+  characters as double-width, so Japanese and other full-width labels keep their
+  text boxes aligned across Excalidraw, SVG, and PPTX.
 - Keep `examples/sample.xal` and `examples/services.csv` in sync so the legend
   includes every diagram service.

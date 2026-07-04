@@ -173,8 +173,8 @@ Implemented model:
 
 | Kind | Meaning | Visual Direction |
 |---|---|---|
-| `route` | Physical/logical connection path | Thin, lower layer, shortest orthogonal route |
-| `traffic` | Communication flow over a route | Offset from route, higher layer, stronger arrow/style |
+| `route` | Physical/logical connection path | Thin, lower layer, no arrowheads, shortest orthogonal route |
+| `traffic` | Communication flow over a route | Offset beside a matching route, higher layer, directional arrow/style |
 
 Potential DSL forms:
 
@@ -190,8 +190,9 @@ A -> B
 A => B
 ```
 
-Routing orders routes below normal connections and traffic, and scores nearby
-lanes to keep overlapping paths readable.
+Routing orders routes below normal connections and traffic. When a traffic line
+shares the same endpoints as a route line, the traffic line follows a nearby
+parallel lane instead of drawing directly on top of the route.
 
 ### Route Connectors
 

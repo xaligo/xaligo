@@ -73,11 +73,11 @@
               <private-subnet title="App Subnet (10.0.1.0/24)" row="3">
                 <row gap="4">
                   <auto-scaling-group title="Auto Scaling Group">
-                    <item id="27" />    <!-- EC2              — primary application server -->
+                    <item id="27" name="app-primary" />    <!-- EC2              — primary application server -->
                     <item id="1790" />  <!-- EC2 Instance     — resource: instance -->
                     <item id="1628" />  <!-- EBS Volume       — resource: gp3 volume -->
                   </auto-scaling-group>
-                  <item id="547" />   <!-- ECS              — containerised workloads -->
+                  <item id="547" name="ecs-primary" />   <!-- ECS              — containerised workloads -->
                   <item id="1685" />  <!-- ECS Task         — resource: task -->
                   <item id="1684" />  <!-- ECS Service      — resource: service -->
                   <item id="548" />   <!-- EKS              — Kubernetes nodes -->
@@ -85,7 +85,7 @@
               </private-subnet>
               <!-- Tier 3: Data (primary / write endpoint) -->
               <private-subnet title="DB Subnet (10.0.2.0/24)" row="2">
-                <item id="110" />   <!-- Aurora Primary     — read/write endpoint -->
+                <item id="110" name="aurora-primary" />   <!-- Aurora Primary     — read/write endpoint -->
                 <item id="1795" />  <!-- Aurora Instance   — resource: DB instance -->
                 <item id="113" />   <!-- ElastiCache       — session / query cache -->
               </private-subnet>
@@ -133,20 +133,20 @@
   <connection src="1581" dst="1182" />   <!-- IGW        → ALB -->
 
   <!-- Tier 1 → Tier 2: Load Balancer → App servers -->
-  <connection src="1182" dst="27"   />   <!-- ALB → EC2 -->
-  <connection src="1182" dst="547"  />   <!-- ALB → ECS -->
+  <connection src="1182" dst="app-primary" />   <!-- ALB → EC2 -->
+  <connection src="1182" dst="ecs-primary" />   <!-- ALB → ECS -->
 
   <!-- Tier 2 → Tier 3: App → Data stores -->
-  <connection src="27"   dst="110"  />   <!-- EC2 → Aurora (primary) -->
-  <connection src="27"   dst="113"  />   <!-- EC2 → ElastiCache -->
-  <connection src="27"   dst="112"  />   <!-- EC2 → DynamoDB (VPC endpoint) -->
-  <connection src="27"   dst="1020" />   <!-- EC2 → S3 (VPC endpoint) -->
+  <connection src="app-primary" dst="aurora-primary" />   <!-- EC2 → Aurora (primary) -->
+  <connection src="app-primary" dst="113"  />   <!-- EC2 → ElastiCache -->
+  <connection src="app-primary" dst="112"  />   <!-- EC2 → DynamoDB (VPC endpoint) -->
+  <connection src="app-primary" dst="1020" />   <!-- EC2 → S3 (VPC endpoint) -->
 
   <!-- Tier 2 → Outbound: App → NAT Gateway (internet egress) -->
-  <connection src="27"   dst="1582" />   <!-- EC2 → NAT Gateway -->
+  <connection src="app-primary" dst="1582" />   <!-- EC2 → NAT Gateway -->
 
   <!-- Tier 2 → Messaging pipeline -->
-  <connection src="547"  dst="706"  />   <!-- ECS     → SQS -->
+  <connection src="ecs-primary" dst="706"  />   <!-- ECS     → SQS -->
   <connection src="706"  dst="13"   />   <!-- SQS     → Lambda -->
   <connection src="13"   dst="720"  />   <!-- Lambda  → Step Functions -->
   <connection src="722"  dst="706"  />   <!-- EventBridge → SQS (event-driven) -->
@@ -157,9 +157,9 @@
   <connection src="1539" dst="1506" />   <!-- CW Alarm    → SNS Topic (resource) -->
 
   <!-- CI/CD: CodePipeline → deploy to ECS -->
-  <connection src="441"  dst="547"  />   <!-- CodePipeline → ECS -->
+  <connection src="441"  dst="ecs-primary" />   <!-- CodePipeline → ECS -->
   <connection src="441"  dst="1677" />   <!-- CodePipeline → ECR Image (push) -->
 
   <!-- Secrets injection: Secrets Manager → App Tier -->
-  <connection src="222"  dst="27"   />   <!-- Secrets Manager → EC2 -->
+  <connection src="222"  dst="app-primary" />   <!-- Secrets Manager → EC2 -->
 </frame>

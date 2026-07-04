@@ -1424,9 +1424,8 @@ func connectorLine(el *entity.Element, style connectorStyle) entity.LineStyle {
 	width := base.Width
 	switch kind {
 	case "route":
-		if endHead == "" {
-			endHead = style.Head
-		}
+		beginHead = "none"
+		endHead = "none"
 	case "traffic":
 		if endHead == "" {
 			endHead = style.Head

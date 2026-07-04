@@ -48,14 +48,33 @@ func TestParseExpandsConnectionShorthands(t *testing.T) {
 	}
 	route := doc.Root.Children[2]
 	traffic := doc.Root.Children[3]
-	if route.Tag != "connection" || route.Attr("src") != "1" || route.Attr("dst") != "2" || route.Attr("kind") != "route" {
+	if route.Tag != "connection" || route.Attr("src") != "web" || route.Attr("dst") != "db" || route.Attr("kind") != "route" {
 		t.Fatalf("route = %#v", route)
 	}
-	if traffic.Attr("src") != "1" || traffic.Attr("dst") != "2" || traffic.Attr("kind") != "traffic" {
+	if traffic.Attr("src") != "web" || traffic.Attr("dst") != "2" || traffic.Attr("kind") != "traffic" {
 		t.Fatalf("traffic = %#v", traffic)
 	}
 	if route.Position.Line != 4 || route.Position.Column != 3 {
 		t.Fatalf("route position = %#v", route.Position)
+	}
+}
+
+func TestParseResolvesExplicitConnectionReferences(t *testing.T) {
+	doc, err := usecase.Parse(strings.NewReader(`<frame>
+  <item id="27" name="app-primary" />
+  <item id="27" name="app-standby" />
+  <item id="110" ref="db" />
+  <connection src="app-primary" dst="db" />
+</frame>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	conn := doc.Root.Children[3]
+	if conn.Attr("src") != "app-primary" || conn.Attr("dst") != "db" {
+		t.Fatalf("connection attrs = %#v", conn.Attrs)
+	}
+	if conn.Attr("_xaligoConnectionSrcKey") == "" || conn.Attr("_xaligoConnectionDstKey") == "" {
+		t.Fatalf("connection keys = %#v", conn.Attrs)
 	}
 }
 
