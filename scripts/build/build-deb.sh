@@ -9,7 +9,7 @@ Usage:
   scripts/build/build-deb.sh
 
 Environment:
-  VERSION=1.2.3        Package and embedded CLI version. Defaults to latest git tag or internal version.
+  VERSION=1.2.3        Package and embedded CLI version. Defaults to VERSION.
   GOARCH=amd64         Target Go architecture. Supported mappings include amd64 and arm64.
   OUTPUT_DIR=output/packages
   PACKAGE_MAINTAINER="Name <email>"

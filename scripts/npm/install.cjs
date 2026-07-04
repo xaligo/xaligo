@@ -64,7 +64,7 @@ function download(url, destination, redirects = 0) {
 
 async function main() {
   const name = binaryName();
-  const nativeDir = path.join(packageRoot, 'npm', 'bin', 'native');
+  const nativeDir = path.join(packageRoot, 'bin', 'native');
   const destination = path.join(nativeDir, name);
 
   if (fs.existsSync(destination)) return;

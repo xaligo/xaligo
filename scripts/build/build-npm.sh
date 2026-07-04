@@ -6,7 +6,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/build/build-npm-binaries.sh
+  scripts/build/build-npm.sh
 
 Environment:
   VERSION=1.2.3
@@ -24,7 +24,7 @@ cd "$ROOT"
 
 VERSION_VALUE="$(package_version)"
 TARGETS="${NPM_PACKAGE_TARGETS:-darwin/amd64 darwin/arm64 linux/amd64 linux/arm64 windows/amd64 windows/arm64}"
-OUT_DIR="npm/bin/native"
+OUT_DIR="bin/native"
 
 build_wasm_exporter
 mkdir -p "$OUT_DIR"
@@ -41,4 +41,3 @@ for target in $TARGETS; do
   chmod 0755 "$output"
   printf 'Built: %s\n' "$output"
 done
-

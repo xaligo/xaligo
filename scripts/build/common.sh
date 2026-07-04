@@ -18,11 +18,12 @@ package_version() {
     printf '%s\n' "${VERSION#v}"
     return
   fi
-  if git describe --tags --abbrev=0 >/dev/null 2>&1; then
-    git describe --tags --abbrev=0 | sed 's/^v//'
+  if [[ -s VERSION ]]; then
+    sed -n '1{s/^v//;p;q;}' VERSION
     return
   fi
-  sed -n 's/^var version = "\(.*\)"/\1/p' internal/controller/version.go
+  printf 'ERROR: VERSION file not found or empty\n' >&2
+  exit 1
 }
 
 go_arch() {

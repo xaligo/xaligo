@@ -1,11 +1,15 @@
 package controller
 
 import (
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/spf13/cobra"
 	"github.com/xaligo/xaligo/internal/share"
 )
 
-var version = "0.1.0"
+var version string
 
 var (
 	ICVERSIONIVC001 = share.NewMCode("ICVERSIONIVC-001", "Init version command start")
@@ -22,7 +26,51 @@ func (rcvr *VersionController) Command() *cobra.Command {
 		Use:   "version",
 		Short: "Print xaligo version",
 		Run: func(cmd *cobra.Command, args []string) {
-			logger.INFO(ICVERSIONIVC002, "version", map[string]any{"version": version})
+			logger.INFO(ICVERSIONIVC002, "version", map[string]any{"version": resolvedVersion()})
 		},
 	}
+}
+
+func resolvedVersion() string {
+	if version != "" {
+		return version
+	}
+	if version, ok := readVersionFile(); ok {
+		return version
+	}
+	return "dev"
+}
+
+func readVersionFile() (string, bool) {
+	if path := os.Getenv("XALIGO_VERSION_FILE"); path != "" {
+		return readVersionPath(path)
+	}
+	if home := os.Getenv("XALIGO_HOME"); home != "" {
+		if version, ok := readVersionPath(filepath.Join(home, "VERSION")); ok {
+			return version, true
+		}
+	}
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", false
+	}
+	for {
+		if version, ok := readVersionPath(filepath.Join(dir, "VERSION")); ok {
+			return version, true
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			return "", false
+		}
+		dir = parent
+	}
+}
+
+func readVersionPath(path string) (string, bool) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "", false
+	}
+	version := strings.TrimSpace(string(data))
+	return version, version != ""
 }

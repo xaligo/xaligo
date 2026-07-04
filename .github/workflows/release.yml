@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to release (e.g. 1.2.3 — without leading v). Defaults to internal CLI version.'
+        description: 'Version to release (e.g. 1.2.3 — without leading v). Defaults to VERSION.'
         required: false
         type: string
 
@@ -36,7 +36,7 @@ jobs:
         shell: bash
         run: |
           input_version="${{ github.event.inputs.version || '' }}"
-          source_version="$(sed -n 's/^var version = "\(.*\)"/\1/p' internal/controller/version.go)"
+          source_version="$(sed -n '1{s/^v//;p;q;}' VERSION)"
           base_version="${input_version:-$source_version}"
 
           if [[ ! "$base_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -147,6 +147,7 @@ jobs:
     needs:
       - metadata
       - package
+      - npm-package
 
     steps:
       - name: Download Linux packages
@@ -155,6 +156,12 @@ jobs:
           pattern: xaligo-linux-packages-*
           path: output/release
           merge-multiple: true
+
+      - name: Download npm package
+        uses: actions/download-artifact@v4
+        with:
+          name: xaligo-npm-package
+          path: output/release
 
       - name: Create GitHub Release and upload packages
         env:
@@ -169,6 +176,10 @@ jobs:
             "$RELEASE_TAG"
             output/release/*.deb
             output/release/*.rpm
+            output/release/*.tgz
+            output/release/xaligo-darwin-*
+            output/release/xaligo-linux-*
+            output/release/xaligo-windows-*
             --target "$GITHUB_SHA"
             --title "$RELEASE_TITLE"
             --notes "Automated package build for ${GITHUB_SHA}. Package version: ${PACKAGE_VERSION}."
@@ -180,13 +191,21 @@ jobs:
           fi
 
           if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release upload "$RELEASE_TAG" output/release/*.deb output/release/*.rpm --repo "$GITHUB_REPOSITORY" --clobber
+            gh release upload "$RELEASE_TAG" \
+              output/release/*.deb \
+              output/release/*.rpm \
+              output/release/*.tgz \
+              output/release/xaligo-darwin-* \
+              output/release/xaligo-linux-* \
+              output/release/xaligo-windows-* \
+              --repo "$GITHUB_REPOSITORY" \
+              --clobber
           else
             gh release create "${args[@]}"
           fi
 
-  npm-native-binaries:
-    name: Build npm native binaries
+  npm-package:
+    name: Build npm package
     runs-on: ubuntu-latest
     needs: metadata
 
@@ -199,55 +218,52 @@ jobs:
         with:
           go-version: '1.22'
 
-      - name: Build native binaries
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+
+      - name: Install Javy
+        shell: bash
+        run: |
+          case "$(uname -m)" in
+            x86_64) javy_arch="x86_64" ;;
+            aarch64|arm64) javy_arch="arm" ;;
+            *) echo "unsupported runner architecture: $(uname -m)" >&2; exit 1 ;;
+          esac
+          javy_version="9.0.0"
+          javy_asset="javy-${javy_arch}-linux-v${javy_version}.gz"
+          curl -fsSL "https://github.com/bytecodealliance/javy/releases/download/v${javy_version}/${javy_asset}" -o /tmp/javy.gz
+          curl -fsSL "https://github.com/bytecodealliance/javy/releases/download/v${javy_version}/${javy_asset}.sha256" -o /tmp/javy.sha256
+          printf '%s  %s\n' "$(cut -d ' ' -f 1 /tmp/javy.sha256)" /tmp/javy.gz | sha256sum -c -
+          gzip -dc /tmp/javy.gz > /tmp/javy
+          sudo install -m 0755 /tmp/javy /usr/local/bin/javy
+          javy --version
+
+      - name: Install npm dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Set npm package version
+        env:
+          VERSION: ${{ needs.metadata.outputs.package_version }}
+        run: |
+          node -e "const fs=require('node:fs'); const path='package.json'; const pkg=JSON.parse(fs.readFileSync(path, 'utf8')); pkg.version=process.env.VERSION; fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n');"
+
+      - name: Build npm package assets
         env:
           VERSION: ${{ needs.metadata.outputs.package_version }}
           NPM_PACKAGE_TARGETS: darwin/amd64 darwin/arm64 linux/amd64 linux/arm64 windows/amd64 windows/arm64
         run: |
-          mkdir -p npm/bin/native
-          for target in $NPM_PACKAGE_TARGETS; do
-            target_os="${target%/*}"
-            target_arch="${target#*/}"
-            suffix=""
-            if [[ "$target_os" == "windows" ]]; then
-              suffix=".exe"
-            fi
-            output="npm/bin/native/xaligo-${target_os}-${target_arch}${suffix}"
-            GOOS="$target_os" GOARCH="$target_arch" CGO_ENABLED=0 \
-              go build \
-                -buildvcs=false \
-                -trimpath \
-                -ldflags "-X github.com/xaligo/xaligo/internal/controller.version=${VERSION}" \
-                -o "$output" \
-                ./cmd
-            chmod 0755 "$output"
-          done
+          npm run build
+          npm run build:npm-binaries
+          mkdir -p output/packages
+          npm pack --pack-destination output/packages
 
-      - name: Upload npm native binaries
+      - name: Upload npm package
         uses: actions/upload-artifact@v4
         with:
-          name: xaligo-npm-native-binaries
-          path: npm/bin/native/xaligo-*
+          name: xaligo-npm-package
+          path: |
+            output/packages/*.tgz
+            bin/native/xaligo-*
           if-no-files-found: error
-
-  npm-release-assets:
-    name: Upload npm native release assets
-    runs-on: ubuntu-latest
-    needs:
-      - metadata
-      - release
-      - npm-native-binaries
-
-    steps:
-      - name: Download npm native binaries
-        uses: actions/download-artifact@v4
-        with:
-          name: xaligo-npm-native-binaries
-          path: output/npm-native
-
-      - name: Upload npm native binaries to GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ needs.metadata.outputs.release_tag }}
-        run: |
-          gh release upload "$RELEASE_TAG" output/npm-native/xaligo-* --repo "$GITHUB_REPOSITORY" --clobber

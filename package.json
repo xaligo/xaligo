@@ -33,11 +33,11 @@
     "external"
   ],
   "bin": {
-    "xaligo": "npm/bin/xaligo.cjs"
+    "xaligo": "bin/xaligo.cjs"
   },
   "files": [
-    "npm/bin",
-    "npm/scripts",
+    "bin",
+    "scripts/npm",
     "etc/resources/aws/app.yaml",
     "etc/resources/aws/isoflow-icons.json",
     "etc/resources/aws/service-catalog.csv",
@@ -45,6 +45,7 @@
     "etc/resources/aws/svg",
     "external/dist",
     "external/wasm/xaligo.wasm",
+    "VERSION",
     "README.md",
     "LICENSE"
   ],
@@ -53,10 +54,10 @@
   },
   "scripts": {
     "build": "npm --prefix external run build",
-    "build:npm-binaries": "scripts/build/build-npm-binaries.sh",
+    "build:npm-binaries": "scripts/build/build-npm.sh",
     "clean": "npm --prefix external run clean",
     "gen:isoflow-icons": "node scripts/tool/gen_isoflow_icons.mjs",
-    "postinstall": "node npm/scripts/install.cjs",
+    "postinstall": "node scripts/npm/install.cjs",
     "import:tabler-icons": "node scripts/tool/import_tabler_icons.mjs",
     "import:yamaha-icons": "node scripts/tool/import_yamaha_icons.mjs"
   },
