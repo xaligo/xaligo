@@ -284,7 +284,7 @@ Before considering PPTX routing/layout changes complete:
 go test ./...
 make build
 make build-wasm
-npm run build --workspace @ryo-arima/xaligo
+npm run build --workspace @ryo/xaligo-external
 .bin/xaligo render examples/sample.xal --format pptx --services examples/services.csv -o out.pptx --paper A3 --orientation landscape --arrow-style thin
 unzip -t out.pptx
 ```

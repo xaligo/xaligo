@@ -3,7 +3,7 @@ package usecase_test
 import (
 	"testing"
 
-	"github.com/ryo-arima/xaligo/internal/usecase"
+	"github.com/xaligo/xaligo/internal/usecase"
 )
 
 func TestMakeTextAndImageBuildExpectedElements(t *testing.T) {

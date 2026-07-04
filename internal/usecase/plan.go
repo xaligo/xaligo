@@ -8,8 +8,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/ryo-arima/xaligo/internal/entity"
-	"github.com/ryo-arima/xaligo/internal/share"
+	"github.com/xaligo/xaligo/internal/entity"
+	"github.com/xaligo/xaligo/internal/share"
 )
 
 // plan.go — builds a fully-resolved PPTX draw plan from an Excalidraw scene.

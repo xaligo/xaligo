@@ -10,10 +10,10 @@ import (
 	"fmt"
 	"syscall/js"
 
-	awsassets "github.com/ryo-arima/xaligo/etc/resources/aws"
-	"github.com/ryo-arima/xaligo/internal/entity"
-	"github.com/ryo-arima/xaligo/internal/repository"
-	"github.com/ryo-arima/xaligo/internal/usecase"
+	awsassets "github.com/xaligo/xaligo/etc/resources/aws"
+	"github.com/xaligo/xaligo/internal/entity"
+	"github.com/xaligo/xaligo/internal/repository"
+	"github.com/xaligo/xaligo/internal/usecase"
 )
 
 var embeddedAssets = &entity.AssetSource{

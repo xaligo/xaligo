@@ -16,10 +16,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ryo-arima/xaligo/internal/config"
-	"github.com/ryo-arima/xaligo/internal/entity"
-	"github.com/ryo-arima/xaligo/internal/repository"
-	"github.com/ryo-arima/xaligo/internal/share"
+	"github.com/xaligo/xaligo/internal/config"
+	"github.com/xaligo/xaligo/internal/entity"
+	"github.com/xaligo/xaligo/internal/repository"
+	"github.com/xaligo/xaligo/internal/share"
 )
 
 var (
@@ -341,7 +341,7 @@ func BuildJSON(root *entity.Box, svgGroupDir string, catalogCSV string, projectR
 	out := file{
 		Type:     "excalidraw",
 		Version:  2,
-		Source:   "https://github.com/ryo-arima/xaligo",
+		Source:   "https://github.com/xaligo/xaligo",
 		Elements: elements,
 		AppState: map[string]any{
 			"gridSize":            20,

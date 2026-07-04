@@ -13,7 +13,7 @@ preconditions before changing code:
 
 ## Project summary
 
-- Go 1.22 module: `github.com/ryo-arima/xaligo`
+- Go 1.22 module: `github.com/xaligo/xaligo`
 - CLI entry point: `cmd/main.go`
 - PPTX exporter WASM entry point: `external/command.ts`
 - TypeScript package and implementation: `external`
@@ -45,7 +45,7 @@ go test ./...
 make build
 make build-wasm
 npm install
-npm run build --workspace=@ryo-arima/xaligo
+npm run build --workspace=@ryo/xaligo-external
 
 # Render and validate
 .bin/xaligo validate examples/sample.xal
@@ -112,7 +112,7 @@ renderers.
 1. Format changed Go files with `gofmt`.
 2. Run `go test ./...` and `go build ./...`.
 3. For shared render use-case or asset changes, cross-build `cmd/wasm`.
-4. For TypeScript-facing changes, build `external` via `npm run build --workspace=@ryo-arima/xaligo`.
+4. For TypeScript-facing changes, build `external` via `npm run build --workspace=@ryo/xaligo-external`.
 5. Run `git diff --check` and inspect `git status --short`.
 6. Update the DSL spec, architecture, README, or roadmap when their contract
    changed.

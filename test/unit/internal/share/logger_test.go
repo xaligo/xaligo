@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ryo-arima/xaligo/internal/share"
+	"github.com/xaligo/xaligo/internal/share"
 )
 
 func TestMCodePaddingUsesRegisteredMaxLength(t *testing.T) {

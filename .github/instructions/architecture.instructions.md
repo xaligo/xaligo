@@ -86,7 +86,7 @@ Run after structural changes:
 go test ./...
 go build ./...
 npm install
-npm run build --workspace=@ryo-arima/xaligo
+npm run build --workspace=@ryo/xaligo-external
 npm --prefix external run build:pptx-exporter-wasm
 ```
 

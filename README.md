@@ -19,10 +19,24 @@ for repository working conventions.
 
 ## Installation
 
+### CLI (npm / yarn)
+
+```bash
+npm install -g @xaligo/xaligo
+# or
+yarn global add @xaligo/xaligo
+
+xaligo version
+```
+
+The npm package installs the native `xaligo` command, bundles the runtime AWS
+icon catalog and PPTX exporter WASM used by the CLI, and also exposes the
+TypeScript/WASM API for extension hosts.
+
 ### CLI (Go binary)
 
 ```bash
-git clone https://github.com/ryo-arima/xaligo
+git clone https://github.com/xaligo/xaligo
 cd xaligo
 go mod tidy
 make build        # produces .bin/xaligo
@@ -34,14 +48,14 @@ A WebAssembly package is provided for environments where spawning a child proces
 (e.g., a VS Code web extension or an extension running in the extension host).
 
 ```bash
-npm install @ryo-arima/xaligo
+npm install @xaligo/xaligo
 ```
 
 The native Go CLI computes the PPTX plan and calls the TS/PptxGenJS exporter
 through `external/wasm/xaligo.wasm`.
 
 ```typescript
-import { renderPptxPlan } from "@ryo-arima/xaligo";
+import { renderPptxPlan } from "@xaligo/xaligo";
 
 const pptx = await renderPptxPlan(planJson, { title: "Architecture" });
 ```
@@ -55,7 +69,8 @@ make build-wasm   # outputs external/wasm/xaligo.wasm
 ## npm Package Layout
 
 ```
-external/   @ryo-arima/xaligo   — TS/PptxGenJS PPTX exporter wrapper
+package root   @xaligo/xaligo          — CLI bin plus TS/WASM API exports
+external/      @xaligo/xaligo-external — internal TS/PptxGenJS build workspace
 ```
 
 ## Commands

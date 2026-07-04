@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ryo-arima/xaligo/internal/entity"
+	"github.com/xaligo/xaligo/internal/entity"
 )
 
 type PreviewServer interface {

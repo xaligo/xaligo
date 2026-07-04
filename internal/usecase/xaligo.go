@@ -3,8 +3,8 @@ package usecase
 import (
 	"context"
 
-	"github.com/ryo-arima/xaligo/internal/entity"
-	"github.com/ryo-arima/xaligo/internal/repository"
+	"github.com/xaligo/xaligo/internal/entity"
+	"github.com/xaligo/xaligo/internal/repository"
 )
 
 type PreviewServer = repository.PreviewServer

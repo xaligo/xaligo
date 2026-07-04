@@ -5,7 +5,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/ryo-arima/xaligo/internal/entity"
+	"github.com/xaligo/xaligo/internal/entity"
 )
 
 // Validate runs the same parser and layout validation used by Render.
