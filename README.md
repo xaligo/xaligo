@@ -144,7 +144,37 @@ mkdir -p output
 
 PPTX flags: `--title`, `--author`, `--company`, `--subject`, `--compression true|false`, `--px-per-inch`, `--paper`, `--orientation`, `--paper-margin`, `--paper-margin-top`, `--paper-margin-right`, `--paper-margin-bottom`, `--paper-margin-left`. Paper margins are in inches and are applied before fitting the diagram to the selected paper.
 
+### Services CSV and legends
+
+`xaligo render --services <csv>` uses the CSV for item labels and generated
+legends. The expected columns are:
+
+```text
+id,OfficialName,Abbreviation,Summary,Usage,Notes
+```
+
+Blank lines and lines starting with `#` are ignored. Every non-comment row
+must have a positive numeric `id` and a non-empty `OfficialName`; duplicate IDs
+are rejected. `Abbreviation` is optional and, when present, is used for the
+short icon label and legend abbreviation. When it is empty, xaligo falls back to
+the built-in abbreviation table or the official name.
+
 ## Sample Gallery
+
+### Route and traffic separation
+
+Use `kind="route"` for structural paths without arrowheads, then add
+`kind="traffic"` connections over the same endpoints for directional flows.
+Traffic lines are drawn beside the matching route lane when possible.
+
+Source: [examples/route-traffic.xal](examples/route-traffic.xal)
+
+```bash
+.bin/xaligo render examples/route-traffic.xal \
+  --format svg \
+  --mode network \
+  -o output/route-traffic.svg
+```
 
 ### Hybrid enterprise architecture
 
@@ -296,6 +326,10 @@ edge; icon-less tags shrink to the title's text height to preserve diagram
 space. The icon is embedded in Excalidraw, SVG, PPTX, and
 XYFlow output through the shared asset mechanism.
 
+Group header and item label width estimates count East Asian full-width
+characters, such as Japanese labels, as double-width so rendered text boxes stay
+aligned across Excalidraw, SVG, and PPTX outputs.
+
 ### `<item>` tag
 
 Embeds a catalog icon by specifying its ID from `service-catalog.csv`.
@@ -353,9 +387,9 @@ Draws an elbowed arrow between `<item>` elements. Must be a direct child of `<fr
 
 | Attribute | Description |
 |---|---|
-| `src` | Catalog ID of the arrow start item |
-| `dst` | Catalog ID of the arrow end item |
-| `kind` | `route` (thin structural path) or `traffic` (strong directional flow) |
+| `src` | Catalog ID, `name`, or `ref` of the arrow start item |
+| `dst` | Catalog ID, `name`, or `ref` of the arrow end item |
+| `kind` | `route` (thin structural path without arrows) or `traffic` (directional flow drawn beside a matching route) |
 | `color` | Per-line CSS/hex stroke color |
 | `stroke-width` | Per-line stroke width; defaults to 1 for route and 2 for traffic |
 | `stroke-style` | `solid`, `dashed`, or `dotted` |
@@ -363,10 +397,16 @@ Draws an elbowed arrow between `<item>` elements. Must be a direct child of `<fr
 | `arrowhead` | Backward-compatible alias for `end-arrowhead` |
 
 Connections are always rendered in **elbowed (right-angle)** style. Route lines
-use circular endpoints by default and are drawn below traffic lines; traffic
-sharing a route is assigned a separate candidate lane where space permits.
+are structural paths without arrowheads and are drawn below traffic lines.
+Traffic lines are directional; when a traffic line shares the same endpoints as
+a route line, it is drawn on a nearby parallel lane.
 Routes that fan out from or converge on the same side of an item automatically
 share a short trunk and render a circular junction at the branch point.
+Each connection endpoint must resolve to exactly one `<item>`. Use numeric
+catalog IDs when that service appears once; use unique `name` or `ref` values
+when the same catalog ID appears multiple times. Missing endpoints, ambiguous
+numeric IDs, and `<connection>` elements nested inside layout/group tags are
+reported as validation errors.
 
 At an interior crossing, SVG and PPTX place a 6px background-colored rectangle
 between the lower and upper lines. The color follows the uppermost opaque
@@ -387,9 +427,17 @@ web --- db  <!-- route -->
 web ==> db  <!-- traffic -->
 ```
 
-Operands resolve through an item's `name`, `ref`, or numeric `id`. Unknown or
-duplicate references produce source-positioned diagnostics. Use explicit
-`<connection>` elements when per-line style attributes are required.
+Operands resolve through an item's `name`, `ref`, or numeric `id`, the same as
+explicit `<connection src=... dst=...>` attributes. Unknown or duplicate
+references produce source-positioned diagnostics. Use explicit `<connection>`
+elements when per-line style attributes are required.
+
+The equivalent explicit form is:
+
+```xml
+<connection src="web" dst="db" kind="route" />
+<connection src="web" dst="db" kind="traffic" />
+```
 
 ### Key attributes
 

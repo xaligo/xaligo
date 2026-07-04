@@ -324,15 +324,21 @@ func BuildJSON(root *entity.Box, svgGroupDir string, catalogCSV string, projectR
 	}
 
 	// itemImgRects / itemLblRects / itemImgIDs / itemLblIDs:
-	// catalog ID → bounding rect (x,y,w,h) and element ID of the image / label elements.
+	// connection key → bounding rect (x,y,w,h) and element ID of the image / label elements.
 	// Populated during renderItemGrid → renderIconAt, used for edge-based connections.
-	itemImgRects := map[int][4]float64{}
-	itemLblRects := map[int][4]float64{}
-	itemImgIDs := map[int]string{}
-	itemLblIDs := map[int]string{}
+	itemImgRects := map[string][4]float64{}
+	itemLblRects := map[string][4]float64{}
+	itemImgIDs := map[string]string{}
+	itemLblIDs := map[string]string{}
 
 	walk(root, &elements, files, svgGroupDir, catalogCSV, projectRoot, fsys, r, root, itemGroups, ancestorBoxes, deps)
-	for ancID, items := range itemGroups {
+	ancestorIDs := make([]string, 0, len(itemGroups))
+	for ancID := range itemGroups {
+		ancestorIDs = append(ancestorIDs, ancID)
+	}
+	sort.Strings(ancestorIDs)
+	for _, ancID := range ancestorIDs {
+		items := itemGroups[ancID]
 		renderItemGrid(items, ancestorBoxes[ancID], &elements, files, catalogCSV, projectRoot, fsys, itemIconSize, r, itemImgRects, itemLblRects, itemImgIDs, itemLblIDs, abbrevMap, deps)
 	}
 	renderConnections(connections, itemImgRects, itemLblRects, itemImgIDs, itemLblIDs, &elements, r)
@@ -672,14 +678,13 @@ func isLayoutTag(tag string) bool {
 // textWidth estimates the rendered width of a string in pixels.
 // charW: approximate pixel width per rune (font-specific).
 func textWidth(s string, charW float64) float64 {
-	return math.Ceil(float64(len([]rune(s)))*charW) + 8
+	return math.Ceil(displayColumns(s)*charW) + 8
 }
 
 func itemLabelHeight(label string) float64 {
 	lines := 1
 	for _, line := range strings.Split(label, "\n") {
-		lineRunes := len([]rune(line))
-		wrapped := int(math.Ceil(float64(lineRunes) * itemLabelCharW / itemLabelW))
+		wrapped := int(math.Ceil(displayColumns(line) * itemLabelCharW / itemLabelW))
 		if wrapped < 1 {
 			wrapped = 1
 		}
@@ -687,6 +692,35 @@ func itemLabelHeight(label string) float64 {
 	}
 	lineH := itemLabelFontPx * 1.25
 	return math.Max(itemLabelH, math.Ceil(float64(lines)*lineH))
+}
+
+func displayColumns(s string) float64 {
+	cols := 0.0
+	for _, r := range s {
+		cols += runeColumns(r)
+	}
+	return cols
+}
+
+func runeColumns(r rune) float64 {
+	switch {
+	case r == '\t':
+		return 4
+	case r < 0x20:
+		return 0
+	case r >= 0x1100 && (r <= 0x115F ||
+		r == 0x2329 || r == 0x232A ||
+		(r >= 0x2E80 && r <= 0xA4CF && r != 0x303F) ||
+		(r >= 0xAC00 && r <= 0xD7A3) ||
+		(r >= 0xF900 && r <= 0xFAFF) ||
+		(r >= 0xFE10 && r <= 0xFE19) ||
+		(r >= 0xFE30 && r <= 0xFE6F) ||
+		(r >= 0xFF00 && r <= 0xFF60) ||
+		(r >= 0xFFE0 && r <= 0xFFE6)):
+		return 2
+	default:
+		return 1
+	}
 }
 
 // parseItemAlign parses an align attribute value (e.g. "top-left", "middle-center")
@@ -708,7 +742,7 @@ func parseItemAlign(align string) (vert, horiz string) {
 
 // renderItemGrid lays out all items collected under the same visibleAncestor as
 // a compact grid within the ancestor's content area.
-func renderItemGrid(items []*entity.Box, ancestor *entity.Box, elements *[]map[string]any, files map[string]any, catalogCSV string, projectRoot string, fsys fs.FS, maxSize float64, r *rand.Rand, itemImgRects map[int][4]float64, itemLblRects map[int][4]float64, itemImgIDs map[int]string, itemLblIDs map[int]string, abbrevMap map[int]string, deps SceneDependencies) {
+func renderItemGrid(items []*entity.Box, ancestor *entity.Box, elements *[]map[string]any, files map[string]any, catalogCSV string, projectRoot string, fsys fs.FS, maxSize float64, r *rand.Rand, itemImgRects map[string][4]float64, itemLblRects map[string][4]float64, itemImgIDs map[string]string, itemLblIDs map[string]string, abbrevMap map[int]string, deps SceneDependencies) {
 	if catalogCSV == "" || len(items) == 0 || ancestor == nil {
 		return
 	}
@@ -772,7 +806,11 @@ func renderItemGrid(items []*entity.Box, ancestor *entity.Box, elements *[]map[s
 		row := i / cols
 		iconX := startX + float64(col)*stepX + math.Max(0, (cellW-iconSize)/2)
 		iconY := startY + float64(row)*stepY
-		renderIconAt(item.ID, item.Attrs["id"], iconX, iconY, iconSize, elements, files, catalogCSV, projectRoot, fsys, r, itemImgRects, itemLblRects, itemImgIDs, itemLblIDs, abbrevMap, deps)
+		connectionKey := strings.TrimSpace(item.Attrs[internalConnectionKeyAttr])
+		if connectionKey == "" {
+			connectionKey = item.ID
+		}
+		renderIconAt(item.ID, connectionKey, item.Attrs["id"], iconX, iconY, iconSize, elements, files, catalogCSV, projectRoot, fsys, r, itemImgRects, itemLblRects, itemImgIDs, itemLblIDs, abbrevMap, deps)
 	}
 }
 
@@ -876,8 +914,8 @@ func gridAxis(areaStart, areaSize, totalSize, cellSize float64, count int, align
 
 // renderIconAt draws a single service icon (image + label) at an explicit position.
 // itemImgRects/itemLblRects/itemImgIDs/itemLblIDs are populated with the bounding rect
-// and element ID of the image and label elements, keyed by the catalog integer ID.
-func renderIconAt(boxID, idAttr string, iconX, iconY, iconSize float64, elements *[]map[string]any, files map[string]any, catalogCSV string, projectRoot string, fsys fs.FS, r *rand.Rand, itemImgRects map[int][4]float64, itemLblRects map[int][4]float64, itemImgIDs map[int]string, itemLblIDs map[int]string, abbrevMap map[int]string, deps SceneDependencies) {
+// and element ID of the image and label elements, keyed by the unique item connection key.
+func renderIconAt(boxID, connectionKey, idAttr string, iconX, iconY, iconSize float64, elements *[]map[string]any, files map[string]any, catalogCSV string, projectRoot string, fsys fs.FS, r *rand.Rand, itemImgRects map[string][4]float64, itemLblRects map[string][4]float64, itemImgIDs map[string]string, itemLblIDs map[string]string, abbrevMap map[int]string, deps SceneDependencies) {
 	if catalogCSV == "" {
 		return
 	}
@@ -928,8 +966,8 @@ func renderIconAt(boxID, idAttr string, iconX, iconY, iconSize float64, elements
 	iconID := fmt.Sprintf("%s-item", boxID)
 	// Record bounding rects and element IDs for edge-based connection arrows.
 	if itemImgRects != nil {
-		itemImgRects[id] = [4]float64{iconX, iconY, iconSize, iconSize}
-		itemImgIDs[id] = iconID
+		itemImgRects[connectionKey] = [4]float64{iconX, iconY, iconSize, iconSize}
+		itemImgIDs[connectionKey] = iconID
 	}
 	*elements = append(*elements, map[string]any{
 		"id": iconID, "type": "image",
@@ -957,8 +995,8 @@ func renderIconAt(boxID, idAttr string, iconX, iconY, iconSize float64, elements
 	labelX := iconX + (iconSize-itemLabelW)/2 // centre label on icon
 	// Record label bounding rect for bottom-side connection binding.
 	if itemLblRects != nil {
-		itemLblRects[id] = [4]float64{labelX, labelY, itemLabelW, labelH}
-		itemLblIDs[id] = iconID + "-lbl"
+		itemLblRects[connectionKey] = [4]float64{labelX, labelY, itemLabelW, labelH}
+		itemLblIDs[connectionKey] = iconID + "-lbl"
 	}
 	textSeed := r.Intn(99999999)
 	*elements = append(*elements, map[string]any{
@@ -1038,11 +1076,11 @@ func fixedPointForSide(side string) [2]float64 {
 // updates the boundElements of the bound source/destination elements — required by
 // Excalidraw so that the application recognises the binding relationship.
 //
-// src/dst are catalog integer IDs; the corresponding item rects and element IDs
+// src/dst are resolved item connection keys; the corresponding item rects and element IDs
 // must already be populated in itemImgRects/itemLblRects/itemImgIDs/itemLblIDs by renderIconAt.
 // Arrows start/end at the actual element edge; when the connection exits/enters from the
 // bottom the label text element is used instead of the image element.
-func renderConnections(connections []*entity.Node, itemImgRects map[int][4]float64, itemLblRects map[int][4]float64, itemImgIDs map[int]string, itemLblIDs map[int]string, elements *[]map[string]any, r *rand.Rand) {
+func renderConnections(connections []*entity.Node, itemImgRects map[string][4]float64, itemLblRects map[string][4]float64, itemImgIDs map[string]string, itemLblIDs map[string]string, elements *[]map[string]any, r *rand.Rand) {
 	if len(connections) == 0 {
 		return
 	}
@@ -1069,20 +1107,20 @@ func renderConnections(connections []*entity.Node, itemImgRects map[int][4]float
 	for i, conn := range orderedConnections {
 		srcIDStr := strings.TrimSpace(conn.Attrs["src"])
 		dstIDStr := strings.TrimSpace(conn.Attrs["dst"])
-		srcID, err1 := strconv.Atoi(srcIDStr)
-		dstID, err2 := strconv.Atoi(dstIDStr)
-		if err1 != nil || err2 != nil {
-			logger.WARN(IUESRC001, "invalid connection source or destination", map[string]any{"src": srcIDStr, "dst": dstIDStr, "srcError": err1, "dstError": err2})
+		srcKey := strings.TrimSpace(conn.Attrs[internalConnectionSrcKeyAttr])
+		dstKey := strings.TrimSpace(conn.Attrs[internalConnectionDstKeyAttr])
+		if srcKey == "" || dstKey == "" {
+			logger.WARN(IUESRC001, "invalid connection source or destination", map[string]any{"src": srcIDStr, "dst": dstIDStr, "srcKey": srcKey, "dstKey": dstKey})
 			continue
 		}
-		srcImgRect, srcOk := itemImgRects[srcID]
-		dstImgRect, dstOk := itemImgRects[dstID]
+		srcImgRect, srcOk := itemImgRects[srcKey]
+		dstImgRect, dstOk := itemImgRects[dstKey]
 		if !srcOk {
-			logger.WARN(IUESRC002, "source item not found or not rendered", map[string]any{"src": srcID})
+			logger.WARN(IUESRC002, "source item not found or not rendered", map[string]any{"src": srcIDStr, "key": srcKey})
 			continue
 		}
 		if !dstOk {
-			logger.WARN(IUESRC003, "destination item not found or not rendered", map[string]any{"dst": dstID})
+			logger.WARN(IUESRC003, "destination item not found or not rendered", map[string]any{"dst": dstIDStr, "key": dstKey})
 			continue
 		}
 
@@ -1097,31 +1135,31 @@ func renderConnections(connections []*entity.Node, itemImgRects map[int][4]float
 		var srcElemID string
 		var srcRect [4]float64
 		if srcSide == "bottom" {
-			if lblRect, ok := itemLblRects[srcID]; ok {
+			if lblRect, ok := itemLblRects[srcKey]; ok {
 				srcRect = lblRect
-				srcElemID = itemLblIDs[srcID]
+				srcElemID = itemLblIDs[srcKey]
 			} else {
 				srcRect = srcImgRect
-				srcElemID = itemImgIDs[srcID]
+				srcElemID = itemImgIDs[srcKey]
 			}
 		} else {
 			srcRect = srcImgRect
-			srcElemID = itemImgIDs[srcID]
+			srcElemID = itemImgIDs[srcKey]
 		}
 
 		var dstElemID string
 		var dstRect [4]float64
 		if dstSide == "bottom" {
-			if lblRect, ok := itemLblRects[dstID]; ok {
+			if lblRect, ok := itemLblRects[dstKey]; ok {
 				dstRect = lblRect
-				dstElemID = itemLblIDs[dstID]
+				dstElemID = itemLblIDs[dstKey]
 			} else {
 				dstRect = dstImgRect
-				dstElemID = itemImgIDs[dstID]
+				dstElemID = itemImgIDs[dstKey]
 			}
 		} else {
 			dstRect = dstImgRect
-			dstElemID = itemImgIDs[dstID]
+			dstElemID = itemImgIDs[dstKey]
 		}
 
 		srcEdge := rectEdgePoint(srcRect, srcSide)
@@ -1133,8 +1171,8 @@ func renderConnections(connections []*entity.Node, itemImgRects map[int][4]float
 		dstFP := fixedPointForSide(dstSide)
 
 		// seed は src/dst/index から決定論的に計算し、再生成しても描画ばらつきが出ないようにする。
-		seed := srcID*1_000_000 + dstID*1_000 + i + 1
-		connID := fmt.Sprintf("conn-%d-%d-%d", srcID, dstID, i)
+		seed := stableConnectionSeed(srcKey, dstKey, i)
+		connID := fmt.Sprintf("conn-%s-%s-%d", sanitizeElementID(srcKey), sanitizeElementID(dstKey), i)
 
 		style := resolveConnectionStyle(conn)
 		if style.Kind == "route" {
@@ -1246,6 +1284,34 @@ func renderConnections(connections []*entity.Node, itemImgRects map[int][4]float
 	}
 }
 
+func stableConnectionSeed(srcKey, dstKey string, index int) int {
+	seed := 2166136261
+	for _, r := range srcKey + "|" + dstKey + "|" + strconv.Itoa(index) {
+		seed ^= int(r)
+		seed *= 16777619
+	}
+	if seed < 0 {
+		seed = -seed
+	}
+	return seed%99999999 + 1
+}
+
+func sanitizeElementID(s string) string {
+	var b strings.Builder
+	for _, r := range s {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-' || r == '_' {
+			b.WriteRune(r)
+			continue
+		}
+		b.WriteByte('-')
+	}
+	out := b.String()
+	if out == "" {
+		return "endpoint"
+	}
+	return out
+}
+
 func extendConnectionPoint(point [2]float64, side string, distance float64) [2]float64 {
 	switch side {
 	case "top":
@@ -1300,6 +1366,8 @@ func resolveConnectionStyle(conn *entity.Node) resolvedConnectionStyle {
 	switch kind {
 	case "route":
 		style.Color = "#64748b"
+		style.EndArrowhead = "none"
+		style.ExcalidrawEndArrowhead = nil
 	case "traffic":
 		style.Color = "#2563eb"
 	}

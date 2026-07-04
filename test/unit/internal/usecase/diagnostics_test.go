@@ -34,8 +34,11 @@ func TestValidateReportsItemAndConnectionBranches(t *testing.T) {
 		{"spacer item", `<frame><item /></frame>`, ""},
 		{"missing src", `<frame><connection dst="2" /></frame>`, "src attribute"},
 		{"missing dst", `<frame><connection src="1" /></frame>`, "dst attribute"},
-		{"bad src", `<frame><connection src="one" dst="2" /></frame>`, "src=\"one\""},
-		{"bad dst", `<frame><connection src="1" dst="two" /></frame>`, "dst=\"two\""},
+		{"unknown src", `<frame><item id="2" /><connection src="one" dst="2" /></frame>`, `src="one"> does not match any <item id/name/ref>`},
+		{"unknown dst", `<frame><item id="1" /><connection src="1" dst="two" /></frame>`, `dst="two"> does not match any <item id/name/ref>`},
+		{"missing endpoint item", `<frame><item id="1" /><connection src="1" dst="2" /></frame>`, `dst="2"> does not match any <item id/name/ref>`},
+		{"ambiguous endpoint item", `<frame><item id="1" /><item id="1" /><item id="2" /><connection src="1" dst="2" /></frame>`, `ambiguous because <item id="1"> appears 2 times`},
+		{"nested connection", `<frame><container><connection src="1" dst="2" /></container><item id="1" /><item id="2" /></frame>`, "direct child"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

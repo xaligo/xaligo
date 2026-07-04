@@ -3,6 +3,7 @@ package usecase
 import (
 	"math"
 	"sort"
+	"strconv"
 )
 
 // routing.go — orthogonal arrow routing core (ported from the former TS
@@ -82,19 +83,106 @@ func routeConnections(requests []routeRequest, obstacles []rect, opt routerOptio
 		placed[i] = append([]segment(nil), opt.Reserved[i]...)
 	}
 	results := make([]routedPath, 0, len(requests))
+	routePaths := map[string][]pt{}
 	for _, req := range requests {
 		local := filterObstacles(obstacles, req)
 		path := routeOne(req, local, placed, opt)
-		if req.Kind != "route" {
+		if req.Kind == "traffic" {
+			if base, ok := matchingRoutePath(req, routePaths); ok {
+				path.Points = trafficAlongsideRoute(base, path.Points, opt.LaneGap)
+			} else {
+				path.Points = separateExactOverlaps(path.Points, placed[len(opt.Reserved):], local, opt)
+			}
+		} else if req.Kind != "route" {
 			path.Points = separateExactOverlaps(path.Points, placed[len(opt.Reserved):], local, opt)
 		}
 		visualMargin := math.Min(opt.LineMargin, opt.Clearance) / 2
 		path.Points = separateObstacleHits(path.Points, placed[len(opt.Reserved):], inflateRects(local, visualMargin), opt)
 		path.Points = rerouteEndpointApproach(path.Points, req, opt)
 		results = append(results, path)
+		if req.Kind == "route" {
+			routePaths[routePairKey(req, false)] = append([]pt(nil), path.Points...)
+		}
 		placed = append(placed, toSegments(path.Points))
 	}
 	return results
+}
+
+func matchingRoutePath(req routeRequest, routePaths map[string][]pt) ([]pt, bool) {
+	if points, ok := routePaths[routePairKey(req, false)]; ok {
+		return points, true
+	}
+	if points, ok := routePaths[routePairKey(req, true)]; ok {
+		return reversePoints(points), true
+	}
+	return nil, false
+}
+
+func routePairKey(req routeRequest, reversed bool) string {
+	src, dst := req.Src, req.Dst
+	srcSide, dstSide := req.SrcSide, req.DstSide
+	if reversed {
+		src, dst = dst, src
+		srcSide, dstSide = dstSide, srcSide
+	}
+	return rectKey(src) + "|" + string(srcSide) + ">" + rectKey(dst) + "|" + string(dstSide)
+}
+
+func rectKey(r rect) string {
+	return fmtFloat(r.X) + "," + fmtFloat(r.Y) + "," + fmtFloat(r.W) + "," + fmtFloat(r.H)
+}
+
+func fmtFloat(v float64) string {
+	return strconv.FormatFloat(math.Round(v*1000)/1000, 'f', 3, 64)
+}
+
+func trafficAlongsideRoute(route, current []pt, laneGap float64) []pt {
+	if len(route) < 2 || len(current) < 2 || laneGap <= 0 {
+		return current
+	}
+	shifted := offsetPolyline(route, laneGap)
+	out := make([]pt, 0, len(shifted)+2)
+	out = append(out, current[0])
+	out = append(out, shifted...)
+	out = append(out, current[len(current)-1])
+	return simplifyRouteCandidate(out)
+}
+
+func offsetPolyline(points []pt, offset float64) []pt {
+	out := make([]pt, len(points))
+	for i := range points {
+		normal := vertexNormal(points, i)
+		out[i] = pt{X: points[i].X + normal.X*offset, Y: points[i].Y + normal.Y*offset}
+	}
+	return out
+}
+
+func vertexNormal(points []pt, i int) pt {
+	var seg segment
+	switch {
+	case i == 0:
+		seg = segment{A: points[0], B: points[1]}
+	case i == len(points)-1:
+		seg = segment{A: points[len(points)-2], B: points[len(points)-1]}
+	default:
+		before := segment{A: points[i-1], B: points[i]}
+		after := segment{A: points[i], B: points[i+1]}
+		if segmentLength(after) >= segmentLength(before) {
+			seg = after
+		} else {
+			seg = before
+		}
+	}
+	dx := seg.B.X - seg.A.X
+	dy := seg.B.Y - seg.A.Y
+	if math.Abs(dx) >= math.Abs(dy) {
+		return pt{X: 0, Y: 1}
+	}
+	return pt{X: -1, Y: 0}
+}
+
+func segmentLength(s segment) float64 {
+	return math.Hypot(s.B.X-s.A.X, s.B.Y-s.A.Y)
 }
 
 // separateExactOverlaps moves only an internal trunk segment onto an adjacent

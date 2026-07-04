@@ -112,6 +112,18 @@ func TestGroupHeaderKeepsConservativeTextSpare(t *testing.T) {
 	t.Fatal("group label not found")
 }
 
+func TestGroupHeaderTextWidthAccountsForFullWidthCharacters(t *testing.T) {
+	scene := buildSceneForGroupTitle(t, "ＡＢＣＤ")
+	fullWidth := groupLabelWidth(t, scene, "ＡＢＣＤ")
+
+	scene = buildSceneForGroupTitle(t, "ABCD")
+	ascii := groupLabelWidth(t, scene, "ABCD")
+
+	if fullWidth <= ascii*1.5 {
+		t.Fatalf("full-width label width = %v, ASCII width = %v", fullWidth, ascii)
+	}
+}
+
 func TestItemLabelHeightExpandsForWrappedCatalogLabel(t *testing.T) {
 	doc, err := usecase.Parse(strings.NewReader(`<frame width="400" height="240"><generic-group title="Network"><item id="200013" /></generic-group></frame>`))
 	if err != nil {
@@ -142,6 +154,42 @@ func TestItemLabelHeightExpandsForWrappedCatalogLabel(t *testing.T) {
 		return
 	}
 	t.Fatal("item label not found")
+}
+
+func buildSceneForGroupTitle(t *testing.T, title string) sceneFile {
+	t.Helper()
+	doc, err := usecase.Parse(strings.NewReader(`<frame width="400" height="200"><generic-group title="` + title + `" /></frame>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	root, err := usecase.Build(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	out, err := usecase.BuildJSONWithFS(root, awsassets.Assets, awsassets.CatalogCSV, awsassets.GroupIconsDir, 32, nil, nil, newSceneDependencies())
+	if err != nil {
+		t.Fatal(err)
+	}
+	var scene sceneFile
+	if err := json.Unmarshal(out, &scene); err != nil {
+		t.Fatal(err)
+	}
+	return scene
+}
+
+func groupLabelWidth(t *testing.T, scene sceneFile, label string) float64 {
+	t.Helper()
+	for _, element := range scene.Elements {
+		if element["text"] == label {
+			width, ok := element["width"].(float64)
+			if !ok {
+				t.Fatalf("label width missing: %#v", element)
+			}
+			return width
+		}
+	}
+	t.Fatalf("label %q not found", label)
+	return 0
 }
 
 func TestTablerItemIconCurrentColorIsResolved(t *testing.T) {

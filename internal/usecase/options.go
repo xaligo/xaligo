@@ -72,6 +72,7 @@ var (
 	IURSO002 = share.NewMCode("IURSO-002", "Service options services CSV branch")
 	IURSO003 = share.NewMCode("IURSO-003", "Service options read services CSV failed")
 	IURSO004 = share.NewMCode("IURSO-004", "Service options service abbreviation branch")
+	IURSO005 = share.NewMCode("IURSO-005", "Service options legend validation failed")
 )
 
 func (rcvr *xaligoUsecase) serviceOptions(opts entity.RenderOptions) ([]entity.ServiceEntry, map[int]string, error) {
@@ -84,10 +85,18 @@ func (rcvr *xaligoUsecase) serviceOptions(opts entity.RenderOptions) ([]entity.S
 		return nil, abbreviations, nil
 	}
 	logger.DEBUG(IURSO002, "branch services csv", map[string]any{"bytes": len(opts.ServicesCSV)})
+	if err := validateLegendCSVRows(opts.ServicesCSV); err != nil {
+		logger.ERROR(IURSO005, "legend validation failed", map[string]any{"error": err})
+		return nil, nil, err
+	}
 	entries, err := rcvr.xaligoRepository.ReadServiceListFromReader(bytes.NewReader(opts.ServicesCSV))
 	if err != nil {
 		logger.ERROR(IURSO003, "read services csv failed", map[string]any{"error": err})
 		return nil, nil, fmt.Errorf("read services CSV: %w", err)
+	}
+	if err := validateLegendEntries(entries); err != nil {
+		logger.ERROR(IURSO005, "legend validation failed", map[string]any{"error": err})
+		return nil, nil, err
 	}
 	for _, entry := range entries {
 		if entry.CatalogID > 0 && entry.Abbreviation != "" {
@@ -96,4 +105,47 @@ func (rcvr *xaligoUsecase) serviceOptions(opts entity.RenderOptions) ([]entity.S
 		}
 	}
 	return entries, abbreviations, nil
+}
+
+func validateLegendCSVRows(data []byte) error {
+	lines := strings.Split(string(data), "\n")
+	for i, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		row := i + 1
+		parts := strings.SplitN(line, ",", 3)
+		for i := range parts {
+			parts[i] = strings.TrimSpace(parts[i])
+		}
+		if len(parts) < 2 {
+			return fmt.Errorf("legend row %d: catalog ID and official name are required", row)
+		}
+		if parts[0] == "" {
+			return fmt.Errorf("legend row %d: catalog ID is required", row)
+		}
+		if parts[1] == "" {
+			return fmt.Errorf("legend row %d: official name is required", row)
+		}
+	}
+	return nil
+}
+
+func validateLegendEntries(entries []entity.ServiceEntry) error {
+	seen := map[int]string{}
+	for i, entry := range entries {
+		row := i + 1
+		if entry.CatalogID <= 0 {
+			return fmt.Errorf("legend row %d: catalog ID is required", row)
+		}
+		if strings.TrimSpace(entry.OfficialName) == "" {
+			return fmt.Errorf("legend row %d: official name is required", row)
+		}
+		if previous, ok := seen[entry.CatalogID]; ok {
+			return fmt.Errorf("legend row %d: duplicate catalog ID %d already used by %q", row, entry.CatalogID, previous)
+		}
+		seen[entry.CatalogID] = entry.OfficialName
+	}
+	return nil
 }

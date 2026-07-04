@@ -266,3 +266,27 @@ func TestBuildPPTXPlanUsesServiceLegend(t *testing.T) {
 		t.Fatalf("legend = %#v", plan.Legend)
 	}
 }
+
+func TestBuildPPTXPlanValidatesServiceLegend(t *testing.T) {
+	cases := []struct {
+		name     string
+		services string
+		want     string
+	}{
+		{"missing catalog ID", "Amazon EC2,EC2", "catalog ID is required"},
+		{"missing official name", "27,,EC2", "official name is required"},
+		{"duplicate catalog ID", "27,Amazon EC2,EC2\n27,Amazon EC2 Duplicate,EC2B", "duplicate catalog ID"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := newUsecase().BuildPPTXPlan(context.Background(), []byte(`<frame width="240" height="120"><item id="27" /></frame>`), entity.RenderOptions{
+				Format:      usecase.FormatPPTX,
+				Theme:       "light",
+				ServicesCSV: []byte(tc.services),
+			})
+			if err == nil || !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("error = %v, want %q", err, tc.want)
+			}
+		})
+	}
+}

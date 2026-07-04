@@ -21,7 +21,7 @@ func TestResolveConnectionStyleKinds(t *testing.T) {
 		stroke         string
 	}{
 		{name: "default", kind: "connection", color: "#1e1e1e", width: 1, startArrowhead: "none", endArrowhead: "stealth", stroke: "solid"},
-		{name: "route", attrs: `kind="route"`, kind: "route", color: "#64748b", width: 1, startArrowhead: "none", endArrowhead: "stealth", stroke: "solid"},
+		{name: "route", attrs: `kind="route"`, kind: "route", color: "#64748b", width: 1, startArrowhead: "none", endArrowhead: "none", stroke: "solid"},
 		{name: "route without connectors", attrs: `kind="route" start-arrowhead="none" end-arrowhead="none"`, kind: "route", color: "#64748b", width: 1, startArrowhead: "none", endArrowhead: "none", stroke: "solid"},
 		{name: "traffic", attrs: `kind="traffic"`, kind: "traffic", color: "#2563eb", width: 1, startArrowhead: "none", endArrowhead: "stealth", stroke: "solid"},
 		{name: "overrides", attrs: `kind="traffic" color="#dc2626" stroke-width="3" stroke-style="dotted" start-arrowhead="oval" end-arrowhead="diamond"`, kind: "traffic", color: "#dc2626", width: 3, startArrowhead: "oval", endArrowhead: "diamond", stroke: "dotted"},

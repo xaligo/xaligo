@@ -33,6 +33,10 @@ func TestBuildPlanPreservesConnectorStylesAndLegend(t *testing.T) {
 	if traffic.Kind != "traffic" || traffic.Source != "src-item" || traffic.Target != "dst-item" || traffic.Line.Color != "2563EB" || traffic.Line.Dash != "dot" || traffic.Line.BeginArrowType != "oval" || traffic.Line.EndArrowType != "diamond" {
 		t.Fatalf("traffic legend = %#v", traffic)
 	}
+	route := plan.ConnectorLegend[0]
+	if route.Kind != "route" || route.Line.BeginArrowType != "none" || route.Line.EndArrowType != "none" {
+		t.Fatalf("route legend = %#v", route)
+	}
 }
 
 func TestBuildPlanResolvesConnectorArrowStyles(t *testing.T) {
@@ -51,14 +55,14 @@ func TestBuildPlanResolvesConnectorArrowStyles(t *testing.T) {
 		head  string
 		width float64
 	}{
-		{"standard", "triangle", 1.5},
-		{"triangle", "triangle", 3},
-		{"stealth", "stealth", 3},
-		{"arrow", "arrow", 3},
-		{"diamond", "diamond", 3},
-		{"oval", "oval", 3},
+		{"standard", "none", 1.5},
+		{"triangle", "none", 3},
+		{"stealth", "none", 3},
+		{"arrow", "none", 3},
+		{"diamond", "none", 3},
+		{"oval", "none", 3},
 		{"none", "none", 3},
-		{"", "stealth", 1},
+		{"", "none", 1},
 	}
 	for _, tc := range cases {
 		t.Run(tc.style, func(t *testing.T) {
@@ -71,6 +75,44 @@ func TestBuildPlanResolvesConnectorArrowStyles(t *testing.T) {
 				t.Fatalf("style %q line = %#v", tc.style, line)
 			}
 		})
+	}
+}
+
+func TestBuildPlanOffsetsTrafficBesideMatchingRoute(t *testing.T) {
+	opacity := 100.0
+	scene := entity.PptxScene{Elements: []entity.Element{
+		{ID: "src-item", Type: "image", X: 0, Y: 0, Width: 32, Height: 32, Opacity: &opacity, FileID: "src-file"},
+		{ID: "dst-item", Type: "image", X: 160, Y: 0, Width: 32, Height: 32, Opacity: &opacity, FileID: "dst-file"},
+		{ID: "route", Type: "arrow", StrokeColor: "#64748b", StrokeWidth: 1, Opacity: &opacity,
+			StartBinding: &entity.Binding{ElementID: "src-item", FixedPoint: []float64{1, 0.5}},
+			EndBinding:   &entity.Binding{ElementID: "dst-item", FixedPoint: []float64{0, 0.5}},
+			CustomData:   &entity.CustomData{ConnectorKind: "route"}},
+		{ID: "traffic", Type: "arrow", StrokeColor: "#2563eb", StrokeWidth: 1, Opacity: &opacity,
+			StartBinding: &entity.Binding{ElementID: "src-item", FixedPoint: []float64{1, 0.5}},
+			EndBinding:   &entity.Binding{ElementID: "dst-item", FixedPoint: []float64{0, 0.5}},
+			CustomData:   &entity.CustomData{ConnectorKind: "traffic"}},
+	}, AppState: &entity.AppState{ViewBackgroundColor: "#FFFFFF"}}
+
+	plan := usecase.BuildPlan(&scene, entity.PptxOptions{PxPerInch: 96})
+	lines := map[string]entity.DrawOp{}
+	for _, op := range plan.Ops {
+		if op.Kind == "line" {
+			lines[op.ID] = op
+		}
+	}
+	route, routeOK := lines["route"]
+	traffic, trafficOK := lines["traffic"]
+	if !routeOK || !trafficOK {
+		t.Fatalf("line ops = %#v", lines)
+	}
+	if len(route.Points) == 0 || len(traffic.Points) == 0 {
+		t.Fatalf("route/traffic points = %#v / %#v", route.Points, traffic.Points)
+	}
+	if route.Y == traffic.Y && route.X == traffic.X {
+		t.Fatalf("traffic line was not offset from route: route=%#v traffic=%#v", route, traffic)
+	}
+	if traffic.Line.EndArrowType == "none" {
+		t.Fatalf("traffic should remain directional: %#v", traffic.Line)
 	}
 }
 

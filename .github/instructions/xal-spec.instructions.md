@@ -153,19 +153,20 @@ Use the same catalog IDs as `<item id="N">` for `src` / `dst`.
 
 | Attribute | Type | Required | Description |
 |---|---|---|---|
-| `src` | int | ✓ | Catalog ID of the arrow start icon |
-| `dst` | int | ✓ | Catalog ID of the arrow end icon |
+| `src` | string | ✓ | Catalog ID, `name`, or `ref` of the arrow start item |
+| `dst` | string | ✓ | Catalog ID, `name`, or `ref` of the arrow end item |
 | `arrowhead-size` | string | — | Arrowhead size: `"s"` (small) / `"m"` (medium) / `"l"` (large). Default `"s"` |
-| `kind` | string | — | `route` for a structural path with circular endpoints, `traffic` for directional flow |
+| `kind` | string | — | `route` for a structural path without arrows, `traffic` for directional flow drawn beside a matching route |
 | `color` | string | — | Stroke color override |
 | `stroke-width` | float | — | Positive stroke width override |
 | `stroke-style` | string | — | `solid`, `dashed`, or `dotted` |
 | `start-arrowhead` / `end-arrowhead` | string | — | Independently set either end to `none`, `arrow`, `triangle`, `stealth`, `diamond`, or `oval` |
 | `arrowhead` | string | — | Backward-compatible alias for `end-arrowhead` |
 
-Default connections, `kind="route"`, and `kind="traffic"` all use a thin 1px
-line with `start-arrowhead="none"` and a slender `stealth` end arrowhead.
-Default colors are `#1e1e1e` for normal connections, `#64748b` for routes, and
+Default connections and `kind="traffic"` use a thin 1px line with
+`start-arrowhead="none"` and a slender `stealth` end arrowhead. `kind="route"`
+uses `start-arrowhead="none"` and `end-arrowhead="none"` by default. Default
+colors are `#1e1e1e` for normal connections, `#64748b` for routes, and
 `#2563eb` for traffic. Explicit `stroke-width`, color, stroke style, and
 arrowhead attributes are preserved.
 
@@ -181,6 +182,7 @@ web ==> db
 - `---` expands to `kind="route"`.
 - `==>` expands to `kind="traffic"`.
 - Operands may also be numeric item IDs.
+- Explicit `<connection src=... dst=...>` attributes resolve the same way.
 - Shorthands must be direct text children of `<frame>`.
 - References must be unique and must belong to an item with a non-empty ID.
 - Use an explicit `<connection>` for color, width, stroke, or arrowhead overrides.
@@ -191,8 +193,10 @@ web ==> db
   `endArrowhead: "arrow"` plus `endArrowheadSize: "s"`; xaligo metadata records
   the logical PPTX/SVG head as `stealth`.
 - Stroke color `#1e1e1e`, stroke width `1px` for normal connections
-- `kind="route"` defaults to `#64748b`, `1px`, lower route layer
-- `kind="traffic"` defaults to `#2563eb`, `1px`, higher traffic layer
+- `kind="route"` defaults to `#64748b`, `1px`, lower route layer, no arrowheads
+- `kind="traffic"` defaults to `#2563eb`, `1px`, higher traffic layer, directional end arrowhead
+- A traffic line with the same endpoints as a route line is drawn beside that
+  route in SVG/PPTX draw plans.
 - Start/end connect to the **edge midpoint** of the element
   - When direction is **downward**: label text element (`{id}-item-lbl`) bottom edge
   - Otherwise: icon image element (`{id}-item`) corresponding edge
@@ -213,6 +217,12 @@ web ==> db
 | Up | top | bottom (label) |
 
 > If `src` / `dst` items are not rendered, a warning is emitted and the connection is skipped.
+
+Connection endpoints must resolve to exactly one `<item>`. Numeric catalog IDs
+are valid only when that ID appears once in the document; when the same service
+appears multiple times, use unique `name` or `ref` values. Missing endpoints,
+ambiguous numeric IDs, duplicate aliases, and `<connection>` tags nested below
+any tag other than `<frame>` are validation errors.
 
 ## AWS Group Tags
 
@@ -265,6 +275,8 @@ The tag background and label box use a conservative width estimate so PowerPoint
 no-wrap text remains inside the tag. Keep group tag text concise; if changing
 group tag font, padding, or geometry, update the renderer width estimate and
 regression tests together.
+East Asian full-width characters, including Japanese labels, count as
+double-width in group header and item label width estimates.
 
 ```xml
 <generic-group title="Network Topology" icon-id="104635">

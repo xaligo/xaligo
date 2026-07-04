@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/xaligo/xaligo/internal/entity"
@@ -13,6 +14,12 @@ import (
 )
 
 var connectionShorthandPattern = regexp.MustCompile(`^([A-Za-z0-9_.:-]+)\s*(---|==>)\s*([A-Za-z0-9_.:-]+)$`)
+
+const (
+	internalConnectionKeyAttr    = "_xaligoConnectionKey"
+	internalConnectionSrcKeyAttr = "_xaligoConnectionSrcKey"
+	internalConnectionDstKeyAttr = "_xaligoConnectionDstKey"
+)
 
 var (
 	IUPP001    = share.NewMCode("IUPP-001", "Parse read DSL failed")
@@ -54,6 +61,9 @@ var (
 	IUPVCN002  = share.NewMCode("IUPVCN-002", "Validate connection missing destination branch")
 	IUPVCN003  = share.NewMCode("IUPVCN-003", "Validate connection non numeric source branch")
 	IUPVCN004  = share.NewMCode("IUPVCN-004", "Validate connection non numeric destination branch")
+	IUPVCN005  = share.NewMCode("IUPVCN-005", "Validate connection nested branch")
+	IUPVCN006  = share.NewMCode("IUPVCN-006", "Validate connection missing endpoint item branch")
+	IUPVCN007  = share.NewMCode("IUPVCN-007", "Validate connection ambiguous endpoint item branch")
 )
 
 func Parse(r io.Reader) (entity.Document, error) {
@@ -146,8 +156,13 @@ func Parse(r io.Reader) (entity.Document, error) {
 		logger.ERROR(IUPP015, "branch invalid root", map[string]any{"tag": root.Tag})
 		return entity.Document{}, &entity.ParseError{Position: root.Position, Err: fmt.Errorf("root tag must be <frame>, got <%s>", root.Tag)}
 	}
+	assignItemConnectionKeys(root)
 	if err := expandConnectionShorthands(root, data); err != nil {
 		logger.ERROR(IUPP016, "expand connection shorthands failed", map[string]any{"error": err})
+		return entity.Document{}, err
+	}
+	if err := validateConnectionReferences(root); err != nil {
+		logger.ERROR(IUPP006, "connection reference validation failed", map[string]any{"error": err})
 		return entity.Document{}, err
 	}
 
@@ -169,16 +184,37 @@ func validateGenericGroupNode(node *entity.Node) error {
 	return nil
 }
 
+func assignItemConnectionKeys(root *entity.Node) {
+	next := 1
+	var walk func(*entity.Node)
+	walk = func(node *entity.Node) {
+		if node.Tag == "item" && strings.TrimSpace(node.Attrs["id"]) != "" {
+			node.Attrs[internalConnectionKeyAttr] = "item-" + strconv.Itoa(next)
+			next++
+		}
+		for _, child := range node.Children {
+			walk(child)
+		}
+	}
+	walk(root)
+}
+
 func expandConnectionShorthands(root *entity.Node, data []byte) error {
 	aliases := map[string]string{}
+	duplicateAliases := map[string]bool{}
 	var collect func(*entity.Node) error
 	collect = func(node *entity.Node) error {
 		if node.Tag == "item" {
 			logger.DEBUG(IUPECS001, "branch item", map[string]any{"tag": node.Tag})
 			id := strings.TrimSpace(node.Attrs["id"])
+			key := strings.TrimSpace(node.Attrs[internalConnectionKeyAttr])
 			if id != "" {
 				logger.DEBUG(IUPECS002, "branch item ID", map[string]any{"id": id})
-				aliases[id] = id
+				if _, exists := aliases[id]; exists {
+					duplicateAliases[id] = true
+				} else {
+					aliases[id] = key
+				}
 			}
 			for _, key := range []string{"name", "ref"} {
 				alias := strings.TrimSpace(node.Attrs[key])
@@ -190,11 +226,11 @@ func expandConnectionShorthands(root *entity.Node, data []byte) error {
 					logger.DEBUG(IUPECS004, "branch alias without ID", map[string]any{"key": key, "alias": alias})
 					return &entity.ParseError{Position: node.Position, Err: fmt.Errorf("<item %s=%q> requires a non-empty id", key, alias)}
 				}
-				if previous, exists := aliases[alias]; exists && previous != id {
-					logger.DEBUG(IUPECS005, "branch duplicate alias", map[string]any{"alias": alias, "previous": previous, "id": id})
+				if _, exists := aliases[alias]; exists || duplicateAliases[alias] {
+					logger.DEBUG(IUPECS005, "branch duplicate alias", map[string]any{"alias": alias, "id": id})
 					return &entity.ParseError{Position: node.Position, Err: fmt.Errorf("duplicate item reference %q", alias)}
 				}
-				aliases[alias] = id
+				aliases[alias] = node.Attrs[internalConnectionKeyAttr]
 			}
 		}
 		for _, child := range node.Children {
@@ -231,12 +267,12 @@ func expandConnectionShorthands(root *entity.Node, data []byte) error {
 				continue
 			}
 			src, ok := aliases[match[1]]
-			if !ok || src == "" {
+			if !ok || src == "" || duplicateAliases[match[1]] {
 				logger.ERROR(IUPECS010, "branch missing source", map[string]any{"source": match[1]})
 				return &entity.ParseError{Position: position, Err: fmt.Errorf("connection shorthand source %q does not match an <item name=...>, <item ref=...>, or item ID", match[1])}
 			}
 			dst, ok := aliases[match[3]]
-			if !ok || dst == "" {
+			if !ok || dst == "" || duplicateAliases[match[3]] {
 				logger.ERROR(IUPECS011, "branch missing destination", map[string]any{"destination": match[3]})
 				return &entity.ParseError{Position: position, Err: fmt.Errorf("connection shorthand destination %q does not match an <item name=...>, <item ref=...>, or item ID", match[3])}
 			}
@@ -246,7 +282,15 @@ func expandConnectionShorthands(root *entity.Node, data []byte) error {
 				kind = "traffic"
 			}
 			root.Children = append(root.Children, &entity.Node{
-				Tag: "connection", Attrs: map[string]string{"src": src, "dst": dst, "kind": kind}, Position: position,
+				Tag: "connection",
+				Attrs: map[string]string{
+					"src":                        match[1],
+					"dst":                        match[3],
+					"kind":                       kind,
+					internalConnectionSrcKeyAttr: src,
+					internalConnectionDstKeyAttr: dst,
+				},
+				Position: position,
 			})
 		}
 	}
@@ -290,7 +334,7 @@ func validateItemNode(node *entity.Node) error {
 	return nil
 }
 
-// validateConnectionNode ensures <connection> carries numeric src and dst attributes.
+// validateConnectionNode ensures <connection> carries non-empty src and dst attributes.
 func validateConnectionNode(node *entity.Node) error {
 	src, hasSrc := node.Attrs["src"]
 	dst, hasDst := node.Attrs["dst"]
@@ -302,16 +346,83 @@ func validateConnectionNode(node *entity.Node) error {
 		logger.ERROR(IUPVCN002, "branch missing destination")
 		return fmt.Errorf("<connection> requires a dst attribute")
 	}
-	for _, ch := range strings.TrimSpace(src) {
-		if ch < '0' || ch > '9' {
-			logger.DEBUG(IUPVCN003, "branch non numeric source", map[string]any{"src": src})
-			return fmt.Errorf("<connection src=%q> must be a positive integer", src)
-		}
+	return nil
+}
+
+func validateConnectionReferences(root *entity.Node) error {
+	type itemRef struct {
+		key      string
+		position entity.Position
 	}
-	for _, ch := range strings.TrimSpace(dst) {
-		if ch < '0' || ch > '9' {
-			logger.DEBUG(IUPVCN004, "branch non numeric destination", map[string]any{"dst": dst})
-			return fmt.Errorf("<connection dst=%q> must be a positive integer", dst)
+	itemsByID := map[string][]itemRef{}
+	itemsByAlias := map[string]itemRef{}
+	var connections []*entity.Node
+
+	var walk func(node, parent *entity.Node) error
+	walk = func(node, parent *entity.Node) error {
+		if node.Tag == "item" {
+			id := strings.TrimSpace(node.Attrs["id"])
+			key := strings.TrimSpace(node.Attrs[internalConnectionKeyAttr])
+			if id != "" {
+				ref := itemRef{key: key, position: node.Position}
+				itemsByID[id] = append(itemsByID[id], ref)
+				for _, attr := range []string{"name", "ref"} {
+					alias := strings.TrimSpace(node.Attrs[attr])
+					if alias == "" {
+						continue
+					}
+					if _, exists := itemsByAlias[alias]; exists {
+						logger.ERROR(IUPVCN007, "branch duplicate endpoint alias", map[string]any{"alias": alias})
+						return &entity.ParseError{Position: node.Position, Err: fmt.Errorf("duplicate item reference %q", alias)}
+					}
+					itemsByAlias[alias] = ref
+				}
+			}
+		}
+		if node.Tag == "connection" {
+			if parent != root {
+				logger.ERROR(IUPVCN005, "branch nested connection", map[string]any{"tag": parent.Tag})
+				return &entity.ParseError{Position: node.Position, Err: fmt.Errorf("<connection> must be a direct child of <frame>")}
+			}
+			connections = append(connections, node)
+		}
+		for _, child := range node.Children {
+			if err := walk(child, node); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	if err := walk(root, nil); err != nil {
+		return err
+	}
+
+	for _, conn := range connections {
+		for _, endpoint := range []struct {
+			attr    string
+			keyAttr string
+		}{
+			{"src", internalConnectionSrcKeyAttr},
+			{"dst", internalConnectionDstKeyAttr},
+		} {
+			token := strings.TrimSpace(conn.Attrs[endpoint.attr])
+			if strings.TrimSpace(conn.Attrs[endpoint.keyAttr]) != "" {
+				continue
+			}
+			if refs := itemsByID[token]; len(refs) > 0 {
+				if len(refs) > 1 {
+					logger.ERROR(IUPVCN007, "branch ambiguous endpoint item", map[string]any{"attr": endpoint.attr, "id": token, "count": len(refs)})
+					return &entity.ParseError{Position: conn.Position, Err: fmt.Errorf("<connection %s=%q> is ambiguous because <item id=%q> appears %d times; use a unique item name or ref", endpoint.attr, token, token, len(refs))}
+				}
+				conn.Attrs[endpoint.keyAttr] = refs[0].key
+				continue
+			}
+			if ref, ok := itemsByAlias[token]; ok {
+				conn.Attrs[endpoint.keyAttr] = ref.key
+				continue
+			}
+			logger.ERROR(IUPVCN006, "branch missing endpoint item", map[string]any{"attr": endpoint.attr, "token": token})
+			return &entity.ParseError{Position: conn.Position, Err: fmt.Errorf("<connection %s=%q> does not match any <item id/name/ref>", endpoint.attr, token)}
 		}
 	}
 	return nil
