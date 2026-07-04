@@ -1,7 +1,7 @@
 " Vim syntax file for xaligo DSL (.xal)
 " Language:   xaligo DSL
 " Maintainer: xaligo project
-" URL:        https://github.com/ryo-arima/xaligo
+" URL:        https://github.com/xaligo/xaligo
 
 if exists("b:current_syntax")
   finish

@@ -3,7 +3,7 @@ set -euo pipefail
 
 PACKAGE_NAME="xaligo"
 PACKAGE_DESCRIPTION="Diagram-as-Code CLI for rendering .xal diagrams"
-PACKAGE_URL="https://github.com/ryo-arima/xaligo"
+PACKAGE_URL="https://github.com/xaligo/xaligo"
 PACKAGE_MAINTAINER="${PACKAGE_MAINTAINER:-Ryo Arima <ryo-arima@users.noreply.github.com>}"
 RUNTIME_REL="usr/lib/${PACKAGE_NAME}"
 
@@ -60,18 +60,24 @@ output_dir() {
   printf '%s\n' "${OUTPUT_DIR:-output/packages}"
 }
 
-build_linux_binary() {
-  local version output
+build_native_binary() {
+  local version output target_os target_arch
   version="$1"
   output="$2"
+  target_os="$3"
+  target_arch="$4"
   mkdir -p "$(dirname "$output")"
-  GOOS="$(go_os)" GOARCH="$(go_arch)" CGO_ENABLED=0 \
+  GOOS="$target_os" GOARCH="$target_arch" CGO_ENABLED=0 \
     go build \
       -buildvcs=false \
       -trimpath \
-      -ldflags "-X github.com/ryo-arima/xaligo/internal/controller.version=${version}" \
+      -ldflags "-X github.com/xaligo/xaligo/internal/controller.version=${version}" \
       -o "$output" \
       ./cmd
+}
+
+build_linux_binary() {
+  build_native_binary "$1" "$2" "$(go_os)" "$(go_arch)"
 }
 
 require_command() {

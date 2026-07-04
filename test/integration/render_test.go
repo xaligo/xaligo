@@ -8,8 +8,8 @@ import (
 	"testing"
 	"testing/fstest"
 
-	"github.com/ryo-arima/xaligo/internal/entity"
-	"github.com/ryo-arima/xaligo/internal/usecase"
+	"github.com/xaligo/xaligo/internal/entity"
+	"github.com/xaligo/xaligo/internal/usecase"
 )
 
 var apiTestXAL = []byte(`<frame width="320" height="180"><box title="API" /></frame>`)

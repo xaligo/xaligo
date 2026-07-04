@@ -9,7 +9,7 @@ import (
 	"testing"
 	"testing/fstest"
 
-	"github.com/ryo-arima/xaligo/internal/repository"
+	"github.com/xaligo/xaligo/internal/repository"
 )
 
 const testSVG = `<svg xmlns="http://www.w3.org/2000/svg"><rect fill="#123456"/></svg>`

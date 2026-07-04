@@ -3,12 +3,12 @@ package command
 import (
 	"os"
 
-	"github.com/ryo-arima/xaligo/internal/config"
-	"github.com/ryo-arima/xaligo/internal/controller"
-	"github.com/ryo-arima/xaligo/internal/repository"
-	"github.com/ryo-arima/xaligo/internal/share"
-	"github.com/ryo-arima/xaligo/internal/usecase"
 	"github.com/spf13/cobra"
+	"github.com/xaligo/xaligo/internal/config"
+	"github.com/xaligo/xaligo/internal/controller"
+	"github.com/xaligo/xaligo/internal/repository"
+	"github.com/xaligo/xaligo/internal/share"
+	"github.com/xaligo/xaligo/internal/usecase"
 )
 
 var (

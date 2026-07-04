@@ -7,8 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/ryo-arima/xaligo/internal/config"
-	"github.com/ryo-arima/xaligo/internal/entity"
+	"github.com/xaligo/xaligo/internal/config"
+	"github.com/xaligo/xaligo/internal/entity"
 )
 
 type IsoflowRepository interface {

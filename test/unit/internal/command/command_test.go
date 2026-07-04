@@ -5,8 +5,8 @@ import (
 	"os/exec"
 	"testing"
 
-	command "github.com/ryo-arima/xaligo/internal"
 	"github.com/spf13/cobra"
+	command "github.com/xaligo/xaligo/internal"
 )
 
 func TestNewRootCmdAssemblesSubcommands(t *testing.T) {

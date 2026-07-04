@@ -1,8 +1,8 @@
 package controller
 
 import (
-	"github.com/ryo-arima/xaligo/internal/share"
 	"github.com/spf13/cobra"
+	"github.com/xaligo/xaligo/internal/share"
 )
 
 var version = "0.1.0"

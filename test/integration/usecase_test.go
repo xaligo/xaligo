@@ -1,8 +1,8 @@
 package integration
 
 import (
-	"github.com/ryo-arima/xaligo/internal/repository"
-	"github.com/ryo-arima/xaligo/internal/usecase"
+	"github.com/xaligo/xaligo/internal/repository"
+	"github.com/xaligo/xaligo/internal/usecase"
 )
 
 func newUsecase() usecase.XaligoUsecase {

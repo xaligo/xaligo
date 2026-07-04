@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	awsassets "github.com/ryo-arima/xaligo/etc/resources/aws"
-	"github.com/ryo-arima/xaligo/internal/usecase"
+	awsassets "github.com/xaligo/xaligo/etc/resources/aws"
+	"github.com/xaligo/xaligo/internal/usecase"
 )
 
 func TestResolveConnectionStyleKinds(t *testing.T) {

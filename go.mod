@@ -1,4 +1,4 @@
-module github.com/ryo-arima/xaligo
+module github.com/xaligo/xaligo
 
 go 1.22.0
 

@@ -1,10 +1,62 @@
 {
-  "name": "xaligo-workspace",
-  "private": true,
+  "name": "@xaligo/xaligo",
+  "version": "0.1.0",
+  "description": "xaligo CLI and TypeScript/WASM API for rendering .xal diagrams",
+  "keywords": [
+    "xaligo",
+    "diagram-as-code",
+    "excalidraw",
+    "pptx",
+    "svg",
+    "aws"
+  ],
+  "homepage": "https://github.com/xaligo/xaligo",
+  "bugs": {
+    "url": "https://github.com/xaligo/xaligo/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xaligo/xaligo.git"
+  },
+  "license": "MIT",
+  "type": "module",
+  "main": "./external/dist/index.js",
+  "module": "./external/dist/index.js",
+  "types": "./external/dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./external/dist/index.d.ts",
+      "import": "./external/dist/index.js"
+    }
+  },
+  "workspaces": [
+    "external"
+  ],
+  "bin": {
+    "xaligo": "npm/bin/xaligo.cjs"
+  },
+  "files": [
+    "npm/bin",
+    "npm/scripts",
+    "etc/resources/aws/app.yaml",
+    "etc/resources/aws/isoflow-icons.json",
+    "etc/resources/aws/service-catalog.csv",
+    "etc/resources/aws/service-index.csv",
+    "etc/resources/aws/svg",
+    "external/dist",
+    "external/wasm/xaligo.wasm",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "npm --prefix external run build",
+    "build:npm-binaries": "scripts/build/build-npm-binaries.sh",
     "clean": "npm --prefix external run clean",
     "gen:isoflow-icons": "node scripts/tool/gen_isoflow_icons.mjs",
+    "postinstall": "node npm/scripts/install.cjs",
     "import:tabler-icons": "node scripts/tool/import_tabler_icons.mjs",
     "import:yamaha-icons": "node scripts/tool/import_yamaha_icons.mjs"
   },

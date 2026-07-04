@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ryo-arima/xaligo/internal/repository"
+	"github.com/xaligo/xaligo/internal/repository"
 )
 
 type failingReader struct{}

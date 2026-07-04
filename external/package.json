@@ -1,5 +1,5 @@
 {
-  "name": "@ryo-arima/xaligo",
+  "name": "@xaligo/xaligo-external",
   "version": "0.0.1",
   "description": "WebAssembly build of xaligo — convert .xal DSL to Excalidraw JSON from TypeScript/JavaScript",
   "keywords": [
@@ -11,16 +11,17 @@
     "webassembly",
     "vscode-extension"
   ],
-  "homepage": "https://github.com/ryo-arima/xaligo",
+  "homepage": "https://github.com/xaligo/xaligo",
   "bugs": {
-    "url": "https://github.com/ryo-arima/xaligo/issues"
+    "url": "https://github.com/xaligo/xaligo/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ryo-arima/xaligo.git",
+    "url": "git+https://github.com/xaligo/xaligo.git",
     "directory": "external"
   },
   "license": "MIT",
+  "private": true,
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",

@@ -1,6 +1,6 @@
 package main
 
-import command "github.com/ryo-arima/xaligo/internal"
+import command "github.com/xaligo/xaligo/internal"
 
 func main() {
 	command.Execute()

@@ -10,7 +10,7 @@ applyTo: "**"
 `.xal` diagram DSL to Excalidraw, SVG, PPTX, XYFlow, and Isoflow outputs.
 
 ```text
-module: github.com/ryo-arima/xaligo
+module: github.com/xaligo/xaligo
 Go:     1.22
 ```
 
@@ -119,7 +119,7 @@ refreshed through the scripts declared in the root `package.json`.
 go test ./...
 go build ./...
 npm install
-npm run build --workspace=@ryo-arima/xaligo
+npm run build --workspace=@ryo/xaligo-external
 npm --prefix external run build:pptx-exporter-wasm
 git diff --check
 ```

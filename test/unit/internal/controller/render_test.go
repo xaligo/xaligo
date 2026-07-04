@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ryo-arima/xaligo/internal/entity"
+	"github.com/xaligo/xaligo/internal/entity"
 )
 
 func TestRenderCommandDefaults(t *testing.T) {

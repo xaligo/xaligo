@@ -10,11 +10,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/ryo-arima/xaligo/internal/config"
-	"github.com/ryo-arima/xaligo/internal/entity"
-	"github.com/ryo-arima/xaligo/internal/share"
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
+	"github.com/xaligo/xaligo/internal/config"
+	"github.com/xaligo/xaligo/internal/entity"
+	"github.com/xaligo/xaligo/internal/share"
 )
 
 const pptxExporterWasmRel = "external/wasm/xaligo.wasm"

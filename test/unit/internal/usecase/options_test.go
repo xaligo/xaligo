@@ -5,8 +5,8 @@ import (
 	"testing"
 	"testing/fstest"
 
-	"github.com/ryo-arima/xaligo/internal/entity"
-	"github.com/ryo-arima/xaligo/internal/usecase"
+	"github.com/xaligo/xaligo/internal/entity"
+	"github.com/xaligo/xaligo/internal/usecase"
 )
 
 func TestValidateRenderOptionsAcceptsSupportedFormatsAndModes(t *testing.T) {

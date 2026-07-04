@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ryo-arima/xaligo/internal/config"
+	"github.com/xaligo/xaligo/internal/config"
 )
 
 func TestNewResolvesDefaultConfigPaths(t *testing.T) {

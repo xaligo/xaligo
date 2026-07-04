@@ -7,7 +7,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/ryo-arima/xaligo/internal/entity"
+	"github.com/xaligo/xaligo/internal/entity"
 )
 
 const svgDefaultPxPerInch = 96.0

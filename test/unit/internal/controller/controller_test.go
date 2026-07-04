@@ -10,12 +10,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ryo-arima/xaligo/internal/config"
-	"github.com/ryo-arima/xaligo/internal/controller"
-	"github.com/ryo-arima/xaligo/internal/entity"
-	"github.com/ryo-arima/xaligo/internal/repository"
-	"github.com/ryo-arima/xaligo/internal/usecase"
 	"github.com/spf13/cobra"
+	"github.com/xaligo/xaligo/internal/config"
+	"github.com/xaligo/xaligo/internal/controller"
+	"github.com/xaligo/xaligo/internal/entity"
+	"github.com/xaligo/xaligo/internal/repository"
+	"github.com/xaligo/xaligo/internal/usecase"
 )
 
 type fakeUseCase struct {

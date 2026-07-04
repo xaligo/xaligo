@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ryo-arima/xaligo/internal/usecase"
+	"github.com/xaligo/xaligo/internal/usecase"
 )
 
 func TestContentAreaAlignsChildren(t *testing.T) {
