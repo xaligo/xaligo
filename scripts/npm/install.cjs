@@ -8,6 +8,15 @@ const path = require('node:path');
 const packageRoot = path.resolve(__dirname, '..', '..');
 const packageJson = require(path.join(packageRoot, 'package.json'));
 
+const supportedTargets = new Set([
+  'darwin/amd64',
+  'darwin/arm64',
+  'linux/amd64',
+  'linux/arm64',
+  'win32/amd64',
+  'win32/arm64',
+]);
+
 function goArch() {
   switch (process.arch) {
     case 'x64':
@@ -19,18 +28,23 @@ function goArch() {
   }
 }
 
+function target() {
+  return `${process.platform}/${goArch()}`;
+}
+
 function isSourceCheckout() {
   return fs.existsSync(path.join(packageRoot, '.git'));
 }
 
 function binaryName() {
-  const arch = goArch();
+  const [platform, arch] = target().split('/');
   const suffix = process.platform === 'win32' ? '.exe' : '';
-  return `xaligo-${process.platform}-${arch}${suffix}`;
+  return `xaligo-${platform}-${arch}${suffix}`;
 }
 
 function releaseTag() {
   if (process.env.XALIGO_NPM_RELEASE_TAG) return process.env.XALIGO_NPM_RELEASE_TAG;
+  if (packageJson.xaligo?.releaseTag) return packageJson.xaligo.releaseTag;
   return `v${String(packageJson.version).split('+')[0]}`;
 }
 
@@ -63,6 +77,10 @@ function download(url, destination, redirects = 0) {
 }
 
 async function main() {
+  if (!supportedTargets.has(target())) {
+    throw new Error(`unsupported platform/architecture: ${process.platform}/${process.arch}`);
+  }
+
   const name = binaryName();
   const nativeDir = path.join(packageRoot, 'bin', 'native');
   const destination = path.join(nativeDir, name);
