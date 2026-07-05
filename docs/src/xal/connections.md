@@ -35,8 +35,8 @@ chooses the endpoint sides and anchor positions automatically from the endpoint
 geometry.
 
 Use `src-anchor` and `dst-anchor` to pin an endpoint to a specific perimeter
-anchor. Each side has five positions. Corners are shared by adjacent sides, so
-the rectangle has 16 unique anchor positions.
+anchor. Each side has five inset positions, so the rectangle has 20 unique
+anchor positions.
 
 ```text
 top:    top-1    top-2    top-3    top-4    top-5
@@ -46,8 +46,9 @@ left:   left-1   left-2   left-3   left-4   left-5
 ```
 
 Position numbers run left-to-right on `top` and `bottom`, and top-to-bottom on
-`left` and `right`. For example, `top-1` and `left-1` are the same top-left
-corner; `right-5` and `bottom-5` are the same bottom-right corner.
+`left` and `right`. Corner anchors are not shared: `top-1` sits slightly inside
+the top edge near the left corner, while `left-1` sits slightly inside the left
+edge near the top corner.
 
 ```xml
 <connection src="web" dst="app"

@@ -126,5 +126,5 @@
 
 - [Live Preview](live-preview.md)
 - [API and Configuration](api-configuration.md)
-- [Contributing and Sponsorship](contributing.md)
+- [Contributing](contributing.md)
 - [Development](development.md)

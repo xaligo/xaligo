@@ -1207,6 +1207,15 @@ func anchorFromFixedPoint(r rect, s side, fp []float64, explicit bool) (pt, bool
 	return pt{X: r.X + r.W*fx, Y: r.Y + r.H*fy}, true
 }
 
+func pointFromFixedPoint(r rect, fp []float64) pt {
+	if len(fp) < 2 {
+		return pt{X: r.X + r.W/2, Y: r.Y + r.H/2}
+	}
+	fx := math.Max(0, math.Min(1, fp[0]))
+	fy := math.Max(0, math.Min(1, fp[1]))
+	return pt{X: r.X + r.W*fx, Y: r.Y + r.H*fy}
+}
+
 func rectOf(el *entity.Element) (rect, bool) {
 	if el == nil {
 		return rect{}, false

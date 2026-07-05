@@ -391,7 +391,9 @@ func BuildJSON(root *entity.Box, svgGroupDir string, catalogCSV string, projectR
 	sort.Strings(ancestorIDs)
 	for _, ancID := range ancestorIDs {
 		items := itemGroups[ancID]
-		renderItemGrid(items, ancestorBoxes[ancID], &elements, files, catalogCSV, projectRoot, fsys, itemIconSize, r, itemImgRects, itemLblRects, itemImgIDs, itemLblIDs, abbrevMap, deps)
+		if err := renderItemGrid(items, ancestorBoxes[ancID], &elements, files, catalogCSV, projectRoot, fsys, itemIconSize, r, itemImgRects, itemLblRects, itemImgIDs, itemLblIDs, abbrevMap, deps); err != nil {
+			return nil, err
+		}
 	}
 	renderConnections(connections, itemImgRects, itemLblRects, itemImgIDs, itemLblIDs, &elements, r)
 	elements = orderSceneLayers(elements)
@@ -845,9 +847,9 @@ func parseItemAlign(align string) (vert, horiz string) {
 
 // renderItemGrid lays out all items collected under the same visibleAncestor as
 // a compact grid within the ancestor's content area.
-func renderItemGrid(items []*entity.Box, ancestor *entity.Box, elements *[]map[string]any, files map[string]any, catalogCSV string, projectRoot string, fsys fs.FS, maxSize float64, r *rand.Rand, itemImgRects map[string][4]float64, itemLblRects map[string][4]float64, itemImgIDs map[string]string, itemLblIDs map[string]string, abbrevMap map[int]string, deps SceneDependencies) {
+func renderItemGrid(items []*entity.Box, ancestor *entity.Box, elements *[]map[string]any, files map[string]any, catalogCSV string, projectRoot string, fsys fs.FS, maxSize float64, r *rand.Rand, itemImgRects map[string][4]float64, itemLblRects map[string][4]float64, itemImgIDs map[string]string, itemLblIDs map[string]string, abbrevMap map[int]string, deps SceneDependencies) error {
 	if catalogCSV == "" || len(items) == 0 || ancestor == nil {
-		return
+		return nil
 	}
 	nItems := len(items)
 	vert, horiz := parseItemAlign(ancestor.Attrs["align"])
@@ -894,7 +896,7 @@ func renderItemGrid(items []*entity.Box, ancestor *entity.Box, elements *[]map[s
 	labelBoxH := estimateMaxItemLabelHeight(items, catalogCSV, fsys, abbrevMap, deps.XaligoRepository)
 	cols, rows, iconSize := chooseItemGrid(nItems, areaW, areaH, maxSize, labelBoxH)
 	if cols <= 0 || rows <= 0 {
-		return
+		return nil
 	}
 	cellW := iconSize
 	cellH := iconSize + 4 + labelBoxH
@@ -909,12 +911,67 @@ func renderItemGrid(items []*entity.Box, ancestor *entity.Box, elements *[]map[s
 		row := i / cols
 		iconX := startX + float64(col)*stepX + math.Max(0, (cellW-iconSize)/2)
 		iconY := startY + float64(row)*stepY
+		if strings.TrimSpace(item.Attrs["id"]) != "" {
+			dx, dy, err := itemIconOffset(item)
+			if err != nil {
+				return err
+			}
+			iconX += dx
+			iconY += dy
+			if err := validateItemIconBounds(item, ancestor, iconX, iconY, iconSize); err != nil {
+				return err
+			}
+		}
 		connectionKey := strings.TrimSpace(item.Attrs[internalConnectionKeyAttr])
 		if connectionKey == "" {
 			connectionKey = item.ID
 		}
 		renderIconAt(item.ID, connectionKey, item.Attrs["id"], iconX, iconY, iconSize, elements, files, catalogCSV, projectRoot, fsys, r, itemImgRects, itemLblRects, itemImgIDs, itemLblIDs, abbrevMap, deps)
 	}
+	return nil
+}
+
+func itemIconOffset(item *entity.Box) (float64, float64, error) {
+	if item == nil {
+		return 0, 0, nil
+	}
+	dx, err := parseOptionalFloatAttr(item, "dx")
+	if err != nil {
+		return 0, 0, err
+	}
+	dy, err := parseOptionalFloatAttr(item, "dy")
+	if err != nil {
+		return 0, 0, err
+	}
+	return dx, dy, nil
+}
+
+func parseOptionalFloatAttr(item *entity.Box, attr string) (float64, error) {
+	value := strings.TrimSpace(item.Attrs[attr])
+	if value == "" {
+		return 0, nil
+	}
+	parsed, err := strconv.ParseFloat(value, 64)
+	if err != nil {
+		return 0, fmt.Errorf("<item %s=%q> must be a number", attr, value)
+	}
+	return parsed, nil
+}
+
+func validateItemIconBounds(item *entity.Box, ancestor *entity.Box, x, y, size float64) error {
+	const epsilon = 1e-6
+	if item == nil || ancestor == nil {
+		return nil
+	}
+	minX := ancestor.X
+	minY := ancestor.Y
+	maxX := ancestor.X + ancestor.W
+	maxY := ancestor.Y + ancestor.H
+	if x+epsilon < minX || y+epsilon < minY || x+size > maxX+epsilon || y+size > maxY+epsilon {
+		return fmt.Errorf("<item id=%q> icon offset moves icon outside parent %q bounds: icon=(%.1f,%.1f,%.1f,%.1f), parent=(%.1f,%.1f,%.1f,%.1f)",
+			strings.TrimSpace(item.Attrs["id"]), ancestor.Tag, x, y, size, size, minX, minY, ancestor.W, ancestor.H)
+	}
+	return nil
 }
 
 func groupHeaderHeightForItems(ancestor *entity.Box) float64 {
@@ -1178,6 +1235,31 @@ func connectionSide(srcCx, srcCy, dstCx, dstCy float64) (srcSide, dstSide string
 	return "top", "bottom"
 }
 
+func connectionBendPoints(conn *entity.Node) []pt {
+	scale := 1.0
+	if value, ok := positiveFloatAttr(conn, "coordinate-scale", "scale"); ok {
+		scale = value
+	}
+	return parseConnectorBends(connectionBends(conn), scale)
+}
+
+func sideTowardPoint(rect [4]float64, point pt) string {
+	cx := rect[0] + rect[2]/2
+	cy := rect[1] + rect[3]/2
+	dx := point.X - cx
+	dy := point.Y - cy
+	if math.Abs(dx) >= math.Abs(dy) {
+		if dx >= 0 {
+			return "right"
+		}
+		return "left"
+	}
+	if dy >= 0 {
+		return "bottom"
+	}
+	return "top"
+}
+
 // rectEdgePoint returns the midpoint of the named edge of a rectangle.
 // rect = [x, y, w, h]; side is "top", "bottom", "left", or "right".
 func rectEdgePoint(rect [4]float64, side string) [2]float64 {
@@ -1215,7 +1297,7 @@ func fixedPointForSide(side string) [2]float64 {
 }
 
 func fixedPointForAnchor(anchor connectionAnchorSpec) [2]float64 {
-	pos := float64(anchor.slot) / 4.0
+	pos := (float64(anchor.slot) + 0.5) / 5.0
 	switch anchor.side {
 	case sideTop:
 		return [2]float64{pos, 0}
@@ -1293,17 +1375,22 @@ func renderConnections(connections []*entity.Node, itemImgRects map[string][4]fl
 		dstCx := dstImgRect[0] + dstImgRect[2]/2
 		dstCy := dstImgRect[1] + dstImgRect[3]/2
 		srcSide, dstSide := connectionSide(srcCx, srcCy, dstCx, dstCy)
+		bends := connectionBendPoints(conn)
 		srcAnchor, hasSrcAnchor := connectionEndpointAnchor(conn, "src")
 		dstAnchor, hasDstAnchor := connectionEndpointAnchor(conn, "dst")
 		if hasSrcAnchor {
 			srcSide = string(srcAnchor.side)
 		} else if explicit, ok := connectionEndpointSide(conn, "src"); ok {
 			srcSide = string(explicit)
+		} else if len(bends) > 0 {
+			srcSide = sideTowardPoint(srcImgRect, bends[0])
 		}
 		if hasDstAnchor {
 			dstSide = string(dstAnchor.side)
 		} else if explicit, ok := connectionEndpointSide(conn, "dst"); ok {
 			dstSide = string(explicit)
+		} else if len(bends) > 0 {
+			dstSide = sideTowardPoint(dstImgRect, bends[len(bends)-1])
 		}
 
 		// Choose element: bottom edge → label text box; other edges → image element.
@@ -1404,6 +1491,12 @@ func renderConnections(connections []*entity.Node, itemImgRects map[string][4]fl
 		}
 		if grid, ok := positiveFloatAttr(conn, "grid"); ok {
 			customData["xaligoConnectorGrid"] = grid
+		}
+		if hasSrcAnchor {
+			customData["xaligoConnectorStartAnchor"] = true
+		}
+		if hasDstAnchor {
+			customData["xaligoConnectorEndAnchor"] = true
 		}
 
 		*elements = append(*elements, map[string]any{
@@ -1523,10 +1616,12 @@ func excalidrawConnectionPoints(conn *entity.Node, srcRect, dstRect [4]float64, 
 	opt := defaultRouterOptions()
 	local := filterObstacles(obstacles, req)
 	path := routeOne(req, local, placed, opt)
+	followedRoute := false
 	if req.Kind == "traffic" {
 		if base, ok := matchingRoutePath(req, routePaths); ok {
 			path.Points = trafficAlongsideRoute(base, path.Points, opt.LaneGap)
 			path.Points = separateExactOverlaps(path.Points, placed, local, opt)
+			followedRoute = true
 		} else {
 			path.Points = separateExactOverlaps(path.Points, placed, local, opt)
 		}
@@ -1539,6 +1634,9 @@ func excalidrawConnectionPoints(conn *entity.Node, srcRect, dstRect [4]float64, 
 		path.Points = rerouteEndpointApproach(path.Points, req, opt)
 	}
 	path.Points = separatePinnedExactOverlaps(path.Points, placed, local, opt)
+	if followedRoute {
+		path.Points = restoreDestinationApproach(path.Points, req.DstSide, opt.Stub)
+	}
 	return enforceOrthogonalPolyline(path.Points)
 }
 

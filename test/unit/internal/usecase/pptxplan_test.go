@@ -295,6 +295,14 @@ func lineHasAbsPoint(op entity.DrawOp, x, y float64) bool {
 	return false
 }
 
+func lineAbsPoints(op entity.DrawOp) []struct{ X, Y float64 } {
+	points := make([]struct{ X, Y float64 }, 0, len(op.Points))
+	for _, p := range op.Points {
+		points = append(points, struct{ X, Y float64 }{X: op.X + p.X, Y: op.Y + p.Y})
+	}
+	return points
+}
+
 func TestBuildPlanPaperMarginsInsetFittedContent(t *testing.T) {
 	scene := entity.PptxScene{Elements: []entity.Element{
 		{ID: "paper-frame", Type: "frame", Width: 100, Height: 50},
