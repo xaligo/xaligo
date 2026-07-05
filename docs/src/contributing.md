@@ -54,25 +54,11 @@ so future users can find the new behavior.
 
 ## Sponsorship
 
-Sponsorship helps keep xaligo moving: more examples, better routing, stronger
-exports, clearer documentation, and faster issue response.
+Sponsorship starts at 1 USD per unit. It helps motivate ongoing development.
 
-Sponsors are welcome to support:
+Sponsor logos can be listed in this documentation.
 
-- Maintenance of the CLI and rendering pipeline.
-- Better SVG/PPTX/Excalidraw output quality.
-- Documentation and sample diagrams.
-- Catalog updates and asset import workflows.
-- Triage and fixes for real-world diagram reports.
-
-If you want to sponsor work, open an issue describing the area you care about.
-The best sponsorships are attached to concrete improvements that can land back
-in this repository for everyone.
-
-For sponsorship discussions or direct project contact, email
-`xaligo@outlook.com`. Issues are still preferred for concrete bug reports and
-feature requests so the discussion and resulting improvements remain visible to
-the community.
+For sponsorship inquiries, email `xaligo@outlook.com`.
 
 ## License
 
