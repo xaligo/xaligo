@@ -1,14 +1,13 @@
-# Contributing and Sponsorship
+# Contributing
 
 xaligo welcomes contributors, sponsors, bug reports, examples, documentation
 improvements, and real-world diagram feedback.
 
-The project has a simple working spirit:
+There are no formal contribution rules. The basic flow is :)
 
 1. Open an issue.
-2. Report what is wrong or what could be better.
-3. If you can, fix it yourself and send a pull request.
-4. Reflect improvements back into this repository whenever possible.
+2. Assign yourself to the issue.
+3. Send a pull request with the change.
 
 Small fixes are valuable. A corrected example, a clearer error message, a
 better route around overlapping labels, or a missing documentation note can be
@@ -53,15 +52,28 @@ Keep changes focused. Prefer a small fix with a regression test over a broad
 refactor. When changing output behavior, update the relevant docs and examples
 so future users can find the new behavior.
 
-## Sponsorship
+## Sponsor 💖
 
 Sponsorship starts at 1 USD per unit. It helps motivate ongoing development.
 
-Sponsor logos can be listed in this documentation.
+Sponsor logos, icons, and names can be listed in this documentation.
+
+Donations are used to maintain the development environment, help cover
+community operation costs, and support developer living expenses.
+
+If the donor's identity is clear, in-kind gifts are also welcome 🎁. Please
+contact us by X or email before sending anything.
+
+Following Xaligo on X and starring the GitHub repository are also encouraging ⭐.
+Please consider following and starring the project. (^^)
 
 Donate via PayPal: [Support from 1 USD](https://www.paypal.com/ncp/payment/6PVX83Y9DMSQJ)
 
-For sponsorship inquiries, email `xaligo@outlook.com`.
+## Contact 📬
+
+X: [@XaligoOrg](https://x.com/XaligoOrg)
+
+Email: `xaligo@outlook.com`.
 
 ## License
 
