@@ -54,6 +54,15 @@ func TestConnectionRoutingMetadataFromChildTags(t *testing.T) {
 	}
 }
 
+func TestConnectionManualBendsInferEndpointSides(t *testing.T) {
+	arrow := buildConnectionArrowSource(t, `<frame width="320" height="160"><item id="1" /><item id="2" /><connection src="1" dst="2"><bend x="210" y="20" /></connection></frame>`)
+	end, _ := arrow["endBinding"].(map[string]any)
+	endFP, _ := end["fixedPoint"].([]any)
+	if len(endFP) != 2 || endFP[0] != 0.5 || endFP[1] != 0.0 {
+		t.Fatalf("end fixedPoint = %#v, want top side inferred from final bend", end["fixedPoint"])
+	}
+}
+
 func TestConnectionRoutingMetadataFromConnectionsParent(t *testing.T) {
 	arrow := buildConnectionArrowSource(t, `<frame width="320" height="160"><item id="1" /><item id="2" /><connections kind="traffic" color="#2563eb" coordinate-scale="2" grid="4"><connection src="1" dst="2"><bend x="80" y="40" /></connection></connections></frame>`)
 	custom, _ := arrow["customData"].(map[string]any)
@@ -108,13 +117,38 @@ func TestConnectionEndpointChildTagsSetAnchorSides(t *testing.T) {
 </frame>`)
 	start, _ := arrow["startBinding"].(map[string]any)
 	end, _ := arrow["endBinding"].(map[string]any)
+	custom, _ := arrow["customData"].(map[string]any)
 	startFP, _ := start["fixedPoint"].([]any)
 	endFP, _ := end["fixedPoint"].([]any)
-	if len(startFP) != 2 || startFP[0] != 0.25 || startFP[1] != 0.0 {
+	if len(startFP) != 2 || startFP[0] != 0.3 || startFP[1] != 0.0 {
 		t.Fatalf("start fixedPoint = %#v, want top anchor 2 of 5", start["fixedPoint"])
 	}
-	if len(endFP) != 2 || endFP[0] != 0.0 || endFP[1] != 1.0 {
+	if len(endFP) != 2 || endFP[0] != 0.0 || endFP[1] != 0.9 {
 		t.Fatalf("end fixedPoint = %#v, want left anchor 5 of 5", end["fixedPoint"])
+	}
+	if custom["xaligoConnectorStartAnchor"] != true || custom["xaligoConnectorEndAnchor"] != true {
+		t.Fatalf("connector anchor customData = %#v", custom)
+	}
+}
+
+func TestConnectionCornerAnchorsAreInsetPerSide(t *testing.T) {
+	arrow := buildConnectionArrowSource(t, `<frame width="320" height="160">
+  <item id="1" name="web" />
+  <item id="2" name="db" />
+  <connection>
+    <src anchor="top-1">web</src>
+    <dst anchor="left-1">db</dst>
+  </connection>
+</frame>`)
+	start, _ := arrow["startBinding"].(map[string]any)
+	end, _ := arrow["endBinding"].(map[string]any)
+	startFP, _ := start["fixedPoint"].([]any)
+	endFP, _ := end["fixedPoint"].([]any)
+	if len(startFP) != 2 || startFP[0] != 0.1 || startFP[1] != 0.0 {
+		t.Fatalf("start fixedPoint = %#v, want inset top anchor 1 of 5", start["fixedPoint"])
+	}
+	if len(endFP) != 2 || endFP[0] != 0.0 || endFP[1] != 0.1 {
+		t.Fatalf("end fixedPoint = %#v, want inset left anchor 1 of 5", end["fixedPoint"])
 	}
 }
 

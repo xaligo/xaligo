@@ -89,9 +89,11 @@ func routeConnections(requests []routeRequest, obstacles []rect, opt routerOptio
 	for _, req := range requests {
 		local := filterObstacles(obstacles, req)
 		path := routeOne(req, local, placed, opt)
+		followedRoute := false
 		if req.Kind == "traffic" {
 			if base, ok := matchingRoutePath(req, routePaths); ok {
 				path.Points = trafficAlongsideRoute(base, path.Points, opt.LaneGap)
+				followedRoute = true
 			} else {
 				path.Points = separateExactOverlaps(path.Points, placed[len(opt.Reserved):], local, opt)
 			}
@@ -102,6 +104,9 @@ func routeConnections(requests []routeRequest, obstacles []rect, opt routerOptio
 		path.Points = separateObstacleHits(path.Points, placed[len(opt.Reserved):], inflateRects(local, visualMargin), opt)
 		if len(req.Bends) == 0 {
 			path.Points = rerouteEndpointApproach(path.Points, req, opt)
+		}
+		if followedRoute {
+			path.Points = restoreDestinationApproach(path.Points, req.DstSide, opt.Stub)
 		}
 		path.Points = enforceOrthogonalPolyline(path.Points)
 		results = append(results, path)
@@ -154,6 +159,37 @@ func trafficAlongsideRoute(route, current []pt, laneGap float64) []pt {
 		out = appendOrthogonalLeg(out, shifted[len(shifted)-1], current[len(current)-1])
 	}
 	return simplifyRouteCandidate(out)
+}
+
+func restoreDestinationApproach(points []pt, dstSide side, distance float64) []pt {
+	if len(points) < 2 || distance <= 0 {
+		return points
+	}
+	end := points[len(points)-1]
+	prev := points[len(points)-2]
+	if approachesEndpointFromSide(prev, end, dstSide) {
+		return points
+	}
+	approach := extend(end, dstSide, distance)
+	out := append([]pt(nil), points[:len(points)-1]...)
+	out = appendOrthogonalLeg(out, out[len(out)-1], approach)
+	out = append(out, end)
+	return simplifyRouteCandidate(out)
+}
+
+func approachesEndpointFromSide(prev, end pt, dstSide side) bool {
+	switch dstSide {
+	case sideTop:
+		return math.Abs(prev.X-end.X) < eps && prev.Y < end.Y-eps
+	case sideBottom:
+		return math.Abs(prev.X-end.X) < eps && prev.Y > end.Y+eps
+	case sideLeft:
+		return math.Abs(prev.Y-end.Y) < eps && prev.X < end.X-eps
+	case sideRight:
+		return math.Abs(prev.Y-end.Y) < eps && prev.X > end.X+eps
+	default:
+		return false
+	}
 }
 
 func offsetPolyline(points []pt, offset float64) []pt {

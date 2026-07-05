@@ -286,6 +286,26 @@ func TestRenderSVGDrawsServiceLegend(t *testing.T) {
 	}
 }
 
+func TestRenderSVGPreservesExplicitCenterAnchor(t *testing.T) {
+	out, err := newUsecase().RenderSVG(context.Background(), []byte(`<frame width="420" height="160" layout="horizontal" gap="80" class="pa-4" item-size="40">
+  <item id="27" name="src" />
+  <item id="110" name="dst-a" />
+  <item id="117" name="dst-b" />
+  <connection src="src" dst="dst-a" src-anchor="right-3" dst-anchor="left-3" />
+  <connection src="src" dst="dst-b" />
+</frame>`), entity.RenderOptions{Theme: "light"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	svg := string(out)
+	if !strings.Contains(svg, `<path d="M 187 71 L 185 71"`) {
+		t.Fatalf("SVG explicit center anchor path missing:\n%s", svg)
+	}
+	if !strings.Contains(svg, `<path d="M 187 79 L 187 71 L 233 71"`) {
+		t.Fatalf("SVG automatic fanout path missing:\n%s", svg)
+	}
+}
+
 func TestBuildPPTXPlanValidatesServiceLegend(t *testing.T) {
 	cases := []struct {
 		name     string

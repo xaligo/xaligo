@@ -15,6 +15,7 @@
 | `id` | Service catalog ID. Empty or omitted means spacer |
 | `name` | Optional connection reference |
 | `ref` | Optional connection reference |
+| `dx` / `dy` | Relative icon offset in pixels from the icon's normal layout `x,y` position. The moved icon rectangle must remain inside the parent frame/group border |
 
 When no icon is found for a service ID, rendering skips that item and emits a
 warning.

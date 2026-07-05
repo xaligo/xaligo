@@ -54,7 +54,7 @@
 
           <vpc id="prod-vpc" title="Production VPC · 10.20.0.0/16" row="10">
             <generic-group id="vpc-edge-security" title="VPC Edge &amp; Shared Security" icon-id="104032" align="middle-spread" row="1">
-              <item id="1581" name="igw" />       <!-- Internet Gateway -->
+              <item id="1581" name="igw" dx="-12" dy="8" /> <!-- Internet Gateway -->
               <item id="1182" name="alb" />       <!-- Application Load Balancer -->
               <item id="1582" name="nat" />       <!-- NAT Gateway -->
               <item id="1579" name="endpoint" />  <!-- VPC Endpoint -->
@@ -117,10 +117,10 @@
     <connection src="campus-network" dst="aws-edge" kind="route" color="#64748b" />
 
     <!-- Public request path: DNS -> CDN -> WAF -> VPC ingress -> load balancer. -->
-    <connection src="104915" dst="1179" kind="traffic" color="#0284c7">
+    <connection src="104915" dst="1179" kind="traffic" color="#0284c7"
+                src-anchor="right-3" dst-anchor="left-2">
       <bend x="456" y="300" />
       <bend x="456" y="120" />
-      <bend x="600" y="10" />
     </connection>
     <connection src="1179" dst="1178" kind="route" />
     <connection src="1178" dst="227" kind="traffic" color="#0284c7" />

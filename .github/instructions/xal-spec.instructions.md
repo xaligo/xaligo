@@ -139,6 +139,7 @@ The icon is rendered to fit within the specified size (`item-size`).
 | Attribute | Type | Required | Description |
 |---|---|---|---|
 | `id` | int | — | Service ID from `service-catalog.csv`. Omitted or empty → treated as spacer |
+| `dx` / `dy` | float | — | Relative icon offset in pixels from the icon's normal layout `x,y` position. The moved icon rectangle must remain inside the parent frame/group border |
 
 > If no icon is found for the given `id`, rendering is silently skipped (no error).
 
@@ -202,7 +203,7 @@ default.
 | `src` | string | ✓ | Catalog ID, or `id`/`name`/`ref` of the arrow start item or group |
 | `dst` | string | ✓ | Catalog ID, or `id`/`name`/`ref` of the arrow end item or group |
 | `src-side` / `dst-side` | string | — | Optional endpoint side: `top`, `right`, `bottom`, or `left` |
-| `src-anchor` / `dst-anchor` | string | — | Optional edge anchor. Each side has five positions (`top-1` through `top-5`, etc.); corners are shared for 16 unique perimeter anchors |
+| `src-anchor` / `dst-anchor` | string | — | Optional edge anchor. Each side has five inset positions (`top-1` through `top-5`, etc.) for 20 unique perimeter anchors |
 | `arrowhead-size` | string | — | Arrowhead size: `"s"` (small) / `"m"` (medium) / `"l"` (large). Default `"s"` |
 | `kind` | string | — | `route` for a structural path without arrows, `traffic` for directional flow drawn beside a matching route |
 | `color` | string | — | Stroke color override |
@@ -224,8 +225,10 @@ arrowhead attributes are preserved.
 When `src-side`, `dst-side`, `src-anchor`, and `dst-anchor` are omitted,
 endpoint sides and anchor positions are calculated automatically from endpoint
 geometry. Use `src-anchor` and `dst-anchor` to pin an endpoint to a specific
-perimeter anchor. Each side has five positions; corners are shared by adjacent
-sides, giving 16 unique anchor positions around the rectangle.
+perimeter anchor. Each side has five inset positions, giving 20 unique anchor
+positions around the rectangle. Corner anchors are not shared: `top-1` sits
+slightly inside the top edge near the left corner, while `left-1` sits slightly
+inside the left edge near the top corner.
 
 ```text
 top:    top-1    top-2    top-3    top-4    top-5
@@ -235,9 +238,9 @@ left:   left-1   left-2   left-3   left-4   left-5
 ```
 
 Position numbers run left-to-right on `top` and `bottom`, and top-to-bottom on
-`left` and `right`. For example, `top-1` and `left-1` are the same top-left
-corner; `right-5` and `bottom-5` are the same bottom-right corner. Anchor
-positions are `1` through `5` from top/left to bottom/right on the named side.
+`left` and `right`. Anchor positions are `1` through `5` from top/left to
+bottom/right on the named side, inset from corners so each side owns its five
+positions.
 `start`, `near`, `center`, `far`, and `end` are accepted aliases.
 
 ```xml

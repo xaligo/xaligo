@@ -65,6 +65,8 @@ type CustomData struct {
 	ConnectorBends          string  `json:"xaligoConnectorBends,omitempty"`
 	ConnectorScale          float64 `json:"xaligoConnectorScale,omitempty"`
 	ConnectorGrid           float64 `json:"xaligoConnectorGrid,omitempty"`
+	ConnectorStartAnchor    bool    `json:"xaligoConnectorStartAnchor,omitempty"`
+	ConnectorEndAnchor      bool    `json:"xaligoConnectorEndAnchor,omitempty"`
 	Junction                bool    `json:"xaligoJunction,omitempty"`
 	GroupBorder             bool    `json:"xaligoGroupBorder,omitempty"`
 	GroupHeader             bool    `json:"xaligoGroupHeader,omitempty"`
