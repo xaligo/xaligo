@@ -47,7 +47,7 @@ Source: [examples/complex-hybrid-architecture.xal](examples/complex-hybrid-archi
 - [Command line](docs/src/cli.md)
 - [.xal DSL](docs/src/xal/overview.md)
 - [Samples](docs/src/samples.md)
-- [Contributing and Sponsorship](docs/src/contributing.md)
+- [Contributing](docs/src/contributing.md)
 
 Build the documentation locally:
 
@@ -56,17 +56,32 @@ cargo install mdbook-tabs --version 0.2.3 --locked
 mdbook build docs
 ```
 
-## Contributing
+## Contribution 🤝
 
-Open an issue, report what can be improved, fix it yourself when possible, and
-reflect the improvement back into this repository.
+There are no formal contribution rules. Open an issue, assign yourself, and
+send a pull request. :)
 
-Sponsorship starts at 1 USD per unit. Sponsor logos can be listed in the
-documentation.
+## Sponsor 💖
+
+Sponsorship starts at 1 USD per unit. Sponsor logos, icons, and names can be
+listed in the documentation.
+
+Donations are used to maintain the development environment, help cover
+community operation costs, and support developer living expenses.
+
+If the donor's identity is clear, in-kind gifts are also welcome 🎁. Please
+contact us by X or email before sending anything.
+
+Following Xaligo on X and starring the GitHub repository are also encouraging ⭐.
+Please consider following and starring the project. (^^)
 
 Donate via PayPal: [Support from 1 USD](https://www.paypal.com/ncp/payment/6PVX83Y9DMSQJ)
 
-Contact: `xaligo@outlook.com`.
+## Contact 📬
+
+X: [@XaligoOrg](https://x.com/XaligoOrg)
+
+Email: `xaligo@outlook.com`.
 
 ## License
 
