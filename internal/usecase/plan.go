@@ -22,6 +22,7 @@ const (
 	anchorGridPadPx         = 4.0
 	anchorGridOuterMarginPx = 2.0
 	anchorGridVisualPadPx   = anchorGridPadPx + anchorGridOuterMarginPx
+	pptxArrowHeadExtendPx   = anchorGridVisualPadPx + 2.0
 	// Keep the mask smaller than the default 8 px lane gap so a jump does not
 	// accidentally erase a nearby parallel lane.
 	lineJumpSizePx        = 6.0
@@ -803,13 +804,15 @@ func prepareConnectors(connectors []*entity.Element, byID map[string]*entity.Ele
 		}
 		var srcFixedAnchor *pt
 		if el.StartBinding != nil {
-			if p, ok := nonCenterAnchorFromFixedPoint(src, srcSide, el.StartBinding.FixedPoint); ok {
+			explicitAnchor := el.CustomData != nil && el.CustomData.ConnectorSrcAnchor
+			if p, ok := anchorFromFixedPoint(src, srcSide, el.StartBinding.FixedPoint, explicitAnchor); ok {
 				srcFixedAnchor = &p
 			}
 		}
 		var dstFixedAnchor *pt
 		if el.EndBinding != nil {
-			if p, ok := nonCenterAnchorFromFixedPoint(dst, dstSide, el.EndBinding.FixedPoint); ok {
+			explicitAnchor := el.CustomData != nil && el.CustomData.ConnectorDstAnchor
+			if p, ok := anchorFromFixedPoint(dst, dstSide, el.EndBinding.FixedPoint, explicitAnchor); ok {
 				dstFixedAnchor = &p
 			}
 		}
@@ -1183,7 +1186,7 @@ func sideFromFixedPoint(fp []float64) (side, bool) {
 	return "", false
 }
 
-func nonCenterAnchorFromFixedPoint(r rect, s side, fp []float64) (pt, bool) {
+func anchorFromFixedPoint(r rect, s side, fp []float64, explicit bool) (pt, bool) {
 	if len(fp) < 2 {
 		return pt{}, false
 	}
@@ -1191,11 +1194,11 @@ func nonCenterAnchorFromFixedPoint(r rect, s side, fp []float64) (pt, bool) {
 	fy := math.Max(0, math.Min(1, fp[1]))
 	switch s {
 	case sideTop, sideBottom:
-		if math.Abs(fx-0.5) < 0.01 {
+		if !explicit && math.Abs(fx-0.5) < 0.01 {
 			return pt{}, false
 		}
 	case sideLeft, sideRight:
-		if math.Abs(fy-0.5) < 0.01 {
+		if !explicit && math.Abs(fy-0.5) < 0.01 {
 			return pt{}, false
 		}
 	default:
@@ -1386,21 +1389,19 @@ func anchorGridOps(id string, r rect, frame rect, ppi float64, background string
 	cellH := r.H / float64(anchorGrid)
 	ops := make([]entity.DrawOp, 0, anchorGrid*anchorGrid)
 	baseID := anchorBaseID(id)
-	groupID := anchorGroupID(baseID)
 	for i := 0; i < anchorGrid; i++ {
 		for j := 0; j < anchorGrid; j++ {
 			cx := r.X + float64(i)*cellW
 			cy := r.Y + float64(j)*cellH
 			ops = append(ops, entity.DrawOp{
-				ID:      fmt.Sprintf("%s-grid-%02d-%02d", baseID, i, j),
-				GroupID: groupID,
-				Kind:    "rect",
-				X:       (cx - frame.X) / ppi,
-				Y:       (cy - frame.Y) / ppi,
-				W:       cellW / ppi,
-				H:       cellH / ppi,
-				Fill:    &entity.FillStyle{Color: background, Transparency: 0},
-				Line:    &entity.LineStyle{Color: background, Width: 0.25, Dash: "solid", Transparency: 0},
+				ID:   fmt.Sprintf("%s-grid-%02d-%02d", baseID, i, j),
+				Kind: "rect",
+				X:    (cx - frame.X) / ppi,
+				Y:    (cy - frame.Y) / ppi,
+				W:    cellW / ppi,
+				H:    cellH / ppi,
+				Fill: &entity.FillStyle{Color: background, Transparency: 0},
+				Line: &entity.LineStyle{Color: background, Width: 0.25, Dash: "solid", Transparency: 0},
 			})
 		}
 	}
@@ -1459,6 +1460,7 @@ func polylineOp(el *entity.Element, points []pt, frame rect, ppi float64, style 
 		rel[i] = entity.PtIn{X: p.X - minX, Y: p.Y - minY, MoveTo: i == 0}
 	}
 	ln := connectorLine(el, style)
+	applyPPTXArrowHeadExtension(&ln, ppi)
 	return entity.DrawOp{
 		ID:         el.ID,
 		FrontLayer: true,
@@ -1492,6 +1494,7 @@ func rawLineOp(el *entity.Element, frame rect, ppi float64, style connectorStyle
 		return entity.DrawOp{}, false
 	}
 	ln := connectorLine(el, style)
+	applyPPTXArrowHeadExtension(&ln, ppi)
 	return entity.DrawOp{
 		ID:         el.ID,
 		FrontLayer: true,
@@ -1540,6 +1543,19 @@ func connectorLine(el *entity.Element, style connectorStyle) entity.LineStyle {
 	base.BeginArrowType = beginHead
 	base.EndArrowType = endHead
 	return base
+}
+
+func applyPPTXArrowHeadExtension(line *entity.LineStyle, ppi float64) {
+	if line == nil || ppi <= 0 {
+		return
+	}
+	extension := pptxArrowHeadExtendPx / ppi
+	if line.BeginArrowType != "" && line.BeginArrowType != "none" {
+		line.BeginArrowExtendIn = extension
+	}
+	if line.EndArrowType != "" && line.EndArrowType != "none" {
+		line.EndArrowExtendIn = extension
+	}
 }
 
 func connectorKind(el *entity.Element) string {

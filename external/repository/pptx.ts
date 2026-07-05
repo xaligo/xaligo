@@ -185,12 +185,13 @@ async function drawImage(slide: pptxgen.Slide, op: PlanOp): Promise<void> {
 function drawLine(slide: pptxgen.Slide, pptx: pptxgen, op: PlanOp): void {
   if (op.points && op.points.length >= 2) {
     logger.DEBUG(ERPDL001, 'branch custom geometry', { id: op.id, points: op.points.length });
+    const geom = lineGeometryForPptx(op);
     slide.addShape(CUST_GEOM, {
-      x: op.x,
-      y: op.y,
-      w: op.w,
-      h: op.h,
-      points: op.points.map((p) => ({
+      x: geom.x,
+      y: geom.y,
+      w: geom.w,
+      h: geom.h,
+      points: geom.points.map((p) => ({
         x: p.x,
         y: p.y,
         ...(p.moveTo ? { moveTo: true } : {}),
@@ -201,16 +202,78 @@ function drawLine(slide: pptxgen.Slide, pptx: pptxgen, op: PlanOp): void {
     return;
   }
   logger.DEBUG(ERPDL002, 'branch fallback line', { id: op.id });
+  const geom = fallbackLineGeometryForPptx(op);
   slide.addShape(pptx.ShapeType.line, {
-    x: op.x,
-    y: op.y,
-    w: op.w,
-    h: op.h,
-    flipH: op.flipH ?? false,
-    flipV: op.flipV ?? false,
+    x: geom.x,
+    y: geom.y,
+    w: geom.w,
+    h: geom.h,
+    flipH: geom.flipH,
+    flipV: geom.flipV,
     ...objectNameOptions(op),
     line: lineOptions(op.line),
   });
+}
+
+function lineGeometryForPptx(op: PlanOp): { x: number; y: number; w: number; h: number; points: NonNullable<PlanOp['points']> } {
+  const abs = (op.points ?? []).map((p) => ({ x: op.x + p.x, y: op.y + p.y, moveTo: p.moveTo }));
+  extendEndpoint(abs, 0, 1, op.line?.beginArrowExtendIn);
+  extendEndpoint(abs, abs.length - 1, abs.length - 2, op.line?.endArrowExtendIn);
+  const bounds = pointBounds(abs);
+  return {
+    x: bounds.x,
+    y: bounds.y,
+    w: bounds.w,
+    h: bounds.h,
+    points: abs.map((p) => ({ x: p.x - bounds.x, y: p.y - bounds.y, ...(p.moveTo ? { moveTo: true } : {}) })),
+  };
+}
+
+function fallbackLineGeometryForPptx(op: PlanOp): { x: number; y: number; w: number; h: number; flipH: boolean; flipV: boolean } {
+  let start = { x: op.x, y: op.y };
+  let end = { x: op.x + op.w, y: op.y + op.h };
+  if (op.flipH) [start.x, end.x] = [end.x, start.x];
+  if (op.flipV) [start.y, end.y] = [end.y, start.y];
+  const points = [start, end];
+  extendEndpoint(points, 0, 1, op.line?.beginArrowExtendIn);
+  extendEndpoint(points, 1, 0, op.line?.endArrowExtendIn);
+  const x = Math.min(points[0].x, points[1].x);
+  const y = Math.min(points[0].y, points[1].y);
+  return {
+    x,
+    y,
+    w: Math.abs(points[1].x - points[0].x),
+    h: Math.abs(points[1].y - points[0].y),
+    flipH: points[1].x < points[0].x,
+    flipV: points[1].y < points[0].y,
+  };
+}
+
+function extendEndpoint(points: Array<{ x: number; y: number }>, endpointIndex: number, neighborIndex: number, extension: number | undefined): void {
+  if (!extension || extension <= 0) return;
+  const endpoint = points[endpointIndex];
+  const neighbor = points[neighborIndex];
+  if (!endpoint || !neighbor) return;
+  const dx = endpoint.x - neighbor.x;
+  const dy = endpoint.y - neighbor.y;
+  const len = Math.hypot(dx, dy);
+  if (len <= 0) return;
+  endpoint.x += (dx / len) * extension;
+  endpoint.y += (dy / len) * extension;
+}
+
+function pointBounds(points: Array<{ x: number; y: number }>): { x: number; y: number; w: number; h: number } {
+  let minX = points[0]?.x ?? 0;
+  let minY = points[0]?.y ?? 0;
+  let maxX = minX;
+  let maxY = minY;
+  for (const p of points) {
+    minX = Math.min(minX, p.x);
+    minY = Math.min(minY, p.y);
+    maxX = Math.max(maxX, p.x);
+    maxY = Math.max(maxY, p.y);
+  }
+  return { x: minX, y: minY, w: Math.max(0.0001, maxX - minX), h: Math.max(0.0001, maxY - minY) };
 }
 
 // ---------------------------------------------------------------------------

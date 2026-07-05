@@ -1390,6 +1390,12 @@ func renderConnections(connections []*entity.Node, itemImgRects map[string][4]fl
 			"xaligoConnectorStartArrowhead": style.StartArrowhead,
 			"xaligoConnectorEndArrowhead":   style.EndArrowhead,
 		}
+		if hasSrcAnchor {
+			customData["xaligoConnectorSrcAnchor"] = true
+		}
+		if hasDstAnchor {
+			customData["xaligoConnectorDstAnchor"] = true
+		}
 		if bends := strings.TrimSpace(connectionBends(conn)); bends != "" {
 			customData["xaligoConnectorBends"] = bends
 		}

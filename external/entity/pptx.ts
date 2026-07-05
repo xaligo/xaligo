@@ -90,6 +90,8 @@ export interface PlanLine {
   transparency: number;
   beginArrowType?: ArrowHeadType;
   endArrowType?: ArrowHeadType;
+  beginArrowExtendIn?: number;
+  endArrowExtendIn?: number;
 }
 
 export interface PlanFill {

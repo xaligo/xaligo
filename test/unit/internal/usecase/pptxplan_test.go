@@ -24,6 +24,9 @@ func TestBuildPlanPreservesConnectorStylesAndLegend(t *testing.T) {
 			StartBinding: &entity.Binding{ElementID: "src-item", FixedPoint: []float64{1, 0.5}},
 			EndBinding:   &entity.Binding{ElementID: "dst-item", FixedPoint: []float64{0, 0.5}},
 			CustomData:   &entity.CustomData{ConnectorKind: "traffic", ConnectorStartArrowhead: "oval", ConnectorEndArrowhead: "diamond"}},
+	}, Files: map[string]entity.SceneFile{
+		"src-file": {DataURL: "data:image/svg+xml;base64,PHN2Zy8+"},
+		"dst-file": {DataURL: "data:image/svg+xml;base64,PHN2Zy8+"},
 	}, AppState: &entity.AppState{ViewBackgroundColor: "#FFFFFF"}}
 
 	plan := usecase.BuildPlan(&scene, entity.PptxOptions{PxPerInch: 96, ArrowStyle: "thin"})
@@ -49,6 +52,9 @@ func TestBuildPlanResolvesConnectorArrowStyles(t *testing.T) {
 			StartBinding: &entity.Binding{ElementID: "src", FixedPoint: []float64{1, 0.5}},
 			EndBinding:   &entity.Binding{ElementID: "dst", FixedPoint: []float64{0, 0.5}},
 			CustomData:   &entity.CustomData{ConnectorKind: "route"}},
+	}, Files: map[string]entity.SceneFile{
+		"src-file": {DataURL: "data:image/svg+xml;base64,PHN2Zy8+"},
+		"dst-file": {DataURL: "data:image/svg+xml;base64,PHN2Zy8+"},
 	}, AppState: &entity.AppState{ViewBackgroundColor: "#FFFFFF"}}
 
 	cases := []struct {
@@ -117,6 +123,82 @@ func TestBuildPlanOffsetsTrafficBesideMatchingRoute(t *testing.T) {
 	}
 }
 
+func TestBuildPlanAddsPPTXArrowHeadExtensionOnlyForArrowheads(t *testing.T) {
+	opacity := 100.0
+	scene := entity.PptxScene{Elements: []entity.Element{
+		{ID: "src-item", Type: "image", X: 0, Y: 0, Width: 32, Height: 32, Opacity: &opacity, FileID: "src-file"},
+		{ID: "dst-item", Type: "image", X: 160, Y: 0, Width: 32, Height: 32, Opacity: &opacity, FileID: "dst-file"},
+		{ID: "route", Type: "arrow", StrokeColor: "#64748b", StrokeWidth: 1, Opacity: &opacity,
+			StartBinding: &entity.Binding{ElementID: "src-item", FixedPoint: []float64{1, 0.5}},
+			EndBinding:   &entity.Binding{ElementID: "dst-item", FixedPoint: []float64{0, 0.5}},
+			CustomData:   &entity.CustomData{ConnectorKind: "route"}},
+		{ID: "traffic", Type: "arrow", StrokeColor: "#2563eb", StrokeWidth: 1, Opacity: &opacity,
+			StartBinding: &entity.Binding{ElementID: "src-item", FixedPoint: []float64{1, 0.5}},
+			EndBinding:   &entity.Binding{ElementID: "dst-item", FixedPoint: []float64{0, 0.5}},
+			CustomData:   &entity.CustomData{ConnectorKind: "traffic"}},
+	}, AppState: &entity.AppState{ViewBackgroundColor: "#FFFFFF"}}
+
+	plan := usecase.BuildPlan(&scene, entity.PptxOptions{PxPerInch: 1})
+	lines := map[string]entity.DrawOp{}
+	for _, op := range plan.Ops {
+		if op.Kind == "line" {
+			lines[op.ID] = op
+		}
+	}
+	if lines["route"].Line.EndArrowExtendIn != 0 {
+		t.Fatalf("route should not extend hidden arrowheads: %#v", lines["route"].Line)
+	}
+	if got := lines["traffic"].Line.EndArrowExtendIn; got != 8 {
+		t.Fatalf("traffic end arrow extension = %v, want 8", got)
+	}
+	if got := lines["traffic"].Line.BeginArrowExtendIn; got != 0 {
+		t.Fatalf("traffic begin arrow extension = %v, want 0", got)
+	}
+}
+
+func TestBuildPlanKeepsAnchorGridBelowConnectors(t *testing.T) {
+	opacity := 100.0
+	scene := entity.PptxScene{
+		Elements: []entity.Element{
+			{ID: "src-item", Type: "image", X: 0, Y: 0, Width: 32, Height: 32, Opacity: &opacity, FileID: "src-file"},
+			{ID: "src-item-lbl", Type: "text", X: -12, Y: 36, Width: 56, Height: 14, Text: "SRC", Opacity: &opacity},
+			{ID: "dst-item", Type: "image", X: 160, Y: 0, Width: 32, Height: 32, Opacity: &opacity, FileID: "dst-file"},
+			{ID: "dst-item-lbl", Type: "text", X: 148, Y: 36, Width: 56, Height: 14, Text: "DST", Opacity: &opacity},
+			{ID: "traffic", Type: "arrow", StrokeColor: "#2563eb", StrokeWidth: 1, Opacity: &opacity,
+				StartBinding: &entity.Binding{ElementID: "src-item", FixedPoint: []float64{1, 0.5}},
+				EndBinding:   &entity.Binding{ElementID: "dst-item", FixedPoint: []float64{0, 0.5}},
+				CustomData:   &entity.CustomData{ConnectorKind: "traffic"}},
+		},
+		Files: map[string]entity.SceneFile{
+			"src-file": {DataURL: "data:image/svg+xml;base64,PHN2Zy8+"},
+			"dst-file": {DataURL: "data:image/svg+xml;base64,PHN2Zy8+"},
+		},
+		AppState: &entity.AppState{ViewBackgroundColor: "#FFFFFF"},
+	}
+
+	plan := usecase.BuildPlan(&scene, entity.PptxOptions{PxPerInch: 1})
+	var grid, icon, label *entity.DrawOp
+	for i := range plan.Ops {
+		switch plan.Ops[i].ID {
+		case "src-item-grid-00-00":
+			grid = &plan.Ops[i]
+		case "src-item":
+			icon = &plan.Ops[i]
+		case "src-item-lbl":
+			label = &plan.Ops[i]
+		}
+	}
+	if grid == nil || icon == nil || label == nil {
+		t.Fatalf("anchor ops missing: grid=%#v icon=%#v label=%#v", grid, icon, label)
+	}
+	if grid.GroupID != "" {
+		t.Fatalf("anchor grid should stay below connectors, not in front group: %#v", grid)
+	}
+	if icon.GroupID == "" || icon.GroupID != label.GroupID {
+		t.Fatalf("icon and label should remain grouped above connectors: icon=%#v label=%#v", icon, label)
+	}
+}
+
 func TestBuildPlanRoutesConnectorThroughManualBends(t *testing.T) {
 	opacity := 100.0
 	scene := entity.PptxScene{Elements: []entity.Element{
@@ -168,6 +250,38 @@ func TestBuildPlanPreservesExplicitConnectorAnchors(t *testing.T) {
 	}
 	if !lineHasAbsPoint(*line, 10, 0) || !lineHasAbsPoint(*line, 160, 120) {
 		t.Fatalf("explicit anchor points were not preserved: op=%#v", line)
+	}
+}
+
+func TestBuildPlanPreservesExplicitCenterConnectorAnchors(t *testing.T) {
+	opacity := 100.0
+	scene := entity.PptxScene{Elements: []entity.Element{
+		{ID: "src-item", Type: "image", X: 0, Y: 0, Width: 40, Height: 40, Opacity: &opacity, FileID: "src-file"},
+		{ID: "dst-explicit", Type: "image", X: 160, Y: 0, Width: 40, Height: 40, Opacity: &opacity, FileID: "explicit-file"},
+		{ID: "dst-auto", Type: "image", X: 160, Y: 80, Width: 40, Height: 40, Opacity: &opacity, FileID: "auto-file"},
+		{ID: "explicit", Type: "arrow", StrokeColor: "#1e1e1e", StrokeWidth: 1, Opacity: &opacity,
+			StartBinding: &entity.Binding{ElementID: "src-item", FixedPoint: []float64{1, 0.5}},
+			EndBinding:   &entity.Binding{ElementID: "dst-explicit", FixedPoint: []float64{0, 0.5}},
+			CustomData:   &entity.CustomData{ConnectorKind: "connection", ConnectorSrcAnchor: true, ConnectorDstAnchor: true}},
+		{ID: "auto", Type: "arrow", StrokeColor: "#1e1e1e", StrokeWidth: 1, Opacity: &opacity,
+			StartBinding: &entity.Binding{ElementID: "src-item", FixedPoint: []float64{1, 0.5}},
+			EndBinding:   &entity.Binding{ElementID: "dst-auto", FixedPoint: []float64{0, 0.5}},
+			CustomData:   &entity.CustomData{ConnectorKind: "connection"}},
+	}, AppState: &entity.AppState{ViewBackgroundColor: "#FFFFFF"}}
+
+	plan := usecase.BuildPlan(&scene, entity.PptxOptions{PxPerInch: 1})
+	var line *entity.DrawOp
+	for i := range plan.Ops {
+		if plan.Ops[i].ID == "explicit" && plan.Ops[i].Kind == "line" {
+			line = &plan.Ops[i]
+			break
+		}
+	}
+	if line == nil {
+		t.Fatalf("explicit connector line op not found: %#v", plan.Ops)
+	}
+	if !lineHasAbsPoint(*line, 40, 20) || !lineHasAbsPoint(*line, 160, 20) {
+		t.Fatalf("explicit center anchor points were not preserved: op=%#v", line)
 	}
 }
 
