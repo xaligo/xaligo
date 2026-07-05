@@ -1,12 +1,14 @@
 package usecase_test
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"strings"
 	"testing"
 
 	awsassets "github.com/xaligo/xaligo/etc/resources/aws"
+	"github.com/xaligo/xaligo/internal/entity"
 	"github.com/xaligo/xaligo/internal/share"
 	"github.com/xaligo/xaligo/internal/usecase"
 )
@@ -156,6 +158,29 @@ func TestItemLabelHeightExpandsForWrappedCatalogLabel(t *testing.T) {
 	t.Fatal("item label not found")
 }
 
+func TestItemIconOffsetMovesFromLayoutPosition(t *testing.T) {
+	base := buildItemScene(t, `<frame width="240" height="180" item-size="32"><item id="27" /></frame>`)
+	moved := buildItemScene(t, `<frame width="240" height="180" item-size="32"><item id="27" dx="12" dy="8" /></frame>`)
+
+	baseIcon := itemIconByFileID(t, base, "item-cat-27")
+	movedIcon := itemIconByFileID(t, moved, "item-cat-27")
+
+	if got, want := movedIcon["x"].(float64), baseIcon["x"].(float64)+12; got != want {
+		t.Fatalf("moved x = %v, want %v; base=%#v moved=%#v", got, want, baseIcon, movedIcon)
+	}
+	if got, want := movedIcon["y"].(float64), baseIcon["y"].(float64)+8; got != want {
+		t.Fatalf("moved y = %v, want %v; base=%#v moved=%#v", got, want, baseIcon, movedIcon)
+	}
+}
+
+func TestItemIconOffsetRejectsParentBoundsOverflow(t *testing.T) {
+	input := []byte(`<frame width="160" height="120" item-size="64"><item id="27" dx="-80" /></frame>`)
+	_, err := newUsecase().RenderSVG(context.Background(), input, entity.RenderOptions{Theme: "light"})
+	if err == nil || !strings.Contains(err.Error(), "outside parent") {
+		t.Fatalf("RenderSVG() err = %v, want outside parent", err)
+	}
+}
+
 func buildSceneForGroupTitle(t *testing.T, title string) sceneFile {
 	t.Helper()
 	doc, err := usecase.Parse(strings.NewReader(`<frame width="400" height="200"><generic-group id="title-group" title="` + title + `" /></frame>`))
@@ -175,6 +200,38 @@ func buildSceneForGroupTitle(t *testing.T, title string) sceneFile {
 		t.Fatal(err)
 	}
 	return scene
+}
+
+func buildItemScene(t *testing.T, source string) sceneFile {
+	t.Helper()
+	doc, err := usecase.Parse(strings.NewReader(source))
+	if err != nil {
+		t.Fatal(err)
+	}
+	root, err := usecase.Build(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	out, err := usecase.BuildJSONWithFS(root, awsassets.Assets, awsassets.CatalogCSV, awsassets.GroupIconsDir, 32, nil, nil, newSceneDependencies())
+	if err != nil {
+		t.Fatal(err)
+	}
+	var scene sceneFile
+	if err := json.Unmarshal(out, &scene); err != nil {
+		t.Fatal(err)
+	}
+	return scene
+}
+
+func itemIconByFileID(t *testing.T, scene sceneFile, fileID string) map[string]any {
+	t.Helper()
+	for _, element := range scene.Elements {
+		if element["type"] == "image" && element["fileId"] == fileID {
+			return element
+		}
+	}
+	t.Fatalf("item icon %q not found", fileID)
+	return nil
 }
 
 func groupLabelWidth(t *testing.T, scene sceneFile, label string) float64 {
