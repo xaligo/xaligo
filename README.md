@@ -23,7 +23,8 @@ for repository working conventions.
 Contributions and sponsorship are welcome. The project culture is: open an
 issue, report what can be improved, fix it yourself when possible, and reflect
 the improvement back into this repository. See
-[Contributing and Sponsorship](docs/src/contributing.md).
+[Contributing and Sponsorship](docs/src/contributing.md). Direct project
+contact: `xaligo@outlook.com`.
 
 ## Installation
 

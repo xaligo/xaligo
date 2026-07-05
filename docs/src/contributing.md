@@ -69,6 +69,11 @@ If you want to sponsor work, open an issue describing the area you care about.
 The best sponsorships are attached to concrete improvements that can land back
 in this repository for everyone.
 
+For sponsorship discussions or direct project contact, email
+`xaligo@outlook.com`. Issues are still preferred for concrete bug reports and
+feature requests so the discussion and resulting improvements remain visible to
+the community.
+
 ## License
 
 xaligo itself is MIT licensed, so the project is intentionally easy to use,
