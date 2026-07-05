@@ -65,8 +65,8 @@ type CustomData struct {
 	ConnectorBends          string  `json:"xaligoConnectorBends,omitempty"`
 	ConnectorScale          float64 `json:"xaligoConnectorScale,omitempty"`
 	ConnectorGrid           float64 `json:"xaligoConnectorGrid,omitempty"`
-	ConnectorStartAnchor    bool    `json:"xaligoConnectorStartAnchor,omitempty"`
-	ConnectorEndAnchor      bool    `json:"xaligoConnectorEndAnchor,omitempty"`
+	ConnectorSrcAnchor      bool    `json:"xaligoConnectorSrcAnchor,omitempty"`
+	ConnectorDstAnchor      bool    `json:"xaligoConnectorDstAnchor,omitempty"`
 	Junction                bool    `json:"xaligoJunction,omitempty"`
 	GroupBorder             bool    `json:"xaligoGroupBorder,omitempty"`
 	GroupHeader             bool    `json:"xaligoGroupHeader,omitempty"`
@@ -164,12 +164,14 @@ type DrawOp struct {
 }
 
 type LineStyle struct {
-	Color          string  `json:"color"`
-	Width          float64 `json:"width"`
-	Dash           string  `json:"dash"`
-	Transparency   float64 `json:"transparency"`
-	BeginArrowType string  `json:"beginArrowType,omitempty"`
-	EndArrowType   string  `json:"endArrowType,omitempty"`
+	Color              string  `json:"color"`
+	Width              float64 `json:"width"`
+	Dash               string  `json:"dash"`
+	Transparency       float64 `json:"transparency"`
+	BeginArrowType     string  `json:"beginArrowType,omitempty"`
+	EndArrowType       string  `json:"endArrowType,omitempty"`
+	BeginArrowExtendIn float64 `json:"beginArrowExtendIn,omitempty"`
+	EndArrowExtendIn   float64 `json:"endArrowExtendIn,omitempty"`
 }
 
 type FillStyle struct {

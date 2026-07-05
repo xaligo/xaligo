@@ -157,6 +157,7 @@
 
     <!-- Delivery and observability lines cross service paths, producing line jumps. -->
     <connection src="441" dst="547" kind="traffic" color="#ea580c"
+                src-anchor="right-3" dst-anchor="right-3"
                 stroke-style="dashed">
       <bends>
         <bend x="680" y="238" />

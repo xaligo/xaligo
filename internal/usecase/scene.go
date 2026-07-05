@@ -1477,8 +1477,14 @@ func renderConnections(connections []*entity.Node, itemImgRects map[string][4]fl
 			"xaligoConnectorStartArrowhead": style.StartArrowhead,
 			"xaligoConnectorEndArrowhead":   style.EndArrowhead,
 		}
-		if bendText := strings.TrimSpace(connectionBends(conn)); bendText != "" {
-			customData["xaligoConnectorBends"] = bendText
+		if hasSrcAnchor {
+			customData["xaligoConnectorSrcAnchor"] = true
+		}
+		if hasDstAnchor {
+			customData["xaligoConnectorDstAnchor"] = true
+		}
+		if bends := strings.TrimSpace(connectionBends(conn)); bends != "" {
+			customData["xaligoConnectorBends"] = bends
 		}
 		if scale, ok := positiveFloatAttr(conn, "coordinate-scale", "scale"); ok {
 			customData["xaligoConnectorScale"] = scale
