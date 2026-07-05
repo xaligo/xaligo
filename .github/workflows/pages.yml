@@ -35,7 +35,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cargo/bin
-          key: mdbook-0.4.52-mdbook-tabs-${{ runner.os }}
+          key: mdbook-0.4.52-mdbook-tabs-0.2.3-${{ runner.os }}
 
       - name: Install mdBook
         shell: bash
@@ -52,9 +52,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if ! command -v mdbook-tabs >/dev/null 2>&1; then
-            cargo install mdbook-tabs --locked
+          MDBOOK_TABS_VERSION="0.2.3"
+          current_version="$(mdbook-tabs --version 2>/dev/null | awk '{print $2}' || true)"
+          if [[ "$current_version" != "$MDBOOK_TABS_VERSION" ]]; then
+            cargo install mdbook-tabs --version "$MDBOOK_TABS_VERSION" --locked --force
           fi
+          mdbook-tabs --version
 
       - name: Build documentation
         run: mdbook build docs

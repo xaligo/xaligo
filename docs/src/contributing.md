@@ -42,6 +42,7 @@ Before opening a pull request:
 ```bash
 go test ./...
 git diff --check
+cargo install mdbook-tabs --version 0.2.3 --locked
 mdbook build docs
 ```
 
@@ -57,6 +58,8 @@ so future users can find the new behavior.
 Sponsorship starts at 1 USD per unit. It helps motivate ongoing development.
 
 Sponsor logos can be listed in this documentation.
+
+Donate via PayPal: [Support from 1 USD](https://www.paypal.com/ncp/payment/6PVX83Y9DMSQJ)
 
 For sponsorship inquiries, email `xaligo@outlook.com`.
 

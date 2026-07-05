@@ -52,6 +52,7 @@ Source: [examples/complex-hybrid-architecture.xal](examples/complex-hybrid-archi
 Build the documentation locally:
 
 ```bash
+cargo install mdbook-tabs --version 0.2.3 --locked
 mdbook build docs
 ```
 
@@ -61,7 +62,11 @@ Open an issue, report what can be improved, fix it yourself when possible, and
 reflect the improvement back into this repository.
 
 Sponsorship starts at 1 USD per unit. Sponsor logos can be listed in the
-documentation. Contact: `xaligo@outlook.com`.
+documentation.
+
+Donate via PayPal: [Support from 1 USD](https://www.paypal.com/ncp/payment/6PVX83Y9DMSQJ)
+
+Contact: `xaligo@outlook.com`.
 
 ## License
 
