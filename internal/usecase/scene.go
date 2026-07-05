@@ -1214,6 +1214,24 @@ func fixedPointForSide(side string) [2]float64 {
 	}
 }
 
+func fixedPointForAnchor(anchor connectionAnchorSpec) [2]float64 {
+	pos := float64(anchor.slot) / 4.0
+	switch anchor.side {
+	case sideTop:
+		return [2]float64{pos, 0}
+	case sideBottom:
+		return [2]float64{pos, 1}
+	case sideLeft:
+		return [2]float64{0, pos}
+	default:
+		return [2]float64{1, pos}
+	}
+}
+
+func rectFixedPoint(rect [4]float64, fp [2]float64) [2]float64 {
+	return [2]float64{rect[0] + rect[2]*fp[0], rect[1] + rect[3]*fp[1]}
+}
+
 // renderConnections generates elbowed arrow elements for each <connection> node and
 // updates the boundElements of the bound source/destination elements — required by
 // Excalidraw so that the application recognises the binding relationship.
@@ -1275,6 +1293,18 @@ func renderConnections(connections []*entity.Node, itemImgRects map[string][4]fl
 		dstCx := dstImgRect[0] + dstImgRect[2]/2
 		dstCy := dstImgRect[1] + dstImgRect[3]/2
 		srcSide, dstSide := connectionSide(srcCx, srcCy, dstCx, dstCy)
+		srcAnchor, hasSrcAnchor := connectionEndpointAnchor(conn, "src")
+		dstAnchor, hasDstAnchor := connectionEndpointAnchor(conn, "dst")
+		if hasSrcAnchor {
+			srcSide = string(srcAnchor.side)
+		} else if explicit, ok := connectionEndpointSide(conn, "src"); ok {
+			srcSide = string(explicit)
+		}
+		if hasDstAnchor {
+			dstSide = string(dstAnchor.side)
+		} else if explicit, ok := connectionEndpointSide(conn, "dst"); ok {
+			dstSide = string(explicit)
+		}
 
 		// Choose element: bottom edge → label text box; other edges → image element.
 		var srcElemID string
@@ -1307,8 +1337,16 @@ func renderConnections(connections []*entity.Node, itemImgRects map[string][4]fl
 			dstElemID = itemImgIDs[dstKey]
 		}
 
-		srcEdge := rectEdgePoint(srcRect, srcSide)
-		dstEdge := rectEdgePoint(dstRect, dstSide)
+		srcFP := fixedPointForSide(srcSide)
+		if hasSrcAnchor {
+			srcFP = fixedPointForAnchor(srcAnchor)
+		}
+		dstFP := fixedPointForSide(dstSide)
+		if hasDstAnchor {
+			dstFP = fixedPointForAnchor(dstAnchor)
+		}
+		srcEdge := rectFixedPoint(srcRect, srcFP)
+		dstEdge := rectFixedPoint(dstRect, dstFP)
 		dx := dstEdge[0] - srcEdge[0]
 		dy := dstEdge[1] - srcEdge[1]
 		style := resolveConnectionStyle(conn)
@@ -1326,10 +1364,6 @@ func renderConnections(connections []*entity.Node, itemImgRects map[string][4]fl
 			maxY = math.Max(maxY, p.Y)
 			points = append(points, []float64{p.X - srcEdge[0], p.Y - srcEdge[1]})
 		}
-
-		srcFP := fixedPointForSide(srcSide)
-		dstFP := fixedPointForSide(dstSide)
-
 		// seed は src/dst/index から決定論的に計算し、再生成しても描画ばらつきが出ないようにする。
 		seed := stableConnectionSeed(srcKey, dstKey, i)
 		connID := fmt.Sprintf("conn-%s-%s-%d", sanitizeElementID(srcKey), sanitizeElementID(dstKey), i)
@@ -1460,6 +1494,24 @@ func firstNonEmptyAttr(node *entity.Node, names ...string) string {
 	return ""
 }
 
+func connectionEndpointSide(conn *entity.Node, endpoint string) (side, bool) {
+	if conn == nil {
+		return "", false
+	}
+	return normalizeConnectionSide(conn.Attrs[endpoint+"-side"])
+}
+
+func connectionEndpointAnchor(conn *entity.Node, endpoint string) (connectionAnchorSpec, bool) {
+	if conn == nil {
+		return connectionAnchorSpec{}, false
+	}
+	spec, ok, err := parseConnectionAnchorSpec(conn.Attrs[endpoint+"-side"], conn.Attrs[endpoint+"-anchor"])
+	if err != nil || !ok || !spec.hasSlot {
+		return connectionAnchorSpec{}, false
+	}
+	return spec, true
+}
+
 func excalidrawConnectionPoints(conn *entity.Node, srcRect, dstRect [4]float64, srcSide, dstSide, kind string, obstacles []rect, placed [][]segment, routePaths map[string][]pt) []pt {
 	req := excalidrawRouteRequest(conn, srcRect, dstRect, srcSide, dstSide, kind)
 	opt := defaultRouterOptions()
@@ -1479,8 +1531,6 @@ func excalidrawConnectionPoints(conn *entity.Node, srcRect, dstRect [4]float64, 
 	path.Points = separateObstacleHits(path.Points, placed, inflateRects(local, visualMargin), opt)
 	if len(req.Bends) == 0 {
 		path.Points = rerouteEndpointApproach(path.Points, req, opt)
-	} else {
-		path.Points = orthogonalizeEndpointStubs(path.Points, req)
 	}
 	path.Points = separatePinnedExactOverlaps(path.Points, placed, local, opt)
 	return enforceOrthogonalPolyline(path.Points)
@@ -1532,6 +1582,14 @@ func excalidrawRouteRequest(conn *entity.Node, srcRect, dstRect [4]float64, srcS
 		DstSide: side(dstSide),
 		SrcGap:  5,
 		DstGap:  5,
+	}
+	if anchor, ok := connectionEndpointAnchor(conn, "src"); ok {
+		fp := fixedPointForAnchor(anchor)
+		req.SrcAnchor = &pt{X: src.X + src.W*fp[0], Y: src.Y + src.H*fp[1]}
+	}
+	if anchor, ok := connectionEndpointAnchor(conn, "dst"); ok {
+		fp := fixedPointForAnchor(anchor)
+		req.DstAnchor = &pt{X: dst.X + dst.W*fp[0], Y: dst.Y + dst.H*fp[1]}
 	}
 	if scale, ok := positiveFloatAttr(conn, "coordinate-scale", "scale"); ok {
 		req.Bends = parseConnectorBends(connectionBends(conn), scale)

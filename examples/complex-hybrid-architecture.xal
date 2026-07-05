@@ -25,12 +25,10 @@
           <item id="104109" name="admin-server" />  <!-- Tabler: server -->
         </server-contents>
 
-        <rectangle id="legacy-api-gateway" title="Legacy API Gateway" width="300" height="96" font-size="18">
-          <port id="legacy-api-lan" side="left" title="LAN" font-size="10" />
+        <rectangle id="legacy-api-gateway" title="container" width="300" height="96" font-size="18">
           <port id="legacy-api-mgmt" side="left" title="MGT" font-size="10" />
           <port id="legacy-api-wan" side="right" title="WAN" font-size="10" />
           <port id="legacy-api-dmz" side="right" title="DMZ" font-size="10" />
-          <port id="legacy-api-ops" side="bottom" title="OPS" width="56" height="22" font-size="10" />
         </rectangle>
       </corporate-data-center>
     </col>
@@ -122,7 +120,7 @@
     <connection src="104915" dst="1179" kind="traffic" color="#0284c7">
       <bend x="456" y="300" />
       <bend x="456" y="120" />
-      <bend x="600" y="120" />
+      <bend x="600" y="10" />
     </connection>
     <connection src="1179" dst="1178" kind="route" />
     <connection src="1178" dst="227" kind="traffic" color="#0284c7" />

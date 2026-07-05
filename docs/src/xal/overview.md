@@ -20,3 +20,9 @@ Important rules:
 
 The parser uses standard XML syntax. Escape special characters in attribute
 values, for example `&amp;`.
+
+For lookup tables, see the dedicated reference pages:
+
+- [Icon Reference](../reference/icons/index.md)
+- [Arrow Reference](../reference/arrows/index.md)
+- [Frame and Border Reference](../reference/frames/index.md)

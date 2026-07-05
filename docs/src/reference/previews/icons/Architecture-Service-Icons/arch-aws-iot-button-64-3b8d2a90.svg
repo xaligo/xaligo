@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="160" viewBox="0 0 220 160">
+<defs><marker id="xaligo-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker><marker id="xaligo-oval" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto" markerUnits="strokeWidth"><circle cx="3.5" cy="3.5" r="2.5" fill="context-stroke"/></marker></defs>
+<rect x="0" y="0" width="220" height="160" fill="#FFFFFF"/>
+<g transform="translate(0 0)">
+<rect x="77" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<image x="78" y="32.5" width="64" height="64" href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iODBweCIgaGVpZ2h0PSI4MHB4IiB2aWV3Qm94PSIwIDAgODAgODAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BV1MtSW9ULUJ1dHRvbl82NDwvdGl0bGU+CiAgICA8ZyBpZD0iSWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BV1MtSW9ULUJ1dHRvbl82NCIgc3Ryb2tlPSJub25lIiBzdHJva2Utd2lkdGg9IjEiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+CiAgICAgICAgPGcgaWQ9Ikljb24tQXJjaGl0ZWN0dXJlLUJHLzY0L0ludGVybmV0LW9mLVRoaW5ncyIgZmlsbD0iIzdBQTExNiI+CiAgICAgICAgICAgIDxyZWN0IGlkPSJSZWN0YW5nbGUiIHg9IjAiIHk9IjAiIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCI+PC9yZWN0PgogICAgICAgIDwvZz4KICAgICAgICA8cGF0aCBkPSJNNDEuNSw0Mi41MDIgQzQyLjg4MSw0Mi41MDIgNDQsNDEuMzgzIDQ0LDQwLjAwMiBDNDQsMzguNjIxIDQyLjg4MSwzNy41MDIgNDEuNSwzNy41MDIgQzQwLjExOSwzNy41MDIgMzksMzguNjIxIDM5LDQwLjAwMiBDMzksNDEuMzgzIDQwLjExOSw0Mi41MDIgNDEuNSw0Mi41MDIgTDQxLjUsNDIuNTAyIFogTTQ4LDQwIEM0OCw0My4zMDkgNTAuNjkxLDQ2IDU0LDQ2IEM1Ny4zMDksNDYgNjAsNDMuMzA5IDYwLDQwIEM2MCwzNi42OTEgNTcuMzA5LDM0IDU0LDM0IEM1MC42OTEsMzQgNDgsMzYuNjkxIDQ4LDQwIEw0OCw0MCBaIE00Niw0MCBDNDYsMzUuNTg5IDQ5LjU4OSwzMiA1NCwzMiBDNTguNDExLDMyIDYyLDM1LjU4OSA2Miw0MCBDNjIsNDQuNDExIDU4LjQxMSw0OCA1NCw0OCBDNDkuNTg5LDQ4IDQ2LDQ0LjQxMSA0Niw0MCBMNDYsNDAgWiBNMTUsNDAgQzE1LDQ1Ljc5NCAxOC43ODUsNTAgMjQsNTAgQzI0LjAzLDUwIDI0LjA2LDUwLjAwMiAyNC4wODksNTAuMDA0IEw1NS45MTEsNTAuMDA0IEM1NS45NCw1MC4wMDIgNTUuOTcsNTAgNTYsNTAgQzYxLjIxNSw1MCA2NSw0NS43OTQgNjUsNDAgQzY1LDM0LjIwOCA2MS4yMTUsMzAuMDA0IDU2LDMwLjAwNCBDNTUuOTcsMzAuMDA0IDU1Ljk0LDMwLjAwMiA1NS45MTEsMzAgTDI0LjA4OSwzMCBDMjQuMDYsMzAuMDAyIDI0LjAzLDMwLjAwNCAyNCwzMC4wMDQgQzE4Ljc4NSwzMC4wMDQgMTUsMzQuMjA4IDE1LDQwIEwxNSw0MCBaIE0xMyw0MCBDMTMsMzMuMDgzIDE3LjU4MSwyOC4wNTMgMjMuOTA3LDI4LjAwNCBDMjMuOTM4LDI4LjAwMiAyMy45NjksMjggMjQsMjggTDU2LDI4IEM1Ni4wMzEsMjggNTYuMDYzLDI4LjAwMiA1Ni4wOTMsMjguMDA0IEM2Mi40MTksMjguMDUzIDY3LDMzLjA4MyA2Nyw0MCBDNjcsNDYuOTIgNjIuNDE5LDUxLjk1MSA1Ni4wOTMsNTIgQzU2LjA2Myw1Mi4wMDIgNTYuMDMxLDUyLjAwNCA1Niw1Mi4wMDQgTDI0LDUyLjAwNCBDMjMuOTY5LDUyLjAwNCAyMy45MzgsNTIuMDAyIDIzLjkwNyw1MiBDMTcuNTgxLDUxLjk1MSAxMyw0Ni45MTkgMTMsNDAgTDEzLDQwIFogTTE3LDE3IEwyNiwxNyBMMjYsMTUgTDE2LDE1IEMxNS40NDcsMTUgMTUsMTUuNDQ4IDE1LDE2IEwxNSwyNiBMMTcsMjYgTDE3LDE3IFogTTYzLDI2IEw2NSwyNiBMNjUsMTYgQzY1LDE1LjQ0OCA2NC41NTMsMTUgNjQsMTUgTDU0LDE1IEw1NCwxNyBMNjMsMTcgTDYzLDI2IFogTTE3LDU0IEwxNSw1NCBMMTUsNjQgQzE1LDY0LjU1MiAxNS40NDcsNjUgMTYsNjUgTDI2LDY1IEwyNiw2MyBMMTcsNjMgTDE3LDU0IFogTTYzLDU0IEw2NSw1NCBMNjUsNjQgQzY1LDY0LjU1MiA2NC41NTMsNjUgNjQsNjUgTDU0LDY1IEw1NCw2MyBMNjMsNjMgTDYzLDU0IFoiIGlkPSJBV1MtSW9ULUJ1dHRvbl9JY29uXzY0X1NxdWlkIiBmaWxsPSIjRkZGRkZGIj48L3BhdGg+CiAgICA8L2c+Cjwvc3ZnPg==" opacity="1"/>
+<text x="110" y="111.167" fill="#1E1E1E" font-family="Helvetica" font-size="10.667" text-anchor="middle">IoT Button</text>
+</g>
+</svg>

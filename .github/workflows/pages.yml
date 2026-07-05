@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'docs/**'
+      - 'etc/resources/aws/svg/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -34,7 +35,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cargo/bin
-          key: mdbook-0.4.52-${{ runner.os }}
+          key: mdbook-0.4.52-mdbook-tabs-${{ runner.os }}
 
       - name: Install mdBook
         shell: bash
@@ -47,8 +48,22 @@ jobs:
           fi
           mdbook --version
 
+      - name: Install mdBook tabs
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v mdbook-tabs >/dev/null 2>&1; then
+            cargo install mdbook-tabs --locked
+          fi
+
       - name: Build documentation
         run: mdbook build docs
+
+      - name: Publish SVG resources
+        run: |
+          mkdir -p docs/book/etc/resources/aws
+          rm -rf docs/book/etc/resources/aws/svg
+          cp -R etc/resources/aws/svg docs/book/etc/resources/aws/svg
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5

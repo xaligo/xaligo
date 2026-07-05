@@ -1,0 +1,3 @@
+<frame width="260" height="160" margin="32">
+  <panel title="No Border" border="none" />
+</frame>

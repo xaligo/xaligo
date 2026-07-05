@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="160" viewBox="0 0 220 160">
+<defs><marker id="xaligo-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker><marker id="xaligo-oval" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto" markerUnits="strokeWidth"><circle cx="3.5" cy="3.5" r="2.5" fill="context-stroke"/></marker></defs>
+<rect x="0" y="0" width="220" height="160" fill="#FFFFFF"/>
+<g transform="translate(0 0)">
+<rect x="77" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<image x="78" y="26" width="64" height="64" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjQzkyNUQxIi8+CjxwYXRoIGQ9Ik0yMSAzMi44MDkxQzE5Ljk0NzcgMzIuOTI3OSAxOC43ODE1IDMzIDE3LjUgMzNDMTEuNjE0MyAzMyA4IDMxLjU0MzkgOCAzMC41VjI1LjA3NzRDOS43NzI0NiAyNi4zNDM1IDEzLjY1MDMgMjcgMTcuNSAyN0MxOC42ODczIDI3IDE5Ljg2OTkgMjYuOTMwMSAyMSAyNi44MDY1VjI1LjgwOTFDMTkuOTQ3NyAyNS45Mjc5IDE4Ljc4MTUgMjYgMTcuNSAyNkMxMS42MTQzIDI2IDggMjQuNTQzOSA4IDIzLjVWMTguMDc3NEM5Ljc3MjQ2IDE5LjM0MzUgMTMuNjUwMyAyMCAxNy41IDIwQzE4LjY4NzMgMjAgMTkuODY5OSAxOS45MzAxIDIxIDE5LjgwNjVWMTguODA5MUMxOS45NDc3IDE4LjkyNzkgMTguNzgxNSAxOSAxNy41IDE5QzExLjYxNDMgMTkgOCAxNy41NDM5IDggMTYuNVYxMS4wNzc0QzkuNzcyNDYgMTIuMzQzNSAxMy42NTAzIDEzIDE3LjUgMTNDMjEuMzQ5NyAxMyAyNS4yMjc1IDEyLjM0MzUgMjcgMTEuMDc3NFYxM0gyOFY5LjVDMjggNy4yMDIxNSAyMi43MTc4IDYgMTcuNSA2QzEyLjI4MjIgNiA3IDcuMjAyMTUgNyA5LjVWMzAuNUM3IDMyLjc5NzggMTIuMjgyMiAzNCAxNy41IDM0QzE4LjY4NTIgMzQgMTkuODcwOCAzMy45MzQ4IDIxIDMzLjgxMlYzMi44MDkxWk0xNy41IDdDMjMuMzg1NyA3IDI3IDguNDU2MDUgMjcgOS41QzI3IDEwLjU0MzkgMjMuMzg1NyAxMiAxNy41IDEyQzExLjYxNDMgMTIgOCAxMC41NDM5IDggOS41QzggOC40NTYwNSAxMS42MTQzIDcgMTcuNSA3Wk0zMi41IDM0SDIyLjVDMjIuMjIzNiAzNCAyMiAzMy43NzY0IDIyIDMzLjVWMTQuNUMyMiAxNC4yMjM2IDIyLjIyMzYgMTQgMjIuNSAxNEgzMi41QzMyLjc3NjQgMTQgMzMgMTQuMjIzNiAzMyAxNC41VjMzLjVDMzMgMzMuNzc2NCAzMi43NzY0IDM0IDMyLjUgMzRaTTIzIDMzSDMyVjE1SDIzVjMzWk0yOCAxN0gyNFYxNkgyOFYxN1pNMzEgMTlIMjRWMThIMzFWMTlaTTMxIDMySDI5Ljg1OTNMMjcuNSAyNy41NzA3TDI1LjE0MDcgMzJIMjRMMjYuOTI5NyAyNi41TDI0IDIxSDI1LjE0MDdMMjcuNSAyNS40MjkzTDI5Ljg1OTMgMjFIMzFMMjguMDcwMyAyNi41TDMxIDMyWiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+Cg==" opacity="1"/>
+<text x="110" y="104.667" fill="#1E1E1E" font-family="Helvetica" font-size="10.667" text-anchor="middle">Oracle Database at AWS</text>
+</g>
+</svg>

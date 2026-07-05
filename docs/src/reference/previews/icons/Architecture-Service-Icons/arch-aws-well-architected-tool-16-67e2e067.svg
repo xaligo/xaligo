@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="160" viewBox="0 0 220 160">
+<defs><marker id="xaligo-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker><marker id="xaligo-oval" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto" markerUnits="strokeWidth"><circle cx="3.5" cy="3.5" r="2.5" fill="context-stroke"/></marker></defs>
+<rect x="0" y="0" width="220" height="160" fill="#FFFFFF"/>
+<g transform="translate(0 0)">
+<rect x="77" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<image x="78" y="26" width="64" height="64" href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iMjRweCIgaGVpZ2h0PSIyNHB4IiB2aWV3Qm94PSIwIDAgMjQgMjQiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1BcmNoaXRlY3R1cmUvMTYvQXJjaF9BV1MtV2VsbC1BcmNoaXRlY3RlZC1Ub29sXzE2PC90aXRsZT4KICAgIDxnIGlkPSJJY29uLUFyY2hpdGVjdHVyZS8xNi9BcmNoX0FXUy1XZWxsLUFyY2hpdGVjdGVkLVRvb2xfMTYiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIxIiBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPgogICAgICAgIDxnIGlkPSJJY29uLUFyY2hpdGVjdHVyZS1CRy8xNi9NYW5hZ2VtZW50LUdvdmVybmFuY2UiIGZpbGw9IiNFNzE1N0IiPgogICAgICAgICAgICA8cmVjdCBpZD0iUmVjdGFuZ2xlIiB4PSIwIiB5PSIwIiB3aWR0aD0iMjQiIGhlaWdodD0iMjQiPjwvcmVjdD4KICAgICAgICA8L2c+CiAgICAgICAgPHBhdGggZD0iTTE2LjMzNTc1LDExLjUgTDE0LjQ1ODc1LDguMjUgQzE0LjM2OTc1LDguMDk1IDE0LjIwNDc1LDggMTQuMDI1NzUsOCBMOS45ODQ3NSw4IEM5LjgwNjc1LDggOS42NDE3NSw4LjA5NSA5LjU1Mjc1LDguMjUgTDcuNjc1NzUsMTEuNSBMNS4zNjU3NSwxMS41IEw4LjU0MTc1LDYgTDE1LjQ2OTc1LDYgTDE4LjY0NTc1LDExLjUgTDE2LjMzNTc1LDExLjUgWiBNMTUuNjgxNzUsMTcuNjM0IEwxNC41MjU3NSwxNS42MzQgTDE2LjMzNTc1LDEyLjUgTDE4LjY0NTc1LDEyLjUgTDE1LjY4MTc1LDE3LjYzNCBaIE0xMi4wNDE3NSwxOCBMMTAuODg2NzUsMTYgTDEzLjU4Mjc1LDE2IEwxNC43Mzc3NSwxOCBMMTIuMDQxNzUsMTggWiBNOC41NTk3NSwxMS45NyBMMTAuMjczNzUsOSBMMTMuNzM2NzUsOSBMMTUuNDY5NzUsMTIgTDEzLjczNjc1LDE1IEwxMC4zMDk3NSwxNSBMOC41NTk3NSwxMS45NyBaIE04LjU0MTc1LDE4IEw1LjM2NTc1LDEyLjUgTDcuNjc1NzUsMTIuNSBMOS41NTI3NSwxNS43NSBDOS41ODE3NSwxNS44MDIgOS42MjA3NSwxNS44NDcgOS42NjQ3NSwxNS44ODQgTDEwLjg4Njc1LDE4IEw4LjU0MTc1LDE4IFogTTE5Ljk0Mzc1LDExLjc1IEwxNi4xOTA3NSw1LjI1IEMxNi4xMDI3NSw1LjA5NSAxNS45Mzc3NSw1IDE1Ljc1ODc1LDUgTDguMjUyNzUsNSBDOC4wNzM3NSw1IDcuOTA4NzUsNS4wOTUgNy44MTk3NSw1LjI1IEw0LjA2Njc1LDExLjc1IEMzLjk3Nzc1LDExLjkwNSAzLjk3Nzc1LDEyLjA5NSA0LjA2Njc1LDEyLjI1IEw3LjgxOTc1LDE4Ljc1IEM3LjkwODc1LDE4LjkwNSA4LjA3Mzc1LDE5IDguMjUyNzUsMTkgTDE1Ljc1ODc1LDE5IEMxNS45Mzc3NSwxOSAxNi4xMDI3NSwxOC45MDUgMTYuMTkwNzUsMTguNzUgTDE5Ljk0Mzc1LDEyLjI1IEMyMC4wMzM3NSwxMi4wOTUgMjAuMDMzNzUsMTEuOTA1IDE5Ljk0Mzc1LDExLjc1IEwxOS45NDM3NSwxMS43NSBaIiBpZD0iQVdTLVdlbGwtQXJjaGl0ZWN0ZWQtVG9vbF9JY29uXzE2X1NxdWlkIiBmaWxsPSIjRkZGRkZGIj48L3BhdGg+CiAgICA8L2c+Cjwvc3ZnPg==" opacity="1"/>
+<text x="110" y="104.667" fill="#1E1E1E" font-family="Helvetica" font-size="10.667" text-anchor="middle">Well Architected Tool</text>
+</g>
+</svg>

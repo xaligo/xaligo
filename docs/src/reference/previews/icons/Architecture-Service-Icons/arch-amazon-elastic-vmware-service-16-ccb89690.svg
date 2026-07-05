@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="160" viewBox="0 0 220 160">
+<defs><marker id="xaligo-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker><marker id="xaligo-oval" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto" markerUnits="strokeWidth"><circle cx="3.5" cy="3.5" r="2.5" fill="context-stroke"/></marker></defs>
+<rect x="0" y="0" width="220" height="160" fill="#FFFFFF"/>
+<g transform="translate(0 0)">
+<rect x="77" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<image x="78" y="26" width="64" height="64" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjRUQ3MTAwIi8+CjxwYXRoIGQ9Ik05Ljk5OTk5IDEyVjguMjExNDNMOS4zNTI1MyA4Ljg1NDVMOC42NDc0NSA4LjE0NTUyTDEwLjE1NzIgNi42NDU1MkMxMC4yNTE5IDYuNTUxMjggMTAuNDExMSA2LjUyODgyIDEwLjUxMTcgNi41MDAwMUMxMC42NDM2IDYuNTAwNSAxMC43NzE1IDYuNTUzNzIgMTAuODY0MyA2LjY0NzQ3TDEyLjM1NDUgOC4xNDc0N0wxMS42NDU1IDguODUyNTVMMTEgOC4yMDI1OVYxMkw5Ljk5OTk5IDEyWk0xNCAyMEgxNVYxN0gxNFYyMFpNOS45OTk5OSAyMEgxMVYxNkg5Ljk5OTk5VjIwWk0xMiAyMEgxM1YxOUgxMlYyMFpNMTIuNSAxM0g4LjQ5OTk5QzguMjIzNjIgMTMgNy45OTk5OSAxMy4yMjM2IDcuOTk5OTkgMTMuNVYxNy41QzcuOTk5OTkgMTcuNzc2NCA4LjIyMzYyIDE4IDguNDk5OTkgMThIOC45OTk5OVYxNEgxMlYxOEgxMi41QzEyLjc3NjQgMTggMTMgMTcuNzc2NCAxMyAxNy41VjEzLjVDMTMgMTMuMjIzNiAxMi43NzY0IDEzIDEyLjUgMTNaTTE3LjUgOC4zOTY5N0MxNy40ODI0IDcuMTUxMzYgMTYuNDYzOSA2LjE0MzA2IDE1LjIxMzkgNi4xNDMwNkMxNC45NDgyIDYuMTQzMDYgMTQuNjg3NSA2LjE4ODk2IDE0LjQ0MTQgNi4yNzczNEMxMy42NjcgNC44Nzg0MSAxMi4yMDAyIDQgMTAuNTcxMyA0QzguMTI4OSA0IDYuMTQyNTcgNS45ODY4MiA2LjE0MjU3IDguNDI4NzFDNi4xNDI1NyA4LjQ1NzUyIDYuMTQyNTcgOC40ODYzMyA2LjE0MzU1IDguNTE1MTRDNC44NjIzIDkuMDA5MjggNCAxMC4yNDEyIDQgMTEuNjQzMUM0IDEzLjM3MTggNS4zMTgyNCAxNC43ODI3IDcgMTQuOTYzOVYxMy45NjM5QzUuODcwNDIgMTMuNzkwMSA1IDEyLjgyMDUgNSAxMS42NDMxQzUgMTAuNTU4NiA1LjczNjMzIDkuNjE4NjYgNi43OTAwNCA5LjM1NzkxQzcuMDM0MTggOS4yOTczNiA3LjE5NTMxIDkuMDY1NDMgNy4xNjY5OSA4LjgxNTkyQzcuMTUyMzQgOC42ODg0OCA3LjE0MjU4IDguNTYwMDYgNy4xNDI1OCA4LjQyODcxQzcuMTQyNTggNi41MzgwOSA4LjY4MDY3IDUgMTAuNTcxMyA1QzExLjk3MjcgNSAxMy4yMTk3IDUuODQwMzMgMTMuNzQ4MSA3LjE0MDE0QzEzLjgwNDcgNy4yODAyOCAxMy45MjE5IDcuMzg3MjEgMTQuMDY2NCA3LjQzMDY3QzE0LjIwOSA3LjQ3NDYyIDE0LjM2NzIgNy40NTA2OSAxNC40OTIyIDcuMzY1MjRDMTQuNzA2MSA3LjIxOTczIDE0Ljk1NTEgNy4xNDMwNyAxNS4yMTM5IDcuMTQzMDdDMTUuOTIyOCA3LjE0MzA3IDE2LjUgNy43MTk3MyAxNi41IDguNDI4NzFDMTYuNSA4LjUxODA3IDE2LjQ5MDIgOC42MDY0NCAxNi40NzA3IDguNjk4MjRDMTYuNDQwNCA4LjgzNjQyIDE2LjQ3MDcgOC45ODE0NCAxNi41NTI3IDkuMDk2MTlDMTYuNjM1NyA5LjIxMTQyIDE2Ljc2MzcgOS4yODU2NCAxNi45MDQzIDkuMzAxMjdDMTguMDk4NiA5LjQzMjYyIDE5IDEwLjQzOTUgMTkgMTEuNjQzMUMxOSAxMi40MzY3IDE4LjYwMjkgMTMuMTM2NCAxOCAxMy41NjM3VjE0LjcwNzdDMTkuMTc1NyAxNC4xODQ5IDIwIDEzLjAxMDQgMjAgMTEuNjQzMUMyMCAxMC4wOTYyIDE4Ljk1NTEgOC43NzczNCAxNy41IDguMzk2OTdaTTE2LjUgMTFIMTIuNUMxMi4yMjM2IDExIDEyIDExLjIyMzYgMTIgMTEuNVYxMkgxNlYxNUgxNFYxNkgxNi41QzE2Ljc3NjQgMTYgMTcgMTUuNzc2NCAxNyAxNS41VjExLjVDMTcgMTEuMjIzNiAxNi43NzY0IDExIDE2LjUgMTFaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K" opacity="1"/>
+<text x="110" y="104.667" fill="#1E1E1E" font-family="Helvetica" font-size="10.667" text-anchor="middle">Elastic VMware Service</text>
+</g>
+</svg>

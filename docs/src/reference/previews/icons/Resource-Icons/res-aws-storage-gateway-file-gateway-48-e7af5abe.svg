@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="160" viewBox="0 0 220 160">
+<defs><marker id="xaligo-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker><marker id="xaligo-oval" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto" markerUnits="strokeWidth"><circle cx="3.5" cy="3.5" r="2.5" fill="context-stroke"/></marker></defs>
+<rect x="0" y="0" width="220" height="160" fill="#FFFFFF"/>
+<g transform="translate(0 0)">
+<rect x="77" y="18" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="18" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="18" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="18" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="18" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="31.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="31.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="31.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="31.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="31.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="45.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="45.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="45.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="45.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="45.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="58.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="58.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="58.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="58.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="58.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="72.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="72.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="72.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="72.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="72.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<image x="78" y="19" width="64" height="64" href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iNDhweCIgaGVpZ2h0PSI0OHB4IiB2aWV3Qm94PSIwIDAgNDggNDgiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1SZXNvdXJjZS9TdG9yYWdlL1Jlc19BV1MtU3RvcmFnZS1HYXRld2F5X0ZpbGUtR2F0ZXdheV80ODwvdGl0bGU+CiAgICA8ZyBpZD0iSWNvbi1SZXNvdXJjZS9TdG9yYWdlL1Jlc19BV1MtU3RvcmFnZS1HYXRld2F5X0ZpbGUtR2F0ZXdheV80OCIgc3Ryb2tlPSJub25lIiBzdHJva2Utd2lkdGg9IjEiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+CiAgICAgICAgPHBhdGggZD0iTTE5Ljg3MTEsNCBDMTQuMTI4MSw0IDEwLjU4NTEsNS42NjYgNy4wMDAxLDcuNzM2IEw3LjAwMDEsNDYgTDUuMDAwMSw0NiBMNS4wMDAxLDcuMTYxIEM1LjAwMDEsNi44MDYgNS4xODgxLDYuNDc4IDUuNDk0MSw2LjI5OCBDOS4zNjExLDQuMDMzIDEzLjM3MDEsMiAxOS44NzExLDIgQzI1LjkxMzEsMiAzMC4zMzkxLDQuMjgxIDMzLjg5NTEsNi4xMTUgTDM0LjIwMDEsNi4yNzIgQzM0LjUzMzEsNi40NDMgMzQuNzQyMSw2Ljc4NiAzNC43NDIxLDcuMTYxIEwzNC43NDIxLDI0LjUgTDMyLjc0MjEsMjQuNSBMMzIuNzQyMSw3Ljc3MSBDMjkuMjYxMSw1Ljk3OCAyNS4zMDQxLDQgMTkuODcxMSw0IEwxOS44NzExLDQgWiBNNDEuNzk5MSw0NC4xIEwxNi4yOTQxLDQ0LjEgTDE2LjI5NDEsMjYuNTIxIEwyMi42MTkxLDI2LjUyMSBMMjMuNDc1MSwyOC4yOTQgQzIzLjY0MjEsMjguNjM5IDIzLjk5MjEsMjguODU4IDI0LjM3NjEsMjguODU4IEw0MS43OTkxLDI4Ljg1OCBMNDEuNzk5MSw0NC4xIFogTTQyLjc5OTEsMjYuODU4IEwyNS4wMDMxLDI2Ljg1OCBMMjQuMTQ2MSwyNS4wODYgQzIzLjk3OTEsMjQuNzQxIDIzLjYzMDEsMjQuNTIxIDIzLjI0NjEsMjQuNTIxIEwxNS4yOTQxLDI0LjUyMSBDMTQuNzQxMSwyNC41MjEgMTQuMjk0MSwyNC45NjkgMTQuMjk0MSwyNS41MjEgTDE0LjI5NDEsNDUuMSBDMTQuMjk0MSw0NS42NTIgMTQuNzQxMSw0Ni4xIDE1LjI5NDEsNDYuMSBMNDIuNzk5MSw0Ni4xIEM0My4zNTExLDQ2LjEgNDMuNzk5MSw0NS42NTIgNDMuNzk5MSw0NS4xIEw0My43OTkxLDI3Ljg1OCBDNDMuNzk5MSwyNy4zMDYgNDMuMzUxMSwyNi44NTggNDIuNzk5MSwyNi44NTggTDQyLjc5OTEsMjYuODU4IFoiIGlkPSJBV1MtU3RvcmFnZS1HYXRld2F5X0ZpbGUtR2F0ZXdheV9SZXNvdXJjZS1JY29uX2xpZ2h0LWJnIiBmaWxsPSIjN0FBMTE2Ij48L3BhdGg+CiAgICA8L2c+Cjwvc3ZnPg==" opacity="1"/>
+<text x="110" y="97.667" fill="#1E1E1E" font-family="Helvetica" font-size="10.667" text-anchor="middle">Storage Gateway File Gateway</text>
+</g>
+</svg>

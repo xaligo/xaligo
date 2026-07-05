@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="160" viewBox="0 0 220 160">
+<defs><marker id="xaligo-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker><marker id="xaligo-oval" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto" markerUnits="strokeWidth"><circle cx="3.5" cy="3.5" r="2.5" fill="context-stroke"/></marker></defs>
+<rect x="0" y="0" width="220" height="160" fill="#FFFFFF"/>
+<g transform="translate(0 0)">
+<rect x="77" y="18" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="18" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="18" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="18" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="18" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="31.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="31.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="31.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="31.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="31.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="45.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="45.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="45.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="45.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="45.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="58.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="58.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="58.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="58.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="58.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="72.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="72.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="72.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="72.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="72.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<image x="78" y="19" width="64" height="64" href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iNDhweCIgaGVpZ2h0PSI0OHB4IiB2aWV3Qm94PSIwIDAgNDggNDgiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1SZXNvdXJjZS9TdG9yYWdlL1Jlc19BbWF6b24tRWxhc3RpYy1CbG9jay1TdG9yZV9NdWx0aXBsZS1Wb2x1bWVzXzQ4PC90aXRsZT4KICAgIDxnIGlkPSJJY29uLVJlc291cmNlL1N0b3JhZ2UvUmVzX0FtYXpvbi1FbGFzdGljLUJsb2NrLVN0b3JlX011bHRpcGxlLVZvbHVtZXNfNDgiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIxIiBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPgogICAgICAgIDxwYXRoIGQ9Ik03LjkxNyw3IEwyLDE0LjgzNiBMMzAuNjA3LDE0LjY5OSBMMjUuNDc1LDcgTDcuOTE3LDcgWiBNOC45MTIsOS4wMDEgTDI0LjQwNSw5LjAwMSBMMjYuODgzLDEyLjcxNiBMNi4wMzIsMTIuODE3IEw4LjkxMiw5LjAwMSBaIE0yOS4xNyw5LjczNiBMMjkuMTcsMTEuNzM2IEwzMy4xNDMsMTEuNzM2IEwzNS4xOTgsMTQuNDU2IEwzMS41OTYsMTQuNDQxIEwzMS41ODksMTYuNDQxIEwzOS4yMjcsMTYuNDczIEwzNC4xMzksOS43MzYgTDI5LjE3LDkuNzM2IFogTTM4LjI3NSwxMi41MTUgTDM4LjI3NSwxNC41MTUgTDQxLjIyMiwxNC41MTUgTDQyLjQ1OCwxNi4xNTEgTDQwLjE0NiwxNi4xNDEgTDQwLjEzOSwxOC4xNDEgTDQ2LjQ4NywxOC4xNjYgTDQ2LjQ4NywxOC4xNjUgTDQyLjIxOSwxMi41MTUgTDM4LjI3NSwxMi41MTUgWiBNMi4zNzksNDEuMTAxIEwzMC4yODEsNDEuMTAxIEwzMC4yODEsMTUuNiBMMi4zNzksMTUuNiBMMi4zNzksNDEuMTAxIFogTTQuMzgsMzkuMTAxIEwyOC4yODEsMzkuMTAxIEwyOC4yODEsMTcuNiBMNC4zOCwxNy42IEw0LjM4LDM5LjEwMSBaIE0zMS42NDYsMTcuMjEzIEwzMS42NDYsMTkuMjEzIEwzNi45MTgsMTkuMjEzIEwzNi45MTgsMzYuNzA5IEwzMS42NDYsMzYuNzA5IEwzMS42NDYsMzguNzEgTDM4LjkxOCwzOC43MSBMMzguOTE4LDE3LjIxMyBMMzEuNjQ2LDE3LjIxMyBaIE00MC4yMzUsMTguOTQ4IEw0MC4yMzUsMjAuOTQ5IEw0NC4xOTcsMjAuOTQ5IEw0NC4xOTcsMzQuMzc1IEw0MC4yMzUsMzQuMzc1IEw0MC4yMzUsMzYuMzc1IEw0Ni4xOTcsMzYuMzc1IEw0Ni4xOTcsMTguOTQ4IEw0MC4yMzUsMTguOTQ4IFoiIGlkPSJBV1MtQW1hem9uLUVsYXN0aWMtQmxvY2stU3RvcmVfTXVsdGlwbGUtVm9sdW1lc19SZXNvdXJjZS1JY29uX2xpZ2h0LWJnIiBmaWxsPSIjN0FBMTE2Ij48L3BhdGg+CiAgICA8L2c+Cjwvc3ZnPg==" opacity="1"/>
+<text x="110" y="97.667" fill="#1E1E1E" font-family="Helvetica" font-size="10.667" text-anchor="middle">Elastic Block Store Multiple Volumes</text>
+</g>
+</svg>

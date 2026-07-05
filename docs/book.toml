@@ -10,6 +10,9 @@ src = "src"
 build-dir = "book"
 create-missing = false
 
+[preprocessor.tabs]
+command = "mdbook-tabs"
+
 [output.html]
 git-repository-url = "https://github.com/xaligo/xaligo"
 edit-url-template = "https://github.com/xaligo/xaligo/edit/main/docs/{path}"

@@ -97,6 +97,27 @@ func TestConnectionCanBindToRectangleAndPortByID(t *testing.T) {
 	}
 }
 
+func TestConnectionEndpointChildTagsSetAnchorSides(t *testing.T) {
+	arrow := buildConnectionArrowSource(t, `<frame width="320" height="160">
+  <item id="1" name="web" />
+  <item id="2" name="db" />
+  <connection>
+    <src anchor="top-2">web</src>
+    <dst side="left" anchor="5">db</dst>
+  </connection>
+</frame>`)
+	start, _ := arrow["startBinding"].(map[string]any)
+	end, _ := arrow["endBinding"].(map[string]any)
+	startFP, _ := start["fixedPoint"].([]any)
+	endFP, _ := end["fixedPoint"].([]any)
+	if len(startFP) != 2 || startFP[0] != 0.25 || startFP[1] != 0.0 {
+		t.Fatalf("start fixedPoint = %#v, want top anchor 2 of 5", start["fixedPoint"])
+	}
+	if len(endFP) != 2 || endFP[0] != 0.0 || endFP[1] != 1.0 {
+		t.Fatalf("end fixedPoint = %#v, want left anchor 5 of 5", end["fixedPoint"])
+	}
+}
+
 func TestExcalidrawItemAnchorsGroupAndCoverConnections(t *testing.T) {
 	scene := buildConnectionScene(t, `<frame width="320" height="160"><item id="1" /><item id="2" /><connection src="1" dst="2" /></frame>`)
 	indexByID := map[string]int{}

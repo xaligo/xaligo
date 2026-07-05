@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="160" viewBox="0 0 220 160">
+<defs><marker id="xaligo-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker><marker id="xaligo-oval" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto" markerUnits="strokeWidth"><circle cx="3.5" cy="3.5" r="2.5" fill="context-stroke"/></marker></defs>
+<rect x="0" y="0" width="220" height="160" fill="#FFFFFF"/>
+<g transform="translate(0 0)">
+<rect x="77" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<image x="78" y="32.5" width="64" height="64" href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iODBweCIgaGVpZ2h0PSI4MHB4IiB2aWV3Qm94PSIwIDAgODAgODAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BV1MtQmlsbGluZy1Db25kdWN0b3JfNjQ8L3RpdGxlPgogICAgPGcgaWQ9Ikljb24tQXJjaGl0ZWN0dXJlLzY0L0FyY2hfQVdTLUJpbGxpbmctQ29uZHVjdG9yXzY0IiBzdHJva2U9Im5vbmUiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj4KICAgICAgICA8ZyBpZD0iSWNvbi1BcmNoaXRlY3R1cmUtQkcvNjQvQVdTLUNvc3QtTWFuYWdlbWVudCIgZmlsbD0iIzdBQTExNiI+CiAgICAgICAgICAgIDxyZWN0IGlkPSJSZWN0YW5nbGUiIHg9IjAiIHk9IjAiIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCI+PC9yZWN0PgogICAgICAgIDwvZz4KICAgICAgICA8ZyBpZD0iSWNvbi1TZXJ2aWNlLzY0L0FXUy1CaWxsaW5nLUNvbmR1Y3Rvcl82NCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTMuMDAwMDAwLCAxMi4wMDAwMDApIiBmaWxsPSIjRkZGRkZGIj4KICAgICAgICAgICAgPHBhdGggZD0iTTEsMzkgTDEyLDM5IEwxMiwzNyBMMSwzNyBMMSwzOSBaIE00LDMzIEwxMiwzMyBMMTIsMzEgTDQsMzEgTDQsMzMgWiBNMCwyNyBMMTIsMjcgTDEyLDI1IEwwLDI1IEwwLDI3IFogTTMzLDQyIEwzOCw0MiBMMzgsNDAgTDMzLDQwIEwzMyw0MiBaIE0yNiw0MiBMMzEsNDIgTDMxLDQwIEwyNiw0MCBMMjYsNDIgWiBNMTksNDIgTDI0LDQyIEwyNCw0MCBMMTksNDAgTDE5LDQyIFogTTMzLDM3IEwzOCwzNyBMMzgsMzUgTDMzLDM1IEwzMywzNyBaIE0yNiwzNyBMMzEsMzcgTDMxLDM1IEwyNiwzNSBMMjYsMzcgWiBNMTksMzcgTDI0LDM3IEwyNCwzNSBMMTksMzUgTDE5LDM3IFogTTIxLDI4IEwzNiwyOCBMMzYsMjUgTDIxLDI1IEwyMSwyOCBaIE0zNywyMyBMMjAsMjMgQzE5LjQ0NywyMyAxOSwyMy40NDggMTksMjQgTDE5LDI5IEMxOSwyOS41NTIgMTkuNDQ3LDMwIDIwLDMwIEwzNywzMCBDMzcuNTUzLDMwIDM4LDI5LjU1MiAzOCwyOSBMMzgsMjQgQzM4LDIzLjQ0OCAzNy41NTMsMjMgMzcsMjMgTDM3LDIzIFogTTE2LDQ2IEw0MSw0NiBMNDEsMjAgTDE2LDIwIEwxNiw0NiBaIE00Miw0OCBDNDIuNTUzLDQ4IDQzLDQ3LjU1MiA0Myw0NyBMNDMsMTkgQzQzLDE4LjQ0OCA0Mi41NTMsMTggNDIsMTggTDE1LDE4IEMxNC40NDcsMTggMTQsMTguNDQ4IDE0LDE5IEwxNCw0NyBDMTQsNDcuNTUyIDE0LjQ0Nyw0OCAxNSw0OCBMNDIsNDggWiBNMzgsMy4yNzMgTDQ2LjQzLDExIEwzOCwxMSBMMzgsMy4yNzMgWiBNNDkuNjc2LDExLjI2MyBMMzcuNjc2LDAuMjYzIEMzNy40OTEsMC4wOTQgMzcuMjUsMCAzNywwIEw4LDAgQzcuNDQ3LDAgNywwLjQ0OCA3LDEgTDcsMjMgTDksMjMgTDksMiBMMzYsMiBMMzYsMTIgQzM2LDEyLjU1MiAzNi40NDcsMTMgMzcsMTMgTDQ4LDEzIEw0OCw1NCBMOSw1NCBMOSw0MSBMNyw0MSBMNyw1NSBDNyw1NS41NTIgNy40NDcsNTYgOCw1NiBMNDksNTYgQzQ5LjU1Myw1NiA1MCw1NS41NTIgNTAsNTUgTDUwLDEyIEM1MCwxMS43MiA0OS44ODMsMTEuNDUyIDQ5LjY3NiwxMS4yNjMgTDQ5LjY3NiwxMS4yNjMgWiIgaWQ9IkZpbGwtMSI+PC9wYXRoPgogICAgICAgIDwvZz4KICAgIDwvZz4KPC9zdmc+" opacity="1"/>
+<text x="110" y="111.167" fill="#1E1E1E" font-family="Helvetica" font-size="10.667" text-anchor="middle">Billing Conductor</text>
+</g>
+</svg>

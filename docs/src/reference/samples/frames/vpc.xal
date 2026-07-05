@@ -1,0 +1,3 @@
+<frame width="263" height="160" margin="24">
+  <vpc id="prod-vpc" title="Production VPC" />
+</frame>

@@ -167,6 +167,10 @@ func Parse(r io.Reader) (entity.Document, error) {
 		logger.ERROR(IUPP016, "expand connection shorthands failed", map[string]any{"error": err})
 		return entity.Document{}, err
 	}
+	if err := normalizeConnectionEndpointTags(root); err != nil {
+		logger.ERROR(IUPP006, "connection endpoint tag normalization failed", map[string]any{"error": err})
+		return entity.Document{}, err
+	}
 	if err := validateConnectionReferences(root); err != nil {
 		logger.ERROR(IUPP006, "connection reference validation failed", map[string]any{"error": err})
 		return entity.Document{}, err
@@ -362,19 +366,253 @@ func validateItemNode(node *entity.Node) error {
 	return nil
 }
 
-// validateConnectionNode ensures <connection> carries non-empty src and dst attributes.
+// validateConnectionNode validates immediately knowable <connection> attributes.
+// Endpoint presence is checked after child <src>/<dst> tags have been parsed.
 func validateConnectionNode(node *entity.Node) error {
-	src, hasSrc := node.Attrs["src"]
-	dst, hasDst := node.Attrs["dst"]
-	if !hasSrc || strings.TrimSpace(src) == "" {
+	return validateConnectionSideAttrs(node)
+}
+
+func normalizeConnectionEndpointTags(root *entity.Node) error {
+	var walk func(node *entity.Node) error
+	walk = func(node *entity.Node) error {
+		if node == nil {
+			return nil
+		}
+		if node.Tag == "connection" {
+			if err := normalizeConnectionEndpointTag(node, "src"); err != nil {
+				return err
+			}
+			if err := normalizeConnectionEndpointTag(node, "dst"); err != nil {
+				return err
+			}
+			if err := validateConnectionEndpointPresence(node); err != nil {
+				return &entity.ParseError{Position: node.Position, Err: fmt.Errorf("parse <connection>: %w", err)}
+			}
+			if err := validateConnectionSideAttrs(node); err != nil {
+				return &entity.ParseError{Position: node.Position, Err: fmt.Errorf("parse <connection>: %w", err)}
+			}
+		}
+		for _, child := range node.Children {
+			if err := walk(child); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	return walk(root)
+}
+
+func normalizeConnectionEndpointTag(conn *entity.Node, endpoint string) error {
+	for _, child := range conn.Children {
+		if strings.ToLower(strings.TrimSpace(child.Tag)) != endpoint {
+			continue
+		}
+		if strings.TrimSpace(conn.Attrs[endpoint]) == "" {
+			if token := connectionEndpointTagToken(child); token != "" {
+				conn.Attrs[endpoint] = token
+			}
+		}
+		sideValue := strings.TrimSpace(child.Attrs["side"])
+		anchorValue := connectionEndpointTagAnchor(child)
+		if spec, ok, err := parseConnectionAnchorSpec(sideValue, anchorValue); err != nil {
+			return &entity.ParseError{Position: child.Position, Err: err}
+		} else if ok {
+			sideAttr := endpoint + "-side"
+			if strings.TrimSpace(conn.Attrs[sideAttr]) == "" {
+				conn.Attrs[sideAttr] = string(spec.side)
+			}
+			anchorAttr := endpoint + "-anchor"
+			if spec.hasSlot && strings.TrimSpace(conn.Attrs[anchorAttr]) == "" {
+				conn.Attrs[anchorAttr] = spec.String()
+			}
+		}
+	}
+	return nil
+}
+
+func connectionEndpointTagToken(node *entity.Node) string {
+	for _, attr := range []string{"id", "ref", "name", "target"} {
+		if value := strings.TrimSpace(node.Attrs[attr]); value != "" {
+			return value
+		}
+	}
+	return strings.TrimSpace(node.Text)
+}
+
+func connectionEndpointTagAnchor(node *entity.Node) string {
+	for _, attr := range []string{"anchor", "position", "slot"} {
+		if value := strings.TrimSpace(node.Attrs[attr]); value != "" {
+			return value
+		}
+	}
+	return ""
+}
+
+func validateConnectionEndpointPresence(node *entity.Node) error {
+	if strings.TrimSpace(node.Attrs["src"]) == "" {
 		logger.ERROR(IUPVCN001, "branch missing source")
 		return fmt.Errorf("<connection> requires a src attribute")
 	}
-	if !hasDst || strings.TrimSpace(dst) == "" {
+	if strings.TrimSpace(node.Attrs["dst"]) == "" {
 		logger.ERROR(IUPVCN002, "branch missing destination")
 		return fmt.Errorf("<connection> requires a dst attribute")
 	}
 	return nil
+}
+
+func validateConnectionSideAttrs(node *entity.Node) error {
+	for _, endpoint := range []string{"src", "dst"} {
+		sideAttr := endpoint + "-side"
+		anchorAttr := endpoint + "-anchor"
+		sideValue := strings.TrimSpace(node.Attrs[sideAttr])
+		anchorValue := strings.TrimSpace(node.Attrs[anchorAttr])
+		if sideValue != "" || anchorValue != "" {
+			spec, ok, err := parseConnectionAnchorSpec(sideValue, anchorValue)
+			if err != nil {
+				return err
+			}
+			if ok {
+				node.Attrs[sideAttr] = string(spec.side)
+				if spec.hasSlot {
+					node.Attrs[anchorAttr] = spec.String()
+				}
+			}
+		}
+	}
+	return nil
+}
+
+type connectionAnchorSpec struct {
+	side    side
+	slot    int
+	hasSlot bool
+}
+
+func (spec connectionAnchorSpec) String() string {
+	return string(spec.side) + "-" + strconv.Itoa(spec.slot+1)
+}
+
+func parseConnectionAnchorSpec(sideValue, anchorValue string) (connectionAnchorSpec, bool, error) {
+	sideValue = strings.TrimSpace(sideValue)
+	anchorValue = strings.TrimSpace(anchorValue)
+	var spec connectionAnchorSpec
+	if sideValue != "" {
+		s, ok := normalizeConnectionSide(sideValue)
+		if !ok {
+			return spec, false, fmt.Errorf("<connection %s=%q> must be one of top, right, bottom, or left", "side", sideValue)
+		}
+		spec.side = s
+	}
+	if anchorValue == "" {
+		return spec, sideValue != "", nil
+	}
+	if anchor, ok := parseFullConnectionAnchor(anchorValue); ok {
+		if sideValue != "" && spec.side != anchor.side {
+			return spec, false, fmt.Errorf("<connection anchor=%q> conflicts with side=%q", anchorValue, sideValue)
+		}
+		return anchor, true, nil
+	}
+	if s, ok := normalizeConnectionSide(anchorValue); ok {
+		if sideValue != "" && spec.side != s {
+			return spec, false, fmt.Errorf("<connection anchor=%q> conflicts with side=%q", anchorValue, sideValue)
+		}
+		return connectionAnchorSpec{side: s}, true, nil
+	}
+	if sideValue == "" {
+		return spec, false, fmt.Errorf("<connection anchor=%q> must be SIDE-POSITION or be paired with side", anchorValue)
+	}
+	slot, ok := parseConnectionAnchorSlot(anchorValue, spec.side)
+	if !ok {
+		return spec, false, fmt.Errorf("<connection anchor=%q> position must be 1, 2, 3, 4, 5, start, near, center, far, or end", anchorValue)
+	}
+	spec.slot = slot
+	spec.hasSlot = true
+	return spec, true, nil
+}
+
+func parseFullConnectionAnchor(value string) (connectionAnchorSpec, bool) {
+	normalized := strings.ToLower(strings.TrimSpace(value))
+	normalized = strings.ReplaceAll(normalized, "_", "-")
+	normalized = strings.ReplaceAll(normalized, ":", "-")
+	normalized = strings.ReplaceAll(normalized, ".", "-")
+	parts := strings.Split(normalized, "-")
+	if len(parts) >= 2 {
+		s, ok := normalizeConnectionSide(parts[0])
+		if !ok {
+			return connectionAnchorSpec{}, false
+		}
+		slot, ok := parseConnectionAnchorSlot(strings.Join(parts[1:], "-"), s)
+		if !ok {
+			return connectionAnchorSpec{}, false
+		}
+		return connectionAnchorSpec{side: s, slot: slot, hasSlot: true}, true
+	}
+	for _, prefix := range []string{"top", "right", "bottom", "left"} {
+		if strings.HasPrefix(normalized, prefix) && len(normalized) > len(prefix) {
+			s, _ := normalizeConnectionSide(prefix)
+			slot, ok := parseConnectionAnchorSlot(normalized[len(prefix):], s)
+			if ok {
+				return connectionAnchorSpec{side: s, slot: slot, hasSlot: true}, true
+			}
+		}
+	}
+	return connectionAnchorSpec{}, false
+}
+
+func parseConnectionAnchorSlot(value string, s side) (int, bool) {
+	value = strings.ToLower(strings.TrimSpace(value))
+	switch value {
+	case "0":
+		return 0, true
+	case "1":
+		return 0, true
+	case "2":
+		return 1, true
+	case "3":
+		return 2, true
+	case "4":
+		return 3, true
+	case "5":
+		return 4, true
+	case "start", "near":
+		return 0, true
+	case "middle", "mid", "center", "centre":
+		return 2, true
+	case "far", "end":
+		return 4, true
+	case "left", "west":
+		if s == sideTop || s == sideBottom {
+			return 0, true
+		}
+	case "right", "east":
+		if s == sideTop || s == sideBottom {
+			return 4, true
+		}
+	case "top", "north":
+		if s == sideLeft || s == sideRight {
+			return 0, true
+		}
+	case "bottom", "south":
+		if s == sideLeft || s == sideRight {
+			return 4, true
+		}
+	}
+	return 0, false
+}
+
+func normalizeConnectionSide(value string) (side, bool) {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "top", "north", "n":
+		return sideTop, true
+	case "right", "east", "e":
+		return sideRight, true
+	case "bottom", "south", "s":
+		return sideBottom, true
+	case "left", "west", "w":
+		return sideLeft, true
+	default:
+		return "", false
+	}
 }
 
 func validateConnectionReferences(root *entity.Node) error {

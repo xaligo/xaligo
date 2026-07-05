@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="160" viewBox="0 0 220 160">
+<defs><marker id="xaligo-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker><marker id="xaligo-oval" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto" markerUnits="strokeWidth"><circle cx="3.5" cy="3.5" r="2.5" fill="context-stroke"/></marker></defs>
+<rect x="0" y="0" width="220" height="160" fill="#FFFFFF"/>
+<g transform="translate(0 0)">
+<rect x="77" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<image x="78" y="32.5" width="64" height="64" href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iNDhweCIgaGVpZ2h0PSI0OHB4IiB2aWV3Qm94PSIwIDAgNDggNDgiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1SZXNvdXJjZS9HZW5lcmFsLVJlc291cmNlL1Jlc19Mb2dzXzQ4X0xpZ2h0PC90aXRsZT4KICAgIDxnIGlkPSJJY29uLVJlc291cmNlL0dlbmVyYWwtUmVzb3VyY2UvUmVzX0xvZ3NfNDgiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIxIiBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPgogICAgICAgIDxwYXRoIGQ9Ik0yOCw0MSBMMzUsNDEgTDM1LDM5IEwyOCwzOSBMMjgsNDEgWiBNMTMsNDEgTDI2LDQxIEwyNiwzOSBMMTMsMzkgTDEzLDQxIFogTTIyLDM2IEwzNSwzNiBMMzUsMzQgTDIyLDM0IEwyMiwzNiBaIE0xMywzNiBMMjAsMzYgTDIwLDM0IEwxMywzNCBMMTMsMzYgWiBNMjIuOTQ4LDMwLjMxNyBMMjEuMDUyLDI5LjY4NSBMMjUuMDUyLDE3LjY4NSBMMjYuOTQ4LDE4LjMxNyBMMjIuOTQ4LDMwLjMxNyBaIE0zNC42MjUsMjMuMjIgQzM0Ljg2MiwyMy40MSAzNSwyMy42OTcgMzUsMjQuMDAxIEMzNSwyNC4zMDUgMzQuODYyLDI0LjU5MiAzNC42MjUsMjQuNzgyIEwyOS42MjUsMjguNzgyIEwyOC4zNzUsMjcuMjIgTDMyLjM5OSwyNC4wMDEgTDI4LjM3NSwyMC43ODIgTDI5LjYyNSwxOS4yMiBMMzQuNjI1LDIzLjIyIFogTTEzLjM3NSwyNC43ODIgQzEzLjEzOCwyNC41OTIgMTMsMjQuMzA1IDEzLDI0LjAwMSBDMTMsMjMuNjk3IDEzLjEzOCwyMy40MSAxMy4zNzUsMjMuMjIgTDE4LjM3NSwxOS4yMiBMMTkuNjI1LDIwLjc4MiBMMTUuNjAxLDI0LjAwMSBMMTkuNjI1LDI3LjIyIEwxOC4zNzUsMjguNzgyIEwxMy4zNzUsMjQuNzgyIFogTTEwLDQ0IEwxMC4wMDcsNCBMMjgsNCBMMjgsMTMgQzI4LDEzLjU1MiAyOC40NDcsMTQgMjksMTQgTDM4LDE0IEwzOCw0NCBMMTAsNDQgWiBNMzAsNS40MTQgTDM2LjU4NiwxMiBMMzAsMTIgTDMwLDUuNDE0IFogTTM5LjcwNywxMi4yOTMgTDI5LjcwNywyLjI5MyBDMjkuNTIsMi4xMDUgMjkuMjY2LDIgMjksMiBMMTAsMiBDOC44MjIsMiA4LDIuODIyIDgsNCBMOCw0NCBDOCw0NS4xNCA4Ljg1OSw0NiAxMCw0NiBMMzgsNDYgQzM5LjE0MSw0NiA0MCw0NS4xNCA0MCw0NCBMNDAsMTMgQzQwLDEyLjczNSAzOS44OTUsMTIuNDggMzkuNzA3LDEyLjI5MyBMMzkuNzA3LDEyLjI5MyBaIiBpZD0iRmlsbC0xIiBmaWxsPSIjMjMyRjNEIj48L3BhdGg+CiAgICA8L2c+Cjwvc3ZnPg==" opacity="1"/>
+<text x="110" y="111.167" fill="#1E1E1E" font-family="Helvetica" font-size="10.667" text-anchor="middle">Logs 48 Light</text>
+</g>
+</svg>
