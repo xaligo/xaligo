@@ -1,6 +1,6 @@
 <!-- availability-zone: Availability Zone (no icon) -->
 <frame width="600" height="440" class="pa-4">
-  <availability-zone title="Availability Zone">
+  <availability-zone id="availability-zone" title="Availability Zone">
     <row gap="16">
       <col span="6" class="pa-2">
         <card title="Resource A" />

@@ -13,9 +13,17 @@ A Diagram-as-Code engine that renders the Vue-style `.xal` DSL to Excalidraw,
 SVG, and PPTX. It includes Vuetify-style layout, AWS/network icon catalogs,
 orthogonal routing, route/traffic layers, line jumps, and automatic junctions.
 
+Official documentation lives in [docs/src](docs/src/SUMMARY.md) and can be
+built with `mdbook build docs`.
+
 See [Architecture](.github/instructions/architecture.instructions.md) for
 implementation boundaries and [Agent Guide](.github/instructions/agent-guide.instructions.md)
 for repository working conventions.
+
+Contributions and sponsorship are welcome. The project culture is: open an
+issue, report what can be improved, fix it yourself when possible, and reflect
+the improvement back into this repository. See
+[Contributing and Sponsorship](docs/src/contributing.md).
 
 ## Installation
 
@@ -317,7 +325,7 @@ Tags rendered with AWS architecture diagram group border styles.
 Set a header icon on `generic-group` using the same catalog IDs as `<item>`:
 
 ```xml
-<generic-group title="Network Topology" icon-id="104635">
+<generic-group id="network-topology" title="Network Topology" icon-id="104635">
   <!-- AWS, Tabler, and Yamaha catalog IDs are supported -->
 </generic-group>
 ```
@@ -333,6 +341,25 @@ XYFlow output through the shared asset mechanism.
 Group header and item label width estimates count East Asian full-width
 characters, such as Japanese labels, as double-width so rendered text boxes stay
 aligned across Excalidraw, SVG, and PPTX outputs.
+
+### `<rectangle>` and `<port>` tags
+
+Use `<rectangle>` for a general-purpose labeled box. Add multiple `<port>`
+children to show small labeled connection points inside its edges. Multiple
+ports on the same side are spaced evenly along that side.
+
+```xml
+<rectangle id="service" title="Service" width="180" height="100" font-size="18">
+  <port id="service-in" side="left" title="in" font-size="9" />
+  <port id="service-out" side="right" title="out" font-size="10" />
+</rectangle>
+```
+
+`<rectangle>` and `<port>` require `id` so they can be referenced by
+connections. `<port>` supports `side="top|right|bottom|left"`, `width`,
+`height`, `x`, `y`, `title` or text content, and `font-size`. Explicit `x` and
+`y` coordinates are relative to the parent rectangle and are clamped so the port
+stays inside the rectangle.
 
 ### `<item>` tag
 
@@ -369,7 +396,7 @@ Refresh them from Yamaha's official ZIP with `npm run import:yamaha-icons`.
 See the bundled `ATTRIBUTION.txt` for Yamaha's CC BY-ND 4.0 terms.
 
 ```xml
-<public-subnet title="Public Subnet">
+<public-subnet id="public-subnet" title="Public Subnet">
   <item id="1178" />   <!-- with icon -->
   <item />             <!-- spacer (empty slot) -->
   <item id="1189" />   <!-- with icon -->
@@ -378,39 +405,81 @@ See the bundled `ATTRIBUTION.txt` for Yamaha's CC BY-ND 4.0 terms.
 
 ### `<connection>` tag
 
-Draws an elbowed arrow between `<item>` elements. Must be a direct child of `<frame>`.
+Draws an elbowed arrow between `<item>` elements or group borders. Must be a direct child of `<frame>`.
+Group, `<rectangle>`, and `<port>` IDs are required and must be unique among
+frame-like components.
 
 ```xml
 <frame width="1122" height="794" class="pa-4">
   <!-- ... layout elements ... -->
+  <vpc id="prod-vpc" title="Production VPC">
+    <!-- ... -->
+  </vpc>
 
   <!-- list connections at the end of frame -->
-  <connection src="1178" dst="1189" />
+  <connections grid="8">
+    <connection src="1178" dst="1189" />
+    <connection src="prod-vpc" dst="1178" kind="route" />
+  </connections>
 </frame>
 ```
 
 | Attribute | Description |
 |---|---|
-| `src` | Catalog ID, `name`, or `ref` of the arrow start item |
-| `dst` | Catalog ID, `name`, or `ref` of the arrow end item |
+| `src` | Catalog ID, or `id`/`name`/`ref` of the arrow start item or group |
+| `dst` | Catalog ID, or `id`/`name`/`ref` of the arrow end item or group |
 | `kind` | `route` (thin structural path without arrows) or `traffic` (directional flow drawn beside a matching route) |
 | `color` | Per-line CSS/hex stroke color |
 | `stroke-width` | Per-line stroke width; defaults to 1 for route and 2 for traffic |
 | `stroke-style` | `solid`, `dashed`, or `dotted` |
+| `arrowhead-size` | Logical arrowhead size: `s`, `m`, or `l`; Excalidraw serializes the smallest visible head (`s`) |
 | `start-arrowhead` / `end-arrowhead` | Independently set each end to `none`, `arrow`, `triangle`, `stealth`, `diamond`, or `oval` |
 | `arrowhead` | Backward-compatible alias for `end-arrowhead` |
+| `bends` / `points` / `via` | Backward-compatible inline coordinate list. Prefer child tags for multiple bend coordinates |
+| `scale` / `coordinate-scale` | Positive multiplier applied to bend coordinates. Default `1` |
+| `grid` | Positive per-connection snap grid in layout pixels |
+
+Use `<connections>` as a direct child of `<frame>` to group connections and
+define shared defaults. Individual `<connection>` attributes override the
+parent values.
+
+```xml
+<connections kind="traffic" color="#2563eb" grid="8" scale="1">
+  <connection src="web" dst="app" />
+  <connection src="app" dst="db" color="#059669" />
+</connections>
+```
 
 Connections are always rendered in **elbowed (right-angle)** style. Route lines
 are structural paths without arrowheads and are drawn below traffic lines.
 Traffic lines are directional; when a traffic line shares the same endpoints as
-a route line, it is drawn on a nearby parallel lane.
+a route line, it is drawn on a nearby parallel lane. Excalidraw output uses the
+same shared router for orthogonal routes and also offsets later lines away from
+previously drawn lanes when their X or Y coordinates would otherwise overlap.
+Use child `<bend>` tags to force a route through specific orthogonal layout
+coordinates:
+
+```xml
+<connection src="web" dst="db" grid="8">
+  <bend x="120" y="80" />
+  <bend x="120" y="220" />
+  <bend x="300" y="220" />
+</connection>
+```
+
+Coordinates use the rendered frame's upper-left as the origin, with positive
+`x` to the right and positive `y` downward. `scale` lets a connection use a
+compact local coordinate system, for example `scale="2"` doubles every listed
+bend coordinate before routing. `<point>`, `<via>`, and `<waypoint>` are
+accepted aliases for `<bend>`.
 Routes that fan out from or converge on the same side of an item automatically
 share a short trunk and render a circular junction at the branch point.
-Each connection endpoint must resolve to exactly one `<item>`. Use numeric
-catalog IDs when that service appears once; use unique `name` or `ref` values
-when the same catalog ID appears multiple times. Missing endpoints, ambiguous
-numeric IDs, and `<connection>` elements nested inside layout/group tags are
-reported as validation errors.
+Each connection endpoint must resolve to exactly one item, group, rectangle, or
+port. Use numeric catalog IDs when a service appears once; use unique `id`,
+`name`, or `ref` values when the same catalog ID appears multiple times or when
+connecting to a group/shape boundary. Missing endpoints, ambiguous references,
+and `<connection>` elements nested inside layout/group tags are reported as
+validation errors.
 
 At an interior crossing, SVG and PPTX place a 6px background-colored rectangle
 between the lower and upper lines. The color follows the uppermost opaque
@@ -423,6 +492,15 @@ border before the connector is drawn. The resulting layer priority is
 Start and end points connect to the **midpoint of the nearest edge** of the icon image or label text element.  
 When the connection direction is downward, the label text element edge is used; otherwise the icon image edge is used.  
 Edges are fixed with Excalidraw's `fixedPoint` binding, so arrows snap correctly when the file is opened.
+
+Excalidraw item icons and labels are grouped with a small 5x5 white anchor grid
+near the icon. The grid is drawn above connector lines and below the icon/label
+so lines do not visually cover item content while keeping the arrow endpoint
+visible. Group header tags, item icons, and labels participate in route
+obstacle scoring, so generated connectors try to avoid covering readable text.
+Excalidraw arrowheads are emitted with the smallest supported size (`s`) even
+when a larger `arrowhead-size` is specified; SVG/PPTX preserve the logical
+arrowhead metadata for export rendering.
 
 Connections can also use textual shorthand as direct text inside `<frame>`:
 
@@ -483,27 +561,27 @@ The snippet below shows the essential structure:
 
 ```xml
 <frame width="1200" height="820" class="pa-4">
-  <aws-cloud title="AWS Cloud">
-    <aws-account title="Production Account">
-      <region title="ap-northeast-1">
-        <vpc title="VPC (10.0.0.0/16)">
-          <availability-zone title="AZ: ap-northeast-1a">
+  <aws-cloud id="cloud" title="AWS Cloud">
+    <aws-account id="prod-account" title="Production Account">
+      <region id="region-apne1" title="ap-northeast-1">
+        <vpc id="prod-vpc" title="VPC (10.0.0.0/16)">
+          <availability-zone id="az-apne1a" title="AZ: ap-northeast-1a">
 
             <!-- Tier 1: Presentation (public) -->
-            <public-subnet title="Tier 1 — Presentation" row="3">
+            <public-subnet id="presentation-subnet" title="Tier 1 — Presentation" row="3">
               <item id="1179" />  <!-- Route 53 -->
               <item id="1581" />  <!-- Internet Gateway -->
               <item id="1182" />  <!-- ELB -->
             </public-subnet>
 
             <!-- Tier 2: Application (private) -->
-            <private-subnet title="Tier 2 — Application" row="2">
+            <private-subnet id="app-subnet" title="Tier 2 — Application" row="2">
               <item id="27" />    <!-- EC2 -->
               <item id="1582" />  <!-- NAT Gateway -->
             </private-subnet>
 
             <!-- Tier 3: Data (private) -->
-            <private-subnet title="Tier 3 — Data" row="2">
+            <private-subnet id="data-subnet" title="Tier 3 — Data" row="2">
               <item id="110" />   <!-- Aurora -->
               <item id="113" />   <!-- ElastiCache -->
             </private-subnet>

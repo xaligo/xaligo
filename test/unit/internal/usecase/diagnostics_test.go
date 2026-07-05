@@ -34,10 +34,14 @@ func TestValidateReportsItemAndConnectionBranches(t *testing.T) {
 		{"spacer item", `<frame><item /></frame>`, ""},
 		{"missing src", `<frame><connection dst="2" /></frame>`, "src attribute"},
 		{"missing dst", `<frame><connection src="1" /></frame>`, "dst attribute"},
-		{"unknown src", `<frame><item id="2" /><connection src="one" dst="2" /></frame>`, `src="one"> does not match any <item id/name/ref>`},
-		{"unknown dst", `<frame><item id="1" /><connection src="1" dst="two" /></frame>`, `dst="two"> does not match any <item id/name/ref>`},
-		{"missing endpoint item", `<frame><item id="1" /><connection src="1" dst="2" /></frame>`, `dst="2"> does not match any <item id/name/ref>`},
-		{"ambiguous endpoint item", `<frame><item id="1" /><item id="1" /><item id="2" /><connection src="1" dst="2" /></frame>`, `ambiguous because <item id="1"> appears 2 times`},
+		{"missing group id", `<frame><generic-group title="g" /></frame>`, `<generic-group> requires a non-empty id attribute`},
+		{"missing rectangle id", `<frame><rectangle title="r" /></frame>`, `<rectangle> requires a non-empty id attribute`},
+		{"missing port id", `<frame><rectangle id="r"><port title="p" /></rectangle></frame>`, `<port> requires a non-empty id attribute`},
+		{"duplicate frame id", `<frame><generic-group id="dup" /><rectangle id="dup" /></frame>`, `duplicate frame reference id "dup"`},
+		{"unknown src", `<frame><item id="2" /><connection src="one" dst="2" /></frame>`, `src="one"> does not match any <item> or group id/name/ref`},
+		{"unknown dst", `<frame><item id="1" /><connection src="1" dst="two" /></frame>`, `dst="two"> does not match any <item> or group id/name/ref`},
+		{"missing endpoint item", `<frame><item id="1" /><connection src="1" dst="2" /></frame>`, `dst="2"> does not match any <item> or group id/name/ref`},
+		{"ambiguous endpoint item", `<frame><item id="1" /><item id="1" /><item id="2" /><connection src="1" dst="2" /></frame>`, `ambiguous because endpoint id="1" appears 2 times`},
 		{"nested connection", `<frame><container><connection src="1" dst="2" /></container><item id="1" /><item id="2" /></frame>`, "direct child"},
 	}
 	for _, tc := range cases {

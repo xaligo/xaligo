@@ -93,7 +93,7 @@ func TestHorizontalLayoutUsesColumnWeightsAndMargins(t *testing.T) {
 func TestStaggeredLayoutMarksDepthAndClampsSmallAreas(t *testing.T) {
 	doc, err := usecase.Parse(strings.NewReader(`
 <frame width="120" height="100">
-  <generic-group title="Stack" layout="staggered" content-width="20" content-height="20" align="middle-center">
+  <generic-group id="stack" title="Stack" layout="staggered" content-width="20" content-height="20" align="middle-center">
     <card title="Front" />
     <card title="Back" />
   </generic-group>
@@ -141,4 +141,63 @@ func TestSpacingClassesAndDirectMarginsAreApplied(t *testing.T) {
 	if child.X <= 0 || child.Y <= 0 || child.W >= root.W || child.H >= root.H {
 		t.Fatalf("spacing was not applied: root=%#v child=%#v", root, child)
 	}
+}
+
+func TestRectanglePortsStayInsideAndShareSameSide(t *testing.T) {
+	doc, err := usecase.Parse(strings.NewReader(`
+<frame width="300" height="180">
+  <rectangle id="svc" width="120" height="80">
+    <port id="a" side="left" width="30" height="16" />
+    <port id="b" side="left" width="30" height="16" />
+    <port id="c" side="left" width="30" height="16" />
+    <port id="d" side="bottom" width="40" height="18" x="-10" y="90" />
+  </rectangle>
+</frame>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	root, err := usecase.Build(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(root.Children) != 1 {
+		t.Fatalf("children = %#v", root.Children)
+	}
+	rect := root.Children[0]
+	if len(rect.Children) != 4 {
+		t.Fatalf("ports = %#v", rect.Children)
+	}
+	for _, port := range rect.Children {
+		if port.X < rect.X || port.Y < rect.Y || port.X+port.W > rect.X+rect.W || port.Y+port.H > rect.Y+rect.H {
+			t.Fatalf("port outside rectangle: rect=%#v port=%#v", rect, port)
+		}
+	}
+	byID := map[string]*entityBox{}
+	for _, port := range rect.Children {
+		byID[port.Attrs["id"]] = &entityBox{X: port.X, Y: port.Y, W: port.W, H: port.H}
+	}
+	first, second, third := byID["a"], byID["b"], byID["c"]
+	if first == nil || second == nil || third == nil {
+		t.Fatalf("left ports not found: %#v", rect.Children)
+	}
+	if first.X != rect.X || second.X != rect.X || third.X != rect.X {
+		t.Fatalf("left ports should sit on inside left edge: %#v %#v %#v", first, second, third)
+	}
+	if !(first.Y < second.Y && second.Y < third.Y) {
+		t.Fatalf("left ports should be ordered along the same side: y %.1f %.1f %.1f", first.Y, second.Y, third.Y)
+	}
+	explicit := byID["d"]
+	if explicit == nil {
+		t.Fatalf("explicit port not found: %#v", rect.Children)
+	}
+	if explicit.X != rect.X || explicit.Y+explicit.H != rect.Y+rect.H {
+		t.Fatalf("explicit out-of-bounds port was not clamped to inside bottom-left: rect=%#v port=%#v", rect, explicit)
+	}
+}
+
+type entityBox struct {
+	X float64
+	Y float64
+	W float64
+	H float64
 }

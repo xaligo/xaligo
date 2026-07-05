@@ -12,7 +12,7 @@ import (
 )
 
 func TestGenericGroupCatalogIcon(t *testing.T) {
-	doc, err := usecase.Parse(strings.NewReader(`<frame width="400" height="200"><generic-group title="Network" icon-id="200036" /></frame>`))
+	doc, err := usecase.Parse(strings.NewReader(`<frame width="400" height="200"><generic-group id="network" title="Network" icon-id="200036" /></frame>`))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,7 +82,7 @@ func TestGenericGroupCatalogIcon(t *testing.T) {
 }
 
 func TestGroupHeaderKeepsConservativeTextSpare(t *testing.T) {
-	doc, err := usecase.Parse(strings.NewReader(`<frame width="800" height="240"><aws-cloud title="AWS Cloud"><region title="ap-northeast-1"><generic-group title="Application Subnet upper lane" /></region></aws-cloud></frame>`))
+	doc, err := usecase.Parse(strings.NewReader(`<frame width="800" height="240"><aws-cloud id="cloud" title="AWS Cloud"><region id="region" title="ap-northeast-1"><generic-group id="app-subnet" title="Application Subnet upper lane" /></region></aws-cloud></frame>`))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -125,7 +125,7 @@ func TestGroupHeaderTextWidthAccountsForFullWidthCharacters(t *testing.T) {
 }
 
 func TestItemLabelHeightExpandsForWrappedCatalogLabel(t *testing.T) {
-	doc, err := usecase.Parse(strings.NewReader(`<frame width="400" height="240"><generic-group title="Network"><item id="200013" /></generic-group></frame>`))
+	doc, err := usecase.Parse(strings.NewReader(`<frame width="400" height="240"><generic-group id="network" title="Network"><item id="200013" /></generic-group></frame>`))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -158,7 +158,7 @@ func TestItemLabelHeightExpandsForWrappedCatalogLabel(t *testing.T) {
 
 func buildSceneForGroupTitle(t *testing.T, title string) sceneFile {
 	t.Helper()
-	doc, err := usecase.Parse(strings.NewReader(`<frame width="400" height="200"><generic-group title="` + title + `" /></frame>`))
+	doc, err := usecase.Parse(strings.NewReader(`<frame width="400" height="200"><generic-group id="title-group" title="` + title + `" /></frame>`))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -193,7 +193,7 @@ func groupLabelWidth(t *testing.T, scene sceneFile, label string) float64 {
 }
 
 func TestTablerItemIconCurrentColorIsResolved(t *testing.T) {
-	doc, err := usecase.Parse(strings.NewReader(`<frame width="200" height="160"><generic-group title="Network"><item id="104915" /></generic-group></frame>`))
+	doc, err := usecase.Parse(strings.NewReader(`<frame width="200" height="160"><generic-group id="network" title="Network"><item id="104915" /></generic-group></frame>`))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -231,7 +231,7 @@ func TestTablerItemIconCurrentColorIsResolved(t *testing.T) {
 }
 
 func TestGroupWithoutIconKeepsBalancedVerticalPadding(t *testing.T) {
-	doc, err := usecase.Parse(strings.NewReader(`<frame width="400" height="200"><generic-group title="Compact" /></frame>`))
+	doc, err := usecase.Parse(strings.NewReader(`<frame width="400" height="200"><generic-group id="compact" title="Compact" /></frame>`))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -267,7 +267,7 @@ func TestGroupWithoutIconKeepsBalancedVerticalPadding(t *testing.T) {
 }
 
 func TestItemOnlyGroupReservesAnchorGridClearanceBelowHeader(t *testing.T) {
-	doc, err := usecase.Parse(strings.NewReader(`<frame width="320" height="180"><private-subnet title="Private"><item id="27" /></private-subnet></frame>`))
+	doc, err := usecase.Parse(strings.NewReader(`<frame width="320" height="180"><private-subnet id="private" title="Private"><item id="27" /></private-subnet></frame>`))
 	if err != nil {
 		t.Fatal(err)
 	}

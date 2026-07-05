@@ -38,6 +38,8 @@ type routeRequest struct {
 	DstGap    float64
 	SrcLane   float64
 	DstLane   float64
+	Bends     []pt
+	Grid      float64
 }
 
 type routedPath struct {
@@ -98,7 +100,12 @@ func routeConnections(requests []routeRequest, obstacles []rect, opt routerOptio
 		}
 		visualMargin := math.Min(opt.LineMargin, opt.Clearance) / 2
 		path.Points = separateObstacleHits(path.Points, placed[len(opt.Reserved):], inflateRects(local, visualMargin), opt)
-		path.Points = rerouteEndpointApproach(path.Points, req, opt)
+		if len(req.Bends) == 0 {
+			path.Points = rerouteEndpointApproach(path.Points, req, opt)
+		} else {
+			path.Points = orthogonalizeEndpointStubs(path.Points, req)
+		}
+		path.Points = enforceOrthogonalPolyline(path.Points)
 		results = append(results, path)
 		if req.Kind == "route" {
 			routePaths[routePairKey(req, false)] = append([]pt(nil), path.Points...)
@@ -143,8 +150,11 @@ func trafficAlongsideRoute(route, current []pt, laneGap float64) []pt {
 	shifted := offsetPolyline(route, laneGap)
 	out := make([]pt, 0, len(shifted)+2)
 	out = append(out, current[0])
-	out = append(out, shifted...)
-	out = append(out, current[len(current)-1])
+	if len(shifted) > 0 {
+		out = appendOrthogonalLeg(out, current[0], shifted[0])
+		out = append(out, shifted[1:]...)
+		out = appendOrthogonalLeg(out, shifted[len(shifted)-1], current[len(current)-1])
+	}
 	return simplifyRouteCandidate(out)
 }
 
@@ -374,6 +384,9 @@ func filterObstacles(obstacles []rect, req routeRequest) []rect {
 }
 
 func routeOne(req routeRequest, obstacles []rect, placed [][]segment, opt routerOptions) routedPath {
+	if req.Grid > 0 {
+		opt.Grid = req.Grid
+	}
 	inflated := make([]rect, len(obstacles))
 	for i, o := range obstacles {
 		inflated[i] = inflate(o, opt.Clearance)
@@ -394,6 +407,11 @@ func routeOne(req routeRequest, obstacles []rect, placed [][]segment, opt router
 	}
 	s2 := extend(s, req.SrcSide, math.Max(opt.LaneGap, opt.Stub+req.SrcLane*opt.LaneGap))
 	d2 := extend(d, req.DstSide, math.Max(opt.LaneGap, opt.Stub+req.DstLane*opt.LaneGap))
+
+	if len(req.Bends) > 0 {
+		points := routeViaBends(s, d, s2, d2, req.Bends, opt)
+		return routedPath{ID: req.ID, Points: points}
+	}
 
 	candidates := buildCandidates(s, d, s2, d2, inflated, placed, opt)
 
@@ -430,6 +448,41 @@ func routeOne(req routeRequest, obstacles []rect, placed [][]segment, opt router
 		return routedPath{ID: req.ID, Points: fallbackOrthogonalRoute(s, d, s2, d2)}
 	}
 	return routedPath{ID: req.ID, Points: best}
+}
+
+func routeViaBends(s, d, s2, d2 pt, bends []pt, opt routerOptions) []pt {
+	points := []pt{s, s2}
+	current := s2
+	for _, bend := range bends {
+		bend = snapPoint(bend, opt.Grid)
+		points = appendOrthogonalLeg(points, current, bend)
+		current = bend
+	}
+	points = appendOrthogonalLeg(points, current, d2)
+	points = append(points, d)
+	return simplifyRouteCandidate(points)
+}
+
+func appendOrthogonalLeg(points []pt, from, to pt) []pt {
+	if math.Abs(from.X-to.X) < eps || math.Abs(from.Y-to.Y) < eps {
+		return append(points, to)
+	}
+	return append(points, pt{X: to.X, Y: from.Y}, to)
+}
+
+func enforceOrthogonalPolyline(points []pt) []pt {
+	if len(points) < 2 {
+		return points
+	}
+	out := []pt{points[0]}
+	for i := 1; i < len(points); i++ {
+		out = appendOrthogonalLeg(out, out[len(out)-1], points[i])
+	}
+	return simplifyRouteCandidate(out)
+}
+
+func snapPoint(p pt, grid float64) pt {
+	return pt{X: snap(p.X, grid), Y: snap(p.Y, grid)}
 }
 
 func fallbackOrthogonalRoute(s, d, s2, d2 pt) []pt {
@@ -538,7 +591,7 @@ func reversePoints(points []pt) []pt {
 }
 
 func reverseRequest(req routeRequest) routeRequest {
-	return routeRequest{ID: req.ID, Kind: req.Kind, Src: req.Dst, Dst: req.Src, SrcSide: req.DstSide, DstSide: req.SrcSide, SrcGap: req.DstGap, DstGap: req.SrcGap}
+	return routeRequest{ID: req.ID, Kind: req.Kind, Src: req.Dst, Dst: req.Src, SrcSide: req.DstSide, DstSide: req.SrcSide, SrcGap: req.DstGap, DstGap: req.SrcGap, Grid: req.Grid}
 }
 
 func simplifyRouteCandidate(points []pt) []pt {

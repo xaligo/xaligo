@@ -61,13 +61,7 @@ func (rcvr *xaligoUsecase) buildScene(ctx context.Context, input []byte, opts en
 		logger.ERROR(IURBS009, "service options failed", map[string]any{"error": err})
 		return nil, nil, err
 	}
-	var connections []*entity.Node
-	for _, child := range doc.Root.Children {
-		if child.Tag == "connection" {
-			logger.DEBUG(IURBS003, "branch connection node", map[string]any{"tag": child.Tag})
-			connections = append(connections, child)
-		}
-	}
+	connections := collectConnectionNodes(doc.Root)
 	var scene []byte
 	if opts.Assets != nil {
 		logger.DEBUG(IURBS004, "branch embedded assets")
@@ -91,6 +85,61 @@ func (rcvr *xaligoUsecase) buildScene(ctx context.Context, input []byte, opts en
 		logger.ERROR(IURBS011, "apply theme failed", map[string]any{"error": err})
 	}
 	return scene, entries, err
+}
+
+func collectConnectionNodes(root *entity.Node) []*entity.Node {
+	if root == nil {
+		return nil
+	}
+	connections := []*entity.Node{}
+	for _, child := range root.Children {
+		switch child.Tag {
+		case "connection":
+			logger.DEBUG(IURBS003, "branch connection node", map[string]any{"tag": child.Tag})
+			connections = append(connections, child)
+		case "connections":
+			defaults := connectionGroupDefaults(child)
+			for _, grouped := range child.Children {
+				if grouped.Tag != "connection" {
+					continue
+				}
+				logger.DEBUG(IURBS003, "branch grouped connection node", map[string]any{"tag": grouped.Tag})
+				connections = append(connections, connectionWithDefaults(grouped, defaults))
+			}
+		}
+	}
+	return connections
+}
+
+func connectionGroupDefaults(group *entity.Node) map[string]string {
+	defaults := map[string]string{}
+	if group == nil {
+		return defaults
+	}
+	for _, name := range []string{
+		"arrowhead-size", "kind", "color", "stroke-width", "width", "stroke-style",
+		"start-arrowhead", "end-arrowhead", "arrowhead", "scale", "coordinate-scale", "grid",
+	} {
+		if value := strings.TrimSpace(group.Attrs[name]); value != "" {
+			defaults[name] = value
+		}
+	}
+	return defaults
+}
+
+func connectionWithDefaults(conn *entity.Node, defaults map[string]string) *entity.Node {
+	if conn == nil || len(defaults) == 0 {
+		return conn
+	}
+	clone := *conn
+	clone.Attrs = map[string]string{}
+	for key, value := range defaults {
+		clone.Attrs[key] = value
+	}
+	for key, value := range conn.Attrs {
+		clone.Attrs[key] = value
+	}
+	return &clone
 }
 
 type file struct {
@@ -229,6 +278,9 @@ const (
 	// Mirrors pptxplan's visual anchor-grid expansion so groups reserve enough
 	// top clearance before PPTX adds the grid around each item.
 	itemAnchorGridVisualPadPx = 6.0
+	excalidrawAnchorGrid      = 5
+	excalidrawAnchorPadPx     = 2.0
+	excalidrawAnchorCellGapPx = 1.0
 )
 
 // paperSizeNames maps (short-side, long-side) → paper name for reverse lookup.
@@ -331,7 +383,7 @@ func BuildJSON(root *entity.Box, svgGroupDir string, catalogCSV string, projectR
 	itemImgIDs := map[string]string{}
 	itemLblIDs := map[string]string{}
 
-	walk(root, &elements, files, svgGroupDir, catalogCSV, projectRoot, fsys, r, root, itemGroups, ancestorBoxes, deps)
+	walk(root, &elements, files, svgGroupDir, catalogCSV, projectRoot, fsys, r, root, itemGroups, ancestorBoxes, itemImgRects, itemImgIDs, deps)
 	ancestorIDs := make([]string, 0, len(itemGroups))
 	for ancID := range itemGroups {
 		ancestorIDs = append(ancestorIDs, ancID)
@@ -342,7 +394,7 @@ func BuildJSON(root *entity.Box, svgGroupDir string, catalogCSV string, projectR
 		renderItemGrid(items, ancestorBoxes[ancID], &elements, files, catalogCSV, projectRoot, fsys, itemIconSize, r, itemImgRects, itemLblRects, itemImgIDs, itemLblIDs, abbrevMap, deps)
 	}
 	renderConnections(connections, itemImgRects, itemLblRects, itemImgIDs, itemLblIDs, &elements, r)
-	elements = orderGroupHeaderLayers(elements)
+	elements = orderSceneLayers(elements)
 
 	out := file{
 		Type:     "excalidraw",
@@ -358,13 +410,14 @@ func BuildJSON(root *entity.Box, svgGroupDir string, catalogCSV string, projectR
 	return json.MarshalIndent(out, "", "  ")
 }
 
-// orderGroupHeaderLayers keeps title tags above every group border while
-// preserving connector priority. Header icons and labels are placed last so
-// neither nested borders nor connectors can make the title unreadable.
-func orderGroupHeaderLayers(elements []map[string]any) []map[string]any {
+// orderSceneLayers keeps connectors below readable content while preserving
+// group headers above nested borders.
+func orderSceneLayers(elements []map[string]any) []map[string]any {
 	base := make([]map[string]any, 0, len(elements))
 	headShapes := make([]map[string]any, 0)
 	connectors := make([]map[string]any, 0)
+	anchorBackgrounds := make([]map[string]any, 0)
+	anchorContent := make([]map[string]any, 0)
 	headContent := make([]map[string]any, 0)
 	for _, el := range elements {
 		custom, _ := el["customData"].(map[string]any)
@@ -376,8 +429,16 @@ func orderGroupHeaderLayers(elements []map[string]any) []map[string]any {
 			headContent = append(headContent, el)
 			continue
 		}
+		if isAnchorBackground, _ := custom["xaligoAnchorBackground"].(bool); isAnchorBackground {
+			anchorBackgrounds = append(anchorBackgrounds, el)
+			continue
+		}
+		if isAnchorContent, _ := custom["xaligoAnchorContent"].(bool); isAnchorContent {
+			anchorContent = append(anchorContent, el)
+			continue
+		}
 		typ, _ := el["type"].(string)
-		if typ == "arrow" || typ == "line" {
+		if isJunction, _ := custom["xaligoJunction"].(bool); typ == "arrow" || typ == "line" || isJunction {
 			connectors = append(connectors, el)
 			continue
 		}
@@ -385,6 +446,8 @@ func orderGroupHeaderLayers(elements []map[string]any) []map[string]any {
 	}
 	ordered := append(base, headShapes...)
 	ordered = append(ordered, connectors...)
+	ordered = append(ordered, anchorBackgrounds...)
+	ordered = append(ordered, anchorContent...)
 	return append(ordered, headContent...)
 }
 
@@ -439,7 +502,7 @@ func alignGroupBorderTopToHeader(borderID string, topY, bottomY float64, element
 	}
 }
 
-func walk(b *entity.Box, elements *[]map[string]any, files map[string]any, svgGroupDir string, catalogCSV string, projectRoot string, fsys fs.FS, r *rand.Rand, visibleAncestor *entity.Box, itemGroups map[string][]*entity.Box, ancestorBoxes map[string]*entity.Box, deps SceneDependencies) {
+func walk(b *entity.Box, elements *[]map[string]any, files map[string]any, svgGroupDir string, catalogCSV string, projectRoot string, fsys fs.FS, r *rand.Rand, visibleAncestor *entity.Box, itemGroups map[string][]*entity.Box, ancestorBoxes map[string]*entity.Box, itemImgRects map[string][4]float64, itemImgIDs map[string]string, deps SceneDependencies) {
 	if IsItemLike(b.Tag) {
 		// 描画はしない: visibleAncestor に結び付けて収集のみ (<item> / <spacer> 共通)
 		key := visibleAncestor.ID
@@ -452,7 +515,7 @@ func walk(b *entity.Box, elements *[]map[string]any, files map[string]any, svgGr
 	// 子要素の描画は継続する (親子関係なく個別に制御可能)。
 	selfVisible := b.Attrs["visible"] != "false"
 
-	if b.Tag != "frame" && (b.W < MinBoxWidth || b.H < MinBoxHeight) {
+	if b.Tag != "frame" && b.Tag != "port" && (b.W < MinBoxWidth || b.H < MinBoxHeight) {
 		logger.WARN(IUESW001, "skipping too small element", map[string]any{"label": b.Label, "tag": b.Tag, "width": b.W, "height": b.H, "minWidth": MinBoxWidth, "minHeight": MinBoxHeight})
 		// 子の item も同じ visibleAncestor に結び付けて収集
 		for _, c := range b.Children {
@@ -461,7 +524,7 @@ func walk(b *entity.Box, elements *[]map[string]any, files map[string]any, svgGr
 				itemGroups[key] = append(itemGroups[key], c)
 				ancestorBoxes[key] = visibleAncestor
 			} else {
-				walk(c, elements, files, svgGroupDir, catalogCSV, projectRoot, fsys, r, visibleAncestor, itemGroups, ancestorBoxes, deps)
+				walk(c, elements, files, svgGroupDir, catalogCSV, projectRoot, fsys, r, visibleAncestor, itemGroups, ancestorBoxes, itemImgRects, itemImgIDs, deps)
 			}
 		}
 		return
@@ -494,6 +557,7 @@ func walk(b *entity.Box, elements *[]map[string]any, files map[string]any, svgGr
 				"updated": updated, "link": nil, "locked": false,
 				"customData": map[string]any{"xaligoGroupBorder": true},
 			})
+			registerConnectionEndpoint(b, rectID, [4]float64{b.X, b.Y, b.W, b.H}, itemImgRects, itemImgIDs)
 
 			// ── Group icon ──────────────────────────────────────────
 			headerX := b.X - groupHeaderLeftOverflow
@@ -620,38 +684,65 @@ func walk(b *entity.Box, elements *[]map[string]any, files map[string]any, svgGr
 			if noBorder {
 				genStroke = "transparent"
 			}
+			backgroundColor := "transparent"
+			fillStyle := "hachure"
+			roundness := map[string]any{"type": 3}
+			if b.Tag == "rectangle" {
+				fillStyle = "solid"
+			}
+			if b.Tag == "port" {
+				backgroundColor = "#ffffff"
+				fillStyle = "solid"
+				roundness = nil
+			}
+			boundElements := any(nil)
+			if b.Label != "" {
+				boundElements = []map[string]any{{"type": "text", "id": textID}}
+			}
 			*elements = append(*elements, map[string]any{
 				"id": rectID, "type": "rectangle",
 				"x": b.X, "y": b.Y, "width": b.W, "height": b.H,
-				"angle":       0,
-				"strokeColor": genStroke, "backgroundColor": "transparent",
-				"fillStyle": "hachure", "strokeWidth": 1, "strokeStyle": "solid",
+				"angle": 0, "strokeColor": genStroke, "backgroundColor": backgroundColor,
+				"fillStyle": fillStyle, "strokeWidth": 1, "strokeStyle": "solid",
 				"roughness": 0, "opacity": 100,
-				"groupIds": []string{}, "roundness": map[string]any{"type": 3},
+				"groupIds": []string{}, "roundness": roundness,
 				"seed": r.Intn(99999999), "version": 1,
 				"versionNonce":  r.Intn(99999999),
 				"isDeleted":     false,
-				"boundElements": []map[string]any{{"type": "text", "id": textID}},
+				"boundElements": boundElements,
 				"updated":       updated, "link": nil, "locked": false,
 			})
-			*elements = append(*elements, map[string]any{
-				"id": textID, "type": "text",
-				"x": b.X + 12, "y": b.Y + 12,
-				// fontFamily=1 (Virgil 20px): ~10px/rune
-				"width": textWidth(b.Label, 10.0), "height": 24,
-				"angle":       0,
-				"strokeColor": "#1e1e1e", "backgroundColor": "transparent",
-				"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
-				"roughness": 0, "opacity": 100,
-				"groupIds": []string{}, "roundness": nil,
-				"seed": r.Intn(99999999), "version": 1,
-				"versionNonce": r.Intn(99999999),
-				"isDeleted":    false, "boundElements": nil,
-				"updated": updated, "link": nil, "locked": false,
-				"text": b.Label, "fontSize": 20, "fontFamily": 1,
-				"textAlign": "left", "verticalAlign": "top",
-				"containerId": rectID, "originalText": b.Label, "lineHeight": 1.2,
-			})
+			if b.Tag == "rectangle" || b.Tag == "port" {
+				registerConnectionEndpoint(b, rectID, [4]float64{b.X, b.Y, b.W, b.H}, itemImgRects, itemImgIDs)
+			}
+			if b.Label != "" {
+				fontSize := attrFloat(b.Attrs["font-size"], 20)
+				textX, textY := b.X+12, b.Y+12
+				textW, textH := textWidth(b.Label, fontSize*0.5), math.Ceil(fontSize*1.2)
+				textAlign, verticalAlign := "left", "top"
+				if b.Tag == "rectangle" || b.Tag == "port" {
+					textX, textY = b.X+4, b.Y+2
+					textW, textH = math.Max(1, b.W-8), math.Max(1, b.H-4)
+					textAlign, verticalAlign = "center", "middle"
+				}
+				*elements = append(*elements, map[string]any{
+					"id": textID, "type": "text",
+					"x": textX, "y": textY,
+					"width": textW, "height": textH,
+					"angle":       0,
+					"strokeColor": "#1e1e1e", "backgroundColor": "transparent",
+					"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
+					"roughness": 0, "opacity": 100,
+					"groupIds": []string{}, "roundness": nil,
+					"seed": r.Intn(99999999), "version": 1,
+					"versionNonce": r.Intn(99999999),
+					"isDeleted":    false, "boundElements": nil,
+					"updated": updated, "link": nil, "locked": false,
+					"text": b.Label, "fontSize": fontSize, "fontFamily": 1,
+					"textAlign": textAlign, "verticalAlign": verticalAlign,
+					"containerId": rectID, "originalText": b.Label, "lineHeight": 1.2,
+				})
+			}
 		}
 	}
 
@@ -665,8 +756,20 @@ func walk(b *entity.Box, elements *[]map[string]any, files map[string]any, svgGr
 		nextVisible = visibleAncestor
 	}
 	for _, c := range b.Children {
-		walk(c, elements, files, svgGroupDir, catalogCSV, projectRoot, fsys, r, nextVisible, itemGroups, ancestorBoxes, deps)
+		walk(c, elements, files, svgGroupDir, catalogCSV, projectRoot, fsys, r, nextVisible, itemGroups, ancestorBoxes, itemImgRects, itemImgIDs, deps)
 	}
+}
+
+func registerConnectionEndpoint(b *entity.Box, elementID string, rect [4]float64, endpointRects map[string][4]float64, endpointIDs map[string]string) {
+	if b == nil || endpointRects == nil || endpointIDs == nil || elementID == "" {
+		return
+	}
+	key := strings.TrimSpace(b.Attrs[internalConnectionKeyAttr])
+	if key == "" {
+		return
+	}
+	endpointRects[key] = rect
+	endpointIDs[key] = elementID
 }
 
 // isLayoutTag reports whether a tag is a pure layout container
@@ -964,25 +1067,7 @@ func renderIconAt(boxID, connectionKey, idAttr string, iconX, iconY, iconSize fl
 	}
 	seed := r.Intn(99999999)
 	iconID := fmt.Sprintf("%s-item", boxID)
-	// Record bounding rects and element IDs for edge-based connection arrows.
-	if itemImgRects != nil {
-		itemImgRects[connectionKey] = [4]float64{iconX, iconY, iconSize, iconSize}
-		itemImgIDs[connectionKey] = iconID
-	}
-	*elements = append(*elements, map[string]any{
-		"id": iconID, "type": "image",
-		"x": iconX, "y": iconY,
-		"width": iconSize, "height": iconSize,
-		"fileId": fid, "status": "saved",
-		"scale":       []int{1, 1},
-		"strokeColor": "transparent", "backgroundColor": deps.ExcalidrawRepository.SVGBGColor(ce.DataURL),
-		"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
-		"roughness": 0, "opacity": 100, "angle": 0,
-		"groupIds": []string{}, "roundness": nil,
-		"seed": seed, "version": 1, "versionNonce": seed,
-		"isDeleted": false, "boundElements": nil,
-		"updated": updated, "link": nil, "locked": false, "frameId": nil,
-	})
+	anchorGroupID := fmt.Sprintf("%s-anchor", boxID)
 	var label string
 	if abbrevMap != nil {
 		label = abbrevMap[id]
@@ -993,6 +1078,31 @@ func renderIconAt(boxID, connectionKey, idAttr string, iconX, iconY, iconSize fl
 	labelH := itemLabelHeight(label)
 	labelY := iconY + iconSize + 4
 	labelX := iconX + (iconSize-itemLabelW)/2 // centre label on icon
+	anchorX := iconX - excalidrawAnchorPadPx
+	anchorY := iconY - excalidrawAnchorPadPx
+	anchorW := iconSize + excalidrawAnchorPadPx*2
+	anchorH := iconSize + excalidrawAnchorPadPx*2
+	// Record bounding rects and element IDs for edge-based connection arrows.
+	if itemImgRects != nil {
+		itemImgRects[connectionKey] = [4]float64{iconX, iconY, iconSize, iconSize}
+		itemImgIDs[connectionKey] = iconID
+	}
+	appendExcalidrawAnchorGrid(elements, boxID, anchorGroupID, anchorX, anchorY, anchorW, anchorH, seed+1, updated)
+	*elements = append(*elements, map[string]any{
+		"id": iconID, "type": "image",
+		"x": iconX, "y": iconY,
+		"width": iconSize, "height": iconSize,
+		"fileId": fid, "status": "saved",
+		"scale":       []int{1, 1},
+		"strokeColor": "transparent", "backgroundColor": deps.ExcalidrawRepository.SVGBGColor(ce.DataURL),
+		"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
+		"roughness": 0, "opacity": 100, "angle": 0,
+		"groupIds": []string{anchorGroupID}, "roundness": nil,
+		"seed": seed, "version": 1, "versionNonce": seed,
+		"isDeleted": false, "boundElements": nil,
+		"updated": updated, "link": nil, "locked": false, "frameId": nil,
+		"customData": map[string]any{"xaligoAnchorContent": true},
+	})
 	// Record label bounding rect for bottom-side connection binding.
 	if itemLblRects != nil {
 		itemLblRects[connectionKey] = [4]float64{labelX, labelY, itemLabelW, labelH}
@@ -1007,7 +1117,7 @@ func renderIconAt(boxID, connectionKey, idAttr string, iconX, iconY, iconSize fl
 		"strokeColor": "#1e1e1e", "backgroundColor": "transparent",
 		"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
 		"roughness": 0, "opacity": 100,
-		"groupIds": []string{}, "roundness": nil,
+		"groupIds": []string{anchorGroupID}, "roundness": nil,
 		"seed": textSeed, "version": 1, "versionNonce": textSeed,
 		"isDeleted": false, "boundElements": nil,
 		"updated": updated, "link": nil, "locked": false, "frameId": nil,
@@ -1015,7 +1125,39 @@ func renderIconAt(boxID, connectionKey, idAttr string, iconX, iconY, iconSize fl
 		"fontSize": itemLabelFontPx, "fontFamily": 4,
 		"textAlign": "center", "verticalAlign": "top",
 		"containerId": nil, "lineHeight": 1.25,
+		"customData": map[string]any{"xaligoAnchorContent": true},
 	})
+}
+
+func appendExcalidrawAnchorGrid(elements *[]map[string]any, boxID, groupID string, x, y, w, h float64, seed int, updated int64) {
+	if elements == nil || excalidrawAnchorGrid <= 0 {
+		return
+	}
+	cellW := w / float64(excalidrawAnchorGrid)
+	cellH := h / float64(excalidrawAnchorGrid)
+	for row := 0; row < excalidrawAnchorGrid; row++ {
+		for col := 0; col < excalidrawAnchorGrid; col++ {
+			cellX := x + float64(col)*cellW + excalidrawAnchorCellGapPx
+			cellY := y + float64(row)*cellH + excalidrawAnchorCellGapPx
+			cellWidth := math.Max(1, cellW-excalidrawAnchorCellGapPx*2)
+			cellHeight := math.Max(1, cellH-excalidrawAnchorCellGapPx*2)
+			cellSeed := seed + row*excalidrawAnchorGrid + col
+			*elements = append(*elements, map[string]any{
+				"id": fmt.Sprintf("%s-anchor-bg-%02d-%02d", boxID, row, col), "type": "rectangle",
+				"x": cellX, "y": cellY,
+				"width": cellWidth, "height": cellHeight,
+				"angle":       0,
+				"strokeColor": "#ffffff", "backgroundColor": "#ffffff",
+				"fillStyle": "solid", "strokeWidth": 0, "strokeStyle": "solid",
+				"roughness": 0, "opacity": 100,
+				"groupIds": []string{groupID}, "roundness": nil,
+				"seed": cellSeed, "version": 1, "versionNonce": cellSeed,
+				"isDeleted": false, "boundElements": nil,
+				"updated": updated, "link": nil, "locked": false, "frameId": nil,
+				"customData": map[string]any{"xaligoAnchorBackground": true},
+			})
+		}
+	}
 }
 
 // connectionSide determines which edge exits src (srcSide) and enters dst (dstSide)
@@ -1103,6 +1245,9 @@ func renderConnections(connections []*entity.Node, itemImgRects map[string][4]fl
 	sort.SliceStable(orderedConnections, func(i, j int) bool {
 		return connectionKindPriority(connectionKind(orderedConnections[i])) < connectionKindPriority(connectionKind(orderedConnections[j]))
 	})
+	obstacles := excalidrawRouteObstacles(*elements)
+	placed := [][]segment{}
+	routePaths := map[string][]pt{}
 
 	for i, conn := range orderedConnections {
 		srcIDStr := strings.TrimSpace(conn.Attrs["src"])
@@ -1166,6 +1311,21 @@ func renderConnections(connections []*entity.Node, itemImgRects map[string][4]fl
 		dstEdge := rectEdgePoint(dstRect, dstSide)
 		dx := dstEdge[0] - srcEdge[0]
 		dy := dstEdge[1] - srcEdge[1]
+		style := resolveConnectionStyle(conn)
+		routePoints := excalidrawConnectionPoints(conn, srcRect, dstRect, srcSide, dstSide, style.Kind, obstacles, placed, routePaths)
+		if style.Kind == "route" {
+			routePaths[routePairKey(excalidrawRouteRequest(conn, srcRect, dstRect, srcSide, dstSide, style.Kind), false)] = append([]pt(nil), routePoints...)
+		}
+		placed = append(placed, toSegments(routePoints))
+		minX, minY, maxX, maxY := srcEdge[0], srcEdge[1], srcEdge[0], srcEdge[1]
+		points := make([][]float64, 0, len(routePoints))
+		for _, p := range routePoints {
+			minX = math.Min(minX, p.X)
+			minY = math.Min(minY, p.Y)
+			maxX = math.Max(maxX, p.X)
+			maxY = math.Max(maxY, p.Y)
+			points = append(points, []float64{p.X - srcEdge[0], p.Y - srcEdge[1]})
+		}
 
 		srcFP := fixedPointForSide(srcSide)
 		dstFP := fixedPointForSide(dstSide)
@@ -1174,7 +1334,6 @@ func renderConnections(connections []*entity.Node, itemImgRects map[string][4]fl
 		seed := stableConnectionSeed(srcKey, dstKey, i)
 		connID := fmt.Sprintf("conn-%s-%s-%d", sanitizeElementID(srcKey), sanitizeElementID(dstKey), i)
 
-		style := resolveConnectionStyle(conn)
 		if style.Kind == "route" {
 			for _, endpoint := range []struct {
 				id   string
@@ -1192,16 +1351,25 @@ func renderConnections(connections []*entity.Node, itemImgRects map[string][4]fl
 			}
 		}
 
-		// arrowhead-size 属性: "s" / "m" / "l"。未指定時は最小 "s" を使用する。
-		ahSize := strings.TrimSpace(conn.Attrs["arrowhead-size"])
-		if ahSize != "s" && ahSize != "m" && ahSize != "l" {
-			ahSize = "s"
+		customData := map[string]any{
+			"xaligoConnectorKind":           style.Kind,
+			"xaligoConnectorStartArrowhead": style.StartArrowhead,
+			"xaligoConnectorEndArrowhead":   style.EndArrowhead,
+		}
+		if bends := strings.TrimSpace(connectionBends(conn)); bends != "" {
+			customData["xaligoConnectorBends"] = bends
+		}
+		if scale, ok := positiveFloatAttr(conn, "coordinate-scale", "scale"); ok {
+			customData["xaligoConnectorScale"] = scale
+		}
+		if grid, ok := positiveFloatAttr(conn, "grid"); ok {
+			customData["xaligoConnectorGrid"] = grid
 		}
 
 		*elements = append(*elements, map[string]any{
 			"id": connID, "type": "arrow",
 			"x": srcEdge[0], "y": srcEdge[1],
-			"width": math.Abs(dx), "height": math.Abs(dy),
+			"width": math.Max(math.Abs(dx), maxX-minX), "height": math.Max(math.Abs(dy), maxY-minY),
 			"angle":       0,
 			"strokeColor": style.Color, "backgroundColor": "transparent",
 			"fillStyle": "solid", "strokeWidth": style.Width, "strokeStyle": style.StrokeStyle,
@@ -1210,7 +1378,7 @@ func renderConnections(connections []*entity.Node, itemImgRects map[string][4]fl
 			"seed": seed, "version": 1, "versionNonce": seed,
 			"isDeleted": false, "boundElements": nil,
 			"updated": updated, "link": nil, "locked": false, "frameId": nil,
-			"points":             [][]float64{{0, 0}, {dx, dy}},
+			"points":             points,
 			"lastCommittedPoint": nil,
 			"startBinding": map[string]any{
 				"elementId":  srcElemID,
@@ -1226,14 +1394,10 @@ func renderConnections(connections []*entity.Node, itemImgRects map[string][4]fl
 			},
 			"startArrowhead":     style.ExcalidrawStartArrowhead,
 			"endArrowhead":       style.ExcalidrawEndArrowhead,
-			"endArrowheadSize":   ahSize,
-			"startArrowheadSize": ahSize,
+			"endArrowheadSize":   "s",
+			"startArrowheadSize": "s",
 			"elbowed":            true,
-			"customData": map[string]any{
-				"xaligoConnectorKind":           style.Kind,
-				"xaligoConnectorStartArrowhead": style.StartArrowhead,
-				"xaligoConnectorEndArrowhead":   style.EndArrowhead,
-			},
+			"customData":         customData,
 		})
 
 		// Register this arrow in boundMap for both endpoints.
@@ -1282,6 +1446,211 @@ func renderConnections(connections []*entity.Node, itemImgRects map[string][4]fl
 			(*elements)[idx] = elem
 		}
 	}
+}
+
+func firstNonEmptyAttr(node *entity.Node, names ...string) string {
+	if node == nil {
+		return ""
+	}
+	for _, name := range names {
+		if value := strings.TrimSpace(node.Attrs[name]); value != "" {
+			return value
+		}
+	}
+	return ""
+}
+
+func excalidrawConnectionPoints(conn *entity.Node, srcRect, dstRect [4]float64, srcSide, dstSide, kind string, obstacles []rect, placed [][]segment, routePaths map[string][]pt) []pt {
+	req := excalidrawRouteRequest(conn, srcRect, dstRect, srcSide, dstSide, kind)
+	opt := defaultRouterOptions()
+	local := filterObstacles(obstacles, req)
+	path := routeOne(req, local, placed, opt)
+	if req.Kind == "traffic" {
+		if base, ok := matchingRoutePath(req, routePaths); ok {
+			path.Points = trafficAlongsideRoute(base, path.Points, opt.LaneGap)
+			path.Points = separateExactOverlaps(path.Points, placed, local, opt)
+		} else {
+			path.Points = separateExactOverlaps(path.Points, placed, local, opt)
+		}
+	} else if req.Kind != "route" {
+		path.Points = separateExactOverlaps(path.Points, placed, local, opt)
+	}
+	visualMargin := math.Min(opt.LineMargin, opt.Clearance) / 2
+	path.Points = separateObstacleHits(path.Points, placed, inflateRects(local, visualMargin), opt)
+	if len(req.Bends) == 0 {
+		path.Points = rerouteEndpointApproach(path.Points, req, opt)
+	} else {
+		path.Points = orthogonalizeEndpointStubs(path.Points, req)
+	}
+	path.Points = separatePinnedExactOverlaps(path.Points, placed, local, opt)
+	return enforceOrthogonalPolyline(path.Points)
+}
+
+func separatePinnedExactOverlaps(points []pt, placed [][]segment, obstacles []rect, opt routerOptions) []pt {
+	if len(points) < 3 || len(placed) == 0 || opt.LaneGap <= 0 {
+		return points
+	}
+	best := append([]pt(nil), points...)
+	bestOverlap := exactOverlapLength(toSegments(best), placed)
+	if bestOverlap <= eps {
+		return best
+	}
+	inflated := inflateRects(obstacles, math.Min(opt.LineMargin, opt.Clearance)/2)
+	bestScore := scorePath(best, inflated, placed, opt.LineMargin)
+	for _, offset := range []float64{opt.LaneGap, -opt.LaneGap, opt.LaneGap * 2, -opt.LaneGap * 2} {
+		shifted := offsetPolyline(points, offset)
+		candidate := []pt{points[0]}
+		appendTarget := shifted[1]
+		candidate = appendOrthogonalLeg(candidate, points[0], appendTarget)
+		if len(shifted) > 3 {
+			candidate = append(candidate, shifted[2:len(shifted)-1]...)
+		}
+		candidate = appendOrthogonalLeg(candidate, shifted[len(shifted)-2], points[len(points)-1])
+		candidate = simplifyRouteCandidate(candidate)
+		candidate = enforceOrthogonalPolyline(candidate)
+		if obstacleHitCount(candidate, inflated) > 0 {
+			continue
+		}
+		overlap := exactOverlapLength(toSegments(candidate), placed)
+		score := scorePath(candidate, inflated, placed, opt.LineMargin)
+		if overlap < bestOverlap-eps || (math.Abs(overlap-bestOverlap) < eps && score < bestScore) {
+			best, bestOverlap, bestScore = candidate, overlap, score
+		}
+	}
+	return best
+}
+
+func excalidrawRouteRequest(conn *entity.Node, srcRect, dstRect [4]float64, srcSide, dstSide, kind string) routeRequest {
+	src := rect{X: srcRect[0], Y: srcRect[1], W: srcRect[2], H: srcRect[3]}
+	dst := rect{X: dstRect[0], Y: dstRect[1], W: dstRect[2], H: dstRect[3]}
+	req := routeRequest{
+		ID:      firstNonEmptyAttr(conn, "src") + "-" + firstNonEmptyAttr(conn, "dst"),
+		Kind:    kind,
+		Src:     src,
+		Dst:     dst,
+		SrcSide: side(srcSide),
+		DstSide: side(dstSide),
+		SrcGap:  5,
+		DstGap:  5,
+	}
+	if scale, ok := positiveFloatAttr(conn, "coordinate-scale", "scale"); ok {
+		req.Bends = parseConnectorBends(connectionBends(conn), scale)
+	} else {
+		req.Bends = parseConnectorBends(connectionBends(conn), 1)
+	}
+	if grid, ok := positiveFloatAttr(conn, "grid"); ok {
+		req.Grid = grid
+	}
+	return req
+}
+
+func excalidrawRouteObstacles(elements []map[string]any) []rect {
+	obstacles := make([]rect, 0)
+	for _, el := range elements {
+		custom, _ := el["customData"].(map[string]any)
+		isAnchorContent, _ := custom["xaligoAnchorContent"].(bool)
+		isHeader, _ := custom["xaligoGroupHeader"].(bool)
+		isHeaderContent, _ := custom["xaligoGroupHeaderContent"].(bool)
+		if !isAnchorContent && !isHeader && !isHeaderContent {
+			continue
+		}
+		r, ok := elementRect(el)
+		if !ok {
+			continue
+		}
+		obstacles = append(obstacles, r)
+	}
+	return obstacles
+}
+
+func elementRect(el map[string]any) (rect, bool) {
+	x, okX := el["x"].(float64)
+	y, okY := el["y"].(float64)
+	w, okW := el["width"].(float64)
+	h, okH := el["height"].(float64)
+	if !okX || !okY || !okW || !okH || w <= 0 || h <= 0 {
+		return rect{}, false
+	}
+	return rect{X: x, Y: y, W: w, H: h}, true
+}
+
+func connectionBends(conn *entity.Node) string {
+	if conn == nil {
+		return ""
+	}
+	points := connectionChildBends(conn)
+	if len(points) > 0 {
+		return strings.Join(points, " ")
+	}
+	return firstNonEmptyAttr(conn, "bends", "points", "via")
+}
+
+func connectionChildBends(node *entity.Node) []string {
+	if node == nil {
+		return nil
+	}
+	points := []string{}
+	for _, child := range node.Children {
+		switch strings.ToLower(strings.TrimSpace(child.Tag)) {
+		case "bend", "point", "via", "waypoint":
+			if point, ok := connectionPointString(child); ok {
+				points = append(points, point)
+			}
+		case "bends", "points", "path":
+			points = append(points, connectionChildBends(child)...)
+		}
+	}
+	return points
+}
+
+func connectionPointString(node *entity.Node) (string, bool) {
+	x, xOK := floatAttr(node, "x")
+	y, yOK := floatAttr(node, "y")
+	if xOK && yOK {
+		return fmtFloat(x) + "," + fmtFloat(y), true
+	}
+	parts := strings.Split(strings.TrimSpace(node.Text), ",")
+	if len(parts) != 2 {
+		return "", false
+	}
+	x, xErr := strconv.ParseFloat(strings.TrimSpace(parts[0]), 64)
+	y, yErr := strconv.ParseFloat(strings.TrimSpace(parts[1]), 64)
+	if xErr != nil || yErr != nil {
+		return "", false
+	}
+	return fmtFloat(x) + "," + fmtFloat(y), true
+}
+
+func floatAttr(node *entity.Node, name string) (float64, bool) {
+	if node == nil {
+		return 0, false
+	}
+	value := strings.TrimSpace(node.Attrs[name])
+	if value == "" {
+		return 0, false
+	}
+	parsed, err := strconv.ParseFloat(value, 64)
+	if err != nil {
+		return 0, false
+	}
+	return parsed, true
+}
+
+func positiveFloatAttr(node *entity.Node, names ...string) (float64, bool) {
+	if node == nil {
+		return 0, false
+	}
+	for _, name := range names {
+		value := strings.TrimSpace(node.Attrs[name])
+		if value == "" {
+			continue
+		}
+		parsed, err := strconv.ParseFloat(value, 64)
+		if err == nil && parsed > 0 {
+			return parsed, true
+		}
+	}
+	return 0, false
 }
 
 func stableConnectionSeed(srcKey, dstKey string, index int) int {

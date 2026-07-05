@@ -78,6 +78,43 @@ func TestParseResolvesExplicitConnectionReferences(t *testing.T) {
 	}
 }
 
+func TestParseResolvesGroupedConnectionReferences(t *testing.T) {
+	doc, err := usecase.Parse(strings.NewReader(`<frame>
+  <item id="1" name="web" />
+  <item id="2" name="db" />
+  <connections grid="8">
+    <connection src="web" dst="db" />
+  </connections>
+</frame>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	conn := doc.Root.Children[2].Children[0]
+	if conn.Attr("_xaligoConnectionSrcKey") == "" || conn.Attr("_xaligoConnectionDstKey") == "" {
+		t.Fatalf("connection keys = %#v", conn.Attrs)
+	}
+}
+
+func TestParseResolvesGroupConnectionReferences(t *testing.T) {
+	doc, err := usecase.Parse(strings.NewReader(`<frame>
+  <generic-group id="edge" name="edge-group" title="Edge">
+    <item id="1" />
+  </generic-group>
+  <item id="2" name="app" />
+  <connection src="edge-group" dst="app" />
+</frame>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	conn := doc.Root.Children[2]
+	if conn.Attr("_xaligoConnectionSrcKey") == "" || conn.Attr("_xaligoConnectionDstKey") == "" {
+		t.Fatalf("connection keys = %#v", conn.Attrs)
+	}
+	if conn.Attr("_xaligoConnectionSrcKey") == conn.Attr("_xaligoConnectionDstKey") {
+		t.Fatalf("connection keys should differ = %#v", conn.Attrs)
+	}
+}
+
 func TestParseShorthandReportsUnknownReference(t *testing.T) {
 	_, err := usecase.Parse(strings.NewReader(`<frame>
   <item id="1" name="web" />
@@ -93,7 +130,7 @@ func TestParseShorthandReportsUnknownReference(t *testing.T) {
 }
 
 func TestParseRejectsInvalidGenericGroupIconID(t *testing.T) {
-	_, err := usecase.Parse(strings.NewReader(`<frame><generic-group icon-id="router" /></frame>`))
+	_, err := usecase.Parse(strings.NewReader(`<frame><generic-group id="network" icon-id="router" /></frame>`))
 	var parseErr *entity.ParseError
 	if !errors.As(err, &parseErr) || !strings.Contains(err.Error(), "positive catalog ID") {
 		t.Fatalf("error = %T %v", err, err)

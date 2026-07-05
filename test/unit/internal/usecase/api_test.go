@@ -204,7 +204,7 @@ func TestUseCaseRenderIsoflowUsesEmbeddedManifest(t *testing.T) {
 }
 
 func TestRenderExcalidrawStaggeredBackgrounds(t *testing.T) {
-	input := []byte(`<frame width="600" height="300"><aws-cloud title="AWS"><region title="Region"><vpc title="VPC" layout="staggered"><availability-zone title="AZ 1"><blank /></availability-zone><availability-zone title="AZ 2"><blank /></availability-zone><availability-zone title="AZ 3"><blank /></availability-zone><availability-zone title="AZ 4"><blank /></availability-zone><availability-zone title="AZ 5"><blank /></availability-zone></vpc></region></aws-cloud></frame>`)
+	input := []byte(`<frame width="600" height="300"><aws-cloud id="cloud" title="AWS"><region id="region" title="Region"><vpc id="vpc" title="VPC" layout="staggered"><availability-zone id="az1" title="AZ 1"><blank /></availability-zone><availability-zone id="az2" title="AZ 2"><blank /></availability-zone><availability-zone id="az3" title="AZ 3"><blank /></availability-zone><availability-zone id="az4" title="AZ 4"><blank /></availability-zone><availability-zone id="az5" title="AZ 5"><blank /></availability-zone></vpc></region></aws-cloud></frame>`)
 	out, err := newUsecase().RenderExcalidraw(context.Background(), input, entity.RenderOptions{Theme: "light"})
 	if err != nil {
 		t.Fatal(err)

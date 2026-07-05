@@ -94,6 +94,33 @@ Rendered as a `rectangle + text` pair in Excalidraw.
 | (none) | Tag name used as label |
 | `border` | Set to `"none"` to hide the border |
 | `visible` | Set to `"false"` to hide only this component (border, icon, label). Children are still rendered individually. Layout space is preserved |
+| `font-size` | Text font size in layout pixels |
+
+## `<rectangle>` and `<port>` Tags
+
+`<rectangle>` creates a general-purpose rectangle. Its label comes from
+`title` or direct text content, and `font-size` controls the label size.
+Unlike generic leaf tags, `<rectangle>` may contain multiple `<port>` children.
+
+`<port>` creates a small rectangle inside a side of the parent rectangle.
+Multiple ports on the same side are spaced evenly along that side. Its label
+also comes from `title` or direct text content, and it supports `font-size`.
+
+```xml
+<rectangle id="service" title="Service" width="180" height="100" font-size="18">
+  <port id="service-in" side="left" title="in" font-size="9" />
+  <port id="service-out" side="right" title="out" font-size="10" />
+</rectangle>
+```
+
+| Attribute | Target | Description |
+|---|---|---|
+| `id` | `rectangle`, `port` | Required connection reference ID |
+| `width` / `height` | `rectangle`, `port` | Size in layout pixels |
+| `title` / text content | `rectangle`, `port` | Text rendered inside the shape |
+| `font-size` | `rectangle`, `port` | Text font size in layout pixels |
+| `side` | `port` | Parent side: `top`, `right`, `bottom`, or `left`. Default `top` |
+| `x` / `y` | `port` | Optional position relative to the parent rectangle's top-left corner. Values are clamped so the port remains inside the parent rectangle |
 
 ## `<item>` Tag
 
@@ -102,7 +129,7 @@ Specify the numeric ID from `service-catalog.csv` as the `id` attribute.
 The icon is rendered to fit within the specified size (`item-size`).
 
 ```xml
-<public-subnet title="Public Subnet">
+<public-subnet id="public-subnet" title="Public Subnet">
   <item id="1178" />   <!-- with icon -->
   <item />             <!-- spacer: no icon, only a layout slot -->
   <item id="1189" />   <!-- with icon -->
@@ -121,7 +148,7 @@ Dedicated empty layout tags, usable as alternatives to `<item />`.
 They occupy layout slots but render no icon, label, border, or text.
 
 ```xml
-<public-subnet title="Public Subnet">
+<public-subnet id="public-subnet" title="Public Subnet">
   <item id="1178" />
   <spacer />          <!-- empty slot: no icon -->
   <blank />           <!-- empty slot: no icon -->
@@ -133,28 +160,47 @@ No attributes (`id` is ignored if specified).
 
 ## `<connection>` Tag
 
-Draws an **elbowed arrow** between `<item>` elements.
-Must be written as a direct child of `<frame>`, **outside** layout tags.
-Use the same catalog IDs as `<item id="N">` for `src` / `dst`.
+Draws an **elbowed arrow** between `<item>` elements or group borders.
+Must be written as a direct child of `<frame>` or inside a frame-level
+`<connections>` tag, **outside** layout tags.
+Use the same catalog IDs as `<item id="N">`, or assign `id`, `name`, or `ref`
+to an AWS/group tag, for `src` / `dst`.
 
 ```xml
 <frame width="1122" height="794" class="pa-4">
-  <aws-cloud title="AWS Cloud">
-    <public-subnet title="Public Subnet">
+  <aws-cloud id="cloud" title="AWS Cloud">
+    <public-subnet id="public" title="Public Subnet">
       <item id="1178" />
       <item id="1189" />
     </public-subnet>
   </aws-cloud>
 
-  <!-- connections go last, as direct children of frame -->
-  <connection src="1178" dst="1189" />
+  <!-- connections go last, as direct children of frame or inside <connections> -->
+  <connections grid="8">
+    <connection src="1178" dst="1189" />
+    <connection src="public" dst="cloud" kind="route" />
+  </connections>
 </frame>
+```
+
+### `<connections>` Tag
+
+`<connections>` is an optional direct child of `<frame>` that groups
+`<connection>` elements and provides shared defaults. It does not render a
+shape or occupy layout space. Any per-connection attribute overrides the parent
+default.
+
+```xml
+<connections kind="traffic" color="#2563eb" grid="8" scale="1">
+  <connection src="web" dst="app" />
+  <connection src="app" dst="db" color="#059669" />
+</connections>
 ```
 
 | Attribute | Type | Required | Description |
 |---|---|---|---|
-| `src` | string | ✓ | Catalog ID, `name`, or `ref` of the arrow start item |
-| `dst` | string | ✓ | Catalog ID, `name`, or `ref` of the arrow end item |
+| `src` | string | ✓ | Catalog ID, or `id`/`name`/`ref` of the arrow start item or group |
+| `dst` | string | ✓ | Catalog ID, or `id`/`name`/`ref` of the arrow end item or group |
 | `arrowhead-size` | string | — | Arrowhead size: `"s"` (small) / `"m"` (medium) / `"l"` (large). Default `"s"` |
 | `kind` | string | — | `route` for a structural path without arrows, `traffic` for directional flow drawn beside a matching route |
 | `color` | string | — | Stroke color override |
@@ -162,6 +208,9 @@ Use the same catalog IDs as `<item id="N">` for `src` / `dst`.
 | `stroke-style` | string | — | `solid`, `dashed`, or `dotted` |
 | `start-arrowhead` / `end-arrowhead` | string | — | Independently set either end to `none`, `arrow`, `triangle`, `stealth`, `diamond`, or `oval` |
 | `arrowhead` | string | — | Backward-compatible alias for `end-arrowhead` |
+| `bends` / `points` / `via` | string | — | Backward-compatible inline coordinate list. Prefer child tags for multiple bend coordinates |
+| `scale` / `coordinate-scale` | float | — | Positive multiplier applied to bend coordinates before routing. Default `1` |
+| `grid` | float | — | Positive per-connection snap grid in layout pixels. Defaults to the router grid |
 
 Default connections and `kind="traffic"` use a thin 1px line with
 `start-arrowhead="none"` and a slender `stealth` end arrowhead. `kind="route"`
@@ -170,21 +219,49 @@ colors are `#1e1e1e` for normal connections, `#64748b` for routes, and
 `#2563eb` for traffic. Explicit `stroke-width`, color, stroke style, and
 arrowhead attributes are preserved.
 
-Items may define a connection reference with `name` or `ref`:
+Excalidraw output always serializes arrowhead sizes as the smallest supported
+size (`"s"`) to keep dense diagrams readable. The logical arrowhead type and
+style metadata are still stored on the connector and used by SVG/PPTX export.
+
+Manual bend coordinates are expressed as child tags in the same Cartesian
+layout coordinate space as the frame, with the origin at the upper-left of the
+rendered frame and positive `x`/`y` extending right/down. SVG and PPTX route
+calculations keep the connector orthogonal while forcing the route through each
+listed bend in order. Excalidraw output stores the routing metadata on the
+arrow; Excalidraw's own editor may still display its editable elbow connector
+approximation.
+
+```xml
+<connection src="web" dst="db"
+            scale="1" grid="8">
+  <bend x="120" y="80" />
+  <bend x="120" y="220" />
+  <bend x="300" y="220" />
+</connection>
+```
+
+`<point>`, `<via>`, and `<waypoint>` are accepted aliases for `<bend>`.
+Coordinates can also be grouped inside `<bends>`, `<points>`, or `<path>`.
+
+Items and group tags may define a connection reference with `id`, `name`, or
+`ref`:
 
 ```xml
 <item id="1178" name="web" />
 <item id="1189" name="db" />
+<vpc id="prod-vpc" />
 web --- db
 web ==> db
+prod-vpc --- web
 ```
 
 - `---` expands to `kind="route"`.
 - `==>` expands to `kind="traffic"`.
-- Operands may also be numeric item IDs.
+- Operands may also be numeric item IDs or group IDs.
 - Explicit `<connection src=... dst=...>` attributes resolve the same way.
 - Shorthands must be direct text children of `<frame>`.
-- References must be unique and must belong to an item with a non-empty ID.
+- References must be unique and must belong to an item or group with a
+  non-empty ID.
 - Use an explicit `<connection>` for color, width, stroke, or arrowhead overrides.
 
 **Arrow spec:**
@@ -196,14 +273,20 @@ web ==> db
 - `kind="route"` defaults to `#64748b`, `1px`, lower route layer, no arrowheads
 - `kind="traffic"` defaults to `#2563eb`, `1px`, higher traffic layer, directional end arrowhead
 - A traffic line with the same endpoints as a route line is drawn beside that
-  route in SVG/PPTX draw plans.
+  route in Excalidraw, SVG, and PPTX draw paths when possible.
 - Start/end connect to the **edge midpoint** of the element
   - When direction is **downward**: label text element (`{id}-item-lbl`) bottom edge
   - Otherwise: icon image element (`{id}-item`) corresponding edge
 - Edges are fixed with normalized coordinates via `fixedPoint`, so arrows snap correctly when the file is opened
 - Arrow ID format: `conn-{src}-{dst}-{index}`
 - Arrow ID is registered in `boundElements` of the bound elements
-- SVG/PPTX routing may add lane offsets, automatic junction markers, and line
+- Excalidraw item icons and labels are grouped with a 5x5 white anchor grid.
+  Anchor grid cells are drawn above connectors and below the item content so
+  lines do not cover icons/labels while endpoints remain visible.
+- Excalidraw routing uses previously placed lines to offset exact or near-exact
+  lane overlaps. Group header tags, item icons, and labels are treated as
+  routing obstacles where possible.
+- SVG/PPTX routing may additionally add automatic junction markers and line
   jump masks after the Excalidraw scene is built. These are export-layer
   rendering features, not extra `.xal` tags.
 
@@ -231,9 +314,9 @@ Templates are in `etc/resources/aws/templates/excalidraw/` (`.excalidraw`) and `
 Icon SVGs are sourced from `etc/resources/aws/svg/Architecture-Group-Icons/`.
 
 ```xml
-<aws-cloud title="Production Environment">
-  <vpc title="vpc-0a1b2c3d">
-    <private-subnet title="Private Subnet A">
+<aws-cloud id="production" title="Production Environment">
+  <vpc id="vpc-main" title="vpc-0a1b2c3d">
+    <private-subnet id="private-a" title="Private Subnet A">
       <card title="App Server" />
     </private-subnet>
   </vpc>
@@ -262,7 +345,9 @@ Icon SVGs are sourced from `etc/resources/aws/svg/Architecture-Group-Icons/`.
 | `<aws-step-functions-workflow>` | AWS Step Functions workflow | `#E7008A` | solid | — |
 | `<generic-group>` | Generic group | `#AAB7B8` | dashed | Configurable with `icon-id` |
 
-Attributes are the same as `container` (`title`, `class`, `gap`, etc.).
+All AWS group tags require a non-empty `id`. IDs for group tags, `<rectangle>`,
+and `<port>` must be unique among frame-like components. Group tags otherwise
+accept the same attributes as `container` (`title`, `class`, `gap`, etc.).
 
 `generic-group` additionally accepts `icon-id`, a positive ID from
 `service-catalog.csv`. It uses the same embedded AWS, Tabler, and Yamaha icon
@@ -279,7 +364,7 @@ East Asian full-width characters, including Japanese labels, count as
 double-width in group header and item label width estimates.
 
 ```xml
-<generic-group title="Network Topology" icon-id="104635">
+<generic-group id="network-topology" title="Network Topology" icon-id="104635">
   <item id="200036" />
 </generic-group>
 ```
@@ -316,13 +401,13 @@ All 12 combinations are valid: `top-left`, `top-center`, `top-right`, `top-sprea
 
 ```xml
 <!-- Icons centred vertically and horizontally inside the group (default) -->
-<private-subnet title="App Tier" align="middle-center">
+<private-subnet id="app-tier" title="App Tier" align="middle-center">
   <item id="27" />
   <item id="547" />
 </private-subnet>
 
 <!-- Icons spread evenly across the full width -->
-<generic-group title="Global Services" align="middle-spread">
+<generic-group id="global-services" title="Global Services" align="middle-spread">
   <item id="1179" />
   <item id="1178" />
   <item id="216" />
@@ -330,7 +415,7 @@ All 12 combinations are valid: `top-left`, `top-center`, `top-right`, `top-sprea
 </generic-group>
 
 <!-- Icons pinned to the top-left -->
-<generic-group title="Security" align="top-left">
+<generic-group id="security-services" title="Security" align="top-left">
   <item id="216" />
   <item id="227" />
 </generic-group>
@@ -345,15 +430,15 @@ All 12 combinations are valid: `top-left`, `top-center`, `top-right`, `top-sprea
 
 ```xml
 <!-- Horizontal: left 2 : right 1 width ratio -->
-<vpc title="VPC" layout="horizontal">
-  <public-subnet title="Public" col="2" />
-  <private-subnet title="Private" col="1" />
+<vpc id="vpc-main" title="VPC" layout="horizontal">
+  <public-subnet id="public-subnet" title="Public" col="2" />
+  <private-subnet id="private-subnet" title="Private" col="1" />
 </vpc>
 
 <!-- Vertical: top 1 : bottom 2 height ratio -->
-<region title="Region">
-  <vpc title="VPC A" row="1" />
-  <vpc title="VPC B" row="2" />
+<region id="region-main" title="Region">
+  <vpc id="vpc-a" title="VPC A" row="1" />
+  <vpc id="vpc-b" title="VPC B" row="2" />
 </region>
 ```
 

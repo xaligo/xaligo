@@ -164,7 +164,16 @@ function moveAnchorAndLineObjectsToFront(xml: string): string {
   }
 
   const movingSet = new Set(movingIndexes);
-  const movingXML = movingIndexes.map((index) => blocks[index]?.xml ?? '').join('');
+  const lineAndMaskXML = movingIndexes
+    .map((index) => blocks[index])
+    .filter((block): block is XmlObjectBlock => !!block && !isAnchorGroupBlock(block.xml))
+    .map((block) => block.xml)
+    .join('');
+  const anchorXML = movingIndexes
+    .map((index) => blocks[index])
+    .filter((block): block is XmlObjectBlock => !!block && isAnchorGroupBlock(block.xml))
+    .map((block) => block.xml)
+    .join('');
 
   let out = '';
   let cursor = 0;
@@ -183,7 +192,7 @@ function moveAnchorAndLineObjectsToFront(xml: string): string {
     return out;
   }
   logger.DEBUG(ERPPMAALOTF003, 'completed', { objects: movingIndexes.length });
-  return `${out.slice(0, spTreeClose)}${movingXML}${out.slice(spTreeClose)}`;
+  return `${out.slice(0, spTreeClose)}${lineAndMaskXML}${anchorXML}${out.slice(spTreeClose)}`;
 }
 
 function isAnchorGroupBlock(xml: string): boolean {

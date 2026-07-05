@@ -31,7 +31,17 @@ func (rcvr *svgRepository) Render(plan entity.Plan, pxPerInch float64, legendPos
 
 	w := plan.Slide.W * pxPerInch
 	h := plan.Slide.H * pxPerInch
-	layout := svgLegendLayout(w, h, plan.Legend, legendPosition)
+	bounds := svgOpsBounds(plan.Ops, pxPerInch, w, h)
+	const diagramPad = 24.0
+	pad := 0.0
+	if bounds.hasPath || bounds.minX < 0 || bounds.minY < 0 || bounds.maxX > w || bounds.maxY > h {
+		pad = diagramPad
+	}
+	diagramOffsetX := pad - bounds.minX
+	diagramOffsetY := pad - bounds.minY
+	diagramW := bounds.maxX - bounds.minX + pad*2
+	diagramH := bounds.maxY - bounds.minY + pad*2
+	layout := svgLegendLayout(diagramW, diagramH, plan.Legend, legendPosition)
 
 	var b bytes.Buffer
 	b.WriteString(`<?xml version="1.0" encoding="UTF-8"?>` + "\n")
@@ -39,18 +49,53 @@ func (rcvr *svgRepository) Render(plan entity.Plan, pxPerInch float64, legendPos
 	b.WriteString(`<defs><marker id="xaligo-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker><marker id="xaligo-oval" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto" markerUnits="strokeWidth"><circle cx="3.5" cy="3.5" r="2.5" fill="context-stroke"/></marker></defs>` + "\n")
 	fmt.Fprintf(&b, `<rect x="0" y="0" width="%s" height="%s" fill="#%s"/>`+"\n", num(layout.canvasW), num(layout.canvasH), color(plan.Slide.Background, "FFFFFF"))
 
-	if layout.diagramX != 0 || layout.diagramY != 0 {
-		fmt.Fprintf(&b, `<g transform="translate(%s %s)">`+"\n", num(layout.diagramX), num(layout.diagramY))
-	}
+	fmt.Fprintf(&b, `<g transform="translate(%s %s)">`+"\n", num(layout.diagramX+diagramOffsetX), num(layout.diagramY+diagramOffsetY))
 	for _, op := range plan.Ops {
 		writeOp(&b, op, pxPerInch)
 	}
-	if layout.diagramX != 0 || layout.diagramY != 0 {
-		b.WriteString("</g>\n")
-	}
+	b.WriteString("</g>\n")
 	writeLegend(&b, plan.Legend, layout)
 	b.WriteString("</svg>\n")
 	return b.Bytes(), nil
+}
+
+type svgBounds struct {
+	minX    float64
+	minY    float64
+	maxX    float64
+	maxY    float64
+	hasPath bool
+}
+
+func svgOpsBounds(ops []entity.DrawOp, ppi, w, h float64) svgBounds {
+	bounds := svgBounds{minX: 0, minY: 0, maxX: w, maxY: h}
+	expand := func(x, y float64) {
+		bounds.minX = math.Min(bounds.minX, x)
+		bounds.minY = math.Min(bounds.minY, y)
+		bounds.maxX = math.Max(bounds.maxX, x)
+		bounds.maxY = math.Max(bounds.maxY, y)
+	}
+	for _, op := range ops {
+		x, y, ow, oh := op.X*ppi, op.Y*ppi, op.W*ppi, op.H*ppi
+		switch op.Kind {
+		case "line", "polygon":
+			bounds.hasPath = true
+			for _, p := range absolutePoints(op, x, y, ow, oh, ppi) {
+				expand(p.x, p.y)
+			}
+		default:
+			expand(x, y)
+			expand(x+ow, y+oh)
+		}
+	}
+	if bounds.hasPath {
+		const strokeAndMarkerPad = 18.0
+		bounds.minX -= strokeAndMarkerPad
+		bounds.minY -= strokeAndMarkerPad
+		bounds.maxX += strokeAndMarkerPad
+		bounds.maxY += strokeAndMarkerPad
+	}
+	return bounds
 }
 
 type svgLegendBox struct {

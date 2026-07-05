@@ -268,6 +268,7 @@ type xalBuilder struct {
 	startMode   string
 	spacingMode string
 	azLayout    string // "grid" or "staggered"
+	usedIDs     map[string]int
 }
 
 func (rcvr *xalBuilder) ind(level int) string {
@@ -275,23 +276,57 @@ func (rcvr *xalBuilder) ind(level int) string {
 }
 
 func (rcvr *xalBuilder) group(tag, title string, level int, fn func()) {
-	rcvr.sb.WriteString(fmt.Sprintf("%s<%s title=%q>\n", rcvr.ind(level), tag, title))
+	rcvr.sb.WriteString(fmt.Sprintf("%s<%s id=%q title=%q>\n", rcvr.ind(level), tag, rcvr.generatedID(tag, title), title))
 	fn()
 	rcvr.sb.WriteString(fmt.Sprintf("%s</%s>\n", rcvr.ind(level), tag))
 }
 
 func (rcvr *xalBuilder) groupAttrs(tag, title, extraAttrs string, level int, fn func()) {
 	if extraAttrs != "" {
-		rcvr.sb.WriteString(fmt.Sprintf("%s<%s title=%q %s>\n", rcvr.ind(level), tag, title, extraAttrs))
+		rcvr.sb.WriteString(fmt.Sprintf("%s<%s id=%q title=%q %s>\n", rcvr.ind(level), tag, rcvr.generatedID(tag, title), title, extraAttrs))
 	} else {
-		rcvr.sb.WriteString(fmt.Sprintf("%s<%s title=%q>\n", rcvr.ind(level), tag, title))
+		rcvr.sb.WriteString(fmt.Sprintf("%s<%s id=%q title=%q>\n", rcvr.ind(level), tag, rcvr.generatedID(tag, title), title))
 	}
 	fn()
 	rcvr.sb.WriteString(fmt.Sprintf("%s</%s>\n", rcvr.ind(level), tag))
 }
 
 func (rcvr *xalBuilder) leaf(tag, title string, level int) {
-	rcvr.sb.WriteString(fmt.Sprintf("%s<%s title=%q />\n", rcvr.ind(level), tag, title))
+	rcvr.sb.WriteString(fmt.Sprintf("%s<%s id=%q title=%q />\n", rcvr.ind(level), tag, rcvr.generatedID(tag, title), title))
+}
+
+func (rcvr *xalBuilder) generatedID(tag, title string) string {
+	base := generatedXALID(tag, title)
+	if rcvr.usedIDs == nil {
+		rcvr.usedIDs = map[string]int{}
+	}
+	rcvr.usedIDs[base]++
+	if rcvr.usedIDs[base] == 1 {
+		return base
+	}
+	return fmt.Sprintf("%s-%d", base, rcvr.usedIDs[base])
+}
+
+func generatedXALID(tag, title string) string {
+	var slug strings.Builder
+	lastDash := false
+	for _, r := range strings.ToLower(title) {
+		switch {
+		case r >= 'a' && r <= 'z', r >= '0' && r <= '9':
+			slug.WriteRune(r)
+			lastDash = false
+		default:
+			if !lastDash {
+				slug.WriteByte('-')
+				lastDash = true
+			}
+		}
+	}
+	value := strings.Trim(slug.String(), "-")
+	if value == "" {
+		return tag
+	}
+	return tag + "-" + value
 }
 
 func (rcvr *xalBuilder) spacingClass() string {

@@ -1,21 +1,21 @@
 <frame width="960" height="540" class="pa-4">
-  <generic-group title="Automatic Route Junction" icon-id="104635">
+  <generic-group id="junction-demo" title="Automatic Route Junction" icon-id="104635">
     <row gap="80">
       <col span="4" class="pa-2">
-        <generic-group title="Route Origin" icon-id="104032" align="middle-center">
+        <generic-group id="route-origin" title="Route Origin" icon-id="104032" align="middle-center">
           <item id="200036" name="router" /> <!-- router_general -->
         </generic-group>
       </col>
 
       <col span="8" class="pa-2">
         <container gap="24">
-          <generic-group title="Branch A: Access Switch" icon-id="104504" align="middle-center">
+          <generic-group id="branch-access" title="Branch A: Access Switch" icon-id="104504" align="middle-center">
             <item id="200013" name="access-switch" /> <!-- l2_switch_general -->
           </generic-group>
-          <generic-group title="Branch B: Server" icon-id="104109" align="middle-center">
+          <generic-group id="branch-server" title="Branch B: Server" icon-id="104109" align="middle-center">
             <item id="200041" name="server" /> <!-- server -->
           </generic-group>
-          <generic-group title="Branch C: Client" icon-id="101804" align="middle-center">
+          <generic-group id="branch-client" title="Branch C: Client" icon-id="101804" align="middle-center">
             <item id="200005" name="client" /> <!-- desktop_pc -->
           </generic-group>
         </container>

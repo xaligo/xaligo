@@ -1,0 +1,22 @@
+[book]
+title = "xaligo Documentation"
+authors = ["xaligo contributors"]
+description = "Official documentation for the xaligo diagram-as-code engine"
+language = "en"
+multilingual = false
+src = "src"
+
+[build]
+build-dir = "book"
+create-missing = false
+
+[output.html]
+git-repository-url = "https://github.com/xaligo/xaligo"
+edit-url-template = "https://github.com/xaligo/xaligo/edit/main/docs/{path}"
+site-url = "/xaligo/"
+additional-css = []
+additional-js = []
+
+[output.html.fold]
+enable = true
+level = 1

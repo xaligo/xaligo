@@ -1,6 +1,6 @@
 <!-- spot-fleet: Spot Fleet (icon: Spot-Fleet_32.svg) -->
 <frame width="600" height="440" class="pa-4">
-  <spot-fleet title="Spot Fleet">
+  <spot-fleet id="spot-fleet" title="Spot Fleet">
     <row gap="16">
       <col span="6" class="pa-2">
         <card title="Resource A" />

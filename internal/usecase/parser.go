@@ -113,6 +113,12 @@ func Parse(r io.Reader) (entity.Document, error) {
 					return entity.Document{}, &entity.ParseError{Position: node.Position, Err: fmt.Errorf("parse <generic-group>: %w", err)}
 				}
 			}
+			if isConnectableFrameTag(node.Tag) {
+				if err := validateConnectableFrameNode(node); err != nil {
+					logger.ERROR(IUPP007, "connectable frame validation failed", map[string]any{"error": err})
+					return entity.Document{}, &entity.ParseError{Position: node.Position, Err: err}
+				}
+			}
 			if len(stack) == 0 {
 				logger.DEBUG(IUPP008, "branch root assignment", map[string]any{"tag": node.Tag})
 				root = node
@@ -156,7 +162,7 @@ func Parse(r io.Reader) (entity.Document, error) {
 		logger.ERROR(IUPP015, "branch invalid root", map[string]any{"tag": root.Tag})
 		return entity.Document{}, &entity.ParseError{Position: root.Position, Err: fmt.Errorf("root tag must be <frame>, got <%s>", root.Tag)}
 	}
-	assignItemConnectionKeys(root)
+	assignConnectionKeys(root)
 	if err := expandConnectionShorthands(root, data); err != nil {
 		logger.ERROR(IUPP016, "expand connection shorthands failed", map[string]any{"error": err})
 		return entity.Document{}, err
@@ -184,12 +190,23 @@ func validateGenericGroupNode(node *entity.Node) error {
 	return nil
 }
 
-func assignItemConnectionKeys(root *entity.Node) {
+func validateConnectableFrameNode(node *entity.Node) error {
+	id := strings.TrimSpace(node.Attrs["id"])
+	if id == "" {
+		return fmt.Errorf("<%s> requires a non-empty id attribute", node.Tag)
+	}
+	if strings.ContainsAny(id, " \t\r\n") {
+		return fmt.Errorf("<%s id=%q> must not contain whitespace", node.Tag, id)
+	}
+	return nil
+}
+
+func assignConnectionKeys(root *entity.Node) {
 	next := 1
 	var walk func(*entity.Node)
 	walk = func(node *entity.Node) {
-		if node.Tag == "item" && strings.TrimSpace(node.Attrs["id"]) != "" {
-			node.Attrs[internalConnectionKeyAttr] = "item-" + strconv.Itoa(next)
+		if nodeConnectableByID(node) {
+			node.Attrs[internalConnectionKeyAttr] = node.Tag + "-" + strconv.Itoa(next)
 			next++
 		}
 		for _, child := range node.Children {
@@ -199,12 +216,27 @@ func assignItemConnectionKeys(root *entity.Node) {
 	walk(root)
 }
 
+func nodeConnectableByID(node *entity.Node) bool {
+	if node == nil || strings.TrimSpace(node.Attrs["id"]) == "" {
+		return false
+	}
+	return node.Tag == "item" || isConnectableFrameTag(node.Tag)
+}
+
+func isConnectableFrameTag(tag string) bool {
+	if tag == "rectangle" || tag == "port" {
+		return true
+	}
+	_, isGroup := awsGroups[tag]
+	return isGroup
+}
+
 func expandConnectionShorthands(root *entity.Node, data []byte) error {
 	aliases := map[string]string{}
 	duplicateAliases := map[string]bool{}
 	var collect func(*entity.Node) error
 	collect = func(node *entity.Node) error {
-		if node.Tag == "item" {
+		if nodeConnectableByID(node) {
 			logger.DEBUG(IUPECS001, "branch item", map[string]any{"tag": node.Tag})
 			id := strings.TrimSpace(node.Attrs["id"])
 			key := strings.TrimSpace(node.Attrs[internalConnectionKeyAttr])
@@ -222,13 +254,9 @@ func expandConnectionShorthands(root *entity.Node, data []byte) error {
 					logger.DEBUG(IUPECS003, "branch empty alias", map[string]any{"key": key})
 					continue
 				}
-				if id == "" {
-					logger.DEBUG(IUPECS004, "branch alias without ID", map[string]any{"key": key, "alias": alias})
-					return &entity.ParseError{Position: node.Position, Err: fmt.Errorf("<item %s=%q> requires a non-empty id", key, alias)}
-				}
 				if _, exists := aliases[alias]; exists || duplicateAliases[alias] {
 					logger.DEBUG(IUPECS005, "branch duplicate alias", map[string]any{"alias": alias, "id": id})
-					return &entity.ParseError{Position: node.Position, Err: fmt.Errorf("duplicate item reference %q", alias)}
+					return &entity.ParseError{Position: node.Position, Err: fmt.Errorf("duplicate connection reference %q", alias)}
 				}
 				aliases[alias] = node.Attrs[internalConnectionKeyAttr]
 			}
@@ -269,12 +297,12 @@ func expandConnectionShorthands(root *entity.Node, data []byte) error {
 			src, ok := aliases[match[1]]
 			if !ok || src == "" || duplicateAliases[match[1]] {
 				logger.ERROR(IUPECS010, "branch missing source", map[string]any{"source": match[1]})
-				return &entity.ParseError{Position: position, Err: fmt.Errorf("connection shorthand source %q does not match an <item name=...>, <item ref=...>, or item ID", match[1])}
+				return &entity.ParseError{Position: position, Err: fmt.Errorf("connection shorthand source %q does not match an <item> or group id/name/ref", match[1])}
 			}
 			dst, ok := aliases[match[3]]
 			if !ok || dst == "" || duplicateAliases[match[3]] {
 				logger.ERROR(IUPECS011, "branch missing destination", map[string]any{"destination": match[3]})
-				return &entity.ParseError{Position: position, Err: fmt.Errorf("connection shorthand destination %q does not match an <item name=...>, <item ref=...>, or item ID", match[3])}
+				return &entity.ParseError{Position: position, Err: fmt.Errorf("connection shorthand destination %q does not match an <item> or group id/name/ref", match[3])}
 			}
 			kind := "route"
 			if match[2] == "==>" {
@@ -350,50 +378,63 @@ func validateConnectionNode(node *entity.Node) error {
 }
 
 func validateConnectionReferences(root *entity.Node) error {
-	type itemRef struct {
+	type endpointRef struct {
 		key      string
 		position entity.Position
 	}
-	itemsByID := map[string][]itemRef{}
-	itemsByAlias := map[string]itemRef{}
+	endpointsByID := map[string][]endpointRef{}
+	endpointsByAlias := map[string]endpointRef{}
+	frameIDs := map[string]endpointRef{}
 	var connections []*entity.Node
 
-	var walk func(node, parent *entity.Node) error
-	walk = func(node, parent *entity.Node) error {
-		if node.Tag == "item" {
+	var walk func(node, parent, grandparent *entity.Node) error
+	walk = func(node, parent, grandparent *entity.Node) error {
+		if nodeConnectableByID(node) {
 			id := strings.TrimSpace(node.Attrs["id"])
 			key := strings.TrimSpace(node.Attrs[internalConnectionKeyAttr])
 			if id != "" {
-				ref := itemRef{key: key, position: node.Position}
-				itemsByID[id] = append(itemsByID[id], ref)
+				ref := endpointRef{key: key, position: node.Position}
+				if isConnectableFrameTag(node.Tag) {
+					if _, exists := frameIDs[id]; exists {
+						logger.ERROR(IUPVCN007, "branch duplicate frame endpoint ID", map[string]any{"id": id})
+						return &entity.ParseError{Position: node.Position, Err: fmt.Errorf("duplicate frame reference id %q", id)}
+					}
+					frameIDs[id] = ref
+				}
+				endpointsByID[id] = append(endpointsByID[id], ref)
 				for _, attr := range []string{"name", "ref"} {
 					alias := strings.TrimSpace(node.Attrs[attr])
 					if alias == "" {
 						continue
 					}
-					if _, exists := itemsByAlias[alias]; exists {
+					if _, exists := endpointsByAlias[alias]; exists {
 						logger.ERROR(IUPVCN007, "branch duplicate endpoint alias", map[string]any{"alias": alias})
-						return &entity.ParseError{Position: node.Position, Err: fmt.Errorf("duplicate item reference %q", alias)}
+						return &entity.ParseError{Position: node.Position, Err: fmt.Errorf("duplicate connection reference %q", alias)}
 					}
-					itemsByAlias[alias] = ref
+					endpointsByAlias[alias] = ref
 				}
 			}
 		}
+		if node.Tag == "connections" && parent != root {
+			logger.ERROR(IUPVCN005, "branch nested connections", map[string]any{"tag": parent.Tag})
+			return &entity.ParseError{Position: node.Position, Err: fmt.Errorf("<connections> must be a direct child of <frame>")}
+		}
 		if node.Tag == "connection" {
-			if parent != root {
+			grouped := parent != nil && parent.Tag == "connections" && grandparent == root
+			if parent != root && !grouped {
 				logger.ERROR(IUPVCN005, "branch nested connection", map[string]any{"tag": parent.Tag})
-				return &entity.ParseError{Position: node.Position, Err: fmt.Errorf("<connection> must be a direct child of <frame>")}
+				return &entity.ParseError{Position: node.Position, Err: fmt.Errorf("<connection> must be a direct child of <frame> or <connections>")}
 			}
 			connections = append(connections, node)
 		}
 		for _, child := range node.Children {
-			if err := walk(child, node); err != nil {
+			if err := walk(child, node, parent); err != nil {
 				return err
 			}
 		}
 		return nil
 	}
-	if err := walk(root, nil); err != nil {
+	if err := walk(root, nil, nil); err != nil {
 		return err
 	}
 
@@ -409,20 +450,20 @@ func validateConnectionReferences(root *entity.Node) error {
 			if strings.TrimSpace(conn.Attrs[endpoint.keyAttr]) != "" {
 				continue
 			}
-			if refs := itemsByID[token]; len(refs) > 0 {
+			if refs := endpointsByID[token]; len(refs) > 0 {
 				if len(refs) > 1 {
 					logger.ERROR(IUPVCN007, "branch ambiguous endpoint item", map[string]any{"attr": endpoint.attr, "id": token, "count": len(refs)})
-					return &entity.ParseError{Position: conn.Position, Err: fmt.Errorf("<connection %s=%q> is ambiguous because <item id=%q> appears %d times; use a unique item name or ref", endpoint.attr, token, token, len(refs))}
+					return &entity.ParseError{Position: conn.Position, Err: fmt.Errorf("<connection %s=%q> is ambiguous because endpoint id=%q appears %d times; use a unique name or ref", endpoint.attr, token, token, len(refs))}
 				}
 				conn.Attrs[endpoint.keyAttr] = refs[0].key
 				continue
 			}
-			if ref, ok := itemsByAlias[token]; ok {
+			if ref, ok := endpointsByAlias[token]; ok {
 				conn.Attrs[endpoint.keyAttr] = ref.key
 				continue
 			}
 			logger.ERROR(IUPVCN006, "branch missing endpoint item", map[string]any{"attr": endpoint.attr, "token": token})
-			return &entity.ParseError{Position: conn.Position, Err: fmt.Errorf("<connection %s=%q> does not match any <item id/name/ref>", endpoint.attr, token)}
+			return &entity.ParseError{Position: conn.Position, Err: fmt.Errorf("<connection %s=%q> does not match any <item> or group id/name/ref", endpoint.attr, token)}
 		}
 	}
 	return nil
