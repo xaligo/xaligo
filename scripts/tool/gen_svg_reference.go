@@ -31,6 +31,7 @@ const (
 	sampleMargin      = 24
 	groupSampleHeight = 112
 	groupSampleMinW   = 156
+	iconPageSize      = 90
 )
 
 type svgAsset struct {
@@ -75,6 +76,14 @@ type assetGroup struct {
 	Assets []svgAsset
 }
 
+type assetPage struct {
+	Number int
+	File   string
+	Start  int
+	End    int
+	Assets []svgAsset
+}
+
 func groupAssets(assets []svgAsset) []assetGroup {
 	groupByName := make(map[string][]svgAsset)
 	for _, asset := range assets {
@@ -101,20 +110,79 @@ func writeIndex(groups []assetGroup, total int) {
 	fmt.Fprintf(&out, `# SVG Icon Reference
 
 This reference uses the SVG files published from `+"`etc/resources/aws/svg`"+`.
-Each section is split into its own page. Total SVG files: %d.
+Large sections are split into paginated pages to keep local preview responsive.
+Total SVG files: %d.
 
 `, total)
 	for _, group := range groups {
+		pages := groupPages(group)
+		if len(pages) > 1 {
+			fmt.Fprintf(&out, "- [%s](%s.md) (%d, %d pages)\n", group.Name, group.Slug, len(group.Assets), len(pages))
+			continue
+		}
 		fmt.Fprintf(&out, "- [%s](%s.md) (%d)\n", group.Name, group.Slug, len(group.Assets))
 	}
 	writeFile(filepath.Join(outputDir, "index.md"), out.Bytes())
 }
 
 func writeGroupPage(group assetGroup) {
+	pages := groupPages(group)
+	if len(pages) > 1 {
+		writeGroupIndexPage(group, pages)
+		for _, page := range pages {
+			writeGroupAssetPage(group, page)
+		}
+		return
+	}
+	writeGroupAssetPage(group, pages[0])
+}
+
+func groupPages(group assetGroup) []assetPage {
+	if len(group.Assets) == 0 {
+		return []assetPage{{Number: 1, File: group.Slug + ".md"}}
+	}
+	count := (len(group.Assets) + iconPageSize - 1) / iconPageSize
+	pages := make([]assetPage, 0, count)
+	for i := 0; i < count; i++ {
+		start := i * iconPageSize
+		end := start + iconPageSize
+		if end > len(group.Assets) {
+			end = len(group.Assets)
+		}
+		file := group.Slug + ".md"
+		if count > 1 {
+			file = fmt.Sprintf("%s-%03d.md", group.Slug, i+1)
+		}
+		pages = append(pages, assetPage{
+			Number: i + 1,
+			File:   file,
+			Start:  start,
+			End:    end,
+			Assets: group.Assets[start:end],
+		})
+	}
+	return pages
+}
+
+func writeGroupIndexPage(group assetGroup, pages []assetPage) {
 	var out bytes.Buffer
-	writeHeader(&out, group)
+	fmt.Fprintf(&out, `# %s
+
+This section contains %d SVG files from `+"`etc/resources/aws/svg/%s`"+`.
+Open a page below to load a smaller set of previews.
+
+`, group.Name, len(group.Assets), group.Name)
+	for _, page := range pages {
+		fmt.Fprintf(&out, "- [Page %d](%s) (%d-%d)\n", page.Number, page.File, page.Start+1, page.End)
+	}
+	writeFile(filepath.Join(outputDir, group.Slug+".md"), out.Bytes())
+}
+
+func writeGroupAssetPage(group assetGroup, page assetPage) {
+	var out bytes.Buffer
+	writeHeader(&out, group, page)
 	currentGroup := ""
-	for i, asset := range group.Assets {
+	for i, asset := range page.Assets {
 		if asset.Group != currentGroup {
 			if currentGroup != "" {
 				out.WriteString("</div>\n\n")
@@ -122,12 +190,12 @@ func writeGroupPage(group assetGroup) {
 			currentGroup = asset.Group
 			out.WriteString("<div class=\"xal-ref-grid\">\n")
 		}
-		writeCard(&out, i, asset)
+		writeCard(&out, page.Start+i, asset)
 	}
 	if currentGroup != "" {
 		out.WriteString("</div>\n")
 	}
-	writeFile(filepath.Join(outputDir, group.Slug+".md"), out.Bytes())
+	writeFile(filepath.Join(outputDir, page.File), out.Bytes())
 }
 
 func writeGroupSamples(renderer usecase.XaligoUsecase, group assetGroup) {
@@ -245,18 +313,25 @@ func groupName(path string) string {
 	return parts[0]
 }
 
-func writeHeader(out *bytes.Buffer, group assetGroup) {
+func writeHeader(out *bytes.Buffer, group assetGroup, page assetPage) {
+	title := group.Name
+	if page.File != group.Slug+".md" {
+		title = fmt.Sprintf("%s - Page %d", group.Name, page.Number)
+	}
 	fmt.Fprintf(out, `# %s
 
 This page references SVG files under `+"`etc/resources/aws/svg/%s`"+`.
 Each card shows the SVG preview first and the XAL tag syntax in the Code tab.
-Total SVG files: %d.
+Showing %d-%d of %d SVG files.
 
 <style>
-.xal-ref-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin:1rem 0 1.5rem}.xal-ref-card{border:1px solid var(--table-border-color);border-radius:8px;overflow:hidden;background:var(--bg);padding:.75rem}.xal-ref-preview{min-height:132px;display:flex;align-items:center;justify-content:center}.xal-ref-preview img{max-width:96px;max-height:96px}.xal-ref-path{font-size:.78em;opacity:.75;word-break:break-all;margin-top:.5rem}.xal-ref-card pre{margin:0;max-height:18rem;overflow:auto;white-space:pre-wrap}.xal-ref-card code{font-size:.78em}
+.xal-ref-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;margin:1rem 0 1.5rem}.xal-ref-card{border:1px solid var(--table-border-color);border-radius:8px;overflow:hidden;background:var(--bg);padding:.75rem}.xal-ref-title{font-size:.9rem;font-weight:600;line-height:1.25;margin:0 0 .5rem;overflow-wrap:anywhere}.xal-ref-preview{display:flex;align-items:center;justify-content:center}.xal-ref-preview img{display:block;width:100%%;height:auto}.xal-ref-card pre{margin:0;max-height:18rem;overflow:auto;white-space:pre}.xal-ref-card code{font-size:.78em}.xal-ref-tag{margin:.5rem 0 0;color:var(--fg);opacity:.72;overflow:auto;white-space:pre}.xal-ref-tag code{font-size:.72em}@media(max-width:900px){.xal-ref-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:560px){.xal-ref-grid{grid-template-columns:1fr}}
 </style>
 
-`, group.Name, group.Name, len(group.Assets))
+`, title, group.Name, page.Start+1, page.End, len(group.Assets))
+	if page.File != group.Slug+".md" {
+		out.WriteString("[Back to section index](" + group.Slug + ".md)\n\n")
+	}
 }
 
 func writeCard(out *bytes.Buffer, i int, asset svgAsset) {
@@ -264,15 +339,16 @@ func writeCard(out *bytes.Buffer, i int, asset svgAsset) {
 	preview := "../previews/icons/" + asset.Group + "/" + asset.Slug + ".svg"
 	sample := "../samples/icons/" + asset.Group + "/" + asset.Slug + ".xal"
 	fmt.Fprintf(out, `<div class="xal-ref-card">
+<div class="xal-ref-title">%s</div>
 
 {{#tabs name="%s"}}
 {{#tab name="Preview"}}
 <div class="xal-ref-preview">
 <div>
 <img src="%s" alt="%s">
-<div class="xal-ref-path">%s<br>%d bytes</div>
 </div>
 </div>
+
 {{#endtab}}
 {{#tab name="Code"}}
 
@@ -283,8 +359,10 @@ func writeCard(out *bytes.Buffer, i int, asset svgAsset) {
 {{#endtab}}
 {{#endtabs}}
 
+<div class="xal-ref-tag"><code>%s</code></div>
+
 </div>
-`, tabID, escapeHTML(preview), escapeHTML(asset.Name), escapeHTML(asset.Path), asset.SizeByte, sample)
+`, escapeHTML(asset.Name), tabID, escapeHTML(preview), escapeHTML(asset.Name), sample, escapeHTML(asset.Usage))
 }
 
 func usageSnippet(path string, entry catalogEntry) string {

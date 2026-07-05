@@ -17,8 +17,8 @@ command = "mdbook-tabs"
 git-repository-url = "https://github.com/xaligo/xaligo"
 edit-url-template = "https://github.com/xaligo/xaligo/edit/main/docs/{path}"
 site-url = "/xaligo/"
-additional-css = []
-additional-js = []
+additional-css = ["theme/tabs.css"]
+additional-js = ["theme/tabs.js"]
 
 [output.html.fold]
 enable = true
