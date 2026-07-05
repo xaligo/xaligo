@@ -1,0 +1,3 @@
+<frame width="253" height="160" margin="24">
+  <public-subnet id="public" title="Public Subnet" />
+</frame>

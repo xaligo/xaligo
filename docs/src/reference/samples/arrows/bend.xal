@@ -1,0 +1,8 @@
+<frame width="360" height="200" margin="24" layout="horizontal" gap="120" align="middle-center">
+  <rectangle id="web" title="web" width="80" height="48" />
+  <rectangle id="db" title="db" width="80" height="48" />
+  <connection src="web" dst="db" grid="8">
+    <bend x="180" y="64" />
+    <bend x="180" y="136" />
+  </connection>
+</frame>

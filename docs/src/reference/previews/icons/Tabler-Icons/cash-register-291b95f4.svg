@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="160" viewBox="0 0 220 160">
+<defs><marker id="xaligo-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker><marker id="xaligo-oval" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto" markerUnits="strokeWidth"><circle cx="3.5" cy="3.5" r="2.5" fill="context-stroke"/></marker></defs>
+<rect x="0" y="0" width="220" height="160" fill="#FFFFFF"/>
+<g transform="translate(0 0)">
+<rect x="77" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<image x="78" y="32.5" width="64" height="64" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiM3NzU4QzEiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj4KICA8dGl0bGU+Y2FzaC1yZWdpc3RlcjwvdGl0bGU+CiAgPHBhdGggZD0iTTIxIDE1aC0yLjVjLS4zOTggMCAtLjc3OSAuMTU4IC0xLjA2MSAuNDM5Yy0uMjgxIC4yODEgLS40MzkgLjY2MyAtLjQzOSAxLjA2MWMwIC4zOTggLjE1OCAuNzc5IC40MzkgMS4wNjFjLjI4MSAuMjgxIC42NjMgLjQzOSAxLjA2MSAuNDM5aDFjLjM5OCAwIC43NzkgLjE1OCAxLjA2MSAuNDM5Yy4yODEgLjI4MSAuNDM5IC42NjMgLjQzOSAxLjA2MWMwIC4zOTggLS4xNTggLjc3OSAtLjQzOSAxLjA2MWMtLjI4MSAuMjgxIC0uNjYzIC40MzkgLTEuMDYxIC40MzloLTIuNSIgLz4KICA8cGF0aCBkPSJNMTkgMjF2MW0wIC04djEiIC8+CiAgPHBhdGggZD0iTTEzIDIxaC03Yy0uNTMgMCAtMS4wMzkgLS4yMTEgLTEuNDE0IC0uNTg2Yy0uMzc1IC0uMzc1IC0uNTg2IC0uODg0IC0uNTg2IC0xLjQxNHYtMTBjMCAtLjUzIC4yMTEgLTEuMDM5IC41ODYgLTEuNDE0Yy4zNzUgLS4zNzUgLjg4NCAtLjU4NiAxLjQxNCAtLjU4NmgybTEyIDMuMTJ2LTEuMTJjMCAtLjUzIC0uMjExIC0xLjAzOSAtLjU4NiAtMS40MTRjLS4zNzUgLS4zNzUgLS44ODQgLS41ODYgLTEuNDE0IC0uNTg2aC0yIiAvPgogIDxwYXRoIGQ9Ik0xNiAxMHYtNmMwIC0uNTMgLS4yMTEgLTEuMDM5IC0uNTg2IC0xLjQxNGMtLjM3NSAtLjM3NSAtLjg4NCAtLjU4NiAtMS40MTQgLS41ODZoLTRjLS41MyAwIC0xLjAzOSAuMjExIC0xLjQxNCAuNTg2Yy0uMzc1IC4zNzUgLS41ODYgLjg4NCAtLjU4NiAxLjQxNHY2bTggMGgtOG04IDBoMW0tOSAwaC0xIiAvPgogIDxwYXRoIGQ9Ik04IDE0di4wMSIgLz4KICA8cGF0aCBkPSJNOCAxN3YuMDEiIC8+CiAgPHBhdGggZD0iTTEyIDEzLjk5di4wMSIgLz4KICA8cGF0aCBkPSJNMTIgMTd2LjAxIiAvPgo8L3N2Zz4K" opacity="1"/>
+<text x="110" y="111.167" fill="#1E1E1E" font-family="Helvetica" font-size="10.667" text-anchor="middle">cash-register</text>
+</g>
+</svg>

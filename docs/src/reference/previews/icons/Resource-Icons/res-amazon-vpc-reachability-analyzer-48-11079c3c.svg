@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="160" viewBox="0 0 220 160">
+<defs><marker id="xaligo-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker><marker id="xaligo-oval" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto" markerUnits="strokeWidth"><circle cx="3.5" cy="3.5" r="2.5" fill="context-stroke"/></marker></defs>
+<rect x="0" y="0" width="220" height="160" fill="#FFFFFF"/>
+<g transform="translate(0 0)">
+<rect x="77" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<image x="78" y="26" width="64" height="64" href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iNDhweCIgaGVpZ2h0PSI0OHB4IiB2aWV3Qm94PSIwIDAgNDggNDgiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1SZXNvdXJjZS9OZXR3b3JraW5nLWFuZC1Db250ZW50LURlbGl2ZXJ5L1Jlc19BbWF6b24tVlBDX1JlYWNoYWJpbGl0eS1BbmFseXplcl80ODwvdGl0bGU+CiAgICA8ZyBpZD0iSWNvbi1SZXNvdXJjZS9OZXR3b3JraW5nLWFuZC1Db250ZW50LURlbGl2ZXJ5L1Jlc19BbWF6b24tVlBDX1JlYWNoYWJpbGl0eS1BbmFseXplcl80OCIgc3Ryb2tlPSJub25lIiBzdHJva2Utd2lkdGg9IjEiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+CiAgICAgICAgPHBhdGggZD0iTTQyLDQwIEM0Miw0MS4xMDMgNDEuMTAzLDQyIDQwLDQyIEMzOC44OTcsNDIgMzgsNDEuMTAzIDM4LDQwIEMzOCwzOC44OTcgMzguODk3LDM4IDQwLDM4IEM0MS4xMDMsMzggNDIsMzguODk3IDQyLDQwIE0xMCw4IEMxMCw5LjEwMyA5LjEwMywxMCA4LDEwIEM2Ljg5NywxMCA2LDkuMTAzIDYsOCBDNiw2Ljg5NyA2Ljg5Nyw2IDgsNiBDOS4xMDMsNiAxMCw2Ljg5NyAxMCw4IE00MCw0NCBDMzcuNzk0LDQ0IDM2LDQyLjIwNiAzNiw0MCBDMzYsMzcuNzk0IDM3Ljc5NCwzNiA0MCwzNiBDNDIuMjA2LDM2IDQ0LDM3Ljc5NCA0NCw0MCBDNDQsNDIuMjA2IDQyLjIwNiw0NCA0MCw0NCBNMjQsMjAgQzI2LjIwNiwyMCAyOCwyMS43OTQgMjgsMjQgQzI4LDI2LjIwNiAyNi4yMDYsMjggMjQsMjggQzIxLjc5NCwyOCAyMCwyNi4yMDYgMjAsMjQgQzIwLDIxLjc5NCAyMS43OTQsMjAgMjQsMjAgTTgsMTIgQzUuNzk0LDEyIDQsMTAuMjA2IDQsOCBDNCw1Ljc5NCA1Ljc5NCw0IDgsNCBDMTAuMjA2LDQgMTIsNS43OTQgMTIsOCBDMTIsMTAuMjA2IDEwLjIwNiwxMiA4LDEyIE00MCwzNCBDMzcuMDMzLDM0IDM0LjU2OCwzNi4xNjcgMzQuMDksMzkgTDE0LDM5IEMxMC4xNDEsMzkgNywzNS44NiA3LDMyIEM3LDI4LjE0IDEwLjE0MSwyNSAxNCwyNSBMMTguMDksMjUgQzE4LjU2OCwyNy44MzMgMjEuMDMzLDMwIDI0LDMwIEMyNi45NjcsMzAgMjkuNDMyLDI3LjgzMyAyOS45MSwyNSBMMzQsMjUgQzM4Ljk2MywyNSA0MywyMC45NjIgNDMsMTYgQzQzLDExLjAzOCAzOC45NjMsNyAzNCw3IEwxMy45MSw3IEMxMy40MzIsNC4xNjcgMTAuOTY3LDIgOCwyIEM0LjY5MSwyIDIsNC42OTEgMiw4IEMyLDExLjMwOSA0LjY5MSwxNCA4LDE0IEMxMC45NjcsMTQgMTMuNDMyLDExLjgzMyAxMy45MSw5IEwzNCw5IEMzNy44NTksOSA0MSwxMi4xNCA0MSwxNiBDNDEsMTkuODYgMzcuODU5LDIzIDM0LDIzIEwyOS45MSwyMyBDMjkuNDMyLDIwLjE2NyAyNi45NjcsMTggMjQsMTggQzIxLjAzMywxOCAxOC41NjgsMjAuMTY3IDE4LjA5LDIzIEwxNCwyMyBDOS4wMzcsMjMgNSwyNy4wMzggNSwzMiBDNSwzNi45NjIgOS4wMzcsNDEgMTQsNDEgTDM0LjA5LDQxIEMzNC41NjgsNDMuODMzIDM3LjAzMyw0NiA0MCw0NiBDNDMuMzA5LDQ2IDQ2LDQzLjMwOSA0Niw0MCBDNDYsMzYuNjkxIDQzLjMwOSwzNCA0MCwzNCIgaWQ9IkZpbGwtMSIgZmlsbD0iIzhDNEZGRiI+PC9wYXRoPgogICAgPC9nPgo8L3N2Zz4=" opacity="1"/>
+<text x="110" y="104.667" fill="#1E1E1E" font-family="Helvetica" font-size="10.667" text-anchor="middle">VPC Reachability Analyzer</text>
+</g>
+</svg>

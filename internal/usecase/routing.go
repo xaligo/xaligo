@@ -102,8 +102,6 @@ func routeConnections(requests []routeRequest, obstacles []rect, opt routerOptio
 		path.Points = separateObstacleHits(path.Points, placed[len(opt.Reserved):], inflateRects(local, visualMargin), opt)
 		if len(req.Bends) == 0 {
 			path.Points = rerouteEndpointApproach(path.Points, req, opt)
-		} else {
-			path.Points = orthogonalizeEndpointStubs(path.Points, req)
 		}
 		path.Points = enforceOrthogonalPolyline(path.Points)
 		results = append(results, path)
@@ -510,36 +508,7 @@ func endpointApproachHitsTarget(points []pt, req routeRequest) bool {
 func rerouteEndpointApproach(points []pt, req routeRequest, opt routerOptions) []pt {
 	points = rerouteDstApproach(points, req, opt)
 	points = reversePoints(rerouteDstApproach(reversePoints(points), reverseRequest(req), opt))
-	return orthogonalizeEndpointStubs(points, req)
-}
-
-func orthogonalizeEndpointStubs(points []pt, req routeRequest) []pt {
-	if len(points) < 2 {
-		return points
-	}
-	out := append([]pt(nil), points...)
-	if !aligned(out[0], out[1]) {
-		out = append(out[:1], append([]pt{endpointStubBend(out[0], out[1], req.SrcSide)}, out[1:]...)...)
-	}
-	last := len(out) - 1
-	if last >= 1 && !aligned(out[last-1], out[last]) {
-		bend := endpointStubBend(out[last], out[last-1], req.DstSide)
-		out = append(out[:last], append([]pt{bend}, out[last:]...)...)
-	}
-	return simplifyRouteCandidate(out)
-}
-
-func aligned(a, b pt) bool {
-	return math.Abs(a.X-b.X) < eps || math.Abs(a.Y-b.Y) < eps
-}
-
-func endpointStubBend(endpoint, next pt, s side) pt {
-	switch s {
-	case sideTop, sideBottom:
-		return pt{X: endpoint.X, Y: next.Y}
-	default:
-		return pt{X: next.X, Y: endpoint.Y}
-	}
+	return simplifyRouteCandidate(points)
 }
 
 func rerouteDstApproach(points []pt, req routeRequest, opt routerOptions) []pt {

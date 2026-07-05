@@ -1,0 +1,6 @@
+<frame width="300" height="180" margin="32">
+  <rectangle id="service" title="Service" width="180" height="100">
+    <port id="service-in" side="left" title="in" />
+    <port id="service-out" side="right" title="out" />
+  </rectangle>
+</frame>

@@ -201,6 +201,8 @@ default.
 |---|---|---|---|
 | `src` | string | ✓ | Catalog ID, or `id`/`name`/`ref` of the arrow start item or group |
 | `dst` | string | ✓ | Catalog ID, or `id`/`name`/`ref` of the arrow end item or group |
+| `src-side` / `dst-side` | string | — | Optional endpoint side: `top`, `right`, `bottom`, or `left` |
+| `src-anchor` / `dst-anchor` | string | — | Optional edge anchor. Each side has five positions (`top-1` through `top-5`, etc.); corners are shared for 16 unique perimeter anchors |
 | `arrowhead-size` | string | — | Arrowhead size: `"s"` (small) / `"m"` (medium) / `"l"` (large). Default `"s"` |
 | `kind` | string | — | `route` for a structural path without arrows, `traffic` for directional flow drawn beside a matching route |
 | `color` | string | — | Stroke color override |
@@ -218,6 +220,45 @@ uses `start-arrowhead="none"` and `end-arrowhead="none"` by default. Default
 colors are `#1e1e1e` for normal connections, `#64748b` for routes, and
 `#2563eb` for traffic. Explicit `stroke-width`, color, stroke style, and
 arrowhead attributes are preserved.
+
+When `src-side`, `dst-side`, `src-anchor`, and `dst-anchor` are omitted,
+endpoint sides and anchor positions are calculated automatically from endpoint
+geometry. Use `src-anchor` and `dst-anchor` to pin an endpoint to a specific
+perimeter anchor. Each side has five positions; corners are shared by adjacent
+sides, giving 16 unique anchor positions around the rectangle.
+
+```text
+top:    top-1    top-2    top-3    top-4    top-5
+right:  right-1  right-2  right-3  right-4  right-5
+bottom: bottom-1 bottom-2 bottom-3 bottom-4 bottom-5
+left:   left-1   left-2   left-3   left-4   left-5
+```
+
+Position numbers run left-to-right on `top` and `bottom`, and top-to-bottom on
+`left` and `right`. For example, `top-1` and `left-1` are the same top-left
+corner; `right-5` and `bottom-5` are the same bottom-right corner. Anchor
+positions are `1` through `5` from top/left to bottom/right on the named side.
+`start`, `near`, `center`, `far`, and `end` are accepted aliases.
+
+```xml
+<connection src="web" dst="app"
+            src-anchor="right-3"
+            dst-anchor="left-3" />
+<connection src="web" dst="app"
+            src-side="right" src-anchor="3"
+            dst-side="left" dst-anchor="3" />
+```
+
+`src` and `dst` can also be expressed as child tags when the endpoint reference
+and anchor should be declared together. The endpoint token can be tag text or
+one of `id`, `ref`, `name`, or `target`.
+
+```xml
+<connection kind="traffic">
+  <src anchor="right-3">web</src>
+  <dst side="left" anchor="5" ref="app" />
+</connection>
+```
 
 Excalidraw output always serializes arrowhead sizes as the smallest supported
 size (`"s"`) to keep dense diagrams readable. The logical arrowhead type and

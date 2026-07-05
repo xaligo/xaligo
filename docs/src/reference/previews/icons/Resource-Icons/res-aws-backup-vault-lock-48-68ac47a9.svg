@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="160" viewBox="0 0 220 160">
+<defs><marker id="xaligo-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker><marker id="xaligo-oval" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto" markerUnits="strokeWidth"><circle cx="3.5" cy="3.5" r="2.5" fill="context-stroke"/></marker></defs>
+<rect x="0" y="0" width="220" height="160" fill="#FFFFFF"/>
+<g transform="translate(0 0)">
+<rect x="77" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<image x="78" y="32.5" width="64" height="64" href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iNDhweCIgaGVpZ2h0PSI0OHB4IiB2aWV3Qm94PSIwIDAgNDggNDgiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1SZXNvdXJjZS9TdG9yYWdlL1Jlc19BV1MtQmFja3VwX1ZhdWx0LUxvY2tfNDg8L3RpdGxlPgogICAgPGcgaWQ9Ikljb24tUmVzb3VyY2UvU3RvcmFnZS9SZXNfQVdTLUJhY2t1cF9WYXVsdC1Mb2NrXzQ4IiBzdHJva2U9Im5vbmUiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj4KICAgICAgICA8cGF0aCBkPSJNMTUuODYzLDMzLjk2IEMyMS45NzgsMzguNTE3IDMwLjY1OCwzNy4yNTEgMzUuMjE3LDMxLjEzNiBDMzkuNzczLDI1LjAyMiAzOC41MDcsMTYuMzQgMzIuMzkzLDExLjc4MyBDMjYuNDc5LDcuMzc2IDE4LjE3Niw4LjQyOSAxMy41MTMsMTQuMDM1IEwxNi4wMTMsMTQuMDY4IEwxNS45ODYsMTYuMDY4IEwxMC45MTksMTYgQzEwLjY1NCwxNS45OTcgMTAuNDAxLDE1Ljg4OCAxMC4yMTYsMTUuNjk4IEMxMC4wMzEsMTUuNTA3IDkuOTI4LDE1LjI1MiA5LjkzMiwxNC45ODYgTDEwLDkuOTg2IEwxMiwxMC4wMTQgTDExLjk2MywxMi43NzUgQzE3LjI5Nyw2LjM0NCAyNi44MTMsNS4xMyAzMy41ODksMTAuMTc5IEM0MC41ODcsMTUuMzk2IDQyLjAzNiwyNS4zMzQgMzYuODIsMzIuMzMyIEMzMy43MTcsMzYuNDk1IDI4Ljk0MSwzOC42OTUgMjQuMTA4LDM4LjY5NSBDMjAuODE4LDM4LjY5NSAxNy41MDMsMzcuNjc2IDE0LjY2OCwzNS41NjQgQzEwLjY1NCwzMi41NzIgOC4zMzMsMjcuOTgxIDguMjk4LDIyLjk2OCBMMTAuMjk4LDIyLjk1NSBDMTAuMzI4LDI3LjMzNSAxMi4zNTYsMzEuMzQ3IDE1Ljg2MywzMy45NiBMMTUuODYzLDMzLjk2IFogTTM1LDQ0IEwzOSw0NCBMMzksNDMgTDM1LDQzIEwzNSw0NCBaIE05LDQ0IEwxMyw0NCBMMTMsNDMgTDksNDMgTDksNDQgWiBNNDUsMiBMMywyIEMyLjQ0NywyIDIsMi40NDggMiwzIEwyLDExIEw0LDExIEw0LDQgTDQ0LDQgTDQ0LDQxIEw0LDQxIEw0LDMzIEwyLDMzIEwyLDQyIEMyLDQyLjU1MiAyLjQ0Nyw0MyAzLDQzIEw3LDQzIEw3LDQ1IEM3LDQ1LjU1MiA3LjQ0Nyw0NiA4LDQ2IEwxNCw0NiBDMTQuNTUyLDQ2IDE1LDQ1LjU1MiAxNSw0NSBMMTUsNDMgTDMzLDQzIEwzMyw0NSBDMzMsNDUuNTUyIDMzLjQ0Nyw0NiAzNCw0NiBMNDAsNDYgQzQwLjU1Miw0NiA0MSw0NS41NTIgNDEsNDUgTDQxLDQzIEw0NSw0MyBDNDUuNTUyLDQzIDQ2LDQyLjU1MiA0Niw0MiBMNDYsMyBDNDYsMi40NDggNDUuNTUyLDIgNDUsMiBMNDUsMiBaIE0yLDI3IEw0LDI3IEw0LDE3IEwyLDE3IEwyLDI3IFogTTIwLDI4IEwyOCwyOCBMMjgsMjIgTDIwLDIyIEwyMCwyOCBaIE0yMiwxOCBDMjIsMTYuODk3IDIyLjg5NywxNiAyNCwxNiBDMjUuMTAyLDE2IDI2LDE2Ljg5NyAyNiwxOCBMMjYsMjAgTDIyLDIwIEwyMiwxOCBaIE0yNCwxNCBDMjEuNzk0LDE0IDIwLDE1Ljc5NCAyMCwxOCBMMjAsMjAgTDE5LDIwIEMxOC40NDcsMjAgMTgsMjAuNDQ4IDE4LDIxIEwxOCwyOSBDMTgsMjkuNTUyIDE4LjQ0NywzMCAxOSwzMCBMMjksMzAgQzI5LjU1MiwzMCAzMCwyOS41NTIgMzAsMjkgTDMwLDIxIEMzMCwyMC40NDggMjkuNTUyLDIwIDI5LDIwIEwyOCwyMCBMMjgsMTggQzI4LDE1Ljc5NCAyNi4yMDYsMTQgMjQsMTQgTDI0LDE0IFoiIGlkPSJGaWxsLTEiIGZpbGw9IiM3QUExMTYiPjwvcGF0aD4KICAgIDwvZz4KPC9zdmc+" opacity="1"/>
+<text x="110" y="111.167" fill="#1E1E1E" font-family="Helvetica" font-size="10.667" text-anchor="middle">Backup Vault Lock</text>
+</g>
+</svg>

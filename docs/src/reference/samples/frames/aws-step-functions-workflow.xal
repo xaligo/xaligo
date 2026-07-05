@@ -1,0 +1,3 @@
+<frame width="204" height="160" margin="24">
+  <aws-step-functions-workflow id="workflow" title="Workflow" />
+</frame>

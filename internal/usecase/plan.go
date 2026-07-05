@@ -750,13 +750,15 @@ func prepareConnectors(connectors []*entity.Element, byID map[string]*entity.Ele
 	groupKeys := []string{}
 	groups := map[string][]endpoint{}
 	type item struct {
-		el      *entity.Element
-		src     rect
-		dst     rect
-		srcSide side
-		dstSide side
-		srcGap  float64
-		dstGap  float64
+		el        *entity.Element
+		src       rect
+		dst       rect
+		srcSide   side
+		dstSide   side
+		srcGap    float64
+		dstGap    float64
+		srcAnchor *pt
+		dstAnchor *pt
 	}
 	itemKeys := []string{}
 	items := map[string]item{}
@@ -799,6 +801,18 @@ func prepareConnectors(connectors []*entity.Element, byID map[string]*entity.Ele
 				dstSide = s
 			}
 		}
+		var srcFixedAnchor *pt
+		if el.StartBinding != nil {
+			if p, ok := nonCenterAnchorFromFixedPoint(src, srcSide, el.StartBinding.FixedPoint); ok {
+				srcFixedAnchor = &p
+			}
+		}
+		var dstFixedAnchor *pt
+		if el.EndBinding != nil {
+			if p, ok := nonCenterAnchorFromFixedPoint(dst, dstSide, el.EndBinding.FixedPoint); ok {
+				dstFixedAnchor = &p
+			}
+		}
 		if srcSide == sideBottom && strings.HasSuffix(srcIconID, "-lbl") {
 			src = inflateRect(src, anchorGridVisualPadPx)
 		}
@@ -819,7 +833,7 @@ func prepareConnectors(connectors []*entity.Element, byID map[string]*entity.Ele
 		if el.EndBinding != nil {
 			dstGap = el.EndBinding.Gap
 		}
-		items[el.ID] = item{el: el, src: src, dst: dst, srcSide: srcSide, dstSide: dstSide, srcGap: srcGap, dstGap: dstGap}
+		items[el.ID] = item{el: el, src: src, dst: dst, srcSide: srcSide, dstSide: dstSide, srcGap: srcGap, dstGap: dstGap, srcAnchor: srcFixedAnchor, dstAnchor: dstFixedAnchor}
 		if needsAnchorGrid(srcEl) {
 			gridRects[srcIconID] = srcGrid
 		}
@@ -861,6 +875,14 @@ func prepareConnectors(connectors []*entity.Element, byID map[string]*entity.Ele
 			req.DstAnchor = a.dst
 			req.SrcLane = a.srcLane
 			req.DstLane = a.dstLane
+		}
+		if it.srcAnchor != nil {
+			req.SrcAnchor = it.srcAnchor
+			req.SrcLane = 0
+		}
+		if it.dstAnchor != nil {
+			req.DstAnchor = it.dstAnchor
+			req.DstLane = 0
 		}
 		routed = append(routed, preparedConnector{el: it.el, req: req})
 	}
@@ -1159,6 +1181,27 @@ func sideFromFixedPoint(fp []float64) (side, bool) {
 		return sideRight, true
 	}
 	return "", false
+}
+
+func nonCenterAnchorFromFixedPoint(r rect, s side, fp []float64) (pt, bool) {
+	if len(fp) < 2 {
+		return pt{}, false
+	}
+	fx := math.Max(0, math.Min(1, fp[0]))
+	fy := math.Max(0, math.Min(1, fp[1]))
+	switch s {
+	case sideTop, sideBottom:
+		if math.Abs(fx-0.5) < 0.01 {
+			return pt{}, false
+		}
+	case sideLeft, sideRight:
+		if math.Abs(fy-0.5) < 0.01 {
+			return pt{}, false
+		}
+	default:
+		return pt{}, false
+	}
+	return pt{X: r.X + r.W*fx, Y: r.Y + r.H*fy}, true
 }
 
 func rectOf(el *entity.Element) (rect, bool) {

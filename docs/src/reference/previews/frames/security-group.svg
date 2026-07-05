@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="311" height="244" viewBox="0 0 311 244">
+<defs><marker id="xaligo-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker><marker id="xaligo-oval" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto" markerUnits="strokeWidth"><circle cx="3.5" cy="3.5" r="2.5" fill="context-stroke"/></marker></defs>
+<rect x="0" y="0" width="311" height="244" fill="#FFFFFF"/>
+<g transform="translate(42 42)">
+<rect x="24" y="24" width="179" height="112" fill="none" stroke="#CC0000" stroke-width="2" stroke-opacity="1" stroke-dasharray="8 6"/>
+<polygon points="22,14 187,14 197,24 187,34 22,34 22,14" fill="#FFFFFF" fill-opacity="1" stroke="#CC0000" stroke-width="1" stroke-opacity="1"/>
+<text x="26" y="28.9" fill="#CC0000" font-family="Helvetica" font-size="14" text-anchor="start">Security Group</text>
+</g>
+</svg>

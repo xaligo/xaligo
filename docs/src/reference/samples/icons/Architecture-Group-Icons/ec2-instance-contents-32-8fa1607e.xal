@@ -1,0 +1,3 @@
+<frame width="330" height="160" margin="24">
+    <generic-group id="ec2-instance-contents" title="EC2 instance contents" icon-id="1869" />
+</frame>

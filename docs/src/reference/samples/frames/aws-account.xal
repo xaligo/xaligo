@@ -1,0 +1,3 @@
+<frame width="234" height="160" margin="24">
+  <aws-account id="account" title="AWS Account" />
+</frame>

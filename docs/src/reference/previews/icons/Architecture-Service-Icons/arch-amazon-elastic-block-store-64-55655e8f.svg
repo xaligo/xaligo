@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="160" viewBox="0 0 220 160">
+<defs><marker id="xaligo-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker><marker id="xaligo-oval" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto" markerUnits="strokeWidth"><circle cx="3.5" cy="3.5" r="2.5" fill="context-stroke"/></marker></defs>
+<rect x="0" y="0" width="220" height="160" fill="#FFFFFF"/>
+<g transform="translate(0 0)">
+<rect x="77" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<image x="78" y="26" width="64" height="64" href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iODBweCIgaGVpZ2h0PSI4MHB4IiB2aWV3Qm94PSIwIDAgODAgODAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BbWF6b24tRWxhc3RpYy1CbG9jay1TdG9yZV82NDwvdGl0bGU+CiAgICA8ZyBpZD0iSWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BbWF6b24tRWxhc3RpYy1CbG9jay1TdG9yZV82NCIgc3Ryb2tlPSJub25lIiBzdHJva2Utd2lkdGg9IjEiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+CiAgICAgICAgPGcgaWQ9Ikljb24tQXJjaGl0ZWN0dXJlLUJHLzY0L1N0b3JhZ2UiIGZpbGw9IiM3QUExMTYiPgogICAgICAgICAgICA8cmVjdCBpZD0iUmVjdGFuZ2xlIiB4PSIwIiB5PSIwIiB3aWR0aD0iODAiIGhlaWdodD0iODAiPjwvcmVjdD4KICAgICAgICA8L2c+CiAgICAgICAgPHBhdGggZD0iTTY2LDU4IEw2OCw1OCBMNjgsNjggTDU4LDY4IEw1OCw2NiBMNjQuNTg2LDY2IEw1Ni4yOTMsNTcuNzA3IEw1Ny43MDcsNTYuMjkzIEw2Niw2NC41ODYgTDY2LDU4IFogTTIzLjcwNyw1Ny43MDcgTDE1LjQxNCw2NiBMMjIsNjYgTDIyLDY4IEwxMiw2OCBMMTIsNTggTDE0LDU4IEwxNCw2NC41ODYgTDIyLjI5Myw1Ni4yOTMgTDIzLjcwNyw1Ny43MDcgWiBNNjgsMTIgTDY4LDIyIEw2NiwyMiBMNjYsMTUuNDE0IEw1Ny43MDcsMjMuNzA3IEw1Ni4yOTMsMjIuMjkzIEw2NC41ODYsMTQgTDU4LDE0IEw1OCwxMiBMNjgsMTIgWiBNMTUuNDE0LDE0IEwyMy43MDcsMjIuMjkzIEwyMi4yOTMsMjMuNzA3IEwxNCwxNS40MTQgTDE0LDIyIEwxMiwyMiBMMTIsMTIgTDIyLDEyIEwyMiwxNCBMMTUuNDE0LDE0IFogTTUwLjY3OCw1My42NjEgQzQ5LjUyMSw1NC44NDggNDUuNjM1LDU2LjA0NiAzOS41NjMsNTYuMDQ2IEMzMi4xNjgsNTYuMDQ2IDI4LjAzMSw1NC4yMyAyOCw1MyBMMjgsMjkuODU3IEMzMC42MDMsMzEuMzk1IDM1LjMyLDMyIDM5LjU2MywzMiBDNDMuNzU2LDMyIDQ4LjQxOCwzMS4zOTcgNTEsMjkuODY3IEw1MSw1My4wMjUgQzUxLjAwMiw1My4wOTkgNTEuMDA4LDUzLjMyMyA1MC42NzgsNTMuNjYxIEw1MC42NzgsNTMuNjYxIFogTTM5LjU2MywyNCBDNDUuNjYzLDI0IDQ5LjU0NSwyNS4xODEgNTAuNjg2LDI2LjM1MiBDNTEuMDA4LDI2LjY4MiA1MS4wMDIsMjYuOTAyIDUxLDI2Ljk3NSBMNTEsMjcgQzUxLDI4LjIyNiA0Ni45MjcsMzAgMzkuNTYzLDMwIEMzMi40MjIsMzAgMjguMDMyLDI4LjI2NSAyOC4wMDMsMjcuMDEzIEMyOC4wNjEsMjUuNzQ2IDMyLjA5MywyNCAzOS41NjMsMjQgTDM5LjU2MywyNCBaIE01Mi45OTksMjcgQzUzLjAwNywyNi40ODIgNTIuODU4LDI1LjcxNiA1Mi4xMTgsMjQuOTU2IEM1MC4zMTMsMjMuMTA1IDQ1LjYyLDIyIDM5LjU2MywyMiBDMzMuMzY1LDIyIDI2LjA5NCwyMy4zMDMgMjYsMjcgTDI2LDUzLjAyNSBDMjYuMDk1LDU2LjczMSAzMy4zNjUsNTguMDQ2IDM5LjU2Myw1OC4wNDYgQzQ0LjIyLDU4LjA0NiA0OS45NjIsNTcuMjYxIDUyLjExLDU1LjA1NyBDNTIuODY5LDU0LjI3OCA1My4wMTMsNTMuNDk1IDUzLDUzIEw1MywyNy4wMTEgTDUzLDI3LjAwNCBMNTMsMjcgTDUyLjk5OSwyNyBaIiBpZD0iQW1hem9uLUVsYXN0aWMtQmxvY2stU3RvcmVfSWNvbl82NF9TcXVpZCIgZmlsbD0iI0ZGRkZGRiI+PC9wYXRoPgogICAgPC9nPgo8L3N2Zz4=" opacity="1"/>
+<text x="110" y="104.667" fill="#1E1E1E" font-family="Helvetica" font-size="10.667" text-anchor="middle">Elastic Block Store</text>
+</g>
+</svg>

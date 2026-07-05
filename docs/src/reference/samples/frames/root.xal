@@ -1,0 +1,7 @@
+<frame width="360" height="220" margin="24">
+  <container layout="horizontal" gap="16">
+    <card title="Web" />
+    <card title="App" />
+    <card title="Data" />
+  </container>
+</frame>

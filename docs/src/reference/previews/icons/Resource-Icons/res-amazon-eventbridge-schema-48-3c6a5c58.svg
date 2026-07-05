@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="160" viewBox="0 0 220 160">
+<defs><marker id="xaligo-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker><marker id="xaligo-oval" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto" markerUnits="strokeWidth"><circle cx="3.5" cy="3.5" r="2.5" fill="context-stroke"/></marker></defs>
+<rect x="0" y="0" width="220" height="160" fill="#FFFFFF"/>
+<g transform="translate(0 0)">
+<rect x="77" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<image x="78" y="32.5" width="64" height="64" href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iNDhweCIgaGVpZ2h0PSI0OHB4IiB2aWV3Qm94PSIwIDAgNDggNDgiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1SZXNvdXJjZS9BcHBsaWNhdGlvbi1JbnRlZ3JhdGlvbi9SZXNfQW1hem9uLUV2ZW50QnJpZGdlX1NjaGVtYV80ODwvdGl0bGU+CiAgICA8ZyBpZD0iSWNvbi1SZXNvdXJjZS9BcHBsaWNhdGlvbi1JbnRlZ3JhdGlvbi9SZXNfQW1hem9uLUV2ZW50QnJpZGdlX1NjaGVtYV80OCIgc3Ryb2tlPSJub25lIiBzdHJva2Utd2lkdGg9IjEiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+CiAgICAgICAgPHBhdGggZD0iTTE5LDI3LjI1IEwxOSwyMS40NzYgTDI0LDE4LjU4OSBMMjksMjEuNDc2IEwyOSwyNy4yNSBMMjQsMzAuMTM2IEwxOSwyNy4yNSBaIE0yNCwzMi4yOTEgQzI0LjE3MywzMi4yOTEgMjQuMzQ2LDMyLjI0NyAyNC41LDMyLjE1NyBMMzAuNSwyOC42OTMgQzMwLjgxLDI4LjUxNSAzMSwyOC4xODUgMzEsMjcuODI3IEwzMSwyMC44OTkgQzMxLDIwLjU0MiAzMC44MSwyMC4yMTEgMzAuNSwyMC4wMzMgTDI0LjUsMTYuNTY4IEMyNC4xOTEsMTYuMzkgMjMuODA5LDE2LjM5IDIzLjUsMTYuNTY4IEwxNy41LDIwLjAzMyBDMTcuMTksMjAuMjExIDE3LDIwLjU0MiAxNywyMC44OTkgTDE3LDI3LjgyNyBDMTcsMjguMTg1IDE3LjE5LDI4LjUxNSAxNy41LDI4LjY5MyBMMjMuNSwzMi4xNTcgQzIzLjY1NCwzMi4yNDcgMjMuODI3LDMyLjI5MSAyNCwzMi4yOTEgTDI0LDMyLjI5MSBaIE0zMi43MDcsMTcuNzA3IEwzMS4yOTMsMTYuMjkzIEwzNy4yOTMsMTAuMjkzIEwzOC43MDcsMTEuNzA3IEwzMi43MDcsMTcuNzA3IFogTTE1LjI5MywzMS4yOTMgTDE2LjcwNywzMi43MDcgTDEwLjcwNywzOC43MDcgTDkuMjkzLDM3LjI5MyBMMTUuMjkzLDMxLjI5MyBaIE0xNi4yOTMsMTcuNzA3IEwxMC4yOTMsMTEuNzA3IEwxMS43MDcsMTAuMjkzIEwxNy43MDcsMTYuMjkzIEwxNi4yOTMsMTcuNzA3IFogTTMyLjcwNywzMS4yOTMgTDM4LjcwNywzNy4yOTMgTDM3LjI5MywzOC43MDcgTDMxLjI5MywzMi43MDcgTDMyLjcwNywzMS4yOTMgWiBNMzQsMjYgTDQwLDI2IEw0MCwyNCBMMzQsMjQgTDM0LDI2IFogTTgsMjYgTDE0LDI2IEwxNCwyNCBMOCwyNCBMOCwyNiBaIE0yMywxMyBMMjUsMTMgTDI1LDcgTDIzLDcgTDIzLDEzIFogTTIzLDQxIEwyNSw0MSBMMjUsMzYgTDIzLDM2IEwyMyw0MSBaIE00LDQ0IEw0NCw0NCBMNDQsNCBMNCw0IEw0LDQ0IFogTTQ2LDMgQzQ2LDIuNDQ4IDQ1LjU1MywyIDQ1LDIgTDMsMiBDMi40NDcsMiAyLDIuNDQ4IDIsMyBMMiw0NSBDMiw0NS41NTIgMi40NDcsNDYgMyw0NiBMNDUsNDYgQzQ1LjU1Myw0NiA0Niw0NS41NTIgNDYsNDUgTDQ2LDMgWiIgaWQ9IkZpbGwtNCIgZmlsbD0iI0U3MTU3QiI+PC9wYXRoPgogICAgPC9nPgo8L3N2Zz4=" opacity="1"/>
+<text x="110" y="111.167" fill="#1E1E1E" font-family="Helvetica" font-size="10.667" text-anchor="middle">EventBridge Schema</text>
+</g>
+</svg>

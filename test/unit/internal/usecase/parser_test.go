@@ -95,6 +95,33 @@ func TestParseResolvesGroupedConnectionReferences(t *testing.T) {
 	}
 }
 
+func TestParseResolvesConnectionEndpointChildTags(t *testing.T) {
+	doc, err := usecase.Parse(strings.NewReader(`<frame>
+  <item id="1" name="web" />
+  <item id="2" name="db" />
+  <connection>
+    <src side="left" anchor="3">web</src>
+    <dst anchor="right-5" ref="db" />
+  </connection>
+</frame>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	conn := doc.Root.Children[2]
+	if conn.Attr("src") != "web" || conn.Attr("dst") != "db" {
+		t.Fatalf("connection endpoint attrs = %#v", conn.Attrs)
+	}
+	if conn.Attr("src-side") != "left" || conn.Attr("dst-side") != "right" {
+		t.Fatalf("connection side attrs = %#v", conn.Attrs)
+	}
+	if conn.Attr("src-anchor") != "left-3" || conn.Attr("dst-anchor") != "right-5" {
+		t.Fatalf("connection anchor attrs = %#v", conn.Attrs)
+	}
+	if conn.Attr("_xaligoConnectionSrcKey") == "" || conn.Attr("_xaligoConnectionDstKey") == "" {
+		t.Fatalf("connection keys = %#v", conn.Attrs)
+	}
+}
+
 func TestParseResolvesGroupConnectionReferences(t *testing.T) {
 	doc, err := usecase.Parse(strings.NewReader(`<frame>
   <generic-group id="edge" name="edge-group" title="Edge">

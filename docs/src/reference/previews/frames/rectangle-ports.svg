@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="180" viewBox="0 0 300 180">
+<defs><marker id="xaligo-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker><marker id="xaligo-oval" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto" markerUnits="strokeWidth"><circle cx="3.5" cy="3.5" r="2.5" fill="context-stroke"/></marker></defs>
+<rect x="0" y="0" width="300" height="180" fill="#FFFFFF"/>
+<g transform="translate(0 0)">
+<rect x="32" y="32" width="180" height="100" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="164" y="72" width="48" height="20" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="32" y="72" width="48" height="20" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<text x="122" y="89" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="middle">Service</text>
+<text x="188" y="89" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="middle">out</text>
+<text x="56" y="89" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="middle">in</text>
+</g>
+</svg>

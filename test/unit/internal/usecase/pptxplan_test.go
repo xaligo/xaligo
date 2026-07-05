@@ -144,6 +144,33 @@ func TestBuildPlanRoutesConnectorThroughManualBends(t *testing.T) {
 	}
 }
 
+func TestBuildPlanPreservesExplicitConnectorAnchors(t *testing.T) {
+	opacity := 100.0
+	scene := entity.PptxScene{Elements: []entity.Element{
+		{ID: "src-item", Type: "image", X: 0, Y: 0, Width: 40, Height: 40, Opacity: &opacity, FileID: "src-file"},
+		{ID: "dst-item", Type: "image", X: 160, Y: 80, Width: 40, Height: 40, Opacity: &opacity, FileID: "dst-file"},
+		{ID: "connector", Type: "arrow", StrokeColor: "#1e1e1e", StrokeWidth: 1, Opacity: &opacity,
+			StartBinding: &entity.Binding{ElementID: "src-item", FixedPoint: []float64{0.25, 0}},
+			EndBinding:   &entity.Binding{ElementID: "dst-item", FixedPoint: []float64{0, 1}},
+			CustomData:   &entity.CustomData{ConnectorKind: "connection"}},
+	}, AppState: &entity.AppState{ViewBackgroundColor: "#FFFFFF"}}
+
+	plan := usecase.BuildPlan(&scene, entity.PptxOptions{PxPerInch: 1})
+	var line *entity.DrawOp
+	for i := range plan.Ops {
+		if plan.Ops[i].ID == "connector" && plan.Ops[i].Kind == "line" {
+			line = &plan.Ops[i]
+			break
+		}
+	}
+	if line == nil {
+		t.Fatalf("connector line op not found: %#v", plan.Ops)
+	}
+	if !lineHasAbsPoint(*line, 10, 0) || !lineHasAbsPoint(*line, 160, 120) {
+		t.Fatalf("explicit anchor points were not preserved: op=%#v", line)
+	}
+}
+
 func lineHasAbsPoint(op entity.DrawOp, x, y float64) bool {
 	const tol = 0.001
 	for _, p := range op.Points {

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="160" viewBox="0 0 220 160">
+<defs><marker id="xaligo-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker><marker id="xaligo-oval" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto" markerUnits="strokeWidth"><circle cx="3.5" cy="3.5" r="2.5" fill="context-stroke"/></marker></defs>
+<rect x="0" y="0" width="220" height="160" fill="#FFFFFF"/>
+<g transform="translate(0 0)">
+<rect x="77" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<image x="78" y="26" width="64" height="64" href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iNDhweCIgaGVpZ2h0PSI0OHB4IiB2aWV3Qm94PSIwIDAgNDggNDgiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1SZXNvdXJjZS9Jb1QvUmVzX0FXUy1Jb1QtQW5hbHl0aWNzX0RhdGFzZXRfNDg8L3RpdGxlPgogICAgPGcgaWQ9Ikljb24tUmVzb3VyY2UvSW9UL1Jlc19BV1MtSW9ULUFuYWx5dGljc19EYXRhc2V0XzQ4IiBzdHJva2U9Im5vbmUiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj4KICAgICAgICA8cGF0aCBkPSJNNiw0MC40NTcgTDM0Ljg4OCw0MC40NTcgTDM0Ljg4OCwyIEw2LDIgTDYsNDAuNDU3IFogTTgsMzguNDU3IEwzMi44ODksMzguNDU3IEwzMi44ODksNCBMOCw0IEw4LDM4LjQ1NyBaIE0zNi42NTEsNS41NTcgTDM2LjY1MSw3LjU1NyBMMzkuMzMsNy41NTcgTDM5LjMzLDQ0IEwxMi41Niw0NCBMMTIuNTYsNDIuMTc4IEwxMC41Niw0Mi4xNzggTDEwLjU2LDQ2IEw0MS4zMyw0NiBMNDEuMzMsNS41NTcgTDM2LjY1MSw1LjU1NyBaIE0yOC4xNzUsMTAuMTc2IEwzMC41NTUsMTAuMTc2IEwzMC41NTUsOC4xNzYgTDI4LjE3NSw4LjE3NiBMMjguMTc1LDEwLjE3NiBaIE0xMC4yNSwxMC4xNzYgTDI2LjU4OCwxMC4xNzYgTDI2LjU4OCw4LjE3NiBMMTAuMjUsOC4xNzYgTDEwLjI1LDEwLjE3NiBaIE0xOS4zMzIsMTYuMjIzIEwzMC41NTYsMTYuMjIzIEwzMC41NTYsMTQuMjIzIEwxOS4zMzIsMTQuMjIzIEwxOS4zMzIsMTYuMjIzIFogTTE0LjA4LDE2LjIyMyBMMTcuOTMzLDE2LjIyMyBMMTcuOTMzLDE0LjIyMyBMMTQuMDgsMTQuMjIzIEwxNC4wOCwxNi4yMjMgWiBNMTAuMjUsMTYuMjIzIEwxMi4yNjYsMTYuMjIzIEwxMi4yNjYsMTQuMjIzIEwxMC4yNSwxNC4yMjMgTDEwLjI1LDE2LjIyMyBaIE0xOC4zNSwyMi4yNjkgTDMwLjU1NiwyMi4yNjkgTDMwLjU1NiwyMC4yNjkgTDE4LjM1LDIwLjI2OSBMMTguMzUsMjIuMjY5IFogTTEwLjI1LDIyLjI2OSBMMTYuODM4LDIyLjI2OSBMMTYuODM4LDIwLjI2OSBMMTAuMjUsMjAuMjY5IEwxMC4yNSwyMi4yNjkgWiBNMTAuMjUsMjguMzE1IEwzMC41NTYsMjguMzE1IEwzMC41NTYsMjYuMzE1IEwxMC4yNSwyNi4zMTUgTDEwLjI1LDI4LjMxNSBaIE0yNi45MjgsMzQuMjg2IEwzMC41NTYsMzQuMjg2IEwzMC41NTYsMzIuMjg1IEwyNi45MjgsMzIuMjg1IEwyNi45MjgsMzQuMjg2IFogTTEwLjI1LDM0LjI4NiBMMjQuOTYzLDM0LjI4NiBMMjQuOTYzLDMyLjI4NSBMMTAuMjUsMzIuMjg1IEwxMC4yNSwzNC4yODYgWiIgaWQ9IkFtYXpvbi1JT1QtUkVTT1VSQ0VTLUlvVC1EYXRhLVNldF9SZXNvdXJjZS1JY29uX2xpZ2h0LWJnIiBmaWxsPSIjN0FBMTE2Ij48L3BhdGg+CiAgICA8L2c+Cjwvc3ZnPg==" opacity="1"/>
+<text x="110" y="104.667" fill="#1E1E1E" font-family="Helvetica" font-size="10.667" text-anchor="middle">IoT Analytics Dataset</text>
+</g>
+</svg>

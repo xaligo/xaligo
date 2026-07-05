@@ -1,0 +1,3 @@
+<frame width="265" height="160" margin="24">
+  <aws-iot-greengrass id="greengrass" title="AWS IoT Greengrass" />
+</frame>

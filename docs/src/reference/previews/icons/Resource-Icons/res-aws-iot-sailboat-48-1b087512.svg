@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="160" viewBox="0 0 220 160">
+<defs><marker id="xaligo-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker><marker id="xaligo-oval" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto" markerUnits="strokeWidth"><circle cx="3.5" cy="3.5" r="2.5" fill="context-stroke"/></marker></defs>
+<rect x="0" y="0" width="220" height="160" fill="#FFFFFF"/>
+<g transform="translate(0 0)">
+<rect x="77" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="31.5" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="45.1" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="58.7" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="72.3" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="85.9" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<image x="78" y="32.5" width="64" height="64" href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iNDhweCIgaGVpZ2h0PSI0OHB4IiB2aWV3Qm94PSIwIDAgNDggNDgiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1SZXNvdXJjZS9Jb1QvUmVzX0FXUy1Jb1RfU2FpbGJvYXRfNDg8L3RpdGxlPgogICAgPGcgaWQ9Ikljb24tUmVzb3VyY2UvSW9UL1Jlc19BV1MtSW9UX1NhaWxib2F0XzQ4IiBzdHJva2U9Im5vbmUiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj4KICAgICAgICA8cGF0aCBkPSJNMjEuODQxLDI2Ljg4MSBDMjAuNTEyLDI1LjU1MiAxOC43MjgsMjQuODIgMTYuODE3LDI0LjgyIEwxNi44MTcsMjYuODIgQzE4LjE5NCwyNi44MiAxOS40NzYsMjcuMzQ0IDIwLjQyNywyOC4yOTUgQzIxLjM3OCwyOS4yNDYgMjEuOTAyLDMwLjUyOCAyMS45MDIsMzEuOTA2IEwyMy45MDIsMzEuOTA2IEMyMy45MDIsMjkuOTk0IDIzLjE3LDI4LjIxIDIxLjg0MSwyNi44ODEgTDIxLjg0MSwyNi44ODEgWiBNMTYuNzkxLDE2LjI3MSBMMTYuNzgzLDE4LjI3MSBDMjQuMzA0LDE4LjI5OCAzMC40MjIsMjQuNDE1IDMwLjQyMiwzMS45MDYgTDMyLjQyMiwzMS45MDYgQzMyLjQyMiwyMy4zMTYgMjUuNDEsMTYuMzAyIDE2Ljc5MSwxNi4yNzEgTDE2Ljc5MSwxNi4yNzEgWiBNMTYuNzg3LDcuNzUxIEwxNi43ODcsOS43NTEgQzI5LjAwMyw5Ljc1MSAzOC45NDIsMTkuNjkgMzguOTQyLDMxLjkwNiBMNDAuOTQyLDMxLjkwNiBDNDAuOTQyLDE4LjU4NyAzMC4xMDYsNy43NTEgMTYuNzg3LDcuNzUxIEwxNi43ODcsNy43NTEgWiBNMTcsNDIgTDMxLDQyIEwzMSw0MCBMMTcsNDAgTDE3LDQyIFogTTYsMzIgTDgsMzIgTDgsMTYgTDYsMTYgTDYsMzIgWiBNNywzOCBDNS4zNDYsMzggNCwzOS4zNDUgNCw0MSBDNCw0Mi42NTQgNS4zNDYsNDQgNyw0NCBDOC42NTQsNDQgMTAsNDIuNjU0IDEwLDQxIEMxMCwzOS4zNDUgOC42NTQsMzggNywzOCBMNywzOCBaIE03LDQ2IEM0LjI0Myw0NiAyLDQzLjc1NiAyLDQxIEMyLDM4LjI0MyA0LjI0MywzNiA3LDM2IEM5Ljc1NywzNiAxMiwzOC4yNDMgMTIsNDEgQzEyLDQzLjc1NiA5Ljc1Nyw0NiA3LDQ2IEw3LDQ2IFogTTcsNCBDNS4zNDYsNCA0LDUuMzQ1IDQsNyBDNCw4LjY1NCA1LjM0NiwxMCA3LDEwIEM4LjY1NCwxMCAxMCw4LjY1NCAxMCw3IEMxMCw1LjM0NSA4LjY1NCw0IDcsNCBMNyw0IFogTTcsMTIgQzQuMjQzLDEyIDIsOS43NTYgMiw3IEMyLDQuMjQzIDQuMjQzLDIgNywyIEM5Ljc1NywyIDEyLDQuMjQzIDEyLDcgQzEyLDkuNzU2IDkuNzU3LDEyIDcsMTIgTDcsMTIgWiBNNDEsMzggQzM5LjM0NiwzOCAzOCwzOS4zNDUgMzgsNDEgQzM4LDQyLjY1NCAzOS4zNDYsNDQgNDEsNDQgQzQyLjY1NCw0NCA0NCw0Mi42NTQgNDQsNDEgQzQ0LDM5LjM0NSA0Mi42NTQsMzggNDEsMzggTDQxLDM4IFogTTQxLDQ2IEMzOC4yNDMsNDYgMzYsNDMuNzU2IDM2LDQxIEMzNiwzOC4yNDMgMzguMjQzLDM2IDQxLDM2IEM0My43NTcsMzYgNDYsMzguMjQzIDQ2LDQxIEM0Niw0My43NTYgNDMuNzU3LDQ2IDQxLDQ2IEw0MSw0NiBaIiBpZD0iRmlsbC0xIiBmaWxsPSIjN0FBMTE2Ij48L3BhdGg+CiAgICA8L2c+Cjwvc3ZnPg==" opacity="1"/>
+<text x="110" y="111.167" fill="#1E1E1E" font-family="Helvetica" font-size="10.667" text-anchor="middle">IoT Sailboat</text>
+</g>
+</svg>

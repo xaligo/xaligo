@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="160" viewBox="0 0 220 160">
+<defs><marker id="xaligo-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker><marker id="xaligo-oval" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto" markerUnits="strokeWidth"><circle cx="3.5" cy="3.5" r="2.5" fill="context-stroke"/></marker></defs>
+<rect x="0" y="0" width="220" height="160" fill="#FFFFFF"/>
+<g transform="translate(0 0)">
+<rect x="77" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="25" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="38.6" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="52.2" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="65.8" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="77" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="90.6" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="104.2" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="117.8" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<rect x="131.4" y="79.4" width="11.6" height="11.6" fill="#FFFFFF" fill-opacity="1" stroke="#FFFFFF" stroke-width="1" stroke-opacity="1"/>
+<image x="78" y="26" width="64" height="64" href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iNDhweCIgaGVpZ2h0PSI0OHB4IiB2aWV3Qm94PSIwIDAgNDggNDgiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1SZXNvdXJjZS9HZW5lcmFsLVJlc291cmNlL1Jlc19BV1MtTWFuYWdlbWVudC1Db25zb2xlXzQ4X0xpZ2h0PC90aXRsZT4KICAgIDxnIGlkPSJJY29uLVJlc291cmNlL0dlbmVyYWwtUmVzb3VyY2UvUmVzX0FXUy1NYW5hZ2VtZW50LUNvbnNvbGVfNDgiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIxIiBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPgogICAgICAgIDxwYXRoIGQ9Ik0xMC4wMDEsNDEgTDQ0LDQxIEw0NCwxNCBMMTAuMDAxLDE0IEwxMC4wMDEsNDEgWiBNNCw0MSBMOC4wMDEsNDEgTDguMDAxLDE0IEw0LDE0IEw0LDQxIFogTTQsMTIgTDQ0LDEyIEw0NCw2IEw0LDYgTDQsMTIgWiBNNDYsNSBMNDYsNDIgQzQ2LDQyLjU1MiA0NS41NTMsNDMgNDUsNDMgTDMsNDMgQzIuNDQ3LDQzIDIsNDIuNTUyIDIsNDIgTDIsNSBDMiw0LjQ0OCAyLjQ0Nyw0IDMsNCBMNDUsNCBDNDUuNTUzLDQgNDYsNC40NDggNDYsNSBMNDYsNSBaIE0zNSwzMi40MDkgTDM1LDIzLjg2NiBMMjgsMjguNTMzIEwyOCwzNi4yOTggTDM1LDMyLjQwOSBaIE0xOSwzMi40MDkgTDI2LDM2LjI5OCBMMjYsMjguNTMzIEwxOSwyMy44NjYgTDE5LDMyLjQwOSBaIE0xOS45MTksMjIuMDc1IEwyNywyNi43OTYgTDM0LjA4MSwyMi4wNzUgTDI3LDE4LjE0MiBMMTkuOTE5LDIyLjA3NSBaIE0zNywyMS45OTggTDM3LDMyLjk5OCBDMzcsMzMuMzYxIDM2LjgwMywzMy42OTUgMzYuNDg1LDMzLjg3MiBMMjcuNDg1LDM4Ljg3MiBDMjcuMzM1LDM4Ljk1NiAyNy4xNjcsMzguOTk4IDI3LDM4Ljk5OCBDMjYuODMzLDM4Ljk5OCAyNi42NjUsMzguOTU2IDI2LjUxNSwzOC44NzIgTDE3LjUxNSwzMy44NzIgQzE3LjE5NywzMy42OTUgMTcsMzMuMzYxIDE3LDMyLjk5OCBMMTcsMjEuOTk4IEMxNywyMS42MzQgMTcuMTk3LDIxLjMgMTcuNTE1LDIxLjEyNCBMMjYuNTE1LDE2LjEyNCBDMjYuODE1LDE1Ljk1NiAyNy4xODUsMTUuOTU2IDI3LjQ4NSwxNi4xMjQgTDM2LjQ4NSwyMS4xMjQgQzM2LjgwMywyMS4zIDM3LDIxLjYzNCAzNywyMS45OTggTDM3LDIxLjk5OCBaIE0xNC4wMDEsMTAgTDE2LjAwMSwxMCBMMTYuMDAxLDggTDE0LjAwMSw4IEwxNC4wMDEsMTAgWiBNMTAuMDAxLDEwIEwxMi4wMDEsMTAgTDEyLjAwMSw4IEwxMC4wMDEsOCBMMTAuMDAxLDEwIFogTTYuMDAxLDEwIEw4LjAwMSwxMCBMOC4wMDEsOCBMNi4wMDEsOCBMNi4wMDEsMTAgWiIgaWQ9IkZpbGwtMSIgZmlsbD0iIzIzMkYzRCI+PC9wYXRoPgogICAgPC9nPgo8L3N2Zz4=" opacity="1"/>
+<text x="110" y="104.667" fill="#1E1E1E" font-family="Helvetica" font-size="10.667" text-anchor="middle">Management Console 48 Light</text>
+</g>
+</svg>
