@@ -803,13 +803,19 @@ func prepareConnectors(connectors []*entity.Element, byID map[string]*entity.Ele
 		}
 		var srcFixedAnchor *pt
 		if el.StartBinding != nil {
-			if p, ok := nonCenterAnchorFromFixedPoint(src, srcSide, el.StartBinding.FixedPoint); ok {
+			if el.CustomData != nil && el.CustomData.ConnectorStartAnchor {
+				p := pointFromFixedPoint(src, el.StartBinding.FixedPoint)
+				srcFixedAnchor = &p
+			} else if p, ok := nonCenterAnchorFromFixedPoint(src, srcSide, el.StartBinding.FixedPoint); ok {
 				srcFixedAnchor = &p
 			}
 		}
 		var dstFixedAnchor *pt
 		if el.EndBinding != nil {
-			if p, ok := nonCenterAnchorFromFixedPoint(dst, dstSide, el.EndBinding.FixedPoint); ok {
+			if el.CustomData != nil && el.CustomData.ConnectorEndAnchor {
+				p := pointFromFixedPoint(dst, el.EndBinding.FixedPoint)
+				dstFixedAnchor = &p
+			} else if p, ok := nonCenterAnchorFromFixedPoint(dst, dstSide, el.EndBinding.FixedPoint); ok {
 				dstFixedAnchor = &p
 			}
 		}
@@ -1202,6 +1208,15 @@ func nonCenterAnchorFromFixedPoint(r rect, s side, fp []float64) (pt, bool) {
 		return pt{}, false
 	}
 	return pt{X: r.X + r.W*fx, Y: r.Y + r.H*fy}, true
+}
+
+func pointFromFixedPoint(r rect, fp []float64) pt {
+	if len(fp) < 2 {
+		return pt{X: r.X + r.W/2, Y: r.Y + r.H/2}
+	}
+	fx := math.Max(0, math.Min(1, fp[0]))
+	fy := math.Max(0, math.Min(1, fp[1]))
+	return pt{X: r.X + r.W*fx, Y: r.Y + r.H*fy}
 }
 
 func rectOf(el *entity.Element) (rect, bool) {

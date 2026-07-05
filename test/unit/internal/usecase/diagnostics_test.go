@@ -31,6 +31,7 @@ func TestValidateReportsItemAndConnectionBranches(t *testing.T) {
 		want  string
 	}{
 		{"comma item", `<frame><item id="1,2" /></frame>`, "single ID"},
+		{"invalid item dx", `<frame><item id="1" dx="east" /></frame>`, `dx="east"> must be a number`},
 		{"spacer item", `<frame><item /></frame>`, ""},
 		{"missing src", `<frame><connection dst="2" /></frame>`, "src attribute"},
 		{"missing dst", `<frame><connection src="1" /></frame>`, "dst attribute"},

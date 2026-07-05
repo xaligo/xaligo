@@ -348,6 +348,16 @@ func positionAt(data []byte, offset int) entity.Position {
 // validateItemNode ensures <item> carries at most one numeric id attribute.
 // An empty (or absent) id is allowed — the item acts as a layout spacer.
 func validateItemNode(node *entity.Node) error {
+	for _, attr := range []string{"dx", "dy"} {
+		value := strings.TrimSpace(node.Attrs[attr])
+		if value == "" {
+			continue
+		}
+		if _, err := strconv.ParseFloat(value, 64); err != nil {
+			return fmt.Errorf("<item %s=%q> must be a number", attr, value)
+		}
+	}
+
 	id, ok := node.Attrs["id"]
 	if !ok || strings.TrimSpace(id) == "" {
 		logger.DEBUG(IUPVIN001, "branch spacer item")

@@ -117,6 +117,43 @@ func TestBuildPlanOffsetsTrafficBesideMatchingRoute(t *testing.T) {
 	}
 }
 
+func TestBuildPlanKeepsTrafficArrowEnteringDestinationSide(t *testing.T) {
+	opacity := 100.0
+	scene := entity.PptxScene{Elements: []entity.Element{
+		{ID: "internet", Type: "image", X: 0, Y: 0, Width: 40, Height: 40, Opacity: &opacity, FileID: "internet-file"},
+		{ID: "router", Type: "image", X: 160, Y: 0, Width: 40, Height: 40, Opacity: &opacity, FileID: "router-file"},
+		{ID: "route", Type: "arrow", StrokeColor: "#64748b", StrokeWidth: 1, Opacity: &opacity,
+			StartBinding: &entity.Binding{ElementID: "router", FixedPoint: []float64{0, 0.5}, Gap: 5},
+			EndBinding:   &entity.Binding{ElementID: "internet", FixedPoint: []float64{1, 0.5}, Gap: 5},
+			CustomData:   &entity.CustomData{ConnectorKind: "route", ConnectorStartAnchor: true, ConnectorEndAnchor: true}},
+		{ID: "traffic", Type: "arrow", StrokeColor: "#0f766e", StrokeWidth: 1, Opacity: &opacity,
+			StartBinding: &entity.Binding{ElementID: "router", FixedPoint: []float64{0, 0.5}, Gap: 5},
+			EndBinding:   &entity.Binding{ElementID: "internet", FixedPoint: []float64{1, 0.5}, Gap: 5},
+			CustomData:   &entity.CustomData{ConnectorKind: "traffic", ConnectorStartAnchor: true, ConnectorEndAnchor: true}},
+	}, AppState: &entity.AppState{ViewBackgroundColor: "#FFFFFF"}}
+
+	plan := usecase.BuildPlan(&scene, entity.PptxOptions{PxPerInch: 1})
+	var traffic *entity.DrawOp
+	for i := range plan.Ops {
+		if plan.Ops[i].ID == "traffic" && plan.Ops[i].Kind == "line" {
+			traffic = &plan.Ops[i]
+			break
+		}
+	}
+	if traffic == nil {
+		t.Fatalf("traffic line op not found: %#v", plan.Ops)
+	}
+	points := lineAbsPoints(*traffic)
+	if len(points) < 2 {
+		t.Fatalf("traffic points = %#v", traffic)
+	}
+	prev := points[len(points)-2]
+	end := points[len(points)-1]
+	if math.Abs(prev.Y-end.Y) > 0.001 || prev.X <= end.X {
+		t.Fatalf("traffic should enter the destination right side horizontally: points=%#v op=%#v", points, traffic)
+	}
+}
+
 func TestBuildPlanRoutesConnectorThroughManualBends(t *testing.T) {
 	opacity := 100.0
 	scene := entity.PptxScene{Elements: []entity.Element{
@@ -171,6 +208,38 @@ func TestBuildPlanPreservesExplicitConnectorAnchors(t *testing.T) {
 	}
 }
 
+func TestBuildPlanPreservesExplicitCenterAnchorWhenEndpointHasMultipleLines(t *testing.T) {
+	opacity := 100.0
+	scene := entity.PptxScene{Elements: []entity.Element{
+		{ID: "src-item", Type: "image", X: 0, Y: 0, Width: 40, Height: 40, Opacity: &opacity, FileID: "src-file"},
+		{ID: "dst-a-item", Type: "image", X: 160, Y: 0, Width: 40, Height: 40, Opacity: &opacity, FileID: "dst-a-file"},
+		{ID: "dst-b-item", Type: "image", X: 160, Y: 80, Width: 40, Height: 40, Opacity: &opacity, FileID: "dst-b-file"},
+		{ID: "explicit-center", Type: "arrow", StrokeColor: "#1e1e1e", StrokeWidth: 1, Opacity: &opacity,
+			StartBinding: &entity.Binding{ElementID: "src-item", FixedPoint: []float64{1, 0.5}},
+			EndBinding:   &entity.Binding{ElementID: "dst-a-item", FixedPoint: []float64{0, 0.5}},
+			CustomData:   &entity.CustomData{ConnectorKind: "connection", ConnectorStartAnchor: true}},
+		{ID: "auto-fanout", Type: "arrow", StrokeColor: "#1e1e1e", StrokeWidth: 1, Opacity: &opacity,
+			StartBinding: &entity.Binding{ElementID: "src-item", FixedPoint: []float64{1, 0.5}},
+			EndBinding:   &entity.Binding{ElementID: "dst-b-item", FixedPoint: []float64{0, 0.5}},
+			CustomData:   &entity.CustomData{ConnectorKind: "connection"}},
+	}, AppState: &entity.AppState{ViewBackgroundColor: "#FFFFFF"}}
+
+	plan := usecase.BuildPlan(&scene, entity.PptxOptions{PxPerInch: 1})
+	var line *entity.DrawOp
+	for i := range plan.Ops {
+		if plan.Ops[i].ID == "explicit-center" && plan.Ops[i].Kind == "line" {
+			line = &plan.Ops[i]
+			break
+		}
+	}
+	if line == nil {
+		t.Fatalf("connector line op not found: %#v", plan.Ops)
+	}
+	if !lineHasAbsPoint(*line, 40, 20) {
+		t.Fatalf("explicit center anchor was not preserved: op=%#v", line)
+	}
+}
+
 func lineHasAbsPoint(op entity.DrawOp, x, y float64) bool {
 	const tol = 0.001
 	for _, p := range op.Points {
@@ -179,6 +248,14 @@ func lineHasAbsPoint(op entity.DrawOp, x, y float64) bool {
 		}
 	}
 	return false
+}
+
+func lineAbsPoints(op entity.DrawOp) []struct{ X, Y float64 } {
+	points := make([]struct{ X, Y float64 }, 0, len(op.Points))
+	for _, p := range op.Points {
+		points = append(points, struct{ X, Y float64 }{X: op.X + p.X, Y: op.Y + p.Y})
+	}
+	return points
 }
 
 func TestBuildPlanPaperMarginsInsetFittedContent(t *testing.T) {
