@@ -111,48 +111,48 @@ Quick checklist:
 
 ```xml
 <frame width="1440" height="900" class="pa-4">
-  <aws-cloud title="AWS Cloud">
+  <aws-cloud id="aws-cloud" title="AWS Cloud">
 
     <!-- ✅ Global: outside <region> — not bound to any specific region -->
-    <generic-group title="Global Services">
+    <generic-group id="global-services" title="Global Services">
       <item id="1179" />  <!-- Route 53 -->
       <item id="216"  />  <!-- IAM -->
     </generic-group>
 
-    <region title="ap-northeast-1" row="8">
+    <region id="region-apne1" title="ap-northeast-1" row="8">
 
       <!-- ✅ Regional: inside <region>, outside <vpc> — no VPC required -->
-      <generic-group title="Managed &amp; Serverless">
+      <generic-group id="managed-serverless" title="Managed &amp; Serverless">
         <item id="13"   />  <!-- Lambda -->
         <item id="1020" />  <!-- S3 -->
       </generic-group>
 
-      <vpc title="VPC (10.0.0.0/16)" row="6">
+      <vpc id="vpc-main" title="VPC (10.0.0.0/16)" row="6">
 
         <!-- ✅ VPC-edge: inside <vpc>, outside <availability-zone> -->
-        <generic-group title="VPC Edge">
+        <generic-group id="vpc-edge" title="VPC Edge">
           <item id="1581" />  <!-- Internet Gateway -->
           <item id="1182" />  <!-- ELB -->
         </generic-group>
 
         <row gap="8" row="5">
           <col span="6">
-            <availability-zone title="AZ: ap-northeast-1a">
+            <availability-zone id="az-apne1a" title="AZ: ap-northeast-1a">
               <!-- ✅ AZ-specific: public-subnet for NAT Gateway -->
-              <public-subnet title="Public Subnet">
+              <public-subnet id="public-subnet-a" title="Public Subnet">
                 <item id="1582" />  <!-- NAT Gateway -->
               </public-subnet>
               <!-- ✅ AZ-specific: compute instances in private subnet -->
-              <private-subnet title="Application Tier" row="3">
+              <private-subnet id="app-tier-a" title="Application Tier" row="3">
                 <item id="27"  />   <!-- EC2 -->
                 <item id="547" />   <!-- ECS -->
               </private-subnet>
             </availability-zone>
           </col>
           <col span="6">
-            <availability-zone title="AZ: ap-northeast-1b">
+            <availability-zone id="az-apne1b" title="AZ: ap-northeast-1b">
               <!-- ✅ AZ-specific: DB instances in private subnet -->
-              <private-subnet title="Data Tier">
+              <private-subnet id="data-tier-b" title="Data Tier">
                 <item id="117" />   <!-- RDS -->
                 <item id="110" />   <!-- Aurora -->
               </private-subnet>
@@ -186,6 +186,12 @@ Routes have no arrowheads. Traffic lines are directional and, when they share
 the same endpoints as a route, render beside the route lane. See
 [examples/route-traffic.xal](../../examples/route-traffic.xal) for a compact
 route/traffic example.
+
+Excalidraw output uses the same orthogonal routing metadata and adds small
+editable anchor grids behind item icons. These anchors keep lines from covering
+icons/labels while preserving visible endpoints. When several lines would share
+the same X or Y lane, the renderer offsets later lines where possible. Group
+header tags are treated as route obstacles so tag labels stay readable.
 
 Reference: [examples/sample.xal](../../examples/sample.xal)
 DSL specification: [xal-spec.instructions.md](xal-spec.instructions.md)

@@ -4,12 +4,12 @@
 <!--   Tier 3 Data         : Aurora / ElastiCache / RDS  (DB Subnet per AZ)            -->
 <!-- Resource Icons (Res_*) are placed alongside their parent service icons             -->
 <frame width="1900" height="1280" class="pa-4">
-  <aws-account title="AWS Account">
+  <aws-account id="aws-account" title="AWS Account">
 
-    <aws-cloud title="AWS Cloud">
+    <aws-cloud id="aws-cloud" title="AWS Cloud">
 
     <!-- ── Tier 1: Presentation — global services ── -->
-    <generic-group title="Presentation Tier – Global" align="middle-spread">
+    <generic-group id="presentation-tier" title="Presentation Tier – Global" align="middle-spread">
       <item id="1179" />  <!-- Route 53          — global DNS routing -->
       <item id="1568" />  <!-- R53 Hosted Zone   — resource: DNS hosted zone -->
       <item id="1178" />  <!-- CloudFront        — global CDN / edge cache -->
@@ -19,10 +19,10 @@
       <item id="1479" />  <!-- IAM Role          — resource: IAM role -->
     </generic-group>
 
-    <region title="ap-northeast-1" row="9">
+    <region id="region-apne1" title="ap-northeast-1" row="9">
 
       <!-- ── Regional: Serverless Compute, Storage, Observability &amp; CI/CD ── -->
-      <generic-group title="Managed &amp; Serverless" align="middle-spread">
+      <generic-group id="managed-serverless" title="Managed &amp; Serverless" align="middle-spread">
         <item id="13" />    <!-- Lambda            — event-driven functions -->
         <item id="1783" />  <!-- Lambda Function   — resource: function -->
         <item id="1020" />  <!-- S3                — object storage / static assets -->
@@ -38,7 +38,7 @@
       </generic-group>
 
       <!-- ── Regional: Messaging, Events &amp; Governance ── -->
-      <generic-group title="Messaging, Events &amp; Governance" align="middle-spread">
+      <generic-group id="messaging-governance" title="Messaging, Events &amp; Governance" align="middle-spread">
         <item id="705" />   <!-- SNS               — fan-out notifications / alerts -->
         <item id="1506" />  <!-- SNS Topic         — resource: topic -->
         <item id="706" />   <!-- SQS               — async decoupling queue -->
@@ -50,10 +50,10 @@
         <item id="314" />   <!-- Macie             — sensitive-data governance -->
       </generic-group>
 
-      <vpc title="VPC (10.0.0.0/16)" row="7">
+      <vpc id="vpc-main" title="VPC (10.0.0.0/16)" row="7">
 
         <!-- ── VPC Edge: shared network components (not AZ-specific) ── -->
-        <generic-group title="VPC Edge" align="middle-spread">
+        <generic-group id="vpc-edge" title="VPC Edge" align="middle-spread">
           <item id="1581" />  <!-- Internet Gateway  — VPC ingress / egress -->
           <item id="1182" />  <!-- ALB               — Tier 1→2 load balancer -->
           <item id="222" />   <!-- Secrets Manager   — credentials vault -->
@@ -65,14 +65,14 @@
 
           <!-- ── AZ: ap-northeast-1a (Primary) ── -->
           <col span="6">
-            <availability-zone title="AZ: ap-northeast-1a">
-              <public-subnet title="Public Subnet (10.0.0.0/24)">
+            <availability-zone id="az-apne1a" title="AZ: ap-northeast-1a">
+              <public-subnet id="public-subnet-a" title="Public Subnet (10.0.0.0/24)">
                 <item id="1582" />  <!-- NAT Gateway         — AZ-specific outbound NAT -->
               </public-subnet>
               <!-- Tier 2: Application (primary) -->
-              <private-subnet title="App Subnet (10.0.1.0/24)" row="3">
+              <private-subnet id="app-subnet-a" title="App Subnet (10.0.1.0/24)" row="3">
                 <row gap="4">
-                  <auto-scaling-group title="Auto Scaling Group">
+                  <auto-scaling-group id="asg-a" title="Auto Scaling Group">
                     <item id="27" name="app-primary" />    <!-- EC2              — primary application server -->
                     <item id="1790" />  <!-- EC2 Instance     — resource: instance -->
                     <item id="1628" />  <!-- EBS Volume       — resource: gp3 volume -->
@@ -84,7 +84,7 @@
                 </row>
               </private-subnet>
               <!-- Tier 3: Data (primary / write endpoint) -->
-              <private-subnet title="DB Subnet (10.0.2.0/24)" row="2">
+              <private-subnet id="db-subnet-a" title="DB Subnet (10.0.2.0/24)" row="2">
                 <item id="110" name="aurora-primary" />   <!-- Aurora Primary     — read/write endpoint -->
                 <item id="1795" />  <!-- Aurora Instance   — resource: DB instance -->
                 <item id="113" />   <!-- ElastiCache       — session / query cache -->
@@ -94,11 +94,11 @@
 
           <!-- ── AZ: ap-northeast-1b (Standby / Replica) ── -->
           <col span="6">
-            <availability-zone title="AZ: ap-northeast-1b">
+            <availability-zone id="az-apne1b" title="AZ: ap-northeast-1b">
               <!-- Tier 2: Application (standby) -->
-              <private-subnet title="App Subnet (10.0.17.0/24)" row="3">
+              <private-subnet id="app-subnet-b" title="App Subnet (10.0.17.0/24)" row="3">
                 <row gap="4">
-                  <auto-scaling-group title="Auto Scaling Group">
+                  <auto-scaling-group id="asg-b" title="Auto Scaling Group">
                     <item id="27" />    <!-- EC2              — standby application server -->
                     <item id="1791" />  <!-- EC2 Instances    — resource: multiple instances -->
                   </auto-scaling-group>
@@ -108,7 +108,7 @@
                 </row>
               </private-subnet>
               <!-- Tier 3: Data (replica / standby) -->
-              <private-subnet title="DB Subnet (10.0.18.0/24)" row="2">
+              <private-subnet id="db-subnet-b" title="DB Subnet (10.0.18.0/24)" row="2">
                 <item id="110" />   <!-- Aurora Replica    — read-only endpoint -->
                 <item id="117" />   <!-- RDS               — Multi-AZ standby -->
                 <item id="1830" />  <!-- RDS Multi-AZ      — resource: Multi-AZ deployment -->

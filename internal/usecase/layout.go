@@ -113,7 +113,7 @@ func Build(doc entity.Document) (*entity.Box, error) {
 func layoutKids(node *entity.Node) []*entity.Node {
 	var kids []*entity.Node
 	for _, c := range node.Children {
-		if c.Tag == "connection" {
+		if c.Tag == "connection" || c.Tag == "connections" {
 			logger.DEBUG(IULLK001, "branch skip connection")
 			continue
 		}
@@ -204,6 +204,8 @@ func layoutNode(node *entity.Node, target *entity.Box, x, y, w, h float64) {
 			logger.DEBUG(IULN009, "branch col stack")
 			layoutStack(node, target, innerX, innerY, innerW, innerH)
 		}
+	case "rectangle":
+		layoutRectangle(node, target, boxX, boxY, boxW, boxH)
 	default:
 		// AWS グループタグおよびその他の未知タグ:
 		// 子要素があればコンテナ, なければリーフとして扱う。
@@ -394,6 +396,70 @@ func layoutLeaf(node *entity.Node, target *entity.Box, x, y, w, h float64) {
 	target.H = h
 }
 
+func layoutRectangle(node *entity.Node, target *entity.Box, x, y, w, h float64) {
+	layoutLeaf(node, target, x, y, w, h)
+	portsBySide := map[string][]*entity.Node{}
+	for _, child := range node.Children {
+		if child.Tag != "port" {
+			continue
+		}
+		side := strings.ToLower(strings.TrimSpace(child.Attr("side")))
+		if side != "right" && side != "bottom" && side != "left" {
+			side = "top"
+		}
+		portsBySide[side] = append(portsBySide[side], child)
+	}
+	for _, side := range []string{"top", "right", "bottom", "left"} {
+		ports := portsBySide[side]
+		for i, port := range ports {
+			portW := clampFloat(attrFloat(firstAttr(port, "width", "w"), 48), 1, w)
+			portH := clampFloat(attrFloat(firstAttr(port, "height", "h"), 20), 1, h)
+			portX, portY := portPosition(x, y, w, h, portW, portH, side, i, len(ports))
+			if px, ok := attrFloatOK(port.Attr("x")); ok {
+				portX = x + px
+			}
+			if py, ok := attrFloatOK(port.Attr("y")); ok {
+				portY = y + py
+			}
+			portX, portY = clampPortPosition(portX, portY, x, y, w, h, portW, portH)
+			cb := &entity.Box{ID: childID(target.ID, len(target.Children)), Tag: port.Tag, Label: labelOf(port), Attrs: port.Attrs}
+			layoutLeaf(port, cb, portX, portY, portW, portH)
+			target.Children = append(target.Children, cb)
+		}
+	}
+}
+
+func portPosition(x, y, w, h, portW, portH float64, side string, index, total int) (float64, float64) {
+	slot := float64(index+1) / float64(total+1)
+	switch side {
+	case "right":
+		return x + w - portW, y + h*slot - portH/2
+	case "bottom":
+		return x + w*slot - portW/2, y + h - portH
+	case "left":
+		return x, y + h*slot - portH/2
+	default:
+		return x + w*slot - portW/2, y
+	}
+}
+
+func clampPortPosition(portX, portY, parentX, parentY, parentW, parentH, portW, portH float64) (float64, float64) {
+	return clampFloat(portX, parentX, parentX+parentW-portW), clampFloat(portY, parentY, parentY+parentH-portH)
+}
+
+func clampFloat(value, min, max float64) float64 {
+	if max < min {
+		return min
+	}
+	if value < min {
+		return min
+	}
+	if value > max {
+		return max
+	}
+	return value
+}
+
 func alignContentArea(node *entity.Node, x, y, w, h float64) (float64, float64, float64, float64) {
 	contentW := attrFloat(node.Attr("content-width"), w)
 	contentH := attrFloat(node.Attr("content-height"), h)
@@ -438,6 +504,9 @@ func labelOf(n *entity.Node) string {
 		logger.DEBUG(IULLO002, "branch text", map[string]any{"tag": n.Tag})
 		return n.Text
 	}
+	if n.Tag == "rectangle" || n.Tag == "port" {
+		return ""
+	}
 	logger.DEBUG(IULLO003, "branch tag", map[string]any{"tag": n.Tag})
 	return n.Tag
 }
@@ -453,6 +522,27 @@ func attrFloat(v string, fallback float64) float64 {
 		return fallback
 	}
 	return f
+}
+
+func attrFloatOK(v string) (float64, bool) {
+	v = strings.TrimSpace(v)
+	if v == "" {
+		return 0, false
+	}
+	f, err := strconv.ParseFloat(v, 64)
+	return f, err == nil
+}
+
+func firstAttr(node *entity.Node, names ...string) string {
+	if node == nil {
+		return ""
+	}
+	for _, name := range names {
+		if value := strings.TrimSpace(node.Attr(name)); value != "" {
+			return value
+		}
+	}
+	return ""
 }
 
 func parseClassSpacing(class string) (entity.Spacing, entity.Spacing) {

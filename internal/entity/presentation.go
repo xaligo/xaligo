@@ -59,12 +59,15 @@ type Element struct {
 }
 
 type CustomData struct {
-	ConnectorKind           string `json:"xaligoConnectorKind"`
-	ConnectorStartArrowhead string `json:"xaligoConnectorStartArrowhead"`
-	ConnectorEndArrowhead   string `json:"xaligoConnectorEndArrowhead"`
-	Junction                bool   `json:"xaligoJunction,omitempty"`
-	GroupBorder             bool   `json:"xaligoGroupBorder,omitempty"`
-	GroupHeader             bool   `json:"xaligoGroupHeader,omitempty"`
+	ConnectorKind           string  `json:"xaligoConnectorKind"`
+	ConnectorStartArrowhead string  `json:"xaligoConnectorStartArrowhead"`
+	ConnectorEndArrowhead   string  `json:"xaligoConnectorEndArrowhead"`
+	ConnectorBends          string  `json:"xaligoConnectorBends,omitempty"`
+	ConnectorScale          float64 `json:"xaligoConnectorScale,omitempty"`
+	ConnectorGrid           float64 `json:"xaligoConnectorGrid,omitempty"`
+	Junction                bool    `json:"xaligoJunction,omitempty"`
+	GroupBorder             bool    `json:"xaligoGroupBorder,omitempty"`
+	GroupHeader             bool    `json:"xaligoGroupHeader,omitempty"`
 }
 
 // ── Options driving the calculations ─────────────────────────────────────────

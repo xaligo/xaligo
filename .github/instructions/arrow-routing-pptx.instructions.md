@@ -134,6 +134,8 @@ Do not spend implementation time replacing the repository-layer exporter with
 - Lines on an obstacle boundary count as collision.
 - Existing routed paths are included in scoring so later lines avoid overlap and
   near-parallel crowding.
+- Excalidraw output also feeds previously routed lines back into the shared
+  router so matching X/Y lanes are offset before export.
 - Visible container borders are reserved routing paths. Connectors may cross a
   frame boundary, but parallel paths prefer the configured line margin.
 - Previously placed line lanes are used as candidate offsets, so `--arrow-margin`
@@ -145,6 +147,13 @@ Do not spend implementation time replacing the repository-layer exporter with
   4. icons and labels
 
 This order prevents lines from visually covering icons even at endpoints.
+
+Excalidraw output mirrors this readability rule with editable JSON elements:
+each item image and label is grouped with a small 5x5 white anchor grid. The
+grid is drawn above connector lines and below the icon/label so labels remain
+readable without hiding the connector endpoint. Excalidraw routing treats group
+header tags, item icons, and labels as obstacles where possible, and serializes
+arrowhead sizes as `"s"` for dense diagrams.
 
 ## Advanced Routing Features
 

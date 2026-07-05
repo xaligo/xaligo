@@ -6,6 +6,7 @@ import (
 	"math"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/xaligo/xaligo/internal/entity"
@@ -819,8 +820,12 @@ func prepareConnectors(connectors []*entity.Element, byID map[string]*entity.Ele
 			dstGap = el.EndBinding.Gap
 		}
 		items[el.ID] = item{el: el, src: src, dst: dst, srcSide: srcSide, dstSide: dstSide, srcGap: srcGap, dstGap: dstGap}
-		gridRects[srcIconID] = srcGrid
-		gridRects[dstIconID] = dstGrid
+		if needsAnchorGrid(srcEl) {
+			gridRects[srcIconID] = srcGrid
+		}
+		if needsAnchorGrid(dstEl) {
+			gridRects[dstIconID] = dstGrid
+		}
 		pushGroup(srcIconID, srcSide, endpoint{connID: el.ID, rect: src, side: srcSide, oppCenter: dstCenter, isSrc: true})
 		pushGroup(dstIconID, dstSide, endpoint{connID: el.ID, rect: dst, side: dstSide, oppCenter: srcCenter, isSrc: false})
 	}
@@ -843,6 +848,14 @@ func prepareConnectors(connectors []*entity.Element, byID map[string]*entity.Ele
 			SrcGap:  it.srcGap,
 			DstGap:  it.dstGap,
 		}
+		if it.el.CustomData != nil {
+			scale := it.el.CustomData.ConnectorScale
+			if scale <= 0 {
+				scale = 1
+			}
+			req.Bends = parseConnectorBends(it.el.CustomData.ConnectorBends, scale)
+			req.Grid = it.el.CustomData.ConnectorGrid
+		}
 		if a := anchors[id]; a != nil {
 			req.SrcAnchor = a.src
 			req.DstAnchor = a.dst
@@ -852,6 +865,39 @@ func prepareConnectors(connectors []*entity.Element, byID map[string]*entity.Ele
 		routed = append(routed, preparedConnector{el: it.el, req: req})
 	}
 	return preparedResult{routed: routed, raw: raw, gridRects: gridRects}
+}
+
+func needsAnchorGrid(el *entity.Element) bool {
+	if el == nil {
+		return false
+	}
+	return el.Type == "image" || el.Type == "text"
+}
+
+func parseConnectorBends(value string, scale float64) []pt {
+	if scale <= 0 {
+		scale = 1
+	}
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return nil
+	}
+	replacer := strings.NewReplacer(";", " ", "|", " ", "\n", " ", "\t", " ")
+	tokens := strings.Fields(replacer.Replace(value))
+	points := make([]pt, 0, len(tokens))
+	for _, token := range tokens {
+		parts := strings.Split(token, ",")
+		if len(parts) != 2 {
+			continue
+		}
+		x, xErr := strconv.ParseFloat(strings.TrimSpace(parts[0]), 64)
+		y, yErr := strconv.ParseFloat(strings.TrimSpace(parts[1]), 64)
+		if xErr != nil || yErr != nil {
+			continue
+		}
+		points = append(points, pt{X: x * scale, Y: y * scale})
+	}
+	return points
 }
 
 func anchorGridForElement(id string, el *entity.Element, base rect, byID map[string]*entity.Element) anchorGridRect {

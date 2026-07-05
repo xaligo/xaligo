@@ -20,3 +20,6 @@ external/wasm/xaligo.wasm
 
 # TypeScript build output
 external/dist/
+
+# mdBook build output
+docs/book/

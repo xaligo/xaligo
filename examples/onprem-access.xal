@@ -2,8 +2,8 @@
 <frame width="1600" height="900" class="pa-4">
   <row gap="24">
     <col span="4">
-      <corporate-data-center title="On-premises Site" row="8">
-        <generic-group title="User Access Lane" align="middle-spread">
+      <corporate-data-center id="onprem-site" title="On-premises Site" row="8">
+        <generic-group id="user-access-lane" title="User Access Lane" align="middle-spread">
           <item id="104733" /> <!-- Tabler: user -->
           <item id="101804" /> <!-- Tabler: device-desktop -->
           <item id="101897" /> <!-- Tabler: device-mobile -->
@@ -14,22 +14,22 @@
     </col>
 
     <col span="8">
-      <aws-cloud title="AWS Cloud" row="8">
-        <generic-group title="Global Edge &amp; Security" align="middle-spread">
+      <aws-cloud id="aws-cloud" title="AWS Cloud" row="8">
+        <generic-group id="global-edge-security" title="Global Edge &amp; Security" align="middle-spread">
           <item id="1178" /> <!-- Amazon CloudFront -->
           <item id="227" />  <!-- AWS WAF -->
         </generic-group>
 
-        <region title="ap-northeast-1" row="8">
-          <vpc title="VPC (10.0.0.0/16)" row="8">
-            <generic-group title="VPC Edge" align="middle-spread">
+        <region id="region-apne1" title="ap-northeast-1" row="8">
+          <vpc id="vpc-main" title="VPC (10.0.0.0/16)" row="8">
+            <generic-group id="vpc-edge" title="VPC Edge" align="middle-spread">
               <item id="1182" /> <!-- Elastic Load Balancing -->
             </generic-group>
-            <availability-zone title="AZ: ap-northeast-1a" row="8">
-              <private-subnet title="Application Subnet" align="middle-spread">
+            <availability-zone id="az-apne1a" title="AZ: ap-northeast-1a" row="8">
+              <private-subnet id="app-subnet" title="Application Subnet" align="middle-spread">
                 <item id="27" />  <!-- Amazon EC2 -->
               </private-subnet>
-              <private-subnet title="Database Subnet" align="middle-spread">
+              <private-subnet id="db-subnet" title="Database Subnet" align="middle-spread">
                 <item id="117" /> <!-- Amazon RDS -->
               </private-subnet>
             </availability-zone>

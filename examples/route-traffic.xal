@@ -1,19 +1,19 @@
 <frame width="1120" height="640" class="pa-4">
-  <generic-group title="Route / Traffic Separation" icon-id="104635">
+  <generic-group id="route-traffic-separation" title="Route / Traffic Separation" icon-id="104635">
     <row gap="32">
       <col span="4" class="pa-2">
-        <generic-group title="Client Segment" icon-id="101804" align="middle-center">
+        <generic-group id="client-segment" title="Client Segment" icon-id="101804" align="middle-center">
           <item id="200005" name="client" /> <!-- desktop_pc -->
         </generic-group>
       </col>
 
       <col span="4" class="pa-2">
         <container gap="24">
-          <generic-group title="Network Core" icon-id="104032" align="middle-spread">
+          <generic-group id="network-core" title="Network Core" icon-id="104032" align="middle-spread">
             <item id="200036" name="router" /> <!-- router_general -->
             <item id="200013" name="switch" /> <!-- l2_switch_general -->
           </generic-group>
-          <generic-group title="Security Hop" icon-id="104151" align="middle-center">
+          <generic-group id="security-hop" title="Security Hop" icon-id="104151" align="middle-center">
             <item id="104151" name="firewall" /> <!-- Tabler: shield -->
           </generic-group>
         </container>
@@ -21,10 +21,10 @@
 
       <col span="4" class="pa-2">
         <container gap="24">
-          <generic-group title="Application Segment" icon-id="104109" align="middle-center">
+          <generic-group id="application-segment" title="Application Segment" icon-id="104109" align="middle-center">
             <item id="200041" name="app" /> <!-- server -->
           </generic-group>
-          <generic-group title="Data Segment" icon-id="101767" align="middle-center">
+          <generic-group id="data-segment" title="Data Segment" icon-id="101767" align="middle-center">
             <item id="101767" name="db" /> <!-- Tabler: database -->
           </generic-group>
         </container>

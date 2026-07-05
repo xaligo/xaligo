@@ -2,6 +2,7 @@ package usecase_test
 
 import (
 	"encoding/json"
+	"math"
 	"testing"
 
 	"github.com/xaligo/xaligo/internal/entity"
@@ -114,6 +115,43 @@ func TestBuildPlanOffsetsTrafficBesideMatchingRoute(t *testing.T) {
 	if traffic.Line.EndArrowType == "none" {
 		t.Fatalf("traffic should remain directional: %#v", traffic.Line)
 	}
+}
+
+func TestBuildPlanRoutesConnectorThroughManualBends(t *testing.T) {
+	opacity := 100.0
+	scene := entity.PptxScene{Elements: []entity.Element{
+		{ID: "src-item", Type: "image", X: 0, Y: 0, Width: 32, Height: 32, Opacity: &opacity, FileID: "src-file"},
+		{ID: "dst-item", Type: "image", X: 200, Y: 0, Width: 32, Height: 32, Opacity: &opacity, FileID: "dst-file"},
+		{ID: "connector", Type: "arrow", StrokeColor: "#1e1e1e", StrokeWidth: 1, Opacity: &opacity,
+			StartBinding: &entity.Binding{ElementID: "src-item", FixedPoint: []float64{1, 0.5}},
+			EndBinding:   &entity.Binding{ElementID: "dst-item", FixedPoint: []float64{0, 0.5}},
+			CustomData:   &entity.CustomData{ConnectorKind: "connection", ConnectorBends: "80,40 120,40 120,80", ConnectorScale: 1, ConnectorGrid: 1}},
+	}, AppState: &entity.AppState{ViewBackgroundColor: "#FFFFFF"}}
+
+	plan := usecase.BuildPlan(&scene, entity.PptxOptions{PxPerInch: 1})
+	var line *entity.DrawOp
+	for i := range plan.Ops {
+		if plan.Ops[i].ID == "connector" && plan.Ops[i].Kind == "line" {
+			line = &plan.Ops[i]
+			break
+		}
+	}
+	if line == nil {
+		t.Fatalf("connector line op not found: %#v", plan.Ops)
+	}
+	if !lineHasAbsPoint(*line, 80, 40) || !lineHasAbsPoint(*line, 120, 40) || !lineHasAbsPoint(*line, 120, 80) {
+		t.Fatalf("manual bend points were not routed: op=%#v", line)
+	}
+}
+
+func lineHasAbsPoint(op entity.DrawOp, x, y float64) bool {
+	const tol = 0.001
+	for _, p := range op.Points {
+		if math.Abs(op.X+p.X-x) < tol && math.Abs(op.Y+p.Y-y) < tol {
+			return true
+		}
+	}
+	return false
 }
 
 func TestBuildPlanPaperMarginsInsetFittedContent(t *testing.T) {
