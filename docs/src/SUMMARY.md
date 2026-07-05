@@ -1,9 +1,11 @@
 # Summary
 
 [Introduction](introduction.md)
+[Installation](installation.md)
 [Getting Started](getting-started.md)
 [Command Line](cli.md)
 [Services and Legends](services.md)
+[Samples](samples.md)
 
 # .xal DSL
 
@@ -24,5 +26,6 @@
 # Operations
 
 [Live Preview](live-preview.md)
+[API and Configuration](api-configuration.md)
 [Contributing and Sponsorship](contributing.md)
 [Development](development.md)
