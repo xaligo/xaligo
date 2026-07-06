@@ -25,10 +25,12 @@
           <item id="104109" name="admin-server" />  <!-- Tabler: server -->
         </server-contents>
 
-        <rectangle id="legacy-api-gateway" title="container" width="300" height="96" font-size="18">
+        <rectangle id="legacy-api-gateway" title="Legacy API Gateway" width="300" height="96" font-size="18">
+          <port id="legacy-api-lan" side="left" title="LAN" font-size="10" />
           <port id="legacy-api-mgmt" side="left" title="MGT" font-size="10" />
           <port id="legacy-api-wan" side="right" title="WAN" font-size="10" />
           <port id="legacy-api-dmz" side="right" title="DMZ" font-size="10" />
+          <port id="legacy-api-ops" side="bottom" title="OPS" width="56" height="22" font-size="10" />
         </rectangle>
       </corporate-data-center>
     </col>
@@ -157,7 +159,6 @@
 
     <!-- Delivery and observability lines cross service paths, producing line jumps. -->
     <connection src="441" dst="547" kind="traffic" color="#ea580c"
-                src-anchor="right-3" dst-anchor="right-3"
                 stroke-style="dashed">
       <bends>
         <bend x="680" y="238" />

@@ -32,14 +32,18 @@ function target() {
   return `${process.platform}/${goArch()}`;
 }
 
+function binaryPlatform() {
+  return process.platform === 'win32' ? 'windows' : process.platform;
+}
+
 function isSourceCheckout() {
   return fs.existsSync(path.join(packageRoot, '.git'));
 }
 
 function binaryName() {
-  const [platform, arch] = target().split('/');
+  const arch = goArch();
   const suffix = process.platform === 'win32' ? '.exe' : '';
-  return `xaligo-${platform}-${arch}${suffix}`;
+  return `xaligo-${binaryPlatform()}-${arch}${suffix}`;
 }
 
 function releaseTag() {
