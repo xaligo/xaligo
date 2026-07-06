@@ -50,9 +50,9 @@ xaligo/
 │   ├── repository/              WASM, PptxGenJS, and package adapters
 │   └── usecase/                 TypeScript orchestration and public API
 ├── etc/resources/aws/           catalogs, templates, icons, attribution
-├── examples/                    example .xal and services CSV files
+├── docs/src/examples/samples/   example .xal and services CSV files
 ├── scripts/                     asset/catalog generation scripts
-├── docs/images/                 README gallery assets
+├── docs/src/images/             documentation and README gallery assets
 ├── Makefile
 ├── go.mod / go.sum
 └── README.md

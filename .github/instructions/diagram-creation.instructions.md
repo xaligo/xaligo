@@ -62,7 +62,7 @@ Example output:
 > is not listed in services.csv, or when a services.csv entry has no corresponding
 > `<item>` in the diagram.  Keep both files in sync to suppress these warnings.
 
-Reference: [examples/services.csv](../../examples/services.csv)
+Reference: [docs/src/examples/samples/services.csv](../../docs/src/examples/samples/services.csv)
 
 ---
 
@@ -184,7 +184,7 @@ separately:
 
 Routes have no arrowheads. Traffic lines are directional and, when they share
 the same endpoints as a route, render beside the route lane. See
-[examples/route-traffic.xal](../../examples/route-traffic.xal) for a compact
+[docs/src/examples/samples/route-traffic.xal](../../docs/src/examples/samples/route-traffic.xal) for a compact
 route/traffic example.
 
 Excalidraw output uses the same orthogonal routing metadata and adds small
@@ -193,7 +193,7 @@ icons/labels while preserving visible endpoints. When several lines would share
 the same X or Y lane, the renderer offsets later lines where possible. Group
 header tags are treated as route obstacles so tag labels stay readable.
 
-Reference: [examples/sample.xal](../../examples/sample.xal)
+Reference: [docs/src/examples/samples/sample.xal](../../docs/src/examples/samples/sample.xal)
 DSL specification: [xal-spec.instructions.md](xal-spec.instructions.md)
 
 ---
@@ -201,10 +201,10 @@ DSL specification: [xal-spec.instructions.md](xal-spec.instructions.md)
 ## Step 4 — Render the Excalidraw file
 
 ```bash
-xaligo render examples/sample.xal \
+xaligo render docs/src/examples/samples/sample.xal \
   --format excalidraw \
   -o output/sample.excalidraw \
-  --services examples/services.csv
+  --services docs/src/examples/samples/services.csv
 ```
 
 `--services` is strongly recommended for this workflow. The CSV provides
@@ -244,5 +244,5 @@ service legend; place that legend with
 - Group header and item label width estimates count East Asian full-width
   characters as double-width, so Japanese and other full-width labels keep their
   text boxes aligned across Excalidraw, SVG, and PPTX.
-- Keep `examples/sample.xal` and `examples/services.csv` in sync so the legend
+- Keep `docs/src/examples/samples/sample.xal` and `docs/src/examples/samples/services.csv` in sync so the legend
   includes every diagram service.

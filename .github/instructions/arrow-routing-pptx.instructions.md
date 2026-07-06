@@ -102,9 +102,9 @@ Do not spend implementation time replacing the repository-layer exporter with
 - A3 landscape is generated with:
 
 ```bash
-.bin/xaligo render examples/sample.xal \
+.bin/xaligo render docs/src/examples/samples/sample.xal \
   --format pptx \
-  --services examples/services.csv \
+  --services docs/src/examples/samples/services.csv \
   -o out.pptx \
   --paper A3 \
   --orientation landscape \
@@ -295,7 +295,7 @@ go test ./...
 make build
 make build-wasm
 npm run build --workspace @ryo/xaligo-external
-.bin/xaligo render examples/sample.xal --format pptx --services examples/services.csv -o out.pptx --paper A3 --orientation landscape --arrow-style thin
+.bin/xaligo render docs/src/examples/samples/sample.xal --format pptx --services docs/src/examples/samples/services.csv -o out.pptx --paper A3 --orientation landscape --arrow-style thin
 unzip -t out.pptx
 ```
 

@@ -88,8 +88,8 @@ function parseArgs(values) {
 
 function printHelp() {
   console.log(`Usage:
-  npm run gen:isoflow-icons -- --xal examples/sample.xal
-  npm run gen:isoflow-icons -- --services examples/services.csv
+  npm run gen:isoflow-icons -- --xal docs/src/examples/samples/sample.xal
+  npm run gen:isoflow-icons -- --services docs/src/examples/samples/services.csv
   npm run gen:isoflow-icons -- --ids 27,117,1020
 
 Options:

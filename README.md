@@ -1,6 +1,6 @@
 # xaligo
 
-![Gopher and Crawfish by a river](docs/images/Gemini_Generated_Image_1lec2o1lec2o1lec.png)
+![Gopher and Crawfish by a river](docs/src/images/Gemini_Generated_Image_1lec2o1lec2o1lec.png)
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![CC BY 3.0](https://img.shields.io/badge/illustration-CC%20BY%203.0-lightgrey.svg)](https://creativecommons.org/licenses/by/3.0/)
@@ -27,18 +27,18 @@ Build from source:
 git clone https://github.com/xaligo/xaligo
 cd xaligo
 make build
-.bin/xaligo render examples/sample.xal --format svg -o output/sample.svg
+.bin/xaligo render docs/src/examples/samples/sample.xal --format svg -o output/sample.svg
 ```
 
 ## Samples
 
-![Hybrid enterprise architecture sample](docs/images/complex-hybrid-architecture.svg)
+![Hybrid enterprise architecture sample](docs/src/images/complex-hybrid-architecture.svg)
 
-Source: [examples/complex-hybrid-architecture.xal](examples/complex-hybrid-architecture.xal)
+Source: [docs/src/examples/samples/complex-hybrid-architecture.xal](docs/src/examples/samples/complex-hybrid-architecture.xal)
 
-![Isoflow editor rendering the hybrid architecture sample](docs/images/isoflow-complex-hybrid-architecture.png)
+![Isoflow editor rendering the hybrid architecture sample](docs/src/images/isoflow-complex-hybrid-architecture.png)
 
-Source: [examples/complex-hybrid-architecture.xal](examples/complex-hybrid-architecture.xal)
+Source: [docs/src/examples/samples/complex-hybrid-architecture.xal](docs/src/examples/samples/complex-hybrid-architecture.xal)
 
 ## Documentation
 

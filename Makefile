@@ -30,11 +30,12 @@ tidy: ## Tidy go.mod
 	go mod tidy
 
 run: build ## Render sample DSL
-	$(BINARY) render examples/sample.xal -o examples/sample.excalidraw
-	@echo "Generated: examples/sample.excalidraw"
+	@mkdir -p output
+	$(BINARY) render docs/src/examples/samples/sample.xal -o output/sample.excalidraw
+	@echo "Generated: output/sample.excalidraw"
 
-init: build ## Create starter template under examples/
-	$(BINARY) init -o examples
+init: build ## Create starter template under output/example/
+	$(BINARY) init -o output/example
 
 clean: ## Remove build artifacts
 	rm -rf $(BIN_DIR)

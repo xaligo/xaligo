@@ -48,12 +48,12 @@ npm install
 npm run build --workspace=@ryo/xaligo-external
 
 # Render and validate
-.bin/xaligo validate examples/sample.xal
-.bin/xaligo render examples/sample.xal --format excalidraw -o output/sample.excalidraw
-.bin/xaligo render examples/sample.xal --format svg -o output/sample.svg
-.bin/xaligo render examples/sample.xal --format xyflow -o output/sample.xyflow.json
-.bin/xaligo render examples/sample.xal --format isoflow -o output/sample.isoflow.json
-.bin/xaligo serve examples/sample.xal --mode network
+.bin/xaligo validate docs/src/examples/samples/sample.xal
+.bin/xaligo render docs/src/examples/samples/sample.xal --format excalidraw -o output/sample.excalidraw
+.bin/xaligo render docs/src/examples/samples/sample.xal --format svg -o output/sample.svg
+.bin/xaligo render docs/src/examples/samples/sample.xal --format xyflow -o output/sample.xyflow.json
+.bin/xaligo render docs/src/examples/samples/sample.xal --format isoflow -o output/sample.isoflow.json
+.bin/xaligo serve docs/src/examples/samples/sample.xal --mode network
 
 # Clean generated artifacts
 make clean
