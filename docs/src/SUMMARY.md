@@ -6,6 +6,11 @@
 - [Command Line](cli.md)
 - [Services and Legends](services.md)
 - [Samples](samples.md)
+- [Examples](examples/index.md)
+  - [Line Variants](examples/line-variants.md)
+  - [Route and Traffic Separation](examples/route-traffic.md)
+  - [Automatic Route Junctions](examples/junctions.md)
+- [AI Agent Guide](ai-agent-guide.md)
 
 # .xal DSL
 

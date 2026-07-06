@@ -2,12 +2,12 @@
 
 ## Hybrid Enterprise Architecture
 
-![Hybrid enterprise architecture sample](../images/complex-hybrid-architecture.svg)
+![Hybrid enterprise architecture sample](images/complex-hybrid-architecture.svg)
 
-Source: [`examples/complex-hybrid-architecture.xal`](../../examples/complex-hybrid-architecture.xal)
+Source: [`docs/src/examples/samples/complex-hybrid-architecture.xal`](examples/samples/complex-hybrid-architecture.xal)
 
 ```bash
-xaligo render examples/complex-hybrid-architecture.xal \
+xaligo render docs/src/examples/samples/complex-hybrid-architecture.xal \
   --format svg \
   --mode network \
   -o output/complex-hybrid-architecture.svg
@@ -15,12 +15,12 @@ xaligo render examples/complex-hybrid-architecture.xal \
 
 ## Isoflow Export
 
-![Isoflow editor rendering the hybrid architecture sample](../images/isoflow-complex-hybrid-architecture.png)
+![Isoflow editor rendering the hybrid architecture sample](images/isoflow-complex-hybrid-architecture.png)
 
 Use the same `.xal` source to generate an Isoflow-compatible model:
 
 ```bash
-xaligo render examples/complex-hybrid-architecture.xal \
+xaligo render docs/src/examples/samples/complex-hybrid-architecture.xal \
   --format isoflow \
   --mode network \
   -o output/complex-hybrid-architecture.isoflow.json
@@ -32,10 +32,10 @@ Use `kind="route"` for structural paths without arrowheads, then add
 `kind="traffic"` connections over the same endpoints for directional flows.
 Traffic lines are drawn beside the matching route lane when possible.
 
-Source: [`examples/route-traffic.xal`](../../examples/route-traffic.xal)
+Source: [`docs/src/examples/samples/route-traffic.xal`](examples/samples/route-traffic.xal)
 
 ```bash
-xaligo render examples/route-traffic.xal \
+xaligo render docs/src/examples/samples/route-traffic.xal \
   --format svg \
   --mode network \
   -o output/route-traffic.svg
@@ -53,5 +53,5 @@ xaligo generate xal --clouds 1 --accounts 1 --regions 2 --azs 2 \
 xaligo render output/infra.xal \
   --format excalidraw \
   -o output/infra.excalidraw \
-  --services examples/services.csv
+  --services docs/src/examples/samples/services.csv
 ```

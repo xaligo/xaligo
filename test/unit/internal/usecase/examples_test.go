@@ -23,11 +23,12 @@ func repoRoot(t *testing.T) string {
 
 func TestRenderExamplesThroughPublicUseCases(t *testing.T) {
 	root := repoRoot(t)
-	servicesCSV, err := os.ReadFile(filepath.Join(root, "examples", "services.csv"))
+	exampleDir := filepath.Join(root, "docs", "src", "examples", "samples")
+	servicesCSV, err := os.ReadFile(filepath.Join(exampleDir, "services.csv"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	onpremServicesCSV, err := os.ReadFile(filepath.Join(root, "examples", "onprem-access-services.csv"))
+	onpremServicesCSV, err := os.ReadFile(filepath.Join(exampleDir, "onprem-access-services.csv"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -50,7 +51,7 @@ func TestRenderExamplesThroughPublicUseCases(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			source, err := os.ReadFile(filepath.Join(root, "examples", tc.file))
+			source, err := os.ReadFile(filepath.Join(exampleDir, tc.file))
 			if err != nil {
 				t.Fatal(err)
 			}

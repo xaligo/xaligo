@@ -3,7 +3,7 @@
 Use `serve` for a browser-based SVG preview with automatic reload:
 
 ```bash
-xaligo serve examples/junctions.xal --mode network
+xaligo serve docs/src/examples/samples/junctions.xal --mode network
 ```
 
 Open:
