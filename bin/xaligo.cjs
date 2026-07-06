@@ -30,14 +30,18 @@ function target() {
   return `${process.platform}/${goArch()}`;
 }
 
+function binaryPlatform() {
+  return process.platform === 'win32' ? 'windows' : process.platform;
+}
+
 if (!supportedTargets.has(target())) {
   console.error(`xaligo does not provide a native binary for ${process.platform}/${process.arch}.`);
   process.exit(1);
 }
 
 const executable = process.platform === 'win32'
-  ? `xaligo-${process.platform}-${goArch()}.exe`
-  : `xaligo-${process.platform}-${goArch()}`;
+  ? `xaligo-${binaryPlatform()}-${goArch()}.exe`
+  : `xaligo-${binaryPlatform()}-${goArch()}`;
 const binary = path.join(__dirname, 'native', executable);
 
 if (!fs.existsSync(binary)) {
