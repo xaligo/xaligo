@@ -6,7 +6,6 @@ on:
       - main
     paths:
       - 'docs/**'
-      - 'etc/resources/aws/svg/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -60,13 +59,9 @@ jobs:
           mdbook-tabs --version
 
       - name: Build documentation
-        run: mdbook build docs
-
-      - name: Publish SVG resources
         run: |
-          mkdir -p docs/book/etc/resources/aws
-          rm -rf docs/book/etc/resources/aws/svg
-          cp -R etc/resources/aws/svg docs/book/etc/resources/aws/svg
+          mdbook clean docs
+          mdbook build docs
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
