@@ -11,6 +11,7 @@
   - [Route and Traffic Separation](examples/route-traffic.md)
   - [Automatic Route Junctions](examples/junctions.md)
 - [AI Agent Guide](ai-agent-guide.md)
+- [Planned Work](roadmap.md)
 
 # .xal DSL
 
