@@ -4,7 +4,7 @@ xaligo is being developed as a diagram-as-code platform for architecture,
 network, and operational visualization workflows. The items below are planned
 or under consideration and may change as the core renderer evolves.
 
-![xaligo Roadmap](images/xaligo-roadmap.svg)
+![xaligo Roadmap](images/xaligo-roadmap.png)
 
 ## Rendering and Scale
 

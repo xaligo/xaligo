@@ -42,7 +42,7 @@ Source: [docs/src/examples/samples/complex-hybrid-architecture.xal](docs/src/exa
 
 ## Roadmap
 
-![xaligo Roadmap](docs/src/images/xaligo-roadmap.svg)
+![xaligo Roadmap](docs/src/images/xaligo-roadmap.png)
 
 See [Planned Work](docs/src/roadmap.md) for upcoming and exploratory features.
 
