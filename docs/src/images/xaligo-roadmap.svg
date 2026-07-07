@@ -1,0 +1,206 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1792" height="1008" viewBox="0 0 1792 1008" role="img" aria-labelledby="title desc">
+  <title id="title">xaligo Roadmap</title>
+  <desc id="desc">Planned work for xaligo, covering rendering scale, input and output formats, editing and automation, runtime visualization, and advanced views.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#030817"/>
+      <stop offset="0.55" stop-color="#07142b"/>
+      <stop offset="1" stop-color="#020711"/>
+    </linearGradient>
+    <linearGradient id="cyanGreen" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#37a3ff"/>
+      <stop offset="0.55" stop-color="#00e7d0"/>
+      <stop offset="1" stop-color="#8ee933"/>
+    </linearGradient>
+    <linearGradient id="cardFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b3450" stop-opacity="0.72"/>
+      <stop offset="1" stop-color="#061423" stop-opacity="0.92"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="7" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <style>
+      .label { font-family: Inter, Arial, Helvetica, sans-serif; fill: #f8fbff; }
+      .muted { fill: #b8d2e4; }
+      .accent { fill: #37d8ff; }
+      .green { fill: #6df270; }
+      .small { font-size: 22px; }
+      .body { font-size: 24px; }
+      .title { font-size: 86px; font-weight: 800; letter-spacing: 0; }
+      .subtitle { font-size: 34px; }
+      .cardTitle { font-size: 32px; font-weight: 750; }
+      .number { font-size: 42px; font-weight: 800; }
+      .strokeBlue { stroke: #2f9dff; }
+      .strokeCyan { stroke: #00eadb; }
+      .strokeGreen { stroke: #92f044; }
+      .line { fill: none; stroke: url(#cyanGreen); stroke-width: 4; filter: url(#glow); }
+      .thin { fill: none; stroke: #1a7eb5; stroke-width: 1; opacity: 0.55; }
+      .card { fill: url(#cardFill); stroke-width: 2.5; filter: url(#glow); }
+      .dot { fill: #10e6dd; filter: url(#glow); }
+    </style>
+  </defs>
+
+  <rect width="1792" height="1008" fill="url(#bg)"/>
+  <g opacity="0.32">
+    <path class="thin" d="M890 188 1180 70 1530 180 1710 108"/>
+    <path class="thin" d="M920 245 1250 90 1600 260"/>
+    <path class="thin" d="M870 290 1200 420 1630 280"/>
+    <path class="thin" d="M1040 115 1515 555"/>
+    <path class="thin" d="M0 715 210 625 465 780 720 655"/>
+    <path class="thin" d="M1325 670 1580 580 1792 675"/>
+    <circle cx="1178" cy="160" r="4" fill="#21baff"/>
+    <circle cx="1400" cy="248" r="4" fill="#21baff"/>
+    <circle cx="1690" cy="147" r="4" fill="#21baff"/>
+    <circle cx="38" cy="770" r="4" fill="#21baff"/>
+    <circle cx="1708" cy="720" r="4" fill="#21baff"/>
+    <circle cx="1525" cy="585" r="4" fill="#21baff"/>
+  </g>
+
+  <g transform="translate(44 33)">
+    <path d="M0 0h54l46 48L55 100H0l46-52z" fill="#1f85ff"/>
+    <path d="M112 0h54l-82 100H30z" fill="#29efb1"/>
+  </g>
+  <text class="label" x="165" y="96" font-size="72" font-weight="800">xaligo</text>
+  <text class="label title" x="128" y="210">xaligo Roadmap</text>
+  <text class="label subtitle accent" x="128" y="262">Diagram-as-code platform roadmap</text>
+
+  <g transform="translate(1450 32)" filter="url(#glow)">
+    <path d="M0 15 15 0h275l15 15v36l-15 15H15L0 51z" fill="#071622" stroke="#00e7d0" stroke-width="2"/>
+    <rect x="35" y="18" width="32" height="32" rx="4" fill="none" stroke="#12d8ff" stroke-width="3"/>
+    <path d="M42 12v13M60 12v13M42 32h18M42 43h18" stroke="#12d8ff" stroke-width="3"/>
+    <text class="label green" x="96" y="43" font-size="27" font-weight="700">Planned Work</text>
+  </g>
+
+  <g opacity="0.7" stroke="#0aa7ff" stroke-width="1.5" fill="none">
+    <path d="M1045 190h120v88h-120zM1062 206h87M1062 232h87M1062 258h87"/>
+    <ellipse cx="1080" cy="166" rx="47" ry="16"/>
+    <path d="M1033 166v80c0 9 21 17 47 17s47-8 47-17v-80"/>
+    <path d="M1445 170c14-38 68-45 91-12 38-5 72 22 72 60 0 35-29 62-68 62h-97c-39 0-70-25-70-58 0-28 21-49 50-53 7 0 14 0 22 1z"/>
+    <path d="M1280 280 1368 238 1456 280v88l-88 42-88-42zM1368 238v92M1280 280l88 50 88-50"/>
+  </g>
+
+  <path class="line" d="M190 354H420c31 0 31 0 31 38v455M451 354H760c31 0 31 0 31 38v455M791 354h278c31 0 31 0 31 38v455M1100 354h283c31 0 31 0 31 38v455M1414 354h215"/>
+  <g>
+    <circle class="dot" cx="421" cy="354" r="13"/>
+    <circle class="dot" cx="734" cy="354" r="13"/>
+    <circle class="dot" cx="1052" cy="354" r="13"/>
+    <circle class="dot" cx="1288" cy="354" r="13"/>
+  </g>
+
+  <g transform="translate(142 350)">
+    <path class="card strokeBlue" d="M0 38q0-38 38-38h184q38 0 38 38v474q0 22-16 38l-20 20H36q-36 0-36-36z"/>
+    <circle cx="130" cy="-4" r="59" fill="#092348" stroke="#2f9dff" stroke-width="2.5" filter="url(#glow)"/>
+    <path d="M86 -4a44 44 0 0 1 88 0M92 -4h14M154 -4h14M130 -48v14M101 -34l10 11M159 -34l-10 11M130 -4l26-28" stroke="#8bd7ff" stroke-width="6" fill="none"/>
+    <text class="label number accent" x="30" y="96">1.</text>
+    <text class="label cardTitle" x="30" y="140">Rendering</text>
+    <text class="label cardTitle" x="30" y="178">and Scale</text>
+    <path d="M30 205h150" stroke="#2f9dff" stroke-width="4"/>
+    <circle cx="28" cy="244" r="4" fill="#39a8ff"/>
+    <text class="label body" x="45" y="250">Performance</text>
+    <text class="label body" x="45" y="282">improvements for</text>
+    <text class="label body" x="45" y="314">large diagrams.</text>
+    <circle cx="28" cy="344" r="4" fill="#39a8ff"/>
+    <text class="label body" x="45" y="350">Rendering support for</text>
+    <text class="label body" x="45" y="382">larger architecture maps.</text>
+    <circle cx="28" cy="432" r="4" fill="#39a8ff"/>
+    <text class="label body" x="45" y="438">Page splitting for</text>
+    <text class="label body" x="45" y="470">diagrams that do not</text>
+    <text class="label body" x="45" y="502">fit on a single page.</text>
+  </g>
+
+  <g transform="translate(445 350)">
+    <path class="card strokeCyan" d="M0 38q0-38 38-38h184q38 0 38 38v474q0 22-16 38l-20 20H36q-36 0-36-36z"/>
+    <circle cx="130" cy="-4" r="59" fill="#073046" stroke="#00e7d0" stroke-width="2.5" filter="url(#glow)"/>
+    <path d="M102 -34h35l25 25v48h-60zM137 -34v25h25M115 -7l12 22 13-22M115 15h25M150 17h8M150 32h8" stroke="#a6f5ff" stroke-width="6" fill="none"/>
+    <text class="label number accent" x="30" y="96">2.</text>
+    <text class="label cardTitle" x="30" y="140">Input and</text>
+    <text class="label cardTitle" x="30" y="178">Output Formats</text>
+    <path d="M30 205h150" stroke="#00e7d0" stroke-width="4"/>
+    <circle cx="28" cy="244" r="4" fill="#00e7d0"/>
+    <text class="label body" x="45" y="250">Excel export and</text>
+    <text class="label body" x="45" y="282">Excel-friendly workflows.</text>
+    <circle cx="28" cy="344" r="4" fill="#00e7d0"/>
+    <text class="label body" x="45" y="350">Import from existing</text>
+    <text class="label body" x="45" y="382">diagram formats and</text>
+    <text class="label body" x="45" y="414">conversion into .xal.</text>
+    <circle cx="28" cy="456" r="4" fill="#00e7d0"/>
+    <text class="label body" x="45" y="462">Better round-tripping</text>
+    <text class="label body" x="45" y="494">between generated output</text>
+    <text class="label body" x="45" y="526">and .xal source.</text>
+  </g>
+
+  <g transform="translate(758 350)">
+    <path class="card strokeCyan" d="M0 38q0-38 38-38h220q38 0 38 38v474q0 22-16 38l-20 20H36q-36 0-36-36z"/>
+    <circle cx="148" cy="-4" r="59" fill="#073046" stroke="#00e7d0" stroke-width="2.5" filter="url(#glow)"/>
+    <rect x="113" y="-34" width="70" height="52" rx="5" stroke="#a6f5ff" stroke-width="5" fill="none"/>
+    <path d="M125 -9l13-12M125 -9l13 12M160 -21l-12 24M183 24a18 18 0 1 0 0 .1M183 6v36M165 24h36" stroke="#a6f5ff" stroke-width="5" fill="none"/>
+    <text class="label number accent" x="30" y="96">3.</text>
+    <text class="label cardTitle" x="30" y="140">Editing and</text>
+    <text class="label cardTitle" x="30" y="178">Automation</text>
+    <path d="M30 205h170" stroke="#00e7d0" stroke-width="4"/>
+    <circle cx="28" cy="244" r="4" fill="#00e7d0"/>
+    <text class="label body" x="45" y="250">A dedicated UI for</text>
+    <text class="label body" x="45" y="282">authoring and</text>
+    <text class="label body" x="45" y="314">editing diagrams.</text>
+    <circle cx="28" cy="344" r="4" fill="#00e7d0"/>
+    <text class="label body" x="45" y="350">MCP interfaces so AI</text>
+    <text class="label body" x="45" y="382">agents and tools can</text>
+    <text class="label body" x="45" y="414">inspect, generate, and</text>
+    <text class="label body" x="45" y="446">update diagrams through</text>
+    <text class="label body" x="45" y="478">xaligo.</text>
+    <circle cx="28" cy="518" r="4" fill="#00e7d0"/>
+    <text class="label body" x="45" y="524">GUI-to-.xal workflows.</text>
+  </g>
+
+  <g transform="translate(1074 350)">
+    <path class="card strokeCyan" d="M0 38q0-38 38-38h210q38 0 38 38v474q0 22-16 38l-20 20H36q-36 0-36-36z"/>
+    <circle cx="143" cy="-4" r="59" fill="#073046" stroke="#00e7d0" stroke-width="2.5" filter="url(#glow)"/>
+    <rect x="106" y="-35" width="74" height="58" rx="4" stroke="#7fffe7" stroke-width="5" fill="none"/>
+    <path d="M118 -4h15l8-18 14 36 9-18h20M143 23v22M120 45h46" stroke="#7fffe7" stroke-width="5" fill="none"/>
+    <text class="label number" x="30" y="96" fill="#26eebc">4.</text>
+    <text class="label cardTitle" x="30" y="140">Runtime</text>
+    <text class="label cardTitle" x="30" y="178">Visualization</text>
+    <path d="M30 205h150" stroke="#26eebc" stroke-width="4"/>
+    <circle cx="28" cy="244" r="4" fill="#26eebc"/>
+    <text class="label body" x="45" y="250">Visualization of</text>
+    <text class="label body" x="45" y="282">running systems.</text>
+    <circle cx="28" cy="344" r="4" fill="#26eebc"/>
+    <text class="label body" x="45" y="350">Agent and server</text>
+    <text class="label body" x="45" y="382">components for</text>
+    <text class="label body" x="45" y="414">collecting system state</text>
+    <text class="label body" x="45" y="446">and rendering it as</text>
+    <text class="label body" x="45" y="478">diagrams.</text>
+  </g>
+
+  <g transform="translate(1392 350)">
+    <path class="card strokeGreen" d="M0 38q0-38 38-38h210q38 0 38 38v474q0 22-16 38l-20 20H36q-36 0-36-36z"/>
+    <circle cx="143" cy="-4" r="59" fill="#18331c" stroke="#92f044" stroke-width="2.5" filter="url(#glow)"/>
+    <path d="M143 -43 184 -20v49l-41 23-41-23v-49zM102 -20l41 25 41-25M143 5v47" stroke="#9cff72" stroke-width="5" fill="none"/>
+    <text class="label number green" x="30" y="96">5.</text>
+    <text class="label cardTitle" x="30" y="140">Advanced</text>
+    <text class="label cardTitle" x="30" y="178">Views</text>
+    <path d="M30 205h150" stroke="#92f044" stroke-width="4"/>
+    <circle cx="28" cy="244" r="4" fill="#92f044"/>
+    <text class="label body" x="45" y="250">3D modeling support for</text>
+    <text class="label body" x="45" y="282">richer architecture and</text>
+    <text class="label body" x="45" y="314">infrastructure</text>
+    <text class="label body" x="45" y="346">visualization.</text>
+  </g>
+
+  <g transform="translate(150 910)" filter="url(#glow)">
+    <path d="M0 0h1475l25 32-25 32H25L0 32z" fill="#071622" stroke="url(#cyanGreen)" stroke-width="1.5"/>
+    <text class="label accent small" x="100" y="41">DIAGRAM-AS-CODE</text>
+    <text class="label accent small" x="455" y="41">ARCHITECTURE INTELLIGENCE</text>
+    <text class="label green small" x="890" y="41">AUTOMATION FIRST</text>
+    <text class="label muted small" x="1188" y="41">INFRASTRUCTURE AWARE</text>
+    <path d="M36 20 20 32l16 12M56 20 72 32 56 44M45 16l-11 32" stroke="#37a3ff" stroke-width="4" fill="none"/>
+    <path d="M395 12v40M830 12v40M1135 12v40" stroke="#255d73" stroke-width="2"/>
+    <path d="M405 45h18v-18h26v18h18M436 27v-16M426 11h20" stroke="#00e7d0" stroke-width="3" fill="none"/>
+    <path d="M790 18a22 22 0 1 0 0 28M790 18a22 22 0 1 1 0 28M768 32h44M790 10v44" stroke="#9beeff" stroke-width="3" fill="none"/>
+    <path d="M1168 42h58c19 0 28-26 10-37-10-7-24-3-29 8-19-12-41 7-35 25-11 0-18 4-18 11 0 6 5 10 14 10z" stroke="#9beeff" stroke-width="3" fill="none"/>
+  </g>
+</svg>

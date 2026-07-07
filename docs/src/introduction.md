@@ -30,3 +30,5 @@ Core features:
 
 Use this documentation when authoring `.xal` files, rendering output, or
 working on the xaligo codebase.
+
+See [Planned Work](roadmap.md) for upcoming and exploratory features.

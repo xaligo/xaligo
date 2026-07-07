@@ -40,6 +40,12 @@ Source: [docs/src/examples/samples/complex-hybrid-architecture.xal](docs/src/exa
 
 Source: [docs/src/examples/samples/complex-hybrid-architecture.xal](docs/src/examples/samples/complex-hybrid-architecture.xal)
 
+## Roadmap
+
+![xaligo Roadmap](docs/src/images/xaligo-roadmap.svg)
+
+See [Planned Work](docs/src/roadmap.md) for upcoming and exploratory features.
+
 ## Documentation
 
 - [Official documentation](docs/src/SUMMARY.md)
