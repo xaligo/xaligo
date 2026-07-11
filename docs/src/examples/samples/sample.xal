@@ -3,7 +3,7 @@
 <!--   Tier 2 Application  : EC2 / ECS / EKS  (App Subnet per AZ)                      -->
 <!--   Tier 3 Data         : Aurora / ElastiCache / RDS  (DB Subnet per AZ)            -->
 <!-- Resource Icons (Res_*) are placed alongside their parent service icons             -->
-<frame width="1900" height="1280" class="pa-4">
+<frame version="1" width="1900" height="1280" class="pa-4">
   <aws-account id="aws-account" title="AWS Account">
 
     <aws-cloud id="aws-cloud" title="AWS Cloud">

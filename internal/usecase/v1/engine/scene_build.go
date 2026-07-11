@@ -119,6 +119,7 @@ func BuildJSONV1EngineSceneBuild(root *entity.Box, svgGroupDir string, catalogCS
 	}
 	applySemanticElementMetadataV1EngineSceneWalk(elements, collectSemanticElementMetadataV1EngineSceneWalk(root))
 	renderConnectionsV1EngineSceneConnectionRender(connections, itemImgRects, itemLblRects, itemImgIDs, itemLblIDs, frameRects, &elements)
+	appendDiffBoxHighlightsV1EngineSceneDiffHighlight(root, &elements)
 	elements = orderSceneLayersV1EngineSceneBuild(elements)
 
 	out := fileV1EngineSceneTypes{

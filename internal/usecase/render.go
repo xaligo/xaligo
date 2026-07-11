@@ -66,7 +66,8 @@ const (
 	FormatXYFlow     = v1engine.FormatXYFlowV1EngineOptionRender
 	FormatIsoflow    = v1engine.FormatIsoflowV1EngineOptionRender
 
-	SeverityError = v1engine.SeverityErrorV1EngineOptionRender
+	SeverityError   = v1engine.SeverityErrorV1EngineOptionRender
+	SeverityWarning = v1engine.SeverityWarningV1EngineOptionRender
 )
 
 var ErrNotImplemented = v1engine.ErrNotImplementedV1EngineOptionRender

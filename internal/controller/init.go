@@ -16,7 +16,7 @@ var (
 	ICIRI003  = share.NewMCode("ICIRI-003", "Run init created sample DSL")
 )
 
-const sampleDSL = `<frame width="1440" height="900" class="pa-4">
+const sampleDSL = `<frame version="1" width="1440" height="900" class="pa-4">
   <container class="pa-4">
     <row gap="20" class="mb-2">
       <col span="8" class="pa-2">

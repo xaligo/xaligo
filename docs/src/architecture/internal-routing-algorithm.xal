@@ -1,4 +1,4 @@
-<frame width="1440" height="820" class="pa-4" gap="20">
+<frame version="1" width="1440" height="820" class="pa-4" gap="20">
   <generic-group id="v1-engine-package" title="internal/usecase/v1/engine" icon="none" gap="20">
     <row gap="20">
       <col span="4">

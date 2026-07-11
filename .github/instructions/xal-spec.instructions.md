@@ -13,10 +13,11 @@ The parser uses `encoding/xml` and handles attributes, nested tags, and text con
 
 ## V1 Compatibility Profile and Version Boundary
 
-This document defines the frozen V1 compatibility profile. An unversioned
-`<frame>` or `<frames>` root is V1. An explicit `version="1"` on either V1 root
-also selects V1. A `version` value other than `1` on a V1 root is invalid; it
-must never silently select another language version.
+This document defines the frozen V1 compatibility profile. Canonical V1 source
+explicitly sets `version="1"` on its `<frame>` or `<frames>` root. For backward
+compatibility, an unversioned V1 root still defaults to V1 but emits a warning
+recommending the explicit version. A `version` value other than `1` on a V1
+root is invalid; it must never silently select another language version.
 
 V2 uses a distinct, reject-safe root:
 
@@ -46,7 +47,7 @@ frontend canonicalizes the documented V1 values once at its input boundary.
 ## Root Tag
 
 ```xml
-<frame width="1440" height="900" class="pa-4">
+<frame version="1" width="1440" height="900" class="pa-4">
   ...
 </frame>
 ```
@@ -55,7 +56,7 @@ For multi-frame documents, wrap pages in `<frames>` and give each child
 `<frame>` a stable `id`.
 
 ```xml
-<frames gap="48">
+<frames version="1" gap="48">
   <frame id="overview" width="1440" height="900">
     ...
   </frame>
@@ -67,7 +68,7 @@ For multi-frame documents, wrap pages in `<frames>` and give each child
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
-| `version` | string | — | Root only. Omit for implicit V1 or set exactly to `"1"` |
+| `version` | string | `"1"` with warning when omitted | Root only. Explicit `"1"` is recommended and is the only accepted value |
 | `width` | float | `1280` | Frame width (px) |
 | `height` | float | `720` | Frame height (px) |
 | `class` | string | — | Spacing class |

@@ -32,8 +32,8 @@ builders and repositories directly.
 
 ## Language-version boundary
 
-Unversioned `<frame>` and `<frames>` roots select the frozen V1 profile;
-`version="1"` is the only explicit version permitted on those roots. Native V2
+`<frame version="1">` and `<frames version="1">` select the frozen V1 profile.
+Unversioned roots remain a V1 compatibility fallback and emit a warning. Native V2
 uses the reject-safe `<scene version="2">` root. The V1 parser is not extended
 to recognize `<scene>` and does not import or call V2 code.
 
@@ -141,6 +141,11 @@ allows V2 to render V1 while V1 remains unaware of V2.
     An encoder may omit a value its target schema cannot represent, but it must
     not invent private schema extensions or become an intermediate semantic
     model. Lossy capabilities are documented and tested explicitly.
+25. Structural diff compares parsed `.xal` trees, never source lines or
+    positional scene/plan IDs. The old side highlights removed and previous
+    modified/moved nodes in pale red; the new side highlights added and current
+    modified/moved nodes in pale green. Highlight overlays are added after
+    layout and route resolution and must not become routing obstacles.
 
 ## File organization
 
@@ -163,8 +168,8 @@ responsibility as the filename prefix:
   `New<Component>Repository` and returns that interface.
 - The concrete implementation type is unexported.
 
-Current component prefixes are `add`, `generate`, `init`, `render`, `serve`,
-`validate`, and `version` in `internal/controller`; `render`, `diagnostics`,
+Current component prefixes are `add`, `diff`, `generate`, `init`, `render`,
+`serve`, `validate`, and `version` in `internal/controller`; `render`, `diff`, `diagnostics`,
 `scene_io`, `catalog`, `export`, `parser`, `layout`, `element`, `pagination`,
 `plan`, `scene`, and `theme` in `internal/usecase`; and `powerpoint`, `preview`,
 `isoflow`, `svg`, `xyflow`, `excalidraw`, and `xaligo` in

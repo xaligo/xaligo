@@ -214,6 +214,7 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 		if hasDstAnchor {
 			customData["xaligoConnectorEndAnchor"] = true
 		}
+		applyConnectionDiffStatusV1EngineSceneDiffHighlight(customData, conn)
 
 		*elements = append(*elements, map[string]any{
 			"id": connID, "type": "arrow",

@@ -1,5 +1,5 @@
 <!-- server-contents: Server contents (icon: Server-contents_32.svg) -->
-<frame width="600" height="440" class="pa-4">
+<frame version="1" width="600" height="440" class="pa-4">
   <server-contents id="server-contents" title="Server contents">
     <row gap="16">
       <col span="6" class="pa-2">

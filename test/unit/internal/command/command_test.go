@@ -11,14 +11,14 @@ import (
 
 func TestNewRootCmdAssemblesSubcommands(t *testing.T) {
 	for _, cmd := range []*cobra.Command{command.NewRootCmd()} {
-		if cmd.Use != "xaligo" || cmd.Short == "" || len(cmd.Commands()) < 7 {
+		if cmd.Use != "xaligo" || cmd.Short == "" || len(cmd.Commands()) < 8 {
 			t.Fatalf("root command = use %q short %q subcommands %d", cmd.Use, cmd.Short, len(cmd.Commands()))
 		}
 		seen := map[string]bool{}
 		for _, sub := range cmd.Commands() {
 			seen[sub.Name()] = true
 		}
-		for _, name := range []string{"render", "validate", "serve", "init", "version", "add", "generate"} {
+		for _, name := range []string{"render", "validate", "serve", "init", "version", "add", "generate", "diff"} {
 			if !seen[name] {
 				t.Fatalf("subcommand %q missing from %#v", name, seen)
 			}

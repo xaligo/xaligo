@@ -1,5 +1,5 @@
 <!-- corporate-data-center: Corporate data center (icon: Corporate-data-center_32.svg) -->
-<frame width="600" height="440" class="pa-4">
+<frame version="1" width="600" height="440" class="pa-4">
   <corporate-data-center id="corporate-data-center" title="Corporate data center">
     <row gap="16">
       <col span="6" class="pa-2">

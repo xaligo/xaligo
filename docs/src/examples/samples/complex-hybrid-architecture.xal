@@ -4,7 +4,7 @@
   grid and flex layout, route/traffic lanes, orthogonal routing, automatic
   junctions, line jumps, custom strokes, and independent arrowheads.
 -->
-<frame width="1920" height="1440" class="pa-3" item-size="40">
+<frame version="1" width="1920" height="1440" class="pa-3" item-size="40">
   <row gap="24">
     <col span="3">
       <corporate-data-center id="onprem-hq" title="On-premises Headquarters">

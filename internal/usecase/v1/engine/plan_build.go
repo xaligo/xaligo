@@ -127,6 +127,7 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 	prepared := prepareConnectorsV1EnginePlanConnectorPrepare(connectors, elementsByID)
 
 	ops := []entity.DrawOp{}
+	diffAreaHighlights := []entity.DrawOp{}
 
 	// 1) Anchor grids first → behind the icons drawn on top.
 	gridIDs := make([]string, 0, len(prepared.gridRects))
@@ -156,13 +157,20 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 		switch el.Type {
 		case "frame", "rectangle", "ellipse":
 			if op, ok := shapeOpV1EnginePlanShape(el, frame, ppi); ok {
-				ops = append(ops, op)
+				if el.CustomData != nil && el.CustomData.DiffHighlight {
+					diffAreaHighlights = append(diffAreaHighlights, op)
+				} else {
+					ops = append(ops, op)
+				}
 			}
 		}
 	}
 	// 3) Connectors above containers but below icons/labels.
 	for _, el := range prepared.raw {
 		if op, ok := rawLineOpV1EnginePlanConnectorDraw(el, frame, ppi, style); ok {
+			if highlight, highlighted := connectorDiffHighlightOpV1EnginePlanDiffHighlight(op, connectorDiffStatusV1EnginePlanDiffHighlight(el)); highlighted {
+				ops = append(ops, highlight)
+			}
 			ops = append(ops, op)
 		}
 	}
@@ -209,6 +217,9 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 			ops = append(ops, lineJumpMaskOpV1EnginePlanJunction(fmt.Sprintf("%s-jump-mask-%02d", path.ID, maskIndex), crossing, frame, ppi, maskColor))
 		}
 		if op, ok := polylineOpV1EnginePlanConnectorDraw(el, path.Points, frame, ppi, style); ok {
+			if highlight, highlighted := connectorDiffHighlightOpV1EnginePlanDiffHighlight(op, connectorDiffStatusV1EnginePlanDiffHighlight(el)); highlighted {
+				ops = append(ops, highlight)
+			}
 			ops = append(ops, op)
 		}
 		line := connectorLineV1EnginePlanConnectorDraw(el, style, ppi)
@@ -251,6 +262,7 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 			}
 		}
 	}
+	ops = append(ops, diffAreaHighlights...)
 	ops = append(ops, connectorLabels...)
 
 	return entity.Plan{

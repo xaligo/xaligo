@@ -77,6 +77,33 @@ func TestDiagnoseReportsParsePositionAndContext(t *testing.T) {
 	}
 }
 
+func TestImplicitV1VersionProducesNonBlockingWarning(t *testing.T) {
+	input := []byte(`<frame><blank /></frame>`)
+	diagnostics, err := usecase.Diagnose(context.Background(), input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(diagnostics) != 1 || diagnostics[0].Severity != usecase.SeverityWarning {
+		t.Fatalf("diagnostics = %#v, want one warning", diagnostics)
+	}
+	if diagnostics[0].Line == 0 || diagnostics[0].Column == 0 || !strings.Contains(diagnostics[0].Message, `version="1"`) {
+		t.Fatalf("diagnostic = %#v, want positioned explicit-version recommendation", diagnostics[0])
+	}
+	if err := usecase.Validate(context.Background(), input); err != nil {
+		t.Fatalf("Validate() error = %v, want warning to be non-blocking", err)
+	}
+}
+
+func TestExplicitV1VersionDoesNotProduceWarning(t *testing.T) {
+	diagnostics, err := usecase.Diagnose(context.Background(), []byte(`<frame version="1"><blank /></frame>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(diagnostics) != 0 {
+		t.Fatalf("diagnostics = %#v, want none", diagnostics)
+	}
+}
+
 func TestValidateRejectsInvalidLayoutNumbers(t *testing.T) {
 	cases := []struct {
 		name  string

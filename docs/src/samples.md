@@ -13,6 +13,36 @@ xaligo render docs/src/examples/samples/complex-hybrid-architecture.xal \
   -o output/complex-hybrid-architecture.svg
 ```
 
+## Structural Diff
+
+This pair demonstrates a title update, an element moved between groups, a
+removed legacy store, an added cache, and changed connections. The comparison
+uses parsed `.xal` structure rather than text lines.
+
+### Removed and previous values
+
+![Structural diff removed elements](images/diff-sample-removed.svg)
+
+### Added and current values
+
+![Structural diff added elements](images/diff-sample-added.svg)
+
+Sources:
+
+- [`diff-before.xal`](examples/samples/diff-before.xal)
+- [`diff-after.xal`](examples/samples/diff-after.xal)
+
+```bash
+xaligo diff \
+  docs/src/examples/samples/diff-before.xal \
+  docs/src/examples/samples/diff-after.xal \
+  -o docs/src/images/diff-sample
+```
+
+The command reports `+2 -2 ~3`: two added branches, two removed branches, and
+three modified or moved elements. The old SVG uses pale red and the new SVG
+uses pale green; unchanged elements retain their normal styling.
+
 ## Isoflow Export
 
 ![Isoflow editor rendering the hybrid architecture sample](images/isoflow-complex-hybrid-architecture.png)

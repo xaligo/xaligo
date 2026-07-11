@@ -60,7 +60,8 @@ The next structural steps are:
 
 ## V1 Compatibility and V2
 
-Unversioned `<frame>` and `<frames>` remain the frozen V1 profile. V2 will use
+Explicitly versioned `<frame version="1">` and `<frames version="1">` are the
+recommended frozen V1 profile. Unversioned roots remain compatible but emit a warning. V2 will use
 the distinct `<scene version="2">` root, allowing an existing V1 reader to
 reject V2 safely without understanding it.
 

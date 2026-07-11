@@ -1,5 +1,5 @@
 <!-- On-premises users accessing a web system hosted on AWS. -->
-<frame width="1600" height="900" class="pa-4">
+<frame version="1" width="1600" height="900" class="pa-4">
   <row gap="24">
     <col span="4">
       <corporate-data-center id="onprem-site" title="On-premises Site" row="8">

@@ -1,5 +1,5 @@
 <!-- auto-scaling-group: Auto Scaling group (icon: Auto-Scaling-group_32.svg) -->
-<frame width="600" height="440" class="pa-4">
+<frame version="1" width="600" height="440" class="pa-4">
   <auto-scaling-group id="auto-scaling-group" title="Auto Scaling group">
     <row gap="16">
       <col span="6" class="pa-2">

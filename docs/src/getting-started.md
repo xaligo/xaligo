@@ -24,7 +24,7 @@ make build
 Create a `.xal` file:
 
 ```xml
-<frame width="1122" height="794" class="pa-4">
+<frame version="1" width="1122" height="794" class="pa-4">
   <aws-cloud id="cloud" title="AWS Cloud">
     <region id="region-apne1" title="ap-northeast-1">
       <vpc id="prod-vpc" title="Production VPC">

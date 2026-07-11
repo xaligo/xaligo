@@ -42,6 +42,7 @@ func NewRootCmd() *cobra.Command {
 	diagnosticsUsecase := usecase.NewDiagnosticsUsecase()
 	elementUsecase := usecase.NewElementUsecase()
 	themeUsecase := usecase.NewThemeUsecase()
+	diffUsecase := usecase.NewDiffUsecase(xaligoRepository, excalidrawRepository, svgRepository)
 
 	addController := controller.NewAddController(cfg, sceneIOUsecase, catalogUsecase, elementUsecase)
 	generateController := controller.NewGenerateController(renderUsecase, exportUsecase)
@@ -50,6 +51,7 @@ func NewRootCmd() *cobra.Command {
 	serveController := controller.NewServeController(renderUsecase)
 	initController := controller.NewInitController()
 	versionController := controller.NewVersionController()
+	diffController := controller.NewDiffController(diffUsecase)
 
 	root := &cobra.Command{
 		Use:   "xaligo",
@@ -64,6 +66,7 @@ func NewRootCmd() *cobra.Command {
 	root.AddCommand(versionController.Command())
 	root.AddCommand(addController.Command())
 	root.AddCommand(generateController.Command())
+	root.AddCommand(diffController.Command())
 	return root
 }
 

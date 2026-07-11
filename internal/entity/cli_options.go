@@ -1,9 +1,20 @@
 package entity
 
 import (
+	"io"
 	"os"
 	"time"
 )
+
+type ControllerDiffOptions struct {
+	BeforePath   string
+	AfterPath    string
+	OutputPrefix string
+	Theme        string
+	Mode         string
+	PxPerInch    float64
+	Stdout       io.Writer
+}
 
 type ControllerRenderOptions struct {
 	InputPath         string

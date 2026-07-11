@@ -47,6 +47,36 @@ PPTX-specific flags:
 | `--title`, `--author`, `--company`, `--subject` | Presentation metadata |
 | `--compression true|false` | PPTX compression |
 
+## Structural Diff
+
+```bash
+xaligo diff before.xal after.xal -o output/architecture
+```
+
+The command compares parsed `.xal` data structures rather than source lines and
+writes two SVG images:
+
+- `output/architecture-removed.svg` renders the old document and highlights
+  removed elements plus the old side of modified or moved elements in pale red.
+- `output/architecture-added.svg` renders the new document and highlights
+  added elements plus the new side of modified or moved elements in pale green.
+
+XML formatting, comments, attribute order, parser-private attributes, and the
+equivalent V1 forms with an omitted version or `version="1"` do not create a
+diff. Matching prefers unique `name`, `ref`, and `id` values, then exact
+subtrees, followed by deterministic order-aware structural matching. Give
+elements an explicit `id`, `name`, or `ref` when moves must remain identifiable
+across different parents.
+
+`-o` is an output prefix, not a single output filename. A trailing `.svg` is
+removed before `-removed.svg` and `-added.svg` are appended. The default prefix
+is `output`. `--theme`, `--mode`, and `--px-per-inch` are applied identically to
+both images. No difference is a successful result and still produces two
+unhighlighted SVGs.
+
+See the [structural diff sample](samples.md#structural-diff) for a complete
+before/after pair and the generated images.
+
 ## Generate
 
 Generate a starter `.xal` hierarchy:
@@ -69,6 +99,7 @@ Useful generation flags:
 
 | Command | Description |
 |---|---|
+| `xaligo diff <before.xal> <after.xal> -o <prefix>` | Render paired structural-diff SVGs |
 | `xaligo validate <file.xal>` | Validate syntax, layout, and connection references |
 | `xaligo serve <file.xal>` | Serve an SVG live preview |
 | `xaligo add service --name <name> --file <file>` | Add a service icon |

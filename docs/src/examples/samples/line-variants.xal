@@ -1,4 +1,4 @@
-<frame width="960" height="540" class="pa-4">
+<frame version="1" width="960" height="540" class="pa-4">
   <generic-group id="route-traffic-demo" title="Route and Traffic" align="middle-spread">
     <item id="200005" /> <!-- desktop_pc -->
     <item id="200036" /> <!-- router_general -->

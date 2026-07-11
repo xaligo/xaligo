@@ -23,8 +23,14 @@ func (rcvr *diagnosticsUsecase) Validate(ctx context.Context, input []byte) erro
 	if err != nil {
 		return err
 	}
-	if len(diagnostics) > 0 {
-		return &entity.DiagnosticsError{Diagnostics: diagnostics}
+	errors := make([]entity.Diagnostic, 0, len(diagnostics))
+	for _, diagnostic := range diagnostics {
+		if diagnostic.Severity == SeverityError {
+			errors = append(errors, diagnostic)
+		}
+	}
+	if len(errors) > 0 {
+		return &entity.DiagnosticsError{Diagnostics: errors}
 	}
 	return nil
 }

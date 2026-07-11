@@ -389,7 +389,7 @@ func TestRunGenerateAndInit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(data), `<frame width="1122" height="794"`) || !strings.Contains(string(data), "<aws-cloud") {
+	if !strings.Contains(string(data), `<frame version="1" width="1122" height="794"`) || !strings.Contains(string(data), "<aws-cloud") {
 		t.Fatalf("generated XAL = %s", data)
 	}
 
@@ -424,6 +424,13 @@ func TestRunGenerateAndInit(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(initDir, "sample.xal")); err != nil {
 		t.Fatal(err)
+	}
+	initialized, err := os.ReadFile(filepath.Join(initDir, "sample.xal"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(initialized), `<frame version="1"`) {
+		t.Fatalf("initialized XAL = %s", initialized)
 	}
 }
 

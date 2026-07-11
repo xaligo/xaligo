@@ -1,5 +1,5 @@
 <!-- aws-cloud-alt: AWS Cloud (icon: AWS-Cloud_32.svg) -->
-<frame width="600" height="440" class="pa-4">
+<frame version="1" width="600" height="440" class="pa-4">
   <aws-cloud-alt id="aws-cloud-alt" title="AWS Cloud">
     <row gap="16">
       <col span="6" class="pa-2">

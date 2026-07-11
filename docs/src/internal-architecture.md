@@ -48,12 +48,54 @@ tree -> canonical scene -> plan or encoder`. `validate` and `render` execute the
 same layout checks, and formats do not have independent parsers or layout
 engines.
 
+## Structural diff algorithm
+
+[`DiffUsecase.Diff`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/diff.go)
+parses the before and after inputs once each, invokes the synchronous tree
+comparison, then sends both annotated documents through the normal V1 layout,
+scene, plan, and SVG repository stages. The two render jobs are independent;
+future parallel scheduling belongs in this parent use case rather than the V1
+engine.
+
+The comparison starts at
+[`DiffDocumentsV1EngineDiffDocument`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/v1/engine/diff_document.go).
+It does not compare XML lines or generated element IDs because current layout
+IDs contain sibling indexes. Instead it compares the parsed `entity.Node`
+trees using these stages:
+
+1. [`diff_fingerprint.go`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/v1/engine/diff_fingerprint.go)
+   canonicalizes tags, user attributes, and direct text. Attribute order,
+   formatting whitespace, `_xaligo*` parser metadata, and implicit versus
+   explicit V1 are ignored.
+2. [`diff_match.go`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/v1/engine/diff_match.go)
+   first matches unique `name`, `ref`, and `id` identities. Remaining siblings
+   use exact ordered-subtree fingerprints and a deterministic dynamic-programming
+   sequence alignment, avoiding a cascade when one early sibling is inserted.
+3. [`diff_classify.go`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/v1/engine/diff_classify.go)
+   classifies unmatched branches as added/removed and matched value, order, or
+   parent changes as modified. Added and removed subtrees collapse to their
+   highest changed root.
+
+The old side is annotated as removed and the new side as added. Area overlays
+are created by
+[`appendDiffBoxHighlightsV1EngineSceneDiffHighlight`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/v1/engine/scene_diff_highlight.go),
+while connector highlighting clones the already resolved path in
+[`connectorDiffHighlightOpV1EnginePlanDiffHighlight`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/v1/engine/plan_diff_highlight.go).
+These translucent overlays are excluded from routing obstacles, so displaying a
+diff cannot change the underlying connector route. The SVG repository only
+serializes ordinary draw operations and contains no diff-specific branching.
+
+[`DiffController.Run`](https://github.com/xaligo/xaligo/blob/main/internal/controller/diff.go)
+reads both sources, waits for both SVG byte sequences, and replaces the paired
+`-removed.svg` and `-added.svg` outputs through temporary files. A render error
+therefore occurs before either final output is written.
+
 ## V1 compatibility and the V2 boundary
 
 The current
 [`ParseV1EngineParseDocument`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/v1/engine/parse_document.go)
-accepts only `<frame>` and `<frames>` roots. Those roots, when unversioned or
-explicitly marked `version="1"`, define the frozen V1 profile. Native V2 will
+accepts only `<frame>` and `<frames>` roots. Explicit `version="1"` defines the
+recommended frozen V1 profile; omission defaults to V1 with a warning. Native V2 will
 use `<scene version="2">`; the distinct root is intentional so the V1 parser
 rejects V2 before interpreting any nested tag as a permissive V1 custom group.
 
@@ -82,7 +124,7 @@ those semantics.
 | Package | Role | Representative code |
 |---|---|---|
 | `cmd`, `internal/controller` | Process entry points, CLI flags, and file I/O | [`internal/command.go`](https://github.com/xaligo/xaligo/blob/main/internal/command.go) |
-| `internal/usecase` | Context checks, repository adaptation, stage ordering, format dispatch, and future parallel scheduling | [`render.go`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/render.go), [`diagnostics.go`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/diagnostics.go) |
+| `internal/usecase` | Context checks, repository adaptation, stage ordering, render/diff orchestration, format dispatch, and future parallel scheduling | [`render.go`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/render.go), [`diff.go`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/diff.go), [`diagnostics.go`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/diagnostics.go) |
 | `internal/usecase/v1/engine` | Synchronous V1 parser, validation, layout, scene, routing, pagination, theme, and draw-plan calculations | [`v1/engine`](https://github.com/xaligo/xaligo/tree/main/internal/usecase/v1/engine) |
 | `internal/entity` | Data exchanged across layers, including resolved content boxes, `PresentationScene`, `Plan`, and `TextLayout`; no orchestration | [`internal/entity`](https://github.com/xaligo/xaligo/tree/main/internal/entity) |
 | `internal/repository` | Catalog/filesystem access and output encoders | [`internal/repository`](https://github.com/xaligo/xaligo/tree/main/internal/repository) |
@@ -94,7 +136,8 @@ constructor: [`RenderUsecase`](https://github.com/xaligo/xaligo/blob/main/intern
 [`DiagnosticsUsecase`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/diagnostics.go),
 [`SceneIOUsecase`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/scene_io.go),
 [`CatalogUsecase`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/catalog.go), and
-[`ExportUsecase`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/export.go). Parser,
+[`ExportUsecase`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/export.go), and
+[`DiffUsecase`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/diff.go). Parser,
 layout, element construction, pagination, plan construction, scene
 construction, and theming follow the same component form in
 [`internal/usecase`](https://github.com/xaligo/xaligo/tree/main/internal/usecase).

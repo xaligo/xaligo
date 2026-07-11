@@ -33,6 +33,7 @@ xaligo/
 │   ├── entity/                  internal structures; independent entity layer
 │   ├── usecase/
 │   │   ├── render.go            RenderUsecase, dispatch, and orchestration
+│   │   ├── diff.go              DiffUsecase, structural comparison, and paired SVG orchestration
 │   │   ├── diagnostics.go       DiagnosticsUsecase and shared validation
 │   │   ├── scene_io.go          SceneIOUsecase for editable scene persistence
 │   │   ├── catalog.go           CatalogUsecase for service metadata

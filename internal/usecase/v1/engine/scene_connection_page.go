@@ -83,6 +83,7 @@ func appendCrossFrameArrowV1EngineSceneConnectionPage(elements *[]map[string]any
 	if anchor, ok := connectionEndpointAnchorV1EngineSceneConnectionRoute(conn, "dst"); ok && anchor.hasSlot {
 		customData["xaligoConnectorDstAnchor"] = true
 	}
+	applyConnectionDiffStatusV1EngineSceneDiffHighlight(customData, conn)
 	*elements = append(*elements, map[string]any{
 		"id": id, "type": "arrow",
 		"x": start[0], "y": start[1],

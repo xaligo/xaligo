@@ -1,5 +1,5 @@
 <!-- security-group: Security group (no icon) -->
-<frame width="600" height="440" class="pa-4">
+<frame version="1" width="600" height="440" class="pa-4">
   <security-group id="security-group" title="Security group">
     <row gap="16">
       <col span="6" class="pa-2">
