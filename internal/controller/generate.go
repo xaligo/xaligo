@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -25,11 +24,6 @@ var (
 	ICGRG007   = share.NewMCode("ICGRG-007", "Run generate value out of range branch")
 	ICGRG008   = share.NewMCode("ICGRG-008", "Run generate write output failed")
 	ICGRG009   = share.NewMCode("ICGRG-009", "Run generate generated output")
-	ICGWMS001  = share.NewMCode("ICGWMS-001", "Warn service mismatch open XAL failed")
-	ICGWMS002  = share.NewMCode("ICGWMS-002", "Warn service mismatch parse XAL failed")
-	ICGWMS003  = share.NewMCode("ICGWMS-003", "Warn service mismatch read services failed")
-	ICGWMS004  = share.NewMCode("ICGWMS-004", "Warn service mismatch item missing from services")
-	ICGWMS005  = share.NewMCode("ICGWMS-005", "Warn service mismatch service missing from diagram")
 )
 
 var paperSizes = map[string][2]int{
@@ -43,19 +37,25 @@ var paperSizes = map[string][2]int{
 	"Tabloid": {1056, 1632},
 }
 
-type GenerateController struct {
-	usecase usecase.XaligoUsecase
+type GenerateController interface {
+	Command() *cobra.Command
+	RunPptx(opts entity.ControllerPptxGenerateOptions) error
 }
 
-func NewGenerateController(uc usecase.XaligoUsecase) *GenerateController {
-	return &GenerateController{usecase: uc}
+type generateController struct {
+	renderUsecase usecase.RenderUsecase
+	exportUsecase usecase.ExportUsecase
+}
+
+func NewGenerateController(renderUsecase usecase.RenderUsecase, exportUsecase usecase.ExportUsecase) GenerateController {
+	return &generateController{renderUsecase: renderUsecase, exportUsecase: exportUsecase}
 }
 
 // Command returns the `xaligo generate` parent command with subcommands:
 //   - xaligo generate xal … generate an AWS hierarchy .xal
 //
 // Format conversion belongs to `xaligo render --format ...`.
-func (rcvr *GenerateController) Command() *cobra.Command {
+func (rcvr *generateController) Command() *cobra.Command {
 	logger.DEBUG(ICGIGC001, "start")
 	parent := &cobra.Command{
 		Use:   "generate",
@@ -187,11 +187,11 @@ func RunGenerate(
 
 // RunGeneratePptx builds a resolved Go PPTX plan, then asks the repository layer
 // to invoke the WASM exporter that turns the plan into PPTX bytes.
-func (rcvr *GenerateController) RunPptx(opts entity.ControllerPptxGenerateOptions) error {
-	return runGeneratePptx(rcvr.usecase, opts)
+func (rcvr *generateController) RunPptx(opts entity.ControllerPptxGenerateOptions) error {
+	return runGeneratePptx(rcvr.renderUsecase, rcvr.exportUsecase, opts)
 }
 
-func runGeneratePptx(uc usecase.XaligoUsecase, opts entity.ControllerPptxGenerateOptions) error {
+func runGeneratePptx(renderUsecase usecase.RenderUsecase, exportUsecase usecase.ExportUsecase, opts entity.ControllerPptxGenerateOptions) error {
 	if opts.XalPath == "" {
 		return fmt.Errorf("--xal is required")
 	}
@@ -204,11 +204,11 @@ func runGeneratePptx(uc usecase.XaligoUsecase, opts entity.ControllerPptxGenerat
 	if opts.PaperMargin < 0 || opts.PaperMarginTop < 0 || opts.PaperMarginRight < 0 || opts.PaperMarginBottom < 0 || opts.PaperMarginLeft < 0 {
 		return fmt.Errorf("paper margins must be non-negative")
 	}
-	planJSON, err := buildPptxPlanJSON(uc, opts)
+	planJSON, err := buildPptxPlanJSON(renderUsecase, opts)
 	if err != nil {
 		return err
 	}
-	return uc.ExportPptx(context.Background(), entity.PptxExportOptions{
+	return exportUsecase.ExportPptx(context.Background(), entity.PptxExportOptions{
 		PlanJSON:     planJSON,
 		Output:       opts.Output,
 		Title:        opts.Title,
@@ -222,9 +222,11 @@ func runGeneratePptx(uc usecase.XaligoUsecase, opts entity.ControllerPptxGenerat
 	})
 }
 
-func buildPptxPlanJSON(uc usecase.XaligoUsecase, opts entity.ControllerPptxGenerateOptions) ([]byte, error) {
-	if err := uc.ValidateRenderOptions(entity.RenderOptions{
+func buildPptxPlanJSON(renderUsecase usecase.RenderUsecase, opts entity.ControllerPptxGenerateOptions) ([]byte, error) {
+	if err := renderUsecase.ValidateRenderOptions(entity.RenderOptions{
 		Mode: entity.Mode(opts.Mode), Format: usecase.FormatPPTX, Theme: opts.Theme,
+		PxPerInch: opts.PxPerInch, ArrowStyle: opts.ArrowStyle, ArrowStubPx: opts.ArrowStub, ArrowMarginPx: opts.ArrowMargin,
+		PaperSize: opts.Paper, Orientation: opts.Orientation,
 		PaperMarginIn: opts.PaperMargin, PaperMarginTopIn: opts.PaperMarginTop, PaperMarginRightIn: opts.PaperMarginRight,
 		PaperMarginBottomIn: opts.PaperMarginBottom, PaperMarginLeftIn: opts.PaperMarginLeft,
 	}); err != nil {
@@ -236,13 +238,12 @@ func buildPptxPlanJSON(uc usecase.XaligoUsecase, opts entity.ControllerPptxGener
 	}
 	var servicesCSV []byte
 	if opts.ServicesFile != "" {
-		warnServiceMismatch(uc, opts.XalPath, opts.ServicesFile)
 		servicesCSV, err = os.ReadFile(opts.ServicesFile)
 		if err != nil {
 			return nil, fmt.Errorf("read services %s: %w", opts.ServicesFile, err)
 		}
 	}
-	return uc.BuildPPTXPlan(context.Background(), input, entity.RenderOptions{
+	return renderUsecase.BuildPPTXPlan(context.Background(), input, entity.RenderOptions{
 		Mode:                entity.Mode(opts.Mode),
 		Format:              usecase.FormatPPTX,
 		Theme:               opts.Theme,
@@ -401,78 +402,4 @@ func buildXAL(W, H, nClouds, nAccounts, nRegions, nAZs int, azLayout string, nSu
 
 	b.sb.WriteString("</frame>\n")
 	return b.sb.String()
-}
-
-// ── Service mismatch warning ──────────────────────────────────────────────────
-
-// warnServiceMismatch compares the <item> catalog IDs in the .xal file with the
-// catalog IDs listed in the services CSV and prints a warning to stderr for any
-// ID that appears in one source but not the other.  Errors are silently ignored
-// so that a bad path never blocks the main generate command.
-func warnServiceMismatch(uc usecase.XaligoUsecase, xalPath, servicesFile string) {
-	// ── collect item IDs from .xal ───────────────────────────────────────────
-	xalFile, err := os.Open(xalPath)
-	if err != nil {
-		logger.WARN(ICGWMS001, "open XAL failed", map[string]any{"xalPath": xalPath, "error": err})
-		return
-	}
-	defer xalFile.Close()
-
-	doc, err := usecase.Parse(xalFile)
-	if err != nil {
-		logger.WARN(ICGWMS002, "parse XAL failed", map[string]any{"xalPath": xalPath, "error": err})
-		return
-	}
-	itemIDs := collectItemIDs(doc.Root)
-	itemIDSet := make(map[int]bool, len(itemIDs))
-	for _, id := range itemIDs {
-		itemIDSet[id] = true
-	}
-
-	// ── collect IDs from services CSV ────────────────────────────────────────
-	entries, err := uc.ReadServiceList(servicesFile)
-	if err != nil {
-		logger.WARN(ICGWMS003, "read services failed", map[string]any{"servicesFile": servicesFile, "error": err})
-		return
-	}
-	svcIDSet := make(map[int]string, len(entries)) // id → OfficialName
-	for _, e := range entries {
-		if e.CatalogID > 0 {
-			svcIDSet[e.CatalogID] = e.OfficialName
-		}
-	}
-
-	// ── warn: in diagram but not in services.csv ─────────────────────────────
-	for id := range itemIDSet {
-		if _, ok := svcIDSet[id]; !ok {
-			logger.WARN(ICGWMS004, "item appears in diagram but is not listed in services", map[string]any{"catalogID": id, "xalPath": xalPath, "servicesFile": servicesFile})
-		}
-	}
-
-	// ── warn: in services.csv but not in diagram ─────────────────────────────
-	for id, name := range svcIDSet {
-		if !itemIDSet[id] {
-			logger.WARN(ICGWMS005, "service is listed in services but has no item in diagram", map[string]any{"catalogID": id, "name": name, "xalPath": xalPath, "servicesFile": servicesFile})
-		}
-	}
-}
-
-// collectItemIDs recursively walks the DSL AST and returns the integer catalog
-// IDs referenced by every <item id="N"> element found in the tree.
-func collectItemIDs(node *entity.Node) []int {
-	if node == nil {
-		return nil
-	}
-	var ids []int
-	if node.Tag == "item" {
-		if idStr, ok := node.Attrs["id"]; ok {
-			if id, err := strconv.Atoi(strings.TrimSpace(idStr)); err == nil {
-				ids = append(ids, id)
-			}
-		}
-	}
-	for _, child := range node.Children {
-		ids = append(ids, collectItemIDs(child)...)
-	}
-	return ids
 }

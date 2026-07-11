@@ -36,17 +36,24 @@ var (
 	ICARAB011  = share.NewMCode("ICARAB-011", "Run add batch completed")
 )
 
-type AddController struct {
-	config  *config.Config
-	usecase usecase.XaligoUsecase
+type AddController interface {
+	Command() *cobra.Command
+	RunServiceBatch(targetFile, listFile string) error
 }
 
-func NewAddController(cfg *config.Config, uc usecase.XaligoUsecase) *AddController {
-	return &AddController{config: cfg, usecase: uc}
+type addController struct {
+	config         *config.Config
+	sceneIOUsecase usecase.SceneIOUsecase
+	catalogUsecase usecase.CatalogUsecase
+	elementUsecase usecase.ElementUsecase
+}
+
+func NewAddController(cfg *config.Config, sceneIOUsecase usecase.SceneIOUsecase, catalogUsecase usecase.CatalogUsecase, elementUsecase usecase.ElementUsecase) AddController {
+	return &addController{config: cfg, sceneIOUsecase: sceneIOUsecase, catalogUsecase: catalogUsecase, elementUsecase: elementUsecase}
 }
 
 // Command returns the 'add' parent command.
-func (rcvr *AddController) Command() *cobra.Command {
+func (rcvr *addController) Command() *cobra.Command {
 	logger.DEBUG(ICAIC001, "start")
 	cmd := &cobra.Command{
 		Use:   "add",
@@ -59,7 +66,7 @@ func (rcvr *AddController) Command() *cobra.Command {
 // ─────────────────────────────────────────────────────────────────────────────
 // add service
 
-func (rcvr *AddController) initAddServiceCmd() *cobra.Command {
+func (rcvr *addController) initAddServiceCmd() *cobra.Command {
 	var (
 		targetFile string
 		listFile   string
@@ -101,7 +108,7 @@ Examples:
 			if isBatch {
 				logger.DEBUG(ICAISC003, "branch batch", map[string]any{"listFile": listFile})
 				var err error
-				entries, err = rcvr.usecase.ReadServiceList(listFile)
+				entries, err = rcvr.catalogUsecase.ReadServiceList(listFile)
 				if err != nil {
 					logger.ERROR(ICAISC004, "read list failed", map[string]any{"listFile": listFile, "error": err})
 					return fmt.Errorf("read list %s: %w", listFile, err)
@@ -115,7 +122,7 @@ Examples:
 				entries = []entity.ServiceEntry{{OfficialName: name}}
 			}
 
-			return runAddBatch(rcvr.config, rcvr.usecase, targetFile, entries, category, size, noLegend, isBatch, false)
+			return runAddBatch(rcvr.config, rcvr.sceneIOUsecase, rcvr.catalogUsecase, rcvr.elementUsecase, targetFile, entries, category, size, noLegend, isBatch, false)
 		},
 	}
 
@@ -135,17 +142,17 @@ Examples:
 
 // RunAddServiceBatch reads listFile (services.csv) and adds all listed service
 // icons to targetFile with legend entries stacked on the right side of the frame.
-func (rcvr *AddController) RunServiceBatch(targetFile, listFile string) error {
-	return runAddServiceBatch(rcvr.config, rcvr.usecase, targetFile, listFile)
+func (rcvr *addController) RunServiceBatch(targetFile, listFile string) error {
+	return runAddServiceBatch(rcvr.config, rcvr.sceneIOUsecase, rcvr.catalogUsecase, rcvr.elementUsecase, targetFile, listFile)
 }
 
-func runAddServiceBatch(cfg *config.Config, uc usecase.XaligoUsecase, targetFile, listFile string) error {
-	entries, err := uc.ReadServiceList(listFile)
+func runAddServiceBatch(cfg *config.Config, sceneIOUsecase usecase.SceneIOUsecase, catalogUsecase usecase.CatalogUsecase, elementUsecase usecase.ElementUsecase, targetFile, listFile string) error {
+	entries, err := catalogUsecase.ReadServiceList(listFile)
 	if err != nil {
 		logger.ERROR(ICARASB001, "read list failed", map[string]any{"listFile": listFile, "error": err})
 		return fmt.Errorf("read list %s: %w", listFile, err)
 	}
-	return runAddBatch(cfg, uc, targetFile, entries, "", 32, false, true, false)
+	return runAddBatch(cfg, sceneIOUsecase, catalogUsecase, elementUsecase, targetFile, entries, "", 32, false, true, false)
 }
 
 // runAddBatch is the shared implementation used by both the --list flag and
@@ -153,8 +160,8 @@ func runAddServiceBatch(cfg *config.Config, uc usecase.XaligoUsecase, targetFile
 // the frame; false places them on the left. legendOnly=true skips the standalone
 // main icon placed outside the frame (used by generate excalidraw, where <item>
 // tags already render icons inside the frame via the render path).
-func runAddBatch(cfg *config.Config, uc usecase.XaligoUsecase, targetFile string, entries []entity.ServiceEntry, category string, size int, noLegend, legendRight, legendOnly bool) error {
-	scene, err := uc.ReadScene(targetFile)
+func runAddBatch(cfg *config.Config, sceneIOUsecase usecase.SceneIOUsecase, catalogUsecase usecase.CatalogUsecase, elementUsecase usecase.ElementUsecase, targetFile string, entries []entity.ServiceEntry, category string, size int, noLegend, legendRight, legendOnly bool) error {
+	scene, err := sceneIOUsecase.ReadScene(targetFile)
 	if err != nil {
 		logger.ERROR(ICARAB001, "read scene failed", map[string]any{"targetFile": targetFile, "error": err})
 		return err
@@ -171,7 +178,7 @@ func runAddBatch(cfg *config.Config, uc usecase.XaligoUsecase, targetFile string
 		var displayName string
 
 		if entry.CatalogID > 0 {
-			ce, cerr := uc.LookupCatalogByID(cfg.ServiceCatalogCSVPath(), entry.CatalogID)
+			ce, cerr := catalogUsecase.LookupCatalogByID(cfg.ServiceCatalogCSVPath(), entry.CatalogID)
 			if cerr != nil {
 				logger.WARN(ICARAB002, "catalog lookup failed", map[string]any{"catalogID": entry.CatalogID, "error": cerr})
 				continue
@@ -186,7 +193,7 @@ func runAddBatch(cfg *config.Config, uc usecase.XaligoUsecase, targetFile string
 			}
 			displayName = svgName
 			var derr error
-			dataURL, derr = uc.SvgToDataURL(svgPath)
+			dataURL, derr = sceneIOUsecase.SvgToDataURL(svgPath)
 			if derr != nil {
 				logger.WARN(ICARAB004, "svg data URL failed", map[string]any{"path": svgPath, "error": derr})
 				continue
@@ -198,8 +205,8 @@ func runAddBatch(cfg *config.Config, uc usecase.XaligoUsecase, targetFile string
 			displayName = entry.OfficialName
 		}
 
-		fileID := uc.FileID(dataURL)
-		bgColor := uc.SVGBGColor(dataURL)
+		fileID := sceneIOUsecase.FileID(dataURL)
+		bgColor := sceneIOUsecase.SVGBGColor(dataURL)
 		if scene.Files == nil {
 			logger.DEBUG(ICARAB006, "branch initialize files")
 			scene.Files = map[string]map[string]interface{}{}
@@ -224,7 +231,7 @@ func runAddBatch(cfg *config.Config, uc usecase.XaligoUsecase, targetFile string
 			ix, iy := nextIconPos(scene, fb, iconSize, gap)
 			iconID := "svc-" + randomHex(8)
 			seedVal = int(ix*100 + iy)
-			iconEl := usecase.MakeImage(iconID, ix, iy, iconSize, iconSize, fileID, bgColor, seedVal)
+			iconEl := elementUsecase.MakeImage(iconID, ix, iy, iconSize, iconSize, fileID, bgColor, seedVal)
 			scene.Elements = append(scene.Elements, iconEl)
 
 			// Label below main icon: max 6 chars, center-aligned, width fitted to 6 chars.
@@ -235,7 +242,7 @@ func runAddBatch(cfg *config.Config, uc usecase.XaligoUsecase, targetFile string
 			const lblW = 50.0                // fits 6 chars at 11px Inter with margin
 			lblX := ix + iconSize/2 - lblW/2 // center under icon
 			labelID := "svc-lbl-" + randomHex(8)
-			labelEl := usecase.MakeText(labelID, lblX, iy+iconSize+4, lblW, 20, label, 11, "#000000", false, "center", seedVal+1)
+			labelEl := elementUsecase.MakeText(labelID, lblX, iy+iconSize+4, lblW, 20, label, 11, "#000000", false, "center", seedVal+1)
 			scene.Elements = append(scene.Elements, labelEl)
 		}
 
@@ -255,16 +262,16 @@ func runAddBatch(cfg *config.Config, uc usecase.XaligoUsecase, targetFile string
 			// e.g. "Amazon EC2" rather than the abbreviation "EC2".
 			lgLabel := displayName
 			lgID := "svc-" + randomHex(8) + "-lg-ico"
-			lgEl := usecase.MakeImage(lgID, lgX, lgY, lgSz, lgSz, fileID, bgColor, seedVal+2)
+			lgEl := elementUsecase.MakeImage(lgID, lgX, lgY, lgSz, lgSz, fileID, bgColor, seedVal+2)
 			scene.Elements = append(scene.Elements, lgEl)
 
 			lgLblID := "svc-lbl-" + randomHex(8) + "-lg"
-			lgLblEl := usecase.MakeText(lgLblID, lgX+lgSz+6, lgY+(lgSz-14)/2, lgLabelW, 20, lgLabel, 11, "#000000", false, "left", seedVal+3)
+			lgLblEl := elementUsecase.MakeText(lgLblID, lgX+lgSz+6, lgY+(lgSz-14)/2, lgLabelW, 20, lgLabel, 11, "#000000", false, "left", seedVal+3)
 			scene.Elements = append(scene.Elements, lgLblEl)
 		}
 	}
 
-	if err := uc.WriteScene(scene, targetFile); err != nil {
+	if err := sceneIOUsecase.WriteScene(scene, targetFile); err != nil {
 		logger.ERROR(ICARAB010, "write scene failed", map[string]any{"targetFile": targetFile, "error": err})
 		return err
 	}

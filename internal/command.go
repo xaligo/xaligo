@@ -28,7 +28,7 @@ func NewRootCmd() *cobra.Command {
 	svgRepository := repository.NewSVGRepository()
 	xyFlowRepository := repository.NewXYFlowRepository()
 
-	xaligoUsecase := usecase.NewXaligoUsecase(
+	renderUsecase := usecase.NewRenderUsecase(
 		excalidrawRepository,
 		xaligoRepository,
 		powerpointRepository,
@@ -36,12 +36,18 @@ func NewRootCmd() *cobra.Command {
 		svgRepository,
 		xyFlowRepository,
 	)
+	sceneIOUsecase := usecase.NewSceneIOUsecase(excalidrawRepository)
+	catalogUsecase := usecase.NewCatalogUsecase(xaligoRepository)
+	exportUsecase := usecase.NewExportUsecase(powerpointRepository)
+	diagnosticsUsecase := usecase.NewDiagnosticsUsecase()
+	elementUsecase := usecase.NewElementUsecase()
+	themeUsecase := usecase.NewThemeUsecase()
 
-	addController := controller.NewAddController(cfg, xaligoUsecase)
-	generateController := controller.NewGenerateController(xaligoUsecase)
-	renderController := controller.NewRenderController(cfg, xaligoUsecase)
-	validateController := controller.NewValidateController(xaligoUsecase)
-	serveController := controller.NewServeController(xaligoUsecase)
+	addController := controller.NewAddController(cfg, sceneIOUsecase, catalogUsecase, elementUsecase)
+	generateController := controller.NewGenerateController(renderUsecase, exportUsecase)
+	renderController := controller.NewRenderController(cfg, renderUsecase, catalogUsecase, sceneIOUsecase, themeUsecase, elementUsecase)
+	validateController := controller.NewValidateController(diagnosticsUsecase)
+	serveController := controller.NewServeController(renderUsecase)
 	initController := controller.NewInitController()
 	versionController := controller.NewVersionController()
 

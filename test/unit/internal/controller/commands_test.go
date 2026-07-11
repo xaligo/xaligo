@@ -24,6 +24,7 @@ type fakeUseCase struct {
 	renderErr        error
 	previewErr       error
 	exportErr        error
+	renderCalls      int
 	lastRenderOpts   entity.RenderOptions
 	lastPlanOpts     entity.RenderOptions
 	lastPreviewPath  string
@@ -48,8 +49,33 @@ func (rcvr *fakeUseCase) Diagnose(context.Context, []byte) ([]entity.Diagnostic,
 	return nil, nil
 }
 
-func (rcvr *fakeUseCase) Render(context.Context, []byte, entity.RenderOptions) ([]byte, error) {
-	return []byte(`render`), rcvr.renderErr
+func (rcvr *fakeUseCase) Render(_ context.Context, _ []byte, opts entity.RenderOptions) ([]byte, error) {
+	rcvr.renderCalls++
+	rcvr.lastRenderOpts = opts
+	switch opts.Format {
+	case usecase.FormatSVG:
+		if rcvr.renderSVG != nil {
+			return rcvr.renderSVG, rcvr.renderErr
+		}
+		return []byte(`<svg></svg>`), rcvr.renderErr
+	case usecase.FormatPPTX:
+		return []byte(`pptx`), rcvr.renderErr
+	case usecase.FormatXYFlow:
+		if rcvr.renderXYFlow != nil {
+			return rcvr.renderXYFlow, rcvr.renderErr
+		}
+		return []byte(`{"nodes":[],"edges":[]}`), rcvr.renderErr
+	case usecase.FormatIsoflow:
+		if rcvr.renderIsoflow != nil {
+			return rcvr.renderIsoflow, rcvr.renderErr
+		}
+		return []byte(`{"version":"3.3.0"}`), rcvr.renderErr
+	default:
+		if rcvr.renderExcalidraw != nil {
+			return rcvr.renderExcalidraw, rcvr.renderErr
+		}
+		return []byte(`{"type":"excalidraw","elements":[],"files":{}}`), rcvr.renderErr
+	}
 }
 
 func (rcvr *fakeUseCase) RenderExcalidraw(_ context.Context, _ []byte, opts entity.RenderOptions) ([]byte, error) {
@@ -96,13 +122,13 @@ func (rcvr *fakeUseCase) BuildPPTXPlan(_ context.Context, _ []byte, opts entity.
 	return []byte(`{"slide":{"w":1,"h":1}}`), rcvr.renderErr
 }
 
-func (rcvr *fakeUseCase) NewPreviewServer(path string, opts entity.PreviewOptions) (usecase.PreviewServer, error) {
+func (rcvr *fakeUseCase) NewPreviewRepository(path string, opts entity.PreviewOptions) (repository.PreviewRepository, error) {
 	rcvr.lastPreviewPath = path
 	rcvr.lastPreviewOpts = opts
 	if rcvr.previewErr != nil {
 		return nil, rcvr.previewErr
 	}
-	return fakePreviewServer{}, nil
+	return fakePreviewRepository{}, nil
 }
 
 func (rcvr *fakeUseCase) ReadScene(path string) (*entity.Scene, error) {
@@ -137,34 +163,40 @@ func (rcvr *fakeUseCase) ExportPptx(context.Context, entity.PptxExportOptions) e
 	return rcvr.exportErr
 }
 
-func newAddController(uc usecase.XaligoUsecase) *controller.AddController {
-	return controller.NewAddController(config.New(), uc)
+func newAddController(uc *fakeUseCase) controller.AddController {
+	return controller.NewAddController(config.New(), uc, uc, usecase.NewElementUsecase())
 }
 
-func newGenerateController(uc usecase.XaligoUsecase) *controller.GenerateController {
-	return controller.NewGenerateController(uc)
+func newGenerateController(uc *fakeUseCase) controller.GenerateController {
+	return controller.NewGenerateController(uc, uc)
 }
 
-func newRenderController(uc usecase.XaligoUsecase) *controller.RenderController {
-	return controller.NewRenderController(config.New(), uc)
+func newRenderController(uc *fakeUseCase) controller.RenderController {
+	return controller.NewRenderController(config.New(), uc, uc, uc, usecase.NewThemeUsecase(), usecase.NewElementUsecase())
 }
 
-func newRealUsecase() usecase.XaligoUsecase {
-	return usecase.NewXaligoUsecase(
-		repository.NewExcalidrawRepository(),
-		repository.NewXaligoRepository(),
-		repository.NewPowerpointRepository(),
-		repository.NewIsoflowRepository(),
-		repository.NewSVGRepository(),
-		repository.NewXYFlowRepository(),
+func newRealGenerateController() controller.GenerateController {
+	excalidrawRepository := repository.NewExcalidrawRepository()
+	xaligoRepository := repository.NewXaligoRepository()
+	powerpointRepository := repository.NewPowerpointRepository()
+	return controller.NewGenerateController(
+		usecase.NewRenderUsecase(
+			excalidrawRepository,
+			xaligoRepository,
+			powerpointRepository,
+			repository.NewIsoflowRepository(),
+			repository.NewSVGRepository(),
+			repository.NewXYFlowRepository(),
+		),
+		usecase.NewExportUsecase(powerpointRepository),
 	)
 }
 
-type fakePreviewServer struct{}
+type fakePreviewRepository struct{}
 
-func (fakePreviewServer) Handler() http.Handler             { return http.NewServeMux() }
-func (fakePreviewServer) Run(context.Context, string) error { return nil }
-func (fakePreviewServer) Refresh() error                    { return nil }
+func (fakePreviewRepository) Handler() http.Handler             { return http.NewServeMux() }
+func (fakePreviewRepository) Run(context.Context, string) error { return nil }
+func (fakePreviewRepository) Refresh() error                    { return nil }
 
 func writeTempXAL(t *testing.T, dir string) string {
 	t.Helper()
@@ -212,7 +244,7 @@ func TestRunRenderFormatWithUseCaseWritesFormats(t *testing.T) {
 	if err := os.WriteFile(services, []byte("27,Amazon EC2,EC2\n"), 0644); err != nil {
 		t.Fatal(err)
 	}
-	formats := []string{"excalidraw", "svg", "xyflow", "isoflow"}
+	formats := []string{"excalidraw", "svg", "pptx", "xyflow", "isoflow"}
 	for _, format := range formats {
 		t.Run(format, func(t *testing.T) {
 			output := filepath.Join(dir, "out."+format)
@@ -227,11 +259,15 @@ func TestRunRenderFormatWithUseCaseWritesFormats(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if len(data) == 0 || fake.lastRenderOpts.Abbreviations[27] != "EC2" {
+			if len(data) == 0 || fake.renderCalls != 1 || fake.lastRenderOpts.Format != entity.Format(format) {
 				t.Fatalf("data=%q opts=%#v", data, fake.lastRenderOpts)
 			}
-			if format == "svg" && !strings.Contains(string(fake.lastRenderOpts.ServicesCSV), "Amazon EC2") {
-				t.Fatalf("svg services CSV was not forwarded: %#v", fake.lastRenderOpts)
+			if format == "excalidraw" {
+				if fake.lastRenderOpts.Abbreviations[27] != "EC2" {
+					t.Fatalf("Excalidraw abbreviation was not forwarded: %#v", fake.lastRenderOpts)
+				}
+			} else if !strings.Contains(string(fake.lastRenderOpts.ServicesCSV), "Amazon EC2") {
+				t.Fatalf("services CSV was not forwarded: %#v", fake.lastRenderOpts)
 			}
 		})
 	}
@@ -252,6 +288,7 @@ func TestRenderCommandUsesDefaultOutputs(t *testing.T) {
 	formats := map[string]string{
 		"excalidraw": "output.excalidraw",
 		"svg":        "output.svg",
+		"pptx":       "output.pptx",
 		"xyflow":     "output.xyflow.json",
 		"isoflow":    "output.isoflow.json",
 	}
@@ -299,7 +336,7 @@ func TestRunRenderFormatWithUseCaseErrors(t *testing.T) {
 		t.Fatalf("pptx missing output error = %v", err)
 	}
 	missingServices := filepath.Join(dir, "missing-services.csv")
-	for _, format := range []string{"excalidraw", "svg", "xyflow", "isoflow"} {
+	for _, format := range []string{"excalidraw", "svg", "pptx", "xyflow", "isoflow"} {
 		t.Run(format+" services", func(t *testing.T) {
 			err := newRenderController(&fakeUseCase{}).RunFormat(entity.ControllerRenderOptions{InputPath: input, OutputPath: filepath.Join(dir, format+".out"), Format: format, Theme: "light", ServicesFile: missingServices})
 			if err == nil || !strings.Contains(err.Error(), "read services") {
@@ -307,7 +344,7 @@ func TestRunRenderFormatWithUseCaseErrors(t *testing.T) {
 			}
 		})
 	}
-	for _, format := range []string{"excalidraw", "svg", "xyflow", "isoflow"} {
+	for _, format := range []string{"excalidraw", "svg", "pptx", "xyflow", "isoflow"} {
 		t.Run(format+" render", func(t *testing.T) {
 			err := newRenderController(&fakeUseCase{renderErr: errors.New("render failed")}).RunFormat(entity.ControllerRenderOptions{InputPath: input, OutputPath: filepath.Join(dir, format+"-render.out"), Format: format, Theme: "light"})
 			if err == nil || !strings.Contains(err.Error(), "render failed") {
@@ -315,7 +352,7 @@ func TestRunRenderFormatWithUseCaseErrors(t *testing.T) {
 			}
 		})
 	}
-	for _, format := range []string{"excalidraw", "svg", "xyflow", "isoflow"} {
+	for _, format := range []string{"excalidraw", "svg", "pptx", "xyflow", "isoflow"} {
 		t.Run(format+" write", func(t *testing.T) {
 			err := newRenderController(&fakeUseCase{}).RunFormat(entity.ControllerRenderOptions{InputPath: input, OutputPath: dir, Format: format, Theme: "light"})
 			if err == nil || !strings.Contains(err.Error(), "write output file") {
@@ -529,7 +566,7 @@ func TestRunGeneratePptxWithUseCaseReachesPlanBuild(t *testing.T) {
 	fake := &fakeUseCase{planJSON: []byte(`{"slide":{"w":1,"h":1}}`), exportErr: errors.New("run PPTX WASM exporter")}
 	err := newGenerateController(fake).RunPptx(entity.ControllerPptxGenerateOptions{
 		XalPath: input, Output: filepath.Join(dir, "out.pptx"), ServicesFile: services, Theme: "dark", Mode: "network", ExporterWASM: badWASM,
-		PxPerInch: 120, ArrowStyle: "orthogonal", ArrowStub: 24, ArrowMargin: 12, Paper: "A3", Orientation: "landscape",
+		PxPerInch: 120, ArrowStyle: "standard", ArrowStub: 24, ArrowMargin: 12, Paper: "A3", Orientation: "landscape",
 		PaperMargin: 0.5, PaperMarginTop: 0.25, PaperMarginRight: 0.3, PaperMarginBottom: 0.35, PaperMarginLeft: 0.4,
 	})
 	if err == nil || !strings.Contains(err.Error(), "run PPTX WASM exporter") {
@@ -541,7 +578,7 @@ func TestRunGeneratePptxWithUseCaseReachesPlanBuild(t *testing.T) {
 	if err := newGenerateController(fake).RunPptx(entity.ControllerPptxGenerateOptions{}); err == nil || !strings.Contains(err.Error(), "--xal") {
 		t.Fatalf("RunGeneratePptx missing xal err = %v", err)
 	}
-	if err := newGenerateController(newRealUsecase()).RunPptx(entity.ControllerPptxGenerateOptions{XalPath: input, Output: filepath.Join(dir, "real.pptx"), ServicesFile: services, Theme: "light", ExporterWASM: badWASM}); err == nil || !strings.Contains(err.Error(), "run PPTX WASM exporter") {
+	if err := newRealGenerateController().RunPptx(entity.ControllerPptxGenerateOptions{XalPath: input, Output: filepath.Join(dir, "real.pptx"), ServicesFile: services, Theme: "light", ExporterWASM: badWASM}); err == nil || !strings.Contains(err.Error(), "run PPTX WASM exporter") {
 		t.Fatalf("RunGeneratePptx real planner err = %v", err)
 	}
 	if err := newGenerateController(fake).RunPptx(entity.ControllerPptxGenerateOptions{XalPath: input, Output: filepath.Join(dir, "out.pptx"), PxPerInch: -1}); err == nil || !strings.Contains(err.Error(), "px-per-inch") {

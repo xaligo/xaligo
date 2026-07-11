@@ -16,7 +16,7 @@ func TestServerRefreshAndDiagnostics(t *testing.T) {
 	if err := os.WriteFile(path, []byte(`<frame width="320" height="180"><box title="Preview" /></frame>`), 0644); err != nil {
 		t.Fatal(err)
 	}
-	server, err := newUsecase().NewPreviewServer(path, entity.PreviewOptions{Render: entity.RenderOptions{Theme: "dark"}})
+	server, err := newUsecase().NewPreviewRepository(path, entity.PreviewOptions{Render: entity.RenderOptions{Theme: "dark"}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,7 +51,7 @@ func TestServerRefreshAndDiagnostics(t *testing.T) {
 func TestServerHealth(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "diagram.xal")
 	_ = os.WriteFile(path, []byte(`<frame width="10" height="10" />`), 0644)
-	server, err := newUsecase().NewPreviewServer(path, entity.PreviewOptions{})
+	server, err := newUsecase().NewPreviewRepository(path, entity.PreviewOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}

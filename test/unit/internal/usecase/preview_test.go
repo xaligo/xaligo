@@ -13,12 +13,12 @@ import (
 	"github.com/xaligo/xaligo/internal/entity"
 )
 
-func TestPreviewServerHandlers(t *testing.T) {
+func TestPreviewRepositoryHandlers(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "preview.xal")
 	if err := os.WriteFile(path, []byte(simpleXAL), 0644); err != nil {
 		t.Fatal(err)
 	}
-	server, err := newUsecase().NewPreviewServer(path, entity.PreviewOptions{Render: entity.RenderOptions{Theme: "light"}})
+	server, err := newUsecase().NewPreviewRepository(path, entity.PreviewOptions{Render: entity.RenderOptions{Theme: "light"}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -70,12 +70,12 @@ func TestPreviewServerHandlers(t *testing.T) {
 	}
 }
 
-func TestPreviewServerSVGHandlerReportsRenderError(t *testing.T) {
+func TestPreviewRepositorySVGHandlerReportsRenderError(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "broken.xal")
 	if err := os.WriteFile(path, []byte(`<frame><item id="bad" /></frame>`), 0644); err != nil {
 		t.Fatal(err)
 	}
-	server, err := newUsecase().NewPreviewServer(path, entity.PreviewOptions{Render: entity.RenderOptions{Theme: "light"}})
+	server, err := newUsecase().NewPreviewRepository(path, entity.PreviewOptions{Render: entity.RenderOptions{Theme: "light"}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -86,12 +86,12 @@ func TestPreviewServerSVGHandlerReportsRenderError(t *testing.T) {
 	}
 }
 
-func TestPreviewServerRunStopsWhenContextCanceled(t *testing.T) {
+func TestPreviewRepositoryRunStopsWhenContextCanceled(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "preview.xal")
 	if err := os.WriteFile(path, []byte(simpleXAL), 0644); err != nil {
 		t.Fatal(err)
 	}
-	server, err := newUsecase().NewPreviewServer(path, entity.PreviewOptions{Render: entity.RenderOptions{Theme: "light"}})
+	server, err := newUsecase().NewPreviewRepository(path, entity.PreviewOptions{Render: entity.RenderOptions{Theme: "light"}})
 	if err != nil {
 		t.Fatal(err)
 	}

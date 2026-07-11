@@ -21,15 +21,20 @@ var (
 	ICVALIDATERVWUC004  = share.NewMCode("ICVALIDATERVWUC-004", "Run validate with use case nil stdout branch")
 )
 
-type ValidateController struct {
-	usecase usecase.XaligoUsecase
+type ValidateController interface {
+	Command() *cobra.Command
+	Run(inputPath string, stdout io.Writer) error
 }
 
-func NewValidateController(uc usecase.XaligoUsecase) *ValidateController {
-	return &ValidateController{usecase: uc}
+type validateController struct {
+	diagnosticsUsecase usecase.DiagnosticsUsecase
 }
 
-func (rcvr *ValidateController) Command() *cobra.Command {
+func NewValidateController(diagnosticsUsecase usecase.DiagnosticsUsecase) ValidateController {
+	return &validateController{diagnosticsUsecase: diagnosticsUsecase}
+}
+
+func (rcvr *validateController) Command() *cobra.Command {
 	logger.DEBUG(ICVALIDATEIVCWUC001, "start")
 	cmd := &cobra.Command{
 		Use:   "validate <input.xal>",
@@ -42,14 +47,14 @@ func (rcvr *ValidateController) Command() *cobra.Command {
 	return cmd
 }
 
-func (rcvr *ValidateController) Run(inputPath string, stdout io.Writer) error {
+func (rcvr *validateController) Run(inputPath string, stdout io.Writer) error {
 	logger.DEBUG(ICVALIDATERV001, "start", map[string]any{"input": inputPath})
 	input, err := os.ReadFile(inputPath)
 	if err != nil {
 		logger.ERROR(ICVALIDATERVWUC001, "read input failed", map[string]any{"input": inputPath, "error": err})
 		return fmt.Errorf("open input file: %w", err)
 	}
-	if err := rcvr.usecase.Validate(context.Background(), input); err != nil {
+	if err := rcvr.diagnosticsUsecase.Validate(context.Background(), input); err != nil {
 		logger.ERROR(ICVALIDATERVWUC002, "validation failed", map[string]any{"input": inputPath, "error": err})
 		return err
 	}

@@ -21,13 +21,12 @@ type fakePptxExporter struct {
 	seen   []byte
 }
 
-func (rcvr *fakePptxExporter) Export(_ context.Context, requestJSON []byte) ([]byte, []byte, error) {
+func (rcvr *fakePptxExporter) Export(_ context.Context, _ string, requestJSON []byte) ([]byte, []byte, error) {
 	rcvr.seen = append([]byte(nil), requestJSON...)
 	return rcvr.stdout, rcvr.stderr, rcvr.err
 }
 
-func TestExportPptxWithExporterWritesPptxOutput(t *testing.T) {
-	repo := repository.NewPowerpointRepository()
+func TestPowerpointRepositoryWritesPptxOutput(t *testing.T) {
 	output := filepath.Join(t.TempDir(), "out.pptx")
 	compression := false
 	stdout := &bytes.Buffer{}
@@ -36,8 +35,9 @@ func TestExportPptxWithExporterWritesPptxOutput(t *testing.T) {
 		stdout: []byte("pptx-bytes"),
 		stderr: []byte("exporter warning\n"),
 	}
+	repo := repository.NewPowerpointRepository(repository.WithPowerpointExportFunc(exporter.Export))
 
-	err := repo.WritePptxWithExporter(context.Background(), entity.PptxExportOptions{
+	err := repo.WritePptx(context.Background(), entity.PptxExportOptions{
 		PlanJSON:    []byte(`{"slides":[{"name":"main"}]}`),
 		Output:      output,
 		Title:       "Example",
@@ -45,7 +45,7 @@ func TestExportPptxWithExporterWritesPptxOutput(t *testing.T) {
 		Compression: &compression,
 		Stdout:      stdout,
 		Stderr:      stderr,
-	}, exporter)
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -83,12 +83,12 @@ func TestExportPptxWithExporterWritesPptxOutput(t *testing.T) {
 	}
 }
 
-func TestExportPptxBytesWithExporterReturnsPptxBytes(t *testing.T) {
-	repo := repository.NewPowerpointRepository()
+func TestPowerpointRepositoryReturnsPptxBytes(t *testing.T) {
 	exporter := &fakePptxExporter{stdout: []byte("pptx-bytes")}
-	pptxBytes, err := repo.ExportPptxBytesWithExporter(context.Background(), entity.PptxExportOptions{
+	repo := repository.NewPowerpointRepository(repository.WithPowerpointExportFunc(exporter.Export))
+	pptxBytes, err := repo.ExportPptxBytes(context.Background(), entity.PptxExportOptions{
 		PlanJSON: []byte(`{"slides":[{"name":"main"}]}`),
-	}, exporter)
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -100,25 +100,25 @@ func TestExportPptxBytesWithExporterReturnsPptxBytes(t *testing.T) {
 	}
 }
 
-func TestExportPptxWithExporterReturnsExporterError(t *testing.T) {
-	repo := repository.NewPowerpointRepository()
+func TestPowerpointRepositoryReturnsExporterError(t *testing.T) {
 	exporter := &fakePptxExporter{err: errors.New("wasm failed")}
-	err := repo.WritePptxWithExporter(context.Background(), entity.PptxExportOptions{
+	repo := repository.NewPowerpointRepository(repository.WithPowerpointExportFunc(exporter.Export))
+	err := repo.WritePptx(context.Background(), entity.PptxExportOptions{
 		PlanJSON: []byte(`{"slides":[]}`),
 		Output:   filepath.Join(t.TempDir(), "out.pptx"),
-	}, exporter)
+	})
 	if err == nil || err.Error() != "wasm failed" {
 		t.Fatalf("err = %v", err)
 	}
 }
 
-func TestExportPptxWithExporterRejectsEmptyExporterOutput(t *testing.T) {
-	repo := repository.NewPowerpointRepository()
+func TestPowerpointRepositoryRejectsEmptyExporterOutput(t *testing.T) {
 	exporter := &fakePptxExporter{}
-	err := repo.WritePptxWithExporter(context.Background(), entity.PptxExportOptions{
+	repo := repository.NewPowerpointRepository(repository.WithPowerpointExportFunc(exporter.Export))
+	err := repo.WritePptx(context.Background(), entity.PptxExportOptions{
 		PlanJSON: []byte(`{"slides":[]}`),
 		Output:   filepath.Join(t.TempDir(), "out.pptx"),
-	}, exporter)
+	})
 	if err == nil || err.Error() != "PPTX WASM exporter produced no output" {
 		t.Fatalf("err = %v", err)
 	}
@@ -127,7 +127,7 @@ func TestExportPptxWithExporterRejectsEmptyExporterOutput(t *testing.T) {
 func TestExportPptxUsesWASMExporterAndReportsMissingPath(t *testing.T) {
 	repo := repository.NewPowerpointRepository()
 	t.Setenv("XALIGO_PPTX_EXPORTER_WASM", filepath.Join(t.TempDir(), "missing-env.wasm"))
-	err := repo.WritePptx(entity.PptxExportOptions{
+	err := repo.WritePptx(context.Background(), entity.PptxExportOptions{
 		PlanJSON:     []byte(`{"slides":[]}`),
 		Output:       filepath.Join(t.TempDir(), "out.pptx"),
 		ExporterWASM: filepath.Join(t.TempDir(), "missing-explicit.wasm"),
@@ -137,13 +137,13 @@ func TestExportPptxUsesWASMExporterAndReportsMissingPath(t *testing.T) {
 	}
 }
 
-func TestWASMPptxExporterReportsInvalidWASM(t *testing.T) {
+func TestPowerpointRepositoryReportsInvalidWASM(t *testing.T) {
 	wasmPath := filepath.Join(t.TempDir(), "bad.wasm")
 	if err := os.WriteFile(wasmPath, []byte("not wasm"), 0644); err != nil {
 		t.Fatal(err)
 	}
-	exporter := repository.WASMPptxExporter{Path: wasmPath}
-	_, _, err := exporter.Export(context.Background(), []byte(`{}`))
+	repo := repository.NewPowerpointRepository()
+	_, err := repo.ExportPptxBytes(context.Background(), entity.PptxExportOptions{PlanJSON: []byte(`{}`), ExporterWASM: wasmPath})
 	if err == nil || !strings.Contains(err.Error(), "run PPTX WASM exporter") {
 		t.Fatalf("err = %v", err)
 	}

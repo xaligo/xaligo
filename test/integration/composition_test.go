@@ -5,8 +5,8 @@ import (
 	"github.com/xaligo/xaligo/internal/usecase"
 )
 
-func newUsecase() usecase.XaligoUsecase {
-	return usecase.NewXaligoUsecase(
+func newUsecase() usecase.RenderUsecase {
+	return usecase.NewRenderUsecase(
 		repository.NewExcalidrawRepository(),
 		repository.NewXaligoRepository(),
 		repository.NewPowerpointRepository(),
