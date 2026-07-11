@@ -1,0 +1,56 @@
+<frame width="1440" height="820" class="pa-4" gap="20">
+  <generic-group id="v1-engine-package" title="internal/usecase/v1/engine" icon="none" gap="20">
+    <row gap="20">
+      <col span="4">
+        <rectangle id="route-request" title="excalidrawRouteRequestV1EngineSceneConnectionRoute()" width="400" font-size="10">
+          <port id="connection-node" side="left" y="64" title="Node" width="64" font-size="10" />
+          <port id="request-data" side="right" y="64" title="routeRequest" width="104" font-size="10" />
+        </rectangle>
+      </col>
+      <col span="8">
+        <row gap="16">
+          <col span="6">
+            <rectangle id="route-connections" title="routeConnectionsV1EngineRouteBuild()" width="400" font-size="11">
+              <port id="requests" side="left" y="48" title="[]routeRequest" width="104" font-size="9" />
+              <port id="obstacle-data" side="top" title="[]rect obstacles" width="104" font-size="9" />
+              <port id="placed-paths" side="bottom" title="placed paths" width="88" font-size="9" />
+              <port id="one-request" side="right" y="40" title="request" width="72" font-size="9" />
+              <port id="filtered-obstacles" side="right" y="88" title="filtered []rect" width="104" font-size="9" />
+            </rectangle>
+          </col>
+          <col span="6">
+            <rectangle id="route-one" title="routeOneV1EngineRoutePath()" width="400" font-size="11">
+              <port id="route-one-input" side="left" y="40" title="request" width="72" font-size="9" />
+              <port id="route-obstacles" side="left" y="88" title="filtered []rect" width="104" font-size="9" />
+              <port id="candidate-request" side="right" y="48" title="request geometry" width="120" font-size="9" />
+              <port id="routed-path" side="bottom" x="88" title="routedPath" width="88" font-size="9" />
+              <port id="candidate-cost" side="bottom" x="232" title="candidate cost" width="88" font-size="9" />
+            </rectangle>
+          </col>
+        </row>
+      </col>
+    </row>
+    <row gap="12">
+      <col span="2"><rectangle id="build-candidates" title="buildCandidatesV1EngineRouteCandidate()" width="200" font-size="8"><port id="candidate-input" side="left" y="64" title="request geometry" width="120" font-size="9" /><port id="candidate-list" side="right" y="64" title="candidates" width="88" font-size="9" /></rectangle></col>
+      <col span="2"><rectangle id="simplify-candidate" title="simplifyRouteCandidateV1EngineRoutePath()" width="200" font-size="7"><port id="simplify-input" side="left" y="64" title="candidate" width="80" font-size="9" /><port id="simplified-candidate" side="right" y="64" title="simplified path" width="104" font-size="9" /></rectangle></col>
+      <col span="2"><rectangle id="score-path" title="scorePathV1EngineRouteCandidate()" width="200" font-size="8"><port id="score-input" side="left" y="64" title="candidate" width="80" font-size="9" /><port id="score-placed" side="top" title="placed paths" width="88" font-size="9" /><port id="cost-weights" side="bottom" title="routing weights" width="104" font-size="9" /><port id="cost-data" side="right" y="64" title="cost" width="56" font-size="9" /></rectangle></col>
+      <col span="2"><rectangle id="separate-overlaps" title="separateExactOverlapsV1EngineRouteOverlap()" width="200" font-size="7"><port id="selected-path" side="left" y="64" title="routed path" width="88" font-size="9" /><port id="separated-path" side="right" y="64" title="separated path" width="96" font-size="9" /></rectangle></col>
+      <col span="2"><rectangle id="separate-obstacles" title="separateObstacleHitsV1EngineRouteOverlap()" width="200" font-size="7"><port id="obstacle-path" side="left" y="64" title="separated path" width="96" font-size="9" /><port id="obstacle-free-path" side="right" y="64" title="clear path" width="80" font-size="9" /></rectangle></col>
+      <col span="2"><rectangle id="enforce-orthogonal" title="enforceOrthogonalPolylineV1EngineRoutePath()" width="200" font-size="7"><port id="orthogonal-input" side="left" y="64" title="clear path" width="80" font-size="9" /><port id="final-path" side="right" y="64" title="orthogonal path" width="112" font-size="9" /></rectangle></col>
+    </row>
+  </generic-group>
+  <connections grid="8" end-arrowhead="stealth">
+    <connection src="request-data" dst="requests" />
+    <connection src="one-request" dst="route-one-input" />
+    <connection src="filtered-obstacles" dst="route-obstacles" />
+    <connection src="candidate-request" dst="candidate-input" />
+    <connection src="candidate-list" dst="simplify-input" />
+    <connection src="simplified-candidate" dst="score-input" />
+    <connection src="placed-paths" dst="score-placed" stroke-style="dashed" />
+    <connection src="cost-data" dst="candidate-cost" />
+    <connection src="routed-path" dst="selected-path" />
+    <connection src="separated-path" dst="obstacle-path" />
+    <connection src="obstacle-free-path" dst="orthogonal-input" />
+    <connection src="final-path" dst="placed-paths" stroke-style="dashed" />
+  </connections>
+</frame>
