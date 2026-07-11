@@ -1,5 +1,4 @@
-import { exportPptxFromRequest } from './usecase/pptx_exporter';
-import { parsePptxExporterRequest } from './usecase/pptx_exporter_request';
+import { runPptxExporter } from './controller/pptx_exporter';
 import { NewEnvLogger } from './share/logger';
 import { NewMCode } from './share/mcode';
 
@@ -33,8 +32,7 @@ main().catch((err: unknown) => {
 async function main(): Promise<void> {
   logger.DEBUG(ECM001, 'start');
   installPptxWasiShims();
-  const request = parsePptxExporterRequest(readAllText(0));
-  const pptx = await exportPptxFromRequest(request);
+  const pptx = await runPptxExporter(readAllText(0));
   writeAll(1, new TextEncoder().encode(bytesToBase64(pptx)));
   logger.DEBUG(ECM003, 'completed', { bytes: pptx.length });
 }
