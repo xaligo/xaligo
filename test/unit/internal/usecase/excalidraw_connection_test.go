@@ -20,18 +20,24 @@ func TestResolveConnectionStyleKinds(t *testing.T) {
 		startArrowhead string
 		endArrowhead   string
 		stroke         string
+		widthExplicit  bool
+		startExplicit  bool
+		endExplicit    bool
 	}{
 		{name: "default", kind: "connection", color: "#1e1e1e", width: 1, startArrowhead: "none", endArrowhead: "stealth", stroke: "solid"},
 		{name: "route", attrs: `kind="route"`, kind: "route", color: "#64748b", width: 1, startArrowhead: "none", endArrowhead: "none", stroke: "solid"},
-		{name: "route without connectors", attrs: `kind="route" start-arrowhead="none" end-arrowhead="none"`, kind: "route", color: "#64748b", width: 1, startArrowhead: "none", endArrowhead: "none", stroke: "solid"},
+		{name: "route without connectors", attrs: `kind="route" start-arrowhead="none" end-arrowhead="none"`, kind: "route", color: "#64748b", width: 1, startArrowhead: "none", endArrowhead: "none", stroke: "solid", startExplicit: true, endExplicit: true},
 		{name: "traffic", attrs: `kind="traffic"`, kind: "traffic", color: "#2563eb", width: 1, startArrowhead: "none", endArrowhead: "stealth", stroke: "solid"},
-		{name: "overrides", attrs: `kind="traffic" color="#dc2626" stroke-width="3" stroke-style="dotted" start-arrowhead="oval" end-arrowhead="diamond"`, kind: "traffic", color: "#dc2626", width: 3, startArrowhead: "oval", endArrowhead: "diamond", stroke: "dotted"},
+		{name: "overrides", attrs: `kind="traffic" color="#dc2626" stroke-width="3" stroke-style="dotted" start-arrowhead="oval" end-arrowhead="diamond"`, kind: "traffic", color: "#dc2626", width: 3, startArrowhead: "oval", endArrowhead: "diamond", stroke: "dotted", widthExplicit: true, startExplicit: true, endExplicit: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			arrow := buildConnectionArrow(t, tt.attrs)
 			custom, _ := arrow["customData"].(map[string]any)
-			if custom["xaligoConnectorKind"] != tt.kind || arrow["strokeColor"] != tt.color || arrow["strokeWidth"] != tt.width || custom["xaligoConnectorStartArrowhead"] != tt.startArrowhead || custom["xaligoConnectorEndArrowhead"] != tt.endArrowhead || arrow["strokeStyle"] != tt.stroke {
+			widthExplicit, _ := custom["xaligoConnectorStrokeWidthExplicit"].(bool)
+			startExplicit, _ := custom["xaligoConnectorStartArrowheadExplicit"].(bool)
+			endExplicit, _ := custom["xaligoConnectorEndArrowheadExplicit"].(bool)
+			if custom["xaligoConnectorStyleSourceKnown"] != true || custom["xaligoConnectorKind"] != tt.kind || arrow["strokeColor"] != tt.color || arrow["strokeWidth"] != tt.width || custom["xaligoConnectorStartArrowhead"] != tt.startArrowhead || custom["xaligoConnectorEndArrowhead"] != tt.endArrowhead || arrow["strokeStyle"] != tt.stroke || widthExplicit != tt.widthExplicit || startExplicit != tt.startExplicit || endExplicit != tt.endExplicit {
 				t.Fatalf("connection arrow = %#v", arrow)
 			}
 		})
@@ -64,9 +70,9 @@ func TestConnectionManualBendsInferEndpointSides(t *testing.T) {
 }
 
 func TestConnectionRoutingMetadataFromConnectionsParent(t *testing.T) {
-	arrow := buildConnectionArrowSource(t, `<frame width="320" height="160"><item id="1" /><item id="2" /><connections kind="traffic" color="#2563eb" coordinate-scale="2" grid="4"><connection src="1" dst="2"><bend x="80" y="40" /></connection></connections></frame>`)
+	arrow := buildConnectionArrowSource(t, `<frame width="320" height="160"><item id="1" /><item id="2" /><connections kind="traffic" color="#2563eb" stroke-width="3" end-arrowhead="triangle" coordinate-scale="2" grid="4"><connection src="1" dst="2"><bend x="80" y="40" /></connection></connections></frame>`)
 	custom, _ := arrow["customData"].(map[string]any)
-	if custom["xaligoConnectorKind"] != "traffic" || arrow["strokeColor"] != "#2563eb" || custom["xaligoConnectorScale"] != 2.0 || custom["xaligoConnectorGrid"] != 4.0 {
+	if custom["xaligoConnectorKind"] != "traffic" || arrow["strokeColor"] != "#2563eb" || arrow["strokeWidth"] != 3.0 || custom["xaligoConnectorEndArrowhead"] != "triangle" || custom["xaligoConnectorStrokeWidthExplicit"] != true || custom["xaligoConnectorEndArrowheadExplicit"] != true || custom["xaligoConnectorScale"] != 2.0 || custom["xaligoConnectorGrid"] != 4.0 {
 		t.Fatalf("connection routing metadata = %#v arrow=%#v", custom, arrow)
 	}
 }
@@ -216,8 +222,8 @@ func TestExcalidrawConnectionsOffsetOverlappingLanesAndUseSmallHeads(t *testing.
 	scene := buildConnectionScene(t, `<frame width="320" height="160">
   <item id="1" />
   <item id="2" />
-  <connection src="1" dst="2" arrowhead-size="l" />
-  <connection src="1" dst="2" arrowhead-size="l" />
+  <connection src="1" dst="2" arrowhead-size="s" />
+  <connection src="1" dst="2" arrowhead-size="s" />
 </frame>`)
 	arrows := []map[string]any{}
 	for _, element := range scene.Elements {
