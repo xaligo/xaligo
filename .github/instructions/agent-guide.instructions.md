@@ -10,6 +10,7 @@ preconditions before changing code:
 1. `roadmap.instructions.md` — product and pipeline direction.
 2. `xal-spec.instructions.md` — authoritative `.xal` behavior.
 3. `architecture.instructions.md` — package boundaries and dependency rules.
+4. `coding.instructions.md` — mandatory file and identifier conventions.
 
 ## Project summary
 
@@ -65,19 +66,20 @@ with PptxGenJS.
 
 ## Shared Use-Case APIs
 
-Use `internal/usecase` instead of assembling parser, layout, and encoder
-packages in adapters:
+Use constructor-injected components from `internal/usecase` instead of
+assembling parser, layout, and encoder packages in adapters. Every direct
+use-case file owns its `XxxUsecase` interface, private implementation,
+`NewXxxUsecase` constructor, and receiver methods. The principal APIs are:
 
 ```go
-Render(ctx, source, options)
-RenderExcalidraw(ctx, source, options)
-RenderSVG(ctx, source, options)
-RenderPPTX(ctx, source, options)
-RenderXYFlow(ctx, source, options)
-RenderIsoflow(ctx, source, options)
-BuildPPTXPlan(ctx, source, options)
-Validate(ctx, source)
-Diagnose(ctx, source)
+renderUsecase := NewRenderUsecase(...)
+renderUsecase.Render(ctx, source, options)
+renderUsecase.RenderSVG(ctx, source, options)
+renderUsecase.RenderPPTX(ctx, source, options)
+
+diagnosticsUsecase := NewDiagnosticsUsecase()
+diagnosticsUsecase.Validate(ctx, source)
+diagnosticsUsecase.Diagnose(ctx, source)
 ```
 
 `RenderOptions.Assets` is only needed by embedded or virtual-filesystem
