@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"strings"
+	"unicode"
 
 	"github.com/xaligo/xaligo/internal/entity"
 )
@@ -83,6 +84,20 @@ func svgOpsBounds(ops []entity.DrawOp, ppi, w, h float64) svgBounds {
 			for _, p := range absolutePoints(op, x, y, ow, oh, ppi) {
 				expand(p.x, p.y)
 			}
+		case "text":
+			expand(x, y)
+			expand(x+ow, y+oh)
+			layout := resolvedTextLayout(op)
+			if layout.Clip {
+				continue
+			}
+			metrics, ok := resolveSVGTextMetrics(op, x, y, ow, oh, ppi)
+			if !ok {
+				continue
+			}
+			minX, minY, maxX, maxY := svgTextGlyphBounds(op, metrics, x, y, ow, oh)
+			expand(minX, minY)
+			expand(maxX, maxY)
 		default:
 			expand(x, y)
 			expand(x+ow, y+oh)
@@ -221,28 +236,314 @@ func writeText(b *bytes.Buffer, op entity.DrawOp, x, y, w, h, ppi float64, trans
 	if op.Text == "" {
 		return
 	}
-	anchor := "start"
-	textX := x
-	if op.Align == "center" {
-		anchor = "middle"
-		textX = x + w/2
-	} else if op.Align == "right" {
-		anchor = "end"
-		textX = x + w
-	}
-	fontSize := op.FontSize * ppi / 72.0
-	textY := y + fontSize
-	if op.Valign == "middle" {
-		textY = y + h/2 + fontSize*0.35
-	} else if op.Valign == "bottom" {
-		textY = y + h - 2
+	metrics, ok := resolveSVGTextMetrics(op, x, y, w, h, ppi)
+	if !ok {
+		return
 	}
 	weight := ""
 	if op.Bold {
 		weight = ` font-weight="700"`
 	}
-	fmt.Fprintf(b, `<text x="%s" y="%s" fill="#%s" font-family="%s" font-size="%s" text-anchor="%s"%s%s>%s</text>`+"\n",
-		num(textX), num(textY), color(op.Color, "1E1E1E"), attr(op.FontFace), num(fontSize), anchor, weight, transform, text(op.Text))
+	clip := ""
+	if metrics.layout.Clip {
+		clipID := svgTextClipID(op, x, y, w, h)
+		fmt.Fprintf(b, `<defs><clipPath id="%s" clipPathUnits="userSpaceOnUse"><rect x="%s" y="%s" width="%s" height="%s"/></clipPath></defs>`+"\n",
+			clipID, num(x), num(y), num(w), num(h))
+		clip = ` clip-path="url(#` + clipID + `)"`
+	}
+	fmt.Fprintf(b, `<text x="%s" y="%s" fill="#%s" font-family="%s" font-size="%s" text-anchor="%s"%s%s%s>`,
+		num(metrics.textX), num(metrics.textY), color(op.Color, "1E1E1E"), attr(op.FontFace), num(metrics.fontSize), metrics.anchor, weight, clip, transform)
+	for i, line := range metrics.lines {
+		if i == 0 {
+			fmt.Fprintf(b, `<tspan x="%s" y="%s">%s</tspan>`, num(metrics.textX), num(metrics.textY), text(line))
+			continue
+		}
+		fmt.Fprintf(b, `<tspan x="%s" dy="%s">%s</tspan>`, num(metrics.textX), num(metrics.lineStep), text(line))
+	}
+	b.WriteString("</text>\n")
+}
+
+type svgTextMetrics struct {
+	layout                     entity.TextLayout
+	lines                      []string
+	fontSize, lineStep, textH  float64
+	textX, textY, maxTextWidth float64
+	anchor                     string
+}
+
+func resolveSVGTextMetrics(op entity.DrawOp, x, y, w, h, ppi float64) (svgTextMetrics, bool) {
+	layout := resolvedTextLayout(op)
+	contentX := x + math.Max(0, layout.Padding.Left*ppi)
+	contentY := y + math.Max(0, layout.Padding.Top*ppi)
+	contentW := w - math.Max(0, (layout.Padding.Left+layout.Padding.Right)*ppi)
+	contentH := h - math.Max(0, (layout.Padding.Top+layout.Padding.Bottom)*ppi)
+	if contentW <= 0 || contentH <= 0 {
+		return svgTextMetrics{}, false
+	}
+	fontSize := op.FontSize * ppi / 72.0
+	if fontSize <= 0 {
+		fontSize = 1
+	}
+	lineHeight := layout.LineHeight
+	if lineHeight <= 0 || math.IsNaN(lineHeight) || math.IsInf(lineHeight, 0) {
+		lineHeight = 1.2
+	}
+	lines := svgTextLines(op.Text, contentW, fontSize, op.Bold, layout.Wrap)
+	maxTextW := 0.0
+	for _, line := range lines {
+		maxTextW = math.Max(maxTextW, svgTextWidth(line, fontSize, op.Bold))
+	}
+	if layout.Fit == entity.TextFitShrink {
+		textH := float64(len(lines)) * fontSize * lineHeight
+		scale := 1.0
+		if maxTextW > contentW {
+			scale = math.Min(scale, contentW/maxTextW)
+		}
+		if textH > contentH {
+			scale = math.Min(scale, contentH/textH)
+		}
+		fontSize = math.Max(0.1, fontSize*scale)
+		maxTextW = 0
+		for _, line := range lines {
+			maxTextW = math.Max(maxTextW, svgTextWidth(line, fontSize, op.Bold))
+		}
+	}
+	lineStep := fontSize * lineHeight
+	textH := float64(len(lines)) * lineStep
+	anchor := "start"
+	textX := contentX
+	if op.Align == "center" {
+		anchor = "middle"
+		textX = contentX + contentW/2
+	} else if op.Align == "right" {
+		anchor = "end"
+		textX = contentX + contentW
+	}
+	textY := contentY + fontSize
+	if op.Valign == "middle" {
+		textY = contentY + (contentH-textH)/2 + fontSize
+	} else if op.Valign == "bottom" {
+		textY = contentY + contentH - textH + fontSize
+	}
+	return svgTextMetrics{
+		layout: layout, lines: lines, fontSize: fontSize, lineStep: lineStep,
+		textH: textH, textX: textX, textY: textY, maxTextWidth: maxTextW, anchor: anchor,
+	}, true
+}
+
+func svgTextGlyphBounds(op entity.DrawOp, metrics svgTextMetrics, x, y, w, h float64) (float64, float64, float64, float64) {
+	// The SVG encoder cannot query the eventual viewer's font metrics. Use the
+	// wrapping estimate for placement and a wider per-rune estimate for visible
+	// overflow bounds so alternate/fallback fonts are not cropped by the viewport.
+	boundsWidth := metrics.maxTextWidth
+	for _, line := range metrics.lines {
+		boundsWidth = math.Max(boundsWidth, svgConservativeTextWidth(line, metrics.fontSize, op.Bold))
+	}
+	minX := metrics.textX
+	switch metrics.anchor {
+	case "middle":
+		minX -= boundsWidth / 2
+	case "end":
+		minX -= boundsWidth
+	}
+	minY := metrics.textY - metrics.fontSize
+	maxX := minX + boundsWidth
+	maxY := minY + metrics.textH
+	if math.Abs(op.Rotate) < 0.0001 {
+		return minX, minY, maxX, maxY
+	}
+	return rotatedRectBounds(minX, minY, maxX, maxY, op.Rotate, x+w/2, y+h/2)
+}
+
+func svgConservativeTextWidth(value string, fontSize float64, bold bool) float64 {
+	units := 0.0
+	for _, r := range value {
+		switch {
+		case unicode.Is(unicode.Mn, r), unicode.Is(unicode.Me, r):
+			continue
+		case unicode.IsSpace(r):
+			units += 0.5
+		default:
+			units += 1.1
+		}
+	}
+	if bold {
+		units *= 1.05
+	}
+	return units * fontSize
+}
+
+func rotatedRectBounds(minX, minY, maxX, maxY, degrees, centerX, centerY float64) (float64, float64, float64, float64) {
+	radians := degrees * math.Pi / 180
+	sin, cos := math.Sin(radians), math.Cos(radians)
+	outMinX, outMinY := math.Inf(1), math.Inf(1)
+	outMaxX, outMaxY := math.Inf(-1), math.Inf(-1)
+	for _, point := range [][2]float64{{minX, minY}, {maxX, minY}, {maxX, maxY}, {minX, maxY}} {
+		dx, dy := point[0]-centerX, point[1]-centerY
+		px := centerX + dx*cos - dy*sin
+		py := centerY + dx*sin + dy*cos
+		outMinX = math.Min(outMinX, px)
+		outMinY = math.Min(outMinY, py)
+		outMaxX = math.Max(outMaxX, px)
+		outMaxY = math.Max(outMaxY, py)
+	}
+	return outMinX, outMinY, outMaxX, outMaxY
+}
+
+func resolvedTextLayout(op entity.DrawOp) entity.TextLayout {
+	if op.TextLayout != nil {
+		layout := *op.TextLayout
+		if layout.Fit != entity.TextFitShrink {
+			layout.Fit = entity.TextFitNone
+		}
+		switch layout.Overflow {
+		case entity.TextOverflowVisible:
+			layout.Clip = false
+		case entity.TextOverflowClip:
+			layout.Clip = true
+		default:
+			if layout.Clip {
+				layout.Overflow = entity.TextOverflowClip
+			} else {
+				layout.Overflow = entity.TextOverflowVisible
+			}
+		}
+		return layout
+	}
+	// Plans produced before textLayout used shrink-to-fit everywhere and a
+	// no-wrap ID convention for group headers. Preserve that behavior while
+	// containing text inside its declared box in SVG.
+	role := entity.TextRoleLabel
+	wrap := true
+	if legacyGroupHeaderLabelID(op.ID) {
+		role = entity.TextRoleGroupHeader
+		wrap = false
+	}
+	return entity.TextLayout{
+		Role:       role,
+		Wrap:       wrap,
+		Fit:        entity.TextFitShrink,
+		Overflow:   entity.TextOverflowClip,
+		Clip:       true,
+		LineHeight: 1.2,
+	}
+}
+
+func legacyGroupHeaderLabelID(id string) bool {
+	return id != "" && strings.HasSuffix(id, "-label") &&
+		!strings.HasSuffix(id, "-item-lbl") && !isConnectorLabelID(id)
+}
+
+func isConnectorLabelID(id string) bool {
+	if !strings.HasPrefix(id, "L") || !strings.HasSuffix(id, "-label") {
+		return false
+	}
+	digits := strings.TrimSuffix(strings.TrimPrefix(id, "L"), "-label")
+	if digits == "" {
+		return false
+	}
+	for _, r := range digits {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
+}
+
+func svgTextLines(value string, maxWidth, fontSize float64, bold, wrap bool) []string {
+	paragraphs := strings.Split(strings.ReplaceAll(value, "\r\n", "\n"), "\n")
+	lines := make([]string, 0, len(paragraphs))
+	for _, paragraph := range paragraphs {
+		if !wrap || strings.TrimSpace(paragraph) == "" {
+			lines = append(lines, paragraph)
+			continue
+		}
+		words := strings.Fields(paragraph)
+		current := ""
+		for _, word := range words {
+			candidate := word
+			if current != "" {
+				candidate = current + " " + word
+			}
+			if svgTextWidth(candidate, fontSize, bold) <= maxWidth {
+				current = candidate
+				continue
+			}
+			if current != "" {
+				lines = append(lines, current)
+				current = ""
+			}
+			parts := svgBreakTextToken(word, maxWidth, fontSize, bold)
+			if len(parts) > 1 {
+				lines = append(lines, parts[:len(parts)-1]...)
+			}
+			if len(parts) > 0 {
+				current = parts[len(parts)-1]
+			}
+		}
+		if current != "" {
+			lines = append(lines, current)
+		}
+	}
+	if len(lines) == 0 {
+		return []string{""}
+	}
+	return lines
+}
+
+func svgBreakTextToken(value string, maxWidth, fontSize float64, bold bool) []string {
+	if value == "" {
+		return []string{""}
+	}
+	parts := []string{}
+	var current strings.Builder
+	for _, r := range value {
+		candidate := current.String() + string(r)
+		if current.Len() > 0 && svgTextWidth(candidate, fontSize, bold) > maxWidth {
+			parts = append(parts, current.String())
+			current.Reset()
+		}
+		current.WriteRune(r)
+	}
+	if current.Len() > 0 {
+		parts = append(parts, current.String())
+	}
+	return parts
+}
+
+func svgTextWidth(value string, fontSize float64, bold bool) float64 {
+	factor := 1.0
+	if bold {
+		factor = 1.05
+	}
+	units := 0.0
+	for _, r := range value {
+		switch {
+		case unicode.Is(unicode.Mn, r), unicode.Is(unicode.Me, r):
+			continue
+		case unicode.IsSpace(r):
+			units += 0.33
+		case r >= 0x1100:
+			units += 1.0
+		case unicode.IsPunct(r):
+			units += 0.42
+		case unicode.IsUpper(r):
+			units += 0.62
+		default:
+			units += 0.55
+		}
+	}
+	return units * fontSize * factor
+}
+
+func svgTextClipID(op entity.DrawOp, x, y, w, h float64) string {
+	key := fmt.Sprintf("%s|%.6f|%.6f|%.6f|%.6f", op.ID, x, y, w, h)
+	var hash uint64 = 1469598103934665603
+	for i := 0; i < len(key); i++ {
+		hash ^= uint64(key[i])
+		hash *= 1099511628211
+	}
+	return fmt.Sprintf("xaligo-text-clip-%x", hash)
 }
 
 func writeLine(b *bytes.Buffer, op entity.DrawOp, x, y, w, h, ppi float64) {
