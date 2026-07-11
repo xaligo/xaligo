@@ -1,20 +1,23 @@
-// Package pptxplan turns an Excalidraw scene (the JSON produced by the xaligo
-// renderer) into a flat, fully-resolved PPTX draw plan.
+// Package entity contains the renderer-shared presentation scene and flat draw
+// plan consumed by xaligo output encoders.
 //
 // All geometry — bounds detection, paper-size scaling and centring, obstacle
-// collection, connector anchoring and orthogonal arrow routing, pixel→inch
-// conversion and colour normalisation — happens here on the Go side. The
-// TypeScript layer only iterates the resulting Plan and issues the matching
-// PptxGenJS drawing calls; it performs no geometry of its own.
+// collection, connector anchoring and orthogonal routing, coordinate conversion,
+// text layout, and colour normalisation — is resolved before an encoder consumes
+// Plan. SVG and PPTX therefore serialize the same drawing decisions.
 package entity
 
-// ── Input: Excalidraw scene (subset of fields used by the exporter) ──────────
-
-type PptxScene struct {
+// PresentationScene is the canonical scene subset used by plan and model
+// encoders. Its JSON remains Excalidraw-compatible for editable output.
+type PresentationScene struct {
 	Elements []Element            `json:"elements"`
 	Files    map[string]SceneFile `json:"files"`
 	AppState *AppState            `json:"appState"`
 }
+
+// PptxScene is kept as a source-compatible alias for older callers.
+// Deprecated: use PresentationScene.
+type PptxScene = PresentationScene
 
 type AppState struct {
 	ViewBackgroundColor string `json:"viewBackgroundColor"`
@@ -50,6 +53,7 @@ type Element struct {
 	FontStyle       string      `json:"fontStyle"`
 	TextAlign       string      `json:"textAlign"`
 	VerticalAlign   string      `json:"verticalAlign"`
+	LineHeight      *float64    `json:"lineHeight"`
 	FileID          string      `json:"fileId"`
 	Points          [][]float64 `json:"points"`
 	IsDeleted       bool        `json:"isDeleted"`
@@ -59,25 +63,43 @@ type Element struct {
 }
 
 type CustomData struct {
-	ConnectorKind           string  `json:"xaligoConnectorKind"`
-	ConnectorStartArrowhead string  `json:"xaligoConnectorStartArrowhead"`
-	ConnectorEndArrowhead   string  `json:"xaligoConnectorEndArrowhead"`
-	ConnectorBends          string  `json:"xaligoConnectorBends,omitempty"`
-	ConnectorScale          float64 `json:"xaligoConnectorScale,omitempty"`
-	ConnectorGrid           float64 `json:"xaligoConnectorGrid,omitempty"`
-	ConnectorSrcAnchor      bool    `json:"xaligoConnectorSrcAnchor,omitempty"`
-	ConnectorDstAnchor      bool    `json:"xaligoConnectorDstAnchor,omitempty"`
-	Junction                bool    `json:"xaligoJunction,omitempty"`
-	GroupBorder             bool    `json:"xaligoGroupBorder,omitempty"`
-	GroupHeader             bool    `json:"xaligoGroupHeader,omitempty"`
+	ConnectorKind                   string      `json:"xaligoConnectorKind"`
+	ConnectorStartArrowhead         string      `json:"xaligoConnectorStartArrowhead"`
+	ConnectorEndArrowhead           string      `json:"xaligoConnectorEndArrowhead"`
+	ConnectorStyleSourceKnown       bool        `json:"xaligoConnectorStyleSourceKnown,omitempty"`
+	ConnectorStartArrowheadExplicit bool        `json:"xaligoConnectorStartArrowheadExplicit,omitempty"`
+	ConnectorEndArrowheadExplicit   bool        `json:"xaligoConnectorEndArrowheadExplicit,omitempty"`
+	ConnectorStrokeWidthExplicit    bool        `json:"xaligoConnectorStrokeWidthExplicit,omitempty"`
+	ConnectorBends                  string      `json:"xaligoConnectorBends,omitempty"`
+	ConnectorScale                  float64     `json:"xaligoConnectorScale,omitempty"`
+	ConnectorGrid                   float64     `json:"xaligoConnectorGrid,omitempty"`
+	ConnectorSrcAnchor              bool        `json:"xaligoConnectorSrcAnchor,omitempty"`
+	ConnectorDstAnchor              bool        `json:"xaligoConnectorDstAnchor,omitempty"`
+	ConnectorCrossFrame             bool        `json:"xaligoCrossFrame,omitempty"`
+	ConnectorSourceFrame            string      `json:"xaligoSourceFrame,omitempty"`
+	ConnectorDestinationFrame       string      `json:"xaligoDestinationFrame,omitempty"`
+	ConnectorLogicalID              string      `json:"xaligoConnectorLogicalId,omitempty"`
+	ConnectorSourceElementID        string      `json:"xaligoConnectorSourceElementId,omitempty"`
+	ConnectorDestinationElementID   string      `json:"xaligoConnectorDestinationElementId,omitempty"`
+	Junction                        bool        `json:"xaligoJunction,omitempty"`
+	GroupBorder                     bool        `json:"xaligoGroupBorder,omitempty"`
+	GroupHeader                     bool        `json:"xaligoGroupHeader,omitempty"`
+	GroupHeaderContent              bool        `json:"xaligoGroupHeaderContent,omitempty"`
+	AnchorBackground                bool        `json:"xaligoAnchorBackground,omitempty"`
+	AnchorContent                   bool        `json:"xaligoAnchorContent,omitempty"`
+	SemanticParentElementID         string      `json:"xaligoSemanticParentElementId,omitempty"`
+	SemanticElementKind             string      `json:"xaligoSemanticElementKind,omitempty"`
+	PortLabel                       bool        `json:"xaligoPortLabel,omitempty"`
+	CrossFrameLabel                 bool        `json:"xaligoCrossFrameLabel,omitempty"`
+	TextLayout                      *TextLayout `json:"xaligoTextLayout,omitempty"`
 }
 
 // ── Options driving the calculations ─────────────────────────────────────────
 
-// Options collects every parameter that influences the geometry of the plan.
-// They originate from the CLI / Go controller and are passed verbatim to the
-// WASM plan builder as JSON.
-type PptxOptions struct {
+// PlanOptions collects every parameter that influences the geometry of the plan.
+// They originate from the CLI / Go controller and are resolved by the Go plan
+// builder before the resulting plan crosses an encoder boundary.
+type PlanOptions struct {
 	Theme             string        `json:"theme,omitempty"`
 	PxPerInch         float64       `json:"pxPerInch"`
 	ArrowStyle        string        `json:"arrowStyle"`
@@ -93,7 +115,11 @@ type PptxOptions struct {
 	LegendEntries     []LegendEntry `json:"legendEntries"`
 }
 
-// ── Output: the PPTX draw plan ───────────────────────────────────────────────
+// PptxOptions is kept as a source-compatible alias for older callers.
+// Deprecated: use PlanOptions.
+type PptxOptions = PlanOptions
+
+// ── Output: renderer-shared physical draw plan ───────────────────────────────
 
 // Plan is the complete, ordered list of drawing operations plus slide metadata.
 // Every coordinate is already in inches and every colour is a 6-hex string.
@@ -127,7 +153,7 @@ type PlanSlide struct {
 	Background string  `json:"background"`
 }
 
-// DrawOp is a single PptxGenJS drawing call. Kind selects the dispatch:
+// DrawOp is a single encoder drawing instruction. Kind selects the dispatch:
 // "rect" | "ellipse" | "polygon" | "text" | "image" | "line".
 type DrawOp struct {
 	ID         string  `json:"id,omitempty"`
@@ -152,6 +178,9 @@ type DrawOp struct {
 	Bold     bool    `json:"bold,omitempty"`
 	Align    string  `json:"align,omitempty"`
 	Valign   string  `json:"valign,omitempty"`
+	// TextLayout is renderer-neutral text overflow and placement metadata.
+	// FontSize remains points while padding follows the plan's inch coordinates.
+	TextLayout *TextLayout `json:"textLayout,omitempty"`
 
 	// image
 	Data         string  `json:"data,omitempty"`
@@ -163,8 +192,62 @@ type DrawOp struct {
 	FlipV  bool   `json:"flipV,omitempty"`
 }
 
+// TextRole describes the semantic purpose of a text operation without relying
+// on renderer-specific object IDs.
+type TextRole string
+
+const (
+	TextRoleLabel          TextRole = "label"
+	TextRoleGroupHeader    TextRole = "group-header"
+	TextRoleItemLabel      TextRole = "item-label"
+	TextRolePortLabel      TextRole = "port-label"
+	TextRoleConnectorLabel TextRole = "connector-label"
+)
+
+// TextFit controls how a renderer handles text larger than its content box.
+type TextFit string
+
+const (
+	TextFitNone   TextFit = "none"
+	TextFitShrink TextFit = "shrink"
+)
+
+// TextOverflow controls whether glyphs remain visible outside their text box.
+type TextOverflow string
+
+const (
+	TextOverflowVisible TextOverflow = "visible"
+	TextOverflowClip    TextOverflow = "clip"
+)
+
+// TextPadding stores text-box insets in the containing model's coordinate
+// space. Canonical scenes use layout pixels; BuildPlan converts them to plan
+// inches before SVG/PPTX encoding.
+type TextPadding struct {
+	Top    float64 `json:"top"`
+	Right  float64 `json:"right"`
+	Bottom float64 `json:"bottom"`
+	Left   float64 `json:"left"`
+}
+
+// TextLayout is the common text-box contract interpreted by SVG and PPTX
+// encoders. LineHeight is a multiplier of FontSize.
+type TextLayout struct {
+	Role     TextRole     `json:"role,omitempty"`
+	Wrap     bool         `json:"wrap"`
+	Fit      TextFit      `json:"fit,omitempty"`
+	Overflow TextOverflow `json:"overflow,omitempty"`
+	// Clip is retained for plan JSON compatibility. New consumers should use
+	// Overflow; producers keep both fields consistent during the migration.
+	Clip       bool        `json:"clip"`
+	LineHeight float64     `json:"lineHeight,omitempty"`
+	Padding    TextPadding `json:"padding"`
+}
+
 type LineStyle struct {
-	Color              string  `json:"color"`
+	Color string `json:"color"`
+	// Width is stored in points, matching FontSize. SVG converts it back to
+	// output pixels with the same PPI transform used for plan geometry.
 	Width              float64 `json:"width"`
 	Dash               string  `json:"dash"`
 	Transparency       float64 `json:"transparency"`
