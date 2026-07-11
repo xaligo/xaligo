@@ -24,8 +24,16 @@ type xyFlowGroup struct {
 	parent  string
 }
 
+type xyFlowLogicalEdge struct {
+	element       entity.Element
+	sourceElement string
+	targetElement string
+	sourceBinding *entity.Binding
+	targetBinding *entity.Binding
+}
+
 func (rcvr *xyFlowRepository) Render(sceneJSON []byte) ([]byte, error) {
-	var scene entity.PptxScene
+	var scene entity.PresentationScene
 	if err := json.Unmarshal(sceneJSON, &scene); err != nil {
 		return nil, fmt.Errorf("decode resolved scene for XYFlow: %w", err)
 	}
@@ -44,6 +52,7 @@ func (rcvr *xyFlowRepository) Render(sceneJSON []byte) ([]byte, error) {
 
 	groups := collectGroups(scene.Elements)
 	nodes := make([]entity.XYFlowNode, 0, len(groups))
+	elementNodes := map[string]string{}
 	for _, candidate := range groups {
 		element := candidate.element
 		position := entity.XYFlowPosition{X: element.X, Y: element.Y}
@@ -54,6 +63,9 @@ func (rcvr *xyFlowRepository) Render(sceneJSON []byte) ([]byte, error) {
 			}
 		}
 		data := map[string]any{"kind": "xyFlowGroup"}
+		if semanticKind := xyFlowSemanticElementKind(element); semanticKind != "" {
+			data["semanticKind"] = semanticKind
+		}
 		if icon := groupIcons[element.ID]; icon != "" {
 			data["icon"] = icon
 		}
@@ -66,18 +78,25 @@ func (rcvr *xyFlowRepository) Render(sceneJSON []byte) ([]byte, error) {
 				"borderWidth": element.StrokeWidth, "borderStyle": cssDash(element.StrokeStyle),
 			},
 		}
-		if candidate.parent != "" {
+		if candidate.parent != "" && xyFlowElementInsideParent(groups, candidate.parent, element) {
 			node.Extent = "parent"
 		}
 		nodes = append(nodes, node)
+		registerXYFlowElementNode(elementNodes, element.ID, node.ID)
 	}
 
-	itemIDs := map[string]bool{}
 	for _, element := range scene.Elements {
-		if element.IsDeleted || element.Type != "image" || !strings.HasSuffix(element.ID, "-item") {
+		semanticKind := xyFlowSemanticElementKind(element)
+		legacyItem := semanticKind == "" && strings.HasSuffix(element.ID, "-item")
+		if element.IsDeleted || element.Type != "image" || (semanticKind != "item" && !legacyItem) {
 			continue
 		}
-		parent := smallestContainingGroup(groups, element)
+		parent := ""
+		if semanticKind == "item" {
+			parent = xyFlowSemanticParent(groups, element)
+		} else {
+			parent = smallestContainingGroup(groups, element)
+		}
 		position := entity.XYFlowPosition{X: element.X, Y: element.Y}
 		if parent != "" {
 			if candidate, ok := groupByID(groups, parent); ok {
@@ -86,38 +105,65 @@ func (rcvr *xyFlowRepository) Render(sceneJSON []byte) ([]byte, error) {
 			}
 		}
 		data := map[string]any{"kind": "item", "label": labels[element.ID], "fileId": element.FileID}
+		if semanticKind != "" {
+			data["semanticKind"] = semanticKind
+		}
 		if file, ok := scene.Files[element.FileID]; ok && file.DataURL != "" {
 			data["image"] = file.DataURL
 		}
 		node := entity.XYFlowNode{ID: element.ID, Type: "xaligoItem", XYFlowPosition: position, Width: element.Width, Height: element.Height, ParentID: parent, Data: data}
-		if parent != "" {
+		if parent != "" && xyFlowElementInsideParent(groups, parent, element) {
 			node.Extent = "parent"
 		}
 		nodes = append(nodes, node)
-		itemIDs[element.ID] = true
+		registerXYFlowElementNode(elementNodes, element.ID, node.ID)
+		registerXYFlowElementNode(elementNodes, element.ID+"-lbl", node.ID)
 	}
 
 	edges := []entity.XYFlowEdge{}
+	logicalEdges := map[string]*xyFlowLogicalEdge{}
+	logicalEdgeOrder := []string{}
 	for _, element := range scene.Elements {
-		if element.IsDeleted || (element.Type != "arrow" && element.Type != "line") || element.StartBinding == nil || element.EndBinding == nil {
+		if element.IsDeleted || (element.Type != "arrow" && element.Type != "line") {
 			continue
 		}
-		source := share.ItemNodeID(element.StartBinding.ElementID)
-		target := share.ItemNodeID(element.EndBinding.ElementID)
-		if !itemIDs[source] || !itemIDs[target] {
+		if element.CustomData != nil && element.CustomData.ConnectorCrossFrame {
+			logicalID := strings.TrimSpace(element.CustomData.ConnectorLogicalID)
+			if logicalID == "" {
+				continue
+			}
+			logical := logicalEdges[logicalID]
+			if logical == nil {
+				logical = &xyFlowLogicalEdge{
+					element:       element,
+					sourceElement: element.CustomData.ConnectorSourceElementID,
+					targetElement: element.CustomData.ConnectorDestinationElementID,
+				}
+				logicalEdges[logicalID] = logical
+				logicalEdgeOrder = append(logicalEdgeOrder, logicalID)
+			}
+			collectXYFlowLogicalBinding(logical, element.StartBinding)
+			collectXYFlowLogicalBinding(logical, element.EndBinding)
 			continue
 		}
-		kind, startHead, endHead := connectorData(element)
-		color := xyFlowNormalizedColor(element.StrokeColor, "#1e1e1e")
-		edge := entity.XYFlowEdge{
-			ID: element.ID, Source: source, Target: target,
-			SourceHandle: bindingSide(element.StartBinding.FixedPoint), TargetHandle: bindingSide(element.EndBinding.FixedPoint),
-			Type: "smoothstep", ZIndex: edgeZIndex(kind),
-			Data:        map[string]any{"kind": kind, "startArrowhead": startHead, "endArrowhead": endHead},
-			Style:       map[string]any{"stroke": color, "strokeWidth": share.PositiveWidth(element.StrokeWidth), "strokeDasharray": cssStrokeDash(element.StrokeStyle)},
-			MarkerStart: marker(startHead, color), MarkerEnd: marker(endHead, color),
+		if element.StartBinding == nil || element.EndBinding == nil {
+			continue
 		}
-		edges = append(edges, edge)
+		source := xyFlowNodeForElement(elementNodes, element.StartBinding.ElementID)
+		target := xyFlowNodeForElement(elementNodes, element.EndBinding.ElementID)
+		if source == "" || target == "" {
+			continue
+		}
+		edges = append(edges, buildXYFlowEdge(element, element.ID, source, target, element.StartBinding, element.EndBinding))
+	}
+	for _, logicalID := range logicalEdgeOrder {
+		logical := logicalEdges[logicalID]
+		source := xyFlowNodeForElement(elementNodes, logical.sourceElement)
+		target := xyFlowNodeForElement(elementNodes, logical.targetElement)
+		if source == "" || target == "" {
+			continue
+		}
+		edges = append(edges, buildXYFlowEdge(logical.element, logicalID, source, target, logical.sourceBinding, logical.targetBinding))
 	}
 
 	width, height := sceneSize(scene.Elements)
@@ -132,15 +178,146 @@ func (rcvr *xyFlowRepository) Render(sceneJSON []byte) ([]byte, error) {
 func collectGroups(elements []entity.Element) []xyFlowGroup {
 	groups := []xyFlowGroup{}
 	for _, element := range elements {
-		if element.IsDeleted || element.ID == "paper-frame" || strings.HasSuffix(element.ID, "-header-bg") || element.Type != "rectangle" || element.Width <= 0 || element.Height <= 0 {
+		if element.IsDeleted || element.ID == "paper-frame" || strings.HasSuffix(element.ID, "-header-bg") || element.Width <= 0 || element.Height <= 0 {
+			continue
+		}
+		semanticKind := xyFlowSemanticElementKind(element)
+		if semanticKind != "" {
+			if !xyFlowSemanticGroupKind(semanticKind) {
+				continue
+			}
+			groups = append(groups, xyFlowGroup{element: element, parent: strings.TrimSpace(element.CustomData.SemanticParentElementID)})
+			continue
+		}
+		if (element.Type != "rectangle" && element.Type != "frame") || (element.CustomData != nil && element.CustomData.AnchorBackground) {
 			continue
 		}
 		groups = append(groups, xyFlowGroup{element: element})
 	}
 	for i := range groups {
-		groups[i].parent = smallestContainingGroupExcluding(groups, groups[i].element, groups[i].element.ID)
+		if xyFlowSemanticElementKind(groups[i].element) == "" {
+			groups[i].parent = smallestContainingGroupExcluding(groups, groups[i].element, groups[i].element.ID)
+			continue
+		}
+		if groups[i].parent != "" {
+			if _, ok := groupByID(groups, groups[i].parent); !ok {
+				groups[i].parent = ""
+			}
+		}
 	}
 	return groups
+}
+
+func xyFlowSemanticElementKind(element entity.Element) string {
+	if element.CustomData == nil {
+		return ""
+	}
+	return strings.TrimSpace(element.CustomData.SemanticElementKind)
+}
+
+func xyFlowSemanticGroupKind(kind string) bool {
+	switch kind {
+	case "frame", "group", "rectangle", "port":
+		return true
+	default:
+		return false
+	}
+}
+
+func xyFlowSemanticParent(groups []xyFlowGroup, element entity.Element) string {
+	if element.CustomData == nil {
+		return ""
+	}
+	parent := strings.TrimSpace(element.CustomData.SemanticParentElementID)
+	if parent == "" {
+		return ""
+	}
+	if _, ok := groupByID(groups, parent); !ok {
+		return ""
+	}
+	return parent
+}
+
+func xyFlowElementInsideParent(groups []xyFlowGroup, parentID string, element entity.Element) bool {
+	parent, ok := groupByID(groups, parentID)
+	return ok && contains(parent.element, element)
+}
+
+func registerXYFlowElementNode(elementNodes map[string]string, elementID, nodeID string) {
+	if elementID == "" || nodeID == "" {
+		return
+	}
+	if _, exists := elementNodes[elementID]; !exists {
+		elementNodes[elementID] = nodeID
+	}
+}
+
+func xyFlowNodeForElement(elementNodes map[string]string, elementID string) string {
+	if nodeID := elementNodes[elementID]; nodeID != "" {
+		return nodeID
+	}
+	return elementNodes[share.ItemNodeID(elementID)]
+}
+
+func collectXYFlowLogicalBinding(logical *xyFlowLogicalEdge, binding *entity.Binding) {
+	if logical == nil || binding == nil {
+		return
+	}
+	switch binding.ElementID {
+	case logical.sourceElement:
+		logical.sourceBinding = binding
+	case logical.targetElement:
+		logical.targetBinding = binding
+	}
+}
+
+func buildXYFlowEdge(element entity.Element, id, source, target string, sourceBinding, targetBinding *entity.Binding) entity.XYFlowEdge {
+	kind, startHead, endHead := connectorData(element)
+	color := xyFlowNormalizedColor(element.StrokeColor, "#1e1e1e")
+	data := map[string]any{"kind": kind, "startArrowhead": startHead, "endArrowhead": endHead}
+	if element.CustomData != nil {
+		if element.CustomData.ConnectorBends != "" {
+			data["bends"] = element.CustomData.ConnectorBends
+		}
+		if element.CustomData.ConnectorScale > 0 {
+			data["scale"] = element.CustomData.ConnectorScale
+		}
+		if element.CustomData.ConnectorGrid > 0 {
+			data["grid"] = element.CustomData.ConnectorGrid
+		}
+		if element.CustomData.ConnectorSrcAnchor {
+			data["sourceAnchorExplicit"] = true
+		}
+		if element.CustomData.ConnectorDstAnchor {
+			data["targetAnchorExplicit"] = true
+		}
+		if element.CustomData.ConnectorCrossFrame {
+			data["crossFrame"] = true
+			data["sourceFrame"] = element.CustomData.ConnectorSourceFrame
+			data["targetFrame"] = element.CustomData.ConnectorDestinationFrame
+		}
+	}
+	if sourceBinding != nil && len(sourceBinding.FixedPoint) >= 2 {
+		data["sourceFixedPoint"] = append([]float64(nil), sourceBinding.FixedPoint...)
+	}
+	if targetBinding != nil && len(targetBinding.FixedPoint) >= 2 {
+		data["targetFixedPoint"] = append([]float64(nil), targetBinding.FixedPoint...)
+	}
+	return entity.XYFlowEdge{
+		ID: id, Source: source, Target: target,
+		SourceHandle: bindingHandle(sourceBinding), TargetHandle: bindingHandle(targetBinding),
+		Type: "smoothstep", ZIndex: edgeZIndex(kind),
+		Data:        data,
+		Style:       map[string]any{"stroke": color, "strokeWidth": share.PositiveWidth(element.StrokeWidth), "strokeDasharray": cssStrokeDash(element.StrokeStyle)},
+		MarkerStart: marker(startHead, color), MarkerEnd: marker(endHead, color),
+	}
+}
+
+func bindingHandle(binding *entity.Binding) string {
+	if binding == nil {
+		return ""
+	}
+	return bindingSide(binding.FixedPoint)
 }
 
 func smallestContainingGroup(groups []xyFlowGroup, element entity.Element) string {
