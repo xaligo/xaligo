@@ -392,12 +392,12 @@ func sampleXAL(path, usage string) string {
 	height := 160
 	if strings.HasPrefix(path, groupIconRelPath) {
 		width, height = groupFrameSize(extractTitle(usage), true)
-		return fmt.Sprintf(`<frame width="%d" height="%d" margin="%d">
+		return fmt.Sprintf(`<frame version="1" width="%d" height="%d" margin="%d">
   %s
 </frame>
 `, width, height, sampleMargin, indentUsage(usage, "  "))
 	}
-	return fmt.Sprintf(`<frame width="%d" height="%d" margin="%d" item-size="64">
+	return fmt.Sprintf(`<frame version="1" width="%d" height="%d" margin="%d" item-size="64">
   %s
 </frame>
 `, width, height, sampleMargin, indentUsage(usage, "  "))
@@ -454,7 +454,7 @@ func writeReferenceSamples(renderer usecase.RenderUsecase) {
 					Slug:    "root",
 					Title:   "Root Frame",
 					Alt:     "Root frame preview",
-					XAL: `<frame width="360" height="220" margin="24">
+					XAL: `<frame version="1" width="360" height="220" margin="24">
   <container layout="horizontal" gap="16">
     <card title="Web" />
     <card title="App" />
@@ -468,7 +468,7 @@ func writeReferenceSamples(renderer usecase.RenderUsecase) {
 					Slug:    "leaf",
 					Title:   "Generic Leaf Box",
 					Alt:     "Generic leaf box preview",
-					XAL: `<frame width="240" height="160" margin="24">
+					XAL: `<frame version="1" width="240" height="160" margin="24">
   <card title="Dashboard" />
 </frame>
 `,
@@ -491,7 +491,7 @@ func writeReferenceSamples(renderer usecase.RenderUsecase) {
 					Slug:    "rectangle-ports",
 					Title:   "Rectangle With Ports",
 					Alt:     "Rectangle and ports preview",
-					XAL: `<frame width="300" height="180" margin="32">
+					XAL: `<frame version="1" width="300" height="180" margin="32">
   <rectangle id="service" title="Service" width="180" height="100">
     <port id="service-in" side="left" title="in" />
     <port id="service-out" side="right" title="out" />
@@ -504,7 +504,7 @@ func writeReferenceSamples(renderer usecase.RenderUsecase) {
 					Slug:    "borderless",
 					Title:   "Borderless Leaf",
 					Alt:     "Borderless leaf preview",
-					XAL: `<frame width="260" height="160" margin="32">
+					XAL: `<frame version="1" width="260" height="160" margin="32">
   <panel title="No Border" border="none" />
 </frame>
 `,
@@ -527,7 +527,7 @@ func arrowSample(slug, title, alt, connections string) referenceSample {
 		Slug:    slug,
 		Title:   title,
 		Alt:     alt,
-		XAL: fmt.Sprintf(`<frame width="360" height="160" margin="24" layout="horizontal" gap="120" align="middle-center">
+		XAL: fmt.Sprintf(`<frame version="1" width="360" height="160" margin="24" layout="horizontal" gap="120" align="middle-center">
   <rectangle id="web" title="web" width="80" height="48" />
   <rectangle id="app" title="app" width="80" height="48" />
   %s
@@ -542,7 +542,7 @@ func manualBendSample() referenceSample {
 		Slug:    "bend",
 		Title:   "Manual Bends",
 		Alt:     "Manual bend preview",
-		XAL: `<frame width="360" height="200" margin="24" layout="horizontal" gap="120" align="middle-center">
+		XAL: `<frame version="1" width="360" height="200" margin="24" layout="horizontal" gap="120" align="middle-center">
   <rectangle id="web" title="web" width="80" height="48" />
   <rectangle id="db" title="db" width="80" height="48" />
   <connection src="web" dst="db" grid="8">
@@ -593,7 +593,7 @@ func awsTagSamples() []referenceSample {
 			Slug:    tag.slug,
 			Title:   tag.title,
 			Alt:     tag.alt,
-			XAL: fmt.Sprintf(`<frame width="%d" height="%d" margin="%d">
+			XAL: fmt.Sprintf(`<frame version="1" width="%d" height="%d" margin="%d">
   <%s id="%s" title="%s"%s />
 </frame>
 `, width, height, sampleMargin, tag.tag, tag.id, tag.label, tag.extra),

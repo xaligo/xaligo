@@ -368,7 +368,7 @@ func buildXAL(W, H, nClouds, nAccounts, nRegions, nAZs int, azLayout string, nSu
 	if azLayout == "staggered" {
 		b.sb.WriteString("<!-- az-layout=staggered: AZs are rendered with depth offset in the excalidraw output -->\n")
 	}
-	b.sb.WriteString(fmt.Sprintf("<frame width=\"%d\" height=\"%d\" class=\"pa-4\">\n", W, H))
+	b.sb.WriteString(fmt.Sprintf("<frame version=\"1\" width=\"%d\" height=\"%d\" class=\"pa-4\">\n", W, H))
 
 	b.many(1, nClouds, func(ci, level int) {
 		b.group("aws-cloud", fmt.Sprintf("AWS Cloud %d", ci+1), level, func() {
