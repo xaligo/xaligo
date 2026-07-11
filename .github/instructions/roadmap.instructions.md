@@ -281,6 +281,9 @@ Implemented or partially implemented:
   scene. V1 non-item endpoints and logical cross-frame connectors are retained,
   and same-frame explicit bends use native tile anchors.
 - `xaligo validate` reuses parser and layout validation.
+- `xaligo diff` compares parsed V1 structures and emits paired SVG views: the
+  old document with removed/previous values highlighted pale red and the new
+  document with added/current values highlighted pale green.
 - The SVG encoder is implemented in `internal/repository/svg.go` over the
   shared draw plan, including distinct V1 arrow, triangle, stealth, diamond,
   and oval marker geometry.

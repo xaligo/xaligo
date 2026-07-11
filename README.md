@@ -19,7 +19,12 @@ Isoflow-compatible output.
 npm install -g @xaligo/xaligo
 xaligo init -o example
 xaligo render example/sample.xal --format svg -o example/sample.svg
+xaligo diff example/before.xal example/after.xal -o example/architecture-diff
 ```
+
+The diff command writes `architecture-diff-removed.svg` with pale-red removed
+elements and `architecture-diff-added.svg` with pale-green added elements. The
+comparison operates on parsed `.xal` structure rather than raw text lines.
 
 Build from source:
 

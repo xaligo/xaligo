@@ -141,6 +141,11 @@ allows V2 to render V1 while V1 remains unaware of V2.
     An encoder may omit a value its target schema cannot represent, but it must
     not invent private schema extensions or become an intermediate semantic
     model. Lossy capabilities are documented and tested explicitly.
+25. Structural diff compares parsed `.xal` trees, never source lines or
+    positional scene/plan IDs. The old side highlights removed and previous
+    modified/moved nodes in pale red; the new side highlights added and current
+    modified/moved nodes in pale green. Highlight overlays are added after
+    layout and route resolution and must not become routing obstacles.
 
 ## File organization
 
@@ -163,8 +168,8 @@ responsibility as the filename prefix:
   `New<Component>Repository` and returns that interface.
 - The concrete implementation type is unexported.
 
-Current component prefixes are `add`, `generate`, `init`, `render`, `serve`,
-`validate`, and `version` in `internal/controller`; `render`, `diagnostics`,
+Current component prefixes are `add`, `diff`, `generate`, `init`, `render`,
+`serve`, `validate`, and `version` in `internal/controller`; `render`, `diff`, `diagnostics`,
 `scene_io`, `catalog`, `export`, `parser`, `layout`, `element`, `pagination`,
 `plan`, `scene`, and `theme` in `internal/usecase`; and `powerpoint`, `preview`,
 `isoflow`, `svg`, `xyflow`, `excalidraw`, and `xaligo` in
