@@ -1,16 +1,25 @@
 package usecase
 
 import (
-	"bytes"
 	"context"
-	"errors"
 
 	"github.com/xaligo/xaligo/internal/entity"
+	v1engine "github.com/xaligo/xaligo/internal/usecase/v1/engine"
 )
 
-// Validate runs the same parser and layout validation used by Render.
-func Validate(ctx context.Context, input []byte) error {
-	diagnostics, err := Diagnose(ctx, input)
+type DiagnosticsUsecase interface {
+	Validate(context.Context, []byte) error
+	Diagnose(context.Context, []byte) ([]entity.Diagnostic, error)
+}
+
+type diagnosticsUsecase struct{}
+
+func NewDiagnosticsUsecase() DiagnosticsUsecase {
+	return &diagnosticsUsecase{}
+}
+
+func (rcvr *diagnosticsUsecase) Validate(ctx context.Context, input []byte) error {
+	diagnostics, err := rcvr.Diagnose(ctx, input)
 	if err != nil {
 		return err
 	}
@@ -20,34 +29,27 @@ func Validate(ctx context.Context, input []byte) error {
 	return nil
 }
 
-// Diagnose validates a document and returns editor-friendly source positions.
-func Diagnose(ctx context.Context, input []byte) ([]entity.Diagnostic, error) {
+func (rcvr *diagnosticsUsecase) Diagnose(ctx context.Context, input []byte) ([]entity.Diagnostic, error) {
 	if err := checkContext(ctx); err != nil {
 		return nil, err
 	}
-	doc, err := Parse(bytes.NewReader(input))
-	if err != nil {
-		return []entity.Diagnostic{diagnosticFromError(err)}, nil
-	}
-	if _, err := Build(doc); err != nil {
-		return []entity.Diagnostic{{Severity: SeverityError, Message: err.Error()}}, nil
-	}
+	diagnostics := v1engine.DiagnoseV1EngineDiagnoseDocument(input)
 	if err := checkContext(ctx); err != nil {
 		return nil, err
 	}
-	return nil, nil
+	return diagnostics, nil
 }
 
-func diagnosticFromError(err error) entity.Diagnostic {
-	diagnostic := entity.Diagnostic{Severity: SeverityError, Message: err.Error()}
-	var positioned *entity.ParseError
-	if errors.As(err, &positioned) {
-		diagnostic.Message = positioned.Err.Error()
-		diagnostic.Offset = positioned.Position.Offset
-		diagnostic.Line = positioned.Position.Line
-		diagnostic.Column = positioned.Position.Column
-	}
-	return diagnostic
+// Validate is kept as a source-compatible package boundary.
+// Deprecated: construct DiagnosticsUsecase and call Validate.
+func Validate(ctx context.Context, input []byte) error {
+	return (&diagnosticsUsecase{}).Validate(ctx, input)
+}
+
+// Diagnose is kept as a source-compatible package boundary.
+// Deprecated: construct DiagnosticsUsecase and call Diagnose.
+func Diagnose(ctx context.Context, input []byte) ([]entity.Diagnostic, error) {
+	return (&diagnosticsUsecase{}).Diagnose(ctx, input)
 }
 
 func checkContext(ctx context.Context) error {

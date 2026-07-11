@@ -1,6 +1,7 @@
 package usecase_test
 
 import (
+	"context"
 	"encoding/json"
 	"math"
 	"testing"
@@ -11,7 +12,7 @@ import (
 
 func TestBuildPlanPreservesConnectorStylesAndLegend(t *testing.T) {
 	opacity := 100.0
-	scene := entity.PptxScene{Elements: []entity.Element{
+	scene := entity.PresentationScene{Elements: []entity.Element{
 		{ID: "src-item", Type: "image", X: 0, Y: 0, Width: 32, Height: 32, Opacity: &opacity, FileID: "src-file"},
 		{ID: "src-item-lbl", Type: "text", X: -12, Y: 36, Width: 56, Height: 14, Text: "SRC", Opacity: &opacity},
 		{ID: "dst-item", Type: "image", X: 160, Y: 0, Width: 32, Height: 32, Opacity: &opacity, FileID: "dst-file"},
@@ -62,14 +63,14 @@ func TestBuildPlanResolvesConnectorArrowStyles(t *testing.T) {
 		head  string
 		width float64
 	}{
-		{"standard", "none", 1.5},
-		{"triangle", "none", 3},
-		{"stealth", "none", 3},
-		{"arrow", "none", 3},
-		{"diamond", "none", 3},
-		{"oval", "none", 3},
-		{"none", "none", 3},
-		{"", "none", 1},
+		{"standard", "none", 1.125},
+		{"triangle", "none", 2.25},
+		{"stealth", "none", 2.25},
+		{"arrow", "none", 2.25},
+		{"diamond", "none", 2.25},
+		{"oval", "none", 2.25},
+		{"none", "none", 2.25},
+		{"", "none", 0.75},
 	}
 	for _, tc := range cases {
 		t.Run(tc.style, func(t *testing.T) {
@@ -82,6 +83,172 @@ func TestBuildPlanResolvesConnectorArrowStyles(t *testing.T) {
 				t.Fatalf("style %q line = %#v", tc.style, line)
 			}
 		})
+	}
+}
+
+func TestBuildPPTXPlanPreservesExplicitConnectorStrokeWidths(t *testing.T) {
+	tests := []struct {
+		name      string
+		kindAttr  string
+		widthAttr string
+		grouped   bool
+	}{
+		{name: "connection stroke-width", widthAttr: ` stroke-width="3"`},
+		{name: "route width alias", kindAttr: ` kind="route"`, widthAttr: ` width="3"`},
+		{name: "traffic stroke-width", kindAttr: ` kind="traffic"`, widthAttr: ` stroke-width="3"`},
+		{name: "connections group default", widthAttr: ` stroke-width="3"`, grouped: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			build := func(widthAttr string) entity.Plan {
+				t.Helper()
+				connector := `<connection src="src" dst="dst"` + tt.kindAttr + widthAttr + ` />`
+				if tt.grouped {
+					connector = `<connections` + widthAttr + `><connection src="src" dst="dst"` + tt.kindAttr + ` /></connections>`
+				}
+				source := `<frame width="320" height="240" gap="16">
+  <rectangle id="src" title="Source" width="120" height="80" />
+  <rectangle id="dst" title="Destination" width="120" height="80" />
+  ` + connector + `
+</frame>`
+				planJSON, err := newUsecase().BuildPPTXPlan(context.Background(), []byte(source), entity.RenderOptions{
+					Format: usecase.FormatPPTX, PxPerInch: 96, ArrowStyle: "thin",
+				})
+				if err != nil {
+					t.Fatal(err)
+				}
+				var plan entity.Plan
+				if err := json.Unmarshal(planJSON, &plan); err != nil {
+					t.Fatal(err)
+				}
+				if len(plan.ConnectorLegend) != 1 {
+					t.Fatalf("connector legend = %#v", plan.ConnectorLegend)
+				}
+				return plan
+			}
+
+			explicit := build(tt.widthAttr).ConnectorLegend[0].Line.Width
+			if math.Abs(explicit-2.25) > 1e-9 {
+				t.Fatalf("explicit width = %vpt, want 2.25pt", explicit)
+			}
+			implicit := build("").ConnectorLegend[0].Line.Width
+			if math.Abs(implicit-0.75) > 1e-9 {
+				t.Fatalf("implicit thin width = %vpt, want 0.75pt", implicit)
+			}
+		})
+	}
+}
+
+func TestBuildPPTXPlanPreservesExplicitCrossFrameConnectorStrokeWidth(t *testing.T) {
+	source := []byte(`<frames gap="48">
+  <frame id="overview" width="320" height="180">
+    <rectangle id="web" title="Web" width="120" height="80" />
+    <connection src="web" dst="db" stroke-width="3" />
+  </frame>
+  <frame id="detail" width="320" height="180">
+    <rectangle id="db" title="DB" width="120" height="80" />
+  </frame>
+</frames>`)
+	planJSON, err := newUsecase().BuildPPTXPlan(context.Background(), source, entity.RenderOptions{
+		Format: usecase.FormatPPTX, PxPerInch: 96, ArrowStyle: "thin",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var plan entity.Plan
+	if err := json.Unmarshal(planJSON, &plan); err != nil {
+		t.Fatal(err)
+	}
+	lines := []entity.DrawOp{}
+	for _, op := range plan.Ops {
+		if op.Kind == "line" {
+			lines = append(lines, op)
+		}
+	}
+	if len(lines) != 2 {
+		t.Fatalf("cross-frame line ops = %#v, want two local stubs", lines)
+	}
+	for _, op := range lines {
+		if op.Line == nil || math.Abs(op.Line.Width-2.25) > 1e-9 {
+			t.Fatalf("cross-frame line %q = %#v, want 2.25pt", op.ID, op.Line)
+		}
+	}
+}
+
+func TestBuildPPTXPlanResolvesGlobalAndExplicitConnectorArrowheads(t *testing.T) {
+	tests := []struct {
+		name      string
+		attrs     string
+		wantBegin string
+		wantEnd   string
+	}{
+		{name: "connection global end", wantBegin: "none", wantEnd: "diamond"},
+		{name: "traffic global end", attrs: ` kind="traffic"`, wantBegin: "none", wantEnd: "diamond"},
+		{name: "explicit end wins", attrs: ` end-arrowhead="triangle"`, wantBegin: "none", wantEnd: "triangle"},
+		{name: "explicit sides win", attrs: ` start-arrowhead="oval" end-arrowhead="triangle"`, wantBegin: "oval", wantEnd: "triangle"},
+		{name: "route explicitly headless", attrs: ` kind="route" start-arrowhead="none" end-arrowhead="none"`, wantBegin: "none", wantEnd: "none"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			source := `<frame width="320" height="240" gap="16">
+  <rectangle id="src" title="Source" width="120" height="80" />
+  <rectangle id="dst" title="Destination" width="120" height="80" />
+  <connection src="src" dst="dst"` + tt.attrs + ` />
+</frame>`
+			planJSON, err := newUsecase().BuildPPTXPlan(context.Background(), []byte(source), entity.RenderOptions{
+				Format: usecase.FormatPPTX, PxPerInch: 96, ArrowStyle: "diamond",
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			var plan entity.Plan
+			if err := json.Unmarshal(planJSON, &plan); err != nil {
+				t.Fatal(err)
+			}
+			if len(plan.ConnectorLegend) != 1 {
+				t.Fatalf("connector legend = %#v", plan.ConnectorLegend)
+			}
+			line := plan.ConnectorLegend[0].Line
+			if line.BeginArrowType != tt.wantBegin || line.EndArrowType != tt.wantEnd {
+				t.Fatalf("arrowheads = %q/%q, want %q/%q", line.BeginArrowType, line.EndArrowType, tt.wantBegin, tt.wantEnd)
+			}
+		})
+	}
+}
+
+func TestBuildPlanScalesStrokeWidthWithGeometryAtRequestedPPI(t *testing.T) {
+	opacity := 100.0
+	scene := entity.PresentationScene{Elements: []entity.Element{
+		{ID: "paper-frame", Type: "frame", Width: 200, Height: 100},
+		{ID: "box", Type: "rectangle", X: 20, Y: 20, Width: 100, Height: 50, StrokeColor: "#1e1e1e", StrokeWidth: 2, Opacity: &opacity},
+	}}
+
+	findRect := func(plan entity.Plan) entity.DrawOp {
+		for _, op := range plan.Ops {
+			if op.Kind == "rect" {
+				return op
+			}
+		}
+		t.Fatal("rectangle op not found")
+		return entity.DrawOp{}
+	}
+	base := findRect(usecase.BuildPlan(&scene, entity.PlanOptions{PxPerInch: 96}))
+	high := findRect(usecase.BuildPlan(&scene, entity.PlanOptions{PxPerInch: 144}))
+	if base.Line == nil || high.Line == nil || math.Abs(base.Line.Width-1.5) > 1e-9 || math.Abs(high.Line.Width-1) > 1e-9 {
+		t.Fatalf("stroke widths = %#v %#v, want 1.5pt and 1pt", base.Line, high.Line)
+	}
+	baseRatio := (base.Line.Width / 72) / base.W
+	highRatio := (high.Line.Width / 72) / high.W
+	if math.Abs(baseRatio-highRatio) > 1e-9 {
+		t.Fatalf("stroke/shape ratio changed with PPI: base=%v high=%v", baseRatio, highRatio)
+	}
+
+	fitted := findRect(usecase.BuildPlan(&scene, entity.PlanOptions{
+		PxPerInch: 144, PaperSize: "A4", Orientation: "landscape", PaperMargin: 0.5,
+	}))
+	fittedRatio := (fitted.Line.Width / 72) / fitted.W
+	if math.Abs(baseRatio-fittedRatio) > 1e-9 {
+		t.Fatalf("stroke/shape ratio changed during paper fit: base=%v fitted=%v", baseRatio, fittedRatio)
 	}
 }
 
@@ -446,5 +613,67 @@ func TestBuildPlanConvertsStylesAndFallbacks(t *testing.T) {
 	}
 	if image == nil || image.Kind != "image" || image.Data == "" || image.Transparency != 60 || image.Rotate != 15 {
 		t.Fatalf("image = %#v", image)
+	}
+}
+
+func TestBuildPlanEmitsRendererNeutralTextLayoutAtRequestedPPI(t *testing.T) {
+	fontSize := 12.0
+	lineHeight := 1.25
+	scene := entity.PptxScene{Elements: []entity.Element{
+		{ID: "paper-frame", Type: "frame", Width: 200, Height: 100},
+		{
+			ID: "header-text", Type: "text", X: 10, Y: 10, Width: 100, Height: 20,
+			Text: "Header", FontSize: &fontSize, LineHeight: &lineHeight,
+			CustomData: &entity.CustomData{GroupHeaderContent: true},
+		},
+		{
+			ID: "opaque-name", Type: "text", X: 10, Y: 40, Width: 100, Height: 20,
+			Text: "Item", FontSize: &fontSize,
+			CustomData: &entity.CustomData{AnchorContent: true},
+		},
+		{
+			ID: "port-name", Type: "text", X: 120, Y: 40, Width: 48, Height: 20,
+			Text: "Long port", FontSize: &fontSize,
+			CustomData: &entity.CustomData{PortLabel: true},
+		},
+	}}
+
+	plan := usecase.BuildPlan(&scene, entity.PlanOptions{PxPerInch: 144})
+	texts := map[string]entity.DrawOp{}
+	for _, op := range plan.Ops {
+		if op.Kind == "text" {
+			texts[op.ID] = op
+		}
+	}
+	header := texts["header-text"]
+	if math.Abs(header.FontSize-6) > 0.001 {
+		t.Fatalf("header font size = %vpt, want 6pt for 12px at 144 PPI", header.FontSize)
+	}
+	if header.TextLayout == nil || header.TextLayout.Role != entity.TextRoleGroupHeader || header.TextLayout.Wrap || header.TextLayout.Fit != entity.TextFitShrink || header.TextLayout.Overflow != entity.TextOverflowClip || !header.TextLayout.Clip || header.TextLayout.LineHeight != lineHeight {
+		t.Fatalf("header text layout = %#v", header.TextLayout)
+	}
+	item := texts["opaque-name"]
+	if item.TextLayout == nil || item.TextLayout.Role != entity.TextRoleItemLabel || !item.TextLayout.Wrap {
+		t.Fatalf("item text layout = %#v", item.TextLayout)
+	}
+	port := texts["port-name"]
+	if port.TextLayout == nil || port.TextLayout.Role != entity.TextRolePortLabel || !port.TextLayout.Wrap || !port.TextLayout.Clip {
+		t.Fatalf("port text layout = %#v", port.TextLayout)
+	}
+
+	fitted := usecase.BuildPlan(&scene, entity.PlanOptions{
+		PxPerInch: 144, PaperSize: "A4", Orientation: "landscape", PaperMargin: 0.5,
+	})
+	var fittedHeader entity.DrawOp
+	for _, op := range fitted.Ops {
+		if op.ID == "header-text" {
+			fittedHeader = op
+			break
+		}
+	}
+	baseRatio := (header.FontSize / 72) / header.W
+	fittedRatio := (fittedHeader.FontSize / 72) / fittedHeader.W
+	if fittedHeader.W <= 0 || math.Abs(baseRatio-fittedRatio) > 0.0001 {
+		t.Fatalf("font/shape ratio changed during paper fit: base=%v fitted=%v op=%#v", baseRatio, fittedRatio, fittedHeader)
 	}
 }

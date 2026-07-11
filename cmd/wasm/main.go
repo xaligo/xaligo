@@ -19,10 +19,10 @@ import (
 var embeddedAssets = &entity.AssetSource{
 	FS: awsassets.Assets, CatalogCSV: awsassets.CatalogCSV,
 	GroupIconsDir: awsassets.GroupIconsDir, IsoflowIconsJSON: awsassets.IsoflowIconsJSON,
-	ItemIconSize: 48,
+	ItemIconSize: 32,
 }
 
-var xaligoUsecase = usecase.NewXaligoUsecase(
+var renderUsecase = usecase.NewRenderUsecase(
 	repository.NewExcalidrawRepository(),
 	repository.NewXaligoRepository(),
 	repository.NewPowerpointRepository(),
@@ -30,6 +30,8 @@ var xaligoUsecase = usecase.NewXaligoUsecase(
 	repository.NewSVGRepository(),
 	repository.NewXYFlowRepository(),
 )
+
+var diagnosticsUsecase = usecase.NewDiagnosticsUsecase()
 
 func main() {
 	js.Global().Set("xaligoRender", js.FuncOf(jsRender))
@@ -64,7 +66,7 @@ func renderResult(name string, args []js.Value, format entity.Format, servicesCS
 	if len(args) < 1 {
 		return jsResult(nil, fmt.Errorf("%s: expected 1 argument (xal)", name))
 	}
-	out, err := xaligoUsecase.Render(context.Background(), []byte(args[0].String()), entity.RenderOptions{
+	out, err := renderUsecase.Render(context.Background(), []byte(args[0].String()), entity.RenderOptions{
 		Format: format, ServicesCSV: servicesCSV, Assets: embeddedAssets,
 	})
 	return jsResult(out, err)
@@ -74,7 +76,7 @@ func jsDiagnose(_ js.Value, args []js.Value) any {
 	if len(args) < 1 {
 		return jsResult(nil, fmt.Errorf("xaligoDiagnose: expected 1 argument (xal)"))
 	}
-	diagnostics, err := usecase.Diagnose(context.Background(), []byte(args[0].String()))
+	diagnostics, err := diagnosticsUsecase.Diagnose(context.Background(), []byte(args[0].String()))
 	if err != nil {
 		return jsResult(nil, err)
 	}
@@ -96,7 +98,7 @@ func jsBuildPptxPlan(_ js.Value, args []js.Value) any {
 		}
 		opts.Assets = embeddedAssets
 	}
-	out, err := xaligoUsecase.BuildPPTXPlan(context.Background(), []byte(args[0].String()), opts)
+	out, err := renderUsecase.BuildPPTXPlan(context.Background(), []byte(args[0].String()), opts)
 	return jsResult(out, err)
 }
 

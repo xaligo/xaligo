@@ -8,14 +8,14 @@ type IsoflowDocument struct {
 	Views       []IsoflowView      `json:"views"`
 	Icons       []IsoflowIcon      `json:"icons"`
 	Colors      []IsoflowColor     `json:"colors"`
-	FitToView   bool               `json:"fitToView,omitempty"`
+	FitToScreen bool               `json:"fitToScreen,omitempty"`
 }
 
 type IsoflowModelItem struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description,omitempty"`
-	IsoflowIcon string `json:"icon,omitempty"`
+	IsoflowIcon string `json:"icon"`
 }
 
 type IsoflowView struct {
@@ -54,7 +54,8 @@ type IsoflowConnectorAnchor struct {
 }
 
 type IsoflowAnchorRef struct {
-	Item string `json:"item,omitempty"`
+	Item string         `json:"item,omitempty"`
+	Tile *IsoflowCoords `json:"tile,omitempty"`
 }
 
 type IsoflowIcon struct {

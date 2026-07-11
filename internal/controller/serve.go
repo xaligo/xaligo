@@ -25,15 +25,20 @@ var (
 	ICSRSWUC006  = share.NewMCode("ICSRSWUC-006", "Run serve with use case watching source")
 )
 
-type ServeController struct {
-	usecase usecase.XaligoUsecase
+type ServeController interface {
+	Command() *cobra.Command
+	Run(ctx context.Context, opts entity.ControllerServeOptions) error
 }
 
-func NewServeController(uc usecase.XaligoUsecase) *ServeController {
-	return &ServeController{usecase: uc}
+type serveController struct {
+	renderUsecase usecase.RenderUsecase
 }
 
-func (rcvr *ServeController) Command() *cobra.Command {
+func NewServeController(renderUsecase usecase.RenderUsecase) ServeController {
+	return &serveController{renderUsecase: renderUsecase}
+}
+
+func (rcvr *serveController) Command() *cobra.Command {
 	logger.DEBUG(ICSISCWUC001, "start")
 	var address, mode, theme string
 	var poll time.Duration
@@ -55,9 +60,9 @@ func (rcvr *ServeController) Command() *cobra.Command {
 	return cmd
 }
 
-func (rcvr *ServeController) Run(ctx context.Context, opts entity.ControllerServeOptions) error {
+func (rcvr *serveController) Run(ctx context.Context, opts entity.ControllerServeOptions) error {
 	logger.DEBUG(ICSRS001, "start", map[string]any{"input": opts.InputPath, "address": opts.Address})
-	server, err := rcvr.usecase.NewPreviewServer(opts.InputPath, entity.PreviewOptions{
+	server, err := rcvr.renderUsecase.NewPreviewRepository(opts.InputPath, entity.PreviewOptions{
 		Render:       entity.RenderOptions{Mode: entity.Mode(opts.Mode), Format: usecase.FormatSVG, Theme: opts.Theme},
 		PollInterval: opts.PollInterval,
 	})

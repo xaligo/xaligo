@@ -14,9 +14,11 @@ module: github.com/xaligo/xaligo
 Go:     1.22
 ```
 
-Read `roadmap.instructions.md` for product direction,
-`xal-spec.instructions.md` for DSL behavior, and
-`architecture.instructions.md` for implementation boundaries.
+Read `development-flow.instructions.md` for task slicing, verification, and
+local commit workflow; `roadmap.instructions.md` for product direction;
+`xal-spec.instructions.md` for DSL behavior; and
+`architecture.instructions.md` for implementation boundaries. Read
+`coding.instructions.md` before changing Go or TypeScript source.
 
 ## Directory structure
 
@@ -30,25 +32,31 @@ xaligo/
 │   ├── controller/              CLI flags and file-I/O adapters
 │   ├── entity/                  internal structures; independent entity layer
 │   ├── usecase/
-│   │   ├── xaligo.go            constructor-injected application facade
-│   │   ├── parser.go            .xal parser
-│   │   ├── render.go            render orchestration and dispatch
-│   │   ├── scene.go             shared scene construction
-│   │   ├── layout.go            resolved layout calculations
-│   │   ├── plan.go              shared draw-plan calculations
-│   │   ├── routing.go           shared connector routing
-│   │   └── theme.go             canonical scene theming
+│   │   ├── render.go            RenderUsecase, dispatch, and orchestration
+│   │   ├── diagnostics.go       DiagnosticsUsecase and shared validation
+│   │   ├── scene_io.go          SceneIOUsecase for editable scene persistence
+│   │   ├── catalog.go           CatalogUsecase for service metadata
+│   │   ├── export.go            ExportUsecase for persisted PPTX output
+│   │   ├── parser.go            ParserUsecase over the V1 engine
+│   │   ├── layout.go            LayoutUsecase over the V1 engine
+│   │   ├── element.go           ElementUsecase over the V1 engine
+│   │   ├── pagination.go        PaginationUsecase over the V1 engine
+│   │   ├── plan.go              PlanUsecase over the V1 engine
+│   │   ├── scene.go             SceneUsecase and repository-port adapter
+│   │   ├── theme.go             ThemeUsecase over the V1 engine
+│   │   └── v1/engine/           synchronous V1 parser/layout/scene/plan logic
 │   ├── repository/              filesystem and output-format adapters
 │   └── config/                  project configuration
 ├── test/
 │   ├── unit/                    unit tests mirroring the project tree
 │   └── integration/             black-box use-case/adapter tests
 ├── external/                    TypeScript external adapter layer
+│   ├── index.ts                 package API composition boundary
 │   ├── command.ts               TypeScript CLI entry point
 │   ├── controller/              CLI argument and file-I/O adapters
 │   ├── entity/                  TypeScript API and PPTX plan types
 │   ├── repository/              WASM, PptxGenJS, and package adapters
-│   └── usecase/                 TypeScript orchestration and public API
+│   └── usecase/                 independent TypeScript application use cases
 ├── etc/resources/aws/           catalogs, templates, icons, attribution
 ├── docs/src/examples/samples/   example .xal and services CSV files
 ├── scripts/                     asset/catalog generation scripts
@@ -73,7 +81,13 @@ adapter rather than an importable public Go package.
 - `internal/entity` owns structures exchanged between layers and contains no
   application orchestration. Shared value helpers such as theme names and
   service labels may live here when they are renderer-independent.
-- Calculation and orchestration belong under `internal/usecase`.
+- Calculation and orchestration belong under `internal/usecase`. Synchronous
+  calculations live in `internal/usecase/v1/engine`; repository
+  I/O, cancellation, stage ordering, and concurrency control remain in the
+  parent `internal/usecase` package.
+- `v1/engine` must not import repositories, start goroutines, own worker
+  pools, or interpret contexts. Parallel execution is a caller-owned policy
+  over independent engine jobs.
 - Keep mode (visual semantics) independent from format (serialization).
 - Keep cross-format routing and geometry in shared layers.
 - `cmd` imports command/adapters only; business logic stays outside entry points.
@@ -107,11 +121,23 @@ refreshed through the scripts declared in the root `package.json`.
 
 - Run `gofmt` on changed Go files.
 - Use lowercase single-word package names.
+- Organize files by implementation responsibility, not declaration kind.
+  Interfaces and constructors/factories belong in the file containing the
+  concrete implementation they describe or create; do not add declaration-only
+  `interface*` or `constructor*` files.
+- Put a component's interface, unexported concrete type, and constructor near
+  the beginning of its responsibility file, before its implementation methods.
+  Do not collect unrelated component methods in a package-wide facade.
+- Do not repeat a package layer in Go filenames. Use `<component>.go` and
+  `<component>_<detail>.go`; express the layer in the exported interface and
+  constructor suffix instead.
 - Wrap errors with `fmt.Errorf("context: %w", err)`.
 - Represent Excalidraw elements as `map[string]interface{}` for format
   compatibility.
 - Do not commit binaries, dependencies, caches, `output`, WASM artifacts, or
-  TypeScript `dist` output.
+  TypeScript `dist` output. Checked-in documentation SVGs generated from
+  `docs/src/architecture/*.xal` are the explicit exception; commit each SVG
+  with its `.xal` source.
 
 ## Verification
 

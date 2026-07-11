@@ -3,6 +3,8 @@ import JSZip from 'jszip';
 import {
   ANCHOR_GROUP_MARKER,
   FRONT_LAYER_MARKER,
+  planObjectName,
+  planTextOverflow,
   type PlanOp,
   type PptxExportResult,
   type PptxOutputType,
@@ -10,10 +12,24 @@ import {
 import { NewEnvLogger } from '../share/logger';
 import { NewMCode } from '../share/mcode';
 
+interface XmlObjectBlock {
+  start: number;
+  end: number;
+  xml: string;
+  groupId?: string;
+}
+
+interface XmlBounds {
+  x: number;
+  y: number;
+  cx: number;
+  cy: number;
+}
+
 const logger = NewEnvLogger('external/repository', 'pptx_package');
-const ERPPGAOIP001 = NewMCode('ERPPGAOIP-001', 'Group anchor objects in PPTX no groups branch');
-const ERPPGAOIP002 = NewMCode('ERPPGAOIP-002', 'Group anchor objects in PPTX missing slide branch');
-const ERPPGAOIP003 = NewMCode('ERPPGAOIP-003', 'Group anchor objects in PPTX completed');
+const ERPPGAOIP001 = NewMCode('ERPPGAOIP-001', 'Finalize PPTX package unnecessary branch');
+const ERPPGAOIP002 = NewMCode('ERPPGAOIP-002', 'Finalize PPTX package missing slide branch');
+const ERPPGAOIP003 = NewMCode('ERPPGAOIP-003', 'Finalize PPTX package completed');
 const ERPPCPO001 = NewMCode('ERPPCPO-001', 'Convert PPTX output arraybuffer branch');
 const ERPPCPO002 = NewMCode('ERPPCPO-002', 'Convert PPTX output base64 branch');
 const ERPPCPO003 = NewMCode('ERPPCPO-003', 'Convert PPTX output blob branch');
@@ -27,10 +43,13 @@ const ERPPMAALOTF002 = NewMCode('ERPPMAALOTF-002', 'Move anchor and line objects
 const ERPPMAALOTF003 = NewMCode('ERPPMAALOTF-003', 'Move anchor and line objects to front completed');
 const ERPPGB001 = NewMCode('ERPPGB-001', 'Group bounds missing branch');
 
-export async function groupAnchorObjectsInPptx(bytes: Uint8Array, ops: PlanOp[], compression: boolean): Promise<Uint8Array> {
+export async function finalizePptxPackage(bytes: Uint8Array, ops: PlanOp[], compression: boolean): Promise<Uint8Array> {
   const groupIds = [...new Set(ops.map((op) => op.groupId).filter((id): id is string => !!id))];
-  if (groupIds.length === 0) {
-    logger.DEBUG(ERPPGAOIP001, 'branch no groups');
+  const requiresPackageFinalization = groupIds.length > 0
+    || ops.some((op) => op.kind === 'text' && !!op.text && !!planObjectName(op))
+    || ops.some((op) => op.kind === 'line' || op.frontLayer);
+  if (!requiresPackageFinalization) {
+    logger.DEBUG(ERPPGAOIP001, 'branch no package finalization');
     return bytes;
   }
 
@@ -43,6 +62,7 @@ export async function groupAnchorObjectsInPptx(bytes: Uint8Array, ops: PlanOp[],
   }
 
   let xml = await slide.async('string');
+  xml = applyTextOverflowPolicies(xml, ops);
   xml = applySlenderStealthArrowheads(xml);
   for (const groupId of groupIds.sort()) {
     xml = groupSlideObjects(xml, groupId);
@@ -52,6 +72,29 @@ export async function groupAnchorObjectsInPptx(bytes: Uint8Array, ops: PlanOp[],
   const out = await zip.generateAsync({ type: 'uint8array', compression: compression ? 'DEFLATE' : 'STORE' });
   logger.DEBUG(ERPPGAOIP003, 'completed', { groups: groupIds.length, bytes: out.length });
   return out;
+}
+
+function applyTextOverflowPolicies(xml: string, ops: PlanOp[]): string {
+  const policies = new Map<string, 'clip' | 'overflow'>();
+  for (const op of ops) {
+    if (op.kind !== 'text' || !op.text) continue;
+    const objectName = planObjectName(op);
+    if (!objectName) continue;
+    policies.set(objectName, planTextOverflow(op) === 'clip' ? 'clip' : 'overflow');
+  }
+  if (policies.size === 0) return xml;
+
+  return xml.replace(/<p:sp\b[\s\S]*?<\/p:sp>/g, (block) => {
+    const objectName = pptxObjectName(block);
+    const overflow = objectName ? policies.get(objectName) : undefined;
+    if (!overflow || !/<p:txBody\b/.test(block)) return block;
+    return block.replace(/<a:bodyPr\b([^>]*?)(\/?)>/, (_match, attrs: string, selfClose: string) => {
+      const preserved = attrs
+        .replace(/\s+(?:horzOverflow|vertOverflow)="[^"]*"/g, '')
+        .replace(/\s+$/, '');
+      return `<a:bodyPr${preserved} horzOverflow="${overflow}" vertOverflow="${overflow}"${selfClose}>`;
+    });
+  });
 }
 
 export function convertPptxOutput(bytes: Uint8Array, outputType: PptxOutputType): PptxExportResult {
@@ -73,20 +116,6 @@ export function convertPptxOutput(bytes: Uint8Array, outputType: PptxOutputType)
       logger.DEBUG(ERPPCPO005, 'branch uint8array');
       return bytes;
   }
-}
-
-interface XmlObjectBlock {
-  start: number;
-  end: number;
-  xml: string;
-  groupId?: string;
-}
-
-interface XmlBounds {
-  x: number;
-  y: number;
-  cx: number;
-  cy: number;
 }
 
 function groupSlideObjects(xml: string, groupId: string): string {
@@ -146,7 +175,7 @@ function collectObjectBlocks(xml: string): XmlObjectBlock[] {
 }
 
 function groupIdFromObjectBlock(xml: string): string | undefined {
-  const name = /<p:cNvPr\b[^>]*\bname="([^"]*)"/.exec(xml)?.[1];
+  const name = pptxObjectName(xml);
   if (!name?.startsWith(ANCHOR_GROUP_MARKER)) return undefined;
   const rest = name.slice(ANCHOR_GROUP_MARKER.length);
   const separator = rest.indexOf('|');
@@ -200,8 +229,36 @@ function isAnchorGroupBlock(xml: string): boolean {
 }
 
 function isFrontLayerBlock(xml: string): boolean {
-  const name = /<p:cNvPr\b[^>]*\bname="([^"]*)"/.exec(xml)?.[1];
+  const name = pptxObjectName(xml);
   return !!name?.startsWith(FRONT_LAYER_MARKER);
+}
+
+// PptxGenJS currently escapes objectName once while constructing DrawingML
+// and the XML serializer escapes that value again. Decode exactly those two
+// layers before comparing with PlanOp IDs; otherwise IDs containing XML
+// metacharacters silently miss grouping, layering, and text overflow policies.
+function pptxObjectName(xml: string): string | undefined {
+  const encoded = /<p:cNvPr\b[^>]*\bname="([^"]*)"/.exec(xml)?.[1];
+  if (encoded === undefined) return undefined;
+  return decodeXmlAttr(decodeXmlAttr(encoded));
+}
+
+function decodeXmlAttr(value: string): string {
+  return value
+    .replace(/&#x([0-9a-f]+);/gi, (match, digits: string) => decodeXmlCodePoint(match, digits, 16))
+    .replace(/&#([0-9]+);/g, (match, digits: string) => decodeXmlCodePoint(match, digits, 10))
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;|&#39;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&');
+}
+
+function decodeXmlCodePoint(source: string, digits: string, radix: number): string {
+  const value = Number.parseInt(digits, radix);
+  return Number.isInteger(value) && value >= 0 && value <= 0x10ffff
+    ? String.fromCodePoint(value)
+    : source;
 }
 
 function applySlenderStealthArrowheads(xml: string): string {

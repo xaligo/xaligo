@@ -78,6 +78,35 @@ type logger struct {
 	output io.Writer
 }
 
+// NewLogger creates a shared logger from config.
+func NewLogger(config LoggerConfig) Logger {
+	return newLogger(config, nil)
+}
+
+// NewEnvLogger creates a logger configured by XALIGO_LOG_* environment variables.
+func NewEnvLogger(component, service string) Logger {
+	return NewLogger(LoggerConfig{
+		Component:    component,
+		Service:      service,
+		Level:        os.Getenv("XALIGO_LOG_LEVEL"),
+		Structured:   truthyEnv(os.Getenv("XALIGO_LOG_STRUCTURED")),
+		EnableCaller: truthyEnv(os.Getenv("XALIGO_LOG_CALLER")),
+		Output:       os.Getenv("XALIGO_LOG_OUTPUT"),
+	})
+}
+
+func newLogger(config LoggerConfig, output io.Writer) Logger {
+	logger := &logger{
+		config: config,
+		level:  parseLogLevel(config.Level),
+		output: output,
+	}
+	if logger.output == nil {
+		logger.output = openLogOutput(config.Output)
+	}
+	return logger
+}
+
 var (
 	defaultLoggerOnce sync.Once
 	defaultLogger     Logger
@@ -114,35 +143,6 @@ func ERROR(mcode MCode, optionalMessage string, fields ...map[string]any) {
 // FATAL writes a fatal log through the default environment-configured logger and exits.
 func FATAL(mcode MCode, optionalMessage string, fields ...map[string]any) {
 	DefaultLogger().FATAL(mcode, optionalMessage, fields...)
-}
-
-// NewLogger creates a shared logger from config.
-func NewLogger(config LoggerConfig) Logger {
-	return newLogger(config, nil)
-}
-
-// NewEnvLogger creates a logger configured by XALIGO_LOG_* environment variables.
-func NewEnvLogger(component, service string) Logger {
-	return NewLogger(LoggerConfig{
-		Component:    component,
-		Service:      service,
-		Level:        os.Getenv("XALIGO_LOG_LEVEL"),
-		Structured:   truthyEnv(os.Getenv("XALIGO_LOG_STRUCTURED")),
-		EnableCaller: truthyEnv(os.Getenv("XALIGO_LOG_CALLER")),
-		Output:       os.Getenv("XALIGO_LOG_OUTPUT"),
-	})
-}
-
-func newLogger(config LoggerConfig, output io.Writer) Logger {
-	logger := &logger{
-		config: config,
-		level:  parseLogLevel(config.Level),
-		output: output,
-	}
-	if logger.output == nil {
-		logger.output = openLogOutput(config.Output)
-	}
-	return logger
 }
 
 func truthyEnv(value string) bool {

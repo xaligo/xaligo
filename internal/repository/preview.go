@@ -14,13 +14,13 @@ import (
 	"github.com/xaligo/xaligo/internal/entity"
 )
 
-type PreviewServer interface {
+type PreviewRepository interface {
 	Handler() http.Handler
 	Run(context.Context, string) error
 	Refresh() error
 }
 
-type previewServer struct {
+type previewRepository struct {
 	path     string
 	opts     entity.PreviewOptions
 	mu       sync.RWMutex
@@ -36,14 +36,14 @@ type previewServer struct {
 	read     func(string) ([]byte, error)
 }
 
-func NewPreviewServer(
+func NewPreviewRepository(
 	path string,
 	opts entity.PreviewOptions,
 	render func(context.Context, []byte, entity.RenderOptions) ([]byte, error),
 	validate func(entity.RenderOptions) error,
 	diagnose func(context.Context, []byte) ([]entity.Diagnostic, error),
 	read func(string) ([]byte, error),
-) (PreviewServer, error) {
+) (PreviewRepository, error) {
 	if path == "" {
 		return nil, fmt.Errorf("preview input path is required")
 	}
@@ -54,7 +54,7 @@ func NewPreviewServer(
 	if err := validate(opts.Render); err != nil {
 		return nil, err
 	}
-	s := &previewServer{
+	s := &previewRepository{
 		path: path, opts: opts, subs: map[uint64]chan uint64{},
 		render: render, validate: validate, diagnose: diagnose, read: read,
 	}
@@ -64,7 +64,7 @@ func NewPreviewServer(
 	return s, nil
 }
 
-func (rcvr *previewServer) Handler() http.Handler {
+func (rcvr *previewRepository) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", rcvr.handleIndex)
 	mux.HandleFunc("/diagram.svg", rcvr.handleSVG)
@@ -77,7 +77,7 @@ func (rcvr *previewServer) Handler() http.Handler {
 	return mux
 }
 
-func (rcvr *previewServer) Run(ctx context.Context, address string) error {
+func (rcvr *previewRepository) Run(ctx context.Context, address string) error {
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -110,9 +110,9 @@ func (rcvr *previewServer) Run(ctx context.Context, address string) error {
 	return err
 }
 
-func (rcvr *previewServer) Refresh() error { return rcvr.refresh(false) }
+func (rcvr *previewRepository) Refresh() error { return rcvr.refresh(false) }
 
-func (rcvr *previewServer) refresh(force bool) error {
+func (rcvr *previewRepository) refresh(force bool) error {
 	source, err := rcvr.read(rcvr.path)
 	if err != nil {
 		return fmt.Errorf("read preview input: %w", err)
@@ -159,7 +159,7 @@ func (rcvr *previewServer) refresh(force bool) error {
 	return nil
 }
 
-func (rcvr *previewServer) watch(ctx context.Context) {
+func (rcvr *previewRepository) watch(ctx context.Context) {
 	ticker := time.NewTicker(rcvr.opts.PollInterval)
 	defer ticker.Stop()
 	for {
@@ -172,7 +172,7 @@ func (rcvr *previewServer) watch(ctx context.Context) {
 	}
 }
 
-func (rcvr *previewServer) handleIndex(w http.ResponseWriter, r *http.Request) {
+func (rcvr *previewRepository) handleIndex(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
 		return
@@ -181,7 +181,7 @@ func (rcvr *previewServer) handleIndex(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte(indexHTML))
 }
 
-func (rcvr *previewServer) handleSVG(w http.ResponseWriter, _ *http.Request) {
+func (rcvr *previewRepository) handleSVG(w http.ResponseWriter, _ *http.Request) {
 	rcvr.mu.RLock()
 	svg := append([]byte(nil), rcvr.svg...)
 	errText := rcvr.status.Error
@@ -195,7 +195,7 @@ func (rcvr *previewServer) handleSVG(w http.ResponseWriter, _ *http.Request) {
 	_, _ = w.Write(svg)
 }
 
-func (rcvr *previewServer) handleStatus(w http.ResponseWriter, _ *http.Request) {
+func (rcvr *previewRepository) handleStatus(w http.ResponseWriter, _ *http.Request) {
 	rcvr.mu.RLock()
 	status := rcvr.status
 	rcvr.mu.RUnlock()
@@ -204,7 +204,7 @@ func (rcvr *previewServer) handleStatus(w http.ResponseWriter, _ *http.Request) 
 	_ = json.NewEncoder(w).Encode(status)
 }
 
-func (rcvr *previewServer) handleEvents(w http.ResponseWriter, r *http.Request) {
+func (rcvr *previewRepository) handleEvents(w http.ResponseWriter, r *http.Request) {
 	flusher, ok := w.(http.Flusher)
 	if !ok {
 		http.Error(w, "streaming unsupported", http.StatusInternalServerError)

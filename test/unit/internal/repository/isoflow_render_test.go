@@ -3,6 +3,7 @@ package repository_test
 import (
 	"encoding/json"
 	"math"
+	"strings"
 	"testing"
 
 	"github.com/xaligo/xaligo/internal/entity"
@@ -30,6 +31,9 @@ func TestRenderBuildsIsometricDocument(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if !strings.Contains(string(out), `"fitToScreen": true`) || strings.Contains(string(out), `"fitToView"`) {
+		t.Fatalf("Isoflow fit field does not match the upstream schema: %s", out)
+	}
 	var document entity.IsoflowDocument
 	if err := json.Unmarshal(out, &document); err != nil {
 		t.Fatal(err)
@@ -37,7 +41,7 @@ func TestRenderBuildsIsometricDocument(t *testing.T) {
 	if document.Version != "3.3.0" {
 		t.Fatalf("version = %q", document.Version)
 	}
-	if document.Title == "" || len(document.Icons) != 1 || len(document.Colors) == 0 {
+	if document.Title == "" || len(document.Icons) != 2 || len(document.Colors) == 0 || !document.FitToScreen {
 		t.Fatalf("document = %#v", document)
 	}
 	if len(document.Items) != 2 || len(document.Views) != 1 {
@@ -56,6 +60,7 @@ func TestRenderBuildsIsometricDocument(t *testing.T) {
 	if item.Name != "Web" || item.IsoflowIcon != "fa" {
 		t.Fatalf("item = %#v", item)
 	}
+	assertIsoflowItemIconsResolve(t, document)
 	viewItem := view.Items[0]
 	if viewItem.ID != "a-item" || viewItem.Tile.X != 2 || viewItem.Tile.Y != 2 || viewItem.LabelHeight != 60 {
 		t.Fatalf("view item = %#v", viewItem)
@@ -63,6 +68,22 @@ func TestRenderBuildsIsometricDocument(t *testing.T) {
 	connector := view.Connectors[0]
 	if len(connector.Anchors) != 2 || connector.Anchors[0].Ref.Item != "a-item" || connector.Anchors[1].Ref.Item != "b-item" || connector.Style != "SOLID" {
 		t.Fatalf("connector = %#v", connector)
+	}
+}
+
+func assertIsoflowItemIconsResolve(t *testing.T, document entity.IsoflowDocument) {
+	t.Helper()
+	icons := make(map[string]bool, len(document.Icons))
+	for _, icon := range document.Icons {
+		if icon.ID == "" || icon.URL == "" {
+			t.Fatalf("invalid Isoflow icon: %#v", icon)
+		}
+		icons[icon.ID] = true
+	}
+	for _, item := range document.Items {
+		if item.IsoflowIcon == "" || !icons[item.IsoflowIcon] {
+			t.Fatalf("Isoflow item %q references missing icon %q: %#v", item.ID, item.IsoflowIcon, document.Icons)
+		}
 	}
 }
 

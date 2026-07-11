@@ -21,13 +21,15 @@ This file is the current source of truth for PPTX export geometry.
 - Avoid a long-term Node.js subprocess dependency for repository-layer PPTX
   export. Node may remain a development/build tool only while the WASM exporter
   is being prepared.
-- All PPTX geometry and routing decisions are computed by Go/WASM.
+- All PPTX geometry and routing decisions are computed by the Go use-case
+  pipeline before the exporter boundary.
 - The PPTX drawing/export layer must not make independent layout/routing
   decisions.
 - Lines must not visually cover icons or labels.
 - If any obstacle-free route exists, obstacle-hitting routes must be rejected.
-- Item labels are 8pt in PPTX output.
-- Item icons should remain visually consistent with 8pt labels; avoid shrinking
+- Item labels are 8pt at the default 96 PPI and scale with the same effective
+  PPI/paper-fit transform as item icons.
+- Item icons should remain visually consistent with their labels; avoid shrinking
   icons merely to satisfy a cramped row when layout whitespace controls can be used.
 - Legend belongs on separate PPTX slide(s), not outside the diagram page.
 - Legend slide layout is fixed to 4 columns and contains icon, abbreviation, and
@@ -38,15 +40,18 @@ This file is the current source of truth for PPTX export geometry.
 
 ```text
 .xal DSL
-  -> Go parser/layout
-  -> Excalidraw scene JSON
-  -> Go pptxplan.BuildPlanJSON
-  -> WASM PPTX export module invoked by Go repository layer
-  -> .pptx
+  -> Go parse and numeric-domain validation (typed normalization is the target)
+  -> resolved layout and canonical scene
+  -> shared physical Go draw plan (neutral-schema migration remains)
+  -> internal repository encoder (SVG), or
+  -> Go repository -> WASM command -> external controller -> use case -> repository
+  -> SVG | .pptx
 ```
 
 Geometry belongs on the Go side. The WASM export module should only translate
-the resolved plan into PPTX bytes.
+the resolved plan into PPTX bytes. Excalidraw-compatible JSON may be one scene
+serialization, but it is not the target architecture name or ownership boundary
+for the shared plan.
 
 ## Go / WASM Boundary
 
@@ -56,14 +61,17 @@ the repository layer.
 Implementation preconditions:
 
 - Go owns CLI/controller/repository orchestration.
-- WASM must be called from `internal/repository/pptx.go`, not directly from
+- WASM must be called from `internal/repository/powerpoint.go`, not directly from
   controller or command packages.
 - The exporter must be compiled to WASM before repository-layer execution.
 - Go forwards user-facing PPTX options to the WASM exporter through a typed
   options structure or JSON bridge.
-- The WASM exporter consumes the resolved Go `pptxplan` output and returns PPTX
+- The WASM exporter consumes the resolved shared Go plan and returns PPTX
   bytes or writes them through a repository-controlled output path.
 - The WASM exporter must not perform independent geometry, layout, or routing.
+- The external WASI command calls its controller, the controller calls the
+  external use case, and only the use case calls the external PPTX repository.
+  Command/controller code must not bypass this path.
 - Go repository/controller code must not implement PPTX/OOXML drawing or zip
   writing directly. Keep Go as the adapter that builds the plan, invokes the
   WASM exporter, and persists the returned bytes.
@@ -88,12 +96,13 @@ Do not spend implementation time replacing the repository-layer exporter with
 
 | Area | Owner |
 |---|---|
-| DSL parse/layout | `internal/usecase/parser.go`, `internal/usecase/layout.go` |
-| Canonical scene and item metadata | `internal/usecase/scene.go` |
-| Plan geometry, paper scaling, routing, legend data | `internal/usecase/plan.go`, `internal/usecase/routing.go` |
+| DSL parse/layout | `internal/usecase/v1/engine/parse_*`, `internal/usecase/v1/engine/layout_*` |
+| Canonical scene and item metadata | `internal/usecase/v1/engine/scene_*` |
+| Plan geometry, text layout, paper scaling, routing, legend data | `internal/usecase/v1/engine/plan_*`, `internal/usecase/v1/engine/route_*` |
 | WASM exporter invocation from Go | `internal/repository/powerpoint.go` |
 | WASM-compatible PPTX drawing/export | `external` TypeScript package and implementation |
-| WASM bridge | `cmd/wasm/main.go` |
+| PPTX WASI command entry | `external/command.ts` |
+| Public browser/JavaScript API bridge | `cmd/wasm/main.go` |
 
 ## Paper / Scaling
 
@@ -112,7 +121,10 @@ Do not spend implementation time replacing the repository-layer exporter with
   --paper-margin-bottom 0.75
 ```
 
-- Go `pptxplan` resolves paper size and computes the pixel-to-inch conversion.
+- The shared Go plan resolves paper size and computes one layout-pixel transform.
+- Shape coordinates, font sizes, strokes, padding, and routing geometry use
+  that same transform. `--px-per-inch 144` must not scale text independently
+  from its containing shape.
 - `--paper-margin N` applies an inch-based margin to every side before fitting
   the diagram to the selected paper.
 - `--paper-margin-top`, `--paper-margin-right`, `--paper-margin-bottom`, and
@@ -125,7 +137,7 @@ Do not spend implementation time replacing the repository-layer exporter with
 
 ## Routing Rules
 
-- Route calculation is in `internal/usecase/routing.go`.
+- Route calculation is in `internal/usecase/v1/engine/route_*`.
 - Obstacles include image and text rectangles from the Excalidraw scene.
 - Start/end rectangles are excluded from obstacle checks for that connection.
 - Binding `gap` from Excalidraw arrows must be honored in PPTX routing.
@@ -205,7 +217,14 @@ parallel lane instead of drawing directly on top of the route.
 
 ### Route Connectors
 
-Route endpoints are represented by small circular connector nodes by default.
+Frozen V1 routes are headless in every format. Their effective
+`start-arrowhead` and `end-arrowhead` must both resolve to `none` after
+`<connections>` defaults and child aliases are merged. A non-`none` value is a
+validation error rather than a renderer-specific circular endpoint.
+
+Small circular route connector nodes remain a future versioned feature; they
+must use a renderer-neutral connector-node concept instead of overloading V1
+arrowheads.
 
 Conceptual shape:
 
@@ -213,13 +232,8 @@ Conceptual shape:
 [EC2] -- o -------- o -- [RDS]
 ```
 
-Behavior:
-
-- In SVG/PPTX, render them as small circles.
-- In Excalidraw JSON, use dot arrowheads.
-- `start-arrowhead="none" end-arrowhead="none"` disables them.
-- Multiple routes sharing an endpoint side use a common stub and automatic
-  circular fan-out/fan-in junction.
+Future behavior may render explicit connector nodes in SVG/PPTX and equivalent
+editable shapes in Excalidraw. It is not part of the V1 compatibility profile.
 
 ## Connector Style Options
 
@@ -236,11 +250,26 @@ Behavior:
 | `--paper-margin` | Inch margin applied to all sides before paper fitting |
 | `--paper-margin-top/right/bottom/left` | Inch margin override for one side |
 
+`--arrow-style` is a Plan-level default. A connection's explicit or inherited
+DSL arrowhead and stroke width take precedence; `kind="route"` remains
+headless. The `thin` and `standard` presets may supply a default line width only
+when the DSL did not supply `stroke-width` or its `width` alias.
+
+Every numeric render option must be finite. `--px-per-inch`, arrow stub and
+margin values, and paper margins reject negative values; the internal zero
+value selects the documented default. Validation happens before scene/plan
+construction so `NaN` or infinity cannot first fail during JSON encoding.
+Paper size, orientation, and arrow style are closed enums. Paper margins require
+a named paper size, and their effective left/right and top/bottom sums must
+leave a strictly positive content area in the selected (or at least one
+automatic) orientation.
+
 ## Group Header Tags
 
-- Group header tag labels are single-line in PPTX output. The TS drawing layer
-  sets `wrap: false` for group header label ops only; item labels and connector
-  ID labels keep their normal wrapping behaviour.
+- Group header tag labels are single-line in every output whose text engine can
+  represent that policy. The shared draw plan marks their semantic role,
+  wrapping, fitting, clipping, line height, and padding; the TS drawing layer
+  consumes those values rather than inferring behavior from an element ID.
 - Excalidraw scene generation must reserve conservative tag label width before
   PPTX export. `groupLabelCharW` is intentionally larger than the average
   Excalidraw text metric so PowerPoint no-wrap text stays inside the tag
@@ -251,7 +280,8 @@ Behavior:
 ## Item Labels
 
 - Item icon size defaults to 32px in native CLI config.
-- Item label font is 8pt in PPTX output.
+- Item label font is 8pt at the default 96 PPI. At another effective PPI it is
+  `10.666...px * 72 / effectivePPI` points so its ratio to the icon is stable.
 - Excalidraw font size for item labels is `8pt * 96 / 72 = 10.666...px`.
 - Item label boxes are 14px high.
 - Do not shrink label boxes to text metrics if it breaks PowerPoint placement.
@@ -270,6 +300,12 @@ Supported whitespace controls:
 | `content-width="N"` / `content-height="N"` | Shrinks usable inner layout area |
 | `align="top-left"` etc. | Aligns the usable content area or item grid |
 | `width="N"` / `height="N"` | Fixed child size, except root frame is the paper/content frame |
+
+Fixed children are reserved before flexible `row`/`col` allocation. The
+resolved size advances the sibling cursor and must remain inside the parent's
+content box unless the source explicitly uses `overflow="visible"`. Layout
+overflow is diagnosed before plan construction; SVG or PPTX clipping is not a
+substitute for a valid layout.
 
 For item grids, horizontal `spread` is also supported.
 

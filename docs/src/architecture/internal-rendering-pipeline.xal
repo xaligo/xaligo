@@ -1,0 +1,205 @@
+<frame width="2200" height="1800" class="pa-4">
+  <generic-group id="xaligo" title="xaligo" icon="none">
+    <row gap="24">
+      <col span="6">
+        <generic-group id="internal" title="internal" icon="none" gap="16">
+          <generic-group id="internal-main" title="Main" icon="none" gap="14" row="3">
+            <generic-group id="internal-command" title="command" icon="none" layout="horizontal" gap="12">
+              <rectangle id="new-root-cmd" title="NewRootCmd()" width="360" font-size="16">
+                <port id="root-controller-dependency" side="right" y="48" title="controller" width="72" font-size="8" />
+              </rectangle>
+              <rectangle id="render-command" title="render Command.RunE" width="408" font-size="16">
+                <port id="command-controller" side="left" y="48" title="controller" width="72" font-size="8" />
+                <port id="xal-source" side="top" title=".xal path + flags" width="112" font-size="8" />
+                <port id="root-render-request" side="bottom" title="render request" width="100" font-size="8" />
+              </rectangle>
+            </generic-group>
+
+            <generic-group id="internal-controller" title="controller" icon="none">
+              <rectangle id="run-format" title="RunFormat()" width="780" font-size="18">
+                <port id="controller-input" side="top" title="render request" width="100" font-size="9" />
+                <port id="controller-usecase" side="bottom" title="source + options" width="110" font-size="9" />
+                <port id="controller-config" side="right" title="Config" width="56" font-size="9" />
+              </rectangle>
+            </generic-group>
+
+            <generic-group id="internal-usecase" title="usecase" icon="none" gap="12" height="360">
+              <row gap="12">
+                <col span="4">
+                  <rectangle id="render" title="Render()" width="228" font-size="15">
+                    <port id="render-input" side="top" title="source + options" width="100" font-size="8" />
+                    <port id="render-scene-request" side="right" y="48" title="scene request" width="96" font-size="8" />
+                  </rectangle>
+                </col>
+                <col span="8">
+                  <rectangle id="build-scene" title="buildScene() — context / I/O / stage order" width="500" font-size="13">
+                    <port id="scene-request" side="left" y="48" title="scene request" width="96" font-size="8" />
+                    <port id="parse-call" side="bottom" x="208" title="source" width="60" font-size="8" />
+                  </rectangle>
+                </col>
+              </row>
+
+              <generic-group id="internal-v1-engine" title="v1/engine (synchronous calculations)" icon="none" layout="horizontal" gap="12">
+                <rectangle id="parse" title="ParseV1EngineParseDocument()" width="190" font-size="9">
+                  <port id="parse-input" side="top" title="source" width="60" font-size="8" />
+                  <port id="document" side="bottom" title="validated Document" width="116" font-size="8" />
+                </rectangle>
+                <rectangle id="build" title="BuildV1EngineLayoutBuild()" width="190" font-size="9">
+                  <port id="build-input" side="top" title="validated Document" width="116" font-size="8" />
+                  <port id="box-tree" side="bottom" title="Resolved Box" width="88" font-size="8" />
+                </rectangle>
+                <rectangle id="build-json" title="BuildJSONV1EngineSceneBuild()" width="190" font-size="9">
+                  <port id="scene-boxes" side="top" title="Resolved Box" width="88" font-size="8" />
+                  <port id="scene-assets" side="right" y="48" title="asset ports" width="76" font-size="8" />
+                  <port id="scene-data" side="bottom" title="PresentationScene" width="116" font-size="8" />
+                </rectangle>
+                <rectangle id="build-plan" title="BuildPlanV1EnginePlanBuild()" width="190" font-size="9">
+                  <port id="plan-scene" side="top" title="PresentationScene" width="116" font-size="8" />
+                  <port id="plan-data" side="bottom" title="Plan / DrawOp" width="100" font-size="8" />
+                </rectangle>
+              </generic-group>
+            </generic-group>
+
+            <generic-group id="internal-repository" title="repository" icon="none" layout="horizontal" gap="12">
+              <rectangle id="load-assets" title="LookupCatalogByID()" width="170" font-size="13">
+                <port id="asset-data" side="top" title="catalog + icons" width="104" font-size="8" />
+              </rectangle>
+              <rectangle id="render-xyflow" title="XYFlow.Render()" width="170" font-size="13">
+                <port id="xyflow-scene" side="top" title="PresentationScene" width="116" font-size="8" />
+                <port id="xyflow-output" side="bottom" title="XYFlow bytes" width="84" font-size="8" />
+              </rectangle>
+              <rectangle id="render-isoflow" title="Isoflow.RenderWithIcons()" width="184" font-size="11">
+                <port id="isoflow-scene" side="top" title="PresentationScene" width="116" font-size="8" />
+                <port id="isoflow-output" side="bottom" title="Isoflow bytes" width="84" font-size="8" />
+              </rectangle>
+              <rectangle id="render-svg" title="SVG.Render()" width="170" font-size="13">
+                <port id="svg-plan" side="top" title="Plan / DrawOp" width="100" font-size="8" />
+                <port id="svg-output" side="bottom" title="SVG bytes" width="72" font-size="8" />
+              </rectangle>
+              <rectangle id="export-pptx" title="ExportPptxBytes()" width="210" font-size="13">
+                <port id="repo-plan" side="top" title="Plan / DrawOp" width="100" font-size="8" />
+                <port id="export-request" side="right" y="8" title="WASI stdin JSON" width="104" font-size="8" />
+                <port id="repo-pptx-result" side="right" y="72" title="base64 PPTX stdout" width="128" font-size="8" />
+                <port id="internal-pptx-output" side="bottom" title="PPTX bytes" width="84" font-size="8" />
+              </rectangle>
+            </generic-group>
+          </generic-group>
+
+          <generic-group id="internal-other" title="Other" icon="none" gap="12" row="2">
+            <row gap="12">
+              <col span="12">
+                <generic-group id="internal-entity" title="entity" icon="none" layout="horizontal" gap="12">
+                  <rectangle id="normalize-theme" title="NormalizeTheme()" width="380" font-size="15">
+                    <port id="theme-value" side="top" title="Theme" width="56" font-size="8" />
+                  </rectangle>
+                  <rectangle id="new-scene" title="NewScene()" width="388" font-size="15">
+                    <port id="entity-types" side="top" title="Node / Document / Box / PresentationScene / Plan / TextLayout" width="340" font-size="8" />
+                  </rectangle>
+                </generic-group>
+              </col>
+            </row>
+            <row gap="12">
+              <col span="6">
+                <generic-group id="internal-config" title="config" icon="none">
+                  <rectangle id="load-config" title="New()" width="360" font-size="15">
+                    <port id="config-data" side="right" title="Config" width="56" font-size="8" />
+                  </rectangle>
+                </generic-group>
+              </col>
+              <col span="6">
+                <generic-group id="internal-share" title="share" icon="none">
+                  <rectangle id="default-logger" title="DefaultLogger()" width="360" font-size="15">
+                    <port id="logger-data" side="top" title="Logger" width="60" font-size="8" />
+                  </rectangle>
+                </generic-group>
+              </col>
+            </row>
+          </generic-group>
+        </generic-group>
+      </col>
+
+      <col span="6">
+        <generic-group id="external" title="external" icon="none" gap="16">
+          <generic-group id="external-main" title="Main" icon="none" gap="14" row="3">
+            <generic-group id="external-command" title="command" icon="none">
+              <rectangle id="external-main-function" title="main()" width="780" font-size="16">
+                <port id="external-command-input" side="left" y="36" title="WASI stdin JSON" width="104" font-size="8" />
+                <port id="external-controller-call" side="bottom" title="input JSON" width="80" font-size="8" />
+                <port id="external-command-result" side="left" y="88" title="base64 PPTX stdout" width="128" font-size="8" />
+              </rectangle>
+            </generic-group>
+
+            <generic-group id="external-controller" title="controller" icon="none">
+              <rectangle id="external-controller-function" title="runPptxExporter()" width="780" font-size="17">
+                <port id="external-controller-input" side="top" title="input JSON" width="80" font-size="8" />
+                <port id="external-usecase-call" side="bottom" title="PptxExporterRequest" width="132" font-size="8" />
+                <port id="external-controller-output" side="left" y="88" title="PPTX bytes" width="84" font-size="8" />
+              </rectangle>
+            </generic-group>
+
+            <generic-group id="external-usecase" title="usecase" icon="none">
+              <rectangle id="external-usecase-function" title="exportPptxFromRequest()" width="780" font-size="17">
+                <port id="external-usecase-input" side="top" title="PptxExporterRequest" width="132" font-size="8" />
+                <port id="external-repository-call" side="bottom" title="PptxPlan" width="72" font-size="8" />
+              </rectangle>
+            </generic-group>
+
+            <generic-group id="external-repository" title="repository" icon="none">
+              <rectangle id="external-repository-function" title="createPptxFromPlan()" width="780" font-size="17">
+                <port id="external-plan" side="top" title="PptxPlan" width="72" font-size="8" />
+                <port id="pptx-output" side="left" y="88" title="PPTX bytes" width="84" font-size="8" />
+              </rectangle>
+            </generic-group>
+          </generic-group>
+
+          <generic-group id="external-other" title="Other" icon="none" gap="12" row="2">
+            <row gap="12">
+              <col span="4">
+                <generic-group id="external-entity" title="entity" icon="none">
+                  <spacer />
+                </generic-group>
+              </col>
+              <col span="4">
+                <generic-group id="external-share" title="share" icon="none">
+                  <rectangle id="external-logger" title="NewLogger()" width="220" font-size="15" />
+                </generic-group>
+              </col>
+              <col span="4">
+                <generic-group id="external-tool" title="tool" icon="none">
+                  <rectangle id="csv-helper" title="csv()" width="220" font-size="15" />
+                </generic-group>
+              </col>
+            </row>
+            <generic-group id="external-wasm" title="wasm (generated artifact)" icon="none">
+              <spacer />
+            </generic-group>
+          </generic-group>
+        </generic-group>
+      </col>
+    </row>
+  </generic-group>
+
+  <connections grid="8" end-arrowhead="stealth">
+    <connection src="root-controller-dependency" dst="command-controller" stroke-style="dashed" />
+    <connection src="root-render-request" dst="controller-input" />
+    <connection src="controller-usecase" dst="render-input" />
+    <connection src="render-scene-request" dst="scene-request" />
+    <connection src="parse-call" dst="parse-input" />
+    <connection src="document" dst="build-input" />
+    <connection src="box-tree" dst="scene-boxes" />
+    <connection src="scene-data" dst="plan-scene" />
+    <connection src="asset-data" dst="scene-assets" />
+    <connection src="scene-data" dst="xyflow-scene" />
+    <connection src="scene-data" dst="isoflow-scene" />
+    <connection src="plan-data" dst="svg-plan" />
+    <connection src="plan-data" dst="repo-plan" />
+    <connection src="config-data" dst="controller-config" />
+    <connection src="export-request" dst="external-command-input" />
+    <connection src="external-controller-call" dst="external-controller-input" />
+    <connection src="external-usecase-call" dst="external-usecase-input" />
+    <connection src="external-repository-call" dst="external-plan" />
+    <connection src="pptx-output" dst="external-controller-output" />
+    <connection src="external-controller-output" dst="external-command-result" />
+    <connection src="external-command-result" dst="repo-pptx-result" />
+  </connections>
+</frame>

@@ -39,11 +39,16 @@ const sampleDSL = `<frame width="1440" height="900" class="pa-4">
 </frame>
 `
 
-type InitController struct{}
+type InitController interface {
+	Command() *cobra.Command
+	Run(outputDir string) error
+}
 
-func NewInitController() *InitController { return &InitController{} }
+type initController struct{}
 
-func (rcvr *InitController) Command() *cobra.Command {
+func NewInitController() InitController { return &initController{} }
+
+func (rcvr *initController) Command() *cobra.Command {
 	logger.DEBUG(ICIIIC001, "start")
 	var outputDir string
 	cmd := &cobra.Command{
@@ -57,7 +62,7 @@ func (rcvr *InitController) Command() *cobra.Command {
 	return cmd
 }
 
-func (rcvr *InitController) Run(outputDir string) error {
+func (rcvr *initController) Run(outputDir string) error {
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
 		logger.ERROR(ICIRI001, "create output directory failed", map[string]any{"outputDir": outputDir, "error": err})
 		return fmt.Errorf("create output dir: %w", err)

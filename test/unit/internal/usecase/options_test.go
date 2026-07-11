@@ -1,6 +1,7 @@
 package usecase_test
 
 import (
+	"math"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -29,10 +30,23 @@ func TestValidateRenderOptionsRejectsInvalidValues(t *testing.T) {
 		{"format", entity.RenderOptions{Format: "bad"}, "unknown render format"},
 		{"mode", entity.RenderOptions{Mode: "bad"}, "unknown render mode"},
 		{"future mode", entity.RenderOptions{Mode: "aws-2.5d"}, "renderer not implemented"},
-		{"margin", entity.RenderOptions{PaperMarginLeftIn: -0.1}, "paper margins"},
+		{"negative margin", entity.RenderOptions{PaperMarginLeftIn: -0.1}, "paper margin left"},
+		{"NaN PPI", entity.RenderOptions{PxPerInch: math.NaN()}, "pixels per inch must be finite"},
+		{"infinite PPI", entity.RenderOptions{PxPerInch: math.Inf(1)}, "pixels per inch must be finite"},
+		{"negative PPI", entity.RenderOptions{PxPerInch: -96}, "pixels per inch must be non-negative"},
+		{"NaN arrow stub", entity.RenderOptions{ArrowStubPx: math.NaN()}, "arrow stub must be finite"},
+		{"infinite arrow margin", entity.RenderOptions{ArrowMarginPx: math.Inf(-1)}, "arrow margin must be finite"},
+		{"NaN paper margin", entity.RenderOptions{PaperMarginTopIn: math.NaN()}, "paper margin top must be finite"},
+		{"arrow style", entity.RenderOptions{ArrowStyle: "wide"}, "unknown arrow style"},
+		{"paper size", entity.RenderOptions{PaperSize: "A0"}, "unknown paper size"},
+		{"orientation", entity.RenderOptions{Orientation: "sideways"}, "unknown paper orientation"},
+		{"margin without paper", entity.RenderOptions{PaperMarginIn: 0.5}, "require a paper size"},
+		{"oversized paper margins", entity.RenderOptions{PaperSize: "A4", PaperMarginIn: 100}, "no positive content area"},
+		{"oversized portrait horizontal margins", entity.RenderOptions{PaperSize: "A4", Orientation: "portrait", PaperMarginLeftIn: 5, PaperMarginRightIn: 5}, "no positive content area"},
 		{"theme", entity.RenderOptions{Theme: "neon"}, "unknown theme"},
 		{"asset fs", entity.RenderOptions{Assets: &entity.AssetSource{CatalogCSV: "catalog.csv", GroupIconsDir: "groups"}}, "filesystem"},
 		{"asset paths", entity.RenderOptions{Assets: &entity.AssetSource{FS: fstest.MapFS{}, CatalogCSV: " ", GroupIconsDir: "groups"}}, "catalog and group icons"},
+		{"asset item size", entity.RenderOptions{Assets: &entity.AssetSource{FS: fstest.MapFS{}, CatalogCSV: "catalog.csv", GroupIconsDir: "groups", ItemIconSize: math.NaN()}}, "asset item icon size must be finite"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

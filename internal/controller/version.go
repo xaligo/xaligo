@@ -16,11 +16,15 @@ var (
 	ICVERSIONIVC002 = share.NewMCode("ICVERSIONIVC-002", "Init version command output version")
 )
 
-type VersionController struct{}
+type VersionController interface {
+	Command() *cobra.Command
+}
 
-func NewVersionController() *VersionController { return &VersionController{} }
+type versionController struct{}
 
-func (rcvr *VersionController) Command() *cobra.Command {
+func NewVersionController() VersionController { return &versionController{} }
+
+func (rcvr *versionController) Command() *cobra.Command {
 	logger.DEBUG(ICVERSIONIVC001, "start")
 	return &cobra.Command{
 		Use:   "version",

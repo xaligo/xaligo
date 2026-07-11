@@ -39,9 +39,14 @@ legend:
   font_size: 12
 
 item:
-  icon_size: 48
+  icon_size: 32
 ```
 
 Native configuration remains the default when no explicit asset source is
 provided. Embedded and WASM environments provide assets through their adapter
 instead of forking the render pipeline.
+
+The V1 compatibility default is `32` layout pixels. `item.icon_size` or an
+embedded `AssetSource` supplies that render-context default, and a root
+`item-size` attribute overrides it. Callers that need stable cross-environment
+geometry should set the root attribute explicitly.

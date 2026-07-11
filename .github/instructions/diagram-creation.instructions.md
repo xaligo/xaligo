@@ -169,10 +169,11 @@ Quick checklist:
 </frame>
 ```
 
-Every `<connection>` must be a direct child of `<frame>`, and each `src` / `dst`
-value must match exactly one `<item>` by catalog ID, `name`, or `ref`. If the
-same service icon appears multiple times, give the connected item a unique
-`name` or `ref` and use that value as the endpoint.
+Every `<connection>` must be a direct child of `<frame>` or a direct child of a
+frame-level `<connections>` group. Each `src` / `dst` value must match exactly
+one item, AWS group, rectangle, port, or identified child frame by catalog ID,
+`id`, `name`, or `ref`. If the same service icon appears multiple times, give
+the connected item a unique `name` or `ref` and use that value as the endpoint.
 
 For network diagrams, define structural paths and communication flows
 separately:
@@ -182,8 +183,10 @@ separately:
 <connection src="client" dst="router" kind="traffic" color="#2563eb" />
 ```
 
-Routes have no arrowheads. Traffic lines are directional and, when they share
-the same endpoints as a route, render beside the route lane. See
+Routes have no arrowheads. V1 rejects a route whose effective start or end
+arrowhead is non-`none`, including values inherited from `<connections>`.
+Traffic lines are directional and, when they share the same endpoints as a
+route, render beside the route lane. See
 [docs/src/examples/samples/route-traffic.xal](../../docs/src/examples/samples/route-traffic.xal) for a compact
 route/traffic example.
 

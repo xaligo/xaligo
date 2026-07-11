@@ -2,19 +2,22 @@
 
 ## Frame
 
-`<frame>` defines the canvas size and the top-level layout.
+`<frame>` defines one canvas and its top-level layout. `<frames>` wraps multiple
+identified `<frame>` children; it lays them out horizontally by default and
+vertically with `layout="vertical"`.
 
 | Attribute | Default | Description |
 |---|---|---|
+| `version` |  | Root only. Omit for implicit V1 or set exactly to `1` |
 | `width` | `1280` | Frame width in pixels |
 | `height` | `720` | Frame height in pixels |
 | `class` |  | Vuetify-style spacing class |
 | `layout` | vertical | Use `horizontal` for side-by-side children |
 | `gap` | `16` | Gap between child elements |
-| `item-size` | config value | Max icon size for `<item>` elements |
+| `item-size` | render context, normally `32` | Max icon size for `<item>` elements. A root value makes output deterministic across native and embedded renderers |
 | `margin`, `margin-*` |  | Content inset in pixels |
 | `content-width`, `content-height` |  | Override usable content size |
-| `align` |  | `top|middle|bottom` plus `left|center|right|spread` |
+| `align` |  | `top|middle|bottom` plus `left|center|right`; item grids additionally support `spread` |
 
 ## Container
 
@@ -39,6 +42,17 @@ for horizontal placement.
 ```
 
 `<row>` and `<col>` are pure layout tags. They do not render borders or labels.
+
+## Custom Tags
+
+An unknown nested tag with no layout children is a generic leaf. If it has
+layout children, V1 treats it as a generic group/container with group insets;
+`layout="horizontal"` and `layout="staggered"` select those layouts. If every
+child is an item or spacer, the tag uses the item-grid row behavior. The rule
+does not apply to the document root.
+
+Only documented `layout` values are valid for each tag. An unknown non-empty
+value is a validation error; it does not silently select the default layout.
 
 ## Spacing
 

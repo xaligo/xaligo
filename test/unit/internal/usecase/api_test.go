@@ -20,12 +20,12 @@ type fakePPTXExporter struct {
 	seen entity.PptxExportOptions
 }
 
-func newUsecase() usecase.XaligoUsecase {
+func newUsecase() usecase.RenderUsecase {
 	return newUsecaseWithPPTX(repository.NewPowerpointRepository())
 }
 
-func newUsecaseWithPPTX(powerpointRepository repository.PowerpointRepository) usecase.XaligoUsecase {
-	return usecase.NewXaligoUsecase(
+func newUsecaseWithPPTX(powerpointRepository repository.PowerpointRepository) usecase.RenderUsecase {
+	return usecase.NewRenderUsecase(
 		repository.NewExcalidrawRepository(),
 		repository.NewXaligoRepository(),
 		powerpointRepository,
@@ -42,11 +42,7 @@ func newSceneDependencies() usecase.SceneDependencies {
 	}
 }
 
-func (rcvr *fakePPTXExporter) WritePptx(_ entity.PptxExportOptions) error {
-	return nil
-}
-
-func (rcvr *fakePPTXExporter) WritePptxWithExporter(_ context.Context, _ entity.PptxExportOptions, _ repository.PptxExporter) error {
+func (rcvr *fakePPTXExporter) WritePptx(_ context.Context, _ entity.PptxExportOptions) error {
 	return nil
 }
 
@@ -55,21 +51,17 @@ func (rcvr *fakePPTXExporter) ExportPptxBytes(_ context.Context, opts entity.Ppt
 	return []byte("pptx-from-fake"), nil
 }
 
-func (rcvr *fakePPTXExporter) ExportPptxBytesWithExporter(_ context.Context, opts entity.PptxExportOptions, _ repository.PptxExporter) ([]byte, error) {
-	rcvr.seen = opts
-	return []byte("pptx-from-fake"), nil
-}
-
 func TestUseCaseAPIRendersStableFormats(t *testing.T) {
 	uc := newUsecase()
+	diagnosticsUsecase := usecase.NewDiagnosticsUsecase()
 	ctx := context.Background()
 	if err := uc.ValidateRenderOptions(entity.RenderOptions{Format: usecase.FormatSVG, Theme: "light"}); err != nil {
 		t.Fatal(err)
 	}
-	if err := uc.Validate(ctx, []byte(simpleXAL)); err != nil {
+	if err := diagnosticsUsecase.Validate(ctx, []byte(simpleXAL)); err != nil {
 		t.Fatal(err)
 	}
-	if diagnostics, err := uc.Diagnose(ctx, []byte(simpleXAL)); err != nil || len(diagnostics) != 0 {
+	if diagnostics, err := diagnosticsUsecase.Diagnose(ctx, []byte(simpleXAL)); err != nil || len(diagnostics) != 0 {
 		t.Fatalf("Diagnose() diagnostics=%#v err=%v", diagnostics, err)
 	}
 
@@ -139,13 +131,14 @@ func TestUseCaseRenderPPTXUsesInjectedExporter(t *testing.T) {
 	exporter := &fakePPTXExporter{}
 	uc := newUsecaseWithPPTX(exporter)
 	compression := false
-	out, err := uc.RenderPPTX(context.Background(), []byte(simpleXAL), entity.RenderOptions{
+	opts := entity.RenderOptions{
 		Format:           usecase.FormatPPTX,
 		Theme:            "light",
 		Title:            "Injected",
 		Compression:      &compression,
 		PPTXExporterWASM: "custom.wasm",
-	})
+	}
+	out, err := uc.RenderPPTX(context.Background(), []byte(simpleXAL), opts)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -157,6 +150,10 @@ func TestUseCaseRenderPPTXUsesInjectedExporter(t *testing.T) {
 	}
 	if !strings.Contains(string(exporter.seen.PlanJSON), `"slide"`) {
 		t.Fatalf("exporter plan = %s", exporter.seen.PlanJSON)
+	}
+	out, err = uc.Render(context.Background(), []byte(simpleXAL), opts)
+	if err != nil || string(out) != "pptx-from-fake" {
+		t.Fatalf("Render(PPTX) output=%q err=%v", out, err)
 	}
 }
 
@@ -217,6 +214,65 @@ func TestRenderExcalidrawStaggeredBackgrounds(t *testing.T) {
 	}
 }
 
+func TestRenderExcalidrawFramesAndCrossFrameLabels(t *testing.T) {
+	input := []byte(`<frames gap="48">
+  <frame id="overview" width="320" height="180">
+    <rectangle id="web" title="Web" width="120" height="80" />
+    <connection src="web" dst="db" />
+  </frame>
+  <frame id="detail" width="320" height="180">
+    <rectangle id="db" title="DB" width="120" height="80" />
+  </frame>
+</frames>`)
+	out, err := newUsecase().RenderExcalidraw(context.Background(), input, entity.RenderOptions{Theme: "light"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var scene sceneFile
+	if err := json.Unmarshal(out, &scene); err != nil {
+		t.Fatal(err)
+	}
+	foundOverviewFrame := false
+	foundDetailFrame := false
+	foundToLabel := false
+	foundFromLabel := false
+	foundCrossArrows := 0
+	logicalID := ""
+	for _, element := range scene.Elements {
+		switch element["id"] {
+		case "paper-frame-overview":
+			foundOverviewFrame = true
+		case "paper-frame-detail":
+			foundDetailFrame = true
+		}
+		if element["type"] == "text" {
+			if element["text"] == "to detail" {
+				foundToLabel = true
+			}
+			if element["text"] == "from overview" {
+				foundFromLabel = true
+			}
+		}
+		if custom, _ := element["customData"].(map[string]any); custom["xaligoCrossFrame"] == true {
+			foundCrossArrows++
+			gotLogicalID, _ := custom["xaligoConnectorLogicalId"].(string)
+			sourceElementID, _ := custom["xaligoConnectorSourceElementId"].(string)
+			destinationElementID, _ := custom["xaligoConnectorDestinationElementId"].(string)
+			if gotLogicalID == "" || sourceElementID == "" || destinationElementID == "" {
+				t.Fatalf("cross-frame logical metadata missing: %#v", custom)
+			}
+			if logicalID == "" {
+				logicalID = gotLogicalID
+			} else if logicalID != gotLogicalID {
+				t.Fatalf("cross-frame stubs have different logical IDs: %q and %q", logicalID, gotLogicalID)
+			}
+		}
+	}
+	if !foundOverviewFrame || !foundDetailFrame || !foundToLabel || !foundFromLabel || foundCrossArrows != 2 {
+		t.Fatalf("frames/cross labels missing: overview=%v detail=%v to=%v from=%v arrows=%d elements=%#v", foundOverviewFrame, foundDetailFrame, foundToLabel, foundFromLabel, foundCrossArrows, scene.Elements)
+	}
+}
+
 func TestUseCaseAPIRenderPPTXHonorsCanceledContext(t *testing.T) {
 	uc := newUsecase()
 	ctx, cancel := context.WithCancel(context.Background())
@@ -226,16 +282,16 @@ func TestUseCaseAPIRenderPPTXHonorsCanceledContext(t *testing.T) {
 	}
 }
 
-func TestUseCaseAPINewPreviewServer(t *testing.T) {
+func TestUseCaseAPINewPreviewRepository(t *testing.T) {
 	uc := newUsecase()
-	if _, err := uc.NewPreviewServer("", entity.PreviewOptions{}); err == nil {
-		t.Fatal("NewPreviewServer empty path error = nil")
+	if _, err := uc.NewPreviewRepository("", entity.PreviewOptions{}); err == nil {
+		t.Fatal("NewPreviewRepository empty path error = nil")
 	}
 	path := filepath.Join(t.TempDir(), "diagram.xal")
 	if err := os.WriteFile(path, []byte(simpleXAL), 0644); err != nil {
 		t.Fatal(err)
 	}
-	server, err := uc.NewPreviewServer(path, entity.PreviewOptions{Render: entity.RenderOptions{Theme: "light"}})
+	server, err := uc.NewPreviewRepository(path, entity.PreviewOptions{Render: entity.RenderOptions{Theme: "light"}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -283,6 +339,50 @@ func TestRenderSVGDrawsServiceLegend(t *testing.T) {
 		if !strings.Contains(svg, want) {
 			t.Fatalf("SVG missing %q:\n%s", want, svg)
 		}
+	}
+}
+
+func TestRenderExcalidrawCarriesSharedPortTextLayout(t *testing.T) {
+	out, err := newUsecase().RenderExcalidraw(context.Background(), []byte(`<frame width="240" height="120">
+  <rectangle id="service" width="180" height="80">
+    <port id="input" side="left" width="80" title="long input port" />
+  </rectangle>
+</frame>`), entity.RenderOptions{Theme: "light"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var scene entity.PresentationScene
+	if err := json.Unmarshal(out, &scene); err != nil {
+		t.Fatal(err)
+	}
+	for _, element := range scene.Elements {
+		if element.ID != "frame-0-0-text" {
+			continue
+		}
+		if element.CustomData == nil || !element.CustomData.PortLabel || element.CustomData.TextLayout == nil {
+			t.Fatalf("port custom data = %#v", element.CustomData)
+		}
+		layout := element.CustomData.TextLayout
+		if layout.Role != entity.TextRolePortLabel || !layout.Wrap || layout.Fit != entity.TextFitShrink || layout.Overflow != entity.TextOverflowClip || !layout.Clip {
+			t.Fatalf("port text layout = %#v", layout)
+		}
+		return
+	}
+	t.Fatalf("port text element not found: %#v", scene.Elements)
+}
+
+func TestRenderSVGContainsLongPortText(t *testing.T) {
+	out, err := newUsecase().RenderSVG(context.Background(), []byte(`<frame width="240" height="120">
+  <rectangle id="service" width="180" height="80">
+    <port id="input" side="left" width="48" title="very-long-port-label" />
+  </rectangle>
+</frame>`), entity.RenderOptions{Theme: "light"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	svg := string(out)
+	if !strings.Contains(svg, `clipPath id="xaligo-text-clip-`) || !strings.Contains(svg, "<tspan") {
+		t.Fatalf("long port text is not wrapped/clipped by the shared contract:\n%s", svg)
 	}
 }
 

@@ -134,3 +134,4 @@
 - [API and Configuration](api-configuration.md)
 - [Contributing](contributing.md)
 - [Development](development.md)
+- [Internal Architecture and Algorithms](internal-architecture.md)
