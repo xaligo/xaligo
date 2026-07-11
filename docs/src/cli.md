@@ -74,6 +74,9 @@ is `output`. `--theme`, `--mode`, and `--px-per-inch` are applied identically to
 both images. No difference is a successful result and still produces two
 unhighlighted SVGs.
 
+See the [structural diff sample](samples.md#structural-diff) for a complete
+before/after pair and the generated images.
+
 ## Generate
 
 Generate a starter `.xal` hierarchy:
