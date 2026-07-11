@@ -28,7 +28,9 @@ components so groups can be used as connection endpoints.
 
 ## Generic Group Icons
 
-`generic-group` accepts `icon-id`, using the same catalog as `<item>`.
+`generic-group` accepts `icon-id`, using the same catalog as `<item>`. It must
+be a positive signed 32-bit decimal ID (`1..2147483647`); zero, signs,
+non-decimal syntax, and out-of-range values are invalid.
 
 ```xml
 <generic-group id="network-topology" title="Network Topology" icon-id="104635">

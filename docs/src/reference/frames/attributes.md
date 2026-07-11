@@ -34,4 +34,4 @@
 | `<aws-iot-greengrass>` | `#3F8624` | solid | `2` | none |
 | `<elastic-beanstalk-container>` | `#E7601B` | solid | `2` | none |
 | `<aws-step-functions-workflow>` | `#E7008A` | solid | `2` | none |
-| `<generic-group>` | `#AAB7B8` | dashed | `1` | configured by `icon-id` |
+| `<generic-group>` | `#AAB7B8` | dashed | `1` | configured by positive decimal int32 `icon-id` (`1..2147483647`) |
