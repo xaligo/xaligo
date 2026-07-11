@@ -2,7 +2,7 @@ import { defineConfig } from 'tsup';
 
 export default defineConfig({
   entry: {
-    index: 'usecase/api.ts',
+    index: 'index.ts',
     cli: 'command.ts',
   },
   format: ['esm'],
