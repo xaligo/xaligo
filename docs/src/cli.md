@@ -20,10 +20,20 @@ Common render flags:
 
 | Flag | Description |
 |---|---|
-| `--mode standard|network|aws` | Rendering mode. Current modes share the same resolved 2D pipeline |
+| `--mode standard|network|aws` | Accepted V1 rendering mode. These three values currently have identical V1 rendering semantics and share the same resolved 2D pipeline |
 | `--theme light|dark` | Output theme |
 | `--services <csv>` | Service metadata and label overrides |
 | `--svg-legend-position top|right|bottom|left` | SVG legend placement |
+| `--arrow-style thin|standard|triangle|stealth|arrow|diamond|oval|none` | SVG/PPTX Plan default used when a connection omits its arrowhead. Explicit DSL arrowheads on normal/traffic connections and explicit stroke widths take precedence; routes require effective arrowheads to be `none` |
+
+`aws-2.5d` and `topology` are recognized roadmap modes but currently return a
+not-implemented error. Any other mode, format, theme, orientation, paper size,
+arrow-style option, or SVG legend-position value outside its documented enum
+returns an error.
+
+`--arrow-style` belongs to the shared physical Plan used by SVG and PPTX. The
+editable Excalidraw, XYFlow, and Isoflow V1 outputs consume the resolved DSL
+scene directly and therefore use the DSL connection defaults instead.
 
 PPTX-specific flags:
 
