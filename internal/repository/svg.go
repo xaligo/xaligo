@@ -185,9 +185,9 @@ func writeOp(b *bytes.Buffer, op entity.DrawOp, ppi float64) {
 	transform := rotateAttr(op.Rotate, x+w/2, y+h/2)
 	switch op.Kind {
 	case "rect":
-		fmt.Fprintf(b, `<rect x="%s" y="%s" width="%s" height="%s"%s%s%s/>`+"\n", num(x), num(y), num(w), num(h), fillAttrs(op.Fill), lineAttrs(op.Line), transform)
+		fmt.Fprintf(b, `<rect x="%s" y="%s" width="%s" height="%s"%s%s%s/>`+"\n", num(x), num(y), num(w), num(h), fillAttrs(op.Fill), lineAttrs(op.Line, ppi), transform)
 	case "ellipse":
-		fmt.Fprintf(b, `<ellipse cx="%s" cy="%s" rx="%s" ry="%s"%s%s%s/>`+"\n", num(x+w/2), num(y+h/2), num(w/2), num(h/2), fillAttrs(op.Fill), lineAttrs(op.Line), transform)
+		fmt.Fprintf(b, `<ellipse cx="%s" cy="%s" rx="%s" ry="%s"%s%s%s/>`+"\n", num(x+w/2), num(y+h/2), num(w/2), num(h/2), fillAttrs(op.Fill), lineAttrs(op.Line, ppi), transform)
 	case "polygon":
 		writePolygon(b, op, x, y, w, h, ppi, transform)
 	case "text":
@@ -214,7 +214,7 @@ func writePolygon(b *bytes.Buffer, op entity.DrawOp, x, y, w, h, ppi float64, tr
 		}
 		fmt.Fprintf(&value, "%s,%s", num(p.x), num(p.y))
 	}
-	fmt.Fprintf(b, `<polygon points="%s"%s%s%s/>`+"\n", value.String(), fillAttrs(op.Fill), lineAttrs(op.Line), transform)
+	fmt.Fprintf(b, `<polygon points="%s"%s%s%s/>`+"\n", value.String(), fillAttrs(op.Fill), lineAttrs(op.Line, ppi), transform)
 }
 
 func writeText(b *bytes.Buffer, op entity.DrawOp, x, y, w, h, ppi float64, transform string) {
@@ -265,7 +265,7 @@ func writeLine(b *bytes.Buffer, op entity.DrawOp, x, y, w, h, ppi float64) {
 	if op.Line != nil && op.Line.EndArrowType != "" && op.Line.EndArrowType != "none" {
 		marker += ` marker-end="url(#` + markerID(op.Line.EndArrowType) + `)"`
 	}
-	fmt.Fprintf(b, `<path d="%s" fill="none"%s%s/>`+"\n", strings.TrimSpace(d.String()), lineAttrs(op.Line), marker)
+	fmt.Fprintf(b, `<path d="%s" fill="none"%s%s/>`+"\n", strings.TrimSpace(d.String()), lineAttrs(op.Line, ppi), marker)
 }
 
 func markerID(arrowType string) string {
@@ -303,7 +303,7 @@ func fillAttrs(fill *entity.FillStyle) string {
 	return fmt.Sprintf(` fill="#%s" fill-opacity="%s"`, color(fill.Color, "FFFFFF"), num(opacity(fill.Transparency)))
 }
 
-func lineAttrs(line *entity.LineStyle) string {
+func lineAttrs(line *entity.LineStyle, ppi float64) string {
 	if line == nil || line.Transparency >= 100 || line.Width <= 0 {
 		return ` stroke="none"`
 	}
@@ -313,7 +313,8 @@ func lineAttrs(line *entity.LineStyle) string {
 	} else if line.Dash == "dot" {
 		dash = ` stroke-dasharray="2 5" stroke-linecap="round"`
 	}
-	return fmt.Sprintf(` stroke="#%s" stroke-width="%s" stroke-opacity="%s"%s`, color(line.Color, "1E1E1E"), num(line.Width), num(opacity(line.Transparency)), dash)
+	widthPx := line.Width * ppi / 72.0
+	return fmt.Sprintf(` stroke="#%s" stroke-width="%s" stroke-opacity="%s"%s`, color(line.Color, "1E1E1E"), num(widthPx), num(opacity(line.Transparency)), dash)
 }
 
 func rotateAttr(deg, cx, cy float64) string {
