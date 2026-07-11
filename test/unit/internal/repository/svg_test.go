@@ -62,6 +62,82 @@ func TestRenderPlanUsesCircularRouteMarkers(t *testing.T) {
 	}
 }
 
+func TestRenderPlanMapsArrowheadTypesToDistinctMarkers(t *testing.T) {
+	tests := []struct {
+		arrowType  string
+		markerID   string
+		definition string
+	}{
+		{arrowType: "none"},
+		{arrowType: "arrow", markerID: "xaligo-arrow", definition: `<path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/>`},
+		{arrowType: "triangle", markerID: "xaligo-triangle", definition: `<path d="M 0 0 L 8 5 L 0 10 z" fill="context-stroke"/>`},
+		{arrowType: "stealth", markerID: "xaligo-stealth", definition: `<path d="M 0 0 L 10 5 L 0 10 L 3 5 z" fill="context-stroke"/>`},
+		{arrowType: "diamond", markerID: "xaligo-diamond", definition: `<path d="M 0 4 L 5.5 0 L 11 4 L 5.5 8 z" fill="context-stroke"/>`},
+		{arrowType: "oval", markerID: "xaligo-oval", definition: `<circle cx="3.5" cy="3.5" r="2.5" fill="context-stroke"/>`},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.arrowType, func(t *testing.T) {
+			plan := entity.Plan{
+				Slide: entity.PlanSlide{W: 2, H: 1, Background: "ffffff"},
+				Ops: []entity.DrawOp{{
+					Kind: "line", X: 0.25, Y: 0.5, W: 1.5,
+					Line: &entity.LineStyle{
+						Color: "64748B", Width: 1,
+						BeginArrowType: tt.arrowType, EndArrowType: tt.arrowType,
+					},
+				}},
+			}
+			out, err := repository.NewSVGRepository().Render(plan, 96, "")
+			if err != nil {
+				t.Fatal(err)
+			}
+			svg := string(out)
+			if tt.markerID == "" {
+				if strings.Contains(svg, `marker-start=`) || strings.Contains(svg, `marker-end=`) {
+					t.Fatalf("none arrowhead emitted a marker:\n%s", svg)
+				}
+				return
+			}
+			for _, want := range []string{
+				`marker id="` + tt.markerID + `"`,
+				`marker-start="url(#` + tt.markerID + `)"`,
+				`marker-end="url(#` + tt.markerID + `)"`,
+				tt.definition,
+			} {
+				if !strings.Contains(svg, want) {
+					t.Fatalf("SVG missing %q for %s arrowhead:\n%s", want, tt.arrowType, svg)
+				}
+			}
+		})
+	}
+}
+
+func TestRenderPlanExpandsCanvasForWideStrokeScaledMarkers(t *testing.T) {
+	plan := entity.Plan{
+		Slide: entity.PlanSlide{W: 1, H: 0.5, Background: "ffffff"},
+		Ops: []entity.DrawOp{{
+			Kind: "line", X: 0, Y: 0, W: 0.01,
+			Line: &entity.LineStyle{
+				Color: "64748B", Width: 10, BeginArrowType: "diamond", EndArrowType: "diamond",
+			},
+		}},
+	}
+	out, err := repository.NewSVGRepository().Render(plan, 96, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	match := regexp.MustCompile(`<svg[^>]* width="([0-9.]+)" height="([0-9.]+)"`).FindStringSubmatch(string(out))
+	if len(match) != 3 {
+		t.Fatalf("SVG canvas size not found:\n%s", out)
+	}
+	width, widthErr := strconv.ParseFloat(match[1], 64)
+	height, heightErr := strconv.ParseFloat(match[2], 64)
+	if widthErr != nil || heightErr != nil || width <= 400 || height <= 350 {
+		t.Fatalf("stroke-scaled diamond marker bounds were cropped: canvas=%sx%s\n%s", match[1], match[2], out)
+	}
+}
+
 func TestRenderPlanDrawsServiceLegendAtRequestedPosition(t *testing.T) {
 	plan := entity.Plan{
 		Slide: entity.PlanSlide{W: 2, H: 1, Background: "ffffff"},

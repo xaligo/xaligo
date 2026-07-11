@@ -47,7 +47,7 @@ func (rcvr *svgRepository) Render(plan entity.Plan, pxPerInch float64, legendPos
 	var b bytes.Buffer
 	b.WriteString(`<?xml version="1.0" encoding="UTF-8"?>` + "\n")
 	fmt.Fprintf(&b, `<svg xmlns="http://www.w3.org/2000/svg" width="%s" height="%s" viewBox="0 0 %s %s">`+"\n", num(layout.canvasW), num(layout.canvasH), num(layout.canvasW), num(layout.canvasH))
-	b.WriteString(`<defs><marker id="xaligo-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker><marker id="xaligo-oval" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto" markerUnits="strokeWidth"><circle cx="3.5" cy="3.5" r="2.5" fill="context-stroke"/></marker></defs>` + "\n")
+	writeMarkerDefinitions(&b)
 	fmt.Fprintf(&b, `<rect x="0" y="0" width="%s" height="%s" fill="#%s"/>`+"\n", num(layout.canvasW), num(layout.canvasH), color(plan.Slide.Background, "FFFFFF"))
 
 	fmt.Fprintf(&b, `<g transform="translate(%s %s)">`+"\n", num(layout.diagramX+diagramOffsetX), num(layout.diagramY+diagramOffsetY))
@@ -70,6 +70,7 @@ type svgBounds struct {
 
 func svgOpsBounds(ops []entity.DrawOp, ppi, w, h float64) svgBounds {
 	bounds := svgBounds{minX: 0, minY: 0, maxX: w, maxY: h}
+	pathPad := 0.0
 	expand := func(x, y float64) {
 		bounds.minX = math.Min(bounds.minX, x)
 		bounds.minY = math.Min(bounds.minY, y)
@@ -81,6 +82,7 @@ func svgOpsBounds(ops []entity.DrawOp, ppi, w, h float64) svgBounds {
 		switch op.Kind {
 		case "line", "polygon":
 			bounds.hasPath = true
+			pathPad = math.Max(pathPad, svgPathBoundsPad(op, ppi))
 			for _, p := range absolutePoints(op, x, y, ow, oh, ppi) {
 				expand(p.x, p.y)
 			}
@@ -104,13 +106,49 @@ func svgOpsBounds(ops []entity.DrawOp, ppi, w, h float64) svgBounds {
 		}
 	}
 	if bounds.hasPath {
-		const strokeAndMarkerPad = 18.0
-		bounds.minX -= strokeAndMarkerPad
-		bounds.minY -= strokeAndMarkerPad
-		bounds.maxX += strokeAndMarkerPad
-		bounds.maxY += strokeAndMarkerPad
+		pathPad = math.Max(18, pathPad)
+		bounds.minX -= pathPad
+		bounds.minY -= pathPad
+		bounds.maxX += pathPad
+		bounds.maxY += pathPad
 	}
 	return bounds
+}
+
+func svgPathBoundsPad(op entity.DrawOp, ppi float64) float64 {
+	if op.Line == nil || op.Line.Width <= 0 || ppi <= 0 {
+		return 0
+	}
+	strokeWidth := op.Line.Width * ppi / 72.0
+	if math.IsNaN(strokeWidth) || math.IsInf(strokeWidth, 0) || strokeWidth <= 0 {
+		return 0
+	}
+	// SVG's default miter join can extend beyond half the stroke width. Markers
+	// use markerUnits="strokeWidth", so their perpendicular extent grows with
+	// the resolved output stroke instead of remaining inside a fixed pixel pad.
+	pad := strokeWidth * 2
+	if op.Kind == "line" {
+		pad = math.Max(pad, strokeWidth*(markerReachInStrokeWidths(op.Line.BeginArrowType)+0.5))
+		pad = math.Max(pad, strokeWidth*(markerReachInStrokeWidths(op.Line.EndArrowType)+0.5))
+	}
+	return pad
+}
+
+func markerReachInStrokeWidths(arrowType string) float64 {
+	switch arrowType {
+	case "", "none":
+		return 0
+	case "diamond":
+		return math.Sqrt(11*11 + 4*4)
+	case "oval":
+		return 3.5
+	case "triangle":
+		return math.Sqrt(7*7 + 5*5)
+	default:
+		// arrow, stealth, and the legacy unknown-value fallback have a 9-unit
+		// rear reach and a 5-unit half-height from the marker reference point.
+		return math.Sqrt(9*9 + 5*5)
+	}
 }
 
 type svgLegendBox struct {
@@ -560,20 +598,46 @@ func writeLine(b *bytes.Buffer, op entity.DrawOp, x, y, w, h, ppi float64) {
 		fmt.Fprintf(&d, "%s %s %s ", cmd, num(p.x), num(p.y))
 	}
 	marker := ""
-	if op.Line != nil && op.Line.BeginArrowType != "" && op.Line.BeginArrowType != "none" {
-		marker += ` marker-start="url(#` + markerID(op.Line.BeginArrowType) + `)"`
-	}
-	if op.Line != nil && op.Line.EndArrowType != "" && op.Line.EndArrowType != "none" {
-		marker += ` marker-end="url(#` + markerID(op.Line.EndArrowType) + `)"`
+	if op.Line != nil {
+		if id := markerID(op.Line.BeginArrowType); id != "" {
+			marker += ` marker-start="url(#` + id + `)"`
+		}
+		if id := markerID(op.Line.EndArrowType); id != "" {
+			marker += ` marker-end="url(#` + id + `)"`
+		}
 	}
 	fmt.Fprintf(b, `<path d="%s" fill="none"%s%s/>`+"\n", strings.TrimSpace(d.String()), lineAttrs(op.Line, ppi), marker)
 }
 
 func markerID(arrowType string) string {
-	if arrowType == "oval" {
+	switch arrowType {
+	case "", "none":
+		return ""
+	case "triangle":
+		return "xaligo-triangle"
+	case "stealth":
+		return "xaligo-stealth"
+	case "diamond":
+		return "xaligo-diamond"
+	case "oval":
 		return "xaligo-oval"
+	case "arrow":
+		return "xaligo-arrow"
+	default:
+		// Plans produced before arrowhead validation treated unknown values as
+		// the default arrow marker. Keep that renderer-level compatibility.
+		return "xaligo-arrow"
 	}
-	return "xaligo-arrow"
+}
+
+func writeMarkerDefinitions(b *bytes.Buffer) {
+	b.WriteString(`<defs>` +
+		`<marker id="xaligo-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker>` +
+		`<marker id="xaligo-triangle" markerWidth="8" markerHeight="10" refX="7" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 8 5 L 0 10 z" fill="context-stroke"/></marker>` +
+		`<marker id="xaligo-stealth" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 10 5 L 0 10 L 3 5 z" fill="context-stroke"/></marker>` +
+		`<marker id="xaligo-diamond" markerWidth="12" markerHeight="8" refX="11" refY="4" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 4 L 5.5 0 L 11 4 L 5.5 8 z" fill="context-stroke"/></marker>` +
+		`<marker id="xaligo-oval" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto" markerUnits="strokeWidth"><circle cx="3.5" cy="3.5" r="2.5" fill="context-stroke"/></marker>` +
+		`</defs>` + "\n")
 }
 
 type point struct{ x, y float64 }
