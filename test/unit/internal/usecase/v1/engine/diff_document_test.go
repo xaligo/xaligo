@@ -44,6 +44,16 @@ func TestStructuralDiffReportsAttributeChangeOnBothSides(t *testing.T) {
 	}
 }
 
+func TestStructuralDiffTreatsDistinctExplicitIdentitiesAsReplacement(t *testing.T) {
+	before := parseDiffDocument(t, `<frame version="1"><rectangle id="removed" /></frame>`)
+	after := parseDiffDocument(t, `<frame version="1"><rectangle id="added" /></frame>`)
+
+	diff := engine.DiffDocumentsV1EngineDiffDocument(before, after)
+	if diff.RemovedCount != 1 || diff.AddedCount != 1 || diff.ModifiedCount != 0 {
+		t.Fatalf("diff = %#v, want one removed and one added", diff)
+	}
+}
+
 func TestStructuralDiffDetectsReparentedIdentifiedNode(t *testing.T) {
 	before := parseDiffDocument(t, `<frame version="1"><container id="left"><rectangle id="one" /></container><container id="right" /></frame>`)
 	after := parseDiffDocument(t, `<frame version="1"><container id="left" /><container id="right"><rectangle id="one" /></container></frame>`)
