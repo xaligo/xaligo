@@ -19,7 +19,7 @@ import (
 var embeddedAssets = &entity.AssetSource{
 	FS: awsassets.Assets, CatalogCSV: awsassets.CatalogCSV,
 	GroupIconsDir: awsassets.GroupIconsDir, IsoflowIconsJSON: awsassets.IsoflowIconsJSON,
-	ItemIconSize: 48,
+	ItemIconSize: 32,
 }
 
 var xaligoUsecase = usecase.NewXaligoUsecase(
