@@ -1,6 +1,9 @@
 package usecase_test
 
 import (
+	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -54,6 +57,34 @@ func TestFrameMarginKeepsPaperSizeAndInsetsContent(t *testing.T) {
 	}
 }
 
+func TestFramesLayoutPlacesPagesWithIDs(t *testing.T) {
+	doc, err := usecase.Parse(strings.NewReader(`
+<frames gap="40">
+  <frame id="overview" width="300" height="180"><blank /></frame>
+  <frame id="detail" width="320" height="200"><blank /></frame>
+</frames>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	root, err := usecase.Build(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if root.Tag != "frames" || root.W != 660 || root.H != 200 {
+		t.Fatalf("root = %#v", root)
+	}
+	if len(root.Children) != 2 {
+		t.Fatalf("children = %#v", root.Children)
+	}
+	first, second := root.Children[0], root.Children[1]
+	if first.ID != "overview" || second.ID != "detail" {
+		t.Fatalf("frame IDs = %q %q", first.ID, second.ID)
+	}
+	if first.X != 0 || first.W != 300 || second.X != 340 || second.W != 320 {
+		t.Fatalf("page positions = %#v %#v", first, second)
+	}
+}
+
 func TestBlankTagsAreItemLike(t *testing.T) {
 	for _, tag := range []string{"spacer", "blank"} {
 		if !usecase.IsBlank(tag) {
@@ -90,10 +121,205 @@ func TestHorizontalLayoutUsesColumnWeightsAndMargins(t *testing.T) {
 	}
 }
 
+func TestStackLayoutReservesFixedHeightBeforeFlexRatios(t *testing.T) {
+	doc, err := usecase.Parse(strings.NewReader(`
+<frame width="300" height="300" gap="10">
+  <rectangle id="fixed" width="100" height="80" />
+  <rectangle id="one" width="100" row="1" />
+  <rectangle id="two" width="100" row="2" />
+</frame>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	root, err := usecase.Build(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(root.Children) != 3 {
+		t.Fatalf("children = %#v", root.Children)
+	}
+	fixed, one, two := root.Children[0], root.Children[1], root.Children[2]
+	if fixed.H != 80 {
+		t.Fatalf("fixed height = %.3f, want 80", fixed.H)
+	}
+	if one.H < 66.6 || one.H > 66.7 || two.H < 133.3 || two.H > 133.4 {
+		t.Fatalf("flex heights = %.3f %.3f, want about 66.667 and 133.333", one.H, two.H)
+	}
+	if one.Y != fixed.Y+fixed.H+10 || two.Y < one.Y+one.H+9.999 || two.Y > one.Y+one.H+10.001 {
+		t.Fatalf("stack positions = fixed=%#v one=%#v two=%#v", fixed, one, two)
+	}
+}
+
+func TestHorizontalLayoutReservesFixedWidthBeforeFlexRatios(t *testing.T) {
+	doc, err := usecase.Parse(strings.NewReader(`
+<frame width="500" height="120" layout="horizontal" gap="10">
+  <rectangle id="fixed" width="100" height="60" />
+  <rectangle id="one" col="1" height="60" />
+  <rectangle id="three" col="3" height="60" />
+</frame>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	root, err := usecase.Build(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fixed, one, three := root.Children[0], root.Children[1], root.Children[2]
+	if fixed.W != 100 || one.W != 95 || three.W != 285 {
+		t.Fatalf("widths = %.3f %.3f %.3f, want 100 95 285", fixed.W, one.W, three.W)
+	}
+	if one.X != 110 || three.X != 215 {
+		t.Fatalf("positions = %.3f %.3f, want 110 215", one.X, three.X)
+	}
+}
+
+func TestRowLayoutReservesFixedWidthBeforeGridShare(t *testing.T) {
+	doc, err := usecase.Parse(strings.NewReader(`
+<frame width="300" height="100">
+  <row gap="10">
+    <rectangle id="fixed" width="100" />
+    <rectangle id="flex" />
+  </row>
+</frame>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	root, err := usecase.Build(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fixed, flex := root.Children[0].Children[0], root.Children[0].Children[1]
+	if fixed.W != 100 || flex.W != 190 || flex.X != 110 {
+		t.Fatalf("row boxes = fixed=%#v flex=%#v, want widths 100/190 and flex x=110", fixed, flex)
+	}
+}
+
+func TestBuildRejectsParentOverflowUnlessVisible(t *testing.T) {
+	const strict = `<frame width="145" height="100"><rectangle id="wide" width="500" height="50" /></frame>`
+	doc, err := usecase.Parse(strings.NewReader(strict))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := usecase.Build(doc); err == nil || !strings.Contains(err.Error(), "overflows parent <frame> content box") {
+		t.Fatalf("Build() error = %v, want parent overflow diagnostic", err)
+	}
+
+	const visible = `<frame width="145" height="100" overflow="visible"><rectangle id="wide" width="500" height="50" /></frame>`
+	doc, err = usecase.Parse(strings.NewReader(visible))
+	if err != nil {
+		t.Fatal(err)
+	}
+	root, err := usecase.Build(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(root.Children) != 1 || root.Children[0].W != 500 || root.Children[0].IntrinsicW != 500 || root.Overflow != "visible" || !root.Overflowed {
+		t.Fatalf("visible overflow tree = %#v", root)
+	}
+}
+
+func TestBuildRejectsImplicitStaggerOverflow(t *testing.T) {
+	doc, err := usecase.Parse(strings.NewReader(`
+<frame width="120" height="100">
+  <generic-group id="stack" layout="staggered" content-width="20" content-height="20">
+    <card /><card />
+  </generic-group>
+</frame>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := usecase.Build(doc); err == nil || !strings.Contains(err.Error(), "staggered children require") {
+		t.Fatalf("Build() error = %v, want stagger overflow diagnostic", err)
+	}
+}
+
+func TestVisibleOverflowUsesOriginalExtentForFlexAfterFixedChildren(t *testing.T) {
+	doc, err := usecase.Parse(strings.NewReader(`
+<frame width="200" height="80" layout="horizontal" gap="10" overflow="visible">
+  <rectangle id="fixed" width="240" height="60" />
+  <rectangle id="flex" col="1" height="60" />
+</frame>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	root, err := usecase.Build(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(root.Children) != 2 || root.Children[0].W != 240 || root.Children[1].W != 190 || root.Children[1].X != 250 || !root.Overflowed {
+		t.Fatalf("visible fixed/flex layout = %#v", root)
+	}
+}
+
+func TestVisibleOverflowAllowsGapsToConsumeAxisAndPreservesSourceOrder(t *testing.T) {
+	doc, err := usecase.Parse(strings.NewReader(`
+<frame width="100" height="80" layout="horizontal" gap="120" overflow="visible">
+  <rectangle id="flex" col="1" height="60" />
+  <rectangle id="fixed" width="40" height="60" />
+</frame>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	root, err := usecase.Build(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(root.Children) != 2 || root.Children[0].W != 100 || root.Children[0].X != 0 || root.Children[1].W != 40 || root.Children[1].X != 220 || !root.Overflowed {
+		t.Fatalf("visible gap overflow layout = %#v", root)
+	}
+}
+
+func TestBuildRejectsOverlappingPortsOnSameSide(t *testing.T) {
+	doc, err := usecase.Parse(strings.NewReader(`
+<frame width="200" height="120">
+  <rectangle id="service" width="120" height="80">
+    <port id="first" side="top" width="80" height="20" />
+    <port id="second" side="top" width="80" height="20" />
+  </rectangle>
+</frame>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := usecase.Build(doc); err == nil || !strings.Contains(err.Error(), `port "second" overlaps port "first" on the top side`) {
+		t.Fatalf("Build() error = %v, want port overlap diagnostic", err)
+	}
+}
+
+func TestBlankAlignUsesDefaultWithoutWarning(t *testing.T) {
+	if os.Getenv("XALIGO_TEST_BLANK_ALIGN") == "1" {
+		doc, err := usecase.Parse(strings.NewReader(`<frame width="100" height="100"><blank /></frame>`))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := usecase.Build(doc); err != nil {
+			t.Fatal(err)
+		}
+		return
+	}
+
+	logPath := filepath.Join(t.TempDir(), "layout.log")
+	cmd := exec.Command(os.Args[0], "-test.run=^TestBlankAlignUsesDefaultWithoutWarning$")
+	cmd.Env = append(os.Environ(),
+		"XALIGO_TEST_BLANK_ALIGN=1",
+		"XALIGO_LOG_LEVEL=WARN",
+		"XALIGO_LOG_OUTPUT="+logPath,
+	)
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("helper process failed: %v\n%s", err, output)
+	}
+	data, err := os.ReadFile(logPath)
+	if err != nil && !os.IsNotExist(err) {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(data), "IULPA-001") {
+		t.Fatalf("blank align emitted invalid-align warning: %s", data)
+	}
+}
+
 func TestStaggeredLayoutMarksDepthAndClampsSmallAreas(t *testing.T) {
 	doc, err := usecase.Parse(strings.NewReader(`
 <frame width="120" height="100">
-  <generic-group id="stack" title="Stack" layout="staggered" content-width="20" content-height="20" align="middle-center">
+  <generic-group id="stack" title="Stack" layout="staggered" content-width="20" content-height="20" align="middle-center" overflow="visible">
     <card title="Front" />
     <card title="Back" />
   </generic-group>
@@ -192,6 +418,37 @@ func TestRectanglePortsStayInsideAndShareSameSide(t *testing.T) {
 	}
 	if explicit.X != rect.X || explicit.Y+explicit.H != rect.Y+rect.H {
 		t.Fatalf("explicit out-of-bounds port was not clamped to inside bottom-left: rect=%#v port=%#v", rect, explicit)
+	}
+}
+
+func TestLeafPaddingPreservesBorderAndSeparatesContentBox(t *testing.T) {
+	doc, err := usecase.Parse(strings.NewReader(`
+<frame width="240" height="140">
+  <badge width="100" height="80" class="pa-1" />
+</frame>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	root, err := usecase.Build(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	leaf := root.Children[0]
+	if leaf.W != 100 || leaf.H != 80 {
+		t.Fatalf("leaf border = %.1fx%.1f, want 100x80", leaf.W, leaf.H)
+	}
+	if leaf.ContentX != leaf.X+8 || leaf.ContentY != leaf.Y+8 || leaf.ContentW != 84 || leaf.ContentH != 64 {
+		t.Fatalf("leaf content box = (%v,%v,%v,%v), border=%#v", leaf.ContentX, leaf.ContentY, leaf.ContentW, leaf.ContentH, leaf)
+	}
+}
+
+func TestBuildRejectsItemGridThatCannotFitMinimumCell(t *testing.T) {
+	doc, err := usecase.Parse(strings.NewReader(`<frame width="40" height="30"><item id="1" /></frame>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := usecase.Build(doc); err == nil || !strings.Contains(err.Error(), "cannot fit 1 item slots") {
+		t.Fatalf("Build() error = %v, want item-grid fit error", err)
 	}
 }
 
