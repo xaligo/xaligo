@@ -198,7 +198,7 @@ func writeGroupAssetPage(group assetGroup, page assetPage) {
 	writeFile(filepath.Join(outputDir, page.File), out.Bytes())
 }
 
-func writeGroupSamples(renderer usecase.XaligoUsecase, group assetGroup) {
+func writeGroupSamples(renderer usecase.RenderUsecase, group assetGroup) {
 	for _, asset := range group.Assets {
 		xalPath := iconSamplePath(asset)
 		svgPath := iconPreviewPath(asset)
@@ -418,7 +418,7 @@ type referencePage struct {
 	Samples []referenceSample
 }
 
-func writeReferenceSamples(renderer usecase.XaligoUsecase) {
+func writeReferenceSamples(renderer usecase.RenderUsecase) {
 	pages := []referencePage{
 		{
 			Section: "arrows",
@@ -701,7 +701,7 @@ func iconPreviewPath(asset svgAsset) string {
 	return filepath.Join(previewDir, asset.Group, asset.Slug+".svg")
 }
 
-func renderSVG(renderer usecase.XaligoUsecase, source, outputPath string) {
+func renderSVG(renderer usecase.RenderUsecase, source, outputPath string) {
 	if err := os.MkdirAll(filepath.Dir(outputPath), 0o755); err != nil {
 		fatal(err)
 	}
@@ -724,8 +724,8 @@ func renderSVG(renderer usecase.XaligoUsecase, source, outputPath string) {
 	writeFile(outputPath, out)
 }
 
-func newUsecase() usecase.XaligoUsecase {
-	return usecase.NewXaligoUsecase(
+func newUsecase() usecase.RenderUsecase {
+	return usecase.NewRenderUsecase(
 		repository.NewExcalidrawRepository(),
 		repository.NewXaligoRepository(),
 		repository.NewPowerpointRepository(),
