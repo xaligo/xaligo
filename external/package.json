@@ -39,6 +39,7 @@
   "scripts": {
     "build": "tsup",
     "build:pptx-exporter-wasm": "npm run build && ${JAVY:-javy} build -J event-loop=y dist/cli.js -o wasm/xaligo.wasm",
+    "test": "npm run build && node --test test/*.test.mjs",
     "dev": "tsup --watch",
     "clean": "rimraf dist"
   },

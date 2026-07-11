@@ -5,21 +5,22 @@ import type {
   PlanFill,
   PlanLine,
   PlanOp,
+  PlanTextLayout,
   PptxExportOptions,
   PptxExportResult,
   PptxPlan,
 } from '../entity/pptx';
-import { ANCHOR_GROUP_MARKER, FRONT_LAYER_MARKER } from '../entity/pptx';
+import { planObjectName, planTextOverflow } from '../entity/pptx';
 import { NewEnvLogger } from '../share/logger';
 import { NewMCode } from '../share/mcode';
 import { imageDataForPptx } from './pptx_image';
 import { drawConnectorLegendSlide, drawLegendSlides } from './pptx_legend';
-import { convertPptxOutput, groupAnchorObjectsInPptx } from './pptx_package';
+import { convertPptxOutput, finalizePptxPackage } from './pptx_package';
 
 const logger = NewEnvLogger('external/repository', 'pptx');
 const ERPCPFP001 = NewMCode('ERPCPFP-001', 'Create PPTX from plan start');
 const ERPCPFP002 = NewMCode('ERPCPFP-002', 'Create PPTX from plan write completed');
-const ERPCPFP003 = NewMCode('ERPCPFP-003', 'Create PPTX from plan grouping completed');
+const ERPCPFP003 = NewMCode('ERPCPFP-003', 'Create PPTX from plan package finalization completed');
 const ERPCPFP004 = NewMCode('ERPCPFP-004', 'Create PPTX from plan completed');
 const ERPDO001 = NewMCode('ERPDO-001', 'Draw op dispatch branch');
 const ERPDP001 = NewMCode('ERPDP-001', 'Draw polygon skipped branch');
@@ -64,9 +65,9 @@ export async function createPptxFromPlan(
     compression: options.compression ?? true,
   }) as Uint8Array;
   logger.DEBUG(ERPCPFP002, 'write completed', { bytes: bytes.length });
-  const grouped = await groupAnchorObjectsInPptx(bytes, parsed.ops, options.compression ?? true);
-  logger.DEBUG(ERPCPFP003, 'grouping completed', { bytes: grouped.length });
-  const result = convertPptxOutput(grouped, outputType);
+  const finalized = await finalizePptxPackage(bytes, parsed.ops, options.compression ?? true);
+  logger.DEBUG(ERPCPFP003, 'package finalization completed', { bytes: finalized.length });
+  const result = convertPptxOutput(finalized, outputType);
   logger.DEBUG(ERPCPFP004, 'completed', { outputType });
   return result;
 }
@@ -139,6 +140,7 @@ function drawText(slide: pptxgen.Slide, op: PlanOp): void {
     logger.DEBUG(ERPDT001, 'branch skipped empty text', { id: op.id });
     return;
   }
+  const layout = resolvedTextLayout(op);
   slide.addText(text, {
     x: op.x,
     y: op.y,
@@ -149,9 +151,10 @@ function drawText(slide: pptxgen.Slide, op: PlanOp): void {
     fontFace: op.fontFace ?? 'Helvetica',
     fontSize: Math.max(1, op.fontSize ?? 9),
     bold: op.bold ?? false,
-    fit: 'shrink',
-    wrap: !isGroupHeaderLabelOp(op),
-    margin: 0,
+    fit: pptxTextFit(layout, !!planObjectName(op)),
+    wrap: layout.wrap,
+    margin: textMargin(layout),
+    lineSpacingMultiple: positiveLineHeight(layout.lineHeight),
     breakLine: false,
     align: normalizeAlign(op.align),
     valign: normalizeValign(op.valign),
@@ -161,8 +164,50 @@ function drawText(slide: pptxgen.Slide, op: PlanOp): void {
   });
 }
 
-function isGroupHeaderLabelOp(op: PlanOp): boolean {
+function resolvedTextLayout(op: PlanOp): PlanTextLayout {
+  if (op.textLayout) {
+    const overflow = planTextOverflow(op);
+    return { ...op.textLayout, overflow, clip: overflow === 'clip' };
+  }
+  // Compatibility for plan JSON generated before the renderer-neutral text
+  // contract. New plans never need to infer semantics from object names.
+  const groupHeader = isLegacyGroupHeaderLabelOp(op);
+  return {
+    role: groupHeader ? 'group-header' : 'label',
+    wrap: !groupHeader,
+    fit: 'shrink',
+    overflow: 'clip',
+    clip: true,
+    lineHeight: 1.2,
+    padding: { top: 0, right: 0, bottom: 0, left: 0 },
+  };
+}
+
+function pptxTextFit(layout: PlanTextLayout, hasObjectName: boolean): 'none' | 'shrink' {
+  if (layout.fit === 'shrink') return 'shrink';
+  // Named text objects receive exact DrawingML overflow attributes during
+  // package finalization. An unnamed clipped object cannot be found reliably,
+  // so keep shrink as a compatibility containment fallback for that edge case.
+  return (layout.overflow === 'clip' || layout.clip) && !hasObjectName ? 'shrink' : 'none';
+}
+
+function isLegacyGroupHeaderLabelOp(op: PlanOp): boolean {
   return !!op.id && op.id.endsWith('-label') && !op.id.endsWith('-item-lbl') && !/^L\d+-label$/.test(op.id);
+}
+
+function textMargin(layout: PlanTextLayout): number | [number, number, number, number] {
+  const padding = layout.padding ?? { top: 0, right: 0, bottom: 0, left: 0 };
+  const values: [number, number, number, number] = [
+    Math.max(0, padding.top * 72),
+    Math.max(0, padding.right * 72),
+    Math.max(0, padding.bottom * 72),
+    Math.max(0, padding.left * 72),
+  ];
+  return values.every((value) => value === values[0]) ? values[0] : values;
+}
+
+function positiveLineHeight(value: number | undefined): number {
+  return value && Number.isFinite(value) && value > 0 ? value : 1.2;
 }
 
 async function drawImage(slide: pptxgen.Slide, op: PlanOp): Promise<void> {
@@ -304,15 +349,8 @@ function lineOptions(line: PlanLine | undefined) {
 }
 
 function objectNameOptions(op: PlanOp): { objectName?: string } {
-  const name = objectNameForOp(op);
+  const name = planObjectName(op);
   return name ? { objectName: name } : {};
-}
-
-function objectNameForOp(op: PlanOp): string | undefined {
-  if (!op.id) return undefined;
-  if (op.frontLayer) return `${FRONT_LAYER_MARKER}${op.id}`;
-  if (!op.groupId) return op.id;
-  return `${ANCHOR_GROUP_MARKER}${op.groupId}|${op.id}`;
 }
 
 function fillOptions(fill: PlanFill | undefined) {
