@@ -19,5 +19,8 @@ SVG rendering uses the shared orthogonal router and includes:
 - Route and traffic layer ordering.
 - Line-jump masks at interior crossings.
 - Automatic junction markers for shared route endpoints.
-- Expanded canvas/viewBox bounds for connector paths and markers.
+- Distinct marker geometry for V1 `arrow`, `triangle`, `stealth`, `diamond`,
+  and `oval` arrowheads.
+- Canvas/viewBox bounds expanded from the resolved stroke width and
+  stroke-scaled marker geometry.
 - Service legends when metadata is provided.
