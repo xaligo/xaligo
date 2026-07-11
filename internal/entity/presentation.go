@@ -91,6 +91,8 @@ type CustomData struct {
 	SemanticElementKind             string      `json:"xaligoSemanticElementKind,omitempty"`
 	PortLabel                       bool        `json:"xaligoPortLabel,omitempty"`
 	CrossFrameLabel                 bool        `json:"xaligoCrossFrameLabel,omitempty"`
+	DiffHighlight                   bool        `json:"xaligoDiffHighlight,omitempty"`
+	DiffStatus                      string      `json:"xaligoDiffStatus,omitempty"`
 	TextLayout                      *TextLayout `json:"xaligoTextLayout,omitempty"`
 }
 
