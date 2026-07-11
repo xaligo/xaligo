@@ -95,6 +95,33 @@ func TestParseResolvesGroupedConnectionReferences(t *testing.T) {
 	}
 }
 
+func TestParseFramesResolvesCrossFrameConnection(t *testing.T) {
+	doc, err := usecase.Parse(strings.NewReader(`<frames>
+  <frame id="page-a" width="320" height="180">
+    <rectangle id="web" title="Web" />
+    <connection src="web" dst="db" />
+  </frame>
+  <frame id="page-b" width="320" height="180">
+    <rectangle id="db" title="DB" />
+  </frame>
+</frames>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	conn := doc.Root.Children[0].Children[1]
+	if conn.Attr("_xaligoConnectionSrcFrame") != "page-a" || conn.Attr("_xaligoConnectionDstFrame") != "page-b" || conn.Attr("_xaligoConnectionCrossFrame") != "true" {
+		t.Fatalf("cross-frame attrs = %#v", conn.Attrs)
+	}
+}
+
+func TestParseFramesRequireFrameID(t *testing.T) {
+	_, err := usecase.Parse(strings.NewReader(`<frames><frame><blank /></frame></frames>`))
+	var parseErr *entity.ParseError
+	if !errors.As(err, &parseErr) || !strings.Contains(err.Error(), "requires a non-empty id") {
+		t.Fatalf("error = %T %v", err, err)
+	}
+}
+
 func TestParseResolvesConnectionEndpointChildTags(t *testing.T) {
 	doc, err := usecase.Parse(strings.NewReader(`<frame>
   <item id="1" name="web" />
