@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"math"
 	"sort"
 	"strings"
@@ -12,6 +13,22 @@ import (
 	"github.com/xaligo/xaligo/internal/entity"
 	"github.com/xaligo/xaligo/internal/share"
 )
+
+// IsoflowRepository converts the shared scene to Isoflow and owns the icon
+// manifest inputs required by that conversion.
+type IsoflowRepository interface {
+	Render(sceneJSON []byte) ([]byte, error)
+	RenderWithIcons(sceneJSON []byte, iconOverrides map[string]string) ([]byte, error)
+	LoadIsoflowIcons(assets *entity.AssetSource) (map[string]string, error)
+	LoadIsoflowIconManifest(path string) (map[string]string, error)
+	LoadIsoflowIconManifestFS(fsys fs.FS, path string) (map[string]string, error)
+}
+
+type isoflowRepository struct{}
+
+func NewIsoflowRepository() IsoflowRepository {
+	return &isoflowRepository{}
+}
 
 const (
 	documentVersion     = "3.3.0"

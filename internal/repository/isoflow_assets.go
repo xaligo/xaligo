@@ -11,20 +11,6 @@ import (
 	"github.com/xaligo/xaligo/internal/entity"
 )
 
-type IsoflowRepository interface {
-	Render(sceneJSON []byte) ([]byte, error)
-	RenderWithIcons(sceneJSON []byte, iconOverrides map[string]string) ([]byte, error)
-	LoadIsoflowIcons(assets *entity.AssetSource) (map[string]string, error)
-	LoadIsoflowIconManifest(path string) (map[string]string, error)
-	LoadIsoflowIconManifestFS(fsys fs.FS, path string) (map[string]string, error)
-}
-
-type isoflowRepository struct{}
-
-func NewIsoflowRepository() IsoflowRepository {
-	return &isoflowRepository{}
-}
-
 func (rcvr *isoflowRepository) LoadIsoflowIcons(assets *entity.AssetSource) (map[string]string, error) {
 	if assets != nil && assets.IsoflowIconsJSON != "" {
 		return rcvr.LoadIsoflowIconManifestFS(assets.FS, assets.IsoflowIconsJSON)
