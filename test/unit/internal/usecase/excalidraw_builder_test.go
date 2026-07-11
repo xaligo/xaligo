@@ -59,3 +59,34 @@ func TestRectangleRendersPortsAndText(t *testing.T) {
 		t.Fatalf("texts/font sizes = %#v", texts)
 	}
 }
+
+func TestSmallPositiveRectangleRemainsInScene(t *testing.T) {
+	doc, err := usecase.Parse(strings.NewReader(`<frame width="160" height="120" gap="0">
+  <rectangle id="tiny" title="Tiny" width="40" height="30" />
+</frame>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	root, err := usecase.Build(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	out, err := usecase.BuildJSONWithFS(root, awsassets.Assets, awsassets.CatalogCSV, awsassets.GroupIconsDir, 32, nil, nil, newSceneDependencies())
+	if err != nil {
+		t.Fatal(err)
+	}
+	var scene sceneFile
+	if err := json.Unmarshal(out, &scene); err != nil {
+		t.Fatal(err)
+	}
+	for _, element := range scene.Elements {
+		if element["id"] != "frame-0-rect" {
+			continue
+		}
+		if element["width"] != float64(40) || element["height"] != float64(30) {
+			t.Fatalf("small rectangle geometry = %#v", element)
+		}
+		return
+	}
+	t.Fatal("small positive rectangle was dropped from the scene")
+}
