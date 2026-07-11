@@ -29,6 +29,14 @@ type StructuralDiff struct {
 	ModifiedCount int                `json:"modifiedCount"`
 }
 
+// DiffOptions controls the common SVG presentation of both diff images.
+type DiffOptions struct {
+	Mode      Mode
+	Theme     string
+	PxPerInch float64
+	Assets    *AssetSource
+}
+
 // DiffResult contains the two SVG projections of one structural comparison.
 type DiffResult struct {
 	RemovedImage []byte
