@@ -30,7 +30,7 @@ RUN case "${TARGETARCH}" in \
 
 WORKDIR /build/external
 
-COPY external/package.json external/tsconfig.json external/tsup.config.ts external/command.ts ./
+COPY external/package.json external/tsconfig.json external/tsup.config.ts external/command.ts external/index.ts ./
 COPY external/controller ./controller
 COPY external/entity ./entity
 COPY external/repository ./repository
