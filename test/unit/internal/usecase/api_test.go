@@ -14,7 +14,7 @@ import (
 	"github.com/xaligo/xaligo/internal/usecase"
 )
 
-const simpleXAL = `<frame width="240" height="120"><blank /></frame>`
+const simpleXAL = `<frame version="1" width="240" height="120"><blank /></frame>`
 
 type fakePPTXExporter struct {
 	seen entity.PptxExportOptions

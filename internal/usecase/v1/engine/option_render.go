@@ -20,7 +20,8 @@ const (
 	FormatXYFlowV1EngineOptionRender     entity.Format = "xyflow"
 	FormatIsoflowV1EngineOptionRender    entity.Format = "isoflow"
 
-	SeverityErrorV1EngineOptionRender entity.DiagnosticSeverity = "error"
+	SeverityErrorV1EngineOptionRender   entity.DiagnosticSeverity = "error"
+	SeverityWarningV1EngineOptionRender entity.DiagnosticSeverity = "warning"
 )
 
 var ErrNotImplementedV1EngineOptionRender = errors.New("renderer not implemented")

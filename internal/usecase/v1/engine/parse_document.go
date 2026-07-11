@@ -37,6 +37,7 @@ var (
 	IUPP014V1EngineParseDocument    = share.NewMCode("IUPP-014", "Parse empty document branch")
 	IUPP015V1EngineParseDocument    = share.NewMCode("IUPP-015", "Parse invalid root branch")
 	IUPP016V1EngineParseDocument    = share.NewMCode("IUPP-016", "Parse expand connection shorthands failed")
+	IUPP017V1EngineParseDocument    = share.NewMCode("IUPP-017", "Parse implicit V1 version branch")
 	IUPVGGN001V1EngineParseDocument = share.NewMCode("IUPVGGN-001", "Validate generic group empty icon ID branch")
 	IUPVGGN002V1EngineParseDocument = share.NewMCode("IUPVGGN-002", "Validate generic group invalid icon ID branch")
 	IUPECS001V1EngineParseDocument  = share.NewMCode("IUPECS-001", "Expand connection shorthands item branch")
@@ -169,6 +170,9 @@ func ParseV1EngineParseDocument(r io.Reader) (entity.Document, error) {
 	if err := validateRootVersionV1EngineParseNode(root); err != nil {
 		loggerV1EngineSharedLogging.ERROR(IUPP015V1EngineParseDocument, "branch unsupported root version", map[string]any{"tag": root.Tag, "version": root.Attrs["version"]})
 		return entity.Document{}, &entity.ParseError{Position: root.Position, Err: err}
+	}
+	if _, specified := root.Attrs["version"]; !specified {
+		loggerV1EngineSharedLogging.WARN(IUPP017V1EngineParseDocument, implicitV1VersionWarningV1EngineParseNode(root), map[string]any{"tag": root.Tag})
 	}
 	if err := validateFrameHierarchyV1EngineParseNode(root); err != nil {
 		loggerV1EngineSharedLogging.ERROR(IUPP006V1EngineParseDocument, "frame hierarchy validation failed", map[string]any{"error": err})

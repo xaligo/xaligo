@@ -64,7 +64,11 @@ func validateRootVersionV1EngineParseNode(root *entity.Node) error {
 	if !specified || version == "1" {
 		return nil
 	}
-	return fmt.Errorf("<%s version=%q> is not supported by the V1 engine; omit version or use version=\"1\"", root.Tag, version)
+	return fmt.Errorf("<%s version=%q> is not supported by the V1 engine; use version=\"1\"", root.Tag, version)
+}
+
+func implicitV1VersionWarningV1EngineParseNode(root *entity.Node) string {
+	return fmt.Sprintf("V1 document version is implicit; add version=\"1\" to the <%s> root", root.Tag)
 }
 
 func validateNestedVersionV1EngineParseNode(node *entity.Node) error {
