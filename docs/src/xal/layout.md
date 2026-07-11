@@ -8,7 +8,7 @@ vertically with `layout="vertical"`.
 
 | Attribute | Default | Description |
 |---|---|---|
-| `version` |  | Root only. Omit for implicit V1 or set exactly to `1` |
+| `version` | `1` with warning when omitted | Root only. Explicit `1` is recommended and is the only accepted value |
 | `width` | `1280` | Frame width in pixels |
 | `height` | `720` | Frame height in pixels |
 | `class` |  | Vuetify-style spacing class |

@@ -38,8 +38,8 @@ Implementation guidance:
 
 ### V1 Compatibility and V2 Input
 
-Freeze unversioned `<frame>` and `<frames>` as the V1 compatibility profile.
-An explicit `version="1"` is also V1. V2 uses a distinct
+Freeze `<frame>` and `<frames>` as the V1 compatibility profile and recommend
+an explicit `version="1"`. Omission remains a V1 fallback but emits a warning. V2 uses a distinct
 `<scene version="2">` root; do not place `version="2"` on a V1 root. This is a
 reject-safe boundary: existing V1 readers reject V2 without having to know any
 V2 syntax.

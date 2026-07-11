@@ -1,4 +1,4 @@
-<frame width="2200" height="1800" class="pa-4">
+<frame version="1" width="2200" height="1800" class="pa-4">
   <generic-group id="xaligo" title="xaligo" icon="none">
     <row gap="24">
       <col span="6">

@@ -52,8 +52,8 @@ engines.
 
 The current
 [`ParseV1EngineParseDocument`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/v1/engine/parse_document.go)
-accepts only `<frame>` and `<frames>` roots. Those roots, when unversioned or
-explicitly marked `version="1"`, define the frozen V1 profile. Native V2 will
+accepts only `<frame>` and `<frames>` roots. Explicit `version="1"` defines the
+recommended frozen V1 profile; omission defaults to V1 with a warning. Native V2 will
 use `<scene version="2">`; the distinct root is intentional so the V1 parser
 rejects V2 before interpreting any nested tag as a permissive V1 custom group.
 

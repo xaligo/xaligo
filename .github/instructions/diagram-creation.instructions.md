@@ -110,7 +110,7 @@ Quick checklist:
 - [ ] Services not tied to a VPC → never inside `<vpc>` or `<availability-zone>`
 
 ```xml
-<frame width="1440" height="900" class="pa-4">
+<frame version="1" width="1440" height="900" class="pa-4">
   <aws-cloud id="aws-cloud" title="AWS Cloud">
 
     <!-- ✅ Global: outside <region> — not bound to any specific region -->

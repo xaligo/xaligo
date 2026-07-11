@@ -32,8 +32,8 @@ builders and repositories directly.
 
 ## Language-version boundary
 
-Unversioned `<frame>` and `<frames>` roots select the frozen V1 profile;
-`version="1"` is the only explicit version permitted on those roots. Native V2
+`<frame version="1">` and `<frames version="1">` select the frozen V1 profile.
+Unversioned roots remain a V1 compatibility fallback and emit a warning. Native V2
 uses the reject-safe `<scene version="2">` root. The V1 parser is not extended
 to recognize `<scene>` and does not import or call V2 code.
 

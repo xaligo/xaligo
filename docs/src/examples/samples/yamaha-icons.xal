@@ -1,4 +1,4 @@
-<frame width="960" height="480" class="pa-4">
+<frame version="1" width="960" height="480" class="pa-4">
   <generic-group id="yamaha-icons" title="Yamaha Network Icons" align="middle-spread">
     <item id="200025" /> <!-- network_user -->
     <item id="200005" /> <!-- desktop_pc -->

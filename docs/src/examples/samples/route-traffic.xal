@@ -1,4 +1,4 @@
-<frame width="1120" height="640" class="pa-4">
+<frame version="1" width="1120" height="640" class="pa-4">
   <generic-group id="route-traffic-separation" title="Route / Traffic Separation" icon-id="104635">
     <row gap="32">
       <col span="4" class="pa-2">
