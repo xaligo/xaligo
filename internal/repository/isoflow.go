@@ -51,7 +51,7 @@ func (rcvr *isoflowRepository) Render(sceneJSON []byte) ([]byte, error) {
 // RenderWithIcons converts the shared Excalidraw scene and applies optional
 // Isoflow-specific icon data URLs keyed by Excalidraw file ID.
 func (rcvr *isoflowRepository) RenderWithIcons(sceneJSON []byte, iconOverrides map[string]string) ([]byte, error) {
-	var scene entity.PptxScene
+	var scene entity.PresentationScene
 	if err := json.Unmarshal(sceneJSON, &scene); err != nil {
 		return nil, fmt.Errorf("decode resolved scene for Isoflow: %w", err)
 	}
@@ -59,10 +59,11 @@ func (rcvr *isoflowRepository) RenderWithIcons(sceneJSON []byte, iconOverrides m
 	colors := colorRegistry{ids: map[string]string{}, colors: []entity.IsoflowColor{}}
 	rectangles := groupRectangles(scene.Elements, &colors)
 
-	itemIDs := map[string]bool{}
+	nodeIDByElementID := map[string]string{}
 	modelItems := []entity.IsoflowModelItem{}
 	viewItems := []entity.IsoflowViewItem{}
 	iconsByID := map[string]entity.IsoflowIcon{}
+	genericIconRequired := false
 	placer := newTilePlacer()
 	for _, element := range scene.Elements {
 		if element.IsDeleted || element.Type != "image" || !strings.HasSuffix(element.ID, "-item") {
@@ -72,7 +73,7 @@ func (rcvr *isoflowRepository) RenderWithIcons(sceneJSON []byte, iconOverrides m
 		if label == "" {
 			label = strings.TrimSuffix(element.ID, "-item")
 		}
-		item := entity.IsoflowModelItem{ID: element.ID, Name: label}
+		item := entity.IsoflowModelItem{ID: element.ID, Name: label, IsoflowIcon: genericEndpointIconID}
 		if file, ok := scene.Files[element.FileID]; ok && file.DataURL != "" {
 			item.IsoflowIcon = element.FileID
 			iconURL := file.DataURL
@@ -80,31 +81,37 @@ func (rcvr *isoflowRepository) RenderWithIcons(sceneJSON []byte, iconOverrides m
 				iconURL = embedIconLabel(override, label)
 			}
 			iconsByID[element.FileID] = entity.IsoflowIcon{ID: element.FileID, Name: label, URL: iconURL, Collection: "xaligo", IsIsometric: true}
+		} else {
+			genericIconRequired = true
 		}
 		modelItems = append(modelItems, item)
 		viewItems = append(viewItems, entity.IsoflowViewItem{ID: element.ID, Tile: placer.place(pixelToTile(element.X+element.Width/2, element.Y+element.Height/2)), LabelHeight: defaultLabelHeight})
-		itemIDs[element.ID] = true
+		nodeIDByElementID[element.ID] = element.ID
+		nodeIDByElementID[element.ID+"-lbl"] = element.ID
+	}
+
+	connectorInputs := isoflowConnectorInputs(scene.Elements)
+	if appendIsoflowEndpointNodes(scene.Elements, connectorInputs, placer, nodeIDByElementID, &modelItems, &viewItems) {
+		genericIconRequired = true
+	}
+	if genericIconRequired {
+		iconsByID[genericEndpointIconID] = genericIsoflowEndpointIcon()
 	}
 
 	connectors := []entity.IsoflowConnector{}
-	for _, element := range scene.Elements {
-		if element.IsDeleted || (element.Type != "arrow" && element.Type != "line") || element.StartBinding == nil || element.EndBinding == nil {
+	for _, input := range connectorInputs {
+		source, sourceOK := resolveIsoflowNodeID(nodeIDByElementID, input.sourceElementID)
+		target, targetOK := resolveIsoflowNodeID(nodeIDByElementID, input.targetElementID)
+		if !sourceOK || !targetOK {
 			continue
 		}
-		source := share.ItemNodeID(element.StartBinding.ElementID)
-		target := share.ItemNodeID(element.EndBinding.ElementID)
-		if !itemIDs[source] || !itemIDs[target] {
-			continue
-		}
+		element := input.element
 		connectors = append(connectors, entity.IsoflowConnector{
-			ID:           element.ID,
+			ID:           input.id,
 			IsoflowColor: colors.idFor(element.StrokeColor),
 			Width:        share.PositiveWidth(element.StrokeWidth),
 			Style:        isoflowConnectorStyle(element.StrokeStyle),
-			Anchors: []entity.IsoflowConnectorAnchor{
-				{ID: element.ID + "-source", Ref: entity.IsoflowAnchorRef{Item: source}},
-				{ID: element.ID + "-target", Ref: entity.IsoflowAnchorRef{Item: target}},
-			},
+			Anchors:      isoflowConnectorAnchors(input, source, target),
 		})
 	}
 
@@ -120,9 +127,9 @@ func (rcvr *isoflowRepository) RenderWithIcons(sceneJSON []byte, iconOverrides m
 		Views: []entity.IsoflowView{
 			{ID: "main", Name: "Main", Items: viewItems, Rectangles: rectangles, Connectors: connectors},
 		},
-		Icons:     icons,
-		Colors:    colors.colors,
-		FitToView: true,
+		Icons:       icons,
+		Colors:      colors.colors,
+		FitToScreen: true,
 	}
 	return json.MarshalIndent(document, "", "  ")
 }
