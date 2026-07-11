@@ -73,7 +73,7 @@ func diffOwnFingerprintV1EngineDiffFingerprint(node *entity.Node) string {
 		writeDiffFingerprintPartV1EngineDiffFingerprint(&result, key)
 		writeDiffFingerprintPartV1EngineDiffFingerprint(&result, canonicalDiffAttributeV1EngineDiffFingerprint(node, key))
 	}
-	writeDiffFingerprintPartV1EngineDiffFingerprint(&result, canonicalDiffTextV1EngineDiffFingerprint(node.Text))
+	writeDiffFingerprintPartV1EngineDiffFingerprint(&result, comparableDiffNodeTextV1EngineDiffFingerprint(node))
 	return result.String()
 }
 
@@ -95,7 +95,7 @@ func diffAttributeDistanceV1EngineDiffFingerprint(before, after *entity.Node) in
 			distance++
 		}
 	}
-	if canonicalDiffTextV1EngineDiffFingerprint(before.Text) != canonicalDiffTextV1EngineDiffFingerprint(after.Text) {
+	if comparableDiffNodeTextV1EngineDiffFingerprint(before) != comparableDiffNodeTextV1EngineDiffFingerprint(after) {
 		distance++
 	}
 	return distance
@@ -113,6 +113,13 @@ func canonicalDiffAttributeV1EngineDiffFingerprint(node *entity.Node, key string
 
 func canonicalDiffTextV1EngineDiffFingerprint(value string) string {
 	return strings.Join(strings.Fields(value), " ")
+}
+
+func comparableDiffNodeTextV1EngineDiffFingerprint(node *entity.Node) string {
+	if node == nil || node.Tag == "frame" || node.Tag == "frames" {
+		return ""
+	}
+	return canonicalDiffTextV1EngineDiffFingerprint(node.Text)
 }
 
 func diffSubtreeFingerprintV1EngineDiffFingerprint(node *entity.Node) string {

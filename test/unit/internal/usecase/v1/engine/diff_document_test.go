@@ -78,6 +78,19 @@ func TestStructuralDiffMarksConnectionWhenNestedBendChanges(t *testing.T) {
 	}
 }
 
+func TestStructuralDiffShorthandChangeDoesNotMarkWholeFrame(t *testing.T) {
+	before := parseDiffDocument(t, `<frame version="1"><rectangle id="a"/><rectangle id="b"/><rectangle id="c"/>a --- b</frame>`)
+	after := parseDiffDocument(t, `<frame version="1"><rectangle id="a"/><rectangle id="b"/><rectangle id="c"/>a --- c</frame>`)
+
+	diff := engine.DiffDocumentsV1EngineDiffDocument(before, after)
+	if diff.RemovedCount != 1 || diff.AddedCount != 1 || diff.ModifiedCount != 0 {
+		t.Fatalf("diff = %#v, want one shorthand connector replacement", diff)
+	}
+	if len(diff.Before) != 1 || diff.Before[0].Tag != "connection" || len(diff.After) != 1 || diff.After[0].Tag != "connection" {
+		t.Fatalf("diff = %#v, want only connection changes", diff)
+	}
+}
+
 func parseDiffDocument(t *testing.T, source string) entity.Document {
 	t.Helper()
 	document, err := engine.ParseV1EngineParseDocument(strings.NewReader(source))
