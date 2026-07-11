@@ -14,8 +14,9 @@ module: github.com/xaligo/xaligo
 Go:     1.22
 ```
 
-Read `roadmap.instructions.md` for product direction,
-`xal-spec.instructions.md` for DSL behavior, and
+Read `development-flow.instructions.md` for task slicing, verification, and
+local commit workflow; `roadmap.instructions.md` for product direction;
+`xal-spec.instructions.md` for DSL behavior; and
 `architecture.instructions.md` for implementation boundaries. Read
 `coding.instructions.md` before changing Go or TypeScript source.
 
@@ -134,7 +135,9 @@ refreshed through the scripts declared in the root `package.json`.
 - Represent Excalidraw elements as `map[string]interface{}` for format
   compatibility.
 - Do not commit binaries, dependencies, caches, `output`, WASM artifacts, or
-  TypeScript `dist` output.
+  TypeScript `dist` output. Checked-in documentation SVGs generated from
+  `docs/src/architecture/*.xal` are the explicit exception; commit each SVG
+  with its `.xal` source.
 
 ## Verification
 

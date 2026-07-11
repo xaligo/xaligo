@@ -7,10 +7,12 @@ applyTo: "**"
 Use this file as the repository working agreement. Read the following
 preconditions before changing code:
 
-1. `roadmap.instructions.md` — product and pipeline direction.
-2. `xal-spec.instructions.md` — authoritative `.xal` behavior.
-3. `architecture.instructions.md` — package boundaries and dependency rules.
-4. `coding.instructions.md` — mandatory file and identifier conventions.
+1. `development-flow.instructions.md` — task slicing, verification, and local
+   commit workflow.
+2. `roadmap.instructions.md` — product and pipeline direction.
+3. `xal-spec.instructions.md` — authoritative `.xal` behavior.
+4. `architecture.instructions.md` — package boundaries and dependency rules.
+5. `coding.instructions.md` — mandatory file and identifier conventions.
 
 ## Project summary
 
@@ -32,7 +34,9 @@ preconditions before changing code:
 - Put cross-format routing and geometry in shared layers.
 - Return wrapped errors; do not panic in core code.
 - Preserve unrelated and pre-existing working-tree changes.
-- Do not commit generated output, dependencies, binaries, or caches.
+- Do not commit build output, dependencies, binaries, or caches. Checked-in
+  documentation SVGs are regenerated from and committed with their `.xal`
+  sources.
 - Add focused tests with every behavior change.
 
 ## Common commands
