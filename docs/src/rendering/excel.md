@@ -21,8 +21,9 @@ intrinsic canvas size and aspect ratio without non-uniform scaling. Diagram
 shapes are not converted into editable
 spreadsheet cells. A one-frame document produces one worksheet. The page-frame
 outline is omitted from the embedded SVG. The default image is strictly
-cropped to the exact frame rectangle, so metadata on a top/bottom edge reaches
-the corresponding image edge.
+cropped to the exact frame rectangle, so a top/bottom metadata band's
+`row-gap` gutter reaches the corresponding image edge while its tag cells
+remain inset by that value.
 
 Worksheet names come from frame IDs. Excel-invalid control characters,
 backslashes, and `:`, `/`, `?`, `*`, `[`, and `]` become `_`; a leading or

@@ -205,13 +205,16 @@ the remote frame, then `top`, `right`, `bottom`, `left`. Frame-terminal
 attributes are cross-frame-only; using them on a same-frame connection is a
 validation error.
 
-A frame metadata reservation strip is a final safety constraint. When no
+A frame metadata reservation strip is a final safety constraint. The visible
+metadata rows are inset from their selected vertical edge and both horizontal
+edges by the resolved `row-gap`, while the reservation itself remains
+full-width from the outer logical frame edge to the content boundary. When no
 explicit frame-terminal attribute is present, a selected reserved top/bottom
 edge is remapped to the nearest safe edge and a left/right terminal is clamped
-outside the full-width strip before the orthogonal dogleg is built. An explicit
-frame side or anchor that selects the metadata edge, or an exact left/right
-anchor inside the strip, is a validation error instead of being moved. Neither
-the local path nor its label may enter the reservation strip.
+outside the full-width strip before the orthogonal dogleg is built. An
+explicit frame side or anchor that selects the metadata edge, or an exact
+left/right anchor inside the strip, is a validation error instead of being
+moved. Neither the local path nor its label may enter the reservation strip.
 
 The unconstrained terminal uses the endpoint binding's coordinate parallel to
 the border. If that coordinate enters a 24-layout-px corner gutter, the

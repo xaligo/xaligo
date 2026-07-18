@@ -440,6 +440,9 @@ func validateResolvedFrameMetadataV1EngineLayoutValidation(box *entity.Box) erro
 	if !isPositiveFiniteV1EngineLayoutConstraints(metadata.FontSize) {
 		return newResolvedLayoutErrorV1EngineLayoutValidation(box, "frame metadata font size must be positive and finite")
 	}
+	if metadata.RowGap < 0 || math.IsNaN(metadata.RowGap) || math.IsInf(metadata.RowGap, 0) {
+		return newResolvedLayoutErrorV1EngineLayoutValidation(box, "frame metadata row gap must be non-negative and finite")
+	}
 	for name, value := range map[string]float64{
 		"reserved-x": metadata.ReservedX, "reserved-y": metadata.ReservedY,
 		"reserved-width": metadata.ReservedW, "reserved-height": metadata.ReservedH,
@@ -482,6 +485,29 @@ func validateResolvedFrameMetadataV1EngineLayoutValidation(box *entity.Box) erro
 		}
 		if !containsRectV1EngineLayoutValidation(metadata.ReservedX, metadata.ReservedY, metadata.ReservedW, metadata.ReservedH, tag.X, tag.Y, tag.W, tag.H) {
 			return newResolvedLayoutErrorV1EngineLayoutValidation(box, "frame metadata tag %d overflows its reserved strip", index+1)
+		}
+	}
+	if len(metadata.Tags) > 0 {
+		pageInset := metadata.RowGap
+		usableWidth := box.W - pageInset*2
+		if !isPositiveFiniteV1EngineLayoutConstraints(usableWidth) {
+			return newResolvedLayoutErrorV1EngineLayoutValidation(box, "frame metadata row gap leaves no positive page width")
+		}
+		minimumY := metadata.Tags[0].Y
+		maximumBottom := metadata.Tags[0].Y + metadata.Tags[0].H
+		for index, tag := range metadata.Tags {
+			if tag.X < box.X+pageInset-geometryEpsilonV1EngineLayoutValidation || tag.X+tag.W > box.X+box.W-pageInset+geometryEpsilonV1EngineLayoutValidation {
+				return newResolvedLayoutErrorV1EngineLayoutValidation(box, "frame metadata tag %d enters the horizontal page-edge inset", index+1)
+			}
+			minimumY = math.Min(minimumY, tag.Y)
+			maximumBottom = math.Max(maximumBottom, tag.Y+tag.H)
+		}
+		if metadata.Position == "bottom" {
+			if math.Abs(maximumBottom-(box.Y+box.H-pageInset)) > geometryEpsilonV1EngineLayoutValidation {
+				return newResolvedLayoutErrorV1EngineLayoutValidation(box, "bottom frame metadata band must retain its row-gap page-edge inset")
+			}
+		} else if math.Abs(minimumY-(box.Y+pageInset)) > geometryEpsilonV1EngineLayoutValidation {
+			return newResolvedLayoutErrorV1EngineLayoutValidation(box, "top frame metadata band must retain its row-gap page-edge inset")
 		}
 	}
 	return nil

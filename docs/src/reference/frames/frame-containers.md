@@ -24,10 +24,12 @@ Default SVG, PDF, and Excel page images crop exactly to that rectangle.
 {{#endtabs}}
 
 Set `title`, a child-frame content `version`, or a direct `<metadata>` block to
-add a top/bottom page tag band flush with the outer frame border box. Tags pack
-and align against the full frame width. The full-width strip between that edge
-and the final content-box boundary is reserved for metadata and excludes normal
-items, text, connector paths and labels, and page links. Tags support per-row
+add a top/bottom page tag band. Its resolved `row-gap` (4 pixels by default) is
+both the inter-row spacing and the inset at the selected vertical edge and both
+row ends, so tags pack and align within `frame width - 2 * row-gap`. The
+full-width strip from the outer logical frame edge to the final content-box
+boundary remains reserved for metadata and excludes normal items, text,
+connector paths and labels, and page links. Tags support per-row
 left/center/right alignment plus explicit entry breaks. See the
 [frame metadata example](../../examples/frame-metadata.md) and the
 [attribute table](attributes.md#border-attributes).

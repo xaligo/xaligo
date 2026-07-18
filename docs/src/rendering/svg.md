@@ -31,8 +31,9 @@ Live preview uses this combined view automatically.
 The page frame itself is not rendered as a visible outline. In default
 page-local output, its exact rectangle is the SVG canvas, `viewBox`, and clip
 boundary. No marker or stroke safety padding is added outside the page, so a
-top/bottom metadata band reaches the physical SVG edge. PDF pages and the SVG
-images embedded in Excel worksheets inherit this strict crop. Combined
+top/bottom metadata band's `row-gap` gutter reaches the physical SVG edge while
+the tag cells remain inset by that value. PDF pages and the SVG images embedded
+in Excel worksheets inherit this strict crop. Combined
 compatibility output omits each page-frame outline but retains marker-safe
 canvas expansion.
 

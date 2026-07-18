@@ -108,6 +108,10 @@ func layoutFrameMetadataV1EngineLayoutFrameMetadata(node *entity.Node, target *e
 	}
 
 	metadata := resolvedFrameMetadataStyleV1EngineLayoutFrameMetadata(metadataNode)
+	metadataDiagnosticNode := node
+	if metadataNode != nil {
+		metadataDiagnosticNode = metadataNode
+	}
 	tagSpecs := frameMetadataTagSpecsV1EngineLayoutFrameMetadata(node, metadataNode)
 	if len(tagSpecs) == 0 {
 		target.FrameMetadata = metadata
@@ -115,10 +119,14 @@ func layoutFrameMetadataV1EngineLayoutFrameMetadata(node *entity.Node, target *e
 	}
 
 	gap := defaultFrameMetadataGapV1EngineLayoutFrameMetadata
-	rowGap := defaultFrameMetadataRowGapV1EngineLayoutFrameMetadata
+	rowGap := metadata.RowGap
 	if metadataNode != nil {
 		gap = attrFloatV1EngineLayoutAttributes(metadataNode.Attr("gap"), gap)
-		rowGap = attrFloatV1EngineLayoutAttributes(metadataNode.Attr("row-gap"), rowGap)
+	}
+	pageInset := rowGap
+	availableWidth := target.W - pageInset*2
+	if !isPositiveFiniteV1EngineLayoutConstraints(availableWidth) {
+		return 0, 0, 0, 0, newLayoutErrorV1EngineLayoutValidation(metadataDiagnosticNode, "frame metadata row-gap %.6g leaves no positive page width", rowGap)
 	}
 	tagHeight := math.Ceil(metadata.FontSize*1.2) + 4
 	rows := make([]frameMetadataRowV1EngineLayoutFrameMetadata, 0, 1)
@@ -133,7 +141,7 @@ func layoutFrameMetadataV1EngineLayoutFrameMetadata(node *entity.Node, target *e
 		rowWidth = 0
 	}
 	for _, spec := range tagSpecs {
-		tagWidth, keyWidth, err := resolveFrameMetadataTagWidthV1EngineLayoutFrameMetadata(spec, metadata.FontSize, target.W)
+		tagWidth, keyWidth, err := resolveFrameMetadataTagWidthV1EngineLayoutFrameMetadata(spec, metadata.FontSize, availableWidth)
 		if err != nil {
 			return 0, 0, 0, 0, err
 		}
@@ -144,7 +152,7 @@ func layoutFrameMetadataV1EngineLayoutFrameMetadata(node *entity.Node, target *e
 		if rowStart < len(metadata.Tags) {
 			requiredWidth = rowWidth + gap + tagWidth
 		}
-		if rowStart < len(metadata.Tags) && requiredWidth > target.W+geometryEpsilonV1EngineLayoutValidation {
+		if rowStart < len(metadata.Tags) && requiredWidth > availableWidth+geometryEpsilonV1EngineLayoutValidation {
 			finishRow()
 			requiredWidth = tagWidth
 		}
@@ -160,22 +168,22 @@ func layoutFrameMetadataV1EngineLayoutFrameMetadata(node *entity.Node, target *e
 	}
 	finishRow()
 	bandHeight := float64(len(rows))*tagHeight + float64(len(rows)-1)*rowGap
-	if bandHeight > target.H+geometryEpsilonV1EngineLayoutValidation {
-		return 0, 0, 0, 0, newLayoutErrorV1EngineLayoutValidation(node, "frame metadata band %.6g exceeds the frame height %.6g", bandHeight, target.H)
+	if bandHeight+pageInset > target.H+geometryEpsilonV1EngineLayoutValidation {
+		return 0, 0, 0, 0, newLayoutErrorV1EngineLayoutValidation(metadataDiagnosticNode, "frame metadata band %.6g with page-edge inset %.6g exceeds the frame height %.6g", bandHeight, pageInset, target.H)
 	}
-	bandY := target.Y
+	bandY := target.Y + pageInset
 	if metadata.Position == "bottom" {
-		bandY = target.Y + target.H - bandHeight
+		bandY = target.Y + target.H - pageInset - bandHeight
 	}
 	for rowIndex, row := range rows {
 		offsetX := 0.0
 		switch metadata.Align {
 		case "center":
-			offsetX = (target.W - row.width) / 2
+			offsetX = (availableWidth - row.width) / 2
 		case "right":
-			offsetX = target.W - row.width
+			offsetX = availableWidth - row.width
 		}
-		cursorX := target.X + math.Max(0, offsetX)
+		cursorX := target.X + pageInset + math.Max(0, offsetX)
 		rowY := bandY + float64(rowIndex)*(tagHeight+rowGap)
 		for tagIndex := row.start; tagIndex < row.end; tagIndex++ {
 			metadata.Tags[tagIndex].X = cursorX
@@ -257,6 +265,7 @@ func resolvedFrameMetadataStyleV1EngineLayoutFrameMetadata(node *entity.Node) *e
 		Align:              "left",
 		FontFamily:         defaultFrameMetadataFontFamilyV1EngineLayoutFrameMetadata,
 		FontSize:           defaultFrameMetadataFontSizeV1EngineLayoutFrameMetadata,
+		RowGap:             defaultFrameMetadataRowGapV1EngineLayoutFrameMetadata,
 		Color:              defaultFrameMetadataColorV1EngineLayoutFrameMetadata,
 		KeyColor:           defaultFrameMetadataColorV1EngineLayoutFrameMetadata,
 		BackgroundColor:    defaultFrameMetadataBackgroundColorV1EngineLayoutFrameMetadata,
@@ -276,6 +285,7 @@ func resolvedFrameMetadataStyleV1EngineLayoutFrameMetadata(node *entity.Node) *e
 		metadata.FontFamily = value
 	}
 	metadata.FontSize = attrFloatV1EngineLayoutAttributes(node.Attr("font-size"), metadata.FontSize)
+	metadata.RowGap = attrFloatV1EngineLayoutAttributes(node.Attr("row-gap"), metadata.RowGap)
 	if value := strings.TrimSpace(node.Attr("color")); value != "" {
 		metadata.Color = value
 		metadata.KeyColor = value
@@ -361,7 +371,7 @@ func resolveFrameMetadataTagWidthV1EngineLayoutFrameMetadata(spec frameMetadataT
 		}
 	}
 	if spec.widthFixed && tagWidth > availableWidth+geometryEpsilonV1EngineLayoutValidation {
-		return 0, 0, newLayoutErrorV1EngineLayoutValidation(spec.node, "metadata width %.6g exceeds the available frame width %.6g", tagWidth, availableWidth)
+		return 0, 0, newLayoutErrorV1EngineLayoutValidation(spec.node, "metadata width %.6g exceeds the available metadata width %.6g", tagWidth, availableWidth)
 	}
 	if !spec.widthFixed && tagWidth > availableWidth {
 		tagWidth = availableWidth

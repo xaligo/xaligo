@@ -38,11 +38,14 @@ not displayed as a page revision.
 ## Frame metadata
 
 Set a frame `title`, a child-frame `version`, or add direct `<metadata>` to
-add a key/value tag band directly against the selected edge of the outer frame
-border box; the default position is the top. Padding, content margins, and the
-content box do not offset the band. An existing frame with only an `id` remains
-visually unchanged; once the band is enabled its non-empty built-ins appear as
-`id`, `title`, and `version`, followed by custom entries in source order.
+add a key/value tag band near the selected edge of the outer frame border box;
+the default position is the top. The resolved `row-gap` is also the page-edge
+inset at the selected top/bottom edge and both row ends, so the default `4`
+leaves a 4-pixel selected-edge gutter and 4-pixel row-end gutters. Padding,
+content margins, and the content box do not replace or add to that inset. An
+existing frame with only an `id` remains visually unchanged; once the band is
+enabled its non-empty built-ins appear as `id`, `title`, and `version`,
+followed by custom entries in source order.
 
 ```xml
 <frame id="architecture" title="AWS Architecture" version="1.0.0"
@@ -77,7 +80,7 @@ separate from document-level `<xaligo><metadata>`.
 | `width` | auto | Total width applied to every tag |
 | `key-width` | auto | Key-cell width applied to every tag |
 | `gap` | `8` | Horizontal space between tags |
-| `row-gap` | `4` | Space between wrapped rows |
+| `row-gap` | `4` | Space between wrapped rows and the same-sized inset from the selected top/bottom edge and both row ends |
 
 Each `<entry>` also accepts `break-before="true|false"`. Its default is
 `false`; `true` starts that entry on a new row when a preceding tag exists.
@@ -89,20 +92,25 @@ cells. Colors accept `#RRGGBB` or `transparent`; fonts are `virgil`,
 `helvetica`, `cascadia`, `assistant`, `excalifont`, `nunito`, `lilita-one`,
 `comic-shanns`, or `liberation-sans`.
 
-Tags retain source order. Greedy left-to-right packing fills each row against
-the complete outer frame width, producing the minimum number of rows without
-reordering; `break-before` can introduce an earlier row boundary. Metadata
-`align` then positions each completed row independently: left and right touch
-the corresponding outer frame edge, while center uses the frame center.
+Tags retain source order. Greedy left-to-right packing fills each row within
+`frame width - 2 * row-gap`, producing the minimum number of rows without
+reordering; `break-before` can introduce an earlier row boundary. The usable
+width must remain positive. Metadata `align` then positions each completed row
+independently: left and right stop one `row-gap` inside the corresponding outer
+frame edge, while center still uses the frame center.
+This metadata page-edge inset is measured from the logical frame edge and is
+independent of PPTX export `--paper-margin*` options or common-slide centering.
 
-For a top band, its top edge equals the frame's outer top edge; for a bottom
-band, its bottom edge equals the frame's outer bottom edge. The metadata-side
-reservation strip spans the full frame width from that edge to the
-corresponding boundary of the final content box. Its depth is at least the band
-height plus the fixed 8-pixel content gap; a closer content boundary moves
-inward, while a boundary already farther inward is retained. Normal items and
-text, local and UML connector paths and labels, and page-link paths and labels
-never enter this strip; `overflow="visible"` does not override the exclusion.
+For a top band, its top edge is `frame.y + row-gap`; for a bottom band, its
+bottom edge is `frame.y + frame.height - row-gap`. The metadata-side
+reservation strip still spans the full frame width from the outer logical
+frame edge to the corresponding boundary of the final content box. Its depth
+is at least `row-gap + complete band height + 8` pixels; the complete band
+height already includes the gaps between multiple rows. A closer content
+boundary moves inward, while a boundary already farther inward is retained.
+Normal items and text, local and UML connector paths and labels, and page-link
+paths and labels never enter this strip; `overflow="visible"` does not override
+the exclusion.
 A page link without an explicit frame terminal remaps a reserved top/bottom
 edge to the nearest safe edge and clamps a left/right terminal outside the
 strip. An explicit `src-frame-side`, `dst-frame-side`, `src-frame-anchor`, or

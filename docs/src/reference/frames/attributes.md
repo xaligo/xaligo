@@ -12,7 +12,7 @@
 | frame `<metadata>` | `font-family`, `font-size` | Tag typography; defaults are `virgil` and `12`, and height follows `ceil(font-size × 1.2) + 4` |
 | frame `<metadata>` | `color`, `key-color`, `background-color`, `key-background-color`, `border-color` | `#RRGGBB` or `transparent`; defaults are `#64748b`, inherited `color`, `transparent`, `#f8fafc`, and `#cbd5e1` respectively |
 | frame `<metadata>`, `<entry>` | `width`, `key-width` | Positive manual total/key-cell width; omission means auto, and entry values override metadata defaults |
-| frame `<metadata>` | `gap`, `row-gap` | Non-negative horizontal and wrapped-row spacing; defaults are `8` and `4` |
+| frame `<metadata>` | `gap`, `row-gap` | Non-negative horizontal and wrapped-row spacing; defaults are `8` and `4`. The resolved `row-gap` also insets the selected vertical edge and both row ends |
 | frame `<metadata>` | `<entry key="..." value="..." />` | Arbitrary non-empty key/value tag, retained in source order |
 | frame `<metadata>` `<entry>` | `break-before` | `false` (default) or `true`; starts that entry on a new row when a preceding tag exists |
 | generic leaf box | `border="none"` | Hide the visible border |
@@ -23,13 +23,15 @@
 
 Metadata tags pack greedily in input order against the usable width, producing
 the minimum row count unless `break-before` introduces an earlier boundary.
-The usable width is the complete outer frame width: the selected top/bottom
-edge and left/right row alignment are not inset by padding, margins, or the
-content box. A full-width reservation strip extends from that outer edge to the
-final content-box boundary and is at least the band height plus the fixed
-8-pixel gap. Normal items, text, connector paths and labels, and page links stay
-outside it, even when the frame or a nested container uses
-`overflow="visible"`. Metadata cell borders use a fixed `0.75`-pixel stroke.
+The usable width is `frame width - 2 * row-gap`: the selected top/bottom band
+edge and left/right row alignment sit one resolved `row-gap` inside the page
+edge. Padding, margins, and the content box do not replace or add to that
+inset. A full-width reservation strip still extends from the outer logical
+frame edge to the final content-box boundary and is at least
+`row-gap + complete band height + 8` pixels deep. Normal items, text, connector
+paths and labels, and page links stay outside it, even when the frame or a
+nested container uses `overflow="visible"`. Metadata cell borders use a fixed
+`0.75`-pixel stroke.
 An automatic or legacy page terminal is remapped/clamped around this strip; an
 explicit cross-frame `src/dst-frame-side` or `src/dst-frame-anchor` that selects
 it is a validation error.

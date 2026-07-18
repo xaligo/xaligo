@@ -29,15 +29,19 @@ XYFlow, and Isoflow remain one logical document. Default SVG uses the exact
 frame rectangle as its canvas and clip boundary; PDF and Excel inherit that
 strict page/image crop, while combined SVG keeps marker-safe bounds.
 
-Page frames can also add a top/bottom metadata band directly against their
-outer border box for built-in `id`, `title`, content `version`, and arbitrary
-key/value tags. Rows use the full frame width. A full-width reservation strip
-extends to the final content-box boundary, remains at least the band height
-plus 8 pixels deep, and excludes normal items, text, connector geometry and
-labels, and page links. Auto/fixed widths, typography, colors, ordered greedy
-row wrapping, explicit row breaks, per-row alignment, page ownership, and safe
-page-link edge selection are resolved before the physical formats project one
-frame per page. Cross-frame links can select item and logical page-edge anchors
+Page frames can also add a top/bottom metadata band for built-in `id`, `title`,
+content `version`, and arbitrary key/value tags. The resolved `row-gap`
+(4 pixels by default) supplies both the inter-row spacing and the metadata
+page-edge inset at the selected vertical edge and both horizontal edges; rows
+use `frame width - 2 * row-gap`. A full-width reservation strip still starts
+at the outer logical frame edge, extends to the final content-box boundary,
+remains at least
+`row-gap + complete band height + 8` pixels deep, and excludes normal items,
+text, connector geometry and labels, and page links. Auto/fixed widths,
+typography, colors, ordered greedy row wrapping, explicit row breaks, per-row
+alignment, page ownership, and safe page-link edge selection are resolved
+before the physical formats project one frame per page. Cross-frame links can
+select item and logical page-edge anchors
 independently, reject explicit frame-anchor conflicts with the metadata strip,
 and keep their labels 4 layout pixels from the page terminal. XYFlow and
 Isoflow omit this page decoration.

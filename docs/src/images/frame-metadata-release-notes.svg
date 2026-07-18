@@ -13,35 +13,35 @@
 <text x="403" y="234.444" fill="#1E1E1E" font-family="Virgil" font-size="4.444" text-anchor="middle" clip-path="url(#xaligo-text-clip-a264ba0ea4a98d16)"><tspan x="403" y="234.444">Rel</tspan><tspan x="403" dy="5.333">eas</tspan><tspan x="403" dy="5.333">e</tspan></text>
 <defs><clipPath id="xaligo-text-clip-884f40fc0ae3c7ff" clipPathUnits="userSpaceOnUse"><rect x="407" y="4" width="146" height="15"/></clipPath></defs>
 <text x="480" y="10.25" fill="#2563EB" font-family="Virgil" font-size="6.25" text-anchor="middle" clip-path="url(#xaligo-text-clip-884f40fc0ae3c7ff)"><tspan x="480" y="10.25">from</tspan><tspan x="480" dy="7.5">&lt;aws-architecture&gt;</tspan></text>
-<rect x="61" y="401" width="56" height="19" fill="#F1F5F9" fill-opacity="1" stroke="#94A3B8" stroke-width="0.75" stroke-opacity="1"/>
-<rect x="117" y="401" width="82" height="19" fill="none" stroke="#94A3B8" stroke-width="0.75" stroke-opacity="1"/>
-<rect x="207" y="401" width="56" height="19" fill="#F1F5F9" fill-opacity="1" stroke="#94A3B8" stroke-width="0.75" stroke-opacity="1"/>
-<rect x="263" y="401" width="82" height="19" fill="none" stroke="#94A3B8" stroke-width="0.75" stroke-opacity="1"/>
-<rect x="353" y="401" width="56" height="19" fill="#F1F5F9" fill-opacity="1" stroke="#94A3B8" stroke-width="0.75" stroke-opacity="1"/>
-<rect x="409" y="401" width="82" height="19" fill="none" stroke="#94A3B8" stroke-width="0.75" stroke-opacity="1"/>
-<rect x="499" y="401" width="56" height="19" fill="#F1F5F9" fill-opacity="1" stroke="#94A3B8" stroke-width="0.75" stroke-opacity="1"/>
-<rect x="555" y="401" width="82" height="19" fill="none" stroke="#94A3B8" stroke-width="0.75" stroke-opacity="1"/>
-<rect x="645" y="401" width="56" height="19" fill="#F1F5F9" fill-opacity="1" stroke="#94A3B8" stroke-width="0.75" stroke-opacity="1"/>
-<rect x="701" y="401" width="88" height="19" fill="none" stroke="#94A3B8" stroke-width="0.75" stroke-opacity="1"/>
-<defs><clipPath id="xaligo-text-clip-42b73dd8a8436d31" clipPathUnits="userSpaceOnUse"><rect x="65" y="403" width="48" height="15"/></clipPath></defs>
-<text x="89" y="415.3" fill="#334155" font-family="Nunito" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-42b73dd8a8436d31)"><tspan x="89" y="415.3">id</tspan></text>
-<defs><clipPath id="xaligo-text-clip-e17e21e03984997f" clipPathUnits="userSpaceOnUse"><rect x="121" y="403" width="74" height="15"/></clipPath></defs>
-<text x="158" y="414.717" fill="#475569" font-family="Nunito" font-size="10.541" text-anchor="middle" clip-path="url(#xaligo-text-clip-e17e21e03984997f)"><tspan x="158" y="414.717">release-notes</tspan></text>
-<defs><clipPath id="xaligo-text-clip-44c1a0b3e1d9b19d" clipPathUnits="userSpaceOnUse"><rect x="211" y="403" width="48" height="15"/></clipPath></defs>
-<text x="235" y="415.3" fill="#334155" font-family="Nunito" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-44c1a0b3e1d9b19d)"><tspan x="235" y="415.3">title</tspan></text>
-<defs><clipPath id="xaligo-text-clip-ee8519116f14786b" clipPathUnits="userSpaceOnUse"><rect x="267" y="403" width="74" height="15"/></clipPath></defs>
-<text x="304" y="414.687" fill="#475569" font-family="Nunito" font-size="10.467" text-anchor="middle" clip-path="url(#xaligo-text-clip-ee8519116f14786b)"><tspan x="304" y="414.687">Release Notes</tspan></text>
-<defs><clipPath id="xaligo-text-clip-c0859d5fb9272091" clipPathUnits="userSpaceOnUse"><rect x="357" y="403" width="48" height="15"/></clipPath></defs>
-<text x="381" y="415.3" fill="#334155" font-family="Nunito" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-c0859d5fb9272091)"><tspan x="381" y="415.3">version</tspan></text>
-<defs><clipPath id="xaligo-text-clip-a76dba587f4fb7ef" clipPathUnits="userSpaceOnUse"><rect x="413" y="403" width="74" height="15"/></clipPath></defs>
-<text x="450" y="415.3" fill="#475569" font-family="Nunito" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-a76dba587f4fb7ef)"><tspan x="450" y="415.3">2026.07</tspan></text>
-<defs><clipPath id="xaligo-text-clip-89b15a1f279db615" clipPathUnits="userSpaceOnUse"><rect x="503" y="403" width="48" height="15"/></clipPath></defs>
-<text x="527" y="415.3" fill="#334155" font-family="Nunito" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-89b15a1f279db615)"><tspan x="527" y="415.3">owner</tspan></text>
-<defs><clipPath id="xaligo-text-clip-e306ae71ffe2fc25" clipPathUnits="userSpaceOnUse"><rect x="559" y="403" width="74" height="15"/></clipPath></defs>
-<text x="596" y="415.132" fill="#475569" font-family="Nunito" font-size="11.581" text-anchor="middle" clip-path="url(#xaligo-text-clip-e306ae71ffe2fc25)"><tspan x="596" y="415.132">Release Eng.</tspan></text>
-<defs><clipPath id="xaligo-text-clip-99237bec2d5f764f" clipPathUnits="userSpaceOnUse"><rect x="649" y="403" width="48" height="15"/></clipPath></defs>
-<text x="673" y="415.3" fill="#334155" font-family="Nunito" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-99237bec2d5f764f)"><tspan x="673" y="415.3">status</tspan></text>
-<defs><clipPath id="xaligo-text-clip-d076808e99642ae2" clipPathUnits="userSpaceOnUse"><rect x="705" y="403" width="80" height="15"/></clipPath></defs>
-<text x="745" y="415.3" fill="#475569" font-family="Nunito" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-d076808e99642ae2)"><tspan x="745" y="415.3">ready</tspan></text>
+<rect x="61" y="395" width="56" height="19" fill="#F1F5F9" fill-opacity="1" stroke="#94A3B8" stroke-width="0.75" stroke-opacity="1"/>
+<rect x="117" y="395" width="82" height="19" fill="none" stroke="#94A3B8" stroke-width="0.75" stroke-opacity="1"/>
+<rect x="207" y="395" width="56" height="19" fill="#F1F5F9" fill-opacity="1" stroke="#94A3B8" stroke-width="0.75" stroke-opacity="1"/>
+<rect x="263" y="395" width="82" height="19" fill="none" stroke="#94A3B8" stroke-width="0.75" stroke-opacity="1"/>
+<rect x="353" y="395" width="56" height="19" fill="#F1F5F9" fill-opacity="1" stroke="#94A3B8" stroke-width="0.75" stroke-opacity="1"/>
+<rect x="409" y="395" width="82" height="19" fill="none" stroke="#94A3B8" stroke-width="0.75" stroke-opacity="1"/>
+<rect x="499" y="395" width="56" height="19" fill="#F1F5F9" fill-opacity="1" stroke="#94A3B8" stroke-width="0.75" stroke-opacity="1"/>
+<rect x="555" y="395" width="82" height="19" fill="none" stroke="#94A3B8" stroke-width="0.75" stroke-opacity="1"/>
+<rect x="645" y="395" width="56" height="19" fill="#F1F5F9" fill-opacity="1" stroke="#94A3B8" stroke-width="0.75" stroke-opacity="1"/>
+<rect x="701" y="395" width="88" height="19" fill="none" stroke="#94A3B8" stroke-width="0.75" stroke-opacity="1"/>
+<defs><clipPath id="xaligo-text-clip-2a658781798a5b0d" clipPathUnits="userSpaceOnUse"><rect x="65" y="397" width="48" height="15"/></clipPath></defs>
+<text x="89" y="409.3" fill="#334155" font-family="Nunito" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-2a658781798a5b0d)"><tspan x="89" y="409.3">id</tspan></text>
+<defs><clipPath id="xaligo-text-clip-65d316d9f9dd90b" clipPathUnits="userSpaceOnUse"><rect x="121" y="397" width="74" height="15"/></clipPath></defs>
+<text x="158" y="408.717" fill="#475569" font-family="Nunito" font-size="10.541" text-anchor="middle" clip-path="url(#xaligo-text-clip-65d316d9f9dd90b)"><tspan x="158" y="408.717">release-notes</tspan></text>
+<defs><clipPath id="xaligo-text-clip-ac1a98cd45244e69" clipPathUnits="userSpaceOnUse"><rect x="211" y="397" width="48" height="15"/></clipPath></defs>
+<text x="235" y="409.3" fill="#334155" font-family="Nunito" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-ac1a98cd45244e69)"><tspan x="235" y="409.3">title</tspan></text>
+<defs><clipPath id="xaligo-text-clip-4bafc9cacba4d447" clipPathUnits="userSpaceOnUse"><rect x="267" y="397" width="74" height="15"/></clipPath></defs>
+<text x="304" y="408.687" fill="#475569" font-family="Nunito" font-size="10.467" text-anchor="middle" clip-path="url(#xaligo-text-clip-4bafc9cacba4d447)"><tspan x="304" y="408.687">Release Notes</tspan></text>
+<defs><clipPath id="xaligo-text-clip-4beb9c020a95db6d" clipPathUnits="userSpaceOnUse"><rect x="357" y="397" width="48" height="15"/></clipPath></defs>
+<text x="381" y="409.3" fill="#334155" font-family="Nunito" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-4beb9c020a95db6d)"><tspan x="381" y="409.3">version</tspan></text>
+<defs><clipPath id="xaligo-text-clip-eb494265a08fa33b" clipPathUnits="userSpaceOnUse"><rect x="413" y="397" width="74" height="15"/></clipPath></defs>
+<text x="450" y="409.3" fill="#475569" font-family="Nunito" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-eb494265a08fa33b)"><tspan x="450" y="409.3">2026.07</tspan></text>
+<defs><clipPath id="xaligo-text-clip-3dbbd761c7bd8151" clipPathUnits="userSpaceOnUse"><rect x="503" y="397" width="48" height="15"/></clipPath></defs>
+<text x="527" y="409.3" fill="#334155" font-family="Nunito" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-3dbbd761c7bd8151)"><tspan x="527" y="409.3">owner</tspan></text>
+<defs><clipPath id="xaligo-text-clip-8648ef2755a7da95" clipPathUnits="userSpaceOnUse"><rect x="559" y="397" width="74" height="15"/></clipPath></defs>
+<text x="596" y="409.132" fill="#475569" font-family="Nunito" font-size="11.581" text-anchor="middle" clip-path="url(#xaligo-text-clip-8648ef2755a7da95)"><tspan x="596" y="409.132">Release Eng.</tspan></text>
+<defs><clipPath id="xaligo-text-clip-d72e46580bcf6c0f" clipPathUnits="userSpaceOnUse"><rect x="649" y="397" width="48" height="15"/></clipPath></defs>
+<text x="673" y="409.3" fill="#334155" font-family="Nunito" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-d72e46580bcf6c0f)"><tspan x="673" y="409.3">status</tspan></text>
+<defs><clipPath id="xaligo-text-clip-14f9f84955a464ce" clipPathUnits="userSpaceOnUse"><rect x="705" y="397" width="80" height="15"/></clipPath></defs>
+<text x="745" y="409.3" fill="#475569" font-family="Nunito" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-14f9f84955a464ce)"><tspan x="745" y="409.3">ready</tspan></text>
 </g>
 </svg>

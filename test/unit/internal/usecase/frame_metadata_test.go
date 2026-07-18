@@ -11,7 +11,7 @@ import (
 	"github.com/xaligo/xaligo/internal/usecase"
 )
 
-func TestFrameMetadataUsesOuterBorderDespitePaddingAndContentMargins(t *testing.T) {
+func TestFrameMetadataUsesDefaultRowGapInsetDespitePaddingAndContentMargins(t *testing.T) {
 	document, err := usecase.Parse(strings.NewReader(`<xaligo version="1"><frames>
   <frame id="page" width="360" height="220" class="pa-2"
          margin-top="72" margin-right="24" margin-bottom="20" margin-left="24">
@@ -31,11 +31,15 @@ func TestFrameMetadataUsesOuterBorderDespitePaddingAndContentMargins(t *testing.
 	if metadata == nil || len(metadata.Tags) != 2 {
 		t.Fatalf("metadata = %#v", metadata)
 	}
-	if got, want := metadata.Tags[0].Y, frame.Y; got != want {
-		t.Fatalf("metadata Y = %v, want outer edge %v", got, want)
+	const wantInset = 4.0
+	if metadata.RowGap != wantInset {
+		t.Fatalf("metadata row gap = %v, want default %v", metadata.RowGap, wantInset)
 	}
-	if got, want := metadata.Tags[1].X+metadata.Tags[1].W, frame.X+frame.W; math.Abs(got-want) > 1e-9 {
-		t.Fatalf("right aligned row edge = %v, want outer edge %v", got, want)
+	if got, want := metadata.Tags[0].Y, frame.Y+wantInset; math.Abs(got-want) > 1e-9 {
+		t.Fatalf("metadata Y = %v, want one row-gap inside page edge %v", got, want)
+	}
+	if got, want := metadata.Tags[1].X+metadata.Tags[1].W, frame.X+frame.W-wantInset; math.Abs(got-want) > 1e-9 {
+		t.Fatalf("right aligned row edge = %v, want one row-gap inside page edge %v", got, want)
 	}
 	if metadata.ReservedX != frame.X || metadata.ReservedW != frame.W || metadata.ReservedY != frame.Y || metadata.ReservedY+metadata.ReservedH != frame.ContentY {
 		t.Fatalf("reserved strip = (%v,%v,%v,%v), frame/content = %#v", metadata.ReservedX, metadata.ReservedY, metadata.ReservedW, metadata.ReservedH, frame)
@@ -77,6 +81,9 @@ func TestFrameMetadataReservesTopMarginBand(t *testing.T) {
 	if metadata.Position != "top" || metadata.FontFamily != "helvetica" || metadata.FontSize != 16 {
 		t.Fatalf("metadata style = %#v", metadata)
 	}
+	if metadata.RowGap != 6 {
+		t.Fatalf("metadata row gap = %v, want custom value 6", metadata.RowGap)
+	}
 	if metadata.Color != "#112233" || metadata.KeyColor != "#334455" || metadata.BackgroundColor != "#ffffff" || metadata.KeyBackgroundColor != "#eeeeee" || metadata.BorderColor != "#667788" {
 		t.Fatalf("metadata colors = %#v", metadata)
 	}
@@ -108,19 +115,22 @@ func TestFrameMetadataReservesTopMarginBand(t *testing.T) {
 	if len(frame.Children) != 1 || frame.Children[0].Y < frame.ContentY || frame.Children[0].Y < metadata.Tags[len(metadata.Tags)-1].Y+metadata.Tags[len(metadata.Tags)-1].H {
 		t.Fatalf("content overlaps metadata: frame=%#v child=%#v metadata=%#v", frame, frame.Children, metadata.Tags)
 	}
-	if got, want := metadata.Tags[0].Y, frame.Y; math.Abs(got-want) > 1e-9 {
-		t.Fatalf("top metadata Y = %v, want outer frame edge %v", got, want)
+	if got, want := metadata.Tags[0].Y, frame.Y+metadata.RowGap; math.Abs(got-want) > 1e-9 {
+		t.Fatalf("top metadata Y = %v, want row-gap inset %v", got, want)
+	}
+	if got, want := metadata.Tags[0].X, frame.X+metadata.RowGap; math.Abs(got-want) > 1e-9 {
+		t.Fatalf("left aligned metadata edge = %v, want row-gap inset %v", got, want)
 	}
 	if metadata.ReservedX != frame.X || metadata.ReservedY != frame.Y || metadata.ReservedW != frame.W || math.Abs(metadata.ReservedY+metadata.ReservedH-frame.ContentY) > 1e-9 {
 		t.Fatalf("top reserved strip = (%v,%v,%v,%v), frame/content = %#v", metadata.ReservedX, metadata.ReservedY, metadata.ReservedW, metadata.ReservedH, frame)
 	}
 }
 
-func TestFrameMetadataBottomPositionAndFontSizedHeight(t *testing.T) {
+func TestFrameMetadataBottomPositionUsesCustomRowGapAndFontSizedHeight(t *testing.T) {
 	document, err := usecase.Parse(strings.NewReader(`<xaligo version="1"><frames>
   <frame id="release" title="Release" version="2026.07" width="420" height="280"
          margin-top="12" margin-right="12" margin-bottom="80" margin-left="12">
-    <metadata position="bottom" font-size="24" width="180" key-width="60" />
+    <metadata position="bottom" font-size="24" width="180" key-width="60" row-gap="9" />
     <rectangle id="content" title="Content" height="80" />
   </frame>
 </frames></xaligo>`))
@@ -136,6 +146,9 @@ func TestFrameMetadataBottomPositionAndFontSizedHeight(t *testing.T) {
 	if metadata == nil || metadata.Position != "bottom" || len(metadata.Tags) != 3 {
 		t.Fatalf("metadata = %#v", metadata)
 	}
+	if metadata.RowGap != 9 {
+		t.Fatalf("metadata row gap = %v, want custom value 9", metadata.RowGap)
+	}
 	wantHeight := math.Ceil(24*1.2) + 4
 	for _, tag := range metadata.Tags {
 		if tag.H != wantHeight || tag.W != 180 || tag.KeyW != 60 {
@@ -146,26 +159,29 @@ func TestFrameMetadataBottomPositionAndFontSizedHeight(t *testing.T) {
 		}
 	}
 	last := metadata.Tags[len(metadata.Tags)-1]
-	if got, want := last.Y+last.H, frame.Y+frame.H; math.Abs(got-want) > 1e-9 {
-		t.Fatalf("bottom metadata edge = %v, want frame bottom %v", got, want)
+	if got, want := last.Y+last.H, frame.Y+frame.H-metadata.RowGap; math.Abs(got-want) > 1e-9 {
+		t.Fatalf("bottom metadata edge = %v, want row-gap inset %v", got, want)
 	}
-	if got, want := frame.ContentY+frame.ContentH, frame.Y+frame.H-80; math.Abs(got-want) > 1e-9 {
-		t.Fatalf("content bottom = %v, want existing bottom margin boundary %v", got, want)
+	if got, want := metadata.Tags[0].X, frame.X+metadata.RowGap; math.Abs(got-want) > 1e-9 {
+		t.Fatalf("left metadata edge = %v, want row-gap inset %v", got, want)
+	}
+	if got, want := frame.ContentY+frame.ContentH, metadata.Tags[0].Y-8; math.Abs(got-want) > 1e-9 {
+		t.Fatalf("content bottom = %v, want fixed content gap boundary %v", got, want)
 	}
 	if metadata.ReservedX != frame.X || metadata.ReservedW != frame.W || math.Abs(metadata.ReservedY-(frame.ContentY+frame.ContentH)) > 1e-9 || math.Abs(metadata.ReservedY+metadata.ReservedH-(frame.Y+frame.H)) > 1e-9 {
 		t.Fatalf("bottom reserved strip = (%v,%v,%v,%v), frame/content = %#v", metadata.ReservedX, metadata.ReservedY, metadata.ReservedW, metadata.ReservedH, frame)
 	}
 }
 
-func TestFrameMetadataUsesOuterWidthAndAlignsWrappedRows(t *testing.T) {
+func TestFrameMetadataUsesDefaultRowGapInsetAndAlignsWrappedRows(t *testing.T) {
 	tests := []struct {
 		align         string
 		wantFirstRowX float64
 		wantLastRowX  float64
 	}{
-		{align: "left", wantFirstRowX: 0, wantLastRowX: 0},
+		{align: "left", wantFirstRowX: 4, wantLastRowX: 4},
 		{align: "center", wantFirstRowX: 40, wantLastRowX: 130},
-		{align: "right", wantFirstRowX: 80, wantLastRowX: 260},
+		{align: "right", wantFirstRowX: 76, wantLastRowX: 256},
 	}
 	for _, test := range tests {
 		t.Run(test.align, func(t *testing.T) {
@@ -192,14 +208,17 @@ func TestFrameMetadataUsesOuterWidthAndAlignsWrappedRows(t *testing.T) {
 			if metadata == nil || metadata.Align != test.align || len(metadata.Tags) != 4 {
 				t.Fatalf("metadata = %#v", metadata)
 			}
+			if metadata.RowGap != 4 {
+				t.Fatalf("metadata row gap = %v, want default value 4", metadata.RowGap)
+			}
 			if got := frame.ContentY - frame.Y; math.Abs(got-64) > 1e-9 {
 				t.Fatalf("content Y offset = %v, want existing top margin 64", got)
 			}
 			if metadata.Tags[0].Y+metadata.Tags[0].H > frame.ContentY+1e-9 {
 				t.Fatalf("metadata is not inside the top reserved strip: tag=%#v contentY=%v", metadata.Tags[0], frame.ContentY)
 			}
-			if metadata.Tags[0].Y != frame.Y {
-				t.Fatalf("metadata top = %v, want outer frame top %v", metadata.Tags[0].Y, frame.Y)
+			if got, want := metadata.Tags[0].Y, frame.Y+metadata.RowGap; math.Abs(got-want) > 1e-9 {
+				t.Fatalf("metadata top = %v, want row-gap inset %v", got, want)
 			}
 			if metadata.ReservedX != frame.X || metadata.ReservedY != frame.Y || metadata.ReservedW != frame.W || math.Abs(metadata.ReservedH-64) > 1e-9 {
 				t.Fatalf("reserved strip = (%v,%v,%v,%v), want full-width 64px top margin", metadata.ReservedX, metadata.ReservedY, metadata.ReservedW, metadata.ReservedH)
@@ -209,6 +228,11 @@ func TestFrameMetadataUsesOuterWidthAndAlignsWrappedRows(t *testing.T) {
 			}
 			if got := metadata.Tags[3].X - frame.X; math.Abs(got-test.wantLastRowX) > 1e-9 {
 				t.Fatalf("last row X = %v, want %v", got, test.wantLastRowX)
+			}
+			for _, tag := range metadata.Tags {
+				if tag.X < frame.X+metadata.RowGap-1e-9 || tag.X+tag.W > frame.X+frame.W-metadata.RowGap+1e-9 {
+					t.Fatalf("tag %#v leaves row-gap-inset usable width [%v,%v]", tag, frame.X+metadata.RowGap, frame.X+frame.W-metadata.RowGap)
+				}
 			}
 			if metadata.Tags[0].Y != metadata.Tags[2].Y || metadata.Tags[3].Y <= metadata.Tags[2].Y {
 				t.Fatalf("greedy rows = %#v, want three tags then one tag", metadata.Tags)
@@ -234,7 +258,7 @@ func TestFrameMetadataSupportsExplicitRowBreak(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			document, err := usecase.Parse(strings.NewReader(`<xaligo version="1"><frames>
   <frame id="page" width="500" height="180" margin="20">
-    <metadata width="80" key-width="24" gap="10">
+    <metadata width="80" key-width="24" gap="10" row-gap="7">
       <entry key="a" value="1" />
       <entry key="b" value="2"` + test.breakAttr + ` />
       <entry key="c" value="3" />
@@ -249,7 +273,18 @@ func TestFrameMetadataSupportsExplicitRowBreak(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			tags := root.Children[0].FrameMetadata.Tags
+			frame := root.Children[0]
+			metadata := frame.FrameMetadata
+			if metadata.RowGap != 7 {
+				t.Fatalf("metadata row gap = %v, want custom value 7", metadata.RowGap)
+			}
+			tags := metadata.Tags
+			if got, want := tags[0].X, frame.X+metadata.RowGap; math.Abs(got-want) > 1e-9 {
+				t.Fatalf("metadata left edge = %v, want row-gap inset %v", got, want)
+			}
+			if got, want := tags[0].Y, frame.Y+metadata.RowGap; math.Abs(got-want) > 1e-9 {
+				t.Fatalf("metadata top edge = %v, want row-gap inset %v", got, want)
+			}
 			rows := map[float64]bool{}
 			for _, tag := range tags {
 				rows[tag.Y] = true
@@ -259,6 +294,142 @@ func TestFrameMetadataSupportsExplicitRowBreak(t *testing.T) {
 			}
 			if got := tags[len(tags)-1].Y > tags[0].Y; got != test.wantLastY {
 				t.Fatalf("last tag wrapped = %v, want %v: %#v", got, test.wantLastY, tags)
+			}
+			if test.wantLastY {
+				if got, want := tags[len(tags)-1].Y-tags[0].Y, tags[0].H+metadata.RowGap; math.Abs(got-want) > 1e-9 {
+					t.Fatalf("row advance = %v, want tag height plus row gap %v", got, want)
+				}
+			}
+		})
+	}
+}
+
+func TestFrameMetadataWrapsAgainstRowGapInsetUsableWidth(t *testing.T) {
+	tests := []struct {
+		name            string
+		frameWidth      string
+		wantUsableWidth float64
+		sameRow         bool
+	}{
+		{name: "exact usable width fits", frameWidth: "190", wantUsableWidth: 170, sameRow: true},
+		{name: "one pixel below usable width wraps", frameWidth: "189", wantUsableWidth: 169, sameRow: false},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			document, err := usecase.Parse(strings.NewReader(`<xaligo version="1"><frames>
+  <frame id="page" width="` + test.frameWidth + `" height="140" margin-top="64">
+    <metadata width="80" key-width="24" gap="10" row-gap="10">
+      <entry key="a" value="1" />
+    </metadata>
+    <blank />
+  </frame>
+</frames></xaligo>`))
+			if err != nil {
+				t.Fatal(err)
+			}
+			root, err := usecase.Build(document)
+			if err != nil {
+				t.Fatal(err)
+			}
+			frame := root.Children[0]
+			metadata := frame.FrameMetadata
+			if metadata == nil || len(metadata.Tags) != 2 || metadata.RowGap != 10 {
+				t.Fatalf("metadata = %#v, want two tags and row-gap 10", metadata)
+			}
+			if got, want := frame.W-2*metadata.RowGap, test.wantUsableWidth; math.Abs(got-want) > 1e-9 {
+				t.Fatalf("usable width = %v, want frame width minus two row gaps %v", got, want)
+			}
+			if got, want := metadata.Tags[0].X, frame.X+metadata.RowGap; math.Abs(got-want) > 1e-9 {
+				t.Fatalf("first tag X = %v, want row-gap inset %v", got, want)
+			}
+			if got, want := metadata.Tags[0].Y, frame.Y+metadata.RowGap; math.Abs(got-want) > 1e-9 {
+				t.Fatalf("first tag Y = %v, want row-gap inset %v", got, want)
+			}
+			if got := metadata.Tags[0].Y == metadata.Tags[1].Y; got != test.sameRow {
+				t.Fatalf("tags share row = %v, want %v: usable-width=%v tags=%#v", got, test.sameRow, frame.W-2*metadata.RowGap, metadata.Tags)
+			}
+			if test.sameRow {
+				if got, want := metadata.Tags[1].X+metadata.Tags[1].W, frame.X+frame.W-metadata.RowGap; math.Abs(got-want) > 1e-9 {
+					t.Fatalf("exact-fit row edge = %v, want usable-width edge %v", got, want)
+				}
+			} else {
+				if got, want := metadata.Tags[1].X, frame.X+metadata.RowGap; math.Abs(got-want) > 1e-9 {
+					t.Fatalf("wrapped tag X = %v, want row-gap inset %v", got, want)
+				}
+				if got, want := metadata.Tags[1].Y-metadata.Tags[0].Y, metadata.Tags[0].H+metadata.RowGap; math.Abs(got-want) > 1e-9 {
+					t.Fatalf("wrapped row advance = %v, want tag height plus row gap %v", got, want)
+				}
+			}
+		})
+	}
+}
+
+func TestFrameMetadataRejectsRowGapWithoutPositivePageWidth(t *testing.T) {
+	document, err := usecase.Parse(strings.NewReader(`<xaligo version="1"><frames>
+  <frame id="page" width="20" height="120">
+    <metadata row-gap="10"><entry key="owner" value="platform" /></metadata>
+    <blank />
+  </frame>
+</frames></xaligo>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = usecase.Build(document)
+	if err == nil || !strings.Contains(err.Error(), "row-gap") || !strings.Contains(err.Error(), "positive page width") {
+		t.Fatalf("Build() error = %v, want row-gap positive page width diagnostic", err)
+	}
+}
+
+func TestFrameMetadataZeroRowGapKeepsEdgeAlignedFullWidth(t *testing.T) {
+	document, err := usecase.Parse(strings.NewReader(`<xaligo version="1"><frames>
+  <frame id="page" width="200" height="120" margin-top="40">
+    <metadata row-gap="0" width="200" key-width="50" />
+    <blank />
+  </frame>
+</frames></xaligo>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	root, err := usecase.Build(document)
+	if err != nil {
+		t.Fatal(err)
+	}
+	frame := root.Children[0]
+	metadata := frame.FrameMetadata
+	if metadata == nil || metadata.RowGap != 0 || len(metadata.Tags) != 1 {
+		t.Fatalf("metadata = %#v, want one tag with zero row gap", metadata)
+	}
+	tag := metadata.Tags[0]
+	if tag.X != frame.X || tag.Y != frame.Y || tag.W != frame.W {
+		t.Fatalf("zero-row-gap tag = %#v, want edge-aligned full frame width %#v", tag, frame)
+	}
+	if metadata.ReservedX != frame.X || metadata.ReservedY != frame.Y || metadata.ReservedW != frame.W || metadata.ReservedY+metadata.ReservedH != frame.ContentY {
+		t.Fatalf("zero-row-gap reserved strip = (%v,%v,%v,%v), frame/content = %#v", metadata.ReservedX, metadata.ReservedY, metadata.ReservedW, metadata.ReservedH, frame)
+	}
+}
+
+func TestFrameMetadataRejectsInvalidRowGap(t *testing.T) {
+	for _, test := range []struct {
+		name   string
+		value  string
+		needle string
+	}{
+		{name: "negative", value: "-1", needle: "zero or greater"},
+		{name: "not finite", value: "NaN", needle: "finite number"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			document, err := usecase.Parse(strings.NewReader(`<xaligo version="1"><frames>
+  <frame id="page" width="200" height="120">
+    <metadata row-gap="` + test.value + `" />
+    <blank />
+  </frame>
+</frames></xaligo>`))
+			if err != nil {
+				t.Fatal(err)
+			}
+			_, err = usecase.Build(document)
+			if err == nil || !strings.Contains(err.Error(), "row-gap") || !strings.Contains(err.Error(), test.needle) {
+				t.Fatalf("Build() error = %v, want row-gap %q diagnostic", err, test.needle)
 			}
 		})
 	}
@@ -279,8 +450,8 @@ func TestFrameMetadataKeepsManualKeyWidthWhenAutoValueIsClamped(t *testing.T) {
 		t.Fatal(err)
 	}
 	tag := root.Children[0].FrameMetadata.Tags[1]
-	if tag.W != 200 || tag.KeyW != 150 {
-		t.Fatalf("clamped tag = %#v, want width=200 and manual key-width=150", tag)
+	if tag.W != 192 || tag.KeyW != 150 || tag.X != 4 {
+		t.Fatalf("clamped tag = %#v, want row-gap-inset width=192, X=4, and manual key-width=150", tag)
 	}
 }
 
@@ -653,15 +824,15 @@ func TestFrameMetadataReservedStripOverridesUnsafeLocalEndpointSide(t *testing.T
 	}
 }
 
-func TestFrameMetadataPageLinksAvoidFullWidthTagsAndFrameEndpoints(t *testing.T) {
+func TestFrameMetadataPageLinksAvoidFullUsableWidthTagsAndFrameEndpoints(t *testing.T) {
 	source := []byte(`<xaligo version="1"><frames gap="48">
   <frame id="source" title="Source" width="300" height="180">
-    <metadata width="300" key-width="72" />
+    <metadata width="292" key-width="72" />
     <rectangle id="local" title="Local" width="80" height="30" />
     <connection src="source" dst="target.item" src-side="top" dst-side="top" />
   </frame>
   <frame id="target" title="Target" width="300" height="180">
-    <metadata width="300" key-width="72" />
+    <metadata width="292" key-width="72" />
     <rectangle id="item" title="Item" width="80" height="30" />
   </frame>
 </frames></xaligo>`)

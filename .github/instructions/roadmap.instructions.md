@@ -323,15 +323,18 @@ Implemented or partially implemented:
   canvas retains marker-safe bounds expansion.
 - Page frames support a shared top/bottom metadata tag band for built-in
   `id`, `title`, content `version`, and arbitrary key/value entries. The band
-  touches the selected edge of the outer frame border box and uses the complete
-  frame width for wrapping and per-row left/center/right alignment. Its
-  full-width reservation strip reaches the final content-box boundary and is
-  at least the band height plus 8 pixels; normal items, text, local/UML lines
-  and labels, and page links remain outside it. Page links remap a reserved
-  edge to the nearest safe edge and clamp side terminals beyond the strip. The
-  band also supports auto/fixed widths, explicit row breaks, and font/color
-  styling. It projects with its owning physical page; graph adapters omit it
-  as page decoration.
+  uses the resolved `row-gap` (4 pixels by default) as both its inter-row
+  spacing and its metadata page-edge inset at the selected vertical edge and
+  both horizontal edges. Wrapping and per-row left/center/right alignment use
+  `frame width - 2 * row-gap`. Its full-width reservation strip still starts at
+  the outer logical frame edge, reaches the final content-box boundary, and is
+  at least
+  `row-gap + complete band height + 8` pixels deep; normal items, text,
+  local/UML lines and labels, and page links remain outside it. Page links
+  remap a reserved edge to the nearest safe edge and clamp side terminals
+  beyond the strip. The band also supports auto/fixed widths, explicit row
+  breaks, and font/color styling. It projects with its owning physical page;
+  graph adapters omit it as page decoration.
 - Cross-frame connections independently support item endpoint
   `src/dst-side|anchor` and logical page-terminal
   `src/dst-frame-side|anchor` geometry. Explicit frame anchors use five fixed

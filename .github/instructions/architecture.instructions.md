@@ -171,15 +171,21 @@ allows V2 to render V1 while V1 remains unaware of V2.
     formats are not exposed there; native canvas, font, and spreadsheet
     dependencies must not enter the browser-WASM dependency graph.
 29. A frame metadata tag band is resolved once in the V1 shared layout and
-    presentation scene as page-owned decoration. Its band touches the selected
-    top/bottom edge of the outer frame border box, and every row wraps and
-    aligns against the full frame width without padding, margin, or content-box
-    offsets. The full-width reservation strip runs from that outer edge to the
-    final content-box boundary and is at least the band height plus 8 layout
-    pixels. Normal items, text, local/UML connector paths and labels, and
-    cross-frame page links cannot enter it. Legacy/automatic page-link side
-    selection remaps a reserved edge to the nearest safe edge and clamps
-    left/right terminals outside the strip. An explicit cross-frame
+    presentation scene as page-owned decoration. The resolved metadata
+    `row-gap`, which defaults to 4 layout pixels, is both the inter-row spacing
+    and the metadata page-edge inset. The selected top/bottom band edge and
+    both horizontal row bounds are inset by that value, and every row wraps and
+    aligns within `frame width - 2 * row-gap`; frame padding, content margins,
+    and content-box offsets do not replace or add to this inset. The full-width
+    reservation strip still runs from the outer logical frame edge to the final
+    content-box boundary and is at least
+    `row-gap + complete band height + 8` layout pixels deep.
+    The inset is measured from the logical frame edge before any common PPTX
+    slide centering; it is not an export `--paper-margin`. Normal items, text,
+    local/UML connector paths and labels, and cross-frame page links cannot
+    enter it. Legacy/automatic page-link side selection remaps a reserved edge
+    to the nearest safe edge and clamps left/right terminals outside the strip.
+    An explicit cross-frame
     `src-frame-side`, `dst-frame-side`, `src-frame-anchor`, or
     `dst-frame-anchor` that selects the reservation is instead a validation
     error. Page-link labels stay adjacent to their logical edge terminal with

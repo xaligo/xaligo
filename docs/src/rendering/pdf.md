@@ -12,9 +12,10 @@ as vector artwork on one PDF page. The PDF page uses the SVG's intrinsic canvas
 dimensions and converts them to physical units at 96 pixels per inch without
 non-uniform scaling. Default page SVGs use the exact frame rectangle as their
 canvas and clip boundary, so the PDF page has no marker-safe overflow padding
-and top/bottom metadata reaches its physical edge. A one-frame document
-produces one page. The logical frame defines page projection but its outline is
-not drawn.
+and a top/bottom metadata band's `row-gap` gutter reaches the physical edge
+while its tag cells remain inset by that value. A one-frame document produces
+one page. The logical frame defines page projection but its outline is not
+drawn.
 
 Use `--combine-frames` to preserve the compatibility canvas as one PDF page:
 

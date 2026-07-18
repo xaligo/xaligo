@@ -112,34 +112,38 @@ with a transparent page-frame outline.
 
 A default page-local SVG uses the exact logical frame rectangle as its canvas
 and clip boundary. PDF pages and the SVG images placed into Excel worksheets
-inherit that strict crop, so a top/bottom metadata band reaches the physical
-page/image edge. The combined SVG compatibility canvas retains marker-safe
-bounds expansion. PPTX uses one common slide size; when frame sizes differ,
-smaller frame pages are centered on the largest slide without changing their
-logical frame edge.
+inherit that strict crop, so a top/bottom metadata band's `row-gap` gutter
+reaches the physical page/image edge while its tag cells remain inset by that
+value. The combined SVG compatibility canvas retains marker-safe bounds
+expansion. PPTX uses one common slide size; when frame sizes differ, smaller
+frame pages are centered on the largest slide without changing their logical
+frame edge. The metadata inset is measured from that logical frame edge, not
+from the common slide edge.
 
 ## Frame metadata tag-band projection
 
-A page frame can place a top or bottom band of visible key/value tags directly
-against the selected edge of its outer border box. Padding, content margins,
-and content-box coordinates do not inset the band. A non-empty frame `title`,
-direct-child content `version`, or direct `<metadata>` child enables it. When
-enabled, non-empty `id`, `title`, and `version` values are emitted in that
-order, followed by arbitrary `<entry key="..." value="..." />` children in
-source order. An ID-only frame keeps the historical layout and does not acquire
-a band.
+A page frame can place a top or bottom band of visible key/value tags near the
+selected edge of its outer border box. Its resolved `row-gap`, 4 pixels by
+default, is both the inter-row spacing and the metadata page-edge inset on
+the selected vertical edge and both horizontal edges. Padding, content
+margins, and content-box coordinates do not replace or add to that inset. A
+non-empty frame `title`, direct-child content `version`, or direct `<metadata>`
+child enables it. When enabled, non-empty `id`, `title`, and `version` values
+are emitted in that order, followed by arbitrary
+`<entry key="..." value="..." />` children in source order. An ID-only frame
+keeps the historical layout and does not acquire a band.
 
 The normalized layout resolves font-dependent height, auto or fixed tag
 widths, greedy source-order wrapping, optional entry row breaks, and
-left/center/right alignment for each row against the full outer frame width.
-The full-width reservation strip extends from the metadata edge to the final
-content-box boundary and is at least the complete band height plus the fixed
-8-pixel content gap. The canonical scene then represents every key and value
-cell as page-owned decoration with stable ownership metadata. SVG, PPTX, PDF,
-Excel, and Excalidraw consume that same geometry. Per-frame projection retains
-only the owning page's tags, while combined compatibility output retains all
-bands. XYFlow and Isoflow omit them because page decoration is neither a graph
-node nor an endpoint.
+left/center/right alignment for each row within
+`frame width - 2 * row-gap`. The full-width reservation strip still extends
+from the outer logical frame edge to the final content-box boundary and is at
+least `row-gap + complete band height + 8` pixels deep. The canonical scene
+then represents every key and value cell as page-owned decoration with stable
+ownership metadata. SVG, PPTX, PDF, Excel, and Excalidraw consume that same
+geometry. Per-frame projection retains only the owning page's tags, while
+combined compatibility output retains all bands. XYFlow and Isoflow omit them
+because page decoration is neither a graph node nor an endpoint.
 
 The entire reservation strip is a hard exclusion zone for normal items and
 text, local and UML connector paths and labels, and page-link paths and labels.

@@ -121,12 +121,12 @@ func TestFrameMetadataReservedStripOverridesVisibleOverflow(t *testing.T) {
 func TestNarrowCrossFramePageLinkLabelsStayOutsideMetadataReservedStrip(t *testing.T) {
 	source := []byte(`<xaligo version="1"><frames gap="30">
   <frame id="a" title="A" width="200" height="70">
-    <metadata width="200" key-width="50" />
+    <metadata width="192" key-width="50" />
     <rectangle id="s" title="S" />
     <connection src="s" dst="b.d" />
   </frame>
   <frame id="b" title="B" width="200" height="70">
-    <metadata width="200" key-width="50" />
+    <metadata width="192" key-width="50" />
     <rectangle id="d" title="D" />
   </frame>
 </frames></xaligo>`)
@@ -163,7 +163,7 @@ func TestNarrowCrossFramePageLinkLabelsStayOutsideMetadataReservedStrip(t *testi
 func TestNarrowUMLRelationLabelStaysOutsideMetadataReservedStrip(t *testing.T) {
 	source := []byte(`<xaligo version="1"><frames>
   <frame id="page" title="Page" width="200" height="70" layout="horizontal" gap="20">
-    <metadata width="200" key-width="50" />
+    <metadata width="192" key-width="50" />
     <rectangle id="source" title="Source" />
     <rectangle id="destination" title="Destination" />
     <connection src="source" dst="destination" uml-relation-label="calls" />

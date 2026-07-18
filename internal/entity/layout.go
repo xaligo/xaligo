@@ -50,10 +50,15 @@ type Box struct {
 // FrameMetadata is the renderer-neutral presentation and resolved geometry of
 // one frame's page-margin metadata band.
 type FrameMetadata struct {
-	Position           string
-	Align              string
-	FontFamily         string
-	FontSize           float64
+	Position   string
+	Align      string
+	FontFamily string
+	FontSize   float64
+
+	// RowGap is both the space between wrapped metadata rows and the V1
+	// metadata inset from its logical frame/page edge.
+	RowGap float64
+
 	Color              string
 	KeyColor           string
 	BackgroundColor    string

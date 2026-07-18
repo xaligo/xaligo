@@ -22,8 +22,8 @@ The [frame metadata example](examples/frame-metadata.md) shows built-in
 `id`/`title`/content-`version` tags and arbitrary key/value entries. Its two
 pages cover top/right-aligned and bottom/center-aligned placement, automatic
 and fixed widths, an explicit row break, per-entry overrides, font/color
-settings, outer-edge anchoring, full-width metadata reservation, and automatic
-safe-edge selection for page links.
+settings, default and explicit `row-gap` page insets, full-width metadata
+reservation, and automatic safe-edge selection for page links.
 
 ## Hybrid Enterprise Architecture
 

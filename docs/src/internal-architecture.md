@@ -372,15 +372,19 @@ the physical-page split and remain one logical document.
 Frame metadata follows the same downstream ownership model. The parser
 normalizes a direct frame `<metadata>` block and distinguishes a child-frame
 content revision from the root DSL version. Shared layout resolves the
-top/bottom band against the outer frame border box, font-sized tag height,
-auto/fixed widths, greedy wrapping, explicit row breaks, and full-frame per-row
-alignment on `Box.FrameMetadata`. The full-width reservation strip reaches the
-final content-box boundary and is at least the band height plus the fixed
-8-pixel gap. Scene construction emits stable page-owned key/value shapes and
-text once and excludes normal items/text, local and UML connector paths and
-labels, and page links from that strip. The result is projected with its owning
-`DocumentPage`; the SVG, PPTX, PDF, Excel, and Excalidraw repositories do not
-recompute the band or reservation. XYFlow and Isoflow discard the decoration
+top/bottom band against the logical frame border box, font-sized tag height,
+auto/fixed widths, greedy wrapping, explicit row breaks, and per-row alignment
+on `Box.FrameMetadata`. The resolved `row-gap` is both the inter-row spacing
+and the inset at the selected vertical edge and both horizontal page edges;
+row wrapping and alignment use `frame width - 2 * row-gap`. The full-width
+reservation strip still starts at the outer logical frame edge, reaches the
+final content-box boundary, and is at least
+`row-gap + complete band height + 8` pixels deep. Scene construction emits
+stable page-owned key/value shapes and text once and excludes normal items/text,
+local and UML connector paths and labels, and page links from that strip. The
+result is projected with its owning `DocumentPage`; the SVG, PPTX, PDF, Excel,
+and Excalidraw repositories do not recompute the band or reservation. XYFlow
+and Isoflow discard the decoration
 through their normal semantic projection instead of exposing synthetic nodes.
 
 Every text operation now carries a renderer-neutral
