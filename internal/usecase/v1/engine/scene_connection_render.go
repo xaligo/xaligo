@@ -17,7 +17,7 @@ import (
 // must already be populated in itemImgRects/itemLblRects/itemImgIDs/itemLblIDs by renderIconAt.
 // Arrows start/end at the actual element edge; when the connection exits/enters from the
 // bottom the label text element is used instead of the image element.
-func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, itemImgRects map[string][4]float64, itemLblRects map[string][4]float64, itemImgIDs map[string]string, itemLblIDs map[string]string, frameRects map[string][4]float64, elements *[]map[string]any) {
+func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, itemImgRects map[string][4]float64, itemLblRects map[string][4]float64, itemImgIDs map[string]string, itemLblIDs map[string]string, frameRects map[string][4]float64, frameElementIDs map[string]string, frameMetadata map[string]frameMetadataSceneGeometryV1EngineSceneFrameMetadata, elements *[]map[string]any) {
 	if len(connections) == 0 {
 		return
 	}
@@ -173,7 +173,7 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 		style := resolveConnectionStyleV1EngineSceneConnectionRoute(conn)
 		if crossFrame {
 			seed := stableConnectionSeedV1EngineSceneConnectionRoute(srcKey, dstKey, i)
-			renderCrossFrameConnectionV1EngineSceneConnectionPage(conn, srcKey, dstKey, srcElemID, dstElemID, srcRect, dstRect, srcVisualRect, dstVisualRect, srcFP, dstFP, srcSide, dstSide, srcFrameID, dstFrameID, srcFrameRect, dstFrameRect, style, seed, i, updated, elements, boundMap)
+			renderCrossFrameConnectionV1EngineSceneConnectionPage(conn, srcKey, dstKey, srcElemID, dstElemID, srcRect, dstRect, srcVisualRect, dstVisualRect, srcFP, dstFP, srcSide, dstSide, srcFrameID, dstFrameID, srcFrameRect, dstFrameRect, srcElemID == frameElementIDs[srcFrameID], dstElemID == frameElementIDs[dstFrameID], frameMetadata[srcFrameID], frameMetadata[dstFrameID], style, seed, i, updated, elements, boundMap)
 			continue
 		}
 		srcEdge := rectFixedPointV1EngineSceneConnection(srcRect, srcFP)

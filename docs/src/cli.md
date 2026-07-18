@@ -76,6 +76,9 @@ Physical-page and PPTX flags:
 | `--title`, `--author`, `--company`, `--subject` | PPTX presentation metadata |
 | `--compression true|false` | PPTX compression |
 
+`--title` sets package-level PPTX metadata. It is unrelated to the visible
+`title` attribute on a page `<frame>` and never creates a frame tag.
+
 ## Structural Diff
 
 ```bash
@@ -92,7 +95,9 @@ writes two SVG images:
 
 XML formatting, comments, attribute order, parser-private attributes, and the
 equivalent V1 forms with an omitted version or `version="1"` do not create a
-diff. Matching prefers unique `name`, `ref`, and `id` values, then exact
+diff when that version is on the document root. A `version` on an identified
+child frame is visible page content and is compared normally, including the
+literal value `1`. Matching prefers unique `name`, `ref`, and `id` values, then exact
 subtrees, followed by deterministic order-aware structural matching. Give
 elements an explicit `id`, `name`, or `ref` when moves must remain identifiable
 across different parents.

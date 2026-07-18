@@ -108,12 +108,15 @@ func legacyV1RootWarningV1EngineParseNode(root *entity.Node) string {
 	return fmt.Sprintf("legacy V1 <%s> root is deprecated; wrap identified frames in <xaligo version=\"1\"><frames>...</frames></xaligo>", root.Tag)
 }
 
-func validateNestedVersionV1EngineParseNode(node *entity.Node) error {
+func validateNestedVersionV1EngineParseNode(node, parent *entity.Node) error {
 	if node == nil {
 		return nil
 	}
 	version, specified := node.Attrs["version"]
 	if !specified {
+		return nil
+	}
+	if node.Tag == "frame" && parent != nil && parent.Tag == "frames" {
 		return nil
 	}
 	return fmt.Errorf("<%s version=%q> is invalid: version is only allowed on the V1 document root", node.Tag, version)

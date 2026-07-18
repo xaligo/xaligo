@@ -70,6 +70,15 @@ func validateLayoutNodeAttributesV1EngineLayoutValidation(node *entity.Node) err
 		{name: "grid"},
 		{name: "stroke-width"},
 	}
+	if node.Tag == "metadata" {
+		rules = append(rules,
+			layoutNumberRuleV1EngineLayoutValidation{name: "row-gap", allowZero: true},
+			layoutNumberRuleV1EngineLayoutValidation{name: "key-width"},
+		)
+	}
+	if node.Tag == "entry" {
+		rules = append(rules, layoutNumberRuleV1EngineLayoutValidation{name: "key-width"})
+	}
 	if node.Tag == "port" {
 		rules = append(rules,
 			layoutNumberRuleV1EngineLayoutValidation{name: "w"},
@@ -277,7 +286,7 @@ func validateSpacingClassV1EngineLayoutValidation(node *entity.Node) error {
 
 func validateLayoutRatiosV1EngineLayoutValidation(node *entity.Node) error {
 	children := layoutKidsV1EngineLayoutNode(node)
-	if len(children) == 0 || node.Tag == "rectangle" || node.Tag == "frames" {
+	if len(children) == 0 || node.Tag == "rectangle" || node.Tag == "frames" || node.Tag == "metadata" || node.Tag == "entry" {
 		return nil
 	}
 
@@ -385,6 +394,9 @@ func validateResolvedBoxV1EngineLayoutValidation(box, parent *entity.Box) error 
 	if !containsRectV1EngineLayoutValidation(box.X, box.Y, box.W, box.H, box.ContentX, box.ContentY, box.ContentW, box.ContentH) {
 		return newResolvedLayoutErrorV1EngineLayoutValidation(box, "content box overflows its border box")
 	}
+	if err := validateResolvedFrameMetadataV1EngineLayoutValidation(box); err != nil {
+		return err
+	}
 	if parent != nil && !containsRectV1EngineLayoutValidation(parent.ContentX, parent.ContentY, parent.ContentW, parent.ContentH, box.X, box.Y, box.W, box.H) {
 		if parent.Overflow != entity.OverflowVisible {
 			return newResolvedLayoutErrorV1EngineLayoutValidation(box, "resolved box overflows parent <%s> content box; set overflow=\"visible\" on the parent to allow it explicitly", parent.Tag)
@@ -394,6 +406,32 @@ func validateResolvedBoxV1EngineLayoutValidation(box, parent *entity.Box) error 
 	for _, child := range box.Children {
 		if err := validateResolvedBoxV1EngineLayoutValidation(child, box); err != nil {
 			return err
+		}
+	}
+	return nil
+}
+
+func validateResolvedFrameMetadataV1EngineLayoutValidation(box *entity.Box) error {
+	if box == nil || box.FrameMetadata == nil {
+		return nil
+	}
+	metadata := box.FrameMetadata
+	if !isPositiveFiniteV1EngineLayoutConstraints(metadata.FontSize) {
+		return newResolvedLayoutErrorV1EngineLayoutValidation(box, "frame metadata font size must be positive and finite")
+	}
+	for index, tag := range metadata.Tags {
+		for name, value := range map[string]float64{
+			"x": tag.X, "y": tag.Y, "width": tag.W, "height": tag.H, "key-width": tag.KeyW,
+		} {
+			if math.IsNaN(value) || math.IsInf(value, 0) {
+				return newResolvedLayoutErrorV1EngineLayoutValidation(box, "frame metadata tag %d %s resolved to a non-finite value", index+1, name)
+			}
+		}
+		if tag.W <= 0 || tag.H <= 0 || tag.KeyW <= 0 || tag.KeyW >= tag.W {
+			return newResolvedLayoutErrorV1EngineLayoutValidation(box, "frame metadata tag %d has invalid resolved cell geometry", index+1)
+		}
+		if !containsRectV1EngineLayoutValidation(box.X, box.Y, box.W, box.H, tag.X, tag.Y, tag.W, tag.H) {
+			return newResolvedLayoutErrorV1EngineLayoutValidation(box, "frame metadata tag %d overflows the frame border box", index+1)
 		}
 	}
 	return nil

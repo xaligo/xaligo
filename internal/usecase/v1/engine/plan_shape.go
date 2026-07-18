@@ -16,14 +16,16 @@ func shapeOpV1EnginePlanShape(el *entity.Element, frame rectV1EngineRouteTypes, 
 	ln := linePropsV1EnginePlanStyle(el, ppi)
 	fl := fillPropsV1EnginePlanStyle(el.BackgroundColor, opacityToTransparencyV1EnginePlanStyle(el.Opacity))
 	return entity.DrawOp{
-		Kind:   kind,
-		X:      p.X,
-		Y:      p.Y,
-		W:      p.W,
-		H:      p.H,
-		Rotate: el.Angle,
-		Line:   &ln,
-		Fill:   &fl,
+		ID:         el.ID,
+		Kind:       kind,
+		X:          p.X,
+		Y:          p.Y,
+		W:          p.W,
+		H:          p.H,
+		Rotate:     el.Angle,
+		Line:       &ln,
+		Fill:       &fl,
+		FrontLayer: el.CustomData != nil && el.CustomData.FrameMetadata,
 	}, true
 }
 

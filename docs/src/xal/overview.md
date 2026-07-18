@@ -21,11 +21,20 @@ immediately; `<frame version="2">` is not valid V2 syntax. A V2 renderer will
 accept both native V2 documents and the frozen V1 profile, but V1 does not need
 to understand V2.
 
+The root `version="1"` above selects the DSL. A non-empty `version` on an
+identified `<frame>` directly inside `<frames>` instead identifies that page's
+visible content revision and does not select another language. Page frames can
+also expose `title` and arbitrary key/value entries in a configurable
+[frame metadata band](layout.md#frame-metadata).
+
 Important rules:
 
 - Layout coordinates use pixels.
 - An identified child frame is one SVG artifact, PPTX slide, PDF page, or Excel
   worksheet by default. `--combine-frames` preserves the compatibility canvas.
+- Frame metadata is page-owned decoration inside the frame padding. It first
+  reuses the selected top/bottom content margin, follows that page projection,
+  and does not become an XYFlow or Isoflow node.
 - The origin is the upper-left of the rendered frame.
 - Positive `x` extends right and positive `y` extends down.
 - Connections must be direct children of `<frame>` or inside frame-level

@@ -103,7 +103,7 @@ func ParseWithImportsV1EngineParseDocument(r io.Reader, imports *entity.ImportSo
 				node.Attrs[a.Name.Local] = a.Value
 			}
 			if len(stack) > 0 {
-				if err := validateNestedVersionV1EngineParseNode(node); err != nil {
+				if err := validateNestedVersionV1EngineParseNode(node, stack[len(stack)-1]); err != nil {
 					return entity.Document{}, &entity.ParseError{Position: node.Position, Err: err}
 				}
 			}
@@ -198,6 +198,9 @@ func ParseWithImportsV1EngineParseDocument(r io.Reader, imports *entity.ImportSo
 	}
 	if err := validateFrameHierarchyV1EngineParseNode(root); err != nil {
 		loggerV1EngineSharedLogging.ERROR(IUPP006V1EngineParseDocument, "frame hierarchy validation failed", map[string]any{"error": err})
+		return entity.Document{}, err
+	}
+	if err := normalizeFrameMetadataV1EngineParseFrameMetadata(root, envelope); err != nil {
 		return entity.Document{}, err
 	}
 	if err := resolveDatabaseImportsV1EngineParseDatabaseImport(dataNode, imports); err != nil {

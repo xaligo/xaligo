@@ -4,13 +4,29 @@
 
 | Target | Attribute | Description |
 |---|---|---|
-| root `<frame>` | `width`, `height` | Canvas size in layout pixels |
-| root `<frame>` | `margin`, `margin-*` | Inset diagram content without shrinking the paper frame |
+| page `<frame>` | `width`, `height` | Canvas size in layout pixels |
+| page `<frame>` | `margin`, `margin-*` | Inset diagram content without shrinking the paper frame |
+| identified child `<frame>` | `title`, `version` | Enable the page metadata band and supply visible built-in values; child `version` is a content revision, not the DSL version |
+| frame `<metadata>` | `position` | `top` (default) or `bottom` |
+| frame `<metadata>` | `align` | `left` (default), `center`, or `right`; applied to each wrapped row independently |
+| frame `<metadata>` | `font-family`, `font-size` | Tag typography; defaults are `virgil` and `12`, and height follows `ceil(font-size × 1.2) + 4` |
+| frame `<metadata>` | `color`, `key-color`, `background-color`, `key-background-color`, `border-color` | `#RRGGBB` or `transparent`; defaults are `#64748b`, inherited `color`, `transparent`, `#f8fafc`, and `#cbd5e1` respectively |
+| frame `<metadata>`, `<entry>` | `width`, `key-width` | Positive manual total/key-cell width; omission means auto, and entry values override metadata defaults |
+| frame `<metadata>` | `gap`, `row-gap` | Non-negative horizontal and wrapped-row spacing; defaults are `8` and `4` |
+| frame `<metadata>` | `<entry key="..." value="..." />` | Arbitrary non-empty key/value tag, retained in source order |
+| frame `<metadata>` `<entry>` | `break-before` | `false` (default) or `true`; starts that entry on a new row when a preceding tag exists |
 | generic leaf box | `border="none"` | Hide the visible border |
 | generic leaf box | `visible="false"` | Hide component while preserving layout space |
 | generic leaf box, rectangle, port | `font-size` | Label font size |
 | rectangle, port | `id` | Required unique connection reference |
 | port | `side` | `top`, `right`, `bottom`, or `left` |
+
+Metadata tags pack greedily in input order against the usable width, producing
+the minimum row count unless `break-before` introduces an earlier boundary.
+The band is anchored inside the frame padding and uses the content area's
+horizontal bounds. The existing margin on the selected top/bottom edge absorbs
+the band and its fixed 8-pixel content gap; only any excess moves the content
+edge inward. Metadata cell borders use a fixed `0.75`-pixel stroke.
 
 ## AWS Group Border Styles
 
@@ -35,3 +51,6 @@
 | `<elastic-beanstalk-container>` | `#E7601B` | solid | `2` | none |
 | `<aws-step-functions-workflow>` | `#E7008A` | solid | `2` | none |
 | `<generic-group>` | `#AAB7B8` | dashed | `1` | configured by positive decimal int32 `icon-id` (`1..2147483647`) |
+
+See [Layout: Frame metadata](../../xal/layout.md#frame-metadata) for activation,
+defaults, wrapping, output projection, and a complete example.

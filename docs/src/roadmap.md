@@ -27,6 +27,14 @@ resolved first and then projected in source order:
 `--combine-frames` retains the former single-canvas/page form. Excalidraw,
 XYFlow, and Isoflow remain one logical document.
 
+Page frames can also add a top/bottom metadata band inside their padding for
+built-in `id`, `title`, content `version`, and arbitrary key/value tags. The
+existing margin on that edge absorbs the band and content gap first; only any
+excess moves normal content inward. Auto/fixed widths, typography, colors,
+ordered greedy row wrapping, explicit row breaks, per-row alignment, page
+ownership, and page-link avoidance are resolved before the physical formats
+project one frame per page. XYFlow and Isoflow omit this page decoration.
+
 This frame pagination is separate from generic tiling. Remaining scale work is
 to split one oversized frame into multiple tiles, add large-diagram regression
 samples and benchmarks, and optimize the slowest measured shared stages.

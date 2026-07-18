@@ -45,6 +45,25 @@ func TestDiffUsecaseMarksBothSidesOfModification(t *testing.T) {
 	}
 }
 
+func TestDiffUsecaseRendersFrameMetadataEntryHighlights(t *testing.T) {
+	before := []byte(`<frame version="1" width="320" height="180"><metadata><entry key="owner" value="platform" /></metadata></frame>`)
+	after := []byte(`<frame version="1" width="320" height="180"><metadata><entry key="owner" value="security" /></metadata></frame>`)
+
+	result, err := newDiffUsecase().Diff(context.Background(), before, after, entity.DiffOptions{Theme: "light", PxPerInch: 96})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Summary.ModifiedCount != 1 {
+		t.Fatalf("summary = %#v", result.Summary)
+	}
+	if !strings.Contains(string(result.RemovedImage), `fill="#FEE2E2"`) {
+		t.Fatalf("removed metadata highlight is missing: %s", result.RemovedImage)
+	}
+	if !strings.Contains(string(result.AddedImage), `fill="#DCFCE7"`) {
+		t.Fatalf("added metadata highlight is missing: %s", result.AddedImage)
+	}
+}
+
 func TestDiffUsecaseReturnsSideSpecificErrorsAndHonorsContext(t *testing.T) {
 	valid := []byte(`<frame version="1" width="320" height="180"><blank /></frame>`)
 	if _, err := newDiffUsecase().Diff(context.Background(), valid, []byte(`<frame version="1">`), entity.DiffOptions{}); err == nil || !strings.Contains(err.Error(), "parse after DSL") {

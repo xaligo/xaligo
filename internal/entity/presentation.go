@@ -65,6 +65,8 @@ type Element struct {
 type CustomData struct {
 	PageFrame                       bool        `json:"xaligoPageFrame,omitempty"`
 	FrameID                         string      `json:"xaligoFrameID,omitempty"`
+	FrameMetadata                   bool        `json:"xaligoFrameMetadata,omitempty"`
+	FrameMetadataContent            bool        `json:"xaligoFrameMetadataContent,omitempty"`
 	ConnectorKind                   string      `json:"xaligoConnectorKind"`
 	ConnectorStartArrowhead         string      `json:"xaligoConnectorStartArrowhead"`
 	ConnectorEndArrowhead           string      `json:"xaligoConnectorEndArrowhead"`

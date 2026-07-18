@@ -18,6 +18,11 @@ Canonical V1 source explicitly sets `version="1"` on `<xaligo>`. An
 unversioned `<xaligo>` defaults to V1 with a warning. A `version` value other
 than `1` is invalid. Legacy `<frame>` and `<frames>` roots accept the historical
 V1 version rules but always emit a warning recommending the canonical envelope.
+This document-root `version` selects the DSL and is not visible page metadata.
+By contrast, a non-empty `version` on an identified `<frame>` that is a direct
+child of the document-root `<frames>` is that page's visible content revision;
+it does not select a language version. Structural diff ignores only the
+document-root DSL version and compares child-frame content revisions normally.
 
 V2 uses a distinct, reject-safe root:
 
@@ -77,7 +82,8 @@ requires exactly one `<frames>`. Give every child `<frame>` a stable `id`.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
-| `version` | string | `"1"` with warning when omitted | `<xaligo>` only. Explicit `"1"` is recommended and is the only accepted value |
+| `version` | string | `"1"` with warning when omitted | On `<xaligo>` or a legacy root, selects V1 and only `"1"` is accepted. On an identified direct child `<frame>`, a non-empty value is the visible page revision |
+| `title` | string | — | On a page `<frame>`, enables the metadata band and supplies its built-in `title` tag |
 | `width` | float | `1280` | Frame width (px) |
 | `height` | float | `720` | Frame height (px) |
 | `class` | string | — | Spacing class |
@@ -130,6 +136,80 @@ formats. It restores the historical single canvas, single slide, single PDF
 page, or single Excel worksheet. It does not change Excalidraw, XYFlow, or
 Isoflow because those formats are already single logical documents.
 
+### Frame metadata tag band
+
+An identified page frame may expose `id`, `title`, a page-content `version`,
+and arbitrary key/value entries as a two-cell tag band. The band stays inside
+the frame padding box and uses the content margin on its selected `top` or
+`bottom` edge before taking any additional content space. It is enabled when
+the page frame has a non-empty `title`, a child-frame content `version`, or a
+direct `<metadata>` child. Existing identified frames that have only an `id`
+remain visually unchanged. Once the band is enabled, non-empty built-ins are
+emitted in stable `id`, `title`, `version` order, followed by `<entry>`
+children in source order.
+
+```xml
+<frame id="aws-architecture" title="AWS Architecture" version="1.0.0"
+       width="720" height="400"
+       margin-top="52" margin-right="24"
+       margin-bottom="52" margin-left="24">
+  <metadata position="top" align="right" font-family="helvetica">
+    <entry key="owner" value="Platform Engineering" />
+    <entry key="status" value="Approved" break-before="true"
+           width="180" key-width="56" />
+  </metadata>
+  <rectangle id="diagram" title="Page content" />
+</frame>
+```
+
+`<metadata>` is a non-layout direct child of a page `<frame>` and may occur at
+most once. This context is distinct from document-level
+`<xaligo><metadata>`. It contains only empty `<entry>` children; every entry
+requires non-empty `key` and `value` attributes. Duplicate keys are retained.
+
+| Attribute | Target | Default | Contract |
+|---|---|---|---|
+| `position` | `metadata` | `top` | Closed enum `top|bottom` |
+| `align` | `metadata` | `left` | Closed enum `left|center|right`; applied independently to each resolved row |
+| `font-family` | `metadata` | `virgil` | `virgil|helvetica|cascadia|assistant|excalifont|nunito|lilita-one|comic-shanns|liberation-sans` |
+| `font-size` | `metadata` | `12` | Positive layout pixels; tag height is exactly `ceil(font-size * 1.2) + 4` |
+| `color` | `metadata` | `#64748b` | Value text color; also key text color unless `key-color` is set |
+| `key-color` | `metadata` | value of `color` | Key text color |
+| `background-color` | `metadata` | `transparent` | Value-cell fill |
+| `key-background-color` | `metadata` | `#f8fafc` | Key-cell fill |
+| `border-color` | `metadata` | `#cbd5e1` | Cell border color; the cell stroke is fixed at `0.75` layout pixels |
+| `width` | `metadata`, `entry` | auto | Positive total key/value tag width. An entry value overrides the metadata-level default |
+| `key-width` | `metadata`, `entry` | auto | Positive key-cell width smaller than total width. An entry value overrides the metadata-level default |
+| `gap` | `metadata` | `8` | Non-negative horizontal gap between tags |
+| `row-gap` | `metadata` | `4` | Non-negative gap between wrapped rows |
+| `break-before` | `entry` | `false` | Closed boolean `true|false`; `true` starts this entry on a new row when a preceding tag exists |
+
+Colors use `#RRGGBB` or `transparent`. Auto width measures both cells with the
+selected font and full-width-rune-aware metrics. Omit `width` or `key-width`
+to request auto sizing; the literal string `auto` is not a V1 numeric value.
+Fixed widths use no-wrap shrink-to-fit with clipping as the final overflow
+guard. Tags preserve input order and use greedy left-to-right packing against
+the usable width, which produces the minimum row count without reordering.
+`break-before="true"` forces a row boundary before that custom entry. The
+metadata `align` is then applied to each row separately.
+
+The band is anchored to the selected edge of the frame padding box. Its tags
+use the same horizontal bounds as normal frame content, after left/right
+content margins. On the selected vertical edge, the existing `margin-top` or
+`margin-bottom` (including the corresponding side of `margin`) absorbs the
+band height and the fixed 8-pixel content gap. If that total fits in the
+margin, the content box is unchanged; only the overflow beyond the margin
+moves the content boundary inward. `content-width`, `content-height`, and the
+frame's own `align` are applied afterward. The frame's outer page size and
+invisible logical edge do not change.
+
+The shared layout and presentation scene own this geometry. SVG, PPTX, PDF,
+Excel, and Excalidraw render the owning frame's tags; per-frame projection
+cannot leak another page's band, and combined output retains every band. The
+tags stay above connectors, act as routing obstacles, and page-link terminals
+and labels avoid them. XYFlow and Isoflow omit the band because it is page
+decoration rather than a graph node or endpoint.
+
 ## Numeric and Geometry Contract
 
 Numeric attributes are validated before layout. A numeric value must be a
@@ -143,7 +223,7 @@ The following domain rules apply:
 
 | Attributes | Required domain |
 |---|---|
-| `width`, `height`, `content-width`, `content-height`, `item-size`, `font-size` | greater than `0` when specified |
+| `width`, `height`, `content-width`, `content-height`, `item-size`, `font-size`, `key-width` | greater than `0` when specified |
 | `row`, `col` | greater than `0` when specified |
 | `span` | greater than `0` and at most `12`; flexible sibling spans in one `<row>` must total at most `12` |
 | `gap`, margins, spacing-class padding | greater than or equal to `0` |

@@ -14,7 +14,8 @@ frame objects but gives them transparent strokes.
 
 | Attribute | Default | Description |
 |---|---|---|
-| `version` | `1` with warning when omitted | Root only. Explicit `1` is recommended and is the only accepted value |
+| `version` | `1` with warning when omitted | On `<xaligo>` or a legacy root, selects DSL V1. On an identified direct child `<frame>`, any non-empty value is the visible page revision |
+| `title` |  | Page title shown in the frame metadata band |
 | `width` | `1280` | Frame width in pixels |
 | `height` | `720` | Frame height in pixels |
 | `class` |  | Vuetify-style spacing class |
@@ -24,6 +25,84 @@ frame objects but gives them transparent strokes.
 | `margin`, `margin-*` |  | Content inset in pixels |
 | `content-width`, `content-height` |  | Override usable content size |
 | `align` |  | `top|middle|bottom` plus `left|center|right`; item grids additionally support `spread` |
+
+Document-root and page-frame versions have different roles. Use
+`<xaligo version="1">` to select the V1 language. A `version` on an identified
+`<frame>` directly inside the root `<frames>` is page content such as
+`version="2026.07"`; it is displayed in the metadata band and participates in
+structural diff. A legacy root `<frame version="1">` still means DSL V1 and is
+not displayed as a page revision.
+
+## Frame metadata
+
+Set a frame `title`, a child-frame `version`, or add direct `<metadata>` to
+add a key/value tag band inside the frame padding. The band reuses the content
+margin on its selected edge; the default position is the top. An existing
+frame with only an `id` remains visually unchanged; once the band is enabled
+its non-empty built-ins appear as `id`, `title`, and `version`, followed by
+custom entries in source order.
+
+```xml
+<frame id="architecture" title="AWS Architecture" version="1.0.0"
+       width="720" height="420"
+       margin-top="52" margin-right="24"
+       margin-bottom="52" margin-left="24">
+  <metadata align="right" font-family="helvetica">
+    <entry key="owner" value="Platform Engineering" />
+    <entry key="status" value="Approved" break-before="true"
+           width="180" key-width="56" />
+  </metadata>
+  ...
+</frame>
+```
+
+`<metadata>` is non-layout configuration and may appear at most once as a
+direct frame child. It accepts only empty `<entry key="..." value="..." />`
+children; keys and values must be non-empty. This frame-local spelling is
+separate from document-level `<xaligo><metadata>`.
+
+| Attribute | Default | Description |
+|---|---|---|
+| `position` | `top` | `top` or `bottom` |
+| `align` | `left` | `left`, `center`, or `right`, applied to each row separately |
+| `font-family` | `virgil` | One of the nine supported presentation fonts |
+| `font-size` | `12` | Positive pixels; tag height is `ceil(font-size × 1.2) + 4` |
+| `color` | `#64748b` | Value text and, unless overridden, key text |
+| `key-color` | `color` | Key text |
+| `background-color` | `transparent` | Value-cell fill |
+| `key-background-color` | `#f8fafc` | Key-cell fill |
+| `border-color` | `#cbd5e1` | Cell borders, drawn with a fixed `0.75`-pixel stroke |
+| `width` | auto | Total width applied to every tag |
+| `key-width` | auto | Key-cell width applied to every tag |
+| `gap` | `8` | Horizontal space between tags |
+| `row-gap` | `4` | Space between wrapped rows |
+
+Each `<entry>` also accepts `break-before="true|false"`. Its default is
+`false`; `true` starts that entry on a new row when a preceding tag exists.
+
+An entry-level `width` or `key-width` overrides its metadata-level default.
+Omit either attribute for auto sizing; `auto` is descriptive, not a literal
+V1 numeric value. A fixed total width must still leave positive key and value
+cells. Colors accept `#RRGGBB` or `transparent`; fonts are `virgil`,
+`helvetica`, `cascadia`, `assistant`, `excalifont`, `nunito`, `lilita-one`,
+`comic-shanns`, or `liberation-sans`.
+
+Tags retain source order. Greedy left-to-right packing fills each row up to the
+usable content width, producing the minimum number of rows without reordering;
+`break-before` can introduce an earlier row boundary. Metadata `align` then
+positions each completed row independently.
+
+The band is anchored at the top or bottom of the frame padding box, while its
+tags use the content area's horizontal bounds after left/right margins. The
+existing top or bottom content margin absorbs the band and its fixed 8-pixel
+content gap first. If both fit, normal content keeps exactly the same box. If
+they exceed that margin, only the excess moves the corresponding content edge
+inward. `content-width`, `content-height`, and the frame-level `align` are
+resolved afterward, so normal children never overlap the tags. SVG, PPTX, PDF,
+Excel, and Excalidraw display the page-owned band; XYFlow and Isoflow omit it as
+page decoration. See the [frame metadata example](../examples/frame-metadata.md)
+for top, bottom, left/right/center alignment, explicit row breaks, and auto or
+fixed widths.
 
 ## Container
 

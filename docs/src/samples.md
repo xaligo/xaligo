@@ -15,6 +15,14 @@ automatic nearest-border selection and explicit side/anchor selection. It also
 shows the exact `to <frame ID>` and `from <frame ID>` labels generated on each
 page-local stub, plus PPTX, PDF, and Excel multi-page render commands.
 
+## Frame Metadata Tags
+
+The [frame metadata example](examples/frame-metadata.md) shows built-in
+`id`/`title`/content-`version` tags and arbitrary key/value entries. Its two
+pages cover top/right-aligned and bottom/center-aligned placement, automatic
+and fixed widths, an explicit row break, per-entry overrides, font/color
+settings, content-margin reuse, and page-link avoidance.
+
 ## Hybrid Enterprise Architecture
 
 ![Hybrid enterprise architecture sample](images/complex-hybrid-architecture.svg)

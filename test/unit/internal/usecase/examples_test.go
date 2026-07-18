@@ -51,6 +51,7 @@ func TestRenderExamplesThroughPublicUseCases(t *testing.T) {
 		{"all UML", "uml-all.xal", nil, `"type": "excalidraw"`, `<svg`, `"nodes"`, `"version": "3.3.0"`},
 		{"canonical V1 envelope", "canonical-v1-envelope.xal", nil, `to \u003cdatabase-detail\u003e`, `from &lt;overview&gt;`, `"crossFrame": true`, `"connectors"`},
 		{"cross-frame page links", "page-links.xal", nil, `to \u003cservice-detail\u003e`, `from &lt;overview&gt;`, `"crossFrame": true`, `"connectors"`},
+		{"frame metadata", "frame-metadata.xal", nil, `"xaligoFrameMetadata": true`, `AWS Architecture`, `"crossFrame": true`, `"connectors"`},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

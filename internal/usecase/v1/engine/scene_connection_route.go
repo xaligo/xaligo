@@ -183,7 +183,8 @@ func excalidrawRouteObstaclesV1EngineSceneConnectionRoute(elements []map[string]
 		isAnchorContent, _ := custom["xaligoAnchorContent"].(bool)
 		isHeader, _ := custom["xaligoGroupHeader"].(bool)
 		isHeaderContent, _ := custom["xaligoGroupHeaderContent"].(bool)
-		if !isAnchorContent && !isHeader && !isHeaderContent {
+		isFrameMetadata, _ := custom["xaligoFrameMetadata"].(bool)
+		if !isAnchorContent && !isHeader && !isHeaderContent && !isFrameMetadata {
 			continue
 		}
 		r, ok := elementRectV1EngineSceneConnectionRoute(el)

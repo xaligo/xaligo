@@ -9,15 +9,38 @@ import (
 )
 
 func TestStructuralDiffIgnoresSourceFormattingAndImplicitV1(t *testing.T) {
-	before := parseDiffDocument(t, `<frame width="320" height="180"><rectangle id="one" title="One" /></frame>`)
+	before := parseDiffDocument(t, `<frame id="root" width="320" height="180"><rectangle id="one" title="One" /></frame>`)
 	after := parseDiffDocument(t, `
-<frame height="180" version="1" width="320">
+<frame height="180" id="root" version="1" width="320">
   <rectangle title="One" id="one"></rectangle>
 </frame>`)
 
 	diff := engine.DiffDocumentsV1EngineDiffDocument(before, after)
 	if diff.AddedCount != 0 || diff.RemovedCount != 0 || diff.ModifiedCount != 0 {
 		t.Fatalf("diff = %#v, want no structural changes", diff)
+	}
+}
+
+func TestStructuralDiffIgnoresCanonicalDocumentRootVersion(t *testing.T) {
+	before := parseDiffDocument(t, `<xaligo><frames><frame id="page" /></frames></xaligo>`)
+	after := parseDiffDocument(t, `<xaligo version="1"><frames><frame id="page" /></frames></xaligo>`)
+
+	diff := engine.DiffDocumentsV1EngineDiffDocument(before, after)
+	if diff.AddedCount != 0 || diff.RemovedCount != 0 || diff.ModifiedCount != 0 {
+		t.Fatalf("diff = %#v, want no structural changes", diff)
+	}
+}
+
+func TestStructuralDiffIncludesIdentifiedChildFrameVersionEvenWhenValueIsOne(t *testing.T) {
+	before := parseDiffDocument(t, `<xaligo version="1"><frames><frame id="page" /></frames></xaligo>`)
+	after := parseDiffDocument(t, `<xaligo version="1"><frames><frame id="page" version="1" /></frames></xaligo>`)
+
+	diff := engine.DiffDocumentsV1EngineDiffDocument(before, after)
+	if diff.AddedCount != 0 || diff.RemovedCount != 0 || diff.ModifiedCount != 1 {
+		t.Fatalf("diff = %#v, want one modified frame", diff)
+	}
+	if len(diff.Before) != 1 || len(diff.After) != 1 || diff.Before[0].Identity != "id=page" || diff.After[0].Identity != "id=page" {
+		t.Fatalf("diff = %#v, want only identified child frame id=page modified", diff)
 	}
 }
 
@@ -88,6 +111,74 @@ func TestStructuralDiffShorthandChangeDoesNotMarkWholeFrame(t *testing.T) {
 	}
 	if len(diff.Before) != 1 || diff.Before[0].Tag != "connection" || len(diff.After) != 1 || diff.After[0].Tag != "connection" {
 		t.Fatalf("diff = %#v, want only connection changes", diff)
+	}
+}
+
+func TestStructuralDiffDetectsFrameMetadataChanges(t *testing.T) {
+	tests := []struct {
+		name        string
+		before      string
+		after       string
+		wantTag     string
+		wantAdded   int
+		wantRemoved int
+		wantChanged int
+	}{
+		{
+			name:        "metadata style",
+			before:      `<frame version="1"><metadata color="#111111"><entry key="owner" value="platform" /></metadata></frame>`,
+			after:       `<frame version="1"><metadata color="#222222"><entry key="owner" value="platform" /></metadata></frame>`,
+			wantTag:     "metadata",
+			wantChanged: 1,
+		},
+		{
+			name:        "entry key",
+			before:      `<frame version="1"><metadata><entry key="owner" value="platform" /></metadata></frame>`,
+			after:       `<frame version="1"><metadata><entry key="team" value="platform" /></metadata></frame>`,
+			wantTag:     "entry",
+			wantChanged: 1,
+		},
+		{
+			name:        "entry value",
+			before:      `<frame version="1"><metadata><entry key="owner" value="platform" /></metadata></frame>`,
+			after:       `<frame version="1"><metadata><entry key="owner" value="security" /></metadata></frame>`,
+			wantTag:     "entry",
+			wantChanged: 1,
+		},
+		{
+			name:      "entry added",
+			before:    `<frame version="1"><metadata><entry key="owner" value="platform" /></metadata></frame>`,
+			after:     `<frame version="1"><metadata><entry key="owner" value="platform" /><entry key="status" value="active" /></metadata></frame>`,
+			wantTag:   "entry",
+			wantAdded: 1,
+		},
+		{
+			name:        "entry removed",
+			before:      `<frame version="1"><metadata><entry key="owner" value="platform" /><entry key="status" value="active" /></metadata></frame>`,
+			after:       `<frame version="1"><metadata><entry key="owner" value="platform" /></metadata></frame>`,
+			wantTag:     "entry",
+			wantRemoved: 1,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			before := parseDiffDocument(t, test.before)
+			after := parseDiffDocument(t, test.after)
+			diff := engine.DiffDocumentsV1EngineDiffDocument(before, after)
+			if diff.AddedCount != test.wantAdded || diff.RemovedCount != test.wantRemoved || diff.ModifiedCount != test.wantChanged {
+				t.Fatalf("diff = %#v", diff)
+			}
+			changes := append(append([]entity.StructuralChange{}, diff.Before...), diff.After...)
+			if len(changes) == 0 {
+				t.Fatal("changes = nil")
+			}
+			for _, change := range changes {
+				if change.Tag != test.wantTag {
+					t.Fatalf("change = %#v, want tag %q", change, test.wantTag)
+				}
+			}
+		})
 	}
 }
 

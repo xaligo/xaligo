@@ -38,6 +38,7 @@ xaligo
 ├─ styles
 └─ frames
    └─ frame             page/layout boundary
+      ├─ metadata       visible page tag-band configuration
       ├─ existing layout and architecture components
       ├─ table
       ├─ database
@@ -109,6 +110,33 @@ geometry remains the page/crop boundary and the logical terminal for
 cross-frame page-link stubs. Excalidraw retains frame structure for editing
 with a transparent page-frame outline.
 
+## Frame metadata tag-band projection
+
+A page frame can place a top or bottom band of visible key/value tags inside
+its padding box. The band consumes the existing content margin on that edge
+before moving the content boundary. A non-empty frame `title`, direct-child
+content `version`, or direct `<metadata>` child enables it. When enabled,
+non-empty `id`, `title`, and `version` values are emitted in that order,
+followed by arbitrary `<entry key="..." value="..." />` children in source
+order. An ID-only frame keeps the historical layout and does not acquire a
+band.
+
+The normalized layout resolves font-dependent height, auto or fixed tag
+widths, greedy source-order wrapping, optional entry row breaks, and
+left/center/right alignment for each row. The fixed 8-pixel content gap and
+band height reuse the selected content margin; only an overflow beyond that
+margin shrinks the content box. The canonical scene then represents every key
+and value cell as page-owned decoration with stable ownership metadata. SVG,
+PPTX, PDF, Excel, and Excalidraw consume that same geometry. Per-frame
+projection retains only the owning page's tags, while combined compatibility
+output retains all bands. XYFlow and Isoflow omit them because page decoration
+is neither a graph node nor an endpoint.
+
+The tag band is drawn above connectors and participates in obstacle
+collection. Page-link terminal coordinates and `to <...>` / `from <...>`
+labels select clear positions around the band. The logical frame edge and page
+size are unchanged, and no visible frame outline is reintroduced.
+
 ## Cross-frame page-link projection
 
 A qualified endpoint such as `detail.database` is a logical connection across
@@ -139,6 +167,8 @@ orthogonal dogleg so both the endpoint and border segments remain perpendicular
 to the selected side. Borders shorter than 96 layout pixels use an adaptive
 quarter-length gutter. Coincident endpoint/border points shift along the border
 within the available gutter range to keep the page-link stub visible.
+If the selected edge also contains frame metadata tags, the terminal and label
+shift to the nearest free edge interval while preserving orthogonal routing.
 
 ## Processing boundaries
 

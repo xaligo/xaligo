@@ -36,12 +36,43 @@ type Box struct {
 	// set when visible overflow was actually required by resolved geometry.
 	Overflow   OverflowPolicy
 	Overflowed bool
+	// FrameMetadata contains the resolved page-margin key/value tags for a
+	// frame. Nil means that the frame did not opt into metadata presentation.
+	FrameMetadata *FrameMetadata
 
 	Children []*Box
 
 	StaggerDepth int
 	IsStaggerBg  bool
 	InStagger    bool
+}
+
+// FrameMetadata is the renderer-neutral presentation and resolved geometry of
+// one frame's page-margin metadata band.
+type FrameMetadata struct {
+	Position           string
+	Align              string
+	FontFamily         string
+	FontSize           float64
+	Color              string
+	KeyColor           string
+	BackgroundColor    string
+	KeyBackgroundColor string
+	BorderColor        string
+	Tags               []FrameMetadataTag
+}
+
+// FrameMetadataTag is one resolved two-cell key/value tag in a frame metadata
+// band. KeyW is the width of the key cell; W includes both cells.
+type FrameMetadataTag struct {
+	Key        string
+	Value      string
+	X          float64
+	Y          float64
+	W          float64
+	H          float64
+	KeyW       float64
+	DiffStatus string
 }
 
 // Spacing stores resolved edge spacing in pixels.

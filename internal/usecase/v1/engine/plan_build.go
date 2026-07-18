@@ -128,6 +128,8 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 
 	ops := []entity.DrawOp{}
 	diffAreaHighlights := []entity.DrawOp{}
+	frameMetadataShapes := []entity.DrawOp{}
+	frameMetadataTexts := []entity.DrawOp{}
 
 	// 1) Anchor grids first → behind the icons drawn on top.
 	gridIDs := make([]string, 0, len(prepared.gridRects))
@@ -157,7 +159,9 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 		switch el.Type {
 		case "frame", "rectangle", "ellipse", "diamond":
 			if op, ok := shapeOpV1EnginePlanShape(el, frame, ppi); ok {
-				if el.CustomData != nil && el.CustomData.DiffHighlight {
+				if el.CustomData != nil && el.CustomData.FrameMetadata {
+					frameMetadataShapes = append(frameMetadataShapes, op)
+				} else if el.CustomData != nil && el.CustomData.DiffHighlight {
 					diffAreaHighlights = append(diffAreaHighlights, op)
 				} else {
 					ops = append(ops, op)
@@ -255,7 +259,11 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 		case "text":
 			if op, ok := textOpV1EnginePlanText(el, frame, ppi); ok {
 				applyAnchorGroupV1EnginePlanAnchor(&op, el.ID, anchorGroupIDs)
-				ops = append(ops, op)
+				if el.CustomData != nil && el.CustomData.FrameMetadata {
+					frameMetadataTexts = append(frameMetadataTexts, op)
+				} else {
+					ops = append(ops, op)
+				}
 			}
 		case "image":
 			if op, ok := imageOpV1EnginePlanImage(el, scene.Files, frame, ppi); ok {
@@ -266,6 +274,8 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 	}
 	ops = append(ops, diffAreaHighlights...)
 	ops = append(ops, connectorLabels...)
+	ops = append(ops, frameMetadataShapes...)
+	ops = append(ops, frameMetadataTexts...)
 
 	return entity.Plan{
 		Slide: entity.PlanSlide{

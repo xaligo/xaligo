@@ -2,13 +2,10 @@ package engine
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 
 	"github.com/xaligo/xaligo/internal/entity"
 )
-
-var tableColorPatternV1EngineParseTable = regexp.MustCompile(`^#[0-9a-fA-F]{6}$`)
 
 var tableStyleAttributesV1EngineParseTable = []string{"color", "background-color", "border-color", "font-family", "font-size"}
 
@@ -129,25 +126,8 @@ func normalizeTableV1EngineParseTable(table *entity.Node) error {
 }
 
 func normalizeTableStyleV1EngineParseTable(node *entity.Node) error {
-	for _, name := range []string{"color", "background-color", "border-color"} {
-		value, exists := node.Attrs[name]
-		if !exists {
-			continue
-		}
-		value = strings.TrimSpace(value)
-		if !tableColorPatternV1EngineParseTable.MatchString(value) && value != "transparent" {
-			return fmt.Errorf("<%s %s=%q> must be #RRGGBB or transparent", node.Tag, name, value)
-		}
-		node.Attrs[name] = strings.ToLower(value)
-	}
-	if family, exists := node.Attrs["font-family"]; exists {
-		family = strings.ToLower(strings.TrimSpace(family))
-		switch family {
-		case "virgil", "helvetica", "cascadia", "assistant", "excalifont", "nunito", "lilita-one", "comic-shanns", "liberation-sans":
-			node.Attrs["font-family"] = family
-		default:
-			return fmt.Errorf("<%s font-family=%q> is not a supported font family", node.Tag, family)
-		}
+	if err := normalizePresentationStyleV1EngineParsePresentationStyle(node, "color", "background-color", "border-color"); err != nil {
+		return err
 	}
 	if node.Tag == "table" {
 		header := &entity.Node{Tag: "table header style", Attrs: map[string]string{}}

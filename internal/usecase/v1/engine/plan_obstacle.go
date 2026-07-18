@@ -13,8 +13,12 @@ func collectObstaclesV1EnginePlanObstacle(elements []*entity.Element) []rectV1En
 		if el.ID == "paper-frame" {
 			continue
 		}
+		if el.CustomData != nil && el.CustomData.DiffHighlight {
+			continue
+		}
 		isHeader := el.CustomData != nil && el.CustomData.GroupHeader
-		if el.Type != "image" && el.Type != "text" && !isHeader {
+		isFrameMetadata := el.CustomData != nil && el.CustomData.FrameMetadata
+		if el.Type != "image" && el.Type != "text" && !isHeader && !isFrameMetadata {
 			continue
 		}
 		r, ok := rectOfV1EnginePlanGeometry(el)
@@ -33,7 +37,7 @@ func collectObstaclesV1EnginePlanObstacle(elements []*entity.Element) []rectV1En
 func collectContainerBorderPathsV1EnginePlanObstacle(elements []*entity.Element) [][]segmentV1EngineRouteTypes {
 	paths := make([][]segmentV1EngineRouteTypes, 0)
 	for _, el := range elements {
-		if el.ID == "paper-frame" || (el.CustomData != nil && (el.CustomData.PageFrame || el.CustomData.DiffHighlight)) || (el.Type != "frame" && el.Type != "rectangle") {
+		if el.ID == "paper-frame" || (el.CustomData != nil && (el.CustomData.PageFrame || el.CustomData.DiffHighlight || el.CustomData.FrameMetadata)) || (el.Type != "frame" && el.Type != "rectangle") {
 			continue
 		}
 		stroke := strings.ToLower(strings.TrimSpace(el.StrokeColor))

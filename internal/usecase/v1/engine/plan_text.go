@@ -19,6 +19,9 @@ func textOpV1EnginePlanText(el *entity.Element, frame rectV1EngineRouteTypes, pp
 	if text == "" {
 		return entity.DrawOp{}, false
 	}
+	if strings.EqualFold(strings.TrimSpace(el.StrokeColor), "transparent") || strings.EqualFold(strings.TrimSpace(el.StrokeColor), "#00000000") {
+		return entity.DrawOp{}, false
+	}
 	fontSize := 12.0
 	if el.FontSize != nil {
 		fontSize = *el.FontSize
@@ -30,6 +33,7 @@ func textOpV1EnginePlanText(el *entity.Element, frame rectV1EngineRouteTypes, pp
 	}
 	return entity.DrawOp{
 		ID:         el.ID,
+		FrontLayer: el.CustomData != nil && el.CustomData.FrameMetadata,
 		Kind:       "text",
 		X:          p.X,
 		Y:          p.Y,

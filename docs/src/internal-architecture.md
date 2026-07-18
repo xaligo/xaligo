@@ -95,8 +95,11 @@ therefore occurs before either final output is written.
 
 The current
 [`ParseV1EngineParseDocument`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/v1/engine/parse_document.go)
-accepts only `<frame>` and `<frames>` roots. Explicit `version="1"` defines the
-recommended frozen V1 profile; omission defaults to V1 with a warning. Native V2 will
+accepts the canonical `<xaligo version="1"><frames>...</frames></xaligo>`
+envelope and historical `<frame>` / `<frames>` roots. Explicit root
+`version="1"` defines the recommended frozen V1 profile; omission defaults to
+V1 with a warning. A direct child frame may independently use `version` as its
+visible page-content revision. Native V2 will
 use `<scene version="2">`; the distinct root is intentional so the V1 parser
 rejects V2 before interpreting any nested tag as a permissive V1 custom group.
 
@@ -344,6 +347,20 @@ The physical encoders map the same page order as follows:
 The preview adapter explicitly requests `CombineFrames` so the browser still
 shows all frames on one SVG canvas. Excalidraw, XYFlow, and Isoflow never enter
 the physical-page split and remain one logical document.
+
+Frame metadata follows the same downstream ownership model. The parser
+normalizes a direct frame `<metadata>` block and distinguishes a child-frame
+content revision from the root DSL version. Shared layout resolves the
+top/bottom band inside frame padding, font-sized tag height, auto/fixed widths,
+greedy wrapping, explicit row breaks, and per-row alignment on
+`Box.FrameMetadata`. The band reuses the selected content margin and changes
+the remaining content box only when its height plus the fixed content gap
+overflows that margin. Scene construction emits stable page-owned key/value
+shapes and text once. They are collected as obstacles, kept above connectors,
+and projected with their owning `DocumentPage`; the SVG, PPTX, PDF, Excel, and
+Excalidraw repositories do not recompute the band. XYFlow and Isoflow discard
+the decoration through their normal semantic projection instead of exposing
+synthetic nodes.
 
 Every text operation now carries a renderer-neutral
 [`TextLayout`](https://github.com/xaligo/xaligo/blob/main/internal/entity/presentation.go)

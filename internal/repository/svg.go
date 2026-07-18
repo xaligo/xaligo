@@ -9,6 +9,7 @@ import (
 	"unicode"
 
 	"github.com/xaligo/xaligo/internal/entity"
+	"github.com/xaligo/xaligo/internal/share"
 )
 
 const svgDefaultPxPerInch = 96.0
@@ -550,28 +551,7 @@ func svgBreakTextToken(value string, maxWidth, fontSize float64, bold bool) []st
 }
 
 func svgTextWidth(value string, fontSize float64, bold bool) float64 {
-	factor := 1.0
-	if bold {
-		factor = 1.05
-	}
-	units := 0.0
-	for _, r := range value {
-		switch {
-		case unicode.Is(unicode.Mn, r), unicode.Is(unicode.Me, r):
-			continue
-		case unicode.IsSpace(r):
-			units += 0.33
-		case r >= 0x1100:
-			units += 1.0
-		case unicode.IsPunct(r):
-			units += 0.42
-		case unicode.IsUpper(r):
-			units += 0.62
-		default:
-			units += 0.55
-		}
-	}
-	return units * fontSize * factor
+	return share.PresentationTextWidth(value, fontSize, bold)
 }
 
 func svgTextClipID(op entity.DrawOp, x, y, w, h float64) string {

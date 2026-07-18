@@ -212,7 +212,7 @@ func diffNodeMatchCostV1EngineDiffMatch(before, after *entity.Node) int {
 	if beforeIdentity != afterIdentity && (beforeIdentity != "" || afterIdentity != "") {
 		return 250
 	}
-	if diffOwnFingerprintV1EngineDiffFingerprint(before) == diffOwnFingerprintV1EngineDiffFingerprint(after) {
+	if diffOwnFingerprintV1EngineDiffFingerprint(before, false) == diffOwnFingerprintV1EngineDiffFingerprint(after, false) {
 		return 10
 	}
 	cost := 60 + 15*diffAttributeDistanceV1EngineDiffFingerprint(before, after)

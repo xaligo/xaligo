@@ -73,6 +73,7 @@ func BuildJSONV1EngineSceneBuild(root *entity.Box, svgGroupDir string, catalogCS
 	itemImgIDs := map[string]string{}
 	itemLblIDs := map[string]string{}
 	frameRects := map[string][4]float64{}
+	frameElementIDs := map[string]string{}
 	if root.Tag == "frames" {
 		for _, child := range root.Children {
 			if child.Tag != "frame" {
@@ -101,6 +102,7 @@ func BuildJSONV1EngineSceneBuild(root *entity.Box, svgGroupDir string, catalogCS
 			}
 			elements = append(elements, pageFrame)
 			frameRects[frameID] = [4]float64{child.X, child.Y, child.W, child.H}
+			frameElementIDs[frameID] = pageFrameID
 			registerConnectionEndpointV1EngineSceneWalk(child, pageFrameID, frameRects[frameID], itemImgRects, itemImgIDs)
 		}
 	}
@@ -117,8 +119,9 @@ func BuildJSONV1EngineSceneBuild(root *entity.Box, svgGroupDir string, catalogCS
 			return nil, err
 		}
 	}
+	frameMetadata := appendFrameMetadataV1EngineSceneFrameMetadata(root, &elements)
 	applySemanticElementMetadataV1EngineSceneWalk(elements, collectSemanticElementMetadataV1EngineSceneWalk(root))
-	renderConnectionsV1EngineSceneConnectionRender(connections, itemImgRects, itemLblRects, itemImgIDs, itemLblIDs, frameRects, &elements)
+	renderConnectionsV1EngineSceneConnectionRender(connections, itemImgRects, itemLblRects, itemImgIDs, itemLblIDs, frameRects, frameElementIDs, frameMetadata, &elements)
 	appendDiffBoxHighlightsV1EngineSceneDiffHighlight(root, &elements)
 	elements = orderSceneLayersV1EngineSceneBuild(elements)
 
@@ -145,8 +148,18 @@ func orderSceneLayersV1EngineSceneBuild(elements []map[string]any) []map[string]
 	anchorBackgrounds := make([]map[string]any, 0)
 	anchorContent := make([]map[string]any, 0)
 	headContent := make([]map[string]any, 0)
+	metadataBackgrounds := make([]map[string]any, 0)
+	metadataContent := make([]map[string]any, 0)
 	for _, el := range elements {
 		custom, _ := el["customData"].(map[string]any)
+		if isMetadata, _ := custom["xaligoFrameMetadata"].(bool); isMetadata {
+			if isContent, _ := custom["xaligoFrameMetadataContent"].(bool); isContent {
+				metadataContent = append(metadataContent, el)
+			} else {
+				metadataBackgrounds = append(metadataBackgrounds, el)
+			}
+			continue
+		}
 		if isHeader, _ := custom["xaligoGroupHeader"].(bool); isHeader {
 			headShapes = append(headShapes, el)
 			continue
@@ -174,7 +187,9 @@ func orderSceneLayersV1EngineSceneBuild(elements []map[string]any) []map[string]
 	ordered = append(ordered, connectors...)
 	ordered = append(ordered, anchorBackgrounds...)
 	ordered = append(ordered, anchorContent...)
-	return append(ordered, headContent...)
+	ordered = append(ordered, headContent...)
+	ordered = append(ordered, metadataBackgrounds...)
+	return append(ordered, metadataContent...)
 }
 
 func avoidGroupHeaderBorderOverlapV1EngineSceneBuild(x, y, w, h float64, ownBorderID string, elements []map[string]any) float64 {
