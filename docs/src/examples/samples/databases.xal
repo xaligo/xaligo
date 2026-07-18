@@ -2,15 +2,20 @@
   <data>
     <database-schema id="application-schema">
       <entity id="roles" name="roles">
-        <column name="id" type="bigint" primary-key="true" nullable="false" />
+        <column name="tenant_id" type="bigint" nullable="false" />
+        <column name="id" type="bigint" nullable="false" />
         <column name="name" type="varchar(100)" unique="true" />
+        <primary-key columns="tenant_id,id" />
       </entity>
 
       <entity id="users" name="users">
         <column name="id" type="bigint" primary-key="true" nullable="false" />
+        <column name="tenant_id" type="bigint" nullable="false" />
         <column name="email" type="varchar(255)" unique="true" nullable="false" />
         <column name="role_id" type="bigint" nullable="false" />
-        <foreign-key columns="role_id" references="roles.id" />
+        <foreign-key columns="tenant_id,role_id"
+                     references="roles.tenant_id,roles.id"
+                     on-delete="restrict" />
       </entity>
     </database-schema>
   </data>

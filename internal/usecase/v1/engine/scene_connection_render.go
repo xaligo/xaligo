@@ -214,6 +214,7 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 		if hasDstAnchor {
 			customData["xaligoConnectorEndAnchor"] = true
 		}
+		applyDatabaseConnectionMetadataV1EngineSceneConnectionRender(customData, conn)
 		applyConnectionDiffStatusV1EngineSceneDiffHighlight(customData, conn)
 
 		*elements = append(*elements, map[string]any{
@@ -294,6 +295,22 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 			existing, _ := elem["boundElements"].([]map[string]any)
 			elem["boundElements"] = append(existing, entries...)
 			(*elements)[idx] = elem
+		}
+	}
+}
+
+func applyDatabaseConnectionMetadataV1EngineSceneConnectionRender(customData map[string]any, conn *entity.Node) {
+	if customData == nil || conn == nil {
+		return
+	}
+	for source, target := range map[string]string{
+		"_xaligoDatabaseForeignKey": "xaligoDatabaseForeignKey",
+		"_xaligoDatabaseReferences": "xaligoDatabaseReferences",
+		"_xaligoDatabaseOnDelete":   "xaligoDatabaseOnDelete",
+		"_xaligoDatabaseOnUpdate":   "xaligoDatabaseOnUpdate",
+	} {
+		if value := strings.TrimSpace(conn.Attr(source)); value != "" {
+			customData[target] = value
 		}
 	}
 }

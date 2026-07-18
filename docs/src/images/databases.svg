@@ -6,78 +6,96 @@
 <rect x="0" y="0" width="960" height="540" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
 <rect x="16" y="16" width="928" height="508" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
 <rect x="28" y="60" width="444" height="452" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
-<rect x="40" y="104" width="140" height="132" fill="#F1F5F9" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
-<rect x="180" y="104" width="140" height="132" fill="#F1F5F9" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
-<rect x="320" y="104" width="140" height="132" fill="#F1F5F9" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
-<rect x="40" y="236" width="140" height="132" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
-<rect x="180" y="236" width="140" height="132" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
-<rect x="320" y="236" width="140" height="132" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
-<rect x="40" y="368" width="140" height="132" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
-<rect x="180" y="368" width="140" height="132" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
-<rect x="320" y="368" width="140" height="132" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="40" y="104" width="140" height="99" fill="#F1F5F9" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="180" y="104" width="140" height="99" fill="#F1F5F9" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="320" y="104" width="140" height="99" fill="#F1F5F9" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="40" y="203" width="140" height="99" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="180" y="203" width="140" height="99" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="320" y="203" width="140" height="99" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="40" y="302" width="140" height="99" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="180" y="302" width="140" height="99" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="320" y="302" width="140" height="99" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="40" y="401" width="140" height="99" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="180" y="401" width="140" height="99" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="320" y="401" width="140" height="99" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
 <rect x="488" y="60" width="444" height="452" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
-<rect x="500" y="104" width="140" height="99" fill="#F1F5F9" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
-<rect x="640" y="104" width="140" height="99" fill="#F1F5F9" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
-<rect x="780" y="104" width="140" height="99" fill="#F1F5F9" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
-<rect x="500" y="203" width="140" height="99" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
-<rect x="640" y="203" width="140" height="99" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
-<rect x="780" y="203" width="140" height="99" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
-<rect x="500" y="302" width="140" height="99" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
-<rect x="640" y="302" width="140" height="99" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
-<rect x="780" y="302" width="140" height="99" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
-<rect x="500" y="401" width="140" height="99" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
-<rect x="640" y="401" width="140" height="99" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
-<rect x="780" y="401" width="140" height="99" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="500" y="104" width="140" height="79.2" fill="#F1F5F9" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="640" y="104" width="140" height="79.2" fill="#F1F5F9" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="780" y="104" width="140" height="79.2" fill="#F1F5F9" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="500" y="183.2" width="140" height="79.2" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="640" y="183.2" width="140" height="79.2" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="780" y="183.2" width="140" height="79.2" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="500" y="262.4" width="140" height="79.2" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="640" y="262.4" width="140" height="79.2" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="780" y="262.4" width="140" height="79.2" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="500" y="341.6" width="140" height="79.2" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="640" y="341.6" width="140" height="79.2" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="780" y="341.6" width="140" height="79.2" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="500" y="420.8" width="140" height="79.2" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="640" y="420.8" width="140" height="79.2" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="780" y="420.8" width="140" height="79.2" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
 <path d="M 483 286 L 477 286" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1" marker-end="url(#xaligo-stealth)"/>
 <defs><clipPath id="xaligo-text-clip-7e0b50640abf5d20" clipPathUnits="userSpaceOnUse"><rect x="28" y="28" width="188" height="24"/></clipPath></defs>
 <text x="28" y="38" fill="#1E1E1E" font-family="Virgil" font-size="10" text-anchor="start" clip-path="url(#xaligo-text-clip-7e0b50640abf5d20)"><tspan x="28" y="38">Application</tspan><tspan x="28" dy="12">Schema</tspan></text>
 <defs><clipPath id="xaligo-text-clip-1e01f5bee93c20e4" clipPathUnits="userSpaceOnUse"><rect x="40" y="72" width="58" height="24"/></clipPath></defs>
 <text x="40" y="92" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-1e01f5bee93c20e4)"><tspan x="40" y="92">roles</tspan></text>
-<defs><clipPath id="xaligo-text-clip-57bf7a2885c0ec24" clipPathUnits="userSpaceOnUse"><rect x="44" y="106" width="132" height="128"/></clipPath></defs>
-<text x="44" y="178" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-57bf7a2885c0ec24)"><tspan x="44" y="178">Column</tspan></text>
-<defs><clipPath id="xaligo-text-clip-dd405e1cfe0ee22" clipPathUnits="userSpaceOnUse"><rect x="184" y="106" width="132" height="128"/></clipPath></defs>
-<text x="184" y="178" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-dd405e1cfe0ee22)"><tspan x="184" y="178">Type</tspan></text>
-<defs><clipPath id="xaligo-text-clip-acdeb005197088e9" clipPathUnits="userSpaceOnUse"><rect x="324" y="106" width="132" height="128"/></clipPath></defs>
-<text x="324" y="178" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-acdeb005197088e9)"><tspan x="324" y="178">Constraints</tspan></text>
-<defs><clipPath id="xaligo-text-clip-64776af4cc32f1d3" clipPathUnits="userSpaceOnUse"><rect x="44" y="238" width="132" height="128"/></clipPath></defs>
-<text x="44" y="310" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-64776af4cc32f1d3)"><tspan x="44" y="310">id</tspan></text>
-<defs><clipPath id="xaligo-text-clip-2efba9787e3a15bb" clipPathUnits="userSpaceOnUse"><rect x="184" y="238" width="132" height="128"/></clipPath></defs>
-<text x="184" y="310" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-2efba9787e3a15bb)"><tspan x="184" y="310">bigint</tspan></text>
-<defs><clipPath id="xaligo-text-clip-39d8c7dbc7d6daa0" clipPathUnits="userSpaceOnUse"><rect x="324" y="238" width="132" height="128"/></clipPath></defs>
-<text x="324" y="298" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-39d8c7dbc7d6daa0)"><tspan x="324" y="298">PK, NOT</tspan><tspan x="324" dy="24">NULL</tspan></text>
-<defs><clipPath id="xaligo-text-clip-6d36edc811bd1237" clipPathUnits="userSpaceOnUse"><rect x="44" y="370" width="132" height="128"/></clipPath></defs>
-<text x="44" y="442" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-6d36edc811bd1237)"><tspan x="44" y="442">name</tspan></text>
-<defs><clipPath id="xaligo-text-clip-dd72af7a948ddfa5" clipPathUnits="userSpaceOnUse"><rect x="184" y="370" width="132" height="128"/></clipPath></defs>
-<text x="184" y="442" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-dd72af7a948ddfa5)"><tspan x="184" y="442">varchar(100)</tspan></text>
-<defs><clipPath id="xaligo-text-clip-a7cd544bd032be4a" clipPathUnits="userSpaceOnUse"><rect x="324" y="370" width="132" height="128"/></clipPath></defs>
-<text x="324" y="442" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-a7cd544bd032be4a)"><tspan x="324" y="442">UNIQUE</tspan></text>
+<defs><clipPath id="xaligo-text-clip-15b264acd7707eb" clipPathUnits="userSpaceOnUse"><rect x="44" y="106" width="132" height="95"/></clipPath></defs>
+<text x="44" y="161.5" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-15b264acd7707eb)"><tspan x="44" y="161.5">Column</tspan></text>
+<defs><clipPath id="xaligo-text-clip-7633047520305051" clipPathUnits="userSpaceOnUse"><rect x="184" y="106" width="132" height="95"/></clipPath></defs>
+<text x="184" y="161.5" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-7633047520305051)"><tspan x="184" y="161.5">Type</tspan></text>
+<defs><clipPath id="xaligo-text-clip-c2e4be822202e90" clipPathUnits="userSpaceOnUse"><rect x="324" y="106" width="132" height="95"/></clipPath></defs>
+<text x="324" y="161.5" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-c2e4be822202e90)"><tspan x="324" y="161.5">Constraints</tspan></text>
+<defs><clipPath id="xaligo-text-clip-6da53a57e199b6fe" clipPathUnits="userSpaceOnUse"><rect x="44" y="205" width="132" height="95"/></clipPath></defs>
+<text x="44" y="260.5" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-6da53a57e199b6fe)"><tspan x="44" y="260.5">tenant_id</tspan></text>
+<defs><clipPath id="xaligo-text-clip-7b5259910b5acf26" clipPathUnits="userSpaceOnUse"><rect x="184" y="205" width="132" height="95"/></clipPath></defs>
+<text x="184" y="260.5" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-7b5259910b5acf26)"><tspan x="184" y="260.5">bigint</tspan></text>
+<defs><clipPath id="xaligo-text-clip-1840d9c70d3885ff" clipPathUnits="userSpaceOnUse"><rect x="324" y="205" width="132" height="95"/></clipPath></defs>
+<text x="324" y="248.5" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-1840d9c70d3885ff)"><tspan x="324" y="248.5">PK, NOT</tspan><tspan x="324" dy="24">NULL</tspan></text>
+<defs><clipPath id="xaligo-text-clip-fca8b700e17b4239" clipPathUnits="userSpaceOnUse"><rect x="44" y="304" width="132" height="95"/></clipPath></defs>
+<text x="44" y="359.5" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-fca8b700e17b4239)"><tspan x="44" y="359.5">id</tspan></text>
+<defs><clipPath id="xaligo-text-clip-84c4d11a455cda43" clipPathUnits="userSpaceOnUse"><rect x="184" y="304" width="132" height="95"/></clipPath></defs>
+<text x="184" y="359.5" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-84c4d11a455cda43)"><tspan x="184" y="359.5">bigint</tspan></text>
+<defs><clipPath id="xaligo-text-clip-861f016fea16b966" clipPathUnits="userSpaceOnUse"><rect x="324" y="304" width="132" height="95"/></clipPath></defs>
+<text x="324" y="347.5" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-861f016fea16b966)"><tspan x="324" y="347.5">PK, NOT</tspan><tspan x="324" dy="24">NULL</tspan></text>
+<defs><clipPath id="xaligo-text-clip-6b60c9e01f4fe364" clipPathUnits="userSpaceOnUse"><rect x="44" y="403" width="132" height="95"/></clipPath></defs>
+<text x="44" y="458.5" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-6b60c9e01f4fe364)"><tspan x="44" y="458.5">name</tspan></text>
+<defs><clipPath id="xaligo-text-clip-fb7875c31d18bea0" clipPathUnits="userSpaceOnUse"><rect x="184" y="403" width="132" height="95"/></clipPath></defs>
+<text x="184" y="458.5" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-fb7875c31d18bea0)"><tspan x="184" y="458.5">varchar(100)</tspan></text>
+<defs><clipPath id="xaligo-text-clip-aa690296be6a7985" clipPathUnits="userSpaceOnUse"><rect x="324" y="403" width="132" height="95"/></clipPath></defs>
+<text x="324" y="458.5" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-aa690296be6a7985)"><tspan x="324" y="458.5">UNIQUE</tspan></text>
 <defs><clipPath id="xaligo-text-clip-6615b1eb805432be" clipPathUnits="userSpaceOnUse"><rect x="500" y="72" width="58" height="24"/></clipPath></defs>
 <text x="500" y="92" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-6615b1eb805432be)"><tspan x="500" y="92">users</tspan></text>
-<defs><clipPath id="xaligo-text-clip-7997bb64b8da16e5" clipPathUnits="userSpaceOnUse"><rect x="504" y="106" width="132" height="95"/></clipPath></defs>
-<text x="504" y="161.5" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-7997bb64b8da16e5)"><tspan x="504" y="161.5">Column</tspan></text>
-<defs><clipPath id="xaligo-text-clip-766f04e7d200e2b5" clipPathUnits="userSpaceOnUse"><rect x="644" y="106" width="132" height="95"/></clipPath></defs>
-<text x="644" y="161.5" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-766f04e7d200e2b5)"><tspan x="644" y="161.5">Type</tspan></text>
-<defs><clipPath id="xaligo-text-clip-1bc0803542428cd" clipPathUnits="userSpaceOnUse"><rect x="784" y="106" width="132" height="95"/></clipPath></defs>
-<text x="784" y="161.5" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-1bc0803542428cd)"><tspan x="784" y="161.5">Constraints</tspan></text>
-<defs><clipPath id="xaligo-text-clip-2f382502b661e3e2" clipPathUnits="userSpaceOnUse"><rect x="504" y="205" width="132" height="95"/></clipPath></defs>
-<text x="504" y="260.5" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-2f382502b661e3e2)"><tspan x="504" y="260.5">id</tspan></text>
-<defs><clipPath id="xaligo-text-clip-2a008f7949a39dfa" clipPathUnits="userSpaceOnUse"><rect x="644" y="205" width="132" height="95"/></clipPath></defs>
-<text x="644" y="260.5" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-2a008f7949a39dfa)"><tspan x="644" y="260.5">bigint</tspan></text>
-<defs><clipPath id="xaligo-text-clip-79108f7b72c4f0ae" clipPathUnits="userSpaceOnUse"><rect x="784" y="205" width="132" height="95"/></clipPath></defs>
-<text x="784" y="248.5" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-79108f7b72c4f0ae)"><tspan x="784" y="248.5">PK, NOT</tspan><tspan x="784" dy="24">NULL</tspan></text>
-<defs><clipPath id="xaligo-text-clip-9087be614802137" clipPathUnits="userSpaceOnUse"><rect x="504" y="304" width="132" height="95"/></clipPath></defs>
-<text x="504" y="359.5" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-9087be614802137)"><tspan x="504" y="359.5">email</tspan></text>
-<defs><clipPath id="xaligo-text-clip-8173635154346c73" clipPathUnits="userSpaceOnUse"><rect x="644" y="304" width="132" height="95"/></clipPath></defs>
-<text x="644" y="359.5" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-8173635154346c73)"><tspan x="644" y="359.5">varchar(255)</tspan></text>
-<defs><clipPath id="xaligo-text-clip-dce9ed60291c634f" clipPathUnits="userSpaceOnUse"><rect x="784" y="304" width="132" height="95"/></clipPath></defs>
-<text x="784" y="347.5" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-dce9ed60291c634f)"><tspan x="784" y="347.5">NOT NULL,</tspan><tspan x="784" dy="24">UNIQUE</tspan></text>
-<defs><clipPath id="xaligo-text-clip-7c7cc2252a73f5a4" clipPathUnits="userSpaceOnUse"><rect x="504" y="403" width="132" height="95"/></clipPath></defs>
-<text x="504" y="458.5" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-7c7cc2252a73f5a4)"><tspan x="504" y="458.5">role_id</tspan></text>
-<defs><clipPath id="xaligo-text-clip-d4be3b521d3e7460" clipPathUnits="userSpaceOnUse"><rect x="644" y="403" width="132" height="95"/></clipPath></defs>
-<text x="644" y="458.5" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-d4be3b521d3e7460)"><tspan x="644" y="458.5">bigint</tspan></text>
-<defs><clipPath id="xaligo-text-clip-616dbc974a355348" clipPathUnits="userSpaceOnUse"><rect x="784" y="403" width="132" height="95"/></clipPath></defs>
-<text x="784" y="458.5" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-616dbc974a355348)"><tspan x="784" y="458.5">NOT NULL</tspan></text>
-<defs><clipPath id="xaligo-text-clip-145288383c9aefc0" clipPathUnits="userSpaceOnUse"><rect x="460" y="288" width="22" height="12"/></clipPath></defs>
-<text x="471" y="297.667" fill="#1E1E1E" font-family="Helvetica" font-size="7.333" text-anchor="middle" font-weight="700" clip-path="url(#xaligo-text-clip-145288383c9aefc0)"><tspan x="471" y="297.667">L01</tspan></text>
+<defs><clipPath id="xaligo-text-clip-89c04416392c3005" clipPathUnits="userSpaceOnUse"><rect x="504" y="106" width="132" height="75.2"/></clipPath></defs>
+<text x="504" y="151.6" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-89c04416392c3005)"><tspan x="504" y="151.6">Column</tspan></text>
+<defs><clipPath id="xaligo-text-clip-da5d91c6e2a154d5" clipPathUnits="userSpaceOnUse"><rect x="644" y="106" width="132" height="75.2"/></clipPath></defs>
+<text x="644" y="151.6" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-da5d91c6e2a154d5)"><tspan x="644" y="151.6">Type</tspan></text>
+<defs><clipPath id="xaligo-text-clip-585483549683e49d" clipPathUnits="userSpaceOnUse"><rect x="784" y="106" width="132" height="75.2"/></clipPath></defs>
+<text x="784" y="151.6" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-585483549683e49d)"><tspan x="784" y="151.6">Constraints</tspan></text>
+<defs><clipPath id="xaligo-text-clip-8ceea2fc72ae8fd5" clipPathUnits="userSpaceOnUse"><rect x="504" y="185.2" width="132" height="75.2"/></clipPath></defs>
+<text x="504" y="230.8" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-8ceea2fc72ae8fd5)"><tspan x="504" y="230.8">id</tspan></text>
+<defs><clipPath id="xaligo-text-clip-8e506867443b5ad" clipPathUnits="userSpaceOnUse"><rect x="644" y="185.2" width="132" height="75.2"/></clipPath></defs>
+<text x="644" y="230.8" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-8e506867443b5ad)"><tspan x="644" y="230.8">bigint</tspan></text>
+<defs><clipPath id="xaligo-text-clip-d1e05524fa71fe89" clipPathUnits="userSpaceOnUse"><rect x="784" y="185.2" width="132" height="75.2"/></clipPath></defs>
+<text x="784" y="218.8" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-d1e05524fa71fe89)"><tspan x="784" y="218.8">PK, NOT</tspan><tspan x="784" dy="24">NULL</tspan></text>
+<defs><clipPath id="xaligo-text-clip-4a992dd5e2482852" clipPathUnits="userSpaceOnUse"><rect x="504" y="264.4" width="132" height="75.2"/></clipPath></defs>
+<text x="504" y="310" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-4a992dd5e2482852)"><tspan x="504" y="310">tenant_id</tspan></text>
+<defs><clipPath id="xaligo-text-clip-48e262ab3289d3e6" clipPathUnits="userSpaceOnUse"><rect x="644" y="264.4" width="132" height="75.2"/></clipPath></defs>
+<text x="644" y="310" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-48e262ab3289d3e6)"><tspan x="644" y="310">bigint</tspan></text>
+<defs><clipPath id="xaligo-text-clip-741fce7955c1f5ba" clipPathUnits="userSpaceOnUse"><rect x="784" y="264.4" width="132" height="75.2"/></clipPath></defs>
+<text x="784" y="310" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-741fce7955c1f5ba)"><tspan x="784" y="310">NOT NULL</tspan></text>
+<defs><clipPath id="xaligo-text-clip-31411f9ebb54b7fb" clipPathUnits="userSpaceOnUse"><rect x="504" y="343.6" width="132" height="75.2"/></clipPath></defs>
+<text x="504" y="389.2" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-31411f9ebb54b7fb)"><tspan x="504" y="389.2">email</tspan></text>
+<defs><clipPath id="xaligo-text-clip-71cf242dc1b68187" clipPathUnits="userSpaceOnUse"><rect x="644" y="343.6" width="132" height="75.2"/></clipPath></defs>
+<text x="644" y="389.2" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-71cf242dc1b68187)"><tspan x="644" y="389.2">varchar(255)</tspan></text>
+<defs><clipPath id="xaligo-text-clip-ea57e3a03b6f2c3f" clipPathUnits="userSpaceOnUse"><rect x="784" y="343.6" width="132" height="75.2"/></clipPath></defs>
+<text x="784" y="377.2" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-ea57e3a03b6f2c3f)"><tspan x="784" y="377.2">NOT NULL,</tspan><tspan x="784" dy="24">UNIQUE</tspan></text>
+<defs><clipPath id="xaligo-text-clip-f80fcc7e825cb568" clipPathUnits="userSpaceOnUse"><rect x="504" y="422.8" width="132" height="75.2"/></clipPath></defs>
+<text x="504" y="468.4" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-f80fcc7e825cb568)"><tspan x="504" y="468.4">role_id</tspan></text>
+<defs><clipPath id="xaligo-text-clip-93dd8fe4a2ca310" clipPathUnits="userSpaceOnUse"><rect x="644" y="422.8" width="132" height="75.2"/></clipPath></defs>
+<text x="644" y="468.4" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-93dd8fe4a2ca310)"><tspan x="644" y="468.4">bigint</tspan></text>
+<defs><clipPath id="xaligo-text-clip-e16c88d99d4ed100" clipPathUnits="userSpaceOnUse"><rect x="784" y="422.8" width="132" height="75.2"/></clipPath></defs>
+<text x="784" y="468.4" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-e16c88d99d4ed100)"><tspan x="784" y="468.4">NOT NULL</tspan></text>
+<defs><clipPath id="xaligo-text-clip-f55f24d8819c966b" clipPathUnits="userSpaceOnUse"><rect x="460" y="272" width="22" height="12"/></clipPath></defs>
+<text x="471" y="281.667" fill="#1E1E1E" font-family="Helvetica" font-size="7.333" text-anchor="middle" font-weight="700" clip-path="url(#xaligo-text-clip-f55f24d8819c966b)"><tspan x="471" y="281.667">L01</tspan></text>
 </g>
 </svg>

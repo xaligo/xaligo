@@ -109,6 +109,31 @@ func normalizeDatabaseV1EngineParseDatabase(database *entity.Node, schemas map[s
 			}
 		}
 	}
+	for id, entityNode := range entities {
+		var primaryKey *entity.Node
+		for _, definition := range entityNode.Children {
+			if definition.Tag != "primary-key" {
+				continue
+			}
+			if primaryKey != nil {
+				return nil, &entity.ParseError{Position: definition.Position, Err: fmt.Errorf("<entity id=%q> may define only one <primary-key>", id)}
+			}
+			primaryKey = definition
+			for _, column := range splitDatabaseColumnsV1EngineParseDatabase(definition.Attr("columns")) {
+				if !columns[id][column] {
+					return nil, &entity.ParseError{Position: definition.Position, Err: fmt.Errorf("primary key %s references missing column %s", id, column)}
+				}
+				for _, candidate := range entityNode.Children {
+					if candidate.Tag == "column" && candidate.Attr("name") == column {
+						candidate.Attrs["primary-key"] = "true"
+					}
+				}
+			}
+			if len(splitDatabaseColumnsV1EngineParseDatabase(definition.Attr("columns"))) == 0 {
+				return nil, &entity.ParseError{Position: definition.Position, Err: fmt.Errorf("<primary-key> requires one or more columns")}
+			}
+		}
+	}
 
 	var connections []*entity.Node
 	for id, entityNode := range entities {
@@ -120,18 +145,37 @@ func normalizeDatabaseV1EngineParseDatabase(database *entity.Node, schemas map[s
 				constraints := databaseColumnConstraintsV1EngineParseDatabase(definition)
 				rows = append(rows, tableRowNodeV1EngineParseTable("table-row", []string{definition.Attr("name"), definition.Attr("type"), constraints}, []string{"left", "left", "left"}, definition.Position))
 			case "foreign-key":
-				fromColumn := strings.TrimSpace(definition.Attr("columns"))
-				reference := strings.TrimSpace(definition.Attr("references"))
-				parts := strings.Split(reference, ".")
-				if strings.Contains(fromColumn, ",") || len(parts) != 2 {
-					return nil, &entity.ParseError{Position: definition.Position, Err: fmt.Errorf("initial V1 <foreign-key> requires one column and references=\"entity.column\"")}
+				fromColumns := splitDatabaseColumnsV1EngineParseDatabase(definition.Attr("columns"))
+				toEntity, toColumns, err := parseDatabaseReferenceV1EngineParseDatabase(definition.Attr("references"))
+				if err != nil || len(fromColumns) == 0 || len(fromColumns) != len(toColumns) {
+					return nil, &entity.ParseError{Position: definition.Position, Err: fmt.Errorf("<foreign-key> requires equally sized columns and entity.column references")}
 				}
-				if !columns[id][fromColumn] || !columns[parts[0]][parts[1]] {
-					return nil, &entity.ParseError{Position: definition.Position, Err: fmt.Errorf("foreign key %s.%s references missing column %s", id, fromColumn, reference)}
+				for index, fromColumn := range fromColumns {
+					if !columns[id][fromColumn] || !columns[toEntity][toColumns[index]] {
+						return nil, &entity.ParseError{Position: definition.Position, Err: fmt.Errorf("foreign key %s.%s references missing column %s.%s", id, fromColumn, toEntity, toColumns[index])}
+					}
 				}
-				connections = append(connections, &entity.Node{Tag: "connection", Attrs: map[string]string{"src": id, "dst": parts[0]}, Position: definition.Position})
+				attrs := map[string]string{"src": id, "dst": toEntity, "_xaligoDatabaseForeignKey": strings.Join(fromColumns, ","), "_xaligoDatabaseReferences": toEntity + "." + strings.Join(toColumns, ",")}
+				for _, action := range []string{"on-delete", "on-update"} {
+					if value := strings.TrimSpace(definition.Attr(action)); value != "" {
+						value = strings.ToLower(value)
+						switch value {
+						case "cascade", "restrict", "no-action", "set-null", "set-default":
+						default:
+							return nil, &entity.ParseError{Position: definition.Position, Err: fmt.Errorf("<foreign-key %s=%q> must be cascade, restrict, no-action, set-null, or set-default", action, value)}
+						}
+						key := "_xaligoDatabaseOnDelete"
+						if action == "on-update" {
+							key = "_xaligoDatabaseOnUpdate"
+						}
+						attrs[key] = value
+					}
+				}
+				connections = append(connections, &entity.Node{Tag: "connection", Attrs: attrs, Position: definition.Position})
+			case "primary-key":
+				continue
 			default:
-				return nil, &entity.ParseError{Position: definition.Position, Err: fmt.Errorf("<entity> may only contain <column> and <foreign-key> children, got <%s>", definition.Tag)}
+				return nil, &entity.ParseError{Position: definition.Position, Err: fmt.Errorf("<entity> may only contain <column>, <primary-key>, and <foreign-key> children, got <%s>", definition.Tag)}
 			}
 		}
 		entityNode.Children = rows
@@ -142,6 +186,35 @@ func normalizeDatabaseV1EngineParseDatabase(database *entity.Node, schemas map[s
 		entityNode.Attrs["gap"] = "0"
 	}
 	return connections, nil
+}
+
+func splitDatabaseColumnsV1EngineParseDatabase(value string) []string {
+	var columns []string
+	for _, column := range strings.Split(value, ",") {
+		if column = strings.TrimSpace(column); column != "" {
+			columns = append(columns, column)
+		}
+	}
+	return columns
+}
+
+func parseDatabaseReferenceV1EngineParseDatabase(value string) (string, []string, error) {
+	parts := splitDatabaseColumnsV1EngineParseDatabase(value)
+	entityID := ""
+	columns := make([]string, 0, len(parts))
+	for _, part := range parts {
+		qualified := strings.Split(part, ".")
+		if len(qualified) != 2 || qualified[0] == "" || qualified[1] == "" {
+			return "", nil, fmt.Errorf("invalid reference %q", part)
+		}
+		if entityID == "" {
+			entityID = qualified[0]
+		} else if entityID != qualified[0] {
+			return "", nil, fmt.Errorf("foreign key references multiple entities")
+		}
+		columns = append(columns, qualified[1])
+	}
+	return entityID, columns, nil
 }
 
 func databaseColumnConstraintsV1EngineParseDatabase(column *entity.Node) string {

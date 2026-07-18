@@ -92,6 +92,45 @@ func TestParseNormalizesDatabaseSchemaAndForeignKey(t *testing.T) {
 	}
 }
 
+func TestParseNormalizesCompositeDatabaseKeys(t *testing.T) {
+	doc, err := usecase.Parse(strings.NewReader(`<xaligo version="1"><data><database-schema id="app">
+  <entity id="roles"><column name="tenant_id" type="bigint" /><column name="id" type="bigint" /><primary-key columns="tenant_id,id" /></entity>
+  <entity id="users"><column name="tenant_id" type="bigint" /><column name="role_id" type="bigint" /><foreign-key columns="tenant_id,role_id" references="roles.tenant_id,roles.id" on-delete="cascade" /></entity>
+</database-schema></data><frames><frame id="erd"><database data="app" /></frame></frames></xaligo>`))
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+	database := doc.Root.Children[0].Children[0]
+	roles := database.Children[0]
+	if roles.Children[1].Children[2].Text != "PK" || roles.Children[2].Children[2].Text != "PK" {
+		t.Fatalf("composite primary key rows = %#v", roles.Children)
+	}
+	connection := doc.Root.Children[0].Children[len(doc.Root.Children[0].Children)-1]
+	if connection.Attr("_xaligoDatabaseForeignKey") != "tenant_id,role_id" || connection.Attr("_xaligoDatabaseOnDelete") != "cascade" {
+		t.Fatalf("composite foreign key connection = %#v", connection.Attrs)
+	}
+}
+
+func TestParseRejectsCompositeForeignKeyArityMismatch(t *testing.T) {
+	_, err := usecase.Parse(strings.NewReader(`<xaligo version="1"><data><database-schema id="app">
+  <entity id="roles"><column name="tenant_id" /><column name="id" /></entity>
+  <entity id="users"><column name="tenant_id" /><foreign-key columns="tenant_id" references="roles.tenant_id,roles.id" /></entity>
+</database-schema></data><frames><frame id="erd"><database data="app" /></frame></frames></xaligo>`))
+	if err == nil || !strings.Contains(err.Error(), "equally sized") {
+		t.Fatalf("Parse() error = %v, want arity error", err)
+	}
+}
+
+func TestParseRejectsInvalidForeignKeyAction(t *testing.T) {
+	_, err := usecase.Parse(strings.NewReader(`<xaligo version="1"><data><database-schema id="app">
+  <entity id="roles"><column name="id" /></entity>
+  <entity id="users"><column name="role_id" /><foreign-key columns="role_id" references="roles.id" on-delete="destroy" /></entity>
+</database-schema></data><frames><frame id="erd"><database data="app" /></frame></frames></xaligo>`))
+	if err == nil || !strings.Contains(err.Error(), "on-delete") {
+		t.Fatalf("Parse() error = %v, want referential-action error", err)
+	}
+}
+
 func TestParseValidationErrorHasPosition(t *testing.T) {
 	_, err := usecase.Parse(strings.NewReader("<frame>\n  <item id=\"bad\" />\n</frame>"))
 	var parseErr *entity.ParseError
