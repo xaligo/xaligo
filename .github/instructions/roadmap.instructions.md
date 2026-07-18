@@ -24,6 +24,36 @@ Implementation guidance:
 
 ## Product Architecture Preconditions
 
+### Future Structured-Diagram Profile
+
+The table, relational-database, and UML design is a future language profile,
+not an extension of frozen V1 and not a replacement for the reserved V2
+`<scene version="2">` contract. Its version remains unassigned until the V2
+boundary is implemented and migration behavior is specified.
+
+The target document shape uses `<xaligo>` as a document envelope, a document-
+wide `<data>` registry, and `<frames>` containing identified `<frame>`
+components. Data definitions are reusable across frames. General tables, RDB
+schemas, and UML diagrams have separate semantic frontends and layout engines;
+they may share renderer-neutral primitives and output encoders but must not be
+forced through one diagram-specific processor.
+
+Keep these semantic distinctions:
+
+- `<table>` is general tabular data, `<database>`/`<entity>` is relational
+  schema meaning, and `<grid>` is visual layout.
+- Pipe and explicit tag syntax lower to the same typed model for a given
+  component; imported files enter that model through an import adapter.
+- `<uml>` is the common UML component. Exactly one diagram-kind child such as
+  `<class-diagram>` or `<sequence-diagram>` selects its processor; the frame
+  does not carry a UML kind.
+- Imports are resolved before semantic validation, retain provenance, and do
+  not execute arbitrary commands. Inline/tag overrides are explicit and
+  deterministic.
+
+The user-facing design is documented in
+`docs/src/design/structured-diagrams.md`.
+
 ### Common DSL and Go Core
 
 - Keep `.xal` as the single source DSL for every visual mode and export format.

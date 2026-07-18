@@ -82,6 +82,14 @@ geometry across native and embedded targets.
 - Import from existing diagram formats and conversion into `.xal`.
 - Better round-tripping between generated output and `.xal` source.
 
+The future structured-diagram profile proposes a document-wide data registry,
+general tables, relational schema/ER views, and UML components. It deliberately
+keeps their semantic processors separate while reusing neutral drawing and
+encoding contracts. See [Structured Diagrams: Tables, Databases, and
+UML](design/structured-diagrams.md). Its `<xaligo>` envelope is not V1 or V2
+syntax; a language version and migration contract must be assigned before
+implementation.
+
 ## Editing and Automation
 
 - A dedicated UI for authoring and editing diagrams.

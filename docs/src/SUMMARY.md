@@ -13,6 +13,10 @@
 - [AI Agent Guide](ai-agent-guide.md)
 - [Planned Work](roadmap.md)
 
+# Design Proposals
+
+- [Structured Diagrams: Tables, Databases, and UML](design/structured-diagrams.md)
+
 # .xal DSL
 
 - [Overview](xal/overview.md)
