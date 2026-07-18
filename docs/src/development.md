@@ -32,7 +32,7 @@ PPTX exporter builds:
 
 ```bash
 make build-wasm
-npm run build --workspace=@ryo/xaligo-external
+npm run build --workspace=@xaligo/xaligo-external
 ```
 
 Generated binaries, `node_modules`, `output`, mdBook build output, WASM
