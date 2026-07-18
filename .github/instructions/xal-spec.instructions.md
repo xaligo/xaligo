@@ -395,6 +395,39 @@ entities. Duplicate or missing schema/entity/column references and mixed
 inline/data-backed database content are positioned errors. Composite keys,
 indexes, checks, and import dialects remain planned V1 extensions.
 
+## UML Tags
+
+`<uml>` requires exactly one diagram-kind child. V1 supports
+`class-diagram`, `object-diagram`, `component-diagram`, `deployment-diagram`,
+`package-diagram`, `composite-structure-diagram`, `profile-diagram`,
+`use-case-diagram`, `activity-diagram`, `state-machine-diagram`,
+`sequence-diagram`, `communication-diagram`, `interaction-overview-diagram`,
+and `timing-diagram`.
+
+```xml
+<uml id="domain" title="Domain Model">
+  <class-diagram direction="right">
+    <class id="user" title="User">
+      <attribute>id: bigint</attribute>
+      <operation>login()</operation>
+    </class>
+    <class id="role" title="Role" />
+    <association src="user" dst="role" title="has" />
+  </class-diagram>
+</uml>
+```
+
+Every UML element requires a diagram-local `id`. Child tags become ordered
+text compartments. Relations require existing `src` and `dst` IDs and retain
+their UML relation kind while lowering to the shared connector model.
+Duplicate IDs, missing references, empty diagrams, unknown children, and zero
+or multiple diagram-kind children are positioned errors.
+
+Reusable definitions use `<uml-model id="...">` below `<data>` and are selected
+with `data="model-id"` on the diagram-kind child. Inline content and `data`
+cannot be combined. All output formats consume the same resolved shapes and
+connections.
+
 ## `<item>` Tag
 
 A leaf element that places an AWS service icon inside a container.

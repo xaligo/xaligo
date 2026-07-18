@@ -256,10 +256,10 @@ kinds are rejected instead of being treated as generic groups. Common `uml`
 properties include `id`, `title`, `theme`, `style`, `data`, and visibility.
 The child may override inherited data or style values.
 
-Each diagram kind owns its typed model and validation. The initial delivery
-priority is class, component, deployment, sequence, activity, and state-machine
-diagrams. Remaining UML 2.x diagram families follow after the shared node,
-compartment, edge, interaction, and timeline primitives are stable.
+V1 implements all fourteen diagram-kind selectors through shared typed element,
+compartment, relation, interaction, and timeline primitives. The selected kind
+is retained as semantic metadata while each element and relation is validated
+before lowering to renderer-neutral shapes and connectors.
 
 Existing layout ideas are reused at the component boundary: `<uml>` can sit in
 rows, columns, grids, or containers and returns resolved width, height, draw
@@ -336,9 +336,9 @@ alternate semantic models.
 4. Deliver RDB entities, keys, relations, Crow's Foot rendering, and SQL DDL
    import for PostgreSQL, MySQL, and SQLite. (Entities, keys, relations, and
    common SQL DDL import are implemented in V1; Crow's Foot remains.)
-5. Deliver the six priority UML diagrams through their separate processors.
-6. Add remaining UML families, DBML/OpenAPI projections, richer table cells,
-   and additional encoders.
+5. Deliver all fourteen UML diagram families through common typed primitives
+   and diagram-kind validation. (Implemented in V1.)
+6. Add DBML/OpenAPI projections, richer table cells, and additional encoders.
 7. Add explicit normalized/bundled output and GUI round-trip contracts.
 
 Every phase requires parser/validation tests, model golden tests, resolved

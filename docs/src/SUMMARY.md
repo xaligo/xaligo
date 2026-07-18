@@ -14,6 +14,7 @@
   - [Tables](examples/tables.md)
   - [Imported Tables](examples/table-imports.md)
   - [Relational Database](examples/databases.md)
+  - [UML Diagrams](examples/uml.md)
 - [AI Agent Guide](ai-agent-guide.md)
 - [Planned Work](roadmap.md)
 
@@ -31,6 +32,7 @@
 - [Connections](xal/connections.md)
 - [Tables](xal/tables.md)
 - [Relational Databases](xal/databases.md)
+- [UML](xal/uml.md)
 
 # Rendering
 

@@ -48,6 +48,7 @@ func TestRenderExamplesThroughPublicUseCases(t *testing.T) {
 		{"onprem access", "onprem-access.xal", onpremServicesCSV, `"type": "excalidraw"`, `<svg`, `"nodes"`, `"version": "3.3.0"`},
 		{"tabler", "tabler.xal", nil, `"type": "excalidraw"`, `<svg`, `"nodes"`, `"version": "3.3.0"`},
 		{"yamaha", "yamaha-icons.xal", nil, `"type": "excalidraw"`, `<svg`, `"nodes"`, `"version": "3.3.0"`},
+		{"all UML", "uml-all.xal", nil, `"type": "excalidraw"`, `<svg`, `"nodes"`, `"version": "3.3.0"`},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

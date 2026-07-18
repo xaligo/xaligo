@@ -1,0 +1,25 @@
+<xaligo version="1">
+  <data>
+    <uml-model id="pair">
+      <element id="source" title="Source"><compartment>operation()</compartment></element>
+      <element id="target" title="Target"><compartment>value</compartment></element>
+      <relation src="source" dst="target" title="relates" />
+    </uml-model>
+  </data>
+  <frames gap="32">
+    <frame id="class" width="480" height="280"><uml title="Class"><class-diagram data="pair" direction="right" /></uml></frame>
+    <frame id="object" width="480" height="280"><uml title="Object"><object-diagram data="pair" direction="right" /></uml></frame>
+    <frame id="component" width="480" height="280"><uml title="Component"><component-diagram data="pair" direction="right" /></uml></frame>
+    <frame id="deployment" width="480" height="280"><uml title="Deployment"><deployment-diagram data="pair" direction="right" /></uml></frame>
+    <frame id="package" width="480" height="280"><uml title="Package"><package-diagram data="pair" direction="right" /></uml></frame>
+    <frame id="composite" width="480" height="280"><uml title="Composite Structure"><composite-structure-diagram data="pair" direction="right" /></uml></frame>
+    <frame id="profile" width="480" height="280"><uml title="Profile"><profile-diagram data="pair" direction="right" /></uml></frame>
+    <frame id="use-case" width="480" height="280"><uml title="Use Case"><use-case-diagram data="pair" direction="right" /></uml></frame>
+    <frame id="activity" width="480" height="280"><uml title="Activity"><activity-diagram data="pair" direction="right" /></uml></frame>
+    <frame id="state-machine" width="480" height="280"><uml title="State Machine"><state-machine-diagram data="pair" direction="right" /></uml></frame>
+    <frame id="sequence" width="480" height="280"><uml title="Sequence"><sequence-diagram data="pair" /></uml></frame>
+    <frame id="communication" width="480" height="280"><uml title="Communication"><communication-diagram data="pair" direction="right" /></uml></frame>
+    <frame id="interaction-overview" width="480" height="280"><uml title="Interaction Overview"><interaction-overview-diagram data="pair" direction="right" /></uml></frame>
+    <frame id="timing" width="480" height="280"><uml title="Timing"><timing-diagram data="pair" /></uml></frame>
+  </frames>
+</xaligo>
