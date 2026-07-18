@@ -161,6 +161,17 @@ func crossFrameArrowPointsAvoidingMetadataV1EngineSceneConnectionPage(start, end
 	if frameAtStart {
 		endpoint, terminal = end, start
 	}
+	const epsilon = 1e-9
+	coincident := math.Abs(endpoint[0]-terminal[0]) <= epsilon && math.Abs(endpoint[1]-terminal[1]) <= epsilon
+	endpointHorizontal := endpointSide == "left" || endpointSide == "right"
+	frameHorizontal := frameSide == "left" || frameSide == "right"
+	if !coincident && endpointHorizontal == frameHorizontal {
+		aligned := (endpointHorizontal && math.Abs(endpoint[1]-terminal[1]) <= epsilon) ||
+			(!endpointHorizontal && math.Abs(endpoint[0]-terminal[0]) <= epsilon)
+		if aligned {
+			return [][]float64{{0, 0}, {end[0] - start[0], end[1] - start[1]}}
+		}
+	}
 	endpointApproach := pageLinkApproachForSideV1EngineSceneConnectionPage(frameRect, endpointSide)
 	frameApproach := pageLinkApproachForSideV1EngineSceneConnectionPage(frameRect, frameSide)
 	endpointDirection := pageLinkSideVectorV1EngineSceneConnectionPage(endpointSide)
@@ -208,7 +219,7 @@ func crossFrameArrowPointsAvoidingMetadataV1EngineSceneConnectionPage(start, end
 
 	absolute := make([][2]float64, 0, 6)
 	appendPoint := func(point [2]float64) {
-		if len(absolute) > 0 && math.Abs(absolute[len(absolute)-1][0]-point[0]) <= 1e-9 && math.Abs(absolute[len(absolute)-1][1]-point[1]) <= 1e-9 {
+		if len(absolute) > 0 && math.Abs(absolute[len(absolute)-1][0]-point[0]) <= epsilon && math.Abs(absolute[len(absolute)-1][1]-point[1]) <= epsilon {
 			return
 		}
 		if len(absolute) >= 2 {
@@ -216,7 +227,7 @@ func crossFrameArrowPointsAvoidingMetadataV1EngineSceneConnectionPage(start, end
 			beforePrevious := absolute[len(absolute)-2]
 			firstDirection := [2]float64{previous[0] - beforePrevious[0], previous[1] - beforePrevious[1]}
 			secondDirection := [2]float64{point[0] - previous[0], point[1] - previous[1]}
-			collinear := math.Abs(firstDirection[0]*secondDirection[1]-firstDirection[1]*secondDirection[0]) <= 1e-9
+			collinear := math.Abs(firstDirection[0]*secondDirection[1]-firstDirection[1]*secondDirection[0]) <= epsilon
 			sameDirection := firstDirection[0]*secondDirection[0]+firstDirection[1]*secondDirection[1] >= 0
 			if collinear && sameDirection {
 				absolute[len(absolute)-1] = point

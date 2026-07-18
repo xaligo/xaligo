@@ -921,6 +921,9 @@ func assertCrossFrameStubGeometry(t *testing.T, elements []map[string]any, stub 
 		if dx > 1e-9 && dy > 1e-9 {
 			t.Fatalf("cross-frame stub %q segment is diagonal: %#v", stub["id"], points)
 		}
+		if index >= 2 && math.Abs(points[index][0]-points[index-2][0]) <= 1e-9 && math.Abs(points[index][1]-points[index-2][1]) <= 1e-9 {
+			t.Fatalf("cross-frame stub %q backtracks over the previous segment: %#v", stub["id"], points)
+		}
 	}
 	if totalLength <= 1e-9 {
 		t.Fatalf("cross-frame stub %q has zero length: start=%#v end=%#v", stub["id"], start, end)
