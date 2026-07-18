@@ -1,4 +1,4 @@
-import type { PptxExportOptions } from '../entity/pptx';
+import { pptxPlanOpCount, pptxPlanPages, type PptxExportOptions } from '../entity/pptx';
 import type { PptxExporterRequest } from '../entity/pptx_exporter';
 import type { PptxExporterOptions } from '../entity/pptx_exporter';
 import { createPptxFromPlan } from '../repository/pptx';
@@ -10,8 +10,8 @@ const EUPE001 = NewMCode('EUPE-001', 'Export PPTX from request start');
 const EUPE002 = NewMCode('EUPE-002', 'Export PPTX from request completed');
 
 export async function exportPptxFromRequest(request: PptxExporterRequest): Promise<Uint8Array> {
-	logger.DEBUG(EUPE001, 'start', { ops: request.plan.ops.length });
-	const out = await createPptxFromPlan(request.plan, pptxExporterOptions(request.options));
+  logger.DEBUG(EUPE001, 'start', { pages: pptxPlanPages(request.plan).length, ops: pptxPlanOpCount(request.plan) });
+  const out = await createPptxFromPlan(request.plan, pptxExporterOptions(request.options));
   const bytes = out as Uint8Array;
   logger.DEBUG(EUPE002, 'completed', { bytes: bytes.length });
   return bytes;

@@ -1,8 +1,11 @@
 package usecase_test
 
 import (
+	"archive/zip"
+	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"math"
 	"os"
 	"path/filepath"
@@ -17,6 +20,104 @@ import (
 )
 
 const simpleXAL = `<frame version="1" width="240" height="120"><blank /></frame>`
+
+const multiFrameXAL = `<xaligo version="1">
+  <data></data>
+  <frames gap="32">
+    <frame id="overview" width="240" height="120"><rectangle id="source" title="Overview" width="100" height="60" /></frame>
+    <frame id="detail" width="300" height="160"><rectangle id="destination" title="Detail" width="120" height="70" /></frame>
+  </frames>
+</xaligo>`
+
+func TestRenderArtifactsUsesOneSVGPerFrame(t *testing.T) {
+	uc := newUsecase()
+	artifacts, err := uc.RenderArtifacts(context.Background(), []byte(multiFrameXAL), entity.RenderOptions{Format: usecase.FormatSVG, Theme: "light"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(artifacts) != 2 || artifacts[0].ID != "overview" || artifacts[1].ID != "detail" {
+		t.Fatalf("artifacts = %#v", artifacts)
+	}
+	if !bytes.Contains(artifacts[0].Data, []byte("Overview")) || bytes.Contains(artifacts[0].Data, []byte(">Detail<")) {
+		t.Fatalf("overview SVG contains wrong frame content: %s", artifacts[0].Data)
+	}
+	if bytes.Contains(artifacts[0].Data, []byte(`width="240" height="120" fill="none"`)) {
+		t.Fatalf("overview SVG must not draw its page-frame outline: %s", artifacts[0].Data)
+	}
+	if _, err := uc.RenderSVG(context.Background(), []byte(multiFrameXAL), entity.RenderOptions{Format: usecase.FormatSVG, Theme: "light"}); err == nil || !strings.Contains(err.Error(), "RenderArtifacts") {
+		t.Fatalf("RenderSVG multi-frame error = %v", err)
+	}
+	combined, err := uc.RenderArtifacts(context.Background(), []byte(multiFrameXAL), entity.RenderOptions{Format: usecase.FormatSVG, Theme: "light", CombineFrames: true})
+	if err != nil || len(combined) != 1 || !bytes.Contains(combined[0].Data, []byte("Overview")) || !bytes.Contains(combined[0].Data, []byte("Detail")) {
+		t.Fatalf("combined artifacts = %#v err=%v", combined, err)
+	}
+	if bytes.Contains(combined[0].Data, []byte(`width="240" height="120" fill="none"`)) || bytes.Contains(combined[0].Data, []byte(`width="300" height="160" fill="none"`)) {
+		t.Fatalf("combined SVG must not draw page-frame outlines: %s", combined[0].Data)
+	}
+}
+
+func TestPageDocumentFormatsUseFrameOrder(t *testing.T) {
+	uc := newUsecase()
+	planJSON, err := uc.BuildPPTXPlan(context.Background(), []byte(multiFrameXAL), entity.RenderOptions{Format: usecase.FormatPPTX, Theme: "light"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var document entity.DocumentPlan
+	if err := json.Unmarshal(planJSON, &document); err != nil {
+		t.Fatal(err)
+	}
+	if len(document.Pages) != 2 || document.Pages[0].ID != "overview" || document.Pages[1].ID != "detail" {
+		t.Fatalf("PPTX document = %#v", document)
+	}
+	if document.Pages[0].Slide != document.Pages[1].Slide {
+		t.Fatalf("PPTX pages must share one slide size: %#v", document.Pages)
+	}
+
+	pdf, err := uc.RenderPDF(context.Background(), []byte(multiFrameXAL), entity.RenderOptions{Format: usecase.FormatPDF, Theme: "light"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.HasPrefix(pdf, []byte("%PDF-")) || !bytes.Contains(pdf, []byte("/Type/Pages/Count 2")) {
+		t.Fatalf("PDF does not contain two pages: %q", pdf)
+	}
+
+	workbook, err := uc.RenderExcel(context.Background(), []byte(multiFrameXAL), entity.RenderOptions{Format: usecase.FormatExcel, Theme: "light"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	workbookXML := zipEntryString(t, workbook, "xl/workbook.xml")
+	if !strings.Contains(workbookXML, `name="overview"`) || !strings.Contains(workbookXML, `name="detail"`) {
+		t.Fatalf("workbook sheets = %s", workbookXML)
+	}
+	if zipEntryString(t, workbook, "xl/media/image1.svg") == "" || zipEntryString(t, workbook, "xl/media/image2.svg") == "" {
+		t.Fatal("workbook frame SVG media is missing")
+	}
+}
+
+func zipEntryString(t *testing.T, archive []byte, name string) string {
+	t.Helper()
+	reader, err := zip.NewReader(bytes.NewReader(archive), int64(len(archive)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, file := range reader.File {
+		if file.Name != name {
+			continue
+		}
+		entry, err := file.Open()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer entry.Close()
+		data, err := io.ReadAll(entry)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(data)
+	}
+	t.Fatalf("ZIP entry %s not found", name)
+	return ""
+}
 
 func TestRenderSVGLoadsInjectedTableImport(t *testing.T) {
 	input := []byte(`<xaligo version="1"><data><table-data id="rows" src="rows.csv" /></data><frames><frame id="main" width="500" height="300"><table data="rows" /></frame></frames></xaligo>`)
@@ -38,6 +139,23 @@ type fakePPTXExporter struct {
 	seen entity.PptxExportOptions
 }
 
+type fixedDocumentSVGRepository struct {
+	data []byte
+}
+
+func (rcvr *fixedDocumentSVGRepository) Render(entity.Plan, float64, string) ([]byte, error) {
+	return bytes.Clone(rcvr.data), nil
+}
+
+type capturingSpreadsheetRepository struct {
+	pages []entity.RenderPage
+}
+
+func (rcvr *capturingSpreadsheetRepository) Export(_ context.Context, pages []entity.RenderPage) ([]byte, error) {
+	rcvr.pages = append([]entity.RenderPage(nil), pages...)
+	return []byte("spreadsheet"), nil
+}
+
 func newUsecase() usecase.RenderUsecase {
 	return newUsecaseWithPPTX(repository.NewPowerpointRepository())
 }
@@ -50,7 +168,34 @@ func newUsecaseWithPPTX(powerpointRepository repository.PowerpointRepository) us
 		repository.NewIsoflowRepository(),
 		repository.NewSVGRepository(),
 		repository.NewXYFlowRepository(),
+		repository.NewPDFRepository(),
+		repository.NewSpreadsheetRepository(),
 	)
+}
+
+func TestDocumentContainersUseRenderedSVGIntrinsicDimensions(t *testing.T) {
+	svgRepository := &fixedDocumentSVGRepository{data: []byte(`<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360"></svg>`)}
+	spreadsheetRepository := &capturingSpreadsheetRepository{}
+	uc := usecase.NewRenderUsecase(
+		repository.NewExcalidrawRepository(),
+		repository.NewXaligoRepository(),
+		repository.NewPowerpointRepository(),
+		repository.NewIsoflowRepository(),
+		svgRepository,
+		repository.NewXYFlowRepository(),
+		nil,
+		spreadsheetRepository,
+	)
+	if _, err := uc.RenderExcel(context.Background(), []byte(simpleXAL), entity.RenderOptions{Format: usecase.FormatExcel, Theme: "light"}); err != nil {
+		t.Fatal(err)
+	}
+	if len(spreadsheetRepository.pages) != 1 {
+		t.Fatalf("spreadsheet pages = %#v", spreadsheetRepository.pages)
+	}
+	page := spreadsheetRepository.pages[0]
+	if page.WidthPx != 640 || page.HeightPx != 360 {
+		t.Fatalf("render page dimensions = %gx%g, want intrinsic SVG 640x360", page.WidthPx, page.HeightPx)
+	}
 }
 
 func newSceneDependencies() usecase.SceneDependencies {
@@ -92,6 +237,8 @@ func TestUseCaseAPIRendersStableFormats(t *testing.T) {
 		{"Render default", "", uc.Render, `"type": "excalidraw"`},
 		{"RenderExcalidraw", usecase.FormatExcalidraw, uc.RenderExcalidraw, `"type": "excalidraw"`},
 		{"RenderSVG", usecase.FormatSVG, uc.RenderSVG, `<svg`},
+		{"RenderPDF", usecase.FormatPDF, uc.RenderPDF, `%PDF-`},
+		{"RenderExcel", usecase.FormatExcel, uc.RenderExcel, `PK`},
 		{"RenderXYFlow", usecase.FormatXYFlow, uc.RenderXYFlow, `"nodes"`},
 		{"RenderIsoflow", usecase.FormatIsoflow, uc.RenderIsoflow, `"version": "3.3.0"`},
 		{"BuildPPTXPlan", usecase.FormatPPTX, uc.BuildPPTXPlan, `"slide"`},
@@ -112,7 +259,7 @@ func TestUseCaseAPIRendersStableFormats(t *testing.T) {
 func TestUseCaseRenderDispatcherBranches(t *testing.T) {
 	uc := newUsecase()
 	ctx := context.Background()
-	formats := []entity.Format{usecase.FormatSVG, usecase.FormatXYFlow, usecase.FormatIsoflow}
+	formats := []entity.Format{usecase.FormatSVG, usecase.FormatPDF, usecase.FormatExcel, usecase.FormatXYFlow, usecase.FormatIsoflow}
 	for _, format := range formats {
 		t.Run(string(format), func(t *testing.T) {
 			out, err := uc.Render(ctx, []byte(simpleXAL), entity.RenderOptions{Format: format, Theme: "light"})
@@ -260,16 +407,26 @@ func TestRenderExcalidrawFramesAndCrossFrameLabels(t *testing.T) {
 	var destinationStub map[string]any
 	for _, element := range scene.Elements {
 		switch element["id"] {
+		case "paper-frame":
+			if element["strokeColor"] != "transparent" {
+				t.Fatalf("document frame outline must be transparent: %#v", element)
+			}
 		case "paper-frame-overview":
 			foundOverviewFrame = true
+			if element["strokeColor"] != "transparent" {
+				t.Fatalf("overview page frame outline must be transparent: %#v", element)
+			}
 		case "paper-frame-detail":
 			foundDetailFrame = true
+			if element["strokeColor"] != "transparent" {
+				t.Fatalf("detail page frame outline must be transparent: %#v", element)
+			}
 		}
 		if element["type"] == "text" {
-			if element["text"] == "to detail" {
+			if element["text"] == "to <detail>" {
 				foundToLabel = true
 			}
-			if element["text"] == "from overview" {
+			if element["text"] == "from <overview>" {
 				foundFromLabel = true
 			}
 		}
@@ -315,12 +472,12 @@ func TestRenderExcalidrawFramesAndCrossFrameLabels(t *testing.T) {
 		t.Fatalf("equal-distance destination tie selected %q, want remote-facing left edge", side)
 	}
 
-	svgOut, err := newUsecase().RenderSVG(context.Background(), input, entity.RenderOptions{Format: usecase.FormatSVG, Theme: "light"})
+	svgOut, err := newUsecase().RenderSVG(context.Background(), input, entity.RenderOptions{Format: usecase.FormatSVG, Theme: "light", CombineFrames: true})
 	if err != nil {
 		t.Fatal(err)
 	}
 	svg := string(svgOut)
-	for _, label := range []string{"to detail", "from overview"} {
+	for _, label := range []string{"to &lt;detail&gt;", "from &lt;overview&gt;"} {
 		if !strings.Contains(svg, label) {
 			t.Fatalf("SVG cross-frame label %q missing:\n%s", label, svg)
 		}
@@ -435,8 +592,8 @@ func TestRenderExcalidrawCrossFrameSmallPagesKeepStubsVisible(t *testing.T) {
 		t.Fatalf("small-page cross-frame stubs = %d, want 2: %#v", stubCount, scene.Elements)
 	}
 	wantLabelFrames := map[string]string{
-		"to destination-page-with-long-id": "source-page-with-long-id",
-		"from source-page-with-long-id":    "destination-page-with-long-id",
+		"to <destination-page-with-long-id>": "source-page-with-long-id",
+		"from <source-page-with-long-id>":    "destination-page-with-long-id",
 	}
 	for label, frameID := range wantLabelFrames {
 		var labelRect [4]float64
@@ -451,7 +608,7 @@ func TestRenderExcalidrawCrossFrameSmallPagesKeepStubsVisible(t *testing.T) {
 			t.Fatalf("small-page label %q rect %#v escapes frame %#v", label, labelRect, frame)
 		}
 	}
-	svgOut, err := newUsecase().RenderSVG(context.Background(), input, entity.RenderOptions{Format: usecase.FormatSVG, Theme: "light"})
+	svgOut, err := newUsecase().RenderSVG(context.Background(), input, entity.RenderOptions{Format: usecase.FormatSVG, Theme: "light", CombineFrames: true})
 	if err != nil {
 		t.Fatal(err)
 	}

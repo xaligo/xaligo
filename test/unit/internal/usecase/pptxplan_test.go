@@ -150,7 +150,7 @@ func TestBuildPPTXPlanPreservesExplicitCrossFrameConnectorStrokeWidth(t *testing
   </frame>
 </frames>`)
 	planJSON, err := newUsecase().BuildPPTXPlan(context.Background(), source, entity.RenderOptions{
-		Format: usecase.FormatPPTX, PxPerInch: 96, ArrowStyle: "thin",
+		Format: usecase.FormatPPTX, PxPerInch: 96, ArrowStyle: "thin", CombineFrames: true,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -165,7 +165,7 @@ func TestBuildPPTXPlanPreservesExplicitCrossFrameConnectorStrokeWidth(t *testing
 		if op.Kind == "line" {
 			lines = append(lines, op)
 		}
-		if op.Kind == "text" && (op.Text == "to detail" || op.Text == "from overview") {
+		if op.Kind == "text" && (op.Text == "to <detail>" || op.Text == "from <overview>") {
 			if op.TextLayout == nil || op.TextLayout.Role != entity.TextRoleConnectorLabel {
 				t.Fatalf("cross-frame label %q layout = %#v", op.Text, op.TextLayout)
 			}
@@ -186,7 +186,7 @@ func TestBuildPPTXPlanPreservesExplicitCrossFrameConnectorStrokeWidth(t *testing
 			t.Fatalf("cross-frame line %q is diagonal: %#v", op.ID, op)
 		}
 	}
-	if !labels["to detail"] || !labels["from overview"] {
+	if !labels["to <detail>"] || !labels["from <overview>"] {
 		t.Fatalf("cross-frame labels = %#v, want exact to/from frame IDs", labels)
 	}
 }
@@ -201,7 +201,7 @@ func TestBuildPPTXPlanPreservesCrossFrameCornerElbow(t *testing.T) {
     <rectangle id="node" title="Destination" width="10" height="10" />
   </frame>
 </frames></xaligo>`)
-	planJSON, err := newUsecase().BuildPPTXPlan(context.Background(), source, entity.RenderOptions{Format: usecase.FormatPPTX, PxPerInch: 96})
+	planJSON, err := newUsecase().BuildPPTXPlan(context.Background(), source, entity.RenderOptions{Format: usecase.FormatPPTX, PxPerInch: 96, CombineFrames: true})
 	if err != nil {
 		t.Fatal(err)
 	}

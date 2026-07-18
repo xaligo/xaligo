@@ -144,7 +144,7 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 	// after every group border so a nested child border cannot cover a parent tag.
 	headerShapes := []*entity.Element{}
 	for _, el := range elements {
-		if el.ID == "paper-frame" {
+		if el.ID == "paper-frame" || (el.CustomData != nil && el.CustomData.PageFrame) {
 			continue
 		}
 		if el.CustomData != nil && el.CustomData.Junction {

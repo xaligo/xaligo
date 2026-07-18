@@ -40,6 +40,8 @@
 - [Excalidraw](rendering/excalidraw.md)
 - [SVG](rendering/svg.md)
 - [PowerPoint](rendering/pptx.md)
+- [PDF](rendering/pdf.md)
+- [Excel](rendering/excel.md)
 - [XYFlow and Isoflow](rendering/xyflow-isoflow.md)
 
 # Reference

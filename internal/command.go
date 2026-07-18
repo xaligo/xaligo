@@ -27,6 +27,8 @@ func NewRootCmd() *cobra.Command {
 	isoflowRepository := repository.NewIsoflowRepository()
 	svgRepository := repository.NewSVGRepository()
 	xyFlowRepository := repository.NewXYFlowRepository()
+	pdfRepository := repository.NewPDFRepository()
+	spreadsheetRepository := repository.NewSpreadsheetRepository()
 
 	renderUsecase := usecase.NewRenderUsecase(
 		excalidrawRepository,
@@ -35,6 +37,8 @@ func NewRootCmd() *cobra.Command {
 		isoflowRepository,
 		svgRepository,
 		xyFlowRepository,
+		pdfRepository,
+		spreadsheetRepository,
 	)
 	sceneIOUsecase := usecase.NewSceneIOUsecase(excalidrawRepository)
 	catalogUsecase := usecase.NewCatalogUsecase(xaligoRepository)

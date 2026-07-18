@@ -90,6 +90,7 @@ func PFlagFromGoFlag(goflag *goflag.Flag) *Flag {
 	}
 	return flag
 }
+
 // AddGoFlag will add the given *flag.Flag to the pflag.FlagSet
 func (f *FlagSet) AddGoFlag(goflag *goflag.Flag) {
 	if f.Lookup(goflag.Name) != nil {

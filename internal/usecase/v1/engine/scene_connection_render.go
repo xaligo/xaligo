@@ -100,12 +100,11 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 		}
 
 		crossFrame := conn.Attrs[internalConnectionCrossFrameAttrV1EngineParseDocument] == "true"
-		var srcFrameID, dstFrameID string
+		srcFrameID := strings.TrimSpace(conn.Attrs[internalConnectionSrcFrameAttrV1EngineParseDocument])
+		dstFrameID := strings.TrimSpace(conn.Attrs[internalConnectionDstFrameAttrV1EngineParseDocument])
 		var srcFrameRect, dstFrameRect [4]float64
 		var srcVisualRect, dstVisualRect [4]float64
 		if crossFrame {
-			srcFrameID = strings.TrimSpace(conn.Attrs[internalConnectionSrcFrameAttrV1EngineParseDocument])
-			dstFrameID = strings.TrimSpace(conn.Attrs[internalConnectionDstFrameAttrV1EngineParseDocument])
 			var srcFrameOK, dstFrameOK bool
 			srcFrameRect, srcFrameOK = frameRects[srcFrameID]
 			dstFrameRect, dstFrameOK = frameRects[dstFrameID]
@@ -221,6 +220,9 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 			"xaligoConnectorStartArrowhead":   style.StartArrowhead,
 			"xaligoConnectorEndArrowhead":     style.EndArrowhead,
 			"xaligoConnectorStyleSourceKnown": true,
+		}
+		if srcFrameID != "" && srcFrameID == dstFrameID {
+			customData["xaligoFrameID"] = srcFrameID
 		}
 		if style.StartArrowheadExplicit {
 			customData["xaligoConnectorStartArrowheadExplicit"] = true

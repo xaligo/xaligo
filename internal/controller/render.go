@@ -94,6 +94,7 @@ func (rcvr *renderController) Command() *cobra.Command {
 		theme             string
 		mode              string
 		svgLegendPosition string
+		combineFrames     bool
 	)
 
 	cmd := &cobra.Command{
@@ -125,6 +126,7 @@ func (rcvr *renderController) Command() *cobra.Command {
 				Author:            author,
 				Company:           company,
 				Subject:           subject,
+				CombineFrames:     combineFrames,
 				Compression:       &compression,
 				PxPerInch:         pxPerInch,
 				ArrowStyle:        arrowStyle,
@@ -148,8 +150,9 @@ func (rcvr *renderController) Command() *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&output, "output", "o", "", "output file path")
-	cmd.Flags().StringVar(&format, "format", "excalidraw", "output format: excalidraw | svg | pptx | xyflow | isoflow")
-	cmd.Flags().StringVar(&servicesFile, "services", "", "optional services.csv for icon labels, Excalidraw legend, and PPTX legend slides")
+	cmd.Flags().StringVar(&format, "format", "excalidraw", "output format: excalidraw | svg | pptx | pdf | excel | xyflow | isoflow")
+	cmd.Flags().StringVar(&servicesFile, "services", "", "optional services.csv for icon labels and output legends")
+	cmd.Flags().BoolVar(&combineFrames, "combine-frames", false, "combine all frames on one canvas/page (legacy output)")
 	cmd.Flags().StringVar(&title, "title", "", "optional PPTX title metadata")
 	cmd.Flags().StringVar(&author, "author", "", "optional PPTX author metadata")
 	cmd.Flags().StringVar(&company, "company", "", "optional PPTX company metadata")
@@ -198,7 +201,8 @@ func (rcvr *renderController) RunFormat(opts entity.ControllerRenderOptions) err
 	}
 	renderOpts := entity.RenderOptions{
 		Mode: entity.Mode(opts.Mode), Format: format, Theme: opts.Theme,
-		Title: opts.Title, Author: opts.Author, Company: opts.Company, Subject: opts.Subject, Compression: opts.Compression,
+		CombineFrames: opts.CombineFrames,
+		Title:         opts.Title, Author: opts.Author, Company: opts.Company, Subject: opts.Subject, Compression: opts.Compression,
 		PxPerInch: opts.PxPerInch, ArrowStyle: opts.ArrowStyle, ArrowStubPx: opts.ArrowStub, ArrowMarginPx: opts.ArrowMargin,
 		PaperSize: opts.Paper, Orientation: opts.Orientation,
 		PaperMarginIn: opts.PaperMargin, PaperMarginTopIn: opts.PaperMarginTop, PaperMarginRightIn: opts.PaperMarginRight,
@@ -264,6 +268,14 @@ func runRender(renderUsecase usecase.RenderUsecase, inputPath, outputPath string
 		return fmt.Errorf("resolve input file path: %w", err)
 	}
 	opts.Imports = &entity.ImportSource{FS: os.DirFS(filepath.Dir(absInputPath))}
+	if opts.Format == usecase.FormatSVG {
+		artifacts, renderErr := renderUsecase.RenderArtifacts(context.Background(), input, opts)
+		if renderErr != nil {
+			logger.ERROR(ICRRR003, "render failed", map[string]any{"format": opts.Format, "error": renderErr})
+			return renderErr
+		}
+		return writeRenderArtifacts(outputPath, opts.Format, artifacts)
+	}
 	out, err := renderUsecase.Render(context.Background(), input, opts)
 	if err != nil {
 		logger.ERROR(ICRRR003, "render failed", map[string]any{"format": opts.Format, "error": err})
@@ -275,6 +287,62 @@ func runRender(renderUsecase usecase.RenderUsecase, inputPath, outputPath string
 	}
 	logger.INFO(ICRRR005, "generated", map[string]any{"format": opts.Format, "output": outputPath})
 	return nil
+}
+
+func writeRenderArtifacts(outputPath string, format entity.Format, artifacts []entity.RenderArtifact) error {
+	if len(artifacts) == 0 {
+		return fmt.Errorf("render produced no artifacts")
+	}
+	paths := make([]string, len(artifacts))
+	if len(artifacts) == 1 {
+		paths[0] = outputPath
+	} else {
+		ext := filepath.Ext(outputPath)
+		stem := strings.TrimSuffix(filepath.Base(outputPath), ext)
+		if ext == "" {
+			ext = ".svg"
+		}
+		seen := map[string]string{}
+		for index, artifact := range artifacts {
+			id := safeRenderArtifactID(artifact.ID)
+			if id == "" {
+				id = fmt.Sprintf("frame-%d", index+1)
+			}
+			path := filepath.Join(filepath.Dir(outputPath), stem+"-"+id+ext)
+			collisionKey := strings.ToLower(filepath.Clean(path))
+			if prior := seen[collisionKey]; prior != "" {
+				return fmt.Errorf("frame IDs %q and %q resolve to the same output %s", prior, artifact.ID, path)
+			}
+			seen[collisionKey] = artifact.ID
+			paths[index] = path
+		}
+	}
+	for index, artifact := range artifacts {
+		if err := os.WriteFile(paths[index], artifact.Data, 0o644); err != nil {
+			logger.ERROR(ICRRR004, "write output failed", map[string]any{"output": paths[index], "error": err})
+			return fmt.Errorf("write output file: %w", err)
+		}
+		logger.INFO(ICRRR005, "generated", map[string]any{"format": format, "output": paths[index], "frame": artifact.ID})
+	}
+	return nil
+}
+
+func safeRenderArtifactID(id string) string {
+	var builder strings.Builder
+	previousDash := false
+	for _, char := range strings.TrimSpace(id) {
+		valid := char >= 'a' && char <= 'z' || char >= 'A' && char <= 'Z' || char >= '0' && char <= '9' || char == '_' || char == '-'
+		if valid {
+			builder.WriteRune(char)
+			previousDash = false
+			continue
+		}
+		if !previousDash {
+			builder.WriteByte('-')
+			previousDash = true
+		}
+	}
+	return strings.Trim(builder.String(), "-")
 }
 
 func serviceAbbreviations(entries []entity.ServiceEntry) map[int]string {
@@ -293,6 +361,9 @@ func normalizeRenderFormat(format string) string {
 		logger.DEBUG(ICRNRF001, "branch default format")
 		return "excalidraw"
 	}
+	if format == "xlsx" {
+		format = "excel"
+	}
 	logger.DEBUG(ICRNRF002, "branch explicit format", map[string]any{"format": format})
 	return format
 }
@@ -305,6 +376,10 @@ func defaultRenderOutput(format string) string {
 	case "pptx":
 		logger.DEBUG(ICRDRO002, "branch pptx output")
 		return "output.pptx"
+	case "pdf":
+		return "output.pdf"
+	case "excel", "xlsx":
+		return "output.xlsx"
 	case "xyflow":
 		logger.DEBUG(ICRDRO003, "branch xyflow output")
 		return "output.xyflow.json"

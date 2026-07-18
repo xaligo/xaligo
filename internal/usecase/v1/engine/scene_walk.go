@@ -446,7 +446,11 @@ func pageFrameElementIDV1EngineSceneWalk(box *entity.Box) string {
 	if frameID == "" {
 		frameID = box.ID
 	}
-	return "paper-frame-" + sanitizeElementIDV1EngineSceneConnectionRoute(frameID)
+	// This ID is also the semantic-parent key used for page projection. It
+	// must therefore preserve the validated frame ID losslessly; a sanitized
+	// display form is not a safe identity key because distinct punctuation can
+	// collapse to the same value.
+	return "paper-frame-" + frameID
 }
 
 func semanticElementKindV1EngineSceneWalk(box *entity.Box) string {

@@ -11,11 +11,25 @@ Available render paths include:
 - `Render`
 - `RenderExcalidraw`
 - `RenderSVG`
+- `RenderArtifacts`
 - `RenderPPTX`
+- `RenderPDF`
+- `RenderExcel`
 - `RenderXYFlow`
 - `RenderIsoflow`
 - `Validate`
 - `Diagnose`
+
+`RenderArtifacts` is the SVG multi-artifact boundary: it returns one ordered
+artifact per identified frame by default. `RenderSVG` remains convenient for a
+single frame or for `RenderOptions.CombineFrames`; it reports an error instead
+of silently discarding extra frame artifacts. PPTX, PDF, and Excel are container
+formats, so their render methods return one byte sequence containing one slide,
+page, or worksheet per frame. Excalidraw, XYFlow, and Isoflow always return one
+logical document.
+
+The CLI accepts `xlsx` as an alias, but API callers set the canonical
+`FormatExcel` (`excel`) value.
 
 Editor integrations should prefer diagnostics from the validation API because
 they include source-positioned line and column information.

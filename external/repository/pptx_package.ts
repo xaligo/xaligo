@@ -43,35 +43,53 @@ const ERPPMAALOTF002 = NewMCode('ERPPMAALOTF-002', 'Move anchor and line objects
 const ERPPMAALOTF003 = NewMCode('ERPPMAALOTF-003', 'Move anchor and line objects to front completed');
 const ERPPGB001 = NewMCode('ERPPGB-001', 'Group bounds missing branch');
 
-export async function finalizePptxPackage(bytes: Uint8Array, ops: PlanOp[], compression: boolean): Promise<Uint8Array> {
-  const groupIds = [...new Set(ops.map((op) => op.groupId).filter((id): id is string => !!id))];
-  const requiresPackageFinalization = groupIds.length > 0
-    || ops.some((op) => op.kind === 'text' && !!op.text && !!planObjectName(op))
-    || ops.some((op) => op.kind === 'line' || op.frontLayer);
-  if (!requiresPackageFinalization) {
+export interface PptxPackageSlidePlan {
+  slideNumber: number;
+  ops: PlanOp[];
+  normalizeStealthArrowheads?: boolean;
+}
+
+export async function finalizePptxPackage(bytes: Uint8Array, pages: PptxPackageSlidePlan[], compression: boolean): Promise<Uint8Array> {
+  if (!pages.some(requiresPackageFinalization)) {
     logger.DEBUG(ERPPGAOIP001, 'branch no package finalization');
     return bytes;
   }
 
   const zip = await JSZip.loadAsync(bytes);
-  const slidePath = 'ppt/slides/slide1.xml';
-  const slide = zip.file(slidePath);
-  if (!slide) {
-    logger.WARN(ERPPGAOIP002, 'branch missing slide', { slidePath });
-    return bytes;
-  }
+  let finalizedSlides = 0;
+  let finalizedGroups = 0;
+  for (const page of pages) {
+    if (!requiresPackageFinalization(page)) continue;
+    const slidePath = `ppt/slides/slide${page.slideNumber}.xml`;
+    const slide = zip.file(slidePath);
+    if (!slide) {
+      logger.WARN(ERPPGAOIP002, 'branch missing slide', { slidePath });
+      continue;
+    }
 
-  let xml = await slide.async('string');
-  xml = applyTextOverflowPolicies(xml, ops);
-  xml = applySlenderStealthArrowheads(xml);
-  for (const groupId of groupIds.sort()) {
-    xml = groupSlideObjects(xml, groupId);
+    const groupIds = [...new Set(page.ops.map((op) => op.groupId).filter((id): id is string => !!id))];
+    let xml = await slide.async('string');
+    xml = applyTextOverflowPolicies(xml, page.ops);
+    xml = applySlenderStealthArrowheads(xml);
+    for (const groupId of groupIds.sort()) {
+      xml = groupSlideObjects(xml, groupId);
+    }
+    xml = moveAnchorAndLineObjectsToFront(xml);
+    zip.file(slidePath, xml);
+    finalizedSlides++;
+    finalizedGroups += groupIds.length;
   }
-  xml = moveAnchorAndLineObjectsToFront(xml);
-  zip.file(slidePath, xml);
+  if (finalizedSlides === 0) return bytes;
   const out = await zip.generateAsync({ type: 'uint8array', compression: compression ? 'DEFLATE' : 'STORE' });
-  logger.DEBUG(ERPPGAOIP003, 'completed', { groups: groupIds.length, bytes: out.length });
+  logger.DEBUG(ERPPGAOIP003, 'completed', { slides: finalizedSlides, groups: finalizedGroups, bytes: out.length });
   return out;
+}
+
+function requiresPackageFinalization(page: PptxPackageSlidePlan): boolean {
+  return page.normalizeStealthArrowheads === true
+    || page.ops.some((op) => !!op.groupId)
+    || page.ops.some((op) => op.kind === 'text' && !!op.text && !!planObjectName(op))
+    || page.ops.some((op) => op.kind === 'line' || op.frontLayer);
 }
 
 function applyTextOverflowPolicies(xml: string, ops: PlanOp[]): string {

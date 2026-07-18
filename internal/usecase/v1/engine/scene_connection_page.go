@@ -31,20 +31,20 @@ func renderCrossFrameConnectionV1EngineSceneConnectionPage(conn *entity.Node, sr
 		"focus":      0.0,
 		"gap":        5.0,
 		"fixedPoint": []float64{srcFP[0], srcFP[1]},
-	}, nil, srcFrameID, dstFrameID, conn, metadata)
-	appendCrossFrameLabelV1EngineSceneConnectionPage(elements, sourceID+"-label", "to "+dstFrameID, srcTerminal, srcFrameRect, srcVisualRect, srcSide, style.Color, seed+1, updated)
+	}, nil, srcFrameID, dstFrameID, srcFrameID, conn, metadata)
+	appendCrossFrameLabelV1EngineSceneConnectionPage(elements, sourceID+"-label", "to <"+dstFrameID+">", srcTerminal, srcFrameRect, srcVisualRect, srcSide, style.Color, srcFrameID, seed+1, updated)
 	appendCrossFrameArrowV1EngineSceneConnectionPage(elements, destID, dstTerminal, dstEdge, dstSide, style, seed+2, updated, nil, map[string]any{
 		"elementId":  dstElemID,
 		"focus":      0.0,
 		"gap":        5.0,
 		"fixedPoint": []float64{dstFP[0], dstFP[1]},
-	}, srcFrameID, dstFrameID, conn, metadata)
-	appendCrossFrameLabelV1EngineSceneConnectionPage(elements, destID+"-label", "from "+srcFrameID, dstTerminal, dstFrameRect, dstVisualRect, dstSide, style.Color, seed+3, updated)
+	}, srcFrameID, dstFrameID, dstFrameID, conn, metadata)
+	appendCrossFrameLabelV1EngineSceneConnectionPage(elements, destID+"-label", "from <"+srcFrameID+">", dstTerminal, dstFrameRect, dstVisualRect, dstSide, style.Color, dstFrameID, seed+3, updated)
 	boundMap[srcElemID] = append(boundMap[srcElemID], map[string]any{"type": "arrow", "id": sourceID})
 	boundMap[dstElemID] = append(boundMap[dstElemID], map[string]any{"type": "arrow", "id": destID})
 }
 
-func appendCrossFrameArrowV1EngineSceneConnectionPage(elements *[]map[string]any, id string, start, end [2]float64, side string, style resolvedConnectionStyleV1EngineSceneTypes, seed int, updated int64, startBinding, endBinding any, srcFrameID, dstFrameID string, conn *entity.Node, metadata crossFrameConnectorMetadataV1EngineSceneConnectionPage) {
+func appendCrossFrameArrowV1EngineSceneConnectionPage(elements *[]map[string]any, id string, start, end [2]float64, side string, style resolvedConnectionStyleV1EngineSceneTypes, seed int, updated int64, startBinding, endBinding any, srcFrameID, dstFrameID, ownerFrameID string, conn *entity.Node, metadata crossFrameConnectorMetadataV1EngineSceneConnectionPage) {
 	dx := end[0] - start[0]
 	dy := end[1] - start[1]
 	points := crossFrameArrowPointsV1EngineSceneConnectionPage(dx, dy, side)
@@ -56,6 +56,7 @@ func appendCrossFrameArrowV1EngineSceneConnectionPage(elements *[]map[string]any
 		"xaligoCrossFrame":                    true,
 		"xaligoSourceFrame":                   srcFrameID,
 		"xaligoDestinationFrame":              dstFrameID,
+		"xaligoFrameID":                       ownerFrameID,
 		"xaligoConnectorLogicalId":            metadata.logicalID,
 		"xaligoConnectorSourceElementId":      metadata.sourceElementID,
 		"xaligoConnectorDestinationElementId": metadata.destinationElementID,
@@ -126,7 +127,7 @@ func crossFrameArrowPointsV1EngineSceneConnectionPage(dx, dy float64, side strin
 	return append(points, []float64{dx, dy})
 }
 
-func appendCrossFrameLabelV1EngineSceneConnectionPage(elements *[]map[string]any, id, label string, terminal [2]float64, frameRect, endpointRect [4]float64, side, color string, seed int, updated int64) {
+func appendCrossFrameLabelV1EngineSceneConnectionPage(elements *[]map[string]any, id, label string, terminal [2]float64, frameRect, endpointRect [4]float64, side, color, frameID string, seed int, updated int64) {
 	fontSize := 12.0
 	w := textWidthV1EngineSceneItem(label, fontSize*0.5)
 	h := math.Ceil(fontSize * 1.2)
@@ -157,6 +158,7 @@ func appendCrossFrameLabelV1EngineSceneConnectionPage(elements *[]map[string]any
 		"containerId": nil, "originalText": label, "lineHeight": 1.2,
 		"customData": map[string]any{
 			"xaligoCrossFrameLabel": true,
+			"xaligoFrameID":         frameID,
 			"xaligoTextLayout":      sceneTextLayoutV1EngineSceneBuild(entity.TextRoleConnectorLabel, true, 1.2),
 		},
 	})

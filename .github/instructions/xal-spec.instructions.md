@@ -97,6 +97,39 @@ but diagnostics recommend wrapping identified frames in the canonical
 `layout="vertical"`, frames are arranged horizontally. A `<frame>` inside
 `<frames>` requires a non-empty `id`.
 
+### Frame and physical-page contract
+
+An identified child `<frame>` is the V1 physical page unit. Frames are emitted
+in source order after the complete document scene and all cross-frame links
+have been resolved.
+
+| Format | Default mapping |
+|---|---|
+| SVG | One `.svg` artifact per frame |
+| PPTX | One slide per frame |
+| PDF | One page per frame |
+| Excel | One worksheet per frame, containing the frame's SVG image |
+| Excalidraw, XYFlow, Isoflow | One logical document containing all frames |
+
+SVG, PPTX, PDF, and Excel omit the page-frame outline in both default and
+`--combine-frames` output. Frame geometry remains authoritative for page size,
+cropping, endpoint ownership, and the logical page edge used by cross-frame
+page-link stubs. Excalidraw retains editable frame structure with transparent
+page-frame strokes.
+
+For a document with one child frame, SVG writes exactly the requested output
+path. For multiple child frames, an output request such as `diagram.svg`
+produces `diagram-<safe-frame-id>.svg` for each frame. The safe ID retains ASCII
+letters, digits, `_`, and `-`; every run of other characters becomes one `-`,
+leading and trailing `-` are removed, and an empty result falls back to
+`frame-<source-order>`. Two IDs that resolve to the same output filename are an
+error. SVG does not create an implicit archive.
+
+`--combine-frames` is the explicit compatibility option for page-oriented
+formats. It restores the historical single canvas, single slide, single PDF
+page, or single Excel worksheet. It does not change Excalidraw, XYFlow, or
+Isoflow because those formats are already single logical documents.
+
 ## Numeric and Geometry Contract
 
 Numeric attributes are validated before layout. A numeric value must be a
@@ -128,7 +161,7 @@ V1 intentionally distinguishes strict values from compatibility fallbacks:
 |---|---|
 | Invalid `overflow`, connection side, or connection anchor | Validation error |
 | Unknown `layout`, connection `kind`, stroke style, arrowhead, or arrowhead-size value | Validation error |
-| Unknown render mode, format, theme, paper/orientation, arrow-style option, or SVG legend position | Render-option error |
+| Unknown render mode, format, theme, paper/orientation, arrow-style option, or SVG legend position | Render-option error. The CLI normalizes `xlsx` to `excel` before validation |
 | Recognized but unavailable render mode (`aws-2.5d` or `topology`) | Not-implemented error |
 | Empty `align` | Omitted; defaults to `top-left` |
 | Malformed or unknown non-empty `align` | Warning; each unsupported component keeps its `top` or `left` default |
@@ -140,7 +173,7 @@ treated as V1 extensions.
 
 `validate` and every render format use the same normalized values and resolved
 geometry checks. Successfully validated input must not later produce `NaN`,
-`Inf`, a negative drawable size, or a JSON/SVG/PPTX serialization error caused
+`Inf`, a negative drawable size, or an output serialization error caused
 by geometry.
 
 ### Fixed and flexible child allocation
@@ -285,8 +318,9 @@ also comes from `title` or direct text content, and it supports `font-size`.
 Port boxes must remain inside their parent rectangle. Explicit positions are
 normalized before drawing, and overlapping ports on the same side are a layout
 diagnostic rather than a renderer-specific accident. Port text carries the
-shared text-layout policy: SVG and PPTX enforce it, while editable
-Excalidraw-compatible output preserves it in metadata for bound-text consumers.
+shared text-layout policy: SVG, its PDF/Excel projections, and PPTX enforce it,
+while editable Excalidraw-compatible output preserves it in metadata for
+bound-text consumers.
 
 ## Resolved Text Layout
 
@@ -649,7 +683,7 @@ capabilities common to xaligo outputs:
   draw a continuous time axis, waveforms, or proportional time geometry; and
 - `owner` records semantic containment without requiring spatial nesting.
 
-SVG, Excalidraw, PPTX, XYFlow, and Isoflow all consume this same resolved
+SVG, Excalidraw, PPTX, PDF, Excel, XYFlow, and Isoflow all consume this same resolved
 geometry. Excalidraw-compatible output carries xaligo UML custom data for
 editing. XYFlow retains UML node and relation fields in node/edge `data` and
 records the projected node shape. Isoflow projects every connected UML shape
@@ -789,28 +823,28 @@ validation error. Explicit `none` is accepted. Explicit `stroke-width`, color,
 and stroke style are preserved for every kind; non-route arrowhead attributes
 are also preserved.
 
-For SVG and PPTX Plan output, the render option `arrow-style` supplies the
-global arrowhead (and, for `thin`/`standard`, width) only when the connection
+For SVG, PPTX, PDF, and Excel Plan output, the render option `arrow-style`
+supplies the global arrowhead (and, for `thin`/`standard`, width) only when the connection
 does not explicitly set that semantic value. Explicit DSL or inherited group
 values take precedence, and `kind="route"` remains headless. Excalidraw,
 XYFlow, and Isoflow V1 output consume the resolved DSL scene rather than this
 Plan-only option.
 
-When a connection references endpoints in different frames, page-oriented
-output represents it as a page link instead of drawing one line across pages.
-Excalidraw, SVG, and PPTX render exactly two local stubs:
+When a connection references endpoints in different frames, the shared scene
+represents it as a page link instead of drawing one line across the inter-frame
+gap. SVG, PPTX, PDF, Excel, and Excalidraw derive exactly two local stubs:
 
-- the source stub runs from the source endpoint to the physical border of its
+- the source stub runs from the source endpoint to the logical page edge of its
   owning frame and has the exact label `to <destination frame ID>`; and
-- the destination stub runs from the physical border of its owning frame to
+- the destination stub runs from the logical page edge of its owning frame to
   the destination endpoint and has the exact label `from <source frame ID>`.
 
-Angle brackets in those forms denote placeholders and are not rendered. For a
+Angle brackets in those forms are rendered as literal punctuation. For a
 connection from frame `overview` to frame `detail`, the visible strings are
-therefore `to detail` and `from overview`.
+therefore `to <detail>` and `from <overview>`.
 
 Unless an endpoint has an explicit anchor or side, its page-link side is the
-frame border with the shortest non-negative perpendicular distance from the
+logical frame edge with the shortest non-negative perpendicular distance from the
 endpoint's visual envelope. An item's visual envelope is the union of its icon
 and external label; other endpoints use their rendered shape. The endpoint
 binding and frame terminal use that same side, selected independently for the
@@ -819,7 +853,8 @@ source and destination. Selection precedence is `src-anchor`/`dst-anchor`, then
 borders have the same minimum distance, a tied border facing the remote frame
 wins; otherwise the stable order is `top`, `right`, `bottom`, `left`.
 
-The terminal lies on the frame's physical border. Its unconstrained coordinate
+The terminal lies on the frame's logical page edge, which is not drawn as a
+page-frame outline. Its unconstrained coordinate
 parallel to that border comes from the endpoint binding. If that coordinate
 enters a 24-layout-px corner gutter, the terminal is clamped and a two-bend
 orthogonal dogleg bridges the coordinate difference; the endpoint- and
@@ -834,6 +869,13 @@ bends remain logical routing metadata for graph adapters.
 Both scene stubs carry the same logical connector ID, original endpoint/frame
 IDs, and V1 routing metadata. XYFlow and Isoflow use those fields to emit one
 logical edge instead of two partial edges.
+
+Default page-oriented export projects only the local stub belonging to each
+frame: the source SVG/slide/page/worksheet contains `to <destination frame
+ID>`, and the destination one contains `from <source frame ID>`.
+`--combine-frames` places both local stubs on the compatibility canvas but
+never reconnects them across the frame gap. Excalidraw also retains both stubs
+in its one editable scene.
 
 Output formats are projections of this resolved V1 meaning. A target schema
 may not have fields for every V1 connector value; the upstream-compatible
@@ -886,7 +928,8 @@ one of `id`, `ref`, `name`, or `target`.
 
 Excalidraw output always serializes arrowhead sizes as the smallest supported
 size (`"s"`) to keep dense diagrams readable. The logical arrowhead type and
-style metadata are still stored on the connector and used by SVG/PPTX export.
+style metadata are still stored on the connector and used by SVG/PPTX export
+and the SVG-based PDF/Excel projections.
 
 Manual bend coordinates are expressed as child tags in the same Cartesian
 layout coordinate space as the frame, with the origin at the upper-left of the
@@ -954,7 +997,8 @@ prod-vpc --- web
   lane overlaps. Group header tags, item icons, and labels are treated as
   routing obstacles where possible.
 - SVG/PPTX routing may additionally add automatic junction markers and line
-  jump masks after the Excalidraw scene is built. These are export-layer
+  jump masks after the Excalidraw scene is built. PDF and Excel inherit the SVG
+  projection. These are export-layer
   rendering features, not extra `.xal` tags.
 
 **Edge selection logic:**

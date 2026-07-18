@@ -56,6 +56,8 @@ npm run build --workspace=@ryo/xaligo-external
 .bin/xaligo validate docs/src/examples/samples/sample.xal
 .bin/xaligo render docs/src/examples/samples/sample.xal --format excalidraw -o output/sample.excalidraw
 .bin/xaligo render docs/src/examples/samples/sample.xal --format svg -o output/sample.svg
+.bin/xaligo render docs/src/examples/samples/sample.xal --format pdf -o output/sample.pdf
+.bin/xaligo render docs/src/examples/samples/sample.xal --format excel -o output/sample.xlsx
 .bin/xaligo render docs/src/examples/samples/sample.xal --format xyflow -o output/sample.xyflow.json
 .bin/xaligo render docs/src/examples/samples/sample.xal --format isoflow -o output/sample.isoflow.json
 .bin/xaligo serve docs/src/examples/samples/sample.xal --mode network
@@ -79,7 +81,10 @@ use-case file owns its `XxxUsecase` interface, private implementation,
 renderUsecase := NewRenderUsecase(...)
 renderUsecase.Render(ctx, source, options)
 renderUsecase.RenderSVG(ctx, source, options)
+renderUsecase.RenderArtifacts(ctx, source, options)
 renderUsecase.RenderPPTX(ctx, source, options)
+renderUsecase.RenderPDF(ctx, source, options)
+renderUsecase.RenderExcel(ctx, source, options)
 
 diagnosticsUsecase := NewDiagnosticsUsecase()
 diagnosticsUsecase.Validate(ctx, source)

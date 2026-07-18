@@ -19,7 +19,7 @@ direction lives in `roadmap.instructions.md`; DSL behavior lives in
    -> resolved canonical scene
    -> internal/usecase/v1/engine plan calculations
    -> internal/repository output encoder
-   -> SVG | Excalidraw | PPTX | XYFlow | Isoflow
+   -> SVG | Excalidraw | PPTX | PDF | Excel | XYFlow | Isoflow
 ```
 
 The parent `internal/usecase` package is the shared rendering and orchestration
@@ -146,6 +146,26 @@ allows V2 to render V1 while V1 remains unaware of V2.
     modified/moved nodes in pale red; the new side highlights added and current
     modified/moved nodes in pale green. Highlight overlays are added after
     layout and route resolution and must not become routing obstacles.
+26. An identified child `<frame>` is one physical page by default. SVG emits
+    one artifact per frame, PPTX maps one frame to one slide, PDF maps one
+    frame to one page, and Excel maps one frame to one worksheet containing
+    that frame's SVG image. `CombineFrames` is the explicit compatibility
+    policy that preserves the former single-canvas, single-slide, single-page,
+    or single-sheet result. Excalidraw, XYFlow, and Isoflow remain single
+    logical documents and do not split by frame. Page-oriented encoders omit
+    the page-frame outline in default and combined output; the frame remains a
+    logical crop/page-link boundary rather than a visible rectangle.
+    Excalidraw retains page-frame objects with transparent strokes.
+27. Page projection happens only after the complete document scene, connector
+    routing, and cross-frame link semantics are resolved. A per-frame encoder
+    consumes an ordered `DocumentPlan` projection; it must not parse, lay out,
+    route, or infer crop geometry independently. A one-frame SVG render returns
+    the exact requested output path, while a multi-frame SVG render uses stable
+    frame-derived artifact IDs and rejects filename collisions.
+28. Native PDF and Excel encoders remain behind `!js` build constraints. The
+    browser adapter uses lightweight `js` repository stubs because those
+    formats are not exposed there; native canvas, font, and spreadsheet
+    dependencies must not enter the browser-WASM dependency graph.
 
 ## File organization
 
@@ -172,7 +192,7 @@ Current component prefixes are `add`, `diff`, `generate`, `init`, `render`,
 `serve`, `validate`, and `version` in `internal/controller`; `render`, `diff`, `diagnostics`,
 `scene_io`, `catalog`, `export`, `parser`, `layout`, `element`, `pagination`,
 `plan`, `scene`, and `theme` in `internal/usecase`; and `powerpoint`, `preview`,
-`isoflow`, `svg`, `xyflow`, `excalidraw`, and `xaligo` in
+`isoflow`, `svg`, `pdf`, `spreadsheet`, `xyflow`, `excalidraw`, and `xaligo` in
 `internal/repository`. Repository supporting files retain the same prefix, such
 as `powerpoint_export.go` and `isoflow_assets.go`. Every direct
 `internal/usecase/*.go` file is a complete component as specified in
@@ -220,7 +240,7 @@ must establish these postconditions before a scene or plan is constructed:
 - gaps are subtracted exactly once and cursors advance by the resolved size;
 - containment or the selected overflow policy is recorded explicitly; and
 - invalid geometry is returned as a source-positioned diagnostic, not dropped
-  later by scene construction or exposed to a JSON/SVG/PPTX encoder.
+  later by scene construction or exposed to an output encoder.
 
 With `overflow="visible"`, fixed children still consume their resolved sizes
 and advance the cursor. If they leave no positive remainder while flexible

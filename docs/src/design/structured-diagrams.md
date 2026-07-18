@@ -84,17 +84,42 @@ components arranged with the normal row, column, container, and grid controls.
 The component selects its semantic processor; `frame` never carries values
 such as `type="uml-class"`.
 
+## Frame-to-page projection
+
+An identified child frame is one physical page by default. The complete scene
+is resolved once, then each frame is projected in source order.
+
+| Output | Frame mapping |
+|---|---|
+| SVG | One file per frame |
+| PPTX | One slide per frame |
+| PDF | One page per frame |
+| Excel | One worksheet per frame containing its SVG image |
+| Excalidraw, XYFlow, Isoflow | One logical document containing every frame |
+
+`--combine-frames` preserves the historical single canvas, slide, PDF page, or
+Excel worksheet. It is an output projection option, not a change to frame
+identity, layout, or connection resolution. A one-frame SVG document writes the
+exact requested filename; multiple frames append a filename-safe frame ID to
+the requested stem.
+
+For SVG, PPTX, PDF, and Excel, a page frame is not a visible rectangle. Its
+outline is omitted in both default and combined compatibility output; its
+geometry remains the page/crop boundary and the logical terminal for
+cross-frame page-link stubs. Excalidraw retains frame structure for editing
+with a transparent page-frame outline.
+
 ## Cross-frame page-link projection
 
 A qualified endpoint such as `detail.database` is a logical connection across
 frame/page boundaries. Page-oriented output does not draw one line through the
 space between frames. It projects the connection as two local page-link stubs:
-the source endpoint connects to its owning frame's physical border and is
-labeled `to <destination frame ID>`; the destination frame's physical border
+the source endpoint connects to its owning frame's logical page edge and is
+labeled `to <destination frame ID>`; the destination frame's logical page edge
 connects to the destination endpoint and is labeled
 `from <source frame ID>`. For example, an `overview` to `detail` connection
-shows `to detail` on the source page and `from overview` on the destination
-page. Angle brackets describe placeholders and are not rendered.
+shows `to <detail>` on the source page and `from <overview>` on the destination
+page. The angle brackets are rendered as literal punctuation.
 
 Unless an endpoint anchor or side is explicit, each endpoint's visual envelope
 selects the nearest of its own frame's four borders. The chosen endpoint side
@@ -102,11 +127,12 @@ and page-border side are the same. Equal distances prefer the side facing the
 other frame, then the stable order top, right, bottom, left. Explicit anchors
 take precedence over explicit sides, which take precedence over automatic
 selection. Manual bends remain logical connection metadata and do not steer
-the two local stubs. Excalidraw, SVG, and PPTX preserve the two page-local
-projections; graph adapters combine their shared logical connection ID into
-one XYFlow or Isoflow edge.
+the two local stubs. Excalidraw, SVG, PPTX, PDF, and Excel preserve the two
+page-local projections; graph adapters combine their shared logical connection
+ID into one XYFlow or Isoflow edge.
 
-The terminal itself lies on the physical frame border. Its unconstrained
+The terminal itself lies on the logical page edge even though no frame outline
+is drawn. Its unconstrained
 parallel coordinate follows the endpoint binding; a coordinate inside the
 24-layout-pixel corner gutter is clamped and connected with a two-bend
 orthogonal dogleg so both the endpoint and border segments remain perpendicular
@@ -312,7 +338,7 @@ and orthogonal semantic connectors for relations. Sequence order sets
 top-to-bottom connector anchors but does not draw separate lifeline/activation
 axes; timing diagrams do not draw proportional waveforms, and semantic owners
 do not imply spatial nesting. This keeps the resolved geometry shared by SVG,
-Excalidraw, PPTX, XYFlow, and Isoflow; target formats may omit UML metadata or
+Excalidraw, PPTX, PDF, Excel, XYFlow, and Isoflow; target formats may omit UML metadata or
 marker details they cannot represent without private schema extensions.
 
 ## Imports and overrides
@@ -370,7 +396,7 @@ After layout, processors emit shared renderer-neutral operations for shapes,
 text, compartments, icons, ports, and semantic edges. Operations retain stable
 source IDs, semantic kind, parentage, text policy, geometry, style, and
 optional endpoint metadata. Output encoders project these operations into SVG,
-PPTX, Excalidraw, XYFlow, or another supported capability set without becoming
+PPTX, PDF, Excel, Excalidraw, XYFlow, or another supported capability set without becoming
 alternate semantic models.
 
 ## Delivery sequence

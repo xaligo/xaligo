@@ -18,7 +18,7 @@ more useful than a large rewrite.
 Good contribution areas include:
 
 - `.xal` examples for real architecture patterns.
-- Rendering bugs in Excalidraw, SVG, PPTX, XYFlow, or Isoflow output.
+- Rendering bugs in Excalidraw, SVG, PPTX, PDF, Excel, XYFlow, or Isoflow output.
 - Connector routing improvements.
 - AWS, Tabler, or Yamaha catalog corrections.
 - Documentation improvements.
@@ -42,6 +42,8 @@ Before opening a pull request:
 make security-setup # first run, or after scanner version updates
 make security-check # required before every commit
 go test ./...
+GOOS=js GOARCH=wasm go build -o /tmp/xaligo-browser.wasm ./cmd/wasm
+npm --prefix external test
 git diff --check
 cargo install mdbook-tabs --version 1.0.4 --locked
 mdbook build docs

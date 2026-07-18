@@ -225,7 +225,8 @@ func runGeneratePptx(renderUsecase usecase.RenderUsecase, exportUsecase usecase.
 func buildPptxPlanJSON(renderUsecase usecase.RenderUsecase, opts entity.ControllerPptxGenerateOptions) ([]byte, error) {
 	if err := renderUsecase.ValidateRenderOptions(entity.RenderOptions{
 		Mode: entity.Mode(opts.Mode), Format: usecase.FormatPPTX, Theme: opts.Theme,
-		PxPerInch: opts.PxPerInch, ArrowStyle: opts.ArrowStyle, ArrowStubPx: opts.ArrowStub, ArrowMarginPx: opts.ArrowMargin,
+		CombineFrames: opts.CombineFrames,
+		PxPerInch:     opts.PxPerInch, ArrowStyle: opts.ArrowStyle, ArrowStubPx: opts.ArrowStub, ArrowMarginPx: opts.ArrowMargin,
 		PaperSize: opts.Paper, Orientation: opts.Orientation,
 		PaperMarginIn: opts.PaperMargin, PaperMarginTopIn: opts.PaperMarginTop, PaperMarginRightIn: opts.PaperMarginRight,
 		PaperMarginBottomIn: opts.PaperMarginBottom, PaperMarginLeftIn: opts.PaperMarginLeft,
@@ -247,6 +248,7 @@ func buildPptxPlanJSON(renderUsecase usecase.RenderUsecase, opts entity.Controll
 		Mode:                entity.Mode(opts.Mode),
 		Format:              usecase.FormatPPTX,
 		Theme:               opts.Theme,
+		CombineFrames:       opts.CombineFrames,
 		PxPerInch:           opts.PxPerInch,
 		ArrowStyle:          opts.ArrowStyle,
 		ArrowStubPx:         opts.ArrowStub,

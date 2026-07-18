@@ -65,7 +65,12 @@ func buildFramesV1EngineLayoutBuild(rootNode *entity.Node) (*entity.Box, error) 
 		id := strings.TrimSpace(child.Attrs["id"])
 		boxID := childIDV1EngineLayoutAttributes(root.ID, i)
 		if id != "" {
-			boxID = sanitizeElementIDV1EngineSceneConnectionRoute(id)
+			// Frame IDs are already validated as non-empty, whitespace-free
+			// document identifiers. Keep the original value here: replacing
+			// punctuation with '-' is lossy (for example a/b and a:b used to
+			// collapse to the same box ID), which also made every descendant
+			// scene element collide across those frames.
+			boxID = id
 		}
 		cb := &entity.Box{ID: boxID, Tag: child.Tag, Label: labelOfV1EngineLayoutAttributes(child), Position: child.Position}
 		if err := layoutNodeV1EngineLayoutNode(child, cb, curX, curY, w, h); err != nil {

@@ -11,7 +11,7 @@ import (
 )
 
 func TestValidateRenderOptionsAcceptsSupportedFormatsAndModes(t *testing.T) {
-	for _, format := range []entity.Format{"", usecase.FormatExcalidraw, usecase.FormatSVG, usecase.FormatPPTX, usecase.FormatXYFlow, usecase.FormatIsoflow} {
+	for _, format := range []entity.Format{"", usecase.FormatExcalidraw, usecase.FormatSVG, usecase.FormatPPTX, usecase.FormatPDF, usecase.FormatExcel, usecase.FormatXYFlow, usecase.FormatIsoflow} {
 		if err := usecase.ValidateRenderOptions(entity.RenderOptions{Mode: " network ", Format: format, Theme: "dark"}); err != nil {
 			t.Fatalf("format %q error = %v", format, err)
 		}

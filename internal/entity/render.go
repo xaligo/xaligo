@@ -29,6 +29,7 @@ type RenderOptions struct {
 	Abbreviations map[int]string `json:"-"`
 	Assets        *AssetSource   `json:"-"`
 	Imports       *ImportSource  `json:"-"`
+	CombineFrames bool           `json:"combineFrames,omitempty"`
 
 	PxPerInch           float64 `json:"pxPerInch,omitempty"`
 	ArrowStyle          string  `json:"arrowStyle,omitempty"`

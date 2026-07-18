@@ -10,38 +10,35 @@ or under consideration and may change as the core renderer evolves.
 
 - Performance improvements for large diagrams.
 - Rendering support for larger architecture maps.
-- Page splitting for diagrams that do not fit on a single page.
+- Tiling one oversized frame across several physical pages.
 
-### Phase 1 Implementation Plan
+### Frame pagination status
 
-1. Add shared page-splitting analysis for the resolved draw plan.
-   This creates page tiles and records which drawing operations intersect each
-   tile without changing SVG or PPTX output yet.
-2. Connect the page metadata to SVG export so large diagrams can be emitted as
-   page-sized SVG files or page groups.
-3. Connect the same metadata to PPTX export so oversized diagrams can become
-   multiple slides while reusing the existing plan geometry.
-4. Add large-diagram regression samples and performance benchmarks around
-   parser, layout, scene construction, routing, plan building, and output
-   encoding.
-5. Optimize the slowest measured stages, with preference for shared caches and
-   data structures that benefit every renderer.
+Identified child frames are now physical page boundaries. The full scene is
+resolved first and then projected in source order:
 
-Initial implementation status:
+| Output | Default frame mapping |
+|---|---|
+| SVG | One file per frame |
+| PPTX | One slide per frame |
+| PDF | One page per frame |
+| Excel | One worksheet containing the frame SVG |
 
-- Shared page-splitting analysis has started in the Go usecase layer.
-- `SplitPlanPagesChecked` rejects non-finite slide, operation, point, page, and
-  overlap geometry and assigns stable unique IDs to anonymous operations.
-- Rendering output is unchanged until SVG and PPTX are wired to the page
-  metadata.
+`--combine-frames` retains the former single-canvas/page form. Excalidraw,
+XYFlow, and Isoflow remain one logical document.
+
+This frame pagination is separate from generic tiling. Remaining scale work is
+to split one oversized frame into multiple tiles, add large-diagram regression
+samples and benchmarks, and optimize the slowest measured shared stages.
 
 ## Rendering Correctness Foundation
 
 The shared renderer now rejects non-finite and invalid layout numbers, resolves
 fixed children before flex ratios, records content boxes and explicit overflow,
-detects parent and port overlap violations, and gives SVG/PPTX a common text
-layout and PPI transform. CLI format dispatch also goes through one use-case
-entry point. See [Internal Architecture and Algorithms](internal-architecture.md).
+detects parent and port overlap violations, and gives SVG/PPTX and the
+SVG-derived PDF/Excel output a common text layout and PPI transform. CLI format
+dispatch also goes through one use-case entry point. See
+[Internal Architecture and Algorithms](internal-architecture.md).
 
 The next structural steps are:
 
@@ -78,7 +75,8 @@ geometry across native and embedded targets.
 
 ## Input and Output Formats
 
-- Excel export and Excel-friendly workflows.
+- Excel-friendly data workflows beyond the implemented frame-image workbook
+  export.
 - Import from existing diagram formats and conversion into `.xal`.
 - Better round-tripping between generated output and `.xal` source.
 

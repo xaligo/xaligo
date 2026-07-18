@@ -5,8 +5,8 @@ Each family has a closed element and relation vocabulary, and the parser checks
 owners, endpoints, control-node degrees, message order, communication links,
 and timing intervals before the shared layout runs.
 
-The result is a portable UML projection: SVG, Excalidraw, PPTX, XYFlow, and
-Isoflow consume the same shapes and connectors, while editable output retains
+The result is a portable UML projection: SVG, Excalidraw, PPTX, PDF, Excel,
+XYFlow, and Isoflow consume the same shapes and connectors, while editable output retains
 the UML diagram, element, relation, owner, order, multiplicity, guard, and time
 metadata that its target schema can represent.
 

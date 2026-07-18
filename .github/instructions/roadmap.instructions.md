@@ -12,8 +12,8 @@ eventual VS Code / PPTX integration.
 Implementation guidance:
 
 - Keep the core pipeline separable as `.xal -> parser -> layout -> renderer`.
-- Treat Excalidraw, SVG, and PPTX as output renderers over a shared model where
-  possible.
+- Treat Excalidraw, SVG, PPTX, PDF, Excel, XYFlow, and Isoflow as output
+  renderers/projections over a shared model where possible.
 - Prioritize SVG renderer and network diagram primitives before advanced PPTX
   feature polish when the choice is otherwise ambiguous.
 - Route/traffic separation, route connectors, orthogonal routing, edge offsets,
@@ -114,7 +114,9 @@ Target formats:
 |---|---|
 | `svg` | Portable output and live preview |
 | `excalidraw` | Editable Excalidraw scene |
-| `pptx` | Editable presentation export |
+| `pptx` | Editable presentation export; one frame per slide by default |
+| `pdf` | Paginated document export; one frame per page by default |
+| `excel` (`xlsx` alias) | Workbook export; one frame SVG per worksheet by default |
 | `xyflow` | React Flow/GUI editor integration |
 | `isoflow` | Isometric/2.5D integration |
 
@@ -140,8 +142,11 @@ The shared in-repository use-case boundary should support at least:
 
 ```go
 RenderSVG()
+RenderArtifacts()
 RenderExcalidraw()
 RenderPPTX()
+RenderPDF()
+RenderExcel()
 RenderXYFlow()
 RenderIsoflow()
 ```
@@ -262,10 +267,15 @@ usable without a specific UI framework.
 
 ## Export Roadmap
 
-Primary formats remain SVG, Excalidraw, and PPTX. Add:
+Primary formats include SVG, Excalidraw, PPTX, PDF, and Excel. The page-oriented
+formats use identified child frames as their default physical page boundary:
+SVG files, PPTX slides, PDF pages, and Excel worksheets respectively.
+`--combine-frames` retains the previous single-canvas behavior. Add or continue:
 
 - XYFlow export for React Flow-style GUI editors. (initial implementation complete)
 - Isoflow export for isometric and 2.5D integrations. (initial upstream model export complete)
+- Generic tiling of one oversized frame across several pages. Frame pagination
+  is implemented and is distinct from this remaining tiling work.
 
 Both exports should consume the shared resolved model; they must not become
 alternative parsers for `.xal`.
@@ -279,7 +289,7 @@ Instana-style topology tools:
 - Strong AWS and network diagram support.
 - 2D, 2.5D, and topology views from one DSL.
 - Comfortable VS Code authoring.
-- SVG, PPTX, Excalidraw, XYFlow, and Isoflow output.
+- SVG, PPTX, PDF, Excel, Excalidraw, XYFlow, and Isoflow output.
 
 ## Current State
 
@@ -302,7 +312,12 @@ Implemented or partially implemented:
   slide data.
 - Repository-layer PPTX export has been redirected toward a WASM exporter
   adapter in `internal/repository/powerpoint.go`.
-- `xaligo render --format excalidraw|svg|pptx` is implemented.
+- `xaligo render --format excalidraw|svg|pptx|pdf|excel` is implemented;
+  `xlsx` is accepted as an alias for `excel`.
+- Identified child frames map to separate SVG artifacts, PPTX slides, PDF
+  pages, and Excel worksheets in source order. `--combine-frames` retains the
+  compatibility single-canvas form. Excalidraw, XYFlow, and Isoflow remain one
+  logical document.
 - `xaligo render --format xyflow` and TypeScript/WASM `renderXYFlow()` export
   nested React Flow-compatible nodes and edges. V1 item, AWS group, rectangle,
   port, and identified child-frame endpoints are retained; cross-frame stubs
@@ -320,7 +335,8 @@ Implemented or partially implemented:
   and oval marker geometry.
 - Shared `light` and `dark` themes are implemented for Excalidraw, SVG, and
   PPTX via `xaligo render --theme`.
-- Stable Go use cases in `internal/usecase` expose `Render`, `RenderExcalidraw`, `RenderSVG`, `RenderPPTX`,
+- Stable Go use cases in `internal/usecase` expose `Render`, `RenderExcalidraw`,
+  `RenderSVG`, `RenderArtifacts`, `RenderPPTX`, `RenderPDF`, `RenderExcel`,
   `RenderXYFlow`, `RenderIsoflow`, and `Validate`; CLI SVG/Excalidraw/validation
   use the same pipeline.
 - CLI, preview, and WASM adapters now use the same render use case. Embedded
@@ -328,8 +344,9 @@ Implemented or partially implemented:
   layout, or scene construction.
 - Isoflow exports shared group borders as view rectangles and produces stable
   icon ordering.
-- Frozen V1 routes are headless across Excalidraw, SVG, PPTX, XYFlow, and
-  Isoflow. Circular route connector nodes remain a future versioned feature.
+- Frozen V1 routes are headless across Excalidraw, SVG, PPTX, PDF, Excel,
+  XYFlow, and Isoflow. Circular route connector nodes remain a future versioned
+  feature.
 - Node/PptxGenJS can still generate `out.pptx` as a temporary development path,
   but it is not the long-term repository-layer architecture.
 
@@ -392,7 +409,10 @@ renderer
 ```go
 RenderExcalidraw()
 RenderSVG()
+RenderArtifacts()
 RenderPPTX()
+RenderPDF()
+RenderExcel()
 RenderXYFlow()
 RenderIsoflow()
 ```
@@ -414,7 +434,8 @@ xaligo validate
 Required compatibility:
 
 - Keep existing `xaligo render <input.xal> -o <out.excalidraw>` working.
-- Add `xaligo render <input.xal> --format excalidraw|svg|pptx`.
+- Add `xaligo render <input.xal> --format excalidraw|svg|pptx|pdf|excel`;
+  accept `xlsx` as the Excel alias.
 - Keep format conversion under `xaligo render --format ...`; `generate` should
   remain focused on source `.xal` generation.
 - `validate` must reuse parser/layout validation rather than duplicate parsing.
@@ -451,7 +472,8 @@ xaligo render input.xal --format svg
 
 Status: route/traffic kinds, headless V1 routes, styling, layer order,
 basic lane separation, automatic route junctions, and textual connection
-shorthands are implemented across Excalidraw, SVG, and PPTX.
+shorthands are implemented across Excalidraw, SVG, and PPTX and inherited by
+the SVG-based PDF and Excel projections.
 
 ### Route Connector
 
@@ -541,7 +563,8 @@ o-----+
 ## v0.5 Line Jumps
 
 Status: rectangular background-mask jumps are implemented in the shared draw
-plan for SVG/PPTX. Curved bridge arcs and an Excalidraw approximation remain.
+plan for SVG/PPTX and therefore their PDF/Excel projections. Curved bridge arcs
+and an Excalidraw approximation remain.
 
 ### Bridge / Jump Lines
 

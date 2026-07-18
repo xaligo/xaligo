@@ -18,7 +18,7 @@
       </container>
 
       <connections>
-        <!-- Auto: each endpoint selects its nearest physical frame border. -->
+        <!-- Auto: each endpoint selects its nearest logical page edge. -->
         <connection src="api-out" dst="service-detail.api-in" />
 
         <!-- Explicit: top-side anchor 1 produces a corner-safe dogleg. -->

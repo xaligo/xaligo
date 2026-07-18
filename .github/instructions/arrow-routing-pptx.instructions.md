@@ -23,6 +23,12 @@ This file is the current source of truth for PPTX export geometry.
   is being prepared.
 - All PPTX geometry and routing decisions are computed by the Go use-case
   pipeline before the exporter boundary.
+- Each identified child frame becomes one diagram slide in source order by
+  default. `--combine-frames` is the explicit compatibility path for the
+  former single-slide canvas.
+- A presentation has one common slide size. Multi-frame PPTX uses the largest
+  resolved page width and height and centers smaller frame pages without
+  scaling them independently.
 - The PPTX drawing/export layer must not make independent layout/routing
   decisions.
 - Lines must not visually cover icons or labels.
@@ -42,7 +48,7 @@ This file is the current source of truth for PPTX export geometry.
 .xal DSL
   -> Go parse and numeric-domain validation (typed normalization is the target)
   -> resolved layout and canonical scene
-  -> shared physical Go draw plan (neutral-schema migration remains)
+  -> ordered page-oriented Go document plan (neutral-schema migration remains)
   -> internal repository encoder (SVG), or
   -> Go repository -> WASM command -> external controller -> use case -> repository
   -> SVG | .pptx
@@ -122,6 +128,8 @@ Do not spend implementation time replacing the repository-layer exporter with
 ```
 
 - The shared Go plan resolves paper size and computes one layout-pixel transform.
+- The page-oriented plan is built after the full scene and cross-frame page
+  links are resolved. Its frame projections preserve source order.
 - Shape coordinates, font sizes, strokes, padding, and routing geometry use
   that same transform. `--px-per-inch 144` must not scale text independently
   from its containing shape.
@@ -171,26 +179,26 @@ arrowhead sizes as `"s"` for dense diagrams.
 
 A connection between different frames is a page link in page-oriented output;
 it is never one line crossing the inter-frame canvas. The shared scene emits
-two axis-aligned local stubs for Excalidraw, SVG, and PPTX:
+two axis-aligned local stubs for Excalidraw, SVG, PPTX, PDF, and Excel:
 
-- source endpoint to the source frame's physical border, with the exact label
+- source endpoint to the source frame's logical page edge, with the exact label
   `to <destination frame ID>`; and
-- destination frame's physical border to the destination endpoint, with the
+- destination frame's logical page edge to the destination endpoint, with the
   exact label `from <source frame ID>`.
 
-Angle brackets are placeholders, so a link from `overview` to `detail` renders
-`to detail` and `from overview`. The shared scene, not the PPTX exporter,
+Angle brackets are literal punctuation, so a link from `overview` to `detail`
+renders `to <detail>` and `from <overview>`. The shared scene, not the PPTX exporter,
 selects each local side independently. An explicit anchor takes precedence
 over an explicit side, which takes precedence over the automatic side. The
 automatic side minimizes the perpendicular distance from the endpoint visual
-envelope to the four physical frame borders. The endpoint binding and border
+envelope to the four logical frame edges. The endpoint binding and border
 terminal use the same side. Ties prefer a tied side facing the remote frame,
 then `top`, `right`, `bottom`, `left`.
 
 The unconstrained terminal uses the endpoint binding's coordinate parallel to
 the border. If that coordinate enters a 24-layout-px corner gutter, the
 terminal is clamped and a two-bend orthogonal dogleg bridges the coordinate
-difference; the segments at both the endpoint and frame border remain
+difference; the segments at both the endpoint and logical page edge remain
 perpendicular to their selected side. A border shorter than 96 layout pixels
 uses one quarter of its length as an adaptive gutter. If the endpoint and
 terminal coincide on the border, the terminal shifts by up to 24 layout pixels
@@ -199,6 +207,13 @@ Manual bends remain connector metadata and
 do not steer page-local stubs. Both stubs retain one logical connector ID;
 XYFlow and Isoflow reconstruct one graph edge from that metadata rather than
 exporting the two page projections.
+
+The page edge is geometric, not a visible rectangle: SVG, PPTX, PDF, and Excel
+omit page-frame outlines in both default and combined output.
+
+Default PPTX output places the source and destination stubs on their respective
+frame slides. `--combine-frames` places both stubs on the compatibility slide
+but never draws a replacement line across the frame gap.
 
 ## Advanced Routing Features
 
@@ -344,8 +359,8 @@ For item grids, horizontal `spread` is also supported.
 
 ## Legend Pages
 
-PPTX export adds legend slides after the diagram slide when `--services` is
-provided.
+PPTX export adds legend slides after all frame/diagram slides when `--services`
+is provided.
 
 - Legend data is derived from `services.csv`.
 - Only services actually used in the scene are included.

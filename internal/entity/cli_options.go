@@ -25,6 +25,7 @@ type ControllerRenderOptions struct {
 	Author            string
 	Company           string
 	Subject           string
+	CombineFrames     bool
 	Compression       *bool
 	PxPerInch         float64
 	ArrowStyle        string
@@ -53,6 +54,7 @@ type ControllerPptxGenerateOptions struct {
 	Author            string
 	Company           string
 	Subject           string
+	CombineFrames     bool
 	Compression       *bool
 	PxPerInch         float64
 	ArrowStyle        string

@@ -33,7 +33,7 @@ func collectObstaclesV1EnginePlanObstacle(elements []*entity.Element) []rectV1En
 func collectContainerBorderPathsV1EnginePlanObstacle(elements []*entity.Element) [][]segmentV1EngineRouteTypes {
 	paths := make([][]segmentV1EngineRouteTypes, 0)
 	for _, el := range elements {
-		if el.ID == "paper-frame" || (el.CustomData != nil && el.CustomData.DiffHighlight) || (el.Type != "frame" && el.Type != "rectangle") {
+		if el.ID == "paper-frame" || (el.CustomData != nil && (el.CustomData.PageFrame || el.CustomData.DiffHighlight)) || (el.Type != "frame" && el.Type != "rectangle") {
 			continue
 		}
 		stroke := strings.ToLower(strings.TrimSpace(el.StrokeColor))

@@ -2,9 +2,15 @@
 
 ## Frame
 
-`<frame>` defines one canvas and its top-level layout. `<frames>` wraps multiple
-identified `<frame>` children; it lays them out horizontally by default and
-vertically with `layout="vertical"`.
+`<frame>` defines one page canvas and its top-level layout. `<frames>` wraps
+multiple identified `<frame>` children; it lays them out horizontally by
+default and vertically with `layout="vertical"` in the complete logical scene.
+SVG, PPTX, PDF, and Excel project each child frame to one file, slide, page, or
+worksheet by default. `--combine-frames` preserves that complete scene as one
+physical canvas/page. SVG, PPTX, PDF, and Excel do not draw the page frame's
+outline, including in combined compatibility output. The frame edge remains a
+logical page-link terminal and clipping boundary. Excalidraw keeps editable
+frame objects but gives them transparent strokes.
 
 | Attribute | Default | Description |
 |---|---|---|

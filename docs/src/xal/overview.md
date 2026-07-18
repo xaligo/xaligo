@@ -24,6 +24,8 @@ to understand V2.
 Important rules:
 
 - Layout coordinates use pixels.
+- An identified child frame is one SVG artifact, PPTX slide, PDF page, or Excel
+  worksheet by default. `--combine-frames` preserves the compatibility canvas.
 - The origin is the upper-left of the rendered frame.
 - Positive `x` extends right and positive `y` extends down.
 - Connections must be direct children of `<frame>` or inside frame-level

@@ -10,6 +10,7 @@ xaligo render diagram.xal --format xyflow -o diagram.xyflow.json
 
 It includes nested group nodes, icon data URLs, labels, connection handles,
 route/traffic metadata, layer order, line styles, and arrow markers.
+All frames remain in one graph document; `--combine-frames` has no effect.
 
 V1 connections may target an item, AWS group, rectangle, port, or identified
 child frame. XYFlow emits a node for each rendered endpoint kind and resolves
@@ -29,8 +30,8 @@ clamp V1 `overflow="visible"` geometry back inside the parent.
 
 A V1 connection between frames is represented by two editable local stubs in
 the canonical scene for page-oriented formats. The source projection runs from
-its endpoint to the frame border with `to <destination frame ID>`; the
-destination projection runs from its frame border to the endpoint with
+its endpoint to the logical frame edge with `to <destination frame ID>`; the
+destination projection runs from its logical frame edge to the endpoint with
 `from <source frame ID>`. Both stubs carry one logical connection ID, the two
 original endpoint/frame IDs, and routing metadata including manual bends. The
 XYFlow adapter uses that metadata to emit one edge, including source and
@@ -46,6 +47,7 @@ xaligo render diagram.xal --format isoflow -o diagram.isoflow.json
 
 The model follows the upstream Isoflow shape with `items`, `views`, `icons`,
 `colors`, and view `rectangles` / `connectors`.
+All frames remain in one model document; `--combine-frames` has no effect.
 
 Items keep their existing IDs, order, and tile reservations. When a connection
 references an AWS group, rectangle, port, or identified child frame, the

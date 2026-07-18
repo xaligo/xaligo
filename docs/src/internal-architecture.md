@@ -38,15 +38,16 @@ This keeps input adapters independent from parsing, layout, and rendering.
    order. Synchronous scene calculation runs in
    [`v1/engine`](https://github.com/xaligo/xaligo/tree/main/internal/usecase/v1/engine)
    and emits the Excalidraw-compatible scene shared by downstream formats.
-4. **Dispatch and encode.** [`Render`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/render.go)
-   is the single format switch. Excalidraw returns the scene directly; XYFlow
-   and Isoflow translate it. SVG and PPTX first convert it into the same
-   shared SVG/PPTX draw plan and then call their repositories.
+4. **Project, dispatch, and encode.** [`Render`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/render.go)
+   owns format dispatch. Excalidraw returns the scene directly; XYFlow and
+   Isoflow translate the complete logical scene. SVG, PPTX, PDF, and Excel
+   build an ordered `DocumentPlan` after full-scene routing, with one identified
+   frame projection per physical page by default, then call their repositories.
 
 The key invariant is therefore `.xal -> validated node tree -> resolved box
-tree -> canonical scene -> plan or encoder`. `validate` and `render` execute the
-same layout checks, and formats do not have independent parsers or layout
-engines.
+tree -> canonical scene -> document plan or logical-document encoder`.
+`validate` and `render` execute the same layout checks, and formats do not have
+independent parsers or layout engines.
 
 ## Structural diff algorithm
 
@@ -126,7 +127,7 @@ those semantics.
 | `cmd`, `internal/controller` | Process entry points, CLI flags, and file I/O | [`internal/command.go`](https://github.com/xaligo/xaligo/blob/main/internal/command.go) |
 | `internal/usecase` | Context checks, repository adaptation, stage ordering, render/diff orchestration, format dispatch, and future parallel scheduling | [`render.go`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/render.go), [`diff.go`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/diff.go), [`diagnostics.go`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/diagnostics.go) |
 | `internal/usecase/v1/engine` | Synchronous V1 parser, validation, layout, scene, routing, pagination, theme, and draw-plan calculations | [`v1/engine`](https://github.com/xaligo/xaligo/tree/main/internal/usecase/v1/engine) |
-| `internal/entity` | Data exchanged across layers, including resolved content boxes, `PresentationScene`, `Plan`, and `TextLayout`; no orchestration | [`internal/entity`](https://github.com/xaligo/xaligo/tree/main/internal/entity) |
+| `internal/entity` | Data exchanged across layers, including resolved content boxes, `PresentationScene`, `DocumentPlan`, `Plan`, and `TextLayout`; no orchestration | [`internal/entity`](https://github.com/xaligo/xaligo/tree/main/internal/entity) |
 | `internal/repository` | Catalog/filesystem access and output encoders | [`internal/repository`](https://github.com/xaligo/xaligo/tree/main/internal/repository) |
 | `external` | TypeScript API and the PptxGenJS/WASM adapter | [`external`](https://github.com/xaligo/xaligo/tree/main/external) |
 
@@ -166,8 +167,9 @@ names and form the compatibility boundary. The mandatory rule is defined in
 `.github/instructions/coding.instructions.md` and enforced by a source-structure
 regression test.
 
-`RenderController.RunFormat` reads each input once and calls the generic
-`RenderUsecase.Render` path for every format
+`RenderController.RunFormat` reads each input once. Container formats call the
+generic `RenderUsecase.Render` path; SVG calls `RenderArtifacts` so a
+multi-frame document can persist several files
 ([`internal/controller/render.go`](https://github.com/xaligo/xaligo/blob/main/internal/controller/render.go)).
 `RenderPPTX` and `BuildPPTXPlan` remain compatibility APIs, but the CLI no
 longer assembles a second PPTX-only pipeline. The legacy Excalidraw outside-frame
@@ -266,16 +268,19 @@ migration; the neutral name does not pretend that migration is already complete.
 For a connection whose endpoints belong to different frames, V1 deliberately
 keeps two page-local editable stubs in `PresentationScene`, never one line
 across the inter-frame canvas. The source stub runs from its endpoint to the
-source frame's physical border and is labeled `to <destination frame ID>`; the
-destination stub runs from the destination frame's physical border to its
-endpoint and is labeled `from <source frame ID>`. Angle brackets denote
-placeholders, so an `overview` to `detail` link displays `to detail` and
-`from overview`.
+source frame's logical page edge and is labeled `to <destination frame ID>`;
+the destination stub runs from the destination frame's logical page edge to its
+endpoint and is labeled `from <source frame ID>`. The angle brackets are
+literal punctuation, so an `overview` to `detail` link displays `to <detail>`
+and `from <overview>`.
+
+The logical page edge is not a rendered frame outline in SVG, PPTX, PDF, or
+Excel. It remains available for sizing, projection, and page-link geometry.
 
 Shared scene construction selects each endpoint and terminal side together.
 Precedence is explicit anchor, then explicit side, then automatic selection;
 automatic selection minimizes the distance from the endpoint visual envelope
-to the four owning-frame borders. Equal minima prefer the remote-facing
+to the four owning-frame edges. Equal minima prefer the remote-facing
 candidate and then `top`, `right`, `bottom`, `left`. The unconstrained terminal
 parallel coordinate comes from the endpoint binding. A coordinate inside the
 24-layout-px corner gutter is clamped and bridged by a two-bend orthogonal
@@ -286,9 +291,9 @@ available range to retain a visible stub.
 
 The stubs share a stable logical connector ID plus the original
 source/destination element and frame IDs. XYFlow and Isoflow use those fields
-to reconstruct one logical edge; Excalidraw, SVG, and PPTX keep the page-local
-representation. Routing metadata such as bends, scale, grid, and explicit
-anchors is stored on both stubs so a capable adapter does not have to infer it
+to reconstruct one logical edge; Excalidraw, SVG, PPTX, PDF, and Excel keep the
+page-local representation. Routing metadata such as bends, scale, grid, and
+explicit anchors is stored on both stubs so a capable adapter does not have to infer it
 from generated geometry. Manual bends do not steer the two page-local paths.
 
 Rendered V1 nodes also carry `xaligoSemanticElementKind` and
@@ -315,6 +320,30 @@ The plan is renderer-shared rather than fully format-neutral today: it uses
 physical inch/point units and presentation-style surface metadata. A neutral
 schema that can serve every future encoder without those assumptions remains a
 roadmap migration.
+
+[`BuildDocumentPlanV1EnginePlanDocument`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/v1/engine/plan_document.go)
+projects that already-resolved scene into ordered `DocumentPage` values. Each
+identified child frame becomes one page unless `CombineFrames` requests the
+compatibility canvas. Projection is intentionally downstream of scene
+construction so cross-frame endpoint lookup and its two page-link stubs are
+resolved once, not independently on cropped pages.
+
+The physical encoders map the same page order as follows:
+
+- SVG returns `RenderArtifact` values. One frame uses the exact requested path;
+  multiple frames append a sanitized frame ID to the output stem and reject
+  collisions.
+- PPTX writes one diagram slide per page. Its document plan normalizes all
+  slides to the largest page dimensions and centers smaller pages because a
+  PowerPoint deck has one common slide size.
+- PDF parses each page SVG as vector drawing content and writes one PDF page
+  with the corresponding physical dimensions.
+- Excel places each page SVG image on one worksheet; it does not translate
+  diagram shapes into spreadsheet cells.
+
+The preview adapter explicitly requests `CombineFrames` so the browser still
+shows all frames on one SVG canvas. Excalidraw, XYFlow, and Isoflow never enter
+the physical-page split and remain one logical document.
 
 Every text operation now carries a renderer-neutral
 [`TextLayout`](https://github.com/xaligo/xaligo/blob/main/internal/entity/presentation.go)

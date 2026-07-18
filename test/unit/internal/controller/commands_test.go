@@ -33,7 +33,24 @@ type fakeUseCase struct {
 	renderSVG        []byte
 	renderXYFlow     []byte
 	renderIsoflow    []byte
+	renderArtifacts  []entity.RenderArtifact
 	planJSON         []byte
+}
+
+func (rcvr *fakeUseCase) RenderArtifacts(_ context.Context, _ []byte, opts entity.RenderOptions) ([]entity.RenderArtifact, error) {
+	rcvr.renderCalls++
+	rcvr.lastRenderOpts = opts
+	if rcvr.renderErr != nil {
+		return nil, rcvr.renderErr
+	}
+	if rcvr.renderArtifacts != nil {
+		return rcvr.renderArtifacts, nil
+	}
+	data := rcvr.renderSVG
+	if data == nil {
+		data = []byte(`<svg></svg>`)
+	}
+	return []entity.RenderArtifact{{ID: "frame", Data: data}}, nil
 }
 
 func (rcvr *fakeUseCase) ValidateRenderOptions(opts entity.RenderOptions) error {
@@ -68,6 +85,10 @@ func (rcvr *fakeUseCase) Render(_ context.Context, _ []byte, opts entity.RenderO
 		return []byte(`<svg></svg>`), rcvr.renderErr
 	case usecase.FormatPPTX:
 		return []byte(`pptx`), rcvr.renderErr
+	case usecase.FormatPDF:
+		return []byte(`pdf`), rcvr.renderErr
+	case usecase.FormatExcel:
+		return []byte(`xlsx`), rcvr.renderErr
 	case usecase.FormatXYFlow:
 		if rcvr.renderXYFlow != nil {
 			return rcvr.renderXYFlow, rcvr.renderErr
@@ -104,6 +125,14 @@ func (rcvr *fakeUseCase) RenderSVG(_ context.Context, _ []byte, opts entity.Rend
 
 func (rcvr *fakeUseCase) RenderPPTX(context.Context, []byte, entity.RenderOptions) ([]byte, error) {
 	return []byte(`pptx`), rcvr.renderErr
+}
+
+func (rcvr *fakeUseCase) RenderPDF(context.Context, []byte, entity.RenderOptions) ([]byte, error) {
+	return []byte(`pdf`), rcvr.renderErr
+}
+
+func (rcvr *fakeUseCase) RenderExcel(context.Context, []byte, entity.RenderOptions) ([]byte, error) {
+	return []byte(`xlsx`), rcvr.renderErr
 }
 
 func (rcvr *fakeUseCase) RenderXYFlow(_ context.Context, _ []byte, opts entity.RenderOptions) ([]byte, error) {
@@ -195,6 +224,8 @@ func newRealGenerateController() controller.GenerateController {
 			repository.NewIsoflowRepository(),
 			repository.NewSVGRepository(),
 			repository.NewXYFlowRepository(),
+			repository.NewPDFRepository(),
+			repository.NewSpreadsheetRepository(),
 		),
 		usecase.NewExportUsecase(powerpointRepository),
 	)
@@ -266,7 +297,7 @@ func TestRunRenderFormatWithUseCaseWritesFormats(t *testing.T) {
 	if err := os.WriteFile(services, []byte("27,Amazon EC2,EC2\n"), 0644); err != nil {
 		t.Fatal(err)
 	}
-	formats := []string{"excalidraw", "svg", "pptx", "xyflow", "isoflow"}
+	formats := []string{"excalidraw", "svg", "pptx", "pdf", "excel", "xyflow", "isoflow"}
 	for _, format := range formats {
 		t.Run(format, func(t *testing.T) {
 			output := filepath.Join(dir, "out."+format)
@@ -311,6 +342,8 @@ func TestRenderCommandUsesDefaultOutputs(t *testing.T) {
 		"excalidraw": "output.excalidraw",
 		"svg":        "output.svg",
 		"pptx":       "output.pptx",
+		"pdf":        "output.pdf",
+		"excel":      "output.xlsx",
 		"xyflow":     "output.xyflow.json",
 		"isoflow":    "output.isoflow.json",
 	}
@@ -329,16 +362,54 @@ func TestRenderCommandUsesDefaultOutputs(t *testing.T) {
 		explicit := filepath.Join(dir, "explicit.svg")
 		fake := &fakeUseCase{}
 		cmd := newRenderController(fake).Command()
-		cmd.SetArgs([]string{input, "--format", "svg", "--output", explicit, "--compression", "--theme", "dark", "--mode", "network", "--px-per-inch", "120", "--arrow-style", "standard", "--arrow-stub", "22", "--arrow-margin", "11", "--paper", "A4", "--orientation", "landscape", "--paper-margin-left", "0.25", "--svg-legend-position", "left"})
+		cmd.SetArgs([]string{input, "--format", "svg", "--output", explicit, "--compression", "--combine-frames", "--theme", "dark", "--mode", "network", "--px-per-inch", "120", "--arrow-style", "standard", "--arrow-stub", "22", "--arrow-margin", "11", "--paper", "A4", "--orientation", "landscape", "--paper-margin-left", "0.25", "--svg-legend-position", "left"})
 		if err := cmd.Execute(); err != nil {
 			t.Fatal(err)
 		}
-		if fake.lastRenderOpts.Theme != "dark" || fake.lastRenderOpts.Mode != entity.Mode("network") || fake.lastRenderOpts.PxPerInch != 120 || fake.lastRenderOpts.ArrowStyle != "standard" || fake.lastRenderOpts.PaperMarginLeftIn != 0.25 || fake.lastRenderOpts.SVGLegendPosition != "left" {
+		if fake.lastRenderOpts.Theme != "dark" || fake.lastRenderOpts.Mode != entity.Mode("network") || fake.lastRenderOpts.PxPerInch != 120 || fake.lastRenderOpts.ArrowStyle != "standard" || fake.lastRenderOpts.PaperMarginLeftIn != 0.25 || fake.lastRenderOpts.SVGLegendPosition != "left" || !fake.lastRenderOpts.CombineFrames {
 			t.Fatalf("explicit render opts = %#v", fake.lastRenderOpts)
 		}
 		if _, err := os.Stat(explicit); err != nil {
 			t.Fatalf("explicit output was not created: %v", err)
 		}
+	}
+}
+
+func TestRunRenderFormatWritesOneSVGFilePerFrame(t *testing.T) {
+	dir := t.TempDir()
+	input := writeTempXAL(t, dir)
+	output := filepath.Join(dir, "diagram.svg")
+	fake := &fakeUseCase{renderArtifacts: []entity.RenderArtifact{
+		{ID: "overview", Data: []byte(`<svg id="overview"/>`)},
+		{ID: "service/detail", Data: []byte(`<svg id="detail"/>`)},
+	}}
+	if err := newRenderController(fake).RunFormat(entity.ControllerRenderOptions{
+		InputPath: input, OutputPath: output, Format: "svg", Theme: "light",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"diagram-overview.svg", "diagram-service-detail.svg"} {
+		if data, err := os.ReadFile(filepath.Join(dir, name)); err != nil || len(data) == 0 {
+			t.Fatalf("artifact %s data=%q err=%v", name, data, err)
+		}
+	}
+	if _, err := os.Stat(output); !os.IsNotExist(err) {
+		t.Fatalf("combined SVG should not be written by default: %v", err)
+	}
+}
+
+func TestRunRenderFormatRejectsCollidingSVGFrameNames(t *testing.T) {
+	dir := t.TempDir()
+	input := writeTempXAL(t, dir)
+	fake := &fakeUseCase{renderArtifacts: []entity.RenderArtifact{
+		{ID: "Overview", Data: []byte(`<svg/>`)},
+		{ID: "overview", Data: []byte(`<svg/>`)},
+	}}
+	err := newRenderController(fake).RunFormat(entity.ControllerRenderOptions{
+		InputPath: input, OutputPath: filepath.Join(dir, "diagram.svg"), Format: "svg", Theme: "light",
+	})
+	if err == nil || !strings.Contains(err.Error(), "same output") {
+		t.Fatalf("collision error = %v", err)
 	}
 }
 
@@ -358,7 +429,7 @@ func TestRunRenderFormatWithUseCaseErrors(t *testing.T) {
 		t.Fatalf("pptx missing output error = %v", err)
 	}
 	missingServices := filepath.Join(dir, "missing-services.csv")
-	for _, format := range []string{"excalidraw", "svg", "pptx", "xyflow", "isoflow"} {
+	for _, format := range []string{"excalidraw", "svg", "pptx", "pdf", "excel", "xyflow", "isoflow"} {
 		t.Run(format+" services", func(t *testing.T) {
 			err := newRenderController(&fakeUseCase{}).RunFormat(entity.ControllerRenderOptions{InputPath: input, OutputPath: filepath.Join(dir, format+".out"), Format: format, Theme: "light", ServicesFile: missingServices})
 			if err == nil || !strings.Contains(err.Error(), "read services") {
@@ -366,7 +437,7 @@ func TestRunRenderFormatWithUseCaseErrors(t *testing.T) {
 			}
 		})
 	}
-	for _, format := range []string{"excalidraw", "svg", "pptx", "xyflow", "isoflow"} {
+	for _, format := range []string{"excalidraw", "svg", "pptx", "pdf", "excel", "xyflow", "isoflow"} {
 		t.Run(format+" render", func(t *testing.T) {
 			err := newRenderController(&fakeUseCase{renderErr: errors.New("render failed")}).RunFormat(entity.ControllerRenderOptions{InputPath: input, OutputPath: filepath.Join(dir, format+"-render.out"), Format: format, Theme: "light"})
 			if err == nil || !strings.Contains(err.Error(), "render failed") {
@@ -374,7 +445,7 @@ func TestRunRenderFormatWithUseCaseErrors(t *testing.T) {
 			}
 		})
 	}
-	for _, format := range []string{"excalidraw", "svg", "pptx", "xyflow", "isoflow"} {
+	for _, format := range []string{"excalidraw", "svg", "pptx", "pdf", "excel", "xyflow", "isoflow"} {
 		t.Run(format+" write", func(t *testing.T) {
 			err := newRenderController(&fakeUseCase{}).RunFormat(entity.ControllerRenderOptions{InputPath: input, OutputPath: dir, Format: format, Theme: "light"})
 			if err == nil || !strings.Contains(err.Error(), "write output file") {

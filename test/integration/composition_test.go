@@ -13,5 +13,7 @@ func newUsecase() usecase.RenderUsecase {
 		repository.NewIsoflowRepository(),
 		repository.NewSVGRepository(),
 		repository.NewXYFlowRepository(),
+		repository.NewPDFRepository(),
+		repository.NewSpreadsheetRepository(),
 	)
 }

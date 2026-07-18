@@ -1,4 +1,4 @@
-import type { PptxExportOptions, PptxExportResult, PptxPlan } from '../entity/pptx';
+import type { PptxExportOptions, PptxExportResult, PptxPlanInput } from '../entity/pptx';
 import { createPptxFromPlan } from '../repository/pptx';
 import { NewEnvLogger } from '../share/logger';
 import { NewMCode } from '../share/mcode';
@@ -73,15 +73,15 @@ export function pptxPlanOptionsJSON(options: PptxExportOptions = {}): string {
 }
 
 export async function drawPlanToPptx(
-  plan: string | PptxPlan,
+  plan: string | PptxPlanInput,
   options: PptxExportOptions = {},
 ): Promise<PptxExportResult> {
-  const parsed: PptxPlan = typeof plan === 'string' ? parsePlanJSON(plan) : plan;
+  const parsed: PptxPlanInput = typeof plan === 'string' ? parsePlanJSON(plan) : plan;
   if (typeof plan !== 'string') logger.DEBUG(EUPDPTP002, 'branch plan object');
   return createPptxFromPlan(parsed, options);
 }
 
-function parsePlanJSON(plan: string): PptxPlan {
+function parsePlanJSON(plan: string): PptxPlanInput {
   logger.DEBUG(EUPDPTP001, 'branch plan string');
-  return JSON.parse(plan) as PptxPlan;
+  return JSON.parse(plan) as PptxPlanInput;
 }

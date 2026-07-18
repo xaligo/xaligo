@@ -7,7 +7,8 @@ applyTo: "**"
 ## Project
 
 `xaligo` is a Go CLI and WebAssembly/TypeScript package that converts the
-`.xal` diagram DSL to Excalidraw, SVG, PPTX, XYFlow, and Isoflow outputs.
+`.xal` diagram DSL to Excalidraw, SVG, PPTX, PDF, Excel, XYFlow, and Isoflow
+outputs.
 
 ```text
 module: github.com/xaligo/xaligo

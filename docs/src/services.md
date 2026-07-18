@@ -27,4 +27,4 @@ id,OfficialName,Abbreviation,Summary,Usage,Notes
 ```
 
 SVG output draws a service legend when `--services` is supplied. PPTX output
-adds separate legend slide(s) after the diagram slide.
+adds separate legend slide(s) after all frame/diagram slides.

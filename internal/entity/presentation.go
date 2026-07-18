@@ -63,6 +63,8 @@ type Element struct {
 }
 
 type CustomData struct {
+	PageFrame                       bool        `json:"xaligoPageFrame,omitempty"`
+	FrameID                         string      `json:"xaligoFrameID,omitempty"`
 	ConnectorKind                   string      `json:"xaligoConnectorKind"`
 	ConnectorStartArrowhead         string      `json:"xaligoConnectorStartArrowhead"`
 	ConnectorEndArrowhead           string      `json:"xaligoConnectorEndArrowhead"`
@@ -151,6 +153,30 @@ type Plan struct {
 	Ops             []DrawOp               `json:"ops"`
 	Legend          []LegendEntry          `json:"legend,omitempty"`
 	ConnectorLegend []ConnectorLegendEntry `json:"connectorLegend,omitempty"`
+}
+
+// DocumentPlan is an ordered, page-oriented drawing plan. Each page is derived
+// from one XAL frame unless CombineFrames was explicitly requested.
+type DocumentPlan struct {
+	SchemaVersion   int                    `json:"schemaVersion"`
+	Pages           []DocumentPage         `json:"pages"`
+	Legend          []LegendEntry          `json:"legend,omitempty"`
+	ConnectorLegend []ConnectorLegendEntry `json:"connectorLegend,omitempty"`
+}
+
+// DocumentPage is one physical output page. PPTX maps it to a slide, PDF to a
+// page, Excel to a worksheet, and SVG to a separate artifact.
+type DocumentPage struct {
+	ID    string    `json:"id"`
+	Slide PlanSlide `json:"slide"`
+	Ops   []DrawOp  `json:"ops"`
+}
+
+// RenderArtifact is a named output emitted by formats that can produce more
+// than one file, currently SVG.
+type RenderArtifact struct {
+	ID   string
+	Data []byte
 }
 
 type LegendEntry struct {
