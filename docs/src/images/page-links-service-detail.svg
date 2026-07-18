@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="504" height="404" viewBox="0 0 504 404">
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="320" viewBox="0 0 420 320">
 <defs><marker id="xaligo-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker><marker id="xaligo-triangle" markerWidth="8" markerHeight="10" refX="7" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 8 5 L 0 10 z" fill="context-stroke"/></marker><marker id="xaligo-stealth" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 10 5 L 0 10 L 3 5 z" fill="context-stroke"/></marker><marker id="xaligo-diamond" markerWidth="12" markerHeight="8" refX="11" refY="4" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 4 L 5.5 0 L 11 4 L 5.5 8 z" fill="context-stroke"/></marker><marker id="xaligo-oval" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto" markerUnits="strokeWidth"><circle cx="3.5" cy="3.5" r="2.5" fill="context-stroke"/></marker></defs>
-<rect x="0" y="0" width="504" height="404" fill="#FFFFFF"/>
-<g transform="translate(42 42)">
+<defs><clipPath id="xaligo-slide-clip" clipPathUnits="userSpaceOnUse"><rect x="0" y="0" width="420" height="320"/></clipPath></defs>
+<rect x="0" y="0" width="420" height="320" fill="#FFFFFF"/>
+<g transform="translate(0 0)" clip-path="url(#xaligo-slide-clip)">
 <rect x="24" y="24" width="372" height="160" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
 <rect x="24" y="94" width="48" height="20" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
 <rect x="24" y="212" width="372" height="80" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
@@ -13,7 +14,7 @@
 <text x="48" y="102.667" fill="#1E1E1E" font-family="Virgil" font-size="6.667" text-anchor="middle" clip-path="url(#xaligo-text-clip-804c59c0f23a52d5)"><tspan x="48" y="102.667">HTT</tspan><tspan x="48" dy="8">P</tspan></text>
 <defs><clipPath id="xaligo-text-clip-741435327315ab66" clipPathUnits="userSpaceOnUse"><rect x="28" y="214" width="364" height="76"/></clipPath></defs>
 <text x="210" y="260" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="middle" clip-path="url(#xaligo-text-clip-741435327315ab66)"><tspan x="210" y="260">Background Worker</tspan></text>
-<defs><clipPath id="xaligo-text-clip-23642b8a73f98392" clipPathUnits="userSpaceOnUse"><rect x="6" y="73" width="98" height="15"/></clipPath></defs>
-<text x="55" y="85.3" fill="#1E1E1E" font-family="Virgil" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-23642b8a73f98392)"><tspan x="55" y="85.3">from &lt;overview&gt;</tspan></text>
+<defs><clipPath id="xaligo-text-clip-bd8e2980dd26ac26" clipPathUnits="userSpaceOnUse"><rect x="4" y="118" width="98" height="15"/></clipPath></defs>
+<text x="53" y="130.3" fill="#1E1E1E" font-family="Virgil" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-bd8e2980dd26ac26)"><tspan x="53" y="130.3">from &lt;overview&gt;</tspan></text>
 </g>
 </svg>

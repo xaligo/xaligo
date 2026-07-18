@@ -37,7 +37,9 @@ PPTX-specific behavior:
   is provided.
 - Cross-frame connections are page links: the source slide contains
   `to <destination frame ID>` and the destination slide contains
-  `from <source frame ID>`.
+  `from <source frame ID>`. Endpoint and logical frame anchors can select
+  different sides, and the page-link label stays 4 layout pixels inward and at
+  least 4 layout pixels along the edge from its terminal.
 
 The PPTX exporter should only translate the resolved draw plan into a
 presentation. Geometry and routing decisions belong on the Go side.

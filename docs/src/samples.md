@@ -11,9 +11,10 @@ compatibility view.
 ## Cross-Frame Page Links
 
 The [cross-frame page-link example](examples/page-links.md) demonstrates both
-automatic nearest-border selection and explicit side/anchor selection. It also
-shows the exact `to <frame ID>` and `from <frame ID>` labels generated on each
-page-local stub, plus PPTX, PDF, and Excel multi-page render commands.
+automatic nearest-border selection and independent endpoint/page-border
+side/anchor selection. It also shows the exact `to <frame ID>` and
+`from <frame ID>` labels generated next to each page-local terminal, plus PPTX,
+PDF, and Excel multi-page render commands.
 
 ## Frame Metadata Tags
 

@@ -20,7 +20,9 @@ Each worksheet contains the frame's rendered SVG image at `A1`, preserving its
 intrinsic canvas size and aspect ratio without non-uniform scaling. Diagram
 shapes are not converted into editable
 spreadsheet cells. A one-frame document produces one worksheet. The page-frame
-outline is omitted from the embedded SVG.
+outline is omitted from the embedded SVG. The default image is strictly
+cropped to the exact frame rectangle, so metadata on a top/bottom edge reaches
+the corresponding image edge.
 
 Worksheet names come from frame IDs. Excel-invalid control characters,
 backslashes, and `:`, `/`, `?`, `*`, `[`, and `]` become `_`; a leading or
@@ -36,4 +38,6 @@ xaligo render diagram.xal --format excel -o diagram.xlsx --combine-frames
 
 Cross-frame connections retain their local page-link labels in the worksheet
 images: `to <destination frame ID>` on the source frame and
-`from <source frame ID>` on the destination frame.
+`from <source frame ID>` on the destination frame. The shared scene resolves
+independent item/frame anchors and the 4-layout-pixel terminal-label gap before
+embedding either image.

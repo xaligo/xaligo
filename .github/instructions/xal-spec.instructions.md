@@ -120,8 +120,11 @@ have been resolved.
 SVG, PPTX, PDF, and Excel omit the page-frame outline in both default and
 `--combine-frames` output. Frame geometry remains authoritative for page size,
 cropping, endpoint ownership, and the logical page edge used by cross-frame
-page-link stubs. Excalidraw retains editable frame structure with transparent
-page-frame strokes.
+page-link stubs. A default page-local SVG uses the exact frame rectangle as its
+canvas and clip boundary; PDF pages and Excel page images inherit that strict
+crop. Combined SVG compatibility output retains marker-safe bounds expansion.
+Excalidraw retains editable frame structure with transparent page-frame
+strokes.
 
 For a document with one child frame, SVG writes exactly the requested output
 path. For multiple child frames, an output request such as `diagram.svg`
@@ -859,9 +862,10 @@ Only these non-empty group attributes are inherited:
 `start-arrowhead`, `end-arrowhead`, `arrowhead`, `scale`,
 `coordinate-scale`, and `grid`. Endpoint identity and geometry are deliberately
 not inherited: every child must supply its own `src` and `dst`, and
-`src-side`, `dst-side`, `src-anchor`, `dst-anchor`, bends, points, and via data
-remain child-local. Defaults are applied to a connection snapshot during scene
-construction; the parsed child node is not mutated.
+`src-side`, `dst-side`, `src-anchor`, `dst-anchor`, `src-frame-side`,
+`dst-frame-side`, `src-frame-anchor`, `dst-frame-anchor`, bends, points, and
+via data remain child-local. Defaults are applied to a connection snapshot
+during scene construction; the parsed child node is not mutated.
 
 `stroke-width`/`width`, `end-arrowhead`/`arrowhead`, and
 `coordinate-scale`/`scale` are semantic alias pairs. If a child supplies either
@@ -885,6 +889,8 @@ connector.
 | `dst` | string | ✓ | Catalog ID, or `id`/`name`/`ref` of the arrow end item, AWS group, rectangle, port, or identified child frame |
 | `src-side` / `dst-side` | string | — | Optional endpoint side: `top`, `right`, `bottom`, or `left` |
 | `src-anchor` / `dst-anchor` | string | — | Optional edge anchor. Each side has five inset positions (`top-1` through `top-5`, etc.) for 20 unique perimeter anchors |
+| `src-frame-side` / `dst-frame-side` | string | — | Cross-frame-only logical page-terminal side, independent of the endpoint side |
+| `src-frame-anchor` / `dst-frame-anchor` | string | — | Cross-frame-only logical page-terminal anchor. Uses `top|right|bottom|left-1..5`, or a side plus numeric/named slot |
 | `arrowhead-size` | string | — | V1 fixed arrowhead size: `"s"` (small). This is the default; `m` and `l` are not V1 values because V1 cannot preserve them across all render formats |
 | `kind` | string | — | `connection` for the normal connector, `route` for a structural path without arrows, or `traffic` for directional flow drawn beside a matching route |
 | `color` | `#RRGGBB` | — | Six-digit hexadecimal stroke color override. Named, short, and alpha colors are invalid in V1 so every format preserves the same color |
@@ -927,23 +933,34 @@ Angle brackets in those forms are rendered as literal punctuation. For a
 connection from frame `overview` to frame `detail`, the visible strings are
 therefore `to <detail>` and `from <overview>`.
 
-Unless an endpoint has an explicit anchor or side, its page-link side is the
-logical frame edge with the shortest non-negative perpendicular distance from the
-endpoint's visual envelope. An item's visual envelope is the union of its icon
-and external label; other endpoints use their rendered shape. The endpoint
-binding and frame terminal use that same side, selected independently for the
-source and destination. Selection precedence is `src-anchor`/`dst-anchor`, then
-`src-side`/`dst-side`, then automatic nearest-border selection. When multiple
-borders have the same minimum distance, a tied border facing the remote frame
-wins; otherwise the stable order is `top`, `right`, `bottom`, `left`.
+Endpoint binding and logical frame-terminal geometry are separate. The
+endpoint uses `src-anchor`/`dst-anchor`, then `src-side`/`dst-side`, then its
+normal automatic binding. The logical page terminal uses
+`src-frame-anchor`/`dst-frame-anchor`, then
+`src-frame-side`/`dst-frame-side`, then the legacy endpoint anchor, then the
+endpoint side, then automatic nearest-border selection. An item's visual
+envelope is the union of its icon and external label; other endpoints use their
+rendered shape.
+Automatic selection minimizes the non-negative perpendicular distance from
+that envelope to the owning frame's four edges. When multiple borders have the
+same minimum distance, a tied border facing the remote frame wins; otherwise
+the stable order is `top`, `right`, `bottom`, `left`.
 
-Frame metadata reservation is a final safety constraint on that choice. If the
-selected top/bottom edge owns the metadata strip, the page link is remapped to
-the nearest safe edge even when the reserved edge came from an explicit anchor
-or side. A terminal on a left or right edge is clamped along that edge so it
-lies outside the top/bottom reservation strip; any resulting coordinate
-difference is bridged orthogonally. Page-link paths and labels remain outside
-the full strip.
+The endpoint- and frame-adjacent segments are perpendicular to their own
+selected sides, so an endpoint may leave on `right` while its local stub exits
+the page on `bottom`. Frame-side and frame-anchor attributes are valid only
+when the resolved endpoints belong to different frames. Using any of them on a
+same-frame connection is a source-positioned validation error.
+
+Frame metadata reservation is a final safety constraint on that choice. When
+no explicit frame-terminal attribute is present, a selected top/bottom edge
+that owns the metadata strip is remapped to the nearest safe edge. A terminal
+on a left or right edge is clamped along that edge so it lies outside the
+top/bottom reservation strip; any resulting coordinate difference is bridged
+orthogonally. An explicit frame side or anchor that selects the reserved edge,
+or an exact left/right anchor whose point lies inside the strip, is a
+source-positioned validation error instead of being moved. Page-link paths and
+labels remain outside the full strip.
 
 The terminal lies on the frame's logical page edge, which is not drawn as a
 page-frame outline. Its unconstrained coordinate
@@ -953,10 +970,18 @@ orthogonal dogleg bridges the coordinate difference; the endpoint- and
 frame-adjacent segments stay perpendicular to their selected side. A border
 shorter than 96 layout pixels uses one quarter of its length as an adaptive
 gutter.
-If the endpoint binding and terminal would coincide on the same border, the
-terminal moves by up to 24 layout pixels within the available range so the
-stub remains visible. Manual bends do not alter either local stub's geometry;
-bends remain logical routing metadata for graph adapters.
+If an unconstrained terminal would coincide with the endpoint binding on the
+same border, it moves by up to 24 layout pixels within the available range so
+the stub remains visible. An explicit frame anchor remains exact; its local
+orthogonal stub provides visibility without moving that terminal. Manual bends
+do not alter either local stub's geometry; bends remain logical routing
+metadata for graph adapters.
+
+Each `to <...>` / `from <...>` label is placed just inside its page with a
+4-layout-pixel inward gap and a minimum 4-layout-pixel tangent gap from the
+logical terminal. Placement chooses the closest tangent position that avoids
+the endpoint envelope and metadata reservation. Tiny pages clamp or shrink the
+label fallback instead of moving it farther inward from the terminal.
 
 Both scene stubs carry the same logical connector ID, original endpoint/frame
 IDs, and V1 routing metadata. XYFlow and Isoflow use those fields to emit one
@@ -979,10 +1004,12 @@ must never use an output format as an intermediate representation.
 When `src-side`, `dst-side`, `src-anchor`, and `dst-anchor` are omitted,
 endpoint sides and anchor positions are calculated automatically from endpoint
 geometry. Use `src-anchor` and `dst-anchor` to pin an endpoint to a specific
-perimeter anchor. Each side has five inset positions, giving 20 unique anchor
-positions around the rectangle. Corner anchors are not shared: `top-1` sits
-slightly inside the top edge near the left corner, while `left-1` sits slightly
-inside the left edge near the top corner.
+perimeter anchor. Cross-frame `src-frame-anchor` and `dst-frame-anchor` use the
+same grammar to pin the logical page terminal independently. Each side has
+five positions at 10, 30, 50, 70, and 90 percent of its length, giving 20
+unique perimeter anchors. Corner anchors are not shared: `top-1` sits inside
+the top edge near the left corner, while `left-1` sits inside the left edge
+near the top corner.
 
 ```text
 top:    top-1    top-2    top-3    top-4    top-5
@@ -1005,6 +1032,13 @@ The aliases map one-to-one as `start=1`, `near=2`, `center=3`, `far=4`, and
 <connection src="web" dst="app"
             src-side="right" src-anchor="3"
             dst-side="left" dst-anchor="3" />
+
+<!-- The item and logical page edge may use different sides. -->
+<connection src="web" dst="detail.app"
+            src-side="right" src-anchor="near"
+            src-frame-side="bottom" src-frame-anchor="far"
+            dst-side="left" dst-anchor="far"
+            dst-frame-side="top" dst-frame-anchor="near" />
 ```
 
 `src` and `dst` can also be expressed as child tags when the endpoint reference
@@ -1013,10 +1047,17 @@ one of `id`, `ref`, `name`, or `target`.
 
 ```xml
 <connection kind="traffic">
-  <src anchor="right-3">web</src>
-  <dst side="left" anchor="5" ref="app" />
+  <src anchor="right-3" frame-side="bottom" frame-anchor="far">web</src>
+  <dst side="left" anchor="5" frame-anchor="top-2" ref="detail.app" />
 </connection>
 ```
+
+On `<src>` and `<dst>`, `frame-side` and `frame-anchor` map to the corresponding
+source/destination connection attributes. A complete anchor such as
+`bottom-4` supplies its side. With a separate side, slots accept `1..5` or the
+aliases `start`, `near`, `center`, `far`, and `end`. Conflicting side and
+complete-anchor values are validation errors for both endpoint and frame
+anchors.
 
 Excalidraw output always serializes arrowhead sizes as the smallest supported
 size (`"s"`) to keep dense diagrams readable. The logical arrowhead type and

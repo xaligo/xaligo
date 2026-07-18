@@ -30,6 +30,9 @@ final content-box boundary and is at least the band height plus the fixed
 8-pixel gap. Normal items, text, connector paths and labels, and page links stay
 outside it, even when the frame or a nested container uses
 `overflow="visible"`. Metadata cell borders use a fixed `0.75`-pixel stroke.
+An automatic or legacy page terminal is remapped/clamped around this strip; an
+explicit cross-frame `src/dst-frame-side` or `src/dst-frame-anchor` that selects
+it is a validation error.
 
 ## AWS Group Border Styles
 

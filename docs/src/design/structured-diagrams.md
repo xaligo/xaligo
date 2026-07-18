@@ -110,6 +110,14 @@ geometry remains the page/crop boundary and the logical terminal for
 cross-frame page-link stubs. Excalidraw retains frame structure for editing
 with a transparent page-frame outline.
 
+A default page-local SVG uses the exact logical frame rectangle as its canvas
+and clip boundary. PDF pages and the SVG images placed into Excel worksheets
+inherit that strict crop, so a top/bottom metadata band reaches the physical
+page/image edge. The combined SVG compatibility canvas retains marker-safe
+bounds expansion. PPTX uses one common slide size; when frame sizes differ,
+smaller frame pages are centered on the largest slide without changing their
+logical frame edge.
+
 ## Frame metadata tag-band projection
 
 A page frame can place a top or bottom band of visible key/value tags directly
@@ -150,31 +158,44 @@ connects to the destination endpoint and is labeled
 shows `to <detail>` on the source page and `from <overview>` on the destination
 page. The angle brackets are rendered as literal punctuation.
 
-Unless an endpoint anchor or side is explicit, each endpoint's visual envelope
-selects the nearest of its own frame's four borders. The chosen endpoint side
-and page-border side are the same. Equal distances prefer the side facing the
-other frame, then the stable order top, right, bottom, left. Explicit anchors
-take precedence over explicit sides, which take precedence over automatic
-selection. Manual bends remain logical connection metadata and do not steer
-the two local stubs. Excalidraw, SVG, PPTX, PDF, and Excel preserve the two
-page-local projections; graph adapters combine their shared logical connection
-ID into one XYFlow or Isoflow edge.
+Endpoint binding and logical page termination are independent. Endpoint
+`src/dst-anchor` takes precedence over endpoint `src/dst-side`. For the page
+terminal, `src/dst-frame-anchor` takes precedence over
+`src/dst-frame-side`, which takes precedence over the legacy endpoint
+anchor, then the endpoint side, then the automatic nearest-border choice. Frame
+anchors provide five fixed positions at 10/30/50/70/90 percent along each edge.
+The endpoint- and page-adjacent route segments remain perpendicular to their
+respective sides, even when those sides differ. Equal automatic distances
+prefer the side facing the other frame, then the stable order top, right,
+bottom, left. Frame-terminal attributes are cross-frame-only; same-frame use is
+an error. Manual bends
+remain logical connection metadata and do not steer the two local stubs.
+Excalidraw, SVG, PPTX, PDF, and Excel preserve the two page-local projections;
+graph adapters combine their shared logical connection ID into one XYFlow or
+Isoflow edge.
 
-Metadata reservation is applied after that normal precedence. A page-link side
-that selects the reserved top/bottom edge is remapped to the nearest safe edge,
-including when the original choice came from an explicit anchor or side.
+Metadata reservation is applied after that normal precedence. Without explicit
+frame-terminal geometry, a page-link side that selects the reserved top/bottom
+edge is remapped to the nearest safe edge. An explicit frame side/anchor that
+selects that edge, or an exact left/right anchor inside the strip, is a
+validation error rather than a silent move.
 
 The terminal itself lies on the logical page edge even though no frame outline
-is drawn. Its unconstrained
-parallel coordinate follows the endpoint binding; a coordinate inside the
-24-layout-pixel corner gutter is clamped and connected with a two-bend
+is drawn. An explicit frame anchor uses its exact slot. Otherwise its
+unconstrained parallel coordinate follows the endpoint binding; a coordinate
+inside the 24-layout-pixel corner gutter is clamped and connected with a two-bend
 orthogonal dogleg so both the endpoint and border segments remain perpendicular
 to the selected side. Borders shorter than 96 layout pixels use an adaptive
-quarter-length gutter. Coincident endpoint/border points shift along the border
-within the available gutter range to keep the page-link stub visible.
+quarter-length gutter. An unconstrained coincident endpoint/border point shifts
+along the border within the available gutter range to keep the page-link stub
+visible. An explicit frame anchor remains at its exact slot.
 On a left or right edge, the terminal is additionally clamped outside the
 metadata reservation strip. The path and label remain outside the strip, and
 any coordinate difference is bridged while preserving orthogonal routing.
+The `to <...>` / `from <...>` label stays just inside the page at a
+4-layout-pixel inward gap and a minimum 4-layout-pixel tangent gap from the
+terminal. It uses the closest tangent position that avoids endpoint and
+metadata geometry.
 
 ## Processing boundaries
 

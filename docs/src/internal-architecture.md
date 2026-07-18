@@ -280,29 +280,41 @@ and `from <overview>`.
 The logical page edge is not a rendered frame outline in SVG, PPTX, PDF, or
 Excel. It remains available for sizing, projection, and page-link geometry.
 
-Shared scene construction selects each endpoint and terminal side together.
-Precedence is explicit anchor, then explicit side, then automatic selection;
-automatic selection minimizes the distance from the endpoint visual envelope
-to the four owning-frame edges. Equal minima prefer the remote-facing
-candidate and then `top`, `right`, `bottom`, `left`. The unconstrained terminal
-parallel coordinate comes from the endpoint binding. A coordinate inside the
-24-layout-px corner gutter is clamped and bridged by a two-bend orthogonal
-dogleg whose endpoint and frame segments are perpendicular to the selected
-side. Borders shorter than 96 layout pixels use an adaptive quarter-length
-gutter. A coincident terminal shifts by up to 24 layout pixels within the
-available range to retain a visible stub.
+Shared scene construction resolves endpoint binding and frame-terminal geometry
+independently. `src/dst-anchor` and `src/dst-side` own the endpoint;
+cross-frame-only `src/dst-frame-anchor` and `src/dst-frame-side` own the
+logical page terminal. Frame-terminal precedence is frame anchor, frame side,
+legacy endpoint anchor, endpoint side, then automatic selection. Every frame
+edge has fixed anchors at 10/30/50/70/90 percent. Automatic selection minimizes
+the distance from the endpoint visual envelope to the four owning-frame edges;
+equal minima prefer the remote-facing candidate and then `top`, `right`,
+`bottom`, `left`. The endpoint and frame segments are perpendicular to their
+respective selected sides even when those sides differ.
 
-Frame metadata adds a final safety pass after normal side precedence. A
-reserved top/bottom edge is remapped to the nearest safe edge even when an
-explicit anchor or side selected it. Left/right terminals are clamped beyond
-the full-width reservation strip, and the path and label remain outside it.
+Without an explicit frame anchor, the unconstrained terminal parallel
+coordinate comes from the endpoint binding. A coordinate inside the
+24-layout-px corner gutter is clamped and bridged by a two-bend orthogonal
+dogleg. Borders shorter than 96 layout pixels use an adaptive quarter-length
+gutter. An unconstrained coincident terminal shifts by up to 24 layout pixels
+within the available range to retain a visible stub. An explicit frame anchor
+remains exact and uses an orthogonal local stub for visible separation.
+
+Frame metadata adds a final safety pass after normal side precedence. Without
+explicit frame-terminal geometry, a reserved top/bottom edge is remapped to the
+nearest safe edge and left/right terminals are clamped beyond the full-width
+reservation strip. An explicit frame side/anchor that selects the reservation
+is a validation error. The path and label remain outside the strip. Page-link
+labels keep a 4-layout-pixel inward gap and at least a 4-layout-pixel tangent
+gap from the logical terminal. The closest tangent position that avoids
+endpoint geometry is selected.
 
 The stubs share a stable logical connector ID plus the original
 source/destination element and frame IDs. XYFlow and Isoflow use those fields
 to reconstruct one logical edge; Excalidraw, SVG, PPTX, PDF, and Excel keep the
-page-local representation. Routing metadata such as bends, scale, grid, and
-explicit anchors is stored on both stubs so a capable adapter does not have to infer it
-from generated geometry. Manual bends do not steer the two page-local paths.
+page-local representation. Routing metadata such as bends, scale, grid,
+endpoint anchors, and frame-terminal anchors is stored on both stubs so a
+capable adapter does not have to infer it from generated geometry. Manual bends
+do not steer the two page-local paths.
 
 Rendered V1 nodes also carry `xaligoSemanticElementKind` and
 `xaligoSemanticParentElementId`, projected from the resolved Box tree. Pure
@@ -335,6 +347,10 @@ identified child frame becomes one page unless `CombineFrames` requests the
 compatibility canvas. Projection is intentionally downstream of scene
 construction so cross-frame endpoint lookup and its two page-link stubs are
 resolved once, not independently on cropped pages.
+
+Default frame pages carry a strict-crop policy. SVG uses the logical frame
+rectangle as the exact canvas and clip boundary, and PDF/Excel inherit that
+page SVG. Combined compatibility output keeps marker-safe bounds expansion.
 
 The physical encoders map the same page order as follows:
 

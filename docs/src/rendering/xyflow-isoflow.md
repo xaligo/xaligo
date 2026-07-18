@@ -33,9 +33,10 @@ the canonical scene for page-oriented formats. The source projection runs from
 its endpoint to the logical frame edge with `to <destination frame ID>`; the
 destination projection runs from its logical frame edge to the endpoint with
 `from <source frame ID>`. Both stubs carry one logical connection ID, the two
-original endpoint/frame IDs, and routing metadata including manual bends. The
-XYFlow adapter uses that metadata to emit one edge, including source and
-destination frame metadata, instead of exporting the two page projections.
+original endpoint/frame IDs, and routing metadata including manual bends and
+independent endpoint/frame side and anchor selections. The XYFlow adapter uses
+that metadata to emit one edge, including source and destination frame side and
+anchor data, instead of exporting the two page projections.
 
 ## Isoflow
 
@@ -62,7 +63,7 @@ Isoflow item references a valid icon. The document uses the upstream
 
 Isoflow's connector schema has no arbitrary metadata field. Consequently,
 V1-only connector kind, arrowhead names, original scale/grid values, and
-Excalidraw fixed points are not added as private JSON extensions. The canonical
-V1 scene remains the source of those semantics; Isoflow is a capability-based
-projection and must not be used as an intermediate format when a future V2
-frontend renders V1 input.
+Excalidraw fixed points or frame anchors are not added as private JSON
+extensions. The canonical V1 scene remains the source of those semantics;
+Isoflow is a capability-based projection and must not be used as an
+intermediate format when a future V2 frontend renders V1 input.

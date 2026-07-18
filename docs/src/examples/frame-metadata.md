@@ -8,6 +8,9 @@ reservation strip extends from that edge to the final content-box boundary and
 is at least the band height plus 8 pixels deep. Normal items, text, connector
 paths and labels, and page links stay outside it. The logical frame edge still
 controls page size, cropping, and safe page-link terminals.
+Default SVG artifacts, PDF pages, and Excel page images are strictly cropped
+to that logical frame, so the selected metadata edge is also the physical
+page/image edge.
 
 The `aws-architecture` page demonstrates automatic sizing and an explicit row
 break with restrained default styling:
@@ -43,7 +46,9 @@ port faces the reserved top edge and its destination port faces the reserved
 bottom edge, page-link safety remaps them to the nearest safe edges. The
 page-local `to <release-notes>` and `from <aws-architecture>` paths and labels
 never enter either reservation strip; left/right terminals would likewise be
-clamped beyond the strip.
+clamped beyond the strip. An explicit `src/dst-frame-side` or
+`src/dst-frame-anchor` that selects a reserved edge is instead a validation
+error, which prevents a requested terminal from being silently relocated.
 
 Source:
 

@@ -21,11 +21,19 @@
         <!-- Auto: each endpoint selects its nearest logical page edge. -->
         <connection src="api-out" dst="service-detail.api-in" />
 
-        <!-- Explicit: top-side anchor 1 produces a corner-safe dogleg. -->
-        <connection src="batch-out" dst="database-detail.import-in"
-                    src-side="top" src-anchor="1"
-                    dst-side="top" dst-anchor="1"
-                    color="#7C3AED" stroke-style="dashed" />
+        <!--
+          Explicit and independent item/page anchors:
+          - source item right-2 -> overview page bottom-4
+          - database page top-2 -> destination item left-4
+        -->
+        <connection color="#7C3AED" stroke-style="dashed">
+          <src ref="batch-out"
+               side="right" anchor="near"
+               frame-side="bottom" frame-anchor="far" />
+          <dst ref="database-detail.import-in"
+               side="left" anchor="far"
+               frame-side="top" frame-anchor="near" />
+        </connection>
       </connections>
     </frame>
 

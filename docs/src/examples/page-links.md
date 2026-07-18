@@ -9,16 +9,26 @@ The HTTP connection leaves the nearest logical page edge of `overview` with
 `to <service-detail>` and enters `service-detail` with `from <overview>`. Its sides
 are selected automatically from the endpoint envelopes.
 
-The dashed CSV connection explicitly selects anchor `1` on each top side. The
-anchor is close to a frame corner, so the local stubs use the corner-safe
-orthogonal dogleg. It is labeled `to <database-detail>` in `overview` and
-`from <overview>` in `database-detail`.
+The dashed CSV connection uses the child endpoint form to demonstrate that
+item and page-edge anchors are independent. It leaves the source port through
+the `near` slot on `right` (`right-2`) and exits the overview page through the
+`far` slot on `bottom` (`bottom-4`). On the destination page it enters through
+the `near` slot on `top` (`top-2`) and reaches the port through the `far` slot
+on `left` (`left-4`). Each end segment is
+perpendicular to its own selected side. It is labeled `to <database-detail>`
+in `overview` and `from <overview>` in `database-detail`.
+
+Each page-link label sits 4 layout pixels inward and at least 4 layout pixels
+sideways from its logical page terminal. It uses the closest sideways position
+that remains outside endpoint envelopes and metadata reservation strips.
 
 Default SVG export creates one file for each of the three frames. These are the
 actual page-local artifacts generated from the sample:
 
 The outer page-frame outline is intentionally absent; the invisible page edge
-still anchors each incoming or outgoing page-link stub.
+still anchors each incoming or outgoing page-link stub. Each default SVG is
+strictly cropped to the frame rectangle, so no extra marker-safe padding is
+added around these three page artifacts.
 
 ### `overview`
 

@@ -156,6 +156,10 @@ allows V2 to render V1 while V1 remains unaware of V2.
     the page-frame outline in default and combined output; the frame remains a
     logical crop/page-link boundary rather than a visible rectangle.
     Excalidraw retains page-frame objects with transparent strokes.
+    A default page-local SVG uses the exact logical frame rectangle as its
+    canvas and clip boundary, without adding stroke/marker safety padding;
+    PDF pages and Excel page images inherit that strict crop. Combined SVG
+    compatibility output retains marker-safe canvas expansion.
 27. Page projection happens only after the complete document scene, connector
     routing, and cross-frame link semantics are resolved. A per-frame encoder
     consumes an ordered `DocumentPlan` projection; it must not parse, lay out,
@@ -173,12 +177,24 @@ allows V2 to render V1 while V1 remains unaware of V2.
     offsets. The full-width reservation strip runs from that outer edge to the
     final content-box boundary and is at least the band height plus 8 layout
     pixels. Normal items, text, local/UML connector paths and labels, and
-    cross-frame page links cannot enter it. Page-link side selection remaps a
-    reserved edge to the nearest safe edge and clamps left/right terminals
-    outside the strip. These rules, text metrics, layer order, and per-page
-    ownership are encoder-independent. SVG, PPTX, PDF, Excel, and Excalidraw
-    consume that shared result; XYFlow and Isoflow may omit the decoration but
-    must not reinterpret it as graph nodes or endpoints.
+    cross-frame page links cannot enter it. Legacy/automatic page-link side
+    selection remaps a reserved edge to the nearest safe edge and clamps
+    left/right terminals outside the strip. An explicit cross-frame
+    `src-frame-side`, `dst-frame-side`, `src-frame-anchor`, or
+    `dst-frame-anchor` that selects the reservation is instead a validation
+    error. Page-link labels stay adjacent to their logical edge terminal with
+    a 4-layout-pixel gap while avoiding metadata and endpoint geometry. These
+    rules, text metrics, layer order, and per-page ownership are
+    encoder-independent. SVG, PPTX, PDF, Excel, and Excalidraw consume that
+    shared result; XYFlow and Isoflow may omit the decoration but must not
+    reinterpret it as graph nodes or endpoints.
+30. Cross-frame connector geometry distinguishes the item endpoint from the
+    logical page terminal. `src-side`/`dst-side` and
+    `src-anchor`/`dst-anchor` bind the endpoint; `src-frame-side`/
+    `dst-frame-side` and `src-frame-anchor`/`dst-frame-anchor` select the
+    owning frame edge independently. The endpoint- and frame-adjacent route
+    segments are perpendicular to their respective sides. Frame-terminal
+    attributes are invalid on same-frame connections.
 
 ## File organization
 

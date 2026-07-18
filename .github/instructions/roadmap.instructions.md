@@ -318,6 +318,9 @@ Implemented or partially implemented:
   pages, and Excel worksheets in source order. `--combine-frames` retains the
   compatibility single-canvas form. Excalidraw, XYFlow, and Isoflow remain one
   logical document.
+- Default page-local SVG uses the exact frame rectangle as its canvas and clip
+  boundary, inherited by PDF and Excel page images. The combined compatibility
+  canvas retains marker-safe bounds expansion.
 - Page frames support a shared top/bottom metadata tag band for built-in
   `id`, `title`, content `version`, and arbitrary key/value entries. The band
   touches the selected edge of the outer frame border box and uses the complete
@@ -329,6 +332,12 @@ Implemented or partially implemented:
   band also supports auto/fixed widths, explicit row breaks, and font/color
   styling. It projects with its owning physical page; graph adapters omit it
   as page decoration.
+- Cross-frame connections independently support item endpoint
+  `src/dst-side|anchor` and logical page-terminal
+  `src/dst-frame-side|anchor` geometry. Explicit frame anchors use five fixed
+  slots per edge, remain perpendicular at the page edge, reject metadata-strip
+  conflicts, and keep `to <...>` / `from <...>` labels 4 layout pixels from
+  the terminal.
 - `xaligo render --format xyflow` and TypeScript/WASM `renderXYFlow()` export
   nested React Flow-compatible nodes and edges. V1 item, AWS group, rectangle,
   port, and identified child-frame endpoints are retained; cross-frame stubs

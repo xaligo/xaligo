@@ -8,9 +8,11 @@ default and vertically with `layout="vertical"` in the complete logical scene.
 SVG, PPTX, PDF, and Excel project each child frame to one file, slide, page, or
 worksheet by default. `--combine-frames` preserves that complete scene as one
 physical canvas/page. SVG, PPTX, PDF, and Excel do not draw the page frame's
-outline, including in combined compatibility output. The frame edge remains a
-logical page-link terminal and clipping boundary. Excalidraw keeps editable
-frame objects but gives them transparent strokes.
+outline, including in combined compatibility output. A default page-local SVG
+uses the exact frame rectangle as its canvas and clip boundary; PDF and Excel
+inherit that strict page/image crop. Combined SVG keeps marker-safe bounds
+expansion. Excalidraw keeps editable frame objects but gives them transparent
+strokes.
 
 | Attribute | Default | Description |
 |---|---|---|
@@ -101,8 +103,10 @@ height plus the fixed 8-pixel content gap; a closer content boundary moves
 inward, while a boundary already farther inward is retained. Normal items and
 text, local and UML connector paths and labels, and page-link paths and labels
 never enter this strip; `overflow="visible"` does not override the exclusion.
-A page link that selects its reserved top/bottom edge is remapped to the nearest
-safe edge, and a terminal on the left/right edge is clamped outside the strip.
+A page link without an explicit frame terminal remaps a reserved top/bottom
+edge to the nearest safe edge and clamps a left/right terminal outside the
+strip. An explicit `src-frame-side`, `dst-frame-side`, `src-frame-anchor`, or
+`dst-frame-anchor` that selects the reservation is a validation error.
 SVG, PPTX, PDF, Excel, and Excalidraw display the page-owned band; XYFlow and
 Isoflow omit it as page decoration. See the
 [frame metadata example](../examples/frame-metadata.md) for top, bottom,

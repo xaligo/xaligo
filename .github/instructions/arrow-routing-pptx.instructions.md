@@ -187,33 +187,52 @@ two axis-aligned local stubs for Excalidraw, SVG, PPTX, PDF, and Excel:
   exact label `from <source frame ID>`.
 
 Angle brackets are literal punctuation, so a link from `overview` to `detail`
-renders `to <detail>` and `from <overview>`. The shared scene, not the PPTX exporter,
-selects each local side independently. An explicit anchor takes precedence
-over an explicit side, which takes precedence over the automatic side. The
-automatic side minimizes the perpendicular distance from the endpoint visual
-envelope to the four logical frame edges. The endpoint binding and border
-terminal use the same side. Ties prefer a tied side facing the remote frame,
-then `top`, `right`, `bottom`, `left`.
+renders `to <detail>` and `from <overview>`. The shared scene, not the PPTX
+exporter, selects endpoint binding and logical frame terminal geometry. The
+endpoint uses `src-side`/`dst-side` and `src-anchor`/`dst-anchor`. A cross-frame
+connection may independently select its logical terminal with
+`src-frame-side`/`dst-frame-side` or the more specific
+`src-frame-anchor`/`dst-frame-anchor`. Every side has five anchors at
+10/30/50/70/90 percent along the edge. The endpoint- and frame-adjacent route
+segments remain perpendicular to their respective sides even when the two
+sides differ.
 
-A frame metadata reservation strip is a final safety constraint. If the chosen
-top/bottom edge is reserved, including when selected by an explicit anchor or
-side, the shared scene remaps the page link to the nearest safe edge. A
-terminal on a left or right edge is clamped outside the full-width strip before
-the orthogonal dogleg is built. Neither the local path nor its label may enter
-the reservation strip.
+Frame-terminal precedence is explicit frame anchor, explicit frame side,
+legacy endpoint anchor, endpoint side, then automatic nearest-side selection.
+The automatic side minimizes the perpendicular distance from the endpoint
+visual envelope to the four logical frame edges. Ties prefer a tied side facing
+the remote frame, then `top`, `right`, `bottom`, `left`. Frame-terminal
+attributes are cross-frame-only; using them on a same-frame connection is a
+validation error.
+
+A frame metadata reservation strip is a final safety constraint. When no
+explicit frame-terminal attribute is present, a selected reserved top/bottom
+edge is remapped to the nearest safe edge and a left/right terminal is clamped
+outside the full-width strip before the orthogonal dogleg is built. An explicit
+frame side or anchor that selects the metadata edge, or an exact left/right
+anchor inside the strip, is a validation error instead of being moved. Neither
+the local path nor its label may enter the reservation strip.
 
 The unconstrained terminal uses the endpoint binding's coordinate parallel to
 the border. If that coordinate enters a 24-layout-px corner gutter, the
 terminal is clamped and a two-bend orthogonal dogleg bridges the coordinate
 difference; the segments at both the endpoint and logical page edge remain
 perpendicular to their selected side. A border shorter than 96 layout pixels
-uses one quarter of its length as an adaptive gutter. If the endpoint and
-terminal coincide on the border, the terminal shifts by up to 24 layout pixels
-within the available gutter range so the line remains visible.
+uses one quarter of its length as an adaptive gutter. If an unconstrained
+terminal and the endpoint coincide on the border, the terminal shifts by up to
+24 layout pixels within the available gutter range so the line remains
+visible. An explicit frame anchor remains at its exact slot; its orthogonal
+local stub supplies the visible separation.
 Manual bends remain connector metadata and
 do not steer page-local stubs. Both stubs retain one logical connector ID;
 XYFlow and Isoflow reconstruct one graph edge from that metadata rather than
 exporting the two page projections.
+
+The `to <...>` / `from <...>` label is placed just inside the owning page with
+a 4-layout-pixel inward gap and a minimum 4-layout-pixel tangent gap from the
+terminal. Candidate placement chooses the closest tangent position that avoids
+the endpoint envelope and metadata reservation; tiny pages use a clamped
+fallback rather than increasing the normal label distance.
 
 The page edge is geometric, not a visible rectangle: SVG, PPTX, PDF, and Excel
 omit page-frame outlines in both default and combined output.

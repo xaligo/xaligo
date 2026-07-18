@@ -6,6 +6,7 @@ Canonical documents place identified page frames inside
 `<xaligo version="1"><frames>`. Historical root-frame syntax shown in older
 reference cards remains readable with a migration warning. Page-frame outlines
 are not drawn; the geometry remains the physical page and crop boundary.
+Default SVG, PDF, and Excel page images crop exactly to that rectangle.
 
 {{#tabs name="frames-root"}}
 {{#tab name="Preview"}}

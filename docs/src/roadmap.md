@@ -25,7 +25,9 @@ resolved first and then projected in source order:
 | Excel | One worksheet containing the frame SVG |
 
 `--combine-frames` retains the former single-canvas/page form. Excalidraw,
-XYFlow, and Isoflow remain one logical document.
+XYFlow, and Isoflow remain one logical document. Default SVG uses the exact
+frame rectangle as its canvas and clip boundary; PDF and Excel inherit that
+strict page/image crop, while combined SVG keeps marker-safe bounds.
 
 Page frames can also add a top/bottom metadata band directly against their
 outer border box for built-in `id`, `title`, content `version`, and arbitrary
@@ -35,7 +37,10 @@ plus 8 pixels deep, and excludes normal items, text, connector geometry and
 labels, and page links. Auto/fixed widths, typography, colors, ordered greedy
 row wrapping, explicit row breaks, per-row alignment, page ownership, and safe
 page-link edge selection are resolved before the physical formats project one
-frame per page. XYFlow and Isoflow omit this page decoration.
+frame per page. Cross-frame links can select item and logical page-edge anchors
+independently, reject explicit frame-anchor conflicts with the metadata strip,
+and keep their labels 4 layout pixels from the page terminal. XYFlow and
+Isoflow omit this page decoration.
 
 This frame pagination is separate from generic tiling. Remaining scale work is
 to split one oversized frame into multiple tiles, add large-diagram regression

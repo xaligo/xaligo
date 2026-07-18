@@ -17,6 +17,12 @@
 {{#endtab}}
 {{#endtabs}}
 
+For a cross-frame page link, `src-frame-side` / `dst-frame-side` and
+`src-frame-anchor` / `dst-frame-anchor` select the invisible page edge
+independently from the item anchor. The complete
+[cross-frame page-link example](../../examples/page-links.md) demonstrates
+different endpoint and page-edge sides at both ends.
+
 ## Manual Bends
 
 {{#tabs name="arrows-bend"}}
@@ -33,4 +39,3 @@
 
 {{#endtab}}
 {{#endtabs}}
-
