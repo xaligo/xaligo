@@ -1,0 +1,22 @@
+<xaligo version="1">
+  <data>
+    <!-- Imported and reusable table data will be declared here. -->
+  </data>
+
+  <frames>
+    <frame id="service-table" width="720" height="420" class="pa-3">
+      <table id="services" title="Service Inventory">
+        | Service | Role     | Port |
+        |:--------|:---------|-----:|
+        | API     | Backend  | 8080 |
+        | DB      | Database | 5432 |
+
+        <row id="worker">
+          <cell>Worker</cell>
+          <cell>Background jobs</cell>
+          <cell align="right">9000</cell>
+        </row>
+      </table>
+    </frame>
+  </frames>
+</xaligo>

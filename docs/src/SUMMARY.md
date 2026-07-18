@@ -11,6 +11,7 @@
   - [Route and Traffic Separation](examples/route-traffic.md)
   - [Automatic Route Junctions](examples/junctions.md)
   - [Canonical V1 Envelope](examples/canonical-v1-envelope.md)
+  - [Tables](examples/tables.md)
 - [AI Agent Guide](ai-agent-guide.md)
 - [Planned Work](roadmap.md)
 
@@ -26,6 +27,7 @@
 - [Items and Spacers](xal/items.md)
 - [Rectangles and Ports](xal/rectangles-ports.md)
 - [Connections](xal/connections.md)
+- [Tables](xal/tables.md)
 
 # Rendering
 

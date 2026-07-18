@@ -140,6 +140,15 @@ func layoutNodeV1EngineLayoutNode(node *entity.Node, target *entity.Box, x, y, w
 	case "row":
 		loggerV1EngineSharedLogging.DEBUG(IULN007V1EngineLayoutNode, "branch row")
 		return layoutRowV1EngineLayoutFlow(node, target, innerX, innerY, innerW, innerH)
+	case "table":
+		gInnerX := boxX + defaultGroupSideInsetV1EngineLayoutNode + pad.Left
+		gInnerY := boxY + defaultGroupTopInsetV1EngineLayoutNode + pad.Top
+		gInnerW := boxW - defaultGroupSideInsetV1EngineLayoutNode*2 - pad.Left - pad.Right
+		gInnerH := boxH - defaultGroupTopInsetV1EngineLayoutNode - defaultGroupSideInsetV1EngineLayoutNode - pad.Top - pad.Bottom
+		setContentBoxV1EngineLayoutConstraints(target, gInnerX, gInnerY, gInnerW, gInnerH)
+		return layoutStackV1EngineLayoutFlow(node, target, gInnerX, gInnerY, gInnerW, gInnerH)
+	case "table-header", "table-row":
+		return layoutFlexHV1EngineLayoutFlow(node, target, innerX, innerY, innerW, innerH)
 	case "col":
 		if node.Attr("layout") == "horizontal" {
 			loggerV1EngineSharedLogging.DEBUG(IULN008V1EngineLayoutNode, "branch col horizontal")

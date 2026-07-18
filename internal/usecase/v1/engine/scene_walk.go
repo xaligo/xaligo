@@ -187,8 +187,15 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 			backgroundColor := "transparent"
 			fillStyle := "hachure"
 			roundness := map[string]any{"type": 3}
-			if b.Tag == "rectangle" {
+			if b.Tag == "rectangle" || b.Tag == "table" || b.Tag == "table-cell" {
 				fillStyle = "solid"
+			}
+			if b.Tag == "table" || b.Tag == "table-cell" {
+				backgroundColor = "#ffffff"
+				roundness = nil
+			}
+			if b.Tag == "table-cell" && b.Attrs["_xaligoTableHeader"] == "true" {
+				backgroundColor = "#f1f5f9"
 			}
 			if b.Tag == "port" {
 				backgroundColor = "#ffffff"
@@ -222,10 +229,20 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 				textAlign, verticalAlign := "left", "top"
 				role := entity.TextRoleLabel
 				textCustomData := map[string]any{}
-				if b.Tag == "rectangle" || b.Tag == "port" {
+				if b.Tag == "rectangle" || b.Tag == "port" || b.Tag == "table-cell" {
 					textX, textY = b.X+4, b.Y+2
 					textW, textH = math.Max(1, b.W-8), math.Max(1, b.H-4)
 					textAlign, verticalAlign = "center", "middle"
+				}
+				if b.Tag == "table-cell" {
+					switch {
+					case strings.HasSuffix(b.Attrs["align"], "-right") || b.Attrs["align"] == "right":
+						textAlign = "right"
+					case strings.HasSuffix(b.Attrs["align"], "-center") || b.Attrs["align"] == "center":
+						textAlign = "center"
+					default:
+						textAlign = "left"
+					}
 				}
 				if b.Tag == "port" {
 					role = entity.TextRolePortLabel
@@ -353,6 +370,10 @@ func semanticElementKindV1EngineSceneWalk(box *entity.Box) string {
 		return ""
 	}
 	switch box.Tag {
+	case "table":
+		return "table"
+	case "table-cell":
+		return "table-cell"
 	case "rectangle":
 		return "rectangle"
 	case "port":
@@ -379,5 +400,5 @@ func registerConnectionEndpointV1EngineSceneWalk(b *entity.Box, elementID string
 // isLayoutTag reports whether a tag is a pure layout container
 // (<row>, <col>, <container>) that should not render any visible border or label.
 func isLayoutTagV1EngineSceneWalk(tag string) bool {
-	return tag == "frames" || tag == "row" || tag == "col" || tag == "container" || IsBlankV1EngineLayoutAttributes(tag)
+	return tag == "frames" || tag == "row" || tag == "col" || tag == "container" || tag == "table-header" || tag == "table-row" || IsBlankV1EngineLayoutAttributes(tag)
 }

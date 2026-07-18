@@ -43,6 +43,40 @@ func TestParseRejectsInvalidXaligoEnvelope(t *testing.T) {
 	}
 }
 
+func TestParseNormalizesPipeAndTaggedTableRows(t *testing.T) {
+	doc, err := usecase.Parse(strings.NewReader(`<xaligo version="1"><frames><frame id="main"><table title="Services">
+| Name | Port |
+|:-----|-----:|
+| API  | 8080 |
+<row><cell>DB</cell><cell align="right">5432</cell></row>
+</table></frame></frames></xaligo>`))
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+	table := doc.Root.Children[0].Children[0]
+	if table.Tag != "table" || len(table.Children) != 3 {
+		t.Fatalf("table = %#v", table)
+	}
+	if table.Children[0].Tag != "table-header" || table.Children[1].Children[1].Text != "8080" || table.Children[2].Children[0].Text != "DB" {
+		t.Fatalf("normalized rows = %#v", table.Children)
+	}
+	if table.Children[0].Children[1].Attr("align") != "middle-right" || table.Children[2].Children[1].Attr("align") != "middle-right" {
+		t.Fatalf("normalized alignments = header %q tagged %q", table.Children[0].Children[1].Attr("align"), table.Children[2].Children[1].Attr("align"))
+	}
+}
+
+func TestParseRejectsTableColumnMismatch(t *testing.T) {
+	_, err := usecase.Parse(strings.NewReader(`<xaligo version="1"><frames><frame id="main"><table>
+| Name | Port |
+|:-----|-----:|
+| API |
+</table></frame></frames></xaligo>`))
+	var parseErr *entity.ParseError
+	if !errors.As(err, &parseErr) || !strings.Contains(err.Error(), "has 1 cells, want 2") {
+		t.Fatalf("error = %T %v", err, err)
+	}
+}
+
 func TestParseValidationErrorHasPosition(t *testing.T) {
 	_, err := usecase.Parse(strings.NewReader("<frame>\n  <item id=\"bad\" />\n</frame>"))
 	var parseErr *entity.ParseError

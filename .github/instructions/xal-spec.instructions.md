@@ -316,6 +316,31 @@ separate layout authority. Encoders apply text policy in this order: resolve
 padding, wrap when enabled, shrink when requested, then clip when
 `TextLayout.overflow="clip"`.
 
+## `<table>` Tag
+
+`<table>` represents general tabular data and is distinct from the `<grid>`
+layout primitive and relational `<entity>` definitions. It accepts either a
+GFM-like pipe table or explicit `<header>`/`<row>` children containing
+`<cell>` elements. One pipe header may be followed by explicit rows; a second
+header is invalid. Both syntaxes normalize to the same typed rows before
+layout.
+
+```xml
+<table id="services" title="Services">
+  | Service | Role    | Port |
+  |:--------|:--------|-----:|
+  | API     | Backend | 8080 |
+  <row><cell>DB</cell><cell>Database</cell><cell align="right">5432</cell></row>
+</table>
+```
+
+Pipe separators require at least three hyphens per cell and use colons for
+left, center, and right alignment. A literal pipe is escaped as `\|`. Every
+header and row must have the same positive cell count. Tagged cell `align`
+accepts `left`, `center`, `right`, or the normal vertical-horizontal values.
+Unknown children, duplicate headers, malformed separators, and mismatched
+column counts are positioned errors.
+
 ## `<item>` Tag
 
 A leaf element that places an AWS service icon inside a container.

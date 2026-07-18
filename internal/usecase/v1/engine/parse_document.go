@@ -191,6 +191,9 @@ func ParseV1EngineParseDocument(r io.Reader) (entity.Document, error) {
 		loggerV1EngineSharedLogging.ERROR(IUPP006V1EngineParseDocument, "frame hierarchy validation failed", map[string]any{"error": err})
 		return entity.Document{}, err
 	}
+	if err := normalizeTablesV1EngineParseTable(root); err != nil {
+		return entity.Document{}, err
+	}
 	assignConnectionKeysV1EngineParseNode(root)
 	if err := expandConnectionShorthandsV1EngineParseShorthand(root, data); err != nil {
 		loggerV1EngineSharedLogging.ERROR(IUPP016V1EngineParseDocument, "expand connection shorthands failed", map[string]any{"error": err})
