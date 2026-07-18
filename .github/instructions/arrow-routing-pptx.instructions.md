@@ -195,6 +195,13 @@ envelope to the four logical frame edges. The endpoint binding and border
 terminal use the same side. Ties prefer a tied side facing the remote frame,
 then `top`, `right`, `bottom`, `left`.
 
+A frame metadata reservation strip is a final safety constraint. If the chosen
+top/bottom edge is reserved, including when selected by an explicit anchor or
+side, the shared scene remaps the page link to the nearest safe edge. A
+terminal on a left or right edge is clamped outside the full-width strip before
+the orthogonal dogleg is built. Neither the local path nor its label may enter
+the reservation strip.
+
 The unconstrained terminal uses the endpoint binding's coordinate parallel to
 the border. If that coordinate enters a 24-layout-px corner gutter, the
 terminal is clamped and a two-bend orthogonal dogleg bridges the coordinate

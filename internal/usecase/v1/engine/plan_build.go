@@ -117,6 +117,7 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 	}
 
 	obstacles := collectObstaclesV1EnginePlanObstacle(elements)
+	frameMetadataReserved := collectFrameMetadataReservedZonesV1EnginePlanObstacle(elements)
 
 	connectors := []*entity.Element{}
 	for _, el := range elements {
@@ -147,6 +148,9 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 	headerShapes := []*entity.Element{}
 	for _, el := range elements {
 		if el.ID == "paper-frame" || (el.CustomData != nil && el.CustomData.PageFrame) {
+			continue
+		}
+		if el.CustomData != nil && el.CustomData.FrameMetadataReserved {
 			continue
 		}
 		if el.CustomData != nil && el.CustomData.Junction {
@@ -198,6 +202,7 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 	rOpt.Stub = stubPx
 	rOpt.LineMargin = marginPx
 	rOpt.Reserved = collectContainerBorderPathsV1EnginePlanObstacle(elements)
+	rOpt.HardObstacles = frameMetadataReserved
 	groupBorders := collectGroupBorderPathsV1EnginePlanObstacle(elements)
 	routed := routeConnectionsV1EngineRouteBuild(reqs, obstacles, rOpt)
 	elByConn := map[string]*entity.Element{}
@@ -228,7 +233,7 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 		}
 		line := connectorLineV1EnginePlanConnectorDraw(el, style, ppi)
 		if el.CustomData == nil || el.CustomData.UMLRelationKind == "" {
-			if op, labelRect, ok := connectorIDLabelOpV1EnginePlanConnectorLabel(connectorID, path, routed, obstacles, connectorLabelRects, frame, ppi, line); ok {
+			if op, labelRect, ok := connectorIDLabelOpV1EnginePlanConnectorLabel(connectorID, path, routed, obstacles, frameMetadataReserved, connectorLabelRects, frame, ppi, line); ok {
 				connectorLabels = append(connectorLabels, op)
 				connectorLabelRects = append(connectorLabelRects, labelRect)
 			}

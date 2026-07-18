@@ -23,10 +23,11 @@ are not drawn; the geometry remains the physical page and crop boundary.
 {{#endtabs}}
 
 Set `title`, a child-frame content `version`, or a direct `<metadata>` block to
-add a top/bottom page tag band inside the frame padding. The selected content
-margin absorbs the band before any overflow moves normal content inward. Tags
-pack into ordered rows and support per-row left/center/right alignment plus
-explicit entry breaks. See the
+add a top/bottom page tag band flush with the outer frame border box. Tags pack
+and align against the full frame width. The full-width strip between that edge
+and the final content-box boundary is reserved for metadata and excludes normal
+items, text, connector paths and labels, and page links. Tags support per-row
+left/center/right alignment plus explicit entry breaks. See the
 [frame metadata example](../../examples/frame-metadata.md) and the
 [attribute table](attributes.md#border-attributes).
 

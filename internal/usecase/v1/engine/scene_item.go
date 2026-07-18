@@ -78,7 +78,7 @@ func parseItemAlignV1EngineSceneItem(align string) (vert, horiz string) {
 
 // renderItemGrid lays out all items collected under the same visibleAncestor as
 // a compact grid within the ancestor's content area.
-func renderItemGridV1EngineSceneItem(items []*entity.Box, ancestor *entity.Box, elements *[]map[string]any, files map[string]any, catalogCSV string, projectRoot string, fsys fs.FS, maxSize float64, itemImgRects map[string][4]float64, itemLblRects map[string][4]float64, itemImgIDs map[string]string, itemLblIDs map[string]string, abbrevMap map[int]string, deps SceneDependenciesV1EngineSceneTypes) error {
+func renderItemGridV1EngineSceneItem(items []*entity.Box, ancestor, metadataFrame *entity.Box, elements *[]map[string]any, files map[string]any, catalogCSV string, projectRoot string, fsys fs.FS, maxSize float64, itemImgRects map[string][4]float64, itemLblRects map[string][4]float64, itemImgIDs map[string]string, itemLblIDs map[string]string, abbrevMap map[int]string, deps SceneDependenciesV1EngineSceneTypes) error {
 	if catalogCSV == "" || len(items) == 0 || ancestor == nil {
 		return nil
 	}
@@ -98,7 +98,7 @@ func renderItemGridV1EngineSceneItem(items []*entity.Box, ancestor *entity.Box, 
 			}
 			iconX += dx
 			iconY += dy
-			if err := validateItemIconBoundsV1EngineSceneItem(item, ancestor, iconX, iconY, grid.IconSize); err != nil {
+			if err := validateItemVisualBoundsV1EngineSceneItem(item, ancestor, metadataFrame, iconX, iconY, grid.IconSize, labelBoxH); err != nil {
 				return err
 			}
 		}
@@ -138,25 +138,43 @@ func parseOptionalFloatAttrV1EngineSceneItem(item *entity.Box, attr string) (flo
 	return parsed, nil
 }
 
-func validateItemIconBoundsV1EngineSceneItem(item *entity.Box, ancestor *entity.Box, x, y, size float64) error {
+func validateItemVisualBoundsV1EngineSceneItem(item, ancestor, metadataFrame *entity.Box, x, y, size, labelHeight float64) error {
 	const epsilon = 1e-6
 	if item == nil || ancestor == nil {
 		return nil
 	}
-	if !isPositiveFiniteV1EngineLayoutConstraints(size) || math.IsNaN(x) || math.IsInf(x, 0) || math.IsNaN(y) || math.IsInf(y, 0) {
-		return newResolvedLayoutErrorV1EngineLayoutValidation(item, "item icon geometry must be finite with a positive size")
+	if !isPositiveFiniteV1EngineLayoutConstraints(size) || !isPositiveFiniteV1EngineLayoutConstraints(labelHeight) || math.IsNaN(x) || math.IsInf(x, 0) || math.IsNaN(y) || math.IsInf(y, 0) {
+		return newResolvedLayoutErrorV1EngineLayoutValidation(item, "item visual geometry must be finite with positive icon and label sizes")
 	}
 	minX := ancestor.X
 	minY := ancestor.Y
 	maxX := ancestor.X + ancestor.W
 	maxY := ancestor.Y + ancestor.H
-	if x+epsilon < minX || y+epsilon < minY || x+size > maxX+epsilon || y+size > maxY+epsilon {
+	if ancestor.Tag == "frame" && isPositiveFiniteV1EngineLayoutConstraints(ancestor.ContentW) && isPositiveFiniteV1EngineLayoutConstraints(ancestor.ContentH) {
+		minX = ancestor.ContentX
+		minY = ancestor.ContentY
+		maxX = ancestor.ContentX + ancestor.ContentW
+		maxY = ancestor.ContentY + ancestor.ContentH
+	}
+	visualLeft := math.Min(x-itemAnchorGridVisualPadPxV1EngineSceneTypes, x+(size-itemLabelWV1EngineSceneTypes)/2)
+	visualTop := y - itemAnchorGridVisualPadPxV1EngineSceneTypes
+	visualRight := math.Max(x+size+itemAnchorGridVisualPadPxV1EngineSceneTypes, x+(size+itemLabelWV1EngineSceneTypes)/2)
+	visualBottom := math.Max(y+size+itemAnchorGridVisualPadPxV1EngineSceneTypes, y+size+4+labelHeight)
+	if metadataFrame != nil && metadataFrame.FrameMetadata != nil {
+		metadata := metadataFrame.FrameMetadata
+		if metadata.ReservedW > 0 && metadata.ReservedH > 0 &&
+			visualLeft < metadata.ReservedX+metadata.ReservedW-epsilon && visualRight > metadata.ReservedX+epsilon &&
+			visualTop < metadata.ReservedY+metadata.ReservedH-epsilon && visualBottom > metadata.ReservedY+epsilon {
+			return newResolvedLayoutErrorV1EngineLayoutValidation(item, "<item id=%q> icon, label, or connection anchor enters frame metadata reserved strip; overflow=\"visible\" cannot override this page-decoration exclusion zone", strings.TrimSpace(item.Attrs["id"]))
+		}
+	}
+	if visualLeft+epsilon < minX || visualTop+epsilon < minY || visualRight > maxX+epsilon || visualBottom > maxY+epsilon {
 		if ancestor.Overflow == entity.OverflowVisible {
 			ancestor.Overflowed = true
 			return nil
 		}
-		return newResolvedLayoutErrorV1EngineLayoutValidation(item, "<item id=%q> icon offset moves icon outside parent %q bounds: icon=(%.1f,%.1f,%.1f,%.1f), parent=(%.1f,%.1f,%.1f,%.1f)",
-			strings.TrimSpace(item.Attrs["id"]), ancestor.Tag, x, y, size, size, minX, minY, ancestor.W, ancestor.H)
+		return newResolvedLayoutErrorV1EngineLayoutValidation(item, "<item id=%q> offset moves its icon, label, or connection anchor outside parent %q content bounds: visual=(%.1f,%.1f,%.1f,%.1f), parent=(%.1f,%.1f,%.1f,%.1f)",
+			strings.TrimSpace(item.Attrs["id"]), ancestor.Tag, visualLeft, visualTop, visualRight-visualLeft, visualBottom-visualTop, minX, minY, maxX-minX, maxY-minY)
 	}
 	return nil
 }
@@ -208,12 +226,13 @@ func chooseItemGridV1EngineSceneItem(n int, areaW, areaH, maxSize float64, label
 		r := int(math.Ceil(float64(n) / float64(c)))
 		cellW := (areaW - itemGapV1EngineSceneTypes*float64(c-1)) / float64(c)
 		cellH := (areaH - itemGapV1EngineSceneTypes*float64(r-1)) / float64(r)
-		size := math.Min(cellW, cellH-4-labelBoxH)
+		size := math.Min(cellW-itemAnchorGridVisualPadPxV1EngineSceneTypes*2, cellH-4-labelBoxH)
 		size = math.Min(size, maxSize)
 		if size < itemMinSizeV1EngineSceneTypes {
 			continue
 		}
-		usedW := size*float64(c) + itemGapV1EngineSceneTypes*float64(c-1)
+		slotW := math.Max(itemLabelWV1EngineSceneTypes, size+itemAnchorGridVisualPadPxV1EngineSceneTypes*2)
+		usedW := slotW*float64(c) + itemGapV1EngineSceneTypes*float64(c-1)
 		usedH := (size+4+labelBoxH)*float64(r) + itemGapV1EngineSceneTypes*float64(r-1)
 		if usedW-areaW > 1e-6 || usedH-areaH > 1e-6 {
 			continue

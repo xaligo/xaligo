@@ -11,6 +11,37 @@ import (
 	"github.com/xaligo/xaligo/internal/usecase"
 )
 
+func TestFrameMetadataUsesOuterBorderDespitePaddingAndContentMargins(t *testing.T) {
+	document, err := usecase.Parse(strings.NewReader(`<xaligo version="1"><frames>
+  <frame id="page" width="360" height="220" class="pa-2"
+         margin-top="72" margin-right="24" margin-bottom="20" margin-left="24">
+    <metadata align="right" width="90" key-width="30"><entry key="owner" value="platform" /></metadata>
+    <rectangle id="content" title="Content" height="40" />
+  </frame>
+</frames></xaligo>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	root, err := usecase.Build(document)
+	if err != nil {
+		t.Fatal(err)
+	}
+	frame := root.Children[0]
+	metadata := frame.FrameMetadata
+	if metadata == nil || len(metadata.Tags) != 2 {
+		t.Fatalf("metadata = %#v", metadata)
+	}
+	if got, want := metadata.Tags[0].Y, frame.Y; got != want {
+		t.Fatalf("metadata Y = %v, want outer edge %v", got, want)
+	}
+	if got, want := metadata.Tags[1].X+metadata.Tags[1].W, frame.X+frame.W; math.Abs(got-want) > 1e-9 {
+		t.Fatalf("right aligned row edge = %v, want outer edge %v", got, want)
+	}
+	if metadata.ReservedX != frame.X || metadata.ReservedW != frame.W || metadata.ReservedY != frame.Y || metadata.ReservedY+metadata.ReservedH != frame.ContentY {
+		t.Fatalf("reserved strip = (%v,%v,%v,%v), frame/content = %#v", metadata.ReservedX, metadata.ReservedY, metadata.ReservedW, metadata.ReservedH, frame)
+	}
+}
+
 func TestFrameMetadataReservesTopMarginBand(t *testing.T) {
 	document, err := usecase.Parse(strings.NewReader(`<xaligo version="1">
   <data></data>
@@ -77,6 +108,12 @@ func TestFrameMetadataReservesTopMarginBand(t *testing.T) {
 	if len(frame.Children) != 1 || frame.Children[0].Y < frame.ContentY || frame.Children[0].Y < metadata.Tags[len(metadata.Tags)-1].Y+metadata.Tags[len(metadata.Tags)-1].H {
 		t.Fatalf("content overlaps metadata: frame=%#v child=%#v metadata=%#v", frame, frame.Children, metadata.Tags)
 	}
+	if got, want := metadata.Tags[0].Y, frame.Y; math.Abs(got-want) > 1e-9 {
+		t.Fatalf("top metadata Y = %v, want outer frame edge %v", got, want)
+	}
+	if metadata.ReservedX != frame.X || metadata.ReservedY != frame.Y || metadata.ReservedW != frame.W || math.Abs(metadata.ReservedY+metadata.ReservedH-frame.ContentY) > 1e-9 {
+		t.Fatalf("top reserved strip = (%v,%v,%v,%v), frame/content = %#v", metadata.ReservedX, metadata.ReservedY, metadata.ReservedW, metadata.ReservedH, frame)
+	}
 }
 
 func TestFrameMetadataBottomPositionAndFontSizedHeight(t *testing.T) {
@@ -108,20 +145,27 @@ func TestFrameMetadataBottomPositionAndFontSizedHeight(t *testing.T) {
 			t.Fatalf("bottom tag overlaps content: tag=%#v content=(%v,%v)", tag, frame.ContentY, frame.ContentH)
 		}
 	}
+	last := metadata.Tags[len(metadata.Tags)-1]
+	if got, want := last.Y+last.H, frame.Y+frame.H; math.Abs(got-want) > 1e-9 {
+		t.Fatalf("bottom metadata edge = %v, want frame bottom %v", got, want)
+	}
 	if got, want := frame.ContentY+frame.ContentH, frame.Y+frame.H-80; math.Abs(got-want) > 1e-9 {
 		t.Fatalf("content bottom = %v, want existing bottom margin boundary %v", got, want)
 	}
+	if metadata.ReservedX != frame.X || metadata.ReservedW != frame.W || math.Abs(metadata.ReservedY-(frame.ContentY+frame.ContentH)) > 1e-9 || math.Abs(metadata.ReservedY+metadata.ReservedH-(frame.Y+frame.H)) > 1e-9 {
+		t.Fatalf("bottom reserved strip = (%v,%v,%v,%v), frame/content = %#v", metadata.ReservedX, metadata.ReservedY, metadata.ReservedW, metadata.ReservedH, frame)
+	}
 }
 
-func TestFrameMetadataUsesMarginZoneAndAlignsWrappedRows(t *testing.T) {
+func TestFrameMetadataUsesOuterWidthAndAlignsWrappedRows(t *testing.T) {
 	tests := []struct {
 		align         string
 		wantFirstRowX float64
 		wantLastRowX  float64
 	}{
-		{align: "left", wantFirstRowX: 20, wantLastRowX: 20},
+		{align: "left", wantFirstRowX: 0, wantLastRowX: 0},
 		{align: "center", wantFirstRowX: 40, wantLastRowX: 130},
-		{align: "right", wantFirstRowX: 60, wantLastRowX: 240},
+		{align: "right", wantFirstRowX: 80, wantLastRowX: 260},
 	}
 	for _, test := range tests {
 		t.Run(test.align, func(t *testing.T) {
@@ -152,7 +196,13 @@ func TestFrameMetadataUsesMarginZoneAndAlignsWrappedRows(t *testing.T) {
 				t.Fatalf("content Y offset = %v, want existing top margin 64", got)
 			}
 			if metadata.Tags[0].Y+metadata.Tags[0].H > frame.ContentY+1e-9 {
-				t.Fatalf("metadata is not in the top margin zone: tag=%#v contentY=%v", metadata.Tags[0], frame.ContentY)
+				t.Fatalf("metadata is not inside the top reserved strip: tag=%#v contentY=%v", metadata.Tags[0], frame.ContentY)
+			}
+			if metadata.Tags[0].Y != frame.Y {
+				t.Fatalf("metadata top = %v, want outer frame top %v", metadata.Tags[0].Y, frame.Y)
+			}
+			if metadata.ReservedX != frame.X || metadata.ReservedY != frame.Y || metadata.ReservedW != frame.W || math.Abs(metadata.ReservedH-64) > 1e-9 {
+				t.Fatalf("reserved strip = (%v,%v,%v,%v), want full-width 64px top margin", metadata.ReservedX, metadata.ReservedY, metadata.ReservedW, metadata.ReservedH)
 			}
 			if got := metadata.Tags[0].X - frame.X; math.Abs(got-test.wantFirstRowX) > 1e-9 {
 				t.Fatalf("first row X = %v, want %v", got, test.wantFirstRowX)
@@ -397,10 +447,18 @@ func TestFrameMetadataStaysAbovePageLinksAndKeepsTheirLabelsClear(t *testing.T) 
 	}
 
 	metadataByFrame := map[string][][4]float64{}
+	reservedByFrame := map[string][4]float64{}
 	lastPageLinkIndex := -1
 	firstMetadataIndex := len(scene.Elements)
 	for index, element := range scene.Elements {
 		custom, _ := element["customData"].(map[string]any)
+		if custom["xaligoFrameMetadataReserved"] == true {
+			frameID, _ := custom["xaligoFrameID"].(string)
+			reservedByFrame[frameID] = [4]float64{
+				sceneNumber(t, element["x"]), sceneNumber(t, element["y"]),
+				sceneNumber(t, element["width"]), sceneNumber(t, element["height"]),
+			}
+		}
 		if custom["xaligoCrossFrame"] == true || element["text"] == "to <detail>" || element["text"] == "from <overview>" {
 			lastPageLinkIndex = index
 		}
@@ -442,6 +500,9 @@ func TestFrameMetadataStaysAbovePageLinksAndKeepsTheirLabelsClear(t *testing.T) 
 				t.Fatalf("page-link label %#v overlaps frame %q metadata %#v", label, frameID, metadata)
 			}
 		}
+		if reserved := reservedByFrame[frameID]; reserved[2] <= 0 || reserved[3] <= 0 || rectanglesOverlapFrameMetadataTest(label, reserved) {
+			t.Fatalf("page-link label %#v is not clear of frame %q reserved strip %#v", label, frameID, reserved)
+		}
 	}
 	for _, element := range scene.Elements {
 		custom, _ := element["customData"].(map[string]any)
@@ -456,7 +517,139 @@ func TestFrameMetadataStaysAbovePageLinksAndKeepsTheirLabelsClear(t *testing.T) 
 					t.Fatalf("page-link segment %#v -> %#v crosses frame %q metadata %#v", points[index-1], points[index], frameID, metadata)
 				}
 			}
+			if reserved := reservedByFrame[frameID]; segmentCrossesRectangleInteriorFrameMetadataTest(points[index-1], points[index], reserved) {
+				t.Fatalf("page-link segment %#v -> %#v crosses frame %q reserved strip %#v", points[index-1], points[index], frameID, reserved)
+			}
 		}
+	}
+}
+
+func TestFrameMetadataReservedStripExcludesItemsGroupHeadersAndLocalRoutes(t *testing.T) {
+	source := `<xaligo version="1"><frames><frame id="page" title="Page" width="420" height="280" margin-top="72" margin-right="16" margin-bottom="16" margin-left="16">
+  <metadata width="120" key-width="40"><entry key="owner" value="platform" /></metadata>
+  <generic-group id="network" title="Network" height="96"><item id="27" name="web" /></generic-group>
+  <item id="110" name="database" />
+  <connection src="network" dst="database" bends="210,12" uml-relation-label="calls" />
+</frame></frames></xaligo>`
+	out, err := newUsecase().RenderExcalidraw(context.Background(), []byte(source), entity.RenderOptions{Theme: "light"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var scene sceneFile
+	if err := json.Unmarshal(out, &scene); err != nil {
+		t.Fatal(err)
+	}
+	reserved := [4]float64{}
+	for _, element := range scene.Elements {
+		custom, _ := element["customData"].(map[string]any)
+		if custom["xaligoFrameMetadataReserved"] == true {
+			reserved = [4]float64{sceneNumber(t, element["x"]), sceneNumber(t, element["y"]), sceneNumber(t, element["width"]), sceneNumber(t, element["height"])}
+			break
+		}
+	}
+	if reserved[2] != 420 || reserved[3] != 72 {
+		t.Fatalf("reserved strip = %#v, want full-width 72px top strip", reserved)
+	}
+	for _, element := range scene.Elements {
+		custom, _ := element["customData"].(map[string]any)
+		if custom["xaligoFrameMetadata"] == true || custom["xaligoFrameMetadataReserved"] == true || custom["xaligoPageFrame"] == true {
+			continue
+		}
+		typeName, _ := element["type"].(string)
+		if typeName == "arrow" {
+			points := sceneArrowPoints(t, element)
+			for index := 1; index < len(points); index++ {
+				if segmentCrossesRectangleInteriorFrameMetadataTest(points[index-1], points[index], reserved) {
+					t.Fatalf("local connector segment %#v -> %#v crosses reserved strip %#v: %#v", points[index-1], points[index], reserved, element)
+				}
+			}
+			continue
+		}
+		if typeName != "rectangle" && typeName != "line" && typeName != "image" && typeName != "text" {
+			continue
+		}
+		rect := [4]float64{sceneNumber(t, element["x"]), sceneNumber(t, element["y"]), sceneNumber(t, element["width"]), sceneNumber(t, element["height"])}
+		if rectanglesOverlapFrameMetadataTest(rect, reserved) {
+			t.Fatalf("ordinary %s %q rect %#v overlaps reserved strip %#v", typeName, element["id"], rect, reserved)
+		}
+	}
+}
+
+func TestFrameMetadataReservedStripExcludesPhysicalPlanLinesAndLabels(t *testing.T) {
+	source := []byte(`<xaligo version="1"><frames><frame id="page" title="Page" width="420" height="260" margin-top="72" margin-right="16" margin-bottom="16" margin-left="16">
+  <metadata width="120" key-width="40"><entry key="owner" value="platform" /></metadata>
+  <rectangle id="source" title="Source" width="120" height="44" />
+  <rectangle id="destination" title="Destination" width="120" height="44" />
+  <connection src="source" dst="destination" bends="210,12" uml-relation-label="calls" />
+</frame></frames></xaligo>`)
+	planJSON, err := newUsecase().BuildPPTXPlan(context.Background(), source, entity.RenderOptions{Format: usecase.FormatPPTX, Theme: "light", PxPerInch: 96})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var plan entity.Plan
+	if err := json.Unmarshal(planJSON, &plan); err != nil {
+		t.Fatal(err)
+	}
+	reservedBottom := 72.0 / 96.0
+	foundConnector := false
+	foundUMLLabel := false
+	for _, op := range plan.Ops {
+		if strings.Contains(op.ID, "metadata") {
+			continue
+		}
+		if op.Kind == "line" && len(op.Points) > 0 {
+			foundConnector = true
+			for _, point := range op.Points {
+				if y := op.Y + point.Y; y < reservedBottom-1e-9 {
+					t.Fatalf("physical connector %q enters reserved strip: y=%v, boundary=%v, op=%#v", op.ID, y, reservedBottom, op)
+				}
+			}
+		}
+		if op.Kind == "text" {
+			if op.Text == "calls" {
+				foundUMLLabel = true
+			}
+			if op.Y < reservedBottom-1e-9 {
+				t.Fatalf("physical text %q enters reserved strip: %#v", op.Text, op)
+			}
+		}
+	}
+	if !foundConnector || !foundUMLLabel {
+		t.Fatalf("missing connector/UML label in plan: %#v", plan.Ops)
+	}
+}
+
+func TestFrameMetadataReservedStripOverridesUnsafeLocalEndpointSide(t *testing.T) {
+	source := `<xaligo version="1"><frames><frame id="page" title="Page" width="360" height="220" margin-top="64" margin-right="16" margin-bottom="16" margin-left="16" align="top-left">
+  <metadata width="120" key-width="40" />
+  <item id="27" name="source" />
+  <item id="110" name="destination" />
+  <connection src="source" dst="destination" src-side="top" dst-side="top" />
+</frame></frames></xaligo>`
+	out, err := newUsecase().RenderExcalidraw(context.Background(), []byte(source), entity.RenderOptions{Theme: "light"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var scene sceneFile
+	if err := json.Unmarshal(out, &scene); err != nil {
+		t.Fatal(err)
+	}
+	reserved := [4]float64{0, 0, 360, 64}
+	found := false
+	for _, element := range scene.Elements {
+		if element["type"] != "arrow" {
+			continue
+		}
+		found = true
+		points := sceneArrowPoints(t, element)
+		for index := 1; index < len(points); index++ {
+			if segmentCrossesRectangleInteriorFrameMetadataTest(points[index-1], points[index], reserved) {
+				t.Fatalf("unsafe explicit endpoint side entered reserved strip: %#v -> %#v, arrow=%#v", points[index-1], points[index], element)
+			}
+		}
+	}
+	if !found {
+		t.Fatal("local connector arrow not found")
 	}
 }
 

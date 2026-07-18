@@ -160,6 +160,12 @@ icon and label. The endpoint binding and frame terminal use the same side.
 Equal-distance ties prefer a tied side facing the other frame, then `top`,
 `right`, `bottom`, `left`.
 
+Frame metadata reservation is a final safety constraint after that precedence.
+If the chosen top/bottom edge is reserved, xaligo remaps the page link to the
+nearest safe edge even when an explicit anchor or side selected it. A terminal
+on a left or right edge is clamped outside the full-width reservation strip;
+the path and `to <...>` / `from <...>` label cannot enter the strip.
+
 The terminal is on the logical frame edge; SVG, PPTX, PDF, and Excel do not
 draw that edge as a frame outline. Its initial position along the edge follows
 the endpoint binding. If that position enters the normal

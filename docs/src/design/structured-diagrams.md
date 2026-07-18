@@ -112,30 +112,31 @@ with a transparent page-frame outline.
 
 ## Frame metadata tag-band projection
 
-A page frame can place a top or bottom band of visible key/value tags inside
-its padding box. The band consumes the existing content margin on that edge
-before moving the content boundary. A non-empty frame `title`, direct-child
-content `version`, or direct `<metadata>` child enables it. When enabled,
-non-empty `id`, `title`, and `version` values are emitted in that order,
-followed by arbitrary `<entry key="..." value="..." />` children in source
-order. An ID-only frame keeps the historical layout and does not acquire a
-band.
+A page frame can place a top or bottom band of visible key/value tags directly
+against the selected edge of its outer border box. Padding, content margins,
+and content-box coordinates do not inset the band. A non-empty frame `title`,
+direct-child content `version`, or direct `<metadata>` child enables it. When
+enabled, non-empty `id`, `title`, and `version` values are emitted in that
+order, followed by arbitrary `<entry key="..." value="..." />` children in
+source order. An ID-only frame keeps the historical layout and does not acquire
+a band.
 
 The normalized layout resolves font-dependent height, auto or fixed tag
 widths, greedy source-order wrapping, optional entry row breaks, and
-left/center/right alignment for each row. The fixed 8-pixel content gap and
-band height reuse the selected content margin; only an overflow beyond that
-margin shrinks the content box. The canonical scene then represents every key
-and value cell as page-owned decoration with stable ownership metadata. SVG,
-PPTX, PDF, Excel, and Excalidraw consume that same geometry. Per-frame
-projection retains only the owning page's tags, while combined compatibility
-output retains all bands. XYFlow and Isoflow omit them because page decoration
-is neither a graph node nor an endpoint.
+left/center/right alignment for each row against the full outer frame width.
+The full-width reservation strip extends from the metadata edge to the final
+content-box boundary and is at least the complete band height plus the fixed
+8-pixel content gap. The canonical scene then represents every key and value
+cell as page-owned decoration with stable ownership metadata. SVG, PPTX, PDF,
+Excel, and Excalidraw consume that same geometry. Per-frame projection retains
+only the owning page's tags, while combined compatibility output retains all
+bands. XYFlow and Isoflow omit them because page decoration is neither a graph
+node nor an endpoint.
 
-The tag band is drawn above connectors and participates in obstacle
-collection. Page-link terminal coordinates and `to <...>` / `from <...>`
-labels select clear positions around the band. The logical frame edge and page
-size are unchanged, and no visible frame outline is reintroduced.
+The entire reservation strip is a hard exclusion zone for normal items and
+text, local and UML connector paths and labels, and page-link paths and labels.
+The logical frame edge and page size are unchanged, and no visible frame
+outline is reintroduced.
 
 ## Cross-frame page-link projection
 
@@ -159,6 +160,10 @@ the two local stubs. Excalidraw, SVG, PPTX, PDF, and Excel preserve the two
 page-local projections; graph adapters combine their shared logical connection
 ID into one XYFlow or Isoflow edge.
 
+Metadata reservation is applied after that normal precedence. A page-link side
+that selects the reserved top/bottom edge is remapped to the nearest safe edge,
+including when the original choice came from an explicit anchor or side.
+
 The terminal itself lies on the logical page edge even though no frame outline
 is drawn. Its unconstrained
 parallel coordinate follows the endpoint binding; a coordinate inside the
@@ -167,8 +172,9 @@ orthogonal dogleg so both the endpoint and border segments remain perpendicular
 to the selected side. Borders shorter than 96 layout pixels use an adaptive
 quarter-length gutter. Coincident endpoint/border points shift along the border
 within the available gutter range to keep the page-link stub visible.
-If the selected edge also contains frame metadata tags, the terminal and label
-shift to the nearest free edge interval while preserving orthogonal routing.
+On a left or right edge, the terminal is additionally clamped outside the
+metadata reservation strip. The path and label remain outside the strip, and
+any coordinate difference is bridged while preserving orthogonal routing.
 
 ## Processing boundaries
 

@@ -6,7 +6,7 @@ import "math"
 // lane when the chosen route would otherwise share the exact same coordinates
 // with an earlier connector. Endpoints and endpoint stubs remain fixed.
 func separateExactOverlapsV1EngineRouteOverlap(points []ptV1EngineRouteTypes, placed [][]segmentV1EngineRouteTypes, obstacles []rectV1EngineRouteTypes, opt routerOptionsV1EngineRouteTypes) []ptV1EngineRouteTypes {
-	if len(points) < 3 || len(placed) == 0 || opt.LaneGap <= 0 {
+	if len(points) < 2 || len(placed) == 0 || opt.LaneGap <= 0 {
 		return points
 	}
 	inflated := make([]rectV1EngineRouteTypes, len(obstacles))
@@ -110,7 +110,7 @@ func separateObstacleHitsV1EngineRouteOverlap(points []ptV1EngineRouteTypes, pla
 // tried, and the obstacle-free candidate that removes the most stub overlap is
 // returned. obstacles are pre-inflated by the caller's stub margin.
 func offsetFirstStubV1EngineRouteOverlap(points []ptV1EngineRouteTypes, placed [][]segmentV1EngineRouteTypes, obstacles []rectV1EngineRouteTypes, laneGap float64) ([]ptV1EngineRouteTypes, bool) {
-	if len(points) < 3 || laneGap <= 0 {
+	if len(points) < 2 || laneGap <= 0 {
 		return nil, false
 	}
 	first := segmentV1EngineRouteTypes{A: points[0], B: points[1]}

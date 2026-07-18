@@ -16,6 +16,7 @@ const (
 type frameMetadataSceneGeometryV1EngineSceneFrameMetadata struct {
 	Position string
 	Rects    [][4]float64
+	Reserved [4]float64
 }
 
 func appendFrameMetadataV1EngineSceneFrameMetadata(root *entity.Box, elements *[]map[string]any) map[string]frameMetadataSceneGeometryV1EngineSceneFrameMetadata {
@@ -32,21 +33,59 @@ func appendFrameMetadataV1EngineSceneFrameMetadata(root *entity.Box, elements *[
 			if frameID == "" {
 				frameID = frame.ID
 			}
-			occupied[frameID] = frameMetadataSceneGeometryV1EngineSceneFrameMetadata{
+			geometry := frameMetadataSceneGeometryV1EngineSceneFrameMetadata{
 				Position: frame.FrameMetadata.Position,
-				Rects:    appendFrameMetadataBoxV1EngineSceneFrameMetadata(frame, frameID, pageFrameElementIDV1EngineSceneWalk(frame), elements),
+				Reserved: frameMetadataReservedRectV1EngineSceneFrameMetadata(frame),
 			}
+			appendFrameMetadataReservedZoneV1EngineSceneFrameMetadata(frame, frameID, geometry.Reserved, elements)
+			geometry.Rects = appendFrameMetadataBoxV1EngineSceneFrameMetadata(frame, frameID, pageFrameElementIDV1EngineSceneWalk(frame), elements)
+			occupied[frameID] = geometry
 		}
 		return occupied
 	}
 	if root.Tag == "frame" && root.FrameMetadata != nil {
 		frameID := strings.TrimSpace(root.Attrs["id"])
-		occupied[frameID] = frameMetadataSceneGeometryV1EngineSceneFrameMetadata{
+		geometry := frameMetadataSceneGeometryV1EngineSceneFrameMetadata{
 			Position: root.FrameMetadata.Position,
-			Rects:    appendFrameMetadataBoxV1EngineSceneFrameMetadata(root, frameID, "paper-frame", elements),
+			Reserved: frameMetadataReservedRectV1EngineSceneFrameMetadata(root),
 		}
+		appendFrameMetadataReservedZoneV1EngineSceneFrameMetadata(root, frameID, geometry.Reserved, elements)
+		geometry.Rects = appendFrameMetadataBoxV1EngineSceneFrameMetadata(root, frameID, "paper-frame", elements)
+		occupied[frameID] = geometry
 	}
 	return occupied
+}
+
+func frameMetadataReservedRectV1EngineSceneFrameMetadata(frame *entity.Box) [4]float64 {
+	if frame == nil || frame.FrameMetadata == nil {
+		return [4]float64{}
+	}
+	metadata := frame.FrameMetadata
+	return [4]float64{metadata.ReservedX, metadata.ReservedY, metadata.ReservedW, metadata.ReservedH}
+}
+
+func appendFrameMetadataReservedZoneV1EngineSceneFrameMetadata(frame *entity.Box, frameID string, rect [4]float64, elements *[]map[string]any) {
+	if frame == nil || elements == nil || rect[2] <= 0 || rect[3] <= 0 {
+		return
+	}
+	id := frame.ID + "-metadata-reserved"
+	seed := stableSceneSeedV1EngineSceneTypes(id)
+	*elements = append(*elements, map[string]any{
+		"id": id, "type": "rectangle",
+		"x": rect[0], "y": rect[1], "width": rect[2], "height": rect[3],
+		"angle":       0,
+		"strokeColor": "transparent", "backgroundColor": "transparent",
+		"fillStyle": "solid", "strokeWidth": 0, "strokeStyle": "solid",
+		"roughness": 0, "opacity": 0,
+		"groupIds": []string{}, "roundness": nil,
+		"seed": seed, "version": 1, "versionNonce": seed,
+		"isDeleted": false, "boundElements": nil,
+		"updated": excalidrawUpdatedV1EngineSceneTypes, "link": nil, "locked": true, "frameId": nil,
+		"customData": map[string]any{
+			"xaligoFrameMetadataReserved": true,
+			"xaligoFrameID":               frameID,
+		},
+	})
 }
 
 func appendFrameMetadataBoxV1EngineSceneFrameMetadata(frame *entity.Box, frameID, semanticParent string, elements *[]map[string]any) [][4]float64 {

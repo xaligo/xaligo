@@ -6,11 +6,11 @@ import (
 	"github.com/xaligo/xaligo/internal/entity"
 )
 
-func connectorIDLabelOpV1EnginePlanConnectorLabel(id string, path routedPathV1EngineRouteTypes, allPaths []routedPathV1EngineRouteTypes, obstacles []rectV1EngineRouteTypes, placedLabels []rectV1EngineRouteTypes, frame rectV1EngineRouteTypes, ppi float64, line entity.LineStyle) (entity.DrawOp, rectV1EngineRouteTypes, bool) {
+func connectorIDLabelOpV1EnginePlanConnectorLabel(id string, path routedPathV1EngineRouteTypes, allPaths []routedPathV1EngineRouteTypes, obstacles, hardObstacles []rectV1EngineRouteTypes, placedLabels []rectV1EngineRouteTypes, frame rectV1EngineRouteTypes, ppi float64, line entity.LineStyle) (entity.DrawOp, rectV1EngineRouteTypes, bool) {
 	if len(path.Points) < 2 {
 		return entity.DrawOp{}, rectV1EngineRouteTypes{}, false
 	}
-	p, ok := connectorLabelPointV1EnginePlanConnectorLabel(path, allPaths, obstacles, placedLabels)
+	p, ok := connectorLabelPointV1EnginePlanConnectorLabel(path, allPaths, obstacles, hardObstacles, placedLabels)
 	if !ok {
 		return entity.DrawOp{}, rectV1EngineRouteTypes{}, false
 	}
@@ -50,22 +50,34 @@ type connectorLabelCandidateV1EnginePlanConnectorLabel struct {
 	Priority float64
 }
 
-func connectorLabelPointV1EnginePlanConnectorLabel(path routedPathV1EngineRouteTypes, allPaths []routedPathV1EngineRouteTypes, obstacles []rectV1EngineRouteTypes, placedLabels []rectV1EngineRouteTypes) (ptV1EngineRouteTypes, bool) {
+func connectorLabelPointV1EnginePlanConnectorLabel(path routedPathV1EngineRouteTypes, allPaths []routedPathV1EngineRouteTypes, obstacles, hardObstacles []rectV1EngineRouteTypes, placedLabels []rectV1EngineRouteTypes) (ptV1EngineRouteTypes, bool) {
 	candidates := connectorLabelCandidatesV1EnginePlanConnectorLabel(path.Points)
 	if len(candidates) == 0 {
 		return ptV1EngineRouteTypes{}, false
 	}
-	best := candidates[0].Point
-	bestScore := connectorLabelScoreV1EnginePlanConnectorLabel(path.ID, best, allPaths, obstacles, placedLabels)
-	bestScore += candidates[0].Priority
-	for _, candidate := range candidates[1:] {
+	best := ptV1EngineRouteTypes{}
+	bestScore := math.Inf(1)
+	found := false
+	for _, candidate := range candidates {
+		label := connectorIDLabelRectV1EnginePlanConnectorLabel(candidate.Point)
+		blocked := false
+		for _, obstacle := range hardObstacles {
+			if rectsOverlapV1EnginePlanConnectorLabel(label, inflateV1EngineRouteGeometry(obstacle, 1)) {
+				blocked = true
+				break
+			}
+		}
+		if blocked {
+			continue
+		}
 		score := candidate.Priority + connectorLabelScoreV1EnginePlanConnectorLabel(path.ID, candidate.Point, allPaths, obstacles, placedLabels)
 		if score < bestScore {
 			best = candidate.Point
 			bestScore = score
+			found = true
 		}
 	}
-	return best, true
+	return best, found
 }
 
 func connectorLabelCandidatesV1EnginePlanConnectorLabel(points []ptV1EngineRouteTypes) []connectorLabelCandidateV1EnginePlanConnectorLabel {

@@ -16,12 +16,16 @@ type semanticElementMetadataV1EngineSceneWalk struct {
 	Kind            string
 }
 
-func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[string]any, svgGroupDir string, catalogCSV string, projectRoot string, fsys fs.FS, visibleAncestor *entity.Box, itemGroups map[string][]*entity.Box, ancestorBoxes map[string]*entity.Box, itemImgRects map[string][4]float64, itemImgIDs map[string]string, deps SceneDependenciesV1EngineSceneTypes) {
+func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[string]any, svgGroupDir string, catalogCSV string, projectRoot string, fsys fs.FS, visibleAncestor *entity.Box, itemGroups map[string][]*entity.Box, ancestorBoxes, itemFrames map[string]*entity.Box, itemImgRects map[string][4]float64, itemImgIDs map[string]string, activeFrame *entity.Box, deps SceneDependenciesV1EngineSceneTypes) {
+	if b != nil && b.Tag == "frame" {
+		activeFrame = b
+	}
 	if IsItemLikeV1EngineLayoutAttributes(b.Tag) {
 		// 描画はしない: visibleAncestor に結び付けて収集のみ (<item> / <spacer> 共通)
 		key := visibleAncestor.ID
 		itemGroups[key] = append(itemGroups[key], b)
 		ancestorBoxes[key] = visibleAncestor
+		itemFrames[key] = activeFrame
 		return
 	}
 
@@ -108,6 +112,7 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 			headerTip := math.Min(groupHeaderTipMaxV1EngineSceneTypes, headerH/2)
 			headerW := textX + lblW + groupHeaderPadEndV1EngineSceneTypes + headerTip - headerX
 			headerY := avoidGroupHeaderBorderOverlapV1EngineSceneBuild(headerX, b.Y-headerH/2, headerW, headerH, rectID, *elements)
+			headerY = groupHeaderYAvoidingFrameMetadataV1EngineSceneWalk(headerY, headerH, activeFrame)
 			alignGroupBorderTopToHeaderV1EngineSceneBuild(rectID, headerY+headerH/2, b.Y+b.H, *elements)
 			headerID := fmt.Sprintf("%s-header-bg", b.ID)
 			headerSeed := stableSceneSeedV1EngineSceneTypes(headerID)
@@ -236,8 +241,8 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 			}
 			if b.Label != "" {
 				fontSize := attrFloatV1EngineLayoutAttributes(b.Attrs["font-size"], 20)
-				textX, textY := b.X+12, b.Y+12
-				textW, textH := textWidthV1EngineSceneItem(b.Label, fontSize*0.5), math.Ceil(fontSize*1.2)
+				textX, textY := b.X+4, b.Y+2
+				textW, textH := math.Max(1, b.W-8), math.Max(1, math.Min(math.Ceil(fontSize*1.2), b.H-4))
 				textAlign, verticalAlign := "left", "top"
 				role := entity.TextRoleLabel
 				textCustomData := map[string]any{}
@@ -293,8 +298,19 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 		nextVisible = visibleAncestor
 	}
 	for _, c := range b.Children {
-		walkV1EngineSceneWalk(c, elements, files, svgGroupDir, catalogCSV, projectRoot, fsys, nextVisible, itemGroups, ancestorBoxes, itemImgRects, itemImgIDs, deps)
+		walkV1EngineSceneWalk(c, elements, files, svgGroupDir, catalogCSV, projectRoot, fsys, nextVisible, itemGroups, ancestorBoxes, itemFrames, itemImgRects, itemImgIDs, activeFrame, deps)
 	}
+}
+
+func groupHeaderYAvoidingFrameMetadataV1EngineSceneWalk(y, height float64, frame *entity.Box) float64 {
+	if frame == nil || frame.FrameMetadata == nil || frame.FrameMetadata.ReservedW <= 0 || frame.FrameMetadata.ReservedH <= 0 {
+		return y
+	}
+	metadata := frame.FrameMetadata
+	if metadata.Position == "bottom" {
+		return math.Min(y, metadata.ReservedY-height)
+	}
+	return math.Max(y, metadata.ReservedY+metadata.ReservedH)
 }
 
 func umlShapeCustomDataV1EngineSceneWalk(box *entity.Box) map[string]any {

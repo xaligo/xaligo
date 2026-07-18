@@ -32,9 +32,10 @@ Important rules:
 - Layout coordinates use pixels.
 - An identified child frame is one SVG artifact, PPTX slide, PDF page, or Excel
   worksheet by default. `--combine-frames` preserves the compatibility canvas.
-- Frame metadata is page-owned decoration inside the frame padding. It first
-  reuses the selected top/bottom content margin, follows that page projection,
-  and does not become an XYFlow or Isoflow node.
+- Frame metadata is page-owned decoration flush with the selected outer frame
+  edge. Its full-width reservation strip excludes normal items, text, lines,
+  and labels, follows that page projection, and does not become an XYFlow or
+  Isoflow node.
 - The origin is the upper-left of the rendered frame.
 - Positive `x` extends right and positive `y` extends down.
 - Connections must be direct children of `<frame>` or inside frame-level

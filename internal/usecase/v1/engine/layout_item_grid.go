@@ -51,7 +51,7 @@ func resolveItemGridV1EngineLayoutItemGrid(count int, ancestor *entity.Box, maxS
 	if cols <= 0 || rows <= 0 || !isPositiveFiniteV1EngineLayoutConstraints(iconSize) {
 		return resolvedItemGridV1EngineLayoutItemGrid{}, newResolvedLayoutErrorV1EngineLayoutValidation(ancestor, "cannot fit %d item slots in %.6gx%.6g", count, areaW, areaH)
 	}
-	cellW := iconSize
+	cellW := math.Max(itemLabelWV1EngineSceneTypes, iconSize+itemAnchorGridVisualPadPxV1EngineSceneTypes*2)
 	cellH := iconSize + 4 + labelBoxH
 	totalW := cellW*float64(cols) + itemGapV1EngineSceneTypes*float64(cols-1)
 	totalH := cellH*float64(rows) + itemGapV1EngineSceneTypes*float64(rows-1)
@@ -91,6 +91,10 @@ func itemGridAreaV1EngineLayoutItemGrid(ancestor *entity.Box) (x, y, w, h float6
 		return ancestor.X + GroupSideInsetV1EngineLayoutNode, ancestor.Y + GroupTopInsetV1EngineLayoutNode + itemGapV1EngineSceneTypes,
 			ancestor.W - GroupSideInsetV1EngineLayoutNode*2, ancestor.H - GroupTopInsetV1EngineLayoutNode - itemGapV1EngineSceneTypes*2
 	}
+	if ancestor.Tag == "frame" && isPositiveFiniteV1EngineLayoutConstraints(ancestor.ContentW) && isPositiveFiniteV1EngineLayoutConstraints(ancestor.ContentH) {
+		return ancestor.ContentX + itemGapV1EngineSceneTypes, ancestor.ContentY + itemGapV1EngineSceneTypes,
+			ancestor.ContentW - itemGapV1EngineSceneTypes*2, ancestor.ContentH - itemGapV1EngineSceneTypes*2
+	}
 	return ancestor.X + itemGapV1EngineSceneTypes, ancestor.Y + itemGapV1EngineSceneTypes,
 		ancestor.W - itemGapV1EngineSceneTypes*2, ancestor.H - itemGapV1EngineSceneTypes*2
 }
@@ -102,7 +106,7 @@ func validateResolvedItemGridsV1EngineLayoutItemGrid(root *entity.Box) error {
 	if root == nil {
 		return nil
 	}
-	groups, ancestors := collectResolvedItemGroupsV1EngineLayoutItemGrid(root)
+	groups, ancestors, frames := collectResolvedItemGroupsV1EngineLayoutItemGrid(root)
 	maxSize := itemMaxSizeV1EngineSceneTypes
 	if value := strings.TrimSpace(root.Attrs["item-size"]); value != "" {
 		maxSize = attrFloatV1EngineLayoutAttributes(value, itemMaxSizeV1EngineSceneTypes)
@@ -128,7 +132,7 @@ func validateResolvedItemGridsV1EngineLayoutItemGrid(root *entity.Box) error {
 			if err != nil {
 				return newResolvedLayoutErrorV1EngineLayoutValidation(item, "%v", err)
 			}
-			if err := validateItemIconBoundsV1EngineSceneItem(item, ancestor, x+dx, y+dy, grid.IconSize); err != nil {
+			if err := validateItemVisualBoundsV1EngineSceneItem(item, ancestor, frames[key], x+dx, y+dy, grid.IconSize, itemLabelHV1EngineSceneTypes); err != nil {
 				return err
 			}
 		}
@@ -136,18 +140,23 @@ func validateResolvedItemGridsV1EngineLayoutItemGrid(root *entity.Box) error {
 	return nil
 }
 
-func collectResolvedItemGroupsV1EngineLayoutItemGrid(root *entity.Box) (map[string][]*entity.Box, map[string]*entity.Box) {
+func collectResolvedItemGroupsV1EngineLayoutItemGrid(root *entity.Box) (map[string][]*entity.Box, map[string]*entity.Box, map[string]*entity.Box) {
 	groups := map[string][]*entity.Box{}
 	ancestors := map[string]*entity.Box{}
-	var walk func(*entity.Box, *entity.Box)
-	walk = func(box, visibleAncestor *entity.Box) {
+	frames := map[string]*entity.Box{}
+	var walk func(*entity.Box, *entity.Box, *entity.Box)
+	walk = func(box, visibleAncestor, activeFrame *entity.Box) {
 		if box == nil {
 			return
+		}
+		if box.Tag == "frame" {
+			activeFrame = box
 		}
 		if IsItemLikeV1EngineLayoutAttributes(box.Tag) {
 			if visibleAncestor != nil {
 				groups[visibleAncestor.ID] = append(groups[visibleAncestor.ID], box)
 				ancestors[visibleAncestor.ID] = visibleAncestor
+				frames[visibleAncestor.ID] = activeFrame
 			}
 			return
 		}
@@ -159,9 +168,9 @@ func collectResolvedItemGroupsV1EngineLayoutItemGrid(root *entity.Box) (map[stri
 			nextVisible = visibleAncestor
 		}
 		for _, child := range box.Children {
-			walk(child, nextVisible)
+			walk(child, nextVisible, activeFrame)
 		}
 	}
-	walk(root, root)
-	return groups, ancestors
+	walk(root, root, nil)
+	return groups, ancestors, frames
 }

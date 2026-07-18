@@ -292,6 +292,11 @@ side. Borders shorter than 96 layout pixels use an adaptive quarter-length
 gutter. A coincident terminal shifts by up to 24 layout pixels within the
 available range to retain a visible stub.
 
+Frame metadata adds a final safety pass after normal side precedence. A
+reserved top/bottom edge is remapped to the nearest safe edge even when an
+explicit anchor or side selected it. Left/right terminals are clamped beyond
+the full-width reservation strip, and the path and label remain outside it.
+
 The stubs share a stable logical connector ID plus the original
 source/destination element and frame IDs. XYFlow and Isoflow use those fields
 to reconstruct one logical edge; Excalidraw, SVG, PPTX, PDF, and Excel keep the
@@ -351,16 +356,16 @@ the physical-page split and remain one logical document.
 Frame metadata follows the same downstream ownership model. The parser
 normalizes a direct frame `<metadata>` block and distinguishes a child-frame
 content revision from the root DSL version. Shared layout resolves the
-top/bottom band inside frame padding, font-sized tag height, auto/fixed widths,
-greedy wrapping, explicit row breaks, and per-row alignment on
-`Box.FrameMetadata`. The band reuses the selected content margin and changes
-the remaining content box only when its height plus the fixed content gap
-overflows that margin. Scene construction emits stable page-owned key/value
-shapes and text once. They are collected as obstacles, kept above connectors,
-and projected with their owning `DocumentPage`; the SVG, PPTX, PDF, Excel, and
-Excalidraw repositories do not recompute the band. XYFlow and Isoflow discard
-the decoration through their normal semantic projection instead of exposing
-synthetic nodes.
+top/bottom band against the outer frame border box, font-sized tag height,
+auto/fixed widths, greedy wrapping, explicit row breaks, and full-frame per-row
+alignment on `Box.FrameMetadata`. The full-width reservation strip reaches the
+final content-box boundary and is at least the band height plus the fixed
+8-pixel gap. Scene construction emits stable page-owned key/value shapes and
+text once and excludes normal items/text, local and UML connector paths and
+labels, and page links from that strip. The result is projected with its owning
+`DocumentPage`; the SVG, PPTX, PDF, Excel, and Excalidraw repositories do not
+recompute the band or reservation. XYFlow and Isoflow discard the decoration
+through their normal semantic projection instead of exposing synthetic nodes.
 
 Every text operation now carries a renderer-neutral
 [`TextLayout`](https://github.com/xaligo/xaligo/blob/main/internal/entity/presentation.go)

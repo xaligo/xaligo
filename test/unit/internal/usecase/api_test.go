@@ -942,10 +942,10 @@ func TestRenderSVGPreservesExplicitCenterAnchor(t *testing.T) {
 		t.Fatal(err)
 	}
 	svg := string(out)
-	if !strings.Contains(svg, `<path d="M 187 71 L 185 71"`) {
+	if !strings.Contains(svg, `<path d="M 171 71 L 185 71"`) {
 		t.Fatalf("SVG explicit center anchor path missing:\n%s", svg)
 	}
-	if !strings.Contains(svg, `<path d="M 187 79 L 187 71 L 233 71"`) {
+	if !strings.Contains(svg, `<path d="M 171 79 L 195 79 L 195 71 L 249 71"`) {
 		t.Fatalf("SVG automatic fanout path missing:\n%s", svg)
 	}
 }

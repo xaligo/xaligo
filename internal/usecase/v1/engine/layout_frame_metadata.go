@@ -38,7 +38,7 @@ type frameMetadataRowV1EngineLayoutFrameMetadata struct {
 	width float64
 }
 
-func layoutFrameMetadataV1EngineLayoutFrameMetadata(node *entity.Node, target *entity.Box, zoneX, zoneY, zoneW, zoneH, x, y, w, h float64) (float64, float64, float64, float64, error) {
+func layoutFrameMetadataV1EngineLayoutFrameMetadata(node *entity.Node, target *entity.Box, x, y, w, h float64) (float64, float64, float64, float64, error) {
 	if node == nil || target == nil || node.Tag != "frame" {
 		return x, y, w, h, nil
 	}
@@ -48,8 +48,8 @@ func layoutFrameMetadataV1EngineLayoutFrameMetadata(node *entity.Node, target *e
 	if metadataNode == nil && title == "" && contentVersion == "" {
 		return x, y, w, h, nil
 	}
-	if !isPositiveFiniteV1EngineLayoutConstraints(zoneW) || !isPositiveFiniteV1EngineLayoutConstraints(zoneH) || !isPositiveFiniteV1EngineLayoutConstraints(w) || !isPositiveFiniteV1EngineLayoutConstraints(h) {
-		return 0, 0, 0, 0, newLayoutErrorV1EngineLayoutValidation(node, "frame metadata requires a positive finite inner area")
+	if !isPositiveFiniteV1EngineLayoutConstraints(target.W) || !isPositiveFiniteV1EngineLayoutConstraints(target.H) || !isPositiveFiniteV1EngineLayoutConstraints(w) || !isPositiveFiniteV1EngineLayoutConstraints(h) {
+		return 0, 0, 0, 0, newLayoutErrorV1EngineLayoutValidation(node, "frame metadata requires positive finite frame and content areas")
 	}
 
 	metadata := resolvedFrameMetadataStyleV1EngineLayoutFrameMetadata(metadataNode)
@@ -78,7 +78,7 @@ func layoutFrameMetadataV1EngineLayoutFrameMetadata(node *entity.Node, target *e
 		rowWidth = 0
 	}
 	for _, spec := range tagSpecs {
-		tagWidth, keyWidth, err := resolveFrameMetadataTagWidthV1EngineLayoutFrameMetadata(spec, metadata.FontSize, w)
+		tagWidth, keyWidth, err := resolveFrameMetadataTagWidthV1EngineLayoutFrameMetadata(spec, metadata.FontSize, target.W)
 		if err != nil {
 			return 0, 0, 0, 0, err
 		}
@@ -89,7 +89,7 @@ func layoutFrameMetadataV1EngineLayoutFrameMetadata(node *entity.Node, target *e
 		if rowStart < len(metadata.Tags) {
 			requiredWidth = rowWidth + gap + tagWidth
 		}
-		if rowStart < len(metadata.Tags) && requiredWidth > w+geometryEpsilonV1EngineLayoutValidation {
+		if rowStart < len(metadata.Tags) && requiredWidth > target.W+geometryEpsilonV1EngineLayoutValidation {
 			finishRow()
 			requiredWidth = tagWidth
 		}
@@ -105,22 +105,22 @@ func layoutFrameMetadataV1EngineLayoutFrameMetadata(node *entity.Node, target *e
 	}
 	finishRow()
 	bandHeight := float64(len(rows))*tagHeight + float64(len(rows)-1)*rowGap
-	if bandHeight > zoneH+geometryEpsilonV1EngineLayoutValidation {
-		return 0, 0, 0, 0, newLayoutErrorV1EngineLayoutValidation(node, "frame metadata band %.6g exceeds the available margin zone height %.6g", bandHeight, zoneH)
+	if bandHeight > target.H+geometryEpsilonV1EngineLayoutValidation {
+		return 0, 0, 0, 0, newLayoutErrorV1EngineLayoutValidation(node, "frame metadata band %.6g exceeds the frame height %.6g", bandHeight, target.H)
 	}
-	bandY := zoneY
+	bandY := target.Y
 	if metadata.Position == "bottom" {
-		bandY = zoneY + zoneH - bandHeight
+		bandY = target.Y + target.H - bandHeight
 	}
 	for rowIndex, row := range rows {
 		offsetX := 0.0
 		switch metadata.Align {
 		case "center":
-			offsetX = (w - row.width) / 2
+			offsetX = (target.W - row.width) / 2
 		case "right":
-			offsetX = w - row.width
+			offsetX = target.W - row.width
 		}
-		cursorX := x + math.Max(0, offsetX)
+		cursorX := target.X + math.Max(0, offsetX)
 		rowY := bandY + float64(rowIndex)*(tagHeight+rowGap)
 		for tagIndex := row.start; tagIndex < row.end; tagIndex++ {
 			metadata.Tags[tagIndex].X = cursorX
@@ -142,10 +142,26 @@ func layoutFrameMetadataV1EngineLayoutFrameMetadata(node *entity.Node, target *e
 	}
 	h = contentBottom - y
 	if !isPositiveFiniteV1EngineLayoutConstraints(h) {
-		return 0, 0, 0, 0, newLayoutErrorV1EngineLayoutValidation(node, "frame metadata margin zone %.6g leaves no positive content height", bandHeight)
+		return 0, 0, 0, 0, newLayoutErrorV1EngineLayoutValidation(node, "frame metadata reserved strip %.6g leaves no positive content height", bandHeight)
 	}
 	target.FrameMetadata = metadata
 	return x, y, w, h, nil
+}
+
+func finalizeFrameMetadataReservedStripV1EngineLayoutFrameMetadata(target *entity.Box, contentY, contentH float64) {
+	if target == nil || target.FrameMetadata == nil || len(target.FrameMetadata.Tags) == 0 {
+		return
+	}
+	metadata := target.FrameMetadata
+	metadata.ReservedX = target.X
+	metadata.ReservedW = target.W
+	if metadata.Position == "bottom" {
+		metadata.ReservedY = contentY + contentH
+		metadata.ReservedH = math.Max(0, target.Y+target.H-metadata.ReservedY)
+		return
+	}
+	metadata.ReservedY = target.Y
+	metadata.ReservedH = math.Max(0, contentY-target.Y)
 }
 
 func frameMetadataTagDiffStatusV1EngineLayoutFrameMetadata(source, metadata *entity.Node) string {

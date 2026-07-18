@@ -59,7 +59,15 @@ type FrameMetadata struct {
 	BackgroundColor    string
 	KeyBackgroundColor string
 	BorderColor        string
-	Tags               []FrameMetadataTag
+	// ReservedX/Y/W/H describe the full-width no-draw strip between the
+	// selected outer frame edge and the final content box. The strip includes
+	// the metadata band, its fixed content gap, and any larger author-supplied
+	// padding/margin on that edge.
+	ReservedX float64
+	ReservedY float64
+	ReservedW float64
+	ReservedH float64
+	Tags      []FrameMetadataTag
 }
 
 // FrameMetadataTag is one resolved two-cell key/value tag in a frame metadata

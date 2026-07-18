@@ -127,7 +127,7 @@ func layoutNodeV1EngineLayoutNode(node *entity.Node, target *entity.Box, x, y, w
 	}
 	var err error
 	if node.Tag == "frame" {
-		innerX, innerY, innerW, innerH, err = layoutFrameMetadataV1EngineLayoutFrameMetadata(node, target, zoneX, zoneY, zoneW, zoneH, innerX, innerY, innerW, innerH)
+		innerX, innerY, innerW, innerH, err = layoutFrameMetadataV1EngineLayoutFrameMetadata(node, target, innerX, innerY, innerW, innerH)
 		if err != nil {
 			return err
 		}
@@ -135,6 +135,9 @@ func layoutNodeV1EngineLayoutNode(node *entity.Node, target *entity.Box, x, y, w
 	innerX, innerY, innerW, innerH, err = alignContentAreaV1EngineLayoutAttributes(node, innerX, innerY, innerW, innerH)
 	if err != nil {
 		return err
+	}
+	if node.Tag == "frame" {
+		finalizeFrameMetadataReservedStripV1EngineLayoutFrameMetadata(target, innerY, innerH)
 	}
 	setContentBoxV1EngineLayoutConstraints(target, innerX, innerY, innerW, innerH)
 

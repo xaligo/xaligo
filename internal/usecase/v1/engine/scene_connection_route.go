@@ -37,9 +37,10 @@ func connectionEndpointAnchorV1EngineSceneConnectionRoute(conn *entity.Node, end
 	return spec, true
 }
 
-func excalidrawConnectionPointsV1EngineSceneConnectionRoute(conn *entity.Node, srcRect, dstRect [4]float64, srcSide, dstSide, kind string, obstacles []rectV1EngineRouteTypes, placed [][]segmentV1EngineRouteTypes, routePaths map[string][]ptV1EngineRouteTypes) []ptV1EngineRouteTypes {
+func excalidrawConnectionPointsV1EngineSceneConnectionRoute(conn *entity.Node, srcRect, dstRect [4]float64, srcSide, dstSide, kind string, obstacles, hardObstacles []rectV1EngineRouteTypes, placed [][]segmentV1EngineRouteTypes, routePaths map[string][]ptV1EngineRouteTypes) []ptV1EngineRouteTypes {
 	req := excalidrawRouteRequestV1EngineSceneConnectionRoute(conn, srcRect, dstRect, srcSide, dstSide, kind)
 	opt := defaultRouterOptionsV1EngineRouteTypes()
+	opt.HardObstacles = hardObstacles
 	local := filterObstaclesV1EngineRouteOverlap(obstacles, req)
 	path := routeOneV1EngineRoutePath(req, local, placed, opt)
 	followedRoute := false
@@ -63,7 +64,8 @@ func excalidrawConnectionPointsV1EngineSceneConnectionRoute(conn *entity.Node, s
 	if followedRoute {
 		path.Points = restoreDestinationApproachV1EngineRouteBuild(path.Points, req.DstSide, opt.Stub)
 	}
-	return enforceOrthogonalPolylineV1EngineRoutePath(path.Points)
+	path.Points = enforceOrthogonalPolylineV1EngineRoutePath(path.Points)
+	return enforceHardObstacleExclusionV1EngineRouteBuild(req, path.Points, local, placed, opt)
 }
 
 func separatePinnedExactOverlapsV1EngineSceneConnectionRoute(points []ptV1EngineRouteTypes, placed [][]segmentV1EngineRouteTypes, obstacles []rectV1EngineRouteTypes, opt routerOptionsV1EngineRouteTypes) []ptV1EngineRouteTypes {
@@ -184,7 +186,8 @@ func excalidrawRouteObstaclesV1EngineSceneConnectionRoute(elements []map[string]
 		isHeader, _ := custom["xaligoGroupHeader"].(bool)
 		isHeaderContent, _ := custom["xaligoGroupHeaderContent"].(bool)
 		isFrameMetadata, _ := custom["xaligoFrameMetadata"].(bool)
-		if !isAnchorContent && !isHeader && !isHeaderContent && !isFrameMetadata {
+		isFrameMetadataReserved, _ := custom["xaligoFrameMetadataReserved"].(bool)
+		if !isAnchorContent && !isHeader && !isHeaderContent && !isFrameMetadata && !isFrameMetadataReserved {
 			continue
 		}
 		r, ok := elementRectV1EngineSceneConnectionRoute(el)

@@ -37,13 +37,93 @@ func routeConnectionsV1EngineRouteBuild(requests []routeRequestV1EngineRouteType
 			path.Points = restoreDestinationApproachV1EngineRouteBuild(path.Points, req.DstSide, opt.Stub)
 		}
 		path.Points = enforceOrthogonalPolylineV1EngineRoutePath(path.Points)
+		path.Points = enforceHardObstacleExclusionV1EngineRouteBuild(req, path.Points, local, placed, opt)
 		results = append(results, path)
-		if req.Kind == "route" {
+		if req.Kind == "route" && len(path.Points) >= 2 {
 			routePaths[routePairKeyV1EngineRouteBuild(req, false)] = append([]ptV1EngineRouteTypes(nil), path.Points...)
 		}
-		placed = append(placed, toSegmentsV1EngineRouteGeometry(path.Points))
+		if len(path.Points) >= 2 {
+			placed = append(placed, toSegmentsV1EngineRouteGeometry(path.Points))
+		}
 	}
 	return results
+}
+
+func enforceHardObstacleExclusionV1EngineRouteBuild(req routeRequestV1EngineRouteTypes, points []ptV1EngineRouteTypes, obstacles []rectV1EngineRouteTypes, placed [][]segmentV1EngineRouteTypes, opt routerOptionsV1EngineRouteTypes) []ptV1EngineRouteTypes {
+	hardObstacles := inflateRectsV1EngineRouteOverlap(opt.HardObstacles, 1)
+	if len(hardObstacles) == 0 || obstacleHitCountV1EngineRouteCandidate(points, hardObstacles) == 0 {
+		return points
+	}
+	retry := req
+	retry.Bends = nil
+	retryObstacles := append([]rectV1EngineRouteTypes(nil), obstacles...)
+	retryObstacles = append(retryObstacles, opt.HardObstacles...)
+	path := routeOneV1EngineRoutePath(retry, retryObstacles, placed, opt)
+	visualMargin := math.Min(opt.LineMargin, opt.Clearance) / 2
+	path.Points = separateObstacleHitsV1EngineRouteOverlap(path.Points, placed, inflateRectsV1EngineRouteOverlap(retryObstacles, visualMargin), opt)
+	path.Points = rerouteEndpointApproachV1EngineRoutePath(path.Points, retry, opt)
+	path.Points = enforceOrthogonalPolylineV1EngineRoutePath(path.Points)
+	if obstacleHitCountV1EngineRouteCandidate(path.Points, hardObstacles) == 0 {
+		return path.Points
+	}
+	if fallback, ok := horizontalStripSafeFallbackV1EngineRouteBuild(retry, hardObstacles, opt); ok && obstacleHitCountV1EngineRouteCandidate(fallback, hardObstacles) == 0 {
+		return fallback
+	}
+	if fallback, ok := visibilityGridFallbackV1EngineRouteHardObstacle(retry, hardObstacles, opt); ok {
+		return fallback
+	}
+	// A point-only path is the defensive terminal state when malformed input
+	// places an endpoint inside an exclusion zone. Callers do not draw it, and
+	// the hard no-entry postcondition remains stronger than connector recovery.
+	source, _, _, _ := routeEndpointStubsV1EngineRouteHardObstacle(retry, opt)
+	return []ptV1EngineRouteTypes{source}
+}
+
+func horizontalStripSafeFallbackV1EngineRouteBuild(req routeRequestV1EngineRouteTypes, hardObstacles []rectV1EngineRouteTypes, opt routerOptionsV1EngineRouteTypes) ([]ptV1EngineRouteTypes, bool) {
+	source, sourceStub, destination, destinationStub := routeEndpointStubsV1EngineRouteHardObstacle(req, opt)
+
+	lowerBound := math.Inf(-1)
+	upperBound := math.Inf(1)
+	matched := false
+	for _, obstacle := range hardObstacles {
+		right := obstacle.X + obstacle.W
+		if source.X < obstacle.X || source.X > right || destination.X < obstacle.X || destination.X > right {
+			continue
+		}
+		bottom := obstacle.Y + obstacle.H
+		switch {
+		case source.Y >= bottom && destination.Y >= bottom:
+			lowerBound = math.Max(lowerBound, bottom)
+			matched = true
+		case source.Y <= obstacle.Y && destination.Y <= obstacle.Y:
+			upperBound = math.Min(upperBound, obstacle.Y)
+			matched = true
+		default:
+			return nil, false
+		}
+	}
+	if !matched || lowerBound > upperBound {
+		return nil, false
+	}
+	railY := (sourceStub.Y + destinationStub.Y) / 2
+	if !math.IsInf(lowerBound, -1) {
+		if sourceStub.Y < lowerBound || destinationStub.Y < lowerBound {
+			return nil, false
+		}
+		railY = math.Max(math.Max(sourceStub.Y, destinationStub.Y), lowerBound)
+	}
+	if !math.IsInf(upperBound, 1) {
+		if sourceStub.Y > upperBound || destinationStub.Y > upperBound {
+			return nil, false
+		}
+		railY = math.Min(math.Min(sourceStub.Y, destinationStub.Y), upperBound)
+	}
+	points := []ptV1EngineRouteTypes{source, sourceStub}
+	points = appendOrthogonalLegV1EngineRoutePath(points, sourceStub, ptV1EngineRouteTypes{X: sourceStub.X, Y: railY})
+	points = appendOrthogonalLegV1EngineRoutePath(points, points[len(points)-1], ptV1EngineRouteTypes{X: destinationStub.X, Y: railY})
+	points = appendOrthogonalLegV1EngineRoutePath(points, points[len(points)-1], destinationStub)
+	points = append(points, destination)
+	return enforceOrthogonalPolylineV1EngineRoutePath(points), true
 }
 
 func matchingRoutePathV1EngineRouteBuild(req routeRequestV1EngineRouteTypes, routePaths map[string][]ptV1EngineRouteTypes) ([]ptV1EngineRouteTypes, bool) {

@@ -1,10 +1,13 @@
 # Frame Metadata Tags
 
 This two-page example adds visible page metadata without drawing a frame
-outline. Each key/value pair is placed inside the frame padding. The band first
-reuses the existing content margin on its selected edge; only a band plus its
-8-pixel content gap that exceeds that margin moves normal content inward. The
-logical frame edge still controls page size, cropping, and page-link terminals.
+outline. Each key/value band touches the selected top/bottom edge of the outer
+frame border box and uses the full frame width for row wrapping and alignment;
+padding, content margins, and the content box do not inset it. A full-width
+reservation strip extends from that edge to the final content-box boundary and
+is at least the band height plus 8 pixels deep. Normal items, text, connector
+paths and labels, and page links stay outside it. The logical frame edge still
+controls page size, cropping, and safe page-link terminals.
 
 The `aws-architecture` page demonstrates automatic sizing and an explicit row
 break with restrained default styling:
@@ -18,23 +21,29 @@ break with restrained default styling:
   and
 - `align="right"` positions both completed rows independently.
 
-Its 52-pixel top margin fully absorbs the two-row band and content gap, so the
-normal content box is unchanged.
+Despite the frame's padding and side margins, both rows use the outer frame
+width: the band's top edge touches the frame top and `align="right"` ends each
+row at the frame's outer right edge. The top reservation continues to the final
+content box, keeping normal content and connections below it.
 
 ![Top frame metadata with automatic widths](../images/frame-metadata-aws-architecture.svg)
 
 The `release-notes` page uses one bottom row with `align="center"`. Its
 metadata-level `width="138"` and `key-width="56"` apply to all tags, while
 `status` overrides both. It also customizes the font, font size, and subtle text,
-key-cell, and border colors. The bottom margin absorbs the band and content gap.
+key-cell, and border colors. The row's bottom edge touches the outer frame
+bottom, and the full-width bottom reservation remains free of normal geometry.
 
 ![Bottom frame metadata with fixed widths](../images/frame-metadata-release-notes.svg)
 
 Tags always retain input order and pack greedily into the minimum number of
 rows for the available width unless an entry requests a break. The cross-frame
-connection deliberately uses the tagged top and bottom edges. The page-local
-`to <release-notes>` and `from <aws-architecture>` labels and their orthogonal
-terminals select free space around the metadata cells.
+connection omits `src-side` and `dst-side` deliberately. Although its source
+port faces the reserved top edge and its destination port faces the reserved
+bottom edge, page-link safety remaps them to the nearest safe edges. The
+page-local `to <release-notes>` and `from <aws-architecture>` paths and labels
+never enter either reservation strip; left/right terminals would likewise be
+clamped beyond the strip.
 
 Source:
 

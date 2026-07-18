@@ -67,6 +67,7 @@ type CustomData struct {
 	FrameID                         string      `json:"xaligoFrameID,omitempty"`
 	FrameMetadata                   bool        `json:"xaligoFrameMetadata,omitempty"`
 	FrameMetadataContent            bool        `json:"xaligoFrameMetadataContent,omitempty"`
+	FrameMetadataReserved           bool        `json:"xaligoFrameMetadataReserved,omitempty"`
 	ConnectorKind                   string      `json:"xaligoConnectorKind"`
 	ConnectorStartArrowhead         string      `json:"xaligoConnectorStartArrowhead"`
 	ConnectorEndArrowhead           string      `json:"xaligoConnectorEndArrowhead"`

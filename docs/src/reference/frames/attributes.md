@@ -23,10 +23,13 @@
 
 Metadata tags pack greedily in input order against the usable width, producing
 the minimum row count unless `break-before` introduces an earlier boundary.
-The band is anchored inside the frame padding and uses the content area's
-horizontal bounds. The existing margin on the selected top/bottom edge absorbs
-the band and its fixed 8-pixel content gap; only any excess moves the content
-edge inward. Metadata cell borders use a fixed `0.75`-pixel stroke.
+The usable width is the complete outer frame width: the selected top/bottom
+edge and left/right row alignment are not inset by padding, margins, or the
+content box. A full-width reservation strip extends from that outer edge to the
+final content-box boundary and is at least the band height plus the fixed
+8-pixel gap. Normal items, text, connector paths and labels, and page links stay
+outside it, even when the frame or a nested container uses
+`overflow="visible"`. Metadata cell borders use a fixed `0.75`-pixel stroke.
 
 ## AWS Group Border Styles
 

@@ -179,7 +179,7 @@ func (rcvr *xyFlowRepository) Render(sceneJSON []byte) ([]byte, error) {
 func collectGroups(elements []entity.Element) []xyFlowGroup {
 	groups := []xyFlowGroup{}
 	for _, element := range elements {
-		if element.IsDeleted || element.ID == "paper-frame" || strings.HasSuffix(element.ID, "-header-bg") || element.Width <= 0 || element.Height <= 0 {
+		if element.IsDeleted || element.ID == "paper-frame" || strings.HasSuffix(element.ID, "-header-bg") || element.Width <= 0 || element.Height <= 0 || xyFlowPageDecoration(element) {
 			continue
 		}
 		semanticKind := xyFlowSemanticElementKind(element)
@@ -207,6 +207,10 @@ func collectGroups(elements []entity.Element) []xyFlowGroup {
 		}
 	}
 	return groups
+}
+
+func xyFlowPageDecoration(element entity.Element) bool {
+	return element.CustomData != nil && (element.CustomData.FrameMetadata || element.CustomData.FrameMetadataReserved)
 }
 
 func xyFlowGenericNodeElement(element entity.Element) bool {

@@ -58,6 +58,7 @@ func BuildJSONV1EngineSceneBuild(root *entity.Box, svgGroupDir string, catalogCS
 	// 2パス: 1) item を visibleAncestorID ごとに収集, 2) グリッド一括描画
 	itemGroups := map[string][]*entity.Box{}
 	ancestorBoxes := map[string]*entity.Box{}
+	itemFrames := map[string]*entity.Box{}
 	// <frame item-size="N"> overrides the global itemIconSize.
 	if v := root.Attrs["item-size"]; v != "" {
 		if f, err := strconv.ParseFloat(v, 64); err == nil && f > 0 {
@@ -105,9 +106,14 @@ func BuildJSONV1EngineSceneBuild(root *entity.Box, svgGroupDir string, catalogCS
 			frameElementIDs[frameID] = pageFrameID
 			registerConnectionEndpointV1EngineSceneWalk(child, pageFrameID, frameRects[frameID], itemImgRects, itemImgIDs)
 		}
+	} else if root.Tag == "frame" {
+		frameID := strings.TrimSpace(root.Attrs["id"])
+		frameRects[frameID] = [4]float64{root.X, root.Y, root.W, root.H}
+		frameElementIDs[frameID] = "paper-frame"
+		registerConnectionEndpointV1EngineSceneWalk(root, "paper-frame", frameRects[frameID], itemImgRects, itemImgIDs)
 	}
 
-	walkV1EngineSceneWalk(root, &elements, files, svgGroupDir, catalogCSV, projectRoot, fsys, root, itemGroups, ancestorBoxes, itemImgRects, itemImgIDs, deps)
+	walkV1EngineSceneWalk(root, &elements, files, svgGroupDir, catalogCSV, projectRoot, fsys, root, itemGroups, ancestorBoxes, itemFrames, itemImgRects, itemImgIDs, nil, deps)
 	ancestorIDs := make([]string, 0, len(itemGroups))
 	for ancID := range itemGroups {
 		ancestorIDs = append(ancestorIDs, ancID)
@@ -115,7 +121,7 @@ func BuildJSONV1EngineSceneBuild(root *entity.Box, svgGroupDir string, catalogCS
 	sort.Strings(ancestorIDs)
 	for _, ancID := range ancestorIDs {
 		items := itemGroups[ancID]
-		if err := renderItemGridV1EngineSceneItem(items, ancestorBoxes[ancID], &elements, files, catalogCSV, projectRoot, fsys, itemIconSize, itemImgRects, itemLblRects, itemImgIDs, itemLblIDs, abbrevMap, deps); err != nil {
+		if err := renderItemGridV1EngineSceneItem(items, ancestorBoxes[ancID], itemFrames[ancID], &elements, files, catalogCSV, projectRoot, fsys, itemIconSize, itemImgRects, itemLblRects, itemImgIDs, itemLblIDs, abbrevMap, deps); err != nil {
 			return nil, err
 		}
 	}

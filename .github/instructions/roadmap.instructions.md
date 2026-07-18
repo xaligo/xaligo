@@ -320,11 +320,15 @@ Implemented or partially implemented:
   logical document.
 - Page frames support a shared top/bottom metadata tag band for built-in
   `id`, `title`, content `version`, and arbitrary key/value entries. The band
-  stays inside frame padding, consumes existing top/bottom content margin
-  before moving the content edge, and supports auto/fixed widths, per-row
-  left/center/right alignment, explicit row breaks, and font/color styling.
-  It projects with its owning physical page and stays clear of cross-frame
-  page-link stubs. Graph adapters omit it as page decoration.
+  touches the selected edge of the outer frame border box and uses the complete
+  frame width for wrapping and per-row left/center/right alignment. Its
+  full-width reservation strip reaches the final content-box boundary and is
+  at least the band height plus 8 pixels; normal items, text, local/UML lines
+  and labels, and page links remain outside it. Page links remap a reserved
+  edge to the nearest safe edge and clamp side terminals beyond the strip. The
+  band also supports auto/fixed widths, explicit row breaks, and font/color
+  styling. It projects with its owning physical page; graph adapters omit it
+  as page decoration.
 - `xaligo render --format xyflow` and TypeScript/WASM `renderXYFlow()` export
   nested React Flow-compatible nodes and edges. V1 item, AWS group, rectangle,
   port, and identified child-frame endpoints are retained; cross-frame stubs

@@ -167,13 +167,18 @@ allows V2 to render V1 while V1 remains unaware of V2.
     formats are not exposed there; native canvas, font, and spreadsheet
     dependencies must not enter the browser-WASM dependency graph.
 29. A frame metadata tag band is resolved once in the V1 shared layout and
-    presentation scene as page-owned decoration. It is anchored inside the
-    frame padding and reuses the selected top/bottom content margin before
-    shrinking the content box. Its per-row alignment, greedy wrapping and
-    explicit row breaks, text metrics, layer order, per-page ownership, and
-    connector avoidance are encoder-independent. SVG, PPTX, PDF, Excel, and
-    Excalidraw consume that shared result; XYFlow and Isoflow may omit the
-    decoration but must not reinterpret it as graph nodes or endpoints.
+    presentation scene as page-owned decoration. Its band touches the selected
+    top/bottom edge of the outer frame border box, and every row wraps and
+    aligns against the full frame width without padding, margin, or content-box
+    offsets. The full-width reservation strip runs from that outer edge to the
+    final content-box boundary and is at least the band height plus 8 layout
+    pixels. Normal items, text, local/UML connector paths and labels, and
+    cross-frame page links cannot enter it. Page-link side selection remaps a
+    reserved edge to the nearest safe edge and clamps left/right terminals
+    outside the strip. These rules, text metrics, layer order, and per-page
+    ownership are encoder-independent. SVG, PPTX, PDF, Excel, and Excalidraw
+    consume that shared result; XYFlow and Isoflow may omit the decoration but
+    must not reinterpret it as graph nodes or endpoints.
 
 ## File organization
 

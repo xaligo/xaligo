@@ -41,6 +41,7 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 		return connectionKindPriorityV1EngineSceneConnectionRoute(connectionKindV1EngineSceneConnectionRoute(orderedConnections[i])) < connectionKindPriorityV1EngineSceneConnectionRoute(connectionKindV1EngineSceneConnectionRoute(orderedConnections[j]))
 	})
 	obstacles := excalidrawRouteObstaclesV1EngineSceneConnectionRoute(*elements)
+	hardObstacles := frameMetadataReservedObstaclesV1EngineSceneConnectionRender(frameMetadata)
 	placed := [][]segmentV1EngineRouteTypes{}
 	routePaths := map[string][]ptV1EngineRouteTypes{}
 
@@ -123,6 +124,27 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 			if !dstSideExplicit {
 				dstSide = nearestFrameSideV1EngineSceneConnectionPage(dstFrameRect, dstVisualRect, srcFrameRect)
 			}
+			adjustedSrcSide := pageLinkSideAvoidingFrameMetadataV1EngineSceneConnectionPage(srcSide, srcFrameRect, srcVisualRect, dstFrameRect, frameMetadata[srcFrameID])
+			if adjustedSrcSide != srcSide {
+				srcSide = adjustedSrcSide
+				hasSrcAnchor = false
+			}
+			adjustedDstSide := pageLinkSideAvoidingFrameMetadataV1EngineSceneConnectionPage(dstSide, dstFrameRect, dstVisualRect, srcFrameRect, frameMetadata[dstFrameID])
+			if adjustedDstSide != dstSide {
+				dstSide = adjustedDstSide
+				hasDstAnchor = false
+			}
+		} else {
+			srcLocalVisualRect := endpointVisualRectV1EngineSceneConnectionPage(srcImgRect, itemLblRects[srcKey])
+			dstLocalVisualRect := endpointVisualRectV1EngineSceneConnectionPage(dstImgRect, itemLblRects[dstKey])
+			if adjusted := localConnectionSideAvoidingFrameMetadataV1EngineSceneConnectionRender(srcSide, srcLocalVisualRect, dstLocalVisualRect, frameRects[srcFrameID], frameMetadata[srcFrameID]); adjusted != srcSide {
+				srcSide = adjusted
+				hasSrcAnchor = false
+			}
+			if adjusted := localConnectionSideAvoidingFrameMetadataV1EngineSceneConnectionRender(dstSide, dstLocalVisualRect, srcLocalVisualRect, frameRects[dstFrameID], frameMetadata[dstFrameID]); adjusted != dstSide {
+				dstSide = adjusted
+				hasDstAnchor = false
+			}
 		}
 
 		// Choose element: bottom edge → label text box; other edges → image element.
@@ -180,7 +202,10 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 		dstEdge := rectFixedPointV1EngineSceneConnection(dstRect, dstFP)
 		dx := dstEdge[0] - srcEdge[0]
 		dy := dstEdge[1] - srcEdge[1]
-		routePoints := excalidrawConnectionPointsV1EngineSceneConnectionRoute(conn, srcRect, dstRect, srcSide, dstSide, style.Kind, obstacles, placed, routePaths)
+		routePoints := excalidrawConnectionPointsV1EngineSceneConnectionRoute(conn, srcRect, dstRect, srcSide, dstSide, style.Kind, obstacles, hardObstacles, placed, routePaths)
+		if len(routePoints) < 2 {
+			continue
+		}
 		if style.Kind == "route" {
 			routePaths[routePairKeyV1EngineRouteBuild(excalidrawRouteRequestV1EngineSceneConnectionRoute(conn, srcRect, dstRect, srcSide, dstSide, style.Kind), false)] = append([]ptV1EngineRouteTypes(nil), routePoints...)
 		}
@@ -291,7 +316,7 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 			"elbowed":            true,
 			"customData":         customData,
 		})
-		appendUMLRelationLabelV1EngineSceneConnectionRender(elements, conn, connID, routePoints, style.Color, updated, seed)
+		appendUMLRelationLabelV1EngineSceneConnectionRender(elements, conn, connID, routePoints, style.Color, updated, seed, frameRects[srcFrameID], frameMetadata[srcFrameID])
 
 		// Register this arrow in boundMap for both endpoints.
 		entry := map[string]any{"type": "arrow", "id": connID}
@@ -341,6 +366,41 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 	}
 }
 
+func frameMetadataReservedObstaclesV1EngineSceneConnectionRender(metadata map[string]frameMetadataSceneGeometryV1EngineSceneFrameMetadata) []rectV1EngineRouteTypes {
+	keys := make([]string, 0, len(metadata))
+	for key := range metadata {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	obstacles := make([]rectV1EngineRouteTypes, 0, len(keys))
+	for _, key := range keys {
+		reserved := metadata[key].Reserved
+		if reserved[2] > 0 && reserved[3] > 0 {
+			obstacles = append(obstacles, rectV1EngineRouteTypes{X: reserved[0], Y: reserved[1], W: reserved[2], H: reserved[3]})
+		}
+	}
+	return obstacles
+}
+
+func localConnectionSideAvoidingFrameMetadataV1EngineSceneConnectionRender(side string, endpointRect, otherRect, frameRect [4]float64, metadata frameMetadataSceneGeometryV1EngineSceneFrameMetadata) string {
+	reserved := metadata.Reserved
+	if reserved[2] <= 0 || reserved[3] <= 0 || side != metadata.Position || frameRect[2] <= 0 || frameRect[3] <= 0 {
+		return side
+	}
+	options := defaultRouterOptionsV1EngineRouteTypes()
+	minimumClearance := 5.0 + math.Max(options.Stub, options.LaneGap) + 1.0
+	clearance := math.Inf(1)
+	if side == "top" {
+		clearance = endpointRect[1] - (reserved[1] + reserved[3])
+	} else if side == "bottom" {
+		clearance = reserved[1] - (endpointRect[1] + endpointRect[3])
+	}
+	if clearance >= minimumClearance {
+		return side
+	}
+	return nearestFrameSideExcludingV1EngineSceneConnectionPage(frameRect, endpointRect, otherRect, metadata.Position)
+}
+
 func applyUMLConnectionMetadataV1EngineSceneConnectionRender(customData map[string]any, conn *entity.Node) {
 	if customData == nil || conn == nil {
 		return
@@ -366,31 +426,59 @@ func applyUMLConnectionMetadataV1EngineSceneConnectionRender(customData map[stri
 	}
 }
 
-func appendUMLRelationLabelV1EngineSceneConnectionRender(elements *[]map[string]any, conn *entity.Node, connID string, routePoints []ptV1EngineRouteTypes, color string, updated int64, seed int) {
+func appendUMLRelationLabelV1EngineSceneConnectionRender(elements *[]map[string]any, conn *entity.Node, connID string, routePoints []ptV1EngineRouteTypes, color string, updated int64, seed int, frameRect [4]float64, metadata frameMetadataSceneGeometryV1EngineSceneFrameMetadata) {
 	label := strings.TrimSpace(conn.Attr("uml-relation-label"))
 	if label == "" || len(routePoints) == 0 {
 		return
 	}
 	point := umlRelationLabelPointV1EngineSceneConnectionRender(routePoints, seed)
-	width := math.Max(80, math.Min(220, textWidthV1EngineSceneItem(label, 6)+16))
-	const height = 20.0
+	fontSize := 12.0
+	height := 20.0
+	if safeTop, safeBottom, ok := frameMetadataSafeVerticalIntervalV1EngineSceneConnectionPage(frameRect, frameMetadataReservedRectsV1EngineSceneConnectionPage(metadata)); ok {
+		height = math.Min(height, safeBottom-safeTop)
+		fontSize = math.Min(fontSize, height/1.2)
+	}
+	width := math.Max(80, math.Min(220, textWidthV1EngineSceneItem(label, fontSize*0.5)+16))
+	if frameRect[2] > 0 {
+		width = math.Min(width, frameRect[2])
+	}
+	x, y := point.X-width/2, point.Y-height/2
+	x, y = frameMetadataLabelPositionV1EngineSceneConnectionRender(x, y, width, height, frameRect, metadata)
 	labelID := connID + "-uml-label"
 	customData := map[string]any{}
 	applyUMLConnectionMetadataV1EngineSceneConnectionRender(customData, conn)
 	customData["xaligoTextLayout"] = sceneTextLayoutV1EngineSceneBuild(entity.TextRoleConnectorLabel, true, 1.2)
 	*elements = append(*elements, map[string]any{
-		"id": labelID, "type": "text", "x": point.X - width/2, "y": point.Y - height/2,
+		"id": labelID, "type": "text", "x": x, "y": y,
 		"width": width, "height": height, "angle": 0,
 		"strokeColor": color, "backgroundColor": "#ffffff",
 		"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
 		"roughness": 0, "opacity": 100, "groupIds": []string{}, "roundness": nil,
 		"seed": seed + 1000, "version": 1, "versionNonce": seed + 1000,
 		"isDeleted": false, "boundElements": nil, "updated": updated, "link": nil, "locked": false,
-		"text": label, "fontSize": 12.0, "fontFamily": 2,
+		"text": label, "fontSize": fontSize, "fontFamily": 2,
 		"textAlign": "center", "verticalAlign": "middle", "containerId": nil,
 		"originalText": label, "lineHeight": 1.2,
 		"customData": customData,
 	})
+}
+
+func frameMetadataLabelPositionV1EngineSceneConnectionRender(x, y, width, height float64, frameRect [4]float64, metadata frameMetadataSceneGeometryV1EngineSceneFrameMetadata) (float64, float64) {
+	reserved := metadata.Reserved
+	if reserved[2] <= 0 || reserved[3] <= 0 {
+		return x, y
+	}
+	const gap = 6.0
+	if frameRect[2] <= 0 || frameRect[3] <= 0 {
+		return x, y
+	}
+	horizontalInset := math.Min(gap, math.Max(0, (frameRect[2]-width)/2))
+	x = clampFloatV1EngineLayoutPort(x, frameRect[0]+horizontalInset, math.Max(frameRect[0]+horizontalInset, frameRect[0]+frameRect[2]-width-horizontalInset))
+	if safeTop, safeBottom, ok := frameMetadataSafeVerticalIntervalV1EngineSceneConnectionPage(frameRect, [][4]float64{reserved}); ok {
+		verticalInset := math.Min(gap, math.Max(0, (safeBottom-safeTop-height)/2))
+		y = clampFloatV1EngineLayoutPort(y, safeTop+verticalInset, math.Max(safeTop+verticalInset, safeBottom-height-verticalInset))
+	}
+	return x, y
 }
 
 func umlRelationLabelPointV1EngineSceneConnectionRender(routePoints []ptV1EngineRouteTypes, seed int) ptV1EngineRouteTypes {

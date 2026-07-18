@@ -5,42 +5,42 @@
 <g transform="translate(42 42)">
 <rect x="28" y="68" width="750" height="190" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
 <rect x="379" y="68" width="48" height="20" fill="#FFFFFF" fill-opacity="1" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
-<path d="M 403 68 L 403 66 L 225 66 L 225 0" fill="none" stroke="#2563EB" stroke-width="1" stroke-opacity="1" marker-end="url(#xaligo-stealth)"/>
+<path d="M 403 88 L 403 420" fill="none" stroke="#2563EB" stroke-width="1" stroke-opacity="1" marker-end="url(#xaligo-stealth)"/>
 <defs><clipPath id="xaligo-text-clip-f3743fc9ddc24279" clipPathUnits="userSpaceOnUse"><rect x="32" y="70" width="742" height="186"/></clipPath></defs>
 <text x="403" y="171" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="middle" clip-path="url(#xaligo-text-clip-f3743fc9ddc24279)"><tspan x="403" y="171">Public Application</tspan></text>
 <defs><clipPath id="xaligo-text-clip-9cf85e60d7bf2fa4" clipPathUnits="userSpaceOnUse"><rect x="383" y="70" width="40" height="16"/></clipPath></defs>
 <text x="403" y="74.444" fill="#1E1E1E" font-family="Virgil" font-size="4.444" text-anchor="middle" clip-path="url(#xaligo-text-clip-9cf85e60d7bf2fa4)"><tspan x="403" y="74.444">Rel</tspan><tspan x="403" dy="5.333">eas</tspan><tspan x="403" dy="5.333">e</tspan></text>
-<defs><clipPath id="xaligo-text-clip-81cab3fc1c079ce1" clipPathUnits="userSpaceOnUse"><rect x="6" y="6" width="116" height="15"/></clipPath></defs>
-<text x="64" y="18.3" fill="#2563EB" font-family="Virgil" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-81cab3fc1c079ce1)"><tspan x="64" y="18.3">to &lt;release-notes&gt;</tspan></text>
-<rect x="233" y="16" width="22" height="19" fill="#F8FAFC" fill-opacity="1" stroke="#CBD5E1" stroke-width="0.75" stroke-opacity="1"/>
-<rect x="255" y="16" width="113" height="19" fill="none" stroke="#CBD5E1" stroke-width="0.75" stroke-opacity="1"/>
-<rect x="376" y="16" width="41" height="19" fill="#F8FAFC" fill-opacity="1" stroke="#CBD5E1" stroke-width="0.75" stroke-opacity="1"/>
-<rect x="417" y="16" width="115" height="19" fill="none" stroke="#CBD5E1" stroke-width="0.75" stroke-opacity="1"/>
-<rect x="540" y="16" width="55" height="19" fill="#F8FAFC" fill-opacity="1" stroke="#CBD5E1" stroke-width="0.75" stroke-opacity="1"/>
-<rect x="595" y="16" width="38" height="19" fill="none" stroke="#CBD5E1" stroke-width="0.75" stroke-opacity="1"/>
-<rect x="641" y="16" width="41" height="19" fill="#F8FAFC" fill-opacity="1" stroke="#CBD5E1" stroke-width="0.75" stroke-opacity="1"/>
-<rect x="682" y="16" width="140" height="19" fill="none" stroke="#CBD5E1" stroke-width="0.75" stroke-opacity="1"/>
-<rect x="642" y="39" width="56" height="19" fill="#F8FAFC" fill-opacity="1" stroke="#CBD5E1" stroke-width="0.75" stroke-opacity="1"/>
-<rect x="698" y="39" width="124" height="19" fill="none" stroke="#CBD5E1" stroke-width="0.75" stroke-opacity="1"/>
-<defs><clipPath id="xaligo-text-clip-f4ef652ff44c2433" clipPathUnits="userSpaceOnUse"><rect x="237" y="18" width="14" height="15"/></clipPath></defs>
-<text x="244" y="30.3" fill="#64748B" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-f4ef652ff44c2433)"><tspan x="244" y="30.3">id</tspan></text>
-<defs><clipPath id="xaligo-text-clip-4070ab6545cd9c0a" clipPathUnits="userSpaceOnUse"><rect x="259" y="18" width="105" height="15"/></clipPath></defs>
-<text x="311.5" y="30.3" fill="#64748B" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-4070ab6545cd9c0a)"><tspan x="311.5" y="30.3">aws-architecture</tspan></text>
-<defs><clipPath id="xaligo-text-clip-8e389348a4895ff4" clipPathUnits="userSpaceOnUse"><rect x="380" y="18" width="33" height="15"/></clipPath></defs>
-<text x="396.5" y="30.3" fill="#64748B" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-8e389348a4895ff4)"><tspan x="396.5" y="30.3">title</tspan></text>
-<defs><clipPath id="xaligo-text-clip-8d8f2bf6fa2a06be" clipPathUnits="userSpaceOnUse"><rect x="421" y="18" width="107" height="15"/></clipPath></defs>
-<text x="474.5" y="30.3" fill="#64748B" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-8d8f2bf6fa2a06be)"><tspan x="474.5" y="30.3">AWS Architecture</tspan></text>
-<defs><clipPath id="xaligo-text-clip-725061328411fe2c" clipPathUnits="userSpaceOnUse"><rect x="544" y="18" width="47" height="15"/></clipPath></defs>
-<text x="567.5" y="30.3" fill="#64748B" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-725061328411fe2c)"><tspan x="567.5" y="30.3">version</tspan></text>
-<defs><clipPath id="xaligo-text-clip-59c1a4578cdf87ca" clipPathUnits="userSpaceOnUse"><rect x="599" y="18" width="30" height="15"/></clipPath></defs>
-<text x="614" y="30.3" fill="#64748B" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-59c1a4578cdf87ca)"><tspan x="614" y="30.3">1.0.0</tspan></text>
-<defs><clipPath id="xaligo-text-clip-ea76a4d4c6ec1a7e" clipPathUnits="userSpaceOnUse"><rect x="645" y="18" width="33" height="15"/></clipPath></defs>
-<text x="661.5" y="30.3" fill="#64748B" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-ea76a4d4c6ec1a7e)"><tspan x="661.5" y="30.3">owner</tspan></text>
-<defs><clipPath id="xaligo-text-clip-c8f2a0057f72835" clipPathUnits="userSpaceOnUse"><rect x="686" y="18" width="132" height="15"/></clipPath></defs>
-<text x="752" y="30.3" fill="#64748B" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-c8f2a0057f72835)"><tspan x="752" y="30.3">Platform Engineering</tspan></text>
-<defs><clipPath id="xaligo-text-clip-bd580a05c84f7e9e" clipPathUnits="userSpaceOnUse"><rect x="646" y="41" width="48" height="15"/></clipPath></defs>
-<text x="670" y="53.3" fill="#64748B" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-bd580a05c84f7e9e)"><tspan x="670" y="53.3">status</tspan></text>
-<defs><clipPath id="xaligo-text-clip-5e35af54702566a7" clipPathUnits="userSpaceOnUse"><rect x="702" y="41" width="116" height="15"/></clipPath></defs>
-<text x="760" y="53.3" fill="#64748B" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-5e35af54702566a7)"><tspan x="760" y="53.3">approved</tspan></text>
+<defs><clipPath id="xaligo-text-clip-39479658c3cf11bc" clipPathUnits="userSpaceOnUse"><rect x="433" y="399" width="116" height="15"/></clipPath></defs>
+<text x="491" y="411.3" fill="#2563EB" font-family="Virgil" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-39479658c3cf11bc)"><tspan x="491" y="411.3">to &lt;release-notes&gt;</tspan></text>
+<rect x="261" y="0" width="22" height="19" fill="#F8FAFC" fill-opacity="1" stroke="#CBD5E1" stroke-width="0.75" stroke-opacity="1"/>
+<rect x="283" y="0" width="113" height="19" fill="none" stroke="#CBD5E1" stroke-width="0.75" stroke-opacity="1"/>
+<rect x="404" y="0" width="41" height="19" fill="#F8FAFC" fill-opacity="1" stroke="#CBD5E1" stroke-width="0.75" stroke-opacity="1"/>
+<rect x="445" y="0" width="115" height="19" fill="none" stroke="#CBD5E1" stroke-width="0.75" stroke-opacity="1"/>
+<rect x="568" y="0" width="55" height="19" fill="#F8FAFC" fill-opacity="1" stroke="#CBD5E1" stroke-width="0.75" stroke-opacity="1"/>
+<rect x="623" y="0" width="38" height="19" fill="none" stroke="#CBD5E1" stroke-width="0.75" stroke-opacity="1"/>
+<rect x="669" y="0" width="41" height="19" fill="#F8FAFC" fill-opacity="1" stroke="#CBD5E1" stroke-width="0.75" stroke-opacity="1"/>
+<rect x="710" y="0" width="140" height="19" fill="none" stroke="#CBD5E1" stroke-width="0.75" stroke-opacity="1"/>
+<rect x="670" y="23" width="56" height="19" fill="#F8FAFC" fill-opacity="1" stroke="#CBD5E1" stroke-width="0.75" stroke-opacity="1"/>
+<rect x="726" y="23" width="124" height="19" fill="none" stroke="#CBD5E1" stroke-width="0.75" stroke-opacity="1"/>
+<defs><clipPath id="xaligo-text-clip-8613906a009a2443" clipPathUnits="userSpaceOnUse"><rect x="265" y="2" width="14" height="15"/></clipPath></defs>
+<text x="272" y="14.3" fill="#64748B" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-8613906a009a2443)"><tspan x="272" y="14.3">id</tspan></text>
+<defs><clipPath id="xaligo-text-clip-25a8d0b780db2ede" clipPathUnits="userSpaceOnUse"><rect x="287" y="2" width="105" height="15"/></clipPath></defs>
+<text x="339.5" y="14.3" fill="#64748B" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-25a8d0b780db2ede)"><tspan x="339.5" y="14.3">aws-architecture</tspan></text>
+<defs><clipPath id="xaligo-text-clip-90c440d9516d6596" clipPathUnits="userSpaceOnUse"><rect x="408" y="2" width="33" height="15"/></clipPath></defs>
+<text x="424.5" y="14.3" fill="#64748B" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-90c440d9516d6596)"><tspan x="424.5" y="14.3">title</tspan></text>
+<defs><clipPath id="xaligo-text-clip-ef3749d4520eb55" clipPathUnits="userSpaceOnUse"><rect x="449" y="2" width="107" height="15"/></clipPath></defs>
+<text x="502.5" y="14.3" fill="#64748B" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-ef3749d4520eb55)"><tspan x="502.5" y="14.3">AWS Architecture</tspan></text>
+<defs><clipPath id="xaligo-text-clip-6454077caa3ff98" clipPathUnits="userSpaceOnUse"><rect x="572" y="2" width="47" height="15"/></clipPath></defs>
+<text x="595.5" y="14.3" fill="#64748B" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-6454077caa3ff98)"><tspan x="595.5" y="14.3">version</tspan></text>
+<defs><clipPath id="xaligo-text-clip-8fb68cc1a194a9c7" clipPathUnits="userSpaceOnUse"><rect x="627" y="2" width="30" height="15"/></clipPath></defs>
+<text x="642" y="14.3" fill="#64748B" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-8fb68cc1a194a9c7)"><tspan x="642" y="14.3">1.0.0</tspan></text>
+<defs><clipPath id="xaligo-text-clip-6707e1aab2012694" clipPathUnits="userSpaceOnUse"><rect x="673" y="2" width="33" height="15"/></clipPath></defs>
+<text x="689.5" y="14.3" fill="#64748B" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-6707e1aab2012694)"><tspan x="689.5" y="14.3">owner</tspan></text>
+<defs><clipPath id="xaligo-text-clip-4610b38aa62d6b62" clipPathUnits="userSpaceOnUse"><rect x="714" y="2" width="132" height="15"/></clipPath></defs>
+<text x="780" y="14.3" fill="#64748B" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-4610b38aa62d6b62)"><tspan x="780" y="14.3">Platform Engineering</tspan></text>
+<defs><clipPath id="xaligo-text-clip-26a9ddb16d8a3b93" clipPathUnits="userSpaceOnUse"><rect x="674" y="25" width="48" height="15"/></clipPath></defs>
+<text x="698" y="37.3" fill="#64748B" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-26a9ddb16d8a3b93)"><tspan x="698" y="37.3">status</tspan></text>
+<defs><clipPath id="xaligo-text-clip-ead9309d886cfce0" clipPathUnits="userSpaceOnUse"><rect x="730" y="25" width="116" height="15"/></clipPath></defs>
+<text x="788" y="37.3" fill="#64748B" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-ead9309d886cfce0)"><tspan x="788" y="37.3">approved</tspan></text>
 </g>
 </svg>

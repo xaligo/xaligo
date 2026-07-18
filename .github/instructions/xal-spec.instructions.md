@@ -139,14 +139,14 @@ Isoflow because those formats are already single logical documents.
 ### Frame metadata tag band
 
 An identified page frame may expose `id`, `title`, a page-content `version`,
-and arbitrary key/value entries as a two-cell tag band. The band stays inside
-the frame padding box and uses the content margin on its selected `top` or
-`bottom` edge before taking any additional content space. It is enabled when
-the page frame has a non-empty `title`, a child-frame content `version`, or a
-direct `<metadata>` child. Existing identified frames that have only an `id`
-remain visually unchanged. Once the band is enabled, non-empty built-ins are
-emitted in stable `id`, `title`, `version` order, followed by `<entry>`
-children in source order.
+and arbitrary key/value entries as a two-cell tag band. The band touches the
+selected `top` or `bottom` edge of the outer frame border box; frame padding,
+content margins, and the content box never offset it. It is enabled when the
+page frame has a non-empty `title`, a child-frame content `version`, or a direct
+`<metadata>` child. Existing identified frames that have only an `id` remain
+visually unchanged. Once the band is enabled, non-empty built-ins are emitted
+in stable `id`, `title`, `version` order, followed by `<entry>` children in
+source order.
 
 ```xml
 <frame id="aws-architecture" title="AWS Architecture" version="1.0.0"
@@ -189,26 +189,30 @@ selected font and full-width-rune-aware metrics. Omit `width` or `key-width`
 to request auto sizing; the literal string `auto` is not a V1 numeric value.
 Fixed widths use no-wrap shrink-to-fit with clipping as the final overflow
 guard. Tags preserve input order and use greedy left-to-right packing against
-the usable width, which produces the minimum row count without reordering.
+the outer frame's complete width, which produces the minimum row count without
+reordering.
 `break-before="true"` forces a row boundary before that custom entry. The
-metadata `align` is then applied to each row separately.
+metadata `align` is then applied to each row separately against that same
+border-box width: left starts at the frame's outer left edge, right ends at its
+outer right edge, and center uses the frame center.
 
-The band is anchored to the selected edge of the frame padding box. Its tags
-use the same horizontal bounds as normal frame content, after left/right
-content margins. On the selected vertical edge, the existing `margin-top` or
-`margin-bottom` (including the corresponding side of `margin`) absorbs the
-band height and the fixed 8-pixel content gap. If that total fits in the
-margin, the content box is unchanged; only the overflow beyond the margin
-moves the content boundary inward. `content-width`, `content-height`, and the
-frame's own `align` are applied afterward. The frame's outer page size and
-invisible logical edge do not change.
+For `position="top"`, the band starts at `frame.y`; for `position="bottom"`,
+it ends at `frame.y + frame.height`. The metadata-side reservation strip spans
+the full frame width from that outer edge to the corresponding boundary of the
+final content box. Its depth is never less than the complete band height plus
+the fixed 8-pixel content gap: if the normal content boundary is closer, it is
+moved inward to that minimum; if it is already farther inward, it is retained.
+Normal items and their text, local connector paths and labels, UML connector
+paths and labels, and cross-frame page-link paths and labels cannot enter this
+strip. `overflow="visible"` never overrides this page-decoration exclusion.
+The frame's outer page size and invisible logical edge do not change.
 
 The shared layout and presentation scene own this geometry. SVG, PPTX, PDF,
 Excel, and Excalidraw render the owning frame's tags; per-frame projection
 cannot leak another page's band, and combined output retains every band. The
-tags stay above connectors, act as routing obstacles, and page-link terminals
-and labels avoid them. XYFlow and Isoflow omit the band because it is page
-decoration rather than a graph node or endpoint.
+entire reservation strip, rather than only the tag cells, is a hard exclusion
+zone for normal rendered geometry. XYFlow and Isoflow omit the band because it
+is page decoration rather than a graph node or endpoint.
 
 ## Numeric and Geometry Contract
 
@@ -932,6 +936,14 @@ source and destination. Selection precedence is `src-anchor`/`dst-anchor`, then
 `src-side`/`dst-side`, then automatic nearest-border selection. When multiple
 borders have the same minimum distance, a tied border facing the remote frame
 wins; otherwise the stable order is `top`, `right`, `bottom`, `left`.
+
+Frame metadata reservation is a final safety constraint on that choice. If the
+selected top/bottom edge owns the metadata strip, the page link is remapped to
+the nearest safe edge even when the reserved edge came from an explicit anchor
+or side. A terminal on a left or right edge is clamped along that edge so it
+lies outside the top/bottom reservation strip; any resulting coordinate
+difference is bridged orthogonally. Page-link paths and labels remain outside
+the full strip.
 
 The terminal lies on the frame's logical page edge, which is not drawn as a
 page-frame outline. Its unconstrained coordinate

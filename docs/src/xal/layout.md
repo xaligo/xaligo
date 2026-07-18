@@ -36,11 +36,11 @@ not displayed as a page revision.
 ## Frame metadata
 
 Set a frame `title`, a child-frame `version`, or add direct `<metadata>` to
-add a key/value tag band inside the frame padding. The band reuses the content
-margin on its selected edge; the default position is the top. An existing
-frame with only an `id` remains visually unchanged; once the band is enabled
-its non-empty built-ins appear as `id`, `title`, and `version`, followed by
-custom entries in source order.
+add a key/value tag band directly against the selected edge of the outer frame
+border box; the default position is the top. Padding, content margins, and the
+content box do not offset the band. An existing frame with only an `id` remains
+visually unchanged; once the band is enabled its non-empty built-ins appear as
+`id`, `title`, and `version`, followed by custom entries in source order.
 
 ```xml
 <frame id="architecture" title="AWS Architecture" version="1.0.0"
@@ -87,22 +87,26 @@ cells. Colors accept `#RRGGBB` or `transparent`; fonts are `virgil`,
 `helvetica`, `cascadia`, `assistant`, `excalifont`, `nunito`, `lilita-one`,
 `comic-shanns`, or `liberation-sans`.
 
-Tags retain source order. Greedy left-to-right packing fills each row up to the
-usable content width, producing the minimum number of rows without reordering;
-`break-before` can introduce an earlier row boundary. Metadata `align` then
-positions each completed row independently.
+Tags retain source order. Greedy left-to-right packing fills each row against
+the complete outer frame width, producing the minimum number of rows without
+reordering; `break-before` can introduce an earlier row boundary. Metadata
+`align` then positions each completed row independently: left and right touch
+the corresponding outer frame edge, while center uses the frame center.
 
-The band is anchored at the top or bottom of the frame padding box, while its
-tags use the content area's horizontal bounds after left/right margins. The
-existing top or bottom content margin absorbs the band and its fixed 8-pixel
-content gap first. If both fit, normal content keeps exactly the same box. If
-they exceed that margin, only the excess moves the corresponding content edge
-inward. `content-width`, `content-height`, and the frame-level `align` are
-resolved afterward, so normal children never overlap the tags. SVG, PPTX, PDF,
-Excel, and Excalidraw display the page-owned band; XYFlow and Isoflow omit it as
-page decoration. See the [frame metadata example](../examples/frame-metadata.md)
-for top, bottom, left/right/center alignment, explicit row breaks, and auto or
-fixed widths.
+For a top band, its top edge equals the frame's outer top edge; for a bottom
+band, its bottom edge equals the frame's outer bottom edge. The metadata-side
+reservation strip spans the full frame width from that edge to the
+corresponding boundary of the final content box. Its depth is at least the band
+height plus the fixed 8-pixel content gap; a closer content boundary moves
+inward, while a boundary already farther inward is retained. Normal items and
+text, local and UML connector paths and labels, and page-link paths and labels
+never enter this strip; `overflow="visible"` does not override the exclusion.
+A page link that selects its reserved top/bottom edge is remapped to the nearest
+safe edge, and a terminal on the left/right edge is clamped outside the strip.
+SVG, PPTX, PDF, Excel, and Excalidraw display the page-owned band; XYFlow and
+Isoflow omit it as page decoration. See the
+[frame metadata example](../examples/frame-metadata.md) for top, bottom,
+left/right/center alignment, explicit row breaks, and auto or fixed widths.
 
 ## Container
 

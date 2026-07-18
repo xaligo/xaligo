@@ -368,10 +368,10 @@ func validateResolvedGeometryV1EngineLayoutValidation(root *entity.Box) error {
 	if root == nil {
 		return fmt.Errorf("resolved layout root is nil")
 	}
-	return validateResolvedBoxV1EngineLayoutValidation(root, nil)
+	return validateResolvedBoxV1EngineLayoutValidation(root, nil, nil)
 }
 
-func validateResolvedBoxV1EngineLayoutValidation(box, parent *entity.Box) error {
+func validateResolvedBoxV1EngineLayoutValidation(box, parent, metadataFrame *entity.Box) error {
 	for name, value := range map[string]float64{
 		"x": box.X, "y": box.Y, "width": box.W, "height": box.H,
 		"content-x": box.ContentX, "content-y": box.ContentY,
@@ -397,18 +397,39 @@ func validateResolvedBoxV1EngineLayoutValidation(box, parent *entity.Box) error 
 	if err := validateResolvedFrameMetadataV1EngineLayoutValidation(box); err != nil {
 		return err
 	}
+	if metadataFrame != nil && box != metadataFrame && boxOverlapsFrameMetadataReservedV1EngineLayoutValidation(box, metadataFrame) {
+		return newResolvedLayoutErrorV1EngineLayoutValidation(box, "resolved box enters frame metadata reserved strip; overflow=\"visible\" cannot override this page-decoration exclusion zone")
+	}
 	if parent != nil && !containsRectV1EngineLayoutValidation(parent.ContentX, parent.ContentY, parent.ContentW, parent.ContentH, box.X, box.Y, box.W, box.H) {
 		if parent.Overflow != entity.OverflowVisible {
 			return newResolvedLayoutErrorV1EngineLayoutValidation(box, "resolved box overflows parent <%s> content box; set overflow=\"visible\" on the parent to allow it explicitly", parent.Tag)
 		}
 		parent.Overflowed = true
 	}
+	nextMetadataFrame := metadataFrame
+	if box.Tag == "frame" && box.FrameMetadata != nil && box.FrameMetadata.ReservedW > 0 && box.FrameMetadata.ReservedH > 0 {
+		nextMetadataFrame = box
+	}
 	for _, child := range box.Children {
-		if err := validateResolvedBoxV1EngineLayoutValidation(child, box); err != nil {
+		if err := validateResolvedBoxV1EngineLayoutValidation(child, box, nextMetadataFrame); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func boxOverlapsFrameMetadataReservedV1EngineLayoutValidation(box, frame *entity.Box) bool {
+	if box == nil || frame == nil || frame.FrameMetadata == nil {
+		return false
+	}
+	metadata := frame.FrameMetadata
+	if metadata.ReservedW <= 0 || metadata.ReservedH <= 0 {
+		return false
+	}
+	return box.X < metadata.ReservedX+metadata.ReservedW-geometryEpsilonV1EngineLayoutValidation &&
+		box.X+box.W > metadata.ReservedX+geometryEpsilonV1EngineLayoutValidation &&
+		box.Y < metadata.ReservedY+metadata.ReservedH-geometryEpsilonV1EngineLayoutValidation &&
+		box.Y+box.H > metadata.ReservedY+geometryEpsilonV1EngineLayoutValidation
 }
 
 func validateResolvedFrameMetadataV1EngineLayoutValidation(box *entity.Box) error {
@@ -418,6 +439,32 @@ func validateResolvedFrameMetadataV1EngineLayoutValidation(box *entity.Box) erro
 	metadata := box.FrameMetadata
 	if !isPositiveFiniteV1EngineLayoutConstraints(metadata.FontSize) {
 		return newResolvedLayoutErrorV1EngineLayoutValidation(box, "frame metadata font size must be positive and finite")
+	}
+	for name, value := range map[string]float64{
+		"reserved-x": metadata.ReservedX, "reserved-y": metadata.ReservedY,
+		"reserved-width": metadata.ReservedW, "reserved-height": metadata.ReservedH,
+	} {
+		if math.IsNaN(value) || math.IsInf(value, 0) {
+			return newResolvedLayoutErrorV1EngineLayoutValidation(box, "frame metadata %s resolved to a non-finite value", name)
+		}
+	}
+	if len(metadata.Tags) > 0 {
+		if !isPositiveFiniteV1EngineLayoutConstraints(metadata.ReservedW) || !isPositiveFiniteV1EngineLayoutConstraints(metadata.ReservedH) {
+			return newResolvedLayoutErrorV1EngineLayoutValidation(box, "frame metadata reserved strip must have a positive finite size")
+		}
+		if !containsRectV1EngineLayoutValidation(box.X, box.Y, box.W, box.H, metadata.ReservedX, metadata.ReservedY, metadata.ReservedW, metadata.ReservedH) {
+			return newResolvedLayoutErrorV1EngineLayoutValidation(box, "frame metadata reserved strip overflows the frame border box")
+		}
+		if math.Abs(metadata.ReservedX-box.X) > geometryEpsilonV1EngineLayoutValidation || math.Abs(metadata.ReservedW-box.W) > geometryEpsilonV1EngineLayoutValidation {
+			return newResolvedLayoutErrorV1EngineLayoutValidation(box, "frame metadata reserved strip must span the complete frame width")
+		}
+		if metadata.Position == "bottom" {
+			if math.Abs(metadata.ReservedY-(box.ContentY+box.ContentH)) > geometryEpsilonV1EngineLayoutValidation || math.Abs(metadata.ReservedY+metadata.ReservedH-(box.Y+box.H)) > geometryEpsilonV1EngineLayoutValidation {
+				return newResolvedLayoutErrorV1EngineLayoutValidation(box, "bottom frame metadata reserved strip must connect the content boundary to the outer frame edge")
+			}
+		} else if math.Abs(metadata.ReservedY-box.Y) > geometryEpsilonV1EngineLayoutValidation || math.Abs(metadata.ReservedY+metadata.ReservedH-box.ContentY) > geometryEpsilonV1EngineLayoutValidation {
+			return newResolvedLayoutErrorV1EngineLayoutValidation(box, "top frame metadata reserved strip must connect the outer frame edge to the content boundary")
+		}
 	}
 	for index, tag := range metadata.Tags {
 		for name, value := range map[string]float64{
@@ -432,6 +479,9 @@ func validateResolvedFrameMetadataV1EngineLayoutValidation(box *entity.Box) erro
 		}
 		if !containsRectV1EngineLayoutValidation(box.X, box.Y, box.W, box.H, tag.X, tag.Y, tag.W, tag.H) {
 			return newResolvedLayoutErrorV1EngineLayoutValidation(box, "frame metadata tag %d overflows the frame border box", index+1)
+		}
+		if !containsRectV1EngineLayoutValidation(metadata.ReservedX, metadata.ReservedY, metadata.ReservedW, metadata.ReservedH, tag.X, tag.Y, tag.W, tag.H) {
+			return newResolvedLayoutErrorV1EngineLayoutValidation(box, "frame metadata tag %d overflows its reserved strip", index+1)
 		}
 	}
 	return nil
