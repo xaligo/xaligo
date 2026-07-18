@@ -5,14 +5,18 @@
 
   <frames>
     <frame id="service-table" width="720" height="420" class="pa-3">
-      <table id="services" title="Service Inventory">
+      <table id="services" title="Service Inventory"
+             color="#172033" background-color="#ffffff" border-color="#94a3b8"
+             font-family="nunito" font-size="16"
+             header-color="#ffffff" header-background-color="#2563eb"
+             header-font-family="cascadia" header-font-size="18">
         | Service | Role     | Port |
         |:--------|:---------|-----:|
         | API     | Backend  | 8080 |
         | DB      | Database | 5432 |
 
-        <row id="worker">
-          <cell>Worker</cell>
+        <row id="worker" background-color="#f8fafc">
+          <cell color="#7c3aed" font-family="helvetica">Worker</cell>
           <cell>Background jobs</cell>
           <cell align="right">9000</cell>
         </row>

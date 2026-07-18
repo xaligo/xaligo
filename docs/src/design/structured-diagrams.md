@@ -151,9 +151,12 @@ must declare the same effective column count; conflicting header definitions,
 duplicate row/cell IDs, and invalid spans are errors. Both lower into the same
 typed table model before layout.
 
-Initial presentation properties are `title`, `grid`, `striped`, `compact`,
-column widths, horizontal/vertical alignment, and overflow policy. `rowspan`,
-`colspan`, rich cell children, and cell endpoints belong to the explicit form.
+Presentation properties include `title`, `grid`, `striped`, `compact`, column
+widths, horizontal/vertical alignment, overflow policy, six-digit text/fill/
+border colors, font family, and font size. Table styles inherit through rows to
+cells; explicit row/cell values override them, while `header-*` table
+attributes style pipe headers. `rowspan`, `colspan`, rich cell children, and
+cell endpoints belong to the explicit form.
 
 `<grid>` remains a layout primitive for arranging diagram components. A grid
 must not be inferred to be a data table merely because it looks tabular.

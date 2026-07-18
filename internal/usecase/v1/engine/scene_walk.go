@@ -181,6 +181,9 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 			rectID := fmt.Sprintf("%s-rect", b.ID)
 			textID := fmt.Sprintf("%s-text", b.ID)
 			genStroke := "#1e1e1e"
+			if configured := strings.TrimSpace(b.Attrs["border-color"]); configured != "" {
+				genStroke = configured
+			}
 			if noBorder {
 				genStroke = "transparent"
 			}
@@ -201,6 +204,9 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 				backgroundColor = "#ffffff"
 				fillStyle = "solid"
 				roundness = nil
+			}
+			if configured, exists := b.Attrs["background-color"]; exists {
+				backgroundColor = configured
 			}
 			boundElements := any(nil)
 			if b.Label != "" {
@@ -257,7 +263,7 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 					"x": textX, "y": textY,
 					"width": textW, "height": textH,
 					"angle":       0,
-					"strokeColor": "#1e1e1e", "backgroundColor": "transparent",
+					"strokeColor": tableTextColorV1EngineSceneWalk(b), "backgroundColor": "transparent",
 					"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
 					"roughness": 0, "opacity": 100,
 					"groupIds": []string{}, "roundness": nil,
@@ -265,7 +271,7 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 					"versionNonce": stableSceneSeedV1EngineSceneTypes(textID),
 					"isDeleted":    false, "boundElements": nil,
 					"updated": updated, "link": nil, "locked": false,
-					"text": b.Label, "fontSize": fontSize, "fontFamily": 1,
+					"text": b.Label, "fontSize": fontSize, "fontFamily": fontFamilyV1EngineSceneWalk(b.Attrs["font-family"]),
 					"textAlign": textAlign, "verticalAlign": verticalAlign,
 					"containerId": rectID, "originalText": b.Label, "lineHeight": 1.2,
 					"customData": textCustomData,
@@ -285,6 +291,36 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 	}
 	for _, c := range b.Children {
 		walkV1EngineSceneWalk(c, elements, files, svgGroupDir, catalogCSV, projectRoot, fsys, nextVisible, itemGroups, ancestorBoxes, itemImgRects, itemImgIDs, deps)
+	}
+}
+
+func tableTextColorV1EngineSceneWalk(box *entity.Box) string {
+	if box != nil && strings.TrimSpace(box.Attrs["color"]) != "" {
+		return box.Attrs["color"]
+	}
+	return "#1e1e1e"
+}
+
+func fontFamilyV1EngineSceneWalk(name string) int {
+	switch strings.ToLower(strings.TrimSpace(name)) {
+	case "helvetica":
+		return 2
+	case "cascadia":
+		return 3
+	case "assistant":
+		return 4
+	case "excalifont":
+		return 5
+	case "nunito":
+		return 6
+	case "lilita-one":
+		return 7
+	case "comic-shanns":
+		return 8
+	case "liberation-sans":
+		return 9
+	default:
+		return 1
 	}
 }
 

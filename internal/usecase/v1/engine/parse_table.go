@@ -2,10 +2,15 @@ package engine
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/xaligo/xaligo/internal/entity"
 )
+
+var tableColorPatternV1EngineParseTable = regexp.MustCompile(`^#[0-9a-fA-F]{6}$`)
+
+var tableStyleAttributesV1EngineParseTable = []string{"color", "background-color", "border-color", "font-family", "font-size"}
 
 func normalizeTablesV1EngineParseTable(root *entity.Node) error {
 	if root == nil {
@@ -23,6 +28,9 @@ func normalizeTablesV1EngineParseTable(root *entity.Node) error {
 }
 
 func normalizeTableV1EngineParseTable(table *entity.Node) error {
+	if err := normalizeTableStyleV1EngineParseTable(table); err != nil {
+		return &entity.ParseError{Position: table.Position, Err: err}
+	}
 	if _, exists := table.Attrs["gap"]; !exists {
 		table.Attrs["gap"] = "0"
 	}
@@ -62,12 +70,21 @@ func normalizeTableV1EngineParseTable(table *entity.Node) error {
 		}
 		if child.Tag == "header" {
 			row.Tag = "table-header"
+			inheritTableHeaderStyleV1EngineParseTable(row.Attrs, table.Attrs)
+		}
+		inheritTableStyleV1EngineParseTable(row.Attrs, table.Attrs)
+		if err := normalizeTableStyleV1EngineParseTable(row); err != nil {
+			return &entity.ParseError{Position: child.Position, Err: err}
 		}
 		for _, cell := range child.Children {
 			if cell.Tag != "cell" {
 				return &entity.ParseError{Position: cell.Position, Err: fmt.Errorf("<%s> may only contain <cell> children, got <%s>", child.Tag, cell.Tag)}
 			}
 			cell.Tag = "table-cell"
+			inheritTableStyleV1EngineParseTable(cell.Attrs, row.Attrs)
+			if err := normalizeTableStyleV1EngineParseTable(cell); err != nil {
+				return &entity.ParseError{Position: cell.Position, Err: err}
+			}
 			if align, exists := cell.Attrs["align"]; exists {
 				switch strings.ToLower(strings.TrimSpace(align)) {
 				case "left", "center", "right":
@@ -97,9 +114,76 @@ func normalizeTableV1EngineParseTable(table *entity.Node) error {
 		return &entity.ParseError{Position: table.Position, Err: fmt.Errorf("<table> must contain a pipe table or tagged rows")}
 	}
 	table.Children = normalized
+	for _, row := range table.Children {
+		if row.Tag == "table-header" {
+			inheritTableHeaderStyleV1EngineParseTable(row.Attrs, table.Attrs)
+		}
+		inheritTableStyleV1EngineParseTable(row.Attrs, table.Attrs)
+		for _, cell := range row.Children {
+			inheritTableStyleV1EngineParseTable(cell.Attrs, row.Attrs)
+		}
+	}
 	table.Text = ""
 	table.TextRuns = nil
 	return nil
+}
+
+func normalizeTableStyleV1EngineParseTable(node *entity.Node) error {
+	for _, name := range []string{"color", "background-color", "border-color"} {
+		value, exists := node.Attrs[name]
+		if !exists {
+			continue
+		}
+		value = strings.TrimSpace(value)
+		if !tableColorPatternV1EngineParseTable.MatchString(value) && value != "transparent" {
+			return fmt.Errorf("<%s %s=%q> must be #RRGGBB or transparent", node.Tag, name, value)
+		}
+		node.Attrs[name] = strings.ToLower(value)
+	}
+	if family, exists := node.Attrs["font-family"]; exists {
+		family = strings.ToLower(strings.TrimSpace(family))
+		switch family {
+		case "virgil", "helvetica", "cascadia", "assistant", "excalifont", "nunito", "lilita-one", "comic-shanns", "liberation-sans":
+			node.Attrs["font-family"] = family
+		default:
+			return fmt.Errorf("<%s font-family=%q> is not a supported font family", node.Tag, family)
+		}
+	}
+	if node.Tag == "table" {
+		header := &entity.Node{Tag: "table header style", Attrs: map[string]string{}}
+		for _, name := range tableStyleAttributesV1EngineParseTable {
+			if value, exists := node.Attrs["header-"+name]; exists {
+				header.Attrs[name] = value
+			}
+		}
+		if err := normalizeTableStyleV1EngineParseTable(header); err != nil {
+			return err
+		}
+		for name, value := range header.Attrs {
+			node.Attrs["header-"+name] = value
+		}
+	}
+	return nil
+}
+
+func inheritTableStyleV1EngineParseTable(target, source map[string]string) {
+	for _, name := range tableStyleAttributesV1EngineParseTable {
+		if _, exists := target[name]; !exists {
+			if value, available := source[name]; available {
+				target[name] = value
+			}
+		}
+	}
+}
+
+func inheritTableHeaderStyleV1EngineParseTable(target, table map[string]string) {
+	for _, name := range tableStyleAttributesV1EngineParseTable {
+		if _, exists := target[name]; !exists {
+			if value, available := table["header-"+name]; available {
+				target[name] = value
+			}
+		}
+	}
 }
 
 func parsePipeTableV1EngineParseTable(table *entity.Node) ([][]string, []string, error) {

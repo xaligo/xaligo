@@ -20,6 +20,39 @@ Separator colons select left, center, or right alignment. Every row must have
 the same number of cells. Cell text is plain text; escape a literal pipe as
 `\|`.
 
+## Colors and fonts
+
+Style a pipe table from the `<table>` tag. Header-specific attributes begin
+with `header-`:
+
+```xml
+<table id="services" title="Service Inventory"
+       color="#172033" background-color="#ffffff" border-color="#94a3b8"
+       font-family="nunito" font-size="16"
+       header-color="#ffffff" header-background-color="#2563eb"
+       header-font-family="cascadia" header-font-size="18">
+  | Service | Role    | Port |
+  |:--------|:--------|-----:|
+  | API     | Backend | 8080 |
+</table>
+```
+
+`color`, `background-color`, and `border-color` accept `#RRGGBB` or
+`transparent`. `font-family` accepts `virgil`, `helvetica`, `cascadia`,
+`assistant`, `excalifont`, `nunito`, `lilita-one`, `comic-shanns`, or
+`liberation-sans`. `font-size` is a positive layout-pixel value.
+
+Styles inherit in the order `table`, then `header` or `row`, then `cell`, with
+the most specific value winning. Tagged rows and cells can therefore override
+the table defaults:
+
+```xml
+<row background-color="#f8fafc">
+  <cell color="#dc2626" font-family="helvetica">Warning</cell>
+  <cell>Retry required</cell>
+</row>
+```
+
 ## Tagged syntax
 
 Use tags when rows or cells need stable IDs or individual attributes:
