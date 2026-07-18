@@ -12,6 +12,7 @@
   - [Automatic Route Junctions](examples/junctions.md)
   - [Canonical V1 Envelope](examples/canonical-v1-envelope.md)
   - [Tables](examples/tables.md)
+  - [Imported Tables](examples/table-imports.md)
   - [Relational Database](examples/databases.md)
 - [AI Agent Guide](ai-agent-guide.md)
 - [Planned Work](roadmap.md)

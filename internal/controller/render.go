@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -258,6 +259,11 @@ func runRender(renderUsecase usecase.RenderUsecase, inputPath, outputPath string
 		logger.ERROR(ICRRR001, "read input failed", map[string]any{"input": inputPath, "error": err})
 		return fmt.Errorf("read input file: %w", err)
 	}
+	absInputPath, err := filepath.Abs(inputPath)
+	if err != nil {
+		return fmt.Errorf("resolve input file path: %w", err)
+	}
+	opts.Imports = &entity.ImportSource{FS: os.DirFS(filepath.Dir(absInputPath))}
 	out, err := renderUsecase.Render(context.Background(), input, opts)
 	if err != nil {
 		logger.ERROR(ICRRR003, "render failed", map[string]any{"format": opts.Format, "error": err})

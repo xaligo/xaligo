@@ -279,8 +279,9 @@ Imports are declared in `<data>` or the document-level `<imports>` registry:
 </data>
 ```
 
-Planned adapters are CSV/TSV, JSON, YAML, SQL DDL, and DBML. OpenAPI may later
-project schemas into tables or UML components. Spreadsheet import is deferred
+V1 implements CSV/TSV, JSON, and YAML table adapters with an injected
+filesystem and paths relative to the input document. SQL DDL and DBML remain
+planned. OpenAPI may later project schemas into tables or UML components. Spreadsheet import is deferred
 until its type, formula, merged-cell, and formatting loss policy is specified.
 
 Resolution order is:
@@ -328,7 +329,7 @@ alternate semantic models.
    frames, imports, and typed
    component dispatch without changing current V1/V2 behavior.
 2. Deliver general tables with pipe/tag normalization and SVG output.
-3. Add CSV, JSON, and YAML table imports.
+3. Add CSV, JSON, and YAML table imports. (Implemented in V1.)
 4. Deliver RDB entities, keys, relations, Crow's Foot rendering, and SQL DDL
    import for PostgreSQL, MySQL, and SQLite.
 5. Deliver the six priority UML diagrams through their separate processors.

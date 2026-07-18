@@ -2,8 +2,10 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -62,8 +64,15 @@ func (rcvr *serveController) Command() *cobra.Command {
 
 func (rcvr *serveController) Run(ctx context.Context, opts entity.ControllerServeOptions) error {
 	logger.DEBUG(ICSRS001, "start", map[string]any{"input": opts.InputPath, "address": opts.Address})
+	absInputPath, err := filepath.Abs(opts.InputPath)
+	if err != nil {
+		return fmt.Errorf("resolve input file path: %w", err)
+	}
 	server, err := rcvr.renderUsecase.NewPreviewRepository(opts.InputPath, entity.PreviewOptions{
-		Render:       entity.RenderOptions{Mode: entity.Mode(opts.Mode), Format: usecase.FormatSVG, Theme: opts.Theme},
+		Render: entity.RenderOptions{
+			Mode: entity.Mode(opts.Mode), Format: usecase.FormatSVG, Theme: opts.Theme,
+			Imports: &entity.ImportSource{FS: os.DirFS(filepath.Dir(absInputPath))},
+		},
 		PollInterval: opts.PollInterval,
 	})
 	if err != nil {

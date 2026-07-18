@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"testing/fstest"
 
 	awsassets "github.com/xaligo/xaligo/etc/resources/aws"
 	"github.com/xaligo/xaligo/internal/entity"
@@ -15,6 +16,22 @@ import (
 )
 
 const simpleXAL = `<frame version="1" width="240" height="120"><blank /></frame>`
+
+func TestRenderSVGLoadsInjectedTableImport(t *testing.T) {
+	input := []byte(`<xaligo version="1"><data><table-data id="rows" src="rows.csv" /></data><frames><frame id="main" width="500" height="300"><table data="rows" /></frame></frames></xaligo>`)
+	output, err := newUsecase().RenderSVG(context.Background(), input, entity.RenderOptions{
+		Format: usecase.FormatSVG,
+		Imports: &entity.ImportSource{FS: fstest.MapFS{
+			"rows.csv": {Data: []byte("name,value\nAPI,8080\n")},
+		}},
+	})
+	if err != nil {
+		t.Fatalf("RenderSVG() error = %v", err)
+	}
+	if !strings.Contains(string(output), "API") || !strings.Contains(string(output), "8080") {
+		t.Fatalf("SVG does not contain imported cells: %s", output)
+	}
+}
 
 type fakePPTXExporter struct {
 	seen entity.PptxExportOptions

@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
+	"github.com/xaligo/xaligo/internal/entity"
 	"github.com/xaligo/xaligo/internal/share"
 	"github.com/xaligo/xaligo/internal/usecase"
 )
@@ -54,7 +56,12 @@ func (rcvr *validateController) Run(inputPath string, stdout io.Writer) error {
 		logger.ERROR(ICVALIDATERVWUC001, "read input failed", map[string]any{"input": inputPath, "error": err})
 		return fmt.Errorf("open input file: %w", err)
 	}
-	if err := rcvr.diagnosticsUsecase.Validate(context.Background(), input); err != nil {
+	absInputPath, err := filepath.Abs(inputPath)
+	if err != nil {
+		return fmt.Errorf("resolve input file path: %w", err)
+	}
+	imports := &entity.ImportSource{FS: os.DirFS(filepath.Dir(absInputPath))}
+	if err := rcvr.diagnosticsUsecase.ValidateWithImports(context.Background(), input, imports); err != nil {
 		logger.ERROR(ICVALIDATERVWUC002, "validation failed", map[string]any{"input": inputPath, "error": err})
 		return err
 	}

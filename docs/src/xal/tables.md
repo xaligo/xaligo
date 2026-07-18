@@ -47,4 +47,33 @@ Both forms are normalized to the same V1 table rows and cells before layout.
 Malformed separators, inconsistent column counts, duplicate headers, unknown
 children, and empty rows are positioned validation errors.
 
-See the [table example](../examples/tables.md) for a complete document.
+## File imports
+
+CSV, TSV, JSON, and YAML files can be loaded relative to the `.xal` input
+file. Declare reusable data under the canonical `<data>` tag and reference it
+from one or more frames:
+
+```xml
+<data>
+  <table-data id="services" src="services.csv" />
+</data>
+<frames>
+  <frame id="inventory">
+    <table data="services" title="Service Inventory" />
+  </frame>
+</frames>
+```
+
+The format is inferred from the extension or selected with `format="csv"`,
+`tsv`, `json`, `yaml`, or `yml`. CSV and TSV require a header row. JSON and
+YAML require a top-level array of objects; their union of keys is sorted to
+produce deterministic columns. A one-off import may use `<table
+src="services.csv" />` directly.
+
+Import paths must be relative and remain inside the caller-supplied import
+filesystem. Inline rows cannot be combined with `data` or `src`. Both
+`xaligo validate` and `xaligo render` resolve CLI imports relative to the
+input `.xal` file.
+
+See the [table example](../examples/tables.md) and [import example](../examples/table-imports.md)
+for complete documents.

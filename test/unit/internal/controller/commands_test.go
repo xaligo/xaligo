@@ -45,7 +45,15 @@ func (rcvr *fakeUseCase) ValidateRenderOptions(opts entity.RenderOptions) error 
 
 func (rcvr *fakeUseCase) Validate(context.Context, []byte) error { return rcvr.validateErr }
 
+func (rcvr *fakeUseCase) ValidateWithImports(context.Context, []byte, *entity.ImportSource) error {
+	return rcvr.validateErr
+}
+
 func (rcvr *fakeUseCase) Diagnose(context.Context, []byte) ([]entity.Diagnostic, error) {
+	return nil, nil
+}
+
+func (rcvr *fakeUseCase) DiagnoseWithImports(context.Context, []byte, *entity.ImportSource) ([]entity.Diagnostic, error) {
 	return nil, nil
 }
 
@@ -234,6 +242,20 @@ func TestRunValidateWithUseCase(t *testing.T) {
 	}
 	if err := controller.NewValidateController(&fakeUseCase{}).Run(filepath.Join(t.TempDir(), "missing.xal"), nil); err == nil {
 		t.Fatal("missing input error = nil")
+	}
+}
+
+func TestRunValidateResolvesTableImportRelativeToInput(t *testing.T) {
+	directory := t.TempDir()
+	input := filepath.Join(directory, "diagram.xal")
+	if err := os.WriteFile(input, []byte(`<xaligo version="1"><data><table-data id="rows" src="rows.csv" /></data><frames><frame id="main"><table data="rows" /></frame></frames></xaligo>`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(directory, "rows.csv"), []byte("name,value\nAPI,8080\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := controller.NewValidateController(usecase.NewDiagnosticsUsecase()).Run(input, nil); err != nil {
+		t.Fatalf("validate imported table: %v", err)
 	}
 }
 

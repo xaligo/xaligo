@@ -68,6 +68,12 @@ var (
 )
 
 func ParseV1EngineParseDocument(r io.Reader) (entity.Document, error) {
+	return ParseWithImportsV1EngineParseDocument(r, nil)
+}
+
+// ParseWithImportsV1EngineParseDocument parses a document and resolves explicitly
+// supplied file imports before shared table normalization.
+func ParseWithImportsV1EngineParseDocument(r io.Reader, imports *entity.ImportSource) (entity.Document, error) {
 	data, err := io.ReadAll(r)
 	if err != nil {
 		loggerV1EngineSharedLogging.ERROR(IUPP001V1EngineParseDocument, "read DSL failed", map[string]any{"error": err})
@@ -192,6 +198,9 @@ func ParseV1EngineParseDocument(r io.Reader) (entity.Document, error) {
 		return entity.Document{}, err
 	}
 	if err := normalizeDatabasesV1EngineParseDatabase(root, dataNode); err != nil {
+		return entity.Document{}, err
+	}
+	if err := resolveTableImportsV1EngineParseImport(root, dataNode, imports); err != nil {
 		return entity.Document{}, err
 	}
 	if err := normalizeTablesV1EngineParseTable(root); err != nil {

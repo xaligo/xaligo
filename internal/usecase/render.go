@@ -323,7 +323,7 @@ func (rcvr *renderUsecase) buildScene(ctx context.Context, input []byte, opts en
 		return nil, nil, err
 	}
 
-	doc, err := v1engine.ParseV1EngineParseDocument(bytes.NewReader(input))
+	doc, err := v1engine.ParseWithImportsV1EngineParseDocument(bytes.NewReader(input), opts.Imports)
 	if err != nil {
 		logger.ERROR(IURBS007, "parse DSL failed", map[string]any{"error": err})
 		return nil, nil, fmt.Errorf("parse DSL: %w", err)
