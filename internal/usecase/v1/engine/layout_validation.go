@@ -162,7 +162,7 @@ func validateLayoutAttributeV1EngineLayoutValidation(node *entity.Node) error {
 	}
 
 	switch node.Tag {
-	case "frames", "frame", "container", "col":
+	case "frames", "frame", "container", "col", "database":
 		if value == "vertical" || value == "horizontal" {
 			return nil
 		}
@@ -186,7 +186,7 @@ func isUnknownContainerV1EngineLayoutValidation(node *entity.Node) bool {
 		return false
 	}
 	switch node.Tag {
-	case "frames", "frame", "container", "row", "col", "table", "table-header", "table-row", "table-cell", "rectangle", "port", "item", "spacer", "blank",
+	case "frames", "frame", "container", "row", "col", "database", "entity", "table", "table-header", "table-row", "table-cell", "rectangle", "port", "item", "spacer", "blank",
 		"connection", "connections", "src", "dst", "bend", "point", "via", "waypoint", "bends", "points", "path":
 		return false
 	default:

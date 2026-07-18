@@ -187,10 +187,10 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 			backgroundColor := "transparent"
 			fillStyle := "hachure"
 			roundness := map[string]any{"type": 3}
-			if b.Tag == "rectangle" || b.Tag == "table" || b.Tag == "table-cell" {
+			if b.Tag == "rectangle" || b.Tag == "table" || b.Tag == "entity" || b.Tag == "table-cell" {
 				fillStyle = "solid"
 			}
-			if b.Tag == "table" || b.Tag == "table-cell" {
+			if b.Tag == "table" || b.Tag == "entity" || b.Tag == "table-cell" {
 				backgroundColor = "#ffffff"
 				roundness = nil
 			}
@@ -219,6 +219,9 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 				"boundElements": boundElements,
 				"updated":       updated, "link": nil, "locked": false,
 			})
+			if b.Tag == "entity" {
+				registerConnectionEndpointV1EngineSceneWalk(b, rectID, [4]float64{b.X, b.Y, b.W, b.H}, itemImgRects, itemImgIDs)
+			}
 			if b.Tag == "rectangle" || b.Tag == "port" {
 				registerConnectionEndpointV1EngineSceneWalk(b, rectID, [4]float64{b.X, b.Y, b.W, b.H}, itemImgRects, itemImgIDs)
 			}
@@ -372,6 +375,10 @@ func semanticElementKindV1EngineSceneWalk(box *entity.Box) string {
 	switch box.Tag {
 	case "table":
 		return "table"
+	case "database":
+		return "database"
+	case "entity":
+		return "entity"
 	case "table-cell":
 		return "table-cell"
 	case "rectangle":

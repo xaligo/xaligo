@@ -12,6 +12,7 @@
   - [Automatic Route Junctions](examples/junctions.md)
   - [Canonical V1 Envelope](examples/canonical-v1-envelope.md)
   - [Tables](examples/tables.md)
+  - [Relational Database](examples/databases.md)
 - [AI Agent Guide](ai-agent-guide.md)
 - [Planned Work](roadmap.md)
 
@@ -28,6 +29,7 @@
 - [Rectangles and Ports](xal/rectangles-ports.md)
 - [Connections](xal/connections.md)
 - [Tables](xal/tables.md)
+- [Relational Databases](xal/databases.md)
 
 # Rendering
 

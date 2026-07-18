@@ -191,6 +191,9 @@ func ParseV1EngineParseDocument(r io.Reader) (entity.Document, error) {
 		loggerV1EngineSharedLogging.ERROR(IUPP006V1EngineParseDocument, "frame hierarchy validation failed", map[string]any{"error": err})
 		return entity.Document{}, err
 	}
+	if err := normalizeDatabasesV1EngineParseDatabase(root, dataNode); err != nil {
+		return entity.Document{}, err
+	}
 	if err := normalizeTablesV1EngineParseTable(root); err != nil {
 		return entity.Document{}, err
 	}

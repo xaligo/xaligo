@@ -77,6 +77,21 @@ func TestParseRejectsTableColumnMismatch(t *testing.T) {
 	}
 }
 
+func TestParseNormalizesDatabaseSchemaAndForeignKey(t *testing.T) {
+	doc, err := usecase.Parse(strings.NewReader(`<xaligo version="1"><data><database-schema id="app"><entity id="roles"><column name="id" type="bigint" primary-key="true" /></entity><entity id="users"><column name="id" type="bigint" primary-key="true" /><column name="role_id" type="bigint" /><foreign-key columns="role_id" references="roles.id" /></entity></database-schema></data><frames><frame id="erd"><database data="app" /></frame></frames></xaligo>`))
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+	frame := doc.Root.Children[0]
+	database := frame.Children[0]
+	if database.Tag != "database" || len(database.Children) != 2 || database.Children[1].Tag != "entity" {
+		t.Fatalf("database = %#v", database)
+	}
+	if got := frame.Children[len(frame.Children)-1]; got.Tag != "connection" || got.Attr("src") != "users" || got.Attr("dst") != "roles" {
+		t.Fatalf("generated relation = %#v", got)
+	}
+}
+
 func TestParseValidationErrorHasPosition(t *testing.T) {
 	_, err := usecase.Parse(strings.NewReader("<frame>\n  <item id=\"bad\" />\n</frame>"))
 	var parseErr *entity.ParseError

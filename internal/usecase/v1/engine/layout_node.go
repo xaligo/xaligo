@@ -140,7 +140,7 @@ func layoutNodeV1EngineLayoutNode(node *entity.Node, target *entity.Box, x, y, w
 	case "row":
 		loggerV1EngineSharedLogging.DEBUG(IULN007V1EngineLayoutNode, "branch row")
 		return layoutRowV1EngineLayoutFlow(node, target, innerX, innerY, innerW, innerH)
-	case "table":
+	case "table", "entity":
 		gInnerX := boxX + defaultGroupSideInsetV1EngineLayoutNode + pad.Left
 		gInnerY := boxY + defaultGroupTopInsetV1EngineLayoutNode + pad.Top
 		gInnerW := boxW - defaultGroupSideInsetV1EngineLayoutNode*2 - pad.Left - pad.Right

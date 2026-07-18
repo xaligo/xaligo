@@ -1,0 +1,23 @@
+<xaligo version="1">
+  <data>
+    <database-schema id="application-schema">
+      <entity id="roles" name="roles">
+        <column name="id" type="bigint" primary-key="true" nullable="false" />
+        <column name="name" type="varchar(100)" unique="true" />
+      </entity>
+
+      <entity id="users" name="users">
+        <column name="id" type="bigint" primary-key="true" nullable="false" />
+        <column name="email" type="varchar(255)" unique="true" nullable="false" />
+        <column name="role_id" type="bigint" nullable="false" />
+        <foreign-key columns="role_id" references="roles.id" />
+      </entity>
+    </database-schema>
+  </data>
+
+  <frames>
+    <frame id="database" width="960" height="540" class="pa-2">
+      <database data="application-schema" title="Application Schema" />
+    </frame>
+  </frames>
+</xaligo>

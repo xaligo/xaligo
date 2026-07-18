@@ -138,7 +138,7 @@ func nodeConnectableByIDV1EngineParseNode(node *entity.Node) bool {
 	if node == nil || strings.TrimSpace(node.Attrs["id"]) == "" {
 		return false
 	}
-	return node.Tag == "item" || node.Tag == "frame" || isConnectableFrameTagV1EngineParseNode(node.Tag)
+	return node.Tag == "item" || node.Tag == "frame" || node.Tag == "entity" || isConnectableFrameTagV1EngineParseNode(node.Tag)
 }
 
 func isConnectableFrameTagV1EngineParseNode(tag string) bool {
