@@ -89,6 +89,27 @@ type CustomData struct {
 	AnchorContent                   bool        `json:"xaligoAnchorContent,omitempty"`
 	SemanticParentElementID         string      `json:"xaligoSemanticParentElementId,omitempty"`
 	SemanticElementKind             string      `json:"xaligoSemanticElementKind,omitempty"`
+	UMLID                           string      `json:"xaligoUmlId,omitempty"`
+	UMLLocalID                      string      `json:"xaligoUmlLocalId,omitempty"`
+	UMLReference                    string      `json:"xaligoUmlReference,omitempty"`
+	UMLDiagramKind                  string      `json:"xaligoUmlDiagramKind,omitempty"`
+	UMLElementKind                  string      `json:"xaligoUmlElementKind,omitempty"`
+	UMLOwnerID                      string      `json:"xaligoUmlOwnerId,omitempty"`
+	UMLOwnerReference               string      `json:"xaligoUmlOwnerReference,omitempty"`
+	UMLCompartmentKinds             string      `json:"xaligoUmlCompartmentKinds,omitempty"`
+	UMLTimeFrom                     string      `json:"xaligoUmlTimeFrom,omitempty"`
+	UMLTimeTo                       string      `json:"xaligoUmlTimeTo,omitempty"`
+	UMLRelationKind                 string      `json:"xaligoUmlRelationKind,omitempty"`
+	UMLRelationLabel                string      `json:"xaligoUmlRelationLabel,omitempty"`
+	UMLRelationSourceReference      string      `json:"xaligoUmlRelationSourceReference,omitempty"`
+	UMLRelationDestinationReference string      `json:"xaligoUmlRelationDestinationReference,omitempty"`
+	UMLMessageOrder                 string      `json:"xaligoUmlMessageOrder,omitempty"`
+	UMLGuard                        string      `json:"xaligoUmlGuard,omitempty"`
+	UMLSourceMultiplicity           string      `json:"xaligoUmlSourceMultiplicity,omitempty"`
+	UMLDestinationMultiplicity      string      `json:"xaligoUmlDestinationMultiplicity,omitempty"`
+	UMLOccurrenceAt                 string      `json:"xaligoUmlOccurrenceAt,omitempty"`
+	UMLDurationFrom                 string      `json:"xaligoUmlDurationFrom,omitempty"`
+	UMLDurationTo                   string      `json:"xaligoUmlDurationTo,omitempty"`
 	PortLabel                       bool        `json:"xaligoPortLabel,omitempty"`
 	CrossFrameLabel                 bool        `json:"xaligoCrossFrameLabel,omitempty"`
 	DiffHighlight                   bool        `json:"xaligoDiffHighlight,omitempty"`
@@ -156,7 +177,7 @@ type PlanSlide struct {
 }
 
 // DrawOp is a single encoder drawing instruction. Kind selects the dispatch:
-// "rect" | "ellipse" | "polygon" | "text" | "image" | "line".
+// "rect" | "ellipse" | "diamond" | "polygon" | "text" | "image" | "line".
 type DrawOp struct {
 	ID         string  `json:"id,omitempty"`
 	GroupID    string  `json:"groupId,omitempty"`

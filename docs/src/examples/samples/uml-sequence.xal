@@ -1,0 +1,24 @@
+<xaligo version="1">
+  <data></data>
+  <frames>
+    <frame id="sequence" width="1360" height="760" class="pa-3">
+      <uml id="checkout-sequence" title="Checkout Sequence">
+        <sequence-diagram>
+          <participant id="customer" title="Customer" />
+          <lifeline id="api" title="Ordering API" />
+          <lifeline id="session" title="CheckoutSession" />
+          <lifeline id="payment" title="Payment Gateway" />
+
+          <message src="customer" dst="api" order="1" title="checkout(cart)" />
+          <create-message src="api" dst="session" order="1.1" title="create(cart)" />
+          <message src="session" dst="session" order="1.2" title="validateCart()" />
+          <message src="session" dst="payment" order="1.3" title="authorize(total)" />
+          <return-message src="payment" dst="session" order="1.4" title="authorization" />
+          <return-message src="session" dst="api" order="1.5" title="receipt" />
+          <return-message src="api" dst="customer" order="2" title="orderConfirmed" />
+          <destroy-message src="api" dst="session" order="3" title="release()" />
+        </sequence-diagram>
+      </uml>
+    </frame>
+  </frames>
+</xaligo>

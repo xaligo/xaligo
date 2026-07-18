@@ -209,11 +209,13 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 				backgroundColor = configured
 			}
 			boundElements := any(nil)
+			shapeCustomData := umlShapeCustomDataV1EngineSceneWalk(b)
 			if b.Label != "" {
 				boundElements = []map[string]any{{"type": "text", "id": textID}}
 			}
+			shapeType := umlShapeTypeV1EngineSceneWalk(b)
 			*elements = append(*elements, map[string]any{
-				"id": rectID, "type": "rectangle",
+				"id": rectID, "type": shapeType,
 				"x": b.X, "y": b.Y, "width": b.W, "height": b.H,
 				"angle": 0, "strokeColor": genStroke, "backgroundColor": backgroundColor,
 				"fillStyle": fillStyle, "strokeWidth": 1, "strokeStyle": "solid",
@@ -224,6 +226,7 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 				"isDeleted":     false,
 				"boundElements": boundElements,
 				"updated":       updated, "link": nil, "locked": false,
+				"customData": shapeCustomData,
 			})
 			if b.Tag == "entity" {
 				registerConnectionEndpointV1EngineSceneWalk(b, rectID, [4]float64{b.X, b.Y, b.W, b.H}, itemImgRects, itemImgIDs)
@@ -291,6 +294,48 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 	}
 	for _, c := range b.Children {
 		walkV1EngineSceneWalk(c, elements, files, svgGroupDir, catalogCSV, projectRoot, fsys, nextVisible, itemGroups, ancestorBoxes, itemImgRects, itemImgIDs, deps)
+	}
+}
+
+func umlShapeCustomDataV1EngineSceneWalk(box *entity.Box) map[string]any {
+	customData := map[string]any{}
+	if box == nil {
+		return customData
+	}
+	for source, target := range map[string]string{
+		"uml-id":                "xaligoUmlId",
+		"uml-local-id":          "xaligoUmlLocalId",
+		"uml-ref":               "xaligoUmlReference",
+		"uml-kind":              "xaligoUmlDiagramKind",
+		"uml-diagram-kind":      "xaligoUmlDiagramKind",
+		"uml-element-kind":      "xaligoUmlElementKind",
+		"uml-owner-id":          "xaligoUmlOwnerId",
+		"uml-owner-ref":         "xaligoUmlOwnerReference",
+		"uml-compartment-kinds": "xaligoUmlCompartmentKinds",
+		"from":                  "xaligoUmlTimeFrom",
+		"to":                    "xaligoUmlTimeTo",
+	} {
+		if value := strings.TrimSpace(box.Attrs[source]); value != "" {
+			customData[target] = value
+		}
+	}
+	if len(customData) == 0 {
+		return nil
+	}
+	return customData
+}
+
+func umlShapeTypeV1EngineSceneWalk(box *entity.Box) string {
+	if box == nil {
+		return "rectangle"
+	}
+	switch strings.TrimSpace(box.Attrs["uml-element-kind"]) {
+	case "use-case", "initial", "final":
+		return "ellipse"
+	case "decision", "merge", "choice", "history":
+		return "diamond"
+	default:
+		return "rectangle"
 	}
 }
 

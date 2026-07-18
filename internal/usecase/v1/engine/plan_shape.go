@@ -10,6 +10,8 @@ func shapeOpV1EnginePlanShape(el *entity.Element, frame rectV1EngineRouteTypes, 
 	kind := "rect"
 	if el.Type == "ellipse" {
 		kind = "ellipse"
+	} else if el.Type == "diamond" {
+		kind = "diamond"
 	}
 	ln := linePropsV1EnginePlanStyle(el, ppi)
 	fl := fillPropsV1EnginePlanStyle(el.BackgroundColor, opacityToTransparencyV1EnginePlanStyle(el.Opacity))

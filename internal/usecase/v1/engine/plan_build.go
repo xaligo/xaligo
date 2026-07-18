@@ -155,7 +155,7 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 			continue
 		}
 		switch el.Type {
-		case "frame", "rectangle", "ellipse":
+		case "frame", "rectangle", "ellipse", "diamond":
 			if op, ok := shapeOpV1EnginePlanShape(el, frame, ppi); ok {
 				if el.CustomData != nil && el.CustomData.DiffHighlight {
 					diffAreaHighlights = append(diffAreaHighlights, op)
@@ -223,9 +223,11 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 			ops = append(ops, op)
 		}
 		line := connectorLineV1EnginePlanConnectorDraw(el, style, ppi)
-		if op, labelRect, ok := connectorIDLabelOpV1EnginePlanConnectorLabel(connectorID, path, routed, obstacles, connectorLabelRects, frame, ppi, line); ok {
-			connectorLabels = append(connectorLabels, op)
-			connectorLabelRects = append(connectorLabelRects, labelRect)
+		if el.CustomData == nil || el.CustomData.UMLRelationKind == "" {
+			if op, labelRect, ok := connectorIDLabelOpV1EnginePlanConnectorLabel(connectorID, path, routed, obstacles, connectorLabelRects, frame, ppi, line); ok {
+				connectorLabels = append(connectorLabels, op)
+				connectorLabelRects = append(connectorLabelRects, labelRect)
+			}
 		}
 		connectorLegend = append(connectorLegend, connectorLegendEntryV1EnginePlanLegend(connectorID, el, line))
 	}

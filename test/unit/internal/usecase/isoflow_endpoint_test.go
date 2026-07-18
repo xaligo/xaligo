@@ -68,15 +68,17 @@ func TestRenderIsoflowPreservesNonItemConnectionEndpoints(t *testing.T) {
 	}
 }
 
-func TestRenderIsoflowDeduplicatesCrossFrameConnectionAndEmitsFrameEndpoint(t *testing.T) {
+func TestRenderIsoflowDeduplicatesCrossFrameConnectionAndEmitsUMLShapeEndpoint(t *testing.T) {
 	source := []byte(`<frames gap="80">
   <frame id="left" width="400" height="300">
     <rectangle id="left-node" title="Left Node" width="160" height="100" />
     <connection src="left" dst="left-node" />
-    <connection src="left-node" dst="right.right-node" kind="traffic" />
+    <connection src="left-node" dst="right.use-cases/remote" kind="traffic" />
   </frame>
   <frame id="right" width="400" height="300">
-    <rectangle id="right-node" title="Right Node" width="160" height="100" />
+    <uml id="use-cases"><use-case-diagram>
+      <use-case id="remote" title="Remote Use Case" />
+    </use-case-diagram></uml>
   </frame>
 </frames>`)
 
@@ -84,7 +86,7 @@ func TestRenderIsoflowDeduplicatesCrossFrameConnectionAndEmitsFrameEndpoint(t *t
 	view := document.Views[0]
 	leftFrameID := isoflowModelItemIDByName(t, document.Items, "left")
 	leftNodeID := isoflowModelItemIDByName(t, document.Items, "Left Node")
-	rightNodeID := isoflowModelItemIDByName(t, document.Items, "Right Node")
+	rightNodeID := isoflowModelItemIDByName(t, document.Items, "Remote Use Case")
 	viewItemIDs := isoflowViewItemIDs(view.Items)
 	for _, id := range []string{leftFrameID, leftNodeID, rightNodeID} {
 		if !viewItemIDs[id] {
@@ -107,6 +109,67 @@ func TestRenderIsoflowDeduplicatesCrossFrameConnectionAndEmitsFrameEndpoint(t *t
 	}
 	if crossFrameCount != 1 {
 		t.Fatalf("cross-frame logical connector count = %d, connectors=%#v", crossFrameCount, view.Connectors)
+	}
+}
+
+func TestRenderIsoflowPreservesUMLShapeEndpoints(t *testing.T) {
+	tests := []struct {
+		name           string
+		source         string
+		endpointNames  []string
+		connectorPairs [][2]string
+	}{
+		{
+			name: "use-case ellipse",
+			source: `<xaligo version="1"><data></data><frames><frame id="main" width="640" height="360">
+  <uml id="use-cases"><use-case-diagram direction="right">
+    <actor id="user" title="User"/><use-case id="sign-in" title="Sign in"/>
+    <association src="user" dst="sign-in"/>
+  </use-case-diagram></uml>
+</frame></frames></xaligo>`,
+			endpointNames:  []string{"User", "Sign in"},
+			connectorPairs: [][2]string{{"User", "Sign in"}},
+		},
+		{
+			name: "activity decision diamond",
+			source: `<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420">
+  <uml id="activity"><activity-diagram direction="right">
+    <action id="validate" title="Validate"/><decision id="decision" title="Valid?"/>
+    <action id="accept" title="Accept"/><action id="reject" title="Reject"/>
+    <control-flow src="validate" dst="decision"/>
+    <control-flow src="decision" dst="accept" guard="yes"/>
+    <control-flow src="decision" dst="reject" guard="no"/>
+  </activity-diagram></uml>
+</frame></frames></xaligo>`,
+			endpointNames: []string{"Validate", "Valid?", "Accept", "Reject"},
+			connectorPairs: [][2]string{
+				{"Validate", "Valid?"}, {"Valid?", "Accept"}, {"Valid?", "Reject"},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			document := renderIsoflowDocument(t, []byte(test.source))
+			view := document.Views[0]
+			viewItemIDs := isoflowViewItemIDs(view.Items)
+			modelIDs := make(map[string]string, len(test.endpointNames))
+			for _, name := range test.endpointNames {
+				modelID := isoflowModelItemIDByName(t, document.Items, name)
+				if !viewItemIDs[modelID] {
+					t.Fatalf("UML endpoint %q is not positioned in the Isoflow view: %#v", name, view.Items)
+				}
+				modelIDs[name] = modelID
+			}
+			if len(view.Connectors) != len(test.connectorPairs) {
+				t.Fatalf("connectors = %#v, want %d", view.Connectors, len(test.connectorPairs))
+			}
+			for _, pair := range test.connectorPairs {
+				if !isoflowHasConnectorBetween(view.Connectors, modelIDs[pair[0]], modelIDs[pair[1]]) {
+					t.Fatalf("UML connector %q -> %q is missing: %#v", pair[0], pair[1], view.Connectors)
+				}
+			}
+		})
 	}
 }
 
@@ -158,4 +221,16 @@ func isoflowViewItemIDs(items []entity.IsoflowViewItem) map[string]bool {
 		ids[item.ID] = true
 	}
 	return ids
+}
+
+func isoflowHasConnectorBetween(connectors []entity.IsoflowConnector, source, target string) bool {
+	for _, connector := range connectors {
+		if len(connector.Anchors) < 2 {
+			continue
+		}
+		if connector.Anchors[0].Ref.Item == source && connector.Anchors[len(connector.Anchors)-1].Ref.Item == target {
+			return true
+		}
+	}
+	return false
 }

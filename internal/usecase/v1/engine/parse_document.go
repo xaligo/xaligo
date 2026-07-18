@@ -125,7 +125,7 @@ func ParseWithImportsV1EngineParseDocument(r io.Reader, imports *entity.ImportSo
 					return entity.Document{}, &entity.ParseError{Position: node.Position, Err: fmt.Errorf("parse <generic-group>: %w", err)}
 				}
 			}
-			if isConnectableFrameTagV1EngineParseNode(node.Tag) {
+			if isConnectableFrameTagV1EngineParseNode(node.Tag) && !isUMLCompartmentStartV1EngineParseDocument(stack, node) {
 				if err := validateConnectableFrameNodeV1EngineParseNode(node); err != nil {
 					loggerV1EngineSharedLogging.ERROR(IUPP007V1EngineParseDocument, "connectable frame validation failed", map[string]any{"error": err})
 					return entity.Document{}, &entity.ParseError{Position: node.Position, Err: err}
@@ -231,6 +231,22 @@ func ParseWithImportsV1EngineParseDocument(r io.Reader, imports *entity.ImportSo
 	}
 
 	return entity.Document{Root: root, Data: dataNode, Envelope: envelope, LegacyRoot: legacyRoot}, nil
+}
+
+func isUMLCompartmentStartV1EngineParseDocument(stack []*entity.Node, node *entity.Node) bool {
+	if node == nil || len(stack) == 0 || !umlCompartmentTagsV1EngineParseUml[node.Tag] {
+		return false
+	}
+	parent := stack[len(stack)-1]
+	if parent == nil || !umlElementTagsV1EngineParseUml[parent.Tag] {
+		return false
+	}
+	for index := len(stack) - 2; index >= 0; index-- {
+		if stack[index].Tag == "uml" || stack[index].Tag == "uml-model" {
+			return true
+		}
+	}
+	return false
 }
 
 func positionAtV1EngineParseDocument(data []byte, offset int) entity.Position {

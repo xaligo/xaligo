@@ -397,36 +397,267 @@ indexes, checks, and import dialects remain planned V1 extensions.
 
 ## UML Tags
 
-`<uml>` requires exactly one diagram-kind child. V1 supports
-`class-diagram`, `object-diagram`, `component-diagram`, `deployment-diagram`,
-`package-diagram`, `composite-structure-diagram`, `profile-diagram`,
-`use-case-diagram`, `activity-diagram`, `state-machine-diagram`,
-`sequence-diagram`, `communication-diagram`, `interaction-overview-diagram`,
-and `timing-diagram`.
+`<uml>` is the common V1 component for the fourteen UML diagram families. It
+adapts their typed elements, compartments, and relations to xaligo's shared
+layout, shape, connector, and output pipeline. Supporting a family selector
+does not imply support for every UML 2.x glyph or interchange construct; the
+closed V1 vocabulary and its projection limits are defined below.
+
+### Component, identity, and layout contract
 
 ```xml
-<uml id="domain" title="Domain Model">
-  <class-diagram direction="right">
-    <class id="user" title="User">
-      <attribute>id: bigint</attribute>
-      <operation>login()</operation>
-    </class>
-    <class id="role" title="Role" />
-    <association src="user" dst="role" title="has" />
-  </class-diagram>
-</uml>
+<xaligo version="1">
+  <data>
+    <uml-model id="domain-model">
+      <class id="order" title="Order">
+        <attribute>- id: UUID</attribute>
+        <operation>+ confirm()</operation>
+      </class>
+      <interface id="repository" title="OrderRepository">
+        <operation>save(order: Order)</operation>
+      </interface>
+      <realization src="order" dst="repository" title="persists" />
+    </uml-model>
+  </data>
+  <frames>
+    <frame id="domain" width="960" height="540">
+      <uml id="model" title="Domain Model">
+        <class-diagram data="domain-model" direction="right" />
+      </uml>
+    </frame>
+  </frames>
+</xaligo>
 ```
 
-Every UML element requires a diagram-local `id`. Child tags become ordered
-text compartments. Relations require existing `src` and `dst` IDs and retain
-their UML relation kind while lowering to the shared connector model.
-Duplicate IDs, missing references, empty diagrams, unknown children, and zero
-or multiple diagram-kind children are positioned errors.
+The following rules are normative:
 
-Reusable definitions use `<uml-model id="...">` below `<data>` and are selected
-with `data="model-id"` on the diagram-kind child. Inline content and `data`
-cannot be combined. All output formats consume the same resolved shapes and
-connections.
+- `<uml>` must be inside a frame, requires a non-empty `id`, and contains
+  exactly one supported diagram-kind child. UML IDs must be unique within that
+  frame. The same UML ID may be reused in a different frame.
+- UML component IDs and diagram-local element IDs must not contain whitespace,
+  `.` or `/`. `.` is reserved for the frame boundary and `/` for the UML
+  boundary in public connection references.
+- The diagram-kind child contains a non-empty set of direct element and
+  relation children. Unknown diagram kinds and unknown children are errors;
+  arbitrary custom tags are not generic UML elements.
+- Every UML element requires a non-empty diagram-local `id`, unique within the
+  UML component. A UML relation's `src` and `dst` use those local IDs, without
+  a UML or frame prefix, and both endpoints must exist in the selected model.
+- `direction` on the diagram-kind child accepts only `right` or `down`. When
+  `<uml layout>` is omitted, `direction="right"`, sequence diagrams, and timing
+  diagrams select horizontal xaligo layout; the other cases select vertical
+  layout. This controls the V1 projection and is not a UML semantic ordering
+  rule.
+- When `<uml title>` is omitted, the selector name without `-diagram` is used.
+  Element labels resolve in the order `title`, `name`, direct text, then local
+  `id`. UML elements default to `font-family="helvetica"` and `font-size="14"`;
+  normal element font attributes override those defaults. An element `name`
+  is display text only and never becomes a frame-level connection alias; use
+  the public UML reference described below.
+- The compatibility tags `<element>` and `<relation>` are not part of the
+  strict V1 UML profile. A model must use one of the element and relation tags
+  allowed for its selected family.
+
+UML elements are also normal xaligo connection endpoints. A frame-level
+`<connection>` uses the following public references; the internal hex-scoped
+scene ID is opaque and must not be written in source:
+
+| Location | Public endpoint reference | Meaning |
+|---|---|---|
+| Same frame | `uml-id/local-id` | Element `local-id` in UML component `uml-id` |
+| Another frame | `frame-id.uml-id/local-id` | The same UML element reached across a frame boundary |
+
+For example, element `order` in `<uml id="model">` inside frame `overview` is
+`model/order` to a normal connection in that frame and
+`overview.model/order` to a normal connection in another frame. Omitting the
+`frame-id.` prefix for a cross-frame endpoint is an unresolved-reference
+error. UML-native relations continue to use `src="order"`, not either public
+connection form.
+
+### Diagram-kind vocabulary
+
+| Diagram kind | Allowed elements | Allowed relations | Additional V1 semantic checks |
+|---|---|---|---|
+| `class-diagram` | `class`, `interface`, `enumeration` | `association`, `aggregation`, `composition`, `generalization`, `realization`, `dependency` | Requires one classifier. Aggregation/composition are class to class; generalization joins equal classifier kinds; realization is class to interface. |
+| `object-diagram` | `object` | `link`, `dependency` | Requires one object. Every relation endpoint is an object. |
+| `component-diagram` | `component`, `interface`, `port`, `artifact` | `dependency`, `realization`, `association`, `assembly`, `delegation` | Requires one component. Realization is component to interface. Assembly uses port/interface endpoints and includes a port. A port requires a component owner. Delegation is port to component/port. |
+| `deployment-diagram` | `node`, `artifact`, `component` | `deployment`, `communication-path`, `dependency` | Requires one node. Deployment is artifact/component to node; communication-path is node to node. |
+| `package-diagram` | `package`, `class`, `interface`, `component` | `dependency`, `package-import`, `package-merge` | Requires one package. Import/merge are package to package. |
+| `composite-structure-diagram` | `structure`, `collaboration`, `part`, `port`, `component` | `connector`, `assembly`, `delegation`, `dependency` | Requires a part or port. Parts/ports require typed owners. Connector endpoints are parts/ports, assembly is port to port, and delegation starts at a port. |
+| `profile-diagram` | `profile`, `stereotype`, `metaclass` | `extension`, `reference`, `generalization` | Requires a profile and stereotype. Extension is stereotype to metaclass; generalization is stereotype to stereotype. |
+| `use-case-diagram` | `actor`, `use-case`, `system-boundary` | `association`, `include`, `extend`, `generalization` | Requires a use case. Association joins actor and use-case; include/extend join use-cases; generalization joins equal actor/use-case kinds. |
+| `activity-diagram` | `initial`, `final`, `activity`, `action`, `decision`, `merge`, `fork`, `join`, `object-node` | `control-flow`, `object-flow` | Requires an activity/action. Control-flow excludes object-node. Object-flow requires an object-node endpoint. Initial/final direction and control-node degrees are validated. |
+| `state-machine-diagram` | `initial`, `final`, `state`, `history`, `choice`, `fork`, `join` | `transition` | Requires a state. Initial/final direction and pseudostate degrees are validated. |
+| `sequence-diagram` | `participant`, `lifeline` | `message`, `return-message`, `create-message`, `destroy-message` | Requires a participant/lifeline. Every message has a diagram-unique order. Create/destroy cannot be self messages. |
+| `communication-diagram` | `object`, `participant` | `link`, `message` | Requires two participants, one link, and one message. Every message has a unique order and matching unordered link pair. |
+| `interaction-overview-diagram` | `initial`, `final`, `interaction`, `decision`, `fork`, `join` | `control-flow` | Requires an interaction. Initial/final direction and control-node degrees are validated. |
+| `timing-diagram` | `lifeline`, `time-state` | `transition`, `occurrence`, `duration` | Requires a lifeline and time-state. Time-state intervals do not overlap per owner. Transition joins chronological states of one owner; occurrence has `at`; duration joins time-states. |
+
+The endpoint contracts above are closed. An admitted relation with an endpoint
+pair not described by its row is a validation error.
+
+### Ownership
+
+`owner` is a same-diagram local element reference. Forward references are
+allowed because ownership is resolved after all elements are collected, but
+the referenced element must exist and have an allowed kind.
+
+| Element and diagram | `owner` | Allowed owner kinds |
+|---|---|---|
+| `component-diagram/port` | required | `component` |
+| `composite-structure-diagram/part` | required | `structure`, `component`, `collaboration` |
+| `composite-structure-diagram/port` | required | `structure`, `part`, `component`, `collaboration` |
+| `use-case-diagram/use-case` | optional | `system-boundary` |
+| `timing-diagram/time-state` | required | `lifeline` |
+
+Every other use of `owner` is invalid. Ownership is retained as semantic
+metadata and a stable reference. The V1 shared layout is flat and does not
+promise that an owned shape is spatially nested inside its owner.
+
+### Element compartments
+
+An element's direct child tags are ordered text compartments. Each compartment
+must have non-whitespace direct text, `title`, or `name` and must not contain
+child elements. Nested UML elements and relations are not compartments. The
+typed compartment vocabulary is:
+
+| Element | Allowed typed compartments |
+|---|---|
+| `class` | `attribute`, `operation`, `constraint`, `note` |
+| `interface` | `operation`, `constraint`, `note` |
+| `enumeration` | `literal`, `operation`, `note` |
+| `object` | `slot`, `note` |
+| `component` | `provided-interface`, `required-interface`, `responsibility`, `note` |
+| `node`, `artifact` | `property`, `responsibility`, `note` |
+| `package` | `responsibility`, `note` |
+| `structure` | `property`, `provided-interface`, `required-interface`, `note` |
+| `part` | `property`, `responsibility`, `note` |
+| `profile` | `constraint`, `note` |
+| `stereotype` | `property`, `constraint`, `note` |
+| `metaclass` | `property`, `note` |
+| `actor` | `responsibility`, `note` |
+| `use-case`, `activity`, `action` | `responsibility`, `constraint`, `note` |
+| `state` | `entry`, `do`, `exit`, `region`, `note` |
+| `interaction` | `note` |
+| `time-state` | `region`, `constraint`, `note` |
+
+Elements absent from this table do not accept compartments. The generic
+`<compartment>` child is a compatibility spelling accepted wherever a typed
+compartment is allowed; new source should use the typed tag because its meaning
+survives future semantic processing. Compartment source order is preserved,
+but compartments are not independent connection endpoints.
+
+### Relation attributes, order, and time
+
+Every relation requires `src` and `dst`. `title` or `label` supplies its
+visible text. `guard` is allowed only on flows/transitions and is appended as
+`[guard]`. `src-multiplicity` and `dst-multiplicity` are allowed only on
+association, aggregation, composition, and link and are appended in
+source-to-destination order. Relation color and normal connector side, anchor,
+stroke-width, bend, scale, and grid attributes use the `<connection>` rules.
+`kind`, `stroke-style`, `arrowhead`, `start-arrowhead`, and `end-arrowhead` are
+invalid because the UML relation kind owns line and marker semantics.
+
+Sequence and communication message kinds require `order`. Its canonical form
+is one or more positive decimal integers without leading zeroes, separated by
+dots, for example `1`, `2`, or `1.1`. The complete order string must be unique
+across all messages in one diagram. Numeric order is prepended to the rendered
+label and assigns top-to-bottom connector anchors on participant/lifeline
+shapes. It does not reorder declared elements or create activation boxes or a
+separate interaction axis. Sequence message anchors always use a vertical
+element edge so the ordering remains vertical: explicit `top` is normalized to
+`left`, explicit `bottom` to `right`, and an explicit anchor slot is superseded
+by the normalized order position.
+
+In a communication diagram, a message is valid only when a `<link>` connects
+the same two endpoints. Link direction is ignored for this structural check,
+so a link `a -> b` also supports a message `b -> a`.
+
+Timing attributes use finite base-10 numbers in one caller-chosen unit. Unit
+suffixes such as `20ms` are invalid; put the unit in a label instead.
+
+| Timing construct | Required attributes | Domain |
+|---|---|---|
+| `time-state` | `owner`, `from`, `to` | `owner` is a lifeline; `from >= 0`; `to > from` |
+| `occurrence` | `src`, `dst`, `at` | `at >= 0`; both endpoints are lifelines or time-states |
+| `duration` | `src`, `dst`; optional `from` and `to` pair | Both endpoints are time-states; when supplied, `from >= 0` and `to > from` |
+
+### Relation projection
+
+UML relations lower to the shared orthogonal connector model with the
+following fixed semantic defaults:
+
+| Projection | Relation kinds |
+|---|---|
+| Dashed line with destination triangle | `dependency`, `realization`, `package-import`, `package-merge`, `reference`, `include`, `extend`, `return-message`, `deployment` |
+| Solid line with destination triangle | `generalization`, `control-flow`, `object-flow`, `transition`, `message`, `create-message`, `destroy-message`, `delegation`, `extension` |
+| Source diamond | `aggregation`, `composition` |
+| No destination arrowhead | `association`, `link`, `occurrence`, `duration`, `communication-path`, `assembly`, `connector` |
+
+The visible relation label is placed near the routed connector midpoint and
+the UML diagram/relation kind is retained as semantic metadata where the target
+format can carry it.
+
+### Reusable UML models
+
+Reusable definitions use `<uml-model id="...">` directly below document
+`<data>`. A diagram-kind child selects one with `data="model-id"`:
+
+```xml
+<data>
+  <uml-model id="order-objects">
+    <object id="customer" title="customer: Customer">
+      <slot>name = Alice</slot>
+    </object>
+    <object id="order" title="order42: Order">
+      <slot>status = Confirmed</slot>
+    </object>
+    <link src="customer" dst="order" title="placed" />
+  </uml-model>
+</data>
+<frames>
+  <frame id="snapshot">
+    <uml id="runtime"><object-diagram data="order-objects" direction="right" /></uml>
+  </frame>
+</frames>
+```
+
+`<uml-model>` requires a document-unique ID. A missing model, duplicate model
+ID, or a diagram that combines `data` with inline children is an error. The
+model itself does not declare a UML family; after expansion, all of its element,
+compartment, ownership, relation, order, and endpoint rules are validated
+against the selecting diagram kind. One reusable model is therefore reusable
+across selectors only when every child belongs to each selector's closed
+vocabulary.
+
+### Deliberately lossy V1 projection
+
+V1 preserves the selected UML family, element kind, relation kind, owner, and
+relation label in the shared semantic scene, then projects them into the
+capabilities common to xaligo outputs:
+
+- `use-case`, `initial`, and `final` become ellipses;
+- `decision`, `merge`, `choice`, and `history` become diamonds;
+- every other element becomes an editable rectangle whose ordered
+  compartments are flattened into its visible text;
+- every relation becomes a shared orthogonal connector with a separate label;
+  aggregation and composition currently share the same diamond projection;
+- sequence order is retained in labels and metadata and controls top-to-bottom
+  message anchors, but V1 does not draw dashed lifelines, activations, combined
+  fragments, or a separate vertical event axis;
+- timing intervals and occurrences are validated and retained, but V1 does not
+  draw a continuous time axis, waveforms, or proportional time geometry; and
+- `owner` records semantic containment without requiring spatial nesting.
+
+SVG, Excalidraw, PPTX, XYFlow, and Isoflow all consume this same resolved
+geometry. Excalidraw-compatible output carries xaligo UML custom data for
+editing. XYFlow retains UML node and relation fields in node/edge `data` and
+records the projected node shape. Isoflow projects every connected UML shape
+to a labeled generic endpoint icon because its upstream connector schema has no
+arbitrary UML data field. Another target schema may omit marker details it
+cannot represent. An encoder must use native target constructs where available
+and must not add private schema-breaking fields. The output is not XMI and is not a
+lossless UML interchange representation.
 
 ## `<item>` Tag
 

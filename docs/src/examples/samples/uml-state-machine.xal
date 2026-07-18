@@ -1,0 +1,49 @@
+<xaligo version="1">
+  <data></data>
+  <frames>
+    <frame id="state-machine" width="1680" height="860" class="pa-3">
+      <uml id="order-state" title="Order State Machine">
+        <state-machine-diagram direction="right">
+          <initial id="start" title="Start" />
+          <state id="draft" title="Draft">
+            <entry>create order</entry>
+            <do>edit order lines</do>
+            <exit>validate order</exit>
+          </state>
+          <state id="submitted" title="Submitted">
+            <entry>request payment</entry>
+          </state>
+          <choice id="payment-result" title="Payment result?" />
+          <state id="paid" title="Paid">
+            <entry>record authorization</entry>
+            <do>prepare fulfilment</do>
+          </state>
+          <state id="cancelled" title="Cancelled">
+            <entry>release reservations</entry>
+          </state>
+          <state id="paused" title="Fulfilment Paused">
+            <do>wait for operator</do>
+          </state>
+          <history id="fulfilment-history" title="H*" />
+          <state id="fulfilled" title="Fulfilled">
+            <entry>publish shipment event</entry>
+          </state>
+          <final id="closed" title="Closed" />
+
+          <transition src="start" dst="draft" />
+          <transition src="draft" dst="submitted" title="submit" guard="valid" />
+          <transition src="submitted" dst="payment-result" title="payment completed" />
+          <transition src="payment-result" dst="paid" guard="authorized" />
+          <transition src="payment-result" dst="submitted" guard="retryable" />
+          <transition src="payment-result" dst="cancelled" guard="declined" />
+          <transition src="paid" dst="paused" title="pause fulfilment" />
+          <transition src="paused" dst="fulfilment-history" title="resume" />
+          <transition src="fulfilment-history" dst="paid" title="restore last substate" />
+          <transition src="paid" dst="fulfilled" title="ship" />
+          <transition src="fulfilled" dst="closed" title="complete" />
+          <transition src="cancelled" dst="closed" title="close" />
+        </state-machine-diagram>
+      </uml>
+    </frame>
+  </frames>
+</xaligo>

@@ -66,7 +66,7 @@ Example:
       <database data="application-schema" notation="crow-foot" />
     </frame>
     <frame id="domain">
-      <uml>
+      <uml id="domain-view">
         <class-diagram data="domain-model" />
       </uml>
     </frame>
@@ -246,27 +246,44 @@ uml
 Example:
 
 ```xml
-<uml id="domain-view" title="Domain Model" theme="default">
-  <class-diagram data="domain-model" layout="elk" direction="right" />
+<uml id="domain-view" title="Domain Model">
+  <class-diagram data="domain-model" direction="right" />
 </uml>
 ```
 
 No child and multiple diagram-kind children are validation errors. Unknown
-kinds are rejected instead of being treated as generic groups. Common `uml`
-properties include `id`, `title`, `theme`, `style`, `data`, and visibility.
-The child may override inherited data or style values.
+kinds are rejected instead of being treated as generic groups. Every UML
+component requires a stable ID that is unique in its frame. The diagram child
+accepts `direction="right|down"` and either inline children or one `data`
+reference, never both. Every element has a diagram-local ID, and relations use
+those local IDs for `src` and `dst`.
 
-V1 implements all fourteen diagram-kind selectors through shared typed element,
-compartment, relation, interaction, and timeline primitives. The selected kind
-is retained as semantic metadata while each element and relation is validated
-before lowering to renderer-neutral shapes and connectors.
+V1 implements all fourteen diagram-kind selectors through closed per-family
+element and relation vocabularies. It validates ownership for ports, composite
+parts, use cases, and timing states; message order for sequence and
+communication diagrams; structural links for communication messages; and
+numeric intervals/events for timing diagrams. Neutral `element` and `relation`
+escape hatches are not part of the strict profile. The authoritative matrix,
+compartment vocabulary, endpoint constraints, and timing domains are in the
+[UML language reference](../xal/uml.md).
 
 Existing layout ideas are reused at the component boundary: `<uml>` can sit in
 rows, columns, grids, or containers and returns resolved width, height, draw
-operations, anchors, and links. Inside `<uml>`, its selected processor owns the
-layout. Existing item icons may be embedded where a UML element explicitly
-permits them. Existing line concepts inform edge style, anchors, bends,
-routing, and line jumps, but UML relationships keep their own semantic kinds.
+operations, anchors, and links. UML component and local IDs reserve `.` and
+`/`; normal connections address a UML element as `uml-id/local-id` in the same
+frame or `frame-id.uml-id/local-id` across frames. Existing line concepts
+provide edge style, anchors, bends, routing, and line jumps, while UML
+relationships keep their own semantic kinds.
+
+The current V1 renderer is deliberately a common-capability projection. It
+uses ellipses for use cases and initial/final nodes, diamonds for decision-like
+nodes, rectangles with flattened text compartments for the other elements,
+and orthogonal semantic connectors for relations. Sequence order sets
+top-to-bottom connector anchors but does not draw separate lifeline/activation
+axes; timing diagrams do not draw proportional waveforms, and semantic owners
+do not imply spatial nesting. This keeps the resolved geometry shared by SVG,
+Excalidraw, PPTX, XYFlow, and Isoflow; target formats may omit UML metadata or
+marker details they cannot represent without private schema extensions.
 
 ## Imports and overrides
 

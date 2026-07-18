@@ -120,7 +120,7 @@ func isoflowEndpointElement(element entity.Element) bool {
 		return false
 	}
 	switch element.Type {
-	case "rectangle":
+	case "rectangle", "ellipse", "diamond":
 		return true
 	case "frame":
 		return element.ID != "paper-frame"

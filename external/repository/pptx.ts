@@ -81,6 +81,7 @@ async function drawOp(slide: pptxgen.Slide, pptx: pptxgen, op: PlanOp): Promise<
   switch (op.kind) {
     case 'rect':
     case 'ellipse':
+    case 'diamond':
       drawShape(slide, pptx, op);
       break;
     case 'polygon':
@@ -121,7 +122,11 @@ function drawPolygon(slide: pptxgen.Slide, op: PlanOp): void {
 }
 
 function drawShape(slide: pptxgen.Slide, pptx: pptxgen, op: PlanOp): void {
-  const shapeType = op.kind === 'ellipse' ? pptx.ShapeType.ellipse : pptx.ShapeType.rect;
+  const shapeType = op.kind === 'ellipse'
+    ? pptx.ShapeType.ellipse
+    : op.kind === 'diamond'
+      ? pptx.ShapeType.diamond
+      : pptx.ShapeType.rect;
   slide.addShape(shapeType, {
     x: op.x,
     y: op.y,

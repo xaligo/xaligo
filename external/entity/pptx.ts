@@ -106,7 +106,7 @@ export interface PlanPoint {
   moveTo?: boolean;
 }
 
-export type PlanOpKind = 'rect' | 'ellipse' | 'polygon' | 'text' | 'image' | 'line';
+export type PlanOpKind = 'rect' | 'ellipse' | 'diamond' | 'polygon' | 'text' | 'image' | 'line';
 
 export type PlanTextRole = 'label' | 'group-header' | 'item-label' | 'port-label' | 'connector-label';
 export type PlanTextFit = 'none' | 'shrink';

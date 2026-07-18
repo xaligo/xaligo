@@ -70,6 +70,9 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 		dstCx := dstImgRect[0] + dstImgRect[2]/2
 		dstCy := dstImgRect[1] + dstImgRect[3]/2
 		srcSide, dstSide := connectionSideV1EngineSceneConnection(srcCx, srcCy, dstCx, dstCy)
+		if conn.Attr("uml-diagram-kind") == "sequence-diagram" && srcIDStr == dstIDStr {
+			srcSide, dstSide = "right", "right"
+		}
 		bends := connectionBendPointsV1EngineSceneConnection(conn)
 		srcAnchor, hasSrcAnchor := connectionEndpointAnchorV1EngineSceneConnectionRoute(conn, "src")
 		dstAnchor, hasDstAnchor := connectionEndpointAnchorV1EngineSceneConnectionRoute(conn, "dst")
@@ -86,6 +89,10 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 			dstSide = string(explicit)
 		} else if len(bends) > 0 {
 			dstSide = sideTowardPointV1EngineSceneConnection(dstImgRect, bends[len(bends)-1])
+		}
+		if _, ok := umlSequencePositionV1EngineSceneConnectionRoute(conn, "src"); ok {
+			srcSide = umlSequenceVerticalSideV1EngineSceneConnectionRoute(srcSide)
+			dstSide = umlSequenceVerticalSideV1EngineSceneConnectionRoute(dstSide)
 		}
 
 		// Choose element: bottom edge → label text box; other edges → image element.
@@ -126,6 +133,12 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 		dstFP := fixedPointForSideV1EngineSceneConnection(dstSide)
 		if hasDstAnchor {
 			dstFP = fixedPointForAnchorV1EngineSceneConnection(dstAnchor)
+		}
+		if fp, ok := umlSequenceFixedPointV1EngineSceneConnectionRoute(conn, "src", srcSide); ok {
+			srcFP = fp
+		}
+		if fp, ok := umlSequenceFixedPointV1EngineSceneConnectionRoute(conn, "dst", dstSide); ok {
+			dstFP = fp
 		}
 		srcEdge := rectFixedPointV1EngineSceneConnection(srcRect, srcFP)
 		dstEdge := rectFixedPointV1EngineSceneConnection(dstRect, dstFP)
@@ -215,6 +228,7 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 			customData["xaligoConnectorEndAnchor"] = true
 		}
 		applyDatabaseConnectionMetadataV1EngineSceneConnectionRender(customData, conn)
+		applyUMLConnectionMetadataV1EngineSceneConnectionRender(customData, conn)
 		applyConnectionDiffStatusV1EngineSceneDiffHighlight(customData, conn)
 
 		*elements = append(*elements, map[string]any{
@@ -250,6 +264,7 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 			"elbowed":            true,
 			"customData":         customData,
 		})
+		appendUMLRelationLabelV1EngineSceneConnectionRender(elements, conn, connID, routePoints, style.Color, updated, seed)
 
 		// Register this arrow in boundMap for both endpoints.
 		entry := map[string]any{"type": "arrow", "id": connID}
@@ -297,6 +312,84 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 			(*elements)[idx] = elem
 		}
 	}
+}
+
+func applyUMLConnectionMetadataV1EngineSceneConnectionRender(customData map[string]any, conn *entity.Node) {
+	if customData == nil || conn == nil {
+		return
+	}
+	for source, target := range map[string]string{
+		"uml-id":               "xaligoUmlId",
+		"uml-diagram-kind":     "xaligoUmlDiagramKind",
+		"uml-relation-kind":    "xaligoUmlRelationKind",
+		"uml-relation-label":   "xaligoUmlRelationLabel",
+		"uml-src-ref":          "xaligoUmlRelationSourceReference",
+		"uml-dst-ref":          "xaligoUmlRelationDestinationReference",
+		"uml-order":            "xaligoUmlMessageOrder",
+		"uml-guard":            "xaligoUmlGuard",
+		"uml-src-multiplicity": "xaligoUmlSourceMultiplicity",
+		"uml-dst-multiplicity": "xaligoUmlDestinationMultiplicity",
+		"uml-at":               "xaligoUmlOccurrenceAt",
+		"uml-from":             "xaligoUmlDurationFrom",
+		"uml-to":               "xaligoUmlDurationTo",
+	} {
+		if value := strings.TrimSpace(conn.Attr(source)); value != "" {
+			customData[target] = value
+		}
+	}
+}
+
+func appendUMLRelationLabelV1EngineSceneConnectionRender(elements *[]map[string]any, conn *entity.Node, connID string, routePoints []ptV1EngineRouteTypes, color string, updated int64, seed int) {
+	label := strings.TrimSpace(conn.Attr("uml-relation-label"))
+	if label == "" || len(routePoints) == 0 {
+		return
+	}
+	point := umlRelationLabelPointV1EngineSceneConnectionRender(routePoints, seed)
+	width := math.Max(80, math.Min(220, textWidthV1EngineSceneItem(label, 6)+16))
+	const height = 20.0
+	labelID := connID + "-uml-label"
+	customData := map[string]any{}
+	applyUMLConnectionMetadataV1EngineSceneConnectionRender(customData, conn)
+	customData["xaligoTextLayout"] = sceneTextLayoutV1EngineSceneBuild(entity.TextRoleConnectorLabel, true, 1.2)
+	*elements = append(*elements, map[string]any{
+		"id": labelID, "type": "text", "x": point.X - width/2, "y": point.Y - height/2,
+		"width": width, "height": height, "angle": 0,
+		"strokeColor": color, "backgroundColor": "#ffffff",
+		"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
+		"roughness": 0, "opacity": 100, "groupIds": []string{}, "roundness": nil,
+		"seed": seed + 1000, "version": 1, "versionNonce": seed + 1000,
+		"isDeleted": false, "boundElements": nil, "updated": updated, "link": nil, "locked": false,
+		"text": label, "fontSize": 12.0, "fontFamily": 2,
+		"textAlign": "center", "verticalAlign": "middle", "containerId": nil,
+		"originalText": label, "lineHeight": 1.2,
+		"customData": customData,
+	})
+}
+
+func umlRelationLabelPointV1EngineSceneConnectionRender(routePoints []ptV1EngineRouteTypes, seed int) ptV1EngineRouteTypes {
+	if len(routePoints) < 2 {
+		return routePoints[0]
+	}
+	bestStart, bestEnd := routePoints[0], routePoints[1]
+	bestLength := math.Hypot(bestEnd.X-bestStart.X, bestEnd.Y-bestStart.Y)
+	for index := 1; index < len(routePoints)-1; index++ {
+		start, end := routePoints[index], routePoints[index+1]
+		length := math.Hypot(end.X-start.X, end.Y-start.Y)
+		if length > bestLength {
+			bestStart, bestEnd, bestLength = start, end, length
+		}
+	}
+	point := ptV1EngineRouteTypes{X: (bestStart.X + bestEnd.X) / 2, Y: (bestStart.Y + bestEnd.Y) / 2}
+	offset := 12.0 + float64(seed%3)*6
+	if seed%2 != 0 {
+		offset = -offset
+	}
+	if math.Abs(bestEnd.X-bestStart.X) >= math.Abs(bestEnd.Y-bestStart.Y) {
+		point.Y += offset
+	} else {
+		point.X += offset
+	}
+	return point
 }
 
 func applyDatabaseConnectionMetadataV1EngineSceneConnectionRender(customData map[string]any, conn *entity.Node) {

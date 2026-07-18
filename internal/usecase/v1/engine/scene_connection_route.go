@@ -121,6 +121,12 @@ func excalidrawRouteRequestV1EngineSceneConnectionRoute(conn *entity.Node, srcRe
 		fp := fixedPointForAnchorV1EngineSceneConnection(anchor)
 		req.DstAnchor = &ptV1EngineRouteTypes{X: dst.X + dst.W*fp[0], Y: dst.Y + dst.H*fp[1]}
 	}
+	if fp, ok := umlSequenceFixedPointV1EngineSceneConnectionRoute(conn, "src", srcSide); ok {
+		req.SrcAnchor = &ptV1EngineRouteTypes{X: src.X + src.W*fp[0], Y: src.Y + src.H*fp[1]}
+	}
+	if fp, ok := umlSequenceFixedPointV1EngineSceneConnectionRoute(conn, "dst", dstSide); ok {
+		req.DstAnchor = &ptV1EngineRouteTypes{X: dst.X + dst.W*fp[0], Y: dst.Y + dst.H*fp[1]}
+	}
 	if scale, ok := positiveFloatAttrV1EngineSceneConnectionRoute(conn, "coordinate-scale", "scale"); ok {
 		req.Bends = parseConnectorBendsV1EnginePlanConnectorPrepare(connectionBendsV1EngineSceneConnectionRoute(conn), scale)
 	} else {
@@ -130,6 +136,44 @@ func excalidrawRouteRequestV1EngineSceneConnectionRoute(conn *entity.Node, srcRe
 		req.Grid = grid
 	}
 	return req
+}
+
+func umlSequenceFixedPointV1EngineSceneConnectionRoute(conn *entity.Node, endpoint, side string) ([2]float64, bool) {
+	position, ok := umlSequencePositionV1EngineSceneConnectionRoute(conn, endpoint)
+	if !ok {
+		return [2]float64{}, false
+	}
+	switch umlSequenceVerticalSideV1EngineSceneConnectionRoute(side) {
+	case "left":
+		return [2]float64{0, position}, true
+	default:
+		return [2]float64{1, position}, true
+	}
+}
+
+func umlSequencePositionV1EngineSceneConnectionRoute(conn *entity.Node, endpoint string) (float64, bool) {
+	if conn == nil || conn.Attr("uml-diagram-kind") != "sequence-diagram" {
+		return 0, false
+	}
+	position, err := strconv.ParseFloat(strings.TrimSpace(conn.Attr("uml-sequence-position")), 64)
+	if err != nil || math.IsNaN(position) || math.IsInf(position, 0) || position <= 0 || position >= 1 {
+		return 0, false
+	}
+	if endpoint == "dst" && conn.Attr("src") == conn.Attr("dst") {
+		position = math.Min(0.98, position+0.04)
+	}
+	return position, true
+}
+
+func umlSequenceVerticalSideV1EngineSceneConnectionRoute(side string) string {
+	switch side {
+	case "top":
+		return "left"
+	case "bottom":
+		return "right"
+	default:
+		return side
+	}
 }
 
 func excalidrawRouteObstaclesV1EngineSceneConnectionRoute(elements []map[string]any) []rectV1EngineRouteTypes {
