@@ -117,6 +117,30 @@ when possible.
 
 ## Cross-frame Connections
 
+References without a dot are resolved only inside the frame containing the
+connection. Use `frameId.id` to address an endpoint in another frame:
+
+```xml
+<frames>
+  <frame id="overview">
+    <rectangle id="web" />
+    <connection src="web" dst="detail.db" />
+  </frame>
+  <frame id="detail">
+    <rectangle id="db" />
+  </frame>
+</frames>
+```
+
+Every `<frame>` inside `<frames>` must have a unique, non-empty `id`; omitting
+it is a validation error. Endpoint `id`, `name`, and `ref` values are scoped by
+that frame, so the same local identifier may be reused in different frames.
+Frame IDs and connectable local IDs must not contain a dot because the dot is
+the scope delimiter.
+The same qualification applies to connectable table, database, entity, group,
+rectangle, port, and item IDs. An unqualified reference never falls back to a
+different frame.
+
 When endpoints belong to different child frames, editable page-oriented output
 contains one local stub per frame, labeled `to <frame-id>` and
 `from <frame-id>`. The stubs share a logical connector ID and the original

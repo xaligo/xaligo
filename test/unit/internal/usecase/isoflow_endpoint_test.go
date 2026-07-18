@@ -73,7 +73,7 @@ func TestRenderIsoflowDeduplicatesCrossFrameConnectionAndEmitsFrameEndpoint(t *t
   <frame id="left" width="400" height="300">
     <rectangle id="left-node" title="Left Node" width="160" height="100" />
     <connection src="left" dst="left-node" />
-    <connection src="left-node" dst="right-node" kind="traffic" />
+    <connection src="left-node" dst="right.right-node" kind="traffic" />
   </frame>
   <frame id="right" width="400" height="300">
     <rectangle id="right-node" title="Right Node" width="160" height="100" />

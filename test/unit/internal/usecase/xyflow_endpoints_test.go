@@ -25,7 +25,7 @@ func TestRenderXYFlowPreservesV1EndpointKinds(t *testing.T) {
       </connection>
       <connection src="port" dst="service" />
       <connection src="overview" dst="box" />
-      <connection src="box" dst="remote" kind="route" src-anchor="right-5" dst-anchor="left-1" scale="2" grid="10">
+      <connection src="box" dst="detail.remote" kind="route" src-anchor="right-5" dst-anchor="left-1" scale="2" grid="10">
         <bend x="330" y="140" />
       </connection>
     </connections>

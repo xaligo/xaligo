@@ -169,7 +169,7 @@ func TestParseFramesResolvesCrossFrameConnection(t *testing.T) {
 	doc, err := usecase.Parse(strings.NewReader(`<frames>
   <frame id="page-a" width="320" height="180">
     <rectangle id="web" title="Web" />
-    <connection src="web" dst="db" />
+    <connection src="web" dst="page-b.db" />
   </frame>
   <frame id="page-b" width="320" height="180">
     <rectangle id="db" title="DB" />
@@ -248,8 +248,46 @@ func TestParseShorthandReportsUnknownReference(t *testing.T) {
 	if !errors.As(err, &parseErr) {
 		t.Fatalf("error = %T %v", err, err)
 	}
-	if parseErr.Position.Line != 3 || parseErr.Position.Column != 3 || !strings.Contains(err.Error(), `destination "missing"`) {
+	if parseErr.Position.Line != 3 || parseErr.Position.Column != 3 || !strings.Contains(err.Error(), `dst="missing"`) {
 		t.Fatalf("error = %v at %#v", err, parseErr.Position)
+	}
+}
+
+func TestParseScopesConnectionIDsByFrame(t *testing.T) {
+	doc, err := usecase.Parse(strings.NewReader(`<frames>
+  <frame id="left"><rectangle id="service" /><connection src="service" dst="right.service" /></frame>
+  <frame id="right"><rectangle id="service" /></frame>
+</frames>`))
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+	connection := doc.Root.Children[0].Children[1]
+	if connection.Attr("_xaligoConnectionSrcFrame") != "left" || connection.Attr("_xaligoConnectionDstFrame") != "right" {
+		t.Fatalf("qualified endpoint frames = %#v", connection.Attrs)
+	}
+}
+
+func TestParseRejectsUnqualifiedCrossFrameConnectionID(t *testing.T) {
+	_, err := usecase.Parse(strings.NewReader(`<frames>
+  <frame id="left"><rectangle id="source" /><connection src="source" dst="target" /></frame>
+  <frame id="right"><rectangle id="target" /></frame>
+</frames>`))
+	if err == nil || !strings.Contains(err.Error(), "use frameId.id") {
+		t.Fatalf("Parse() error = %v, want qualified-reference error", err)
+	}
+}
+
+func TestParseResolvesQualifiedTableIDAcrossFrames(t *testing.T) {
+	doc, err := usecase.Parse(strings.NewReader(`<frames>
+  <frame id="source"><table id="inventory"><header><cell>Name</cell></header><row><cell>API</cell></row></table></frame>
+  <frame id="consumer"><rectangle id="report" /><connection src="report" dst="source.inventory" /></frame>
+</frames>`))
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+	connection := doc.Root.Children[1].Children[1]
+	if connection.Attr("_xaligoConnectionDstFrame") != "source" {
+		t.Fatalf("qualified table endpoint = %#v", connection.Attrs)
 	}
 }
 

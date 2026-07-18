@@ -235,7 +235,7 @@ func TestRenderExcalidrawFramesAndCrossFrameLabels(t *testing.T) {
 	input := []byte(`<frames gap="48">
   <frame id="overview" width="320" height="180">
     <rectangle id="web" title="Web" width="120" height="80" />
-    <connection src="web" dst="db" />
+    <connection src="web" dst="detail.db" />
   </frame>
   <frame id="detail" width="320" height="180">
     <rectangle id="db" title="DB" width="120" height="80" />
