@@ -32,6 +32,9 @@ func BuildV1EngineLayoutBuild(doc entity.Document) (*entity.Box, error) {
 		if err := validateResolvedItemGridsV1EngineLayoutItemGrid(root); err != nil {
 			return nil, err
 		}
+		if err := validateFrameMetadataConnectionAnchorsV1EngineLayoutFrameMetadata(root, doc.Root); err != nil {
+			return nil, err
+		}
 		return root, nil
 	}
 	w := attrFloatV1EngineLayoutAttributes(doc.Root.Attr("width"), 1280)
@@ -45,6 +48,9 @@ func BuildV1EngineLayoutBuild(doc entity.Document) (*entity.Box, error) {
 		return nil, err
 	}
 	if err := validateResolvedItemGridsV1EngineLayoutItemGrid(root); err != nil {
+		return nil, err
+	}
+	if err := validateFrameMetadataConnectionAnchorsV1EngineLayoutFrameMetadata(root, doc.Root); err != nil {
 		return nil, err
 	}
 	return root, nil

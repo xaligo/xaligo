@@ -264,6 +264,56 @@ func TestV1ParseRejectsAnchorPositionZero(t *testing.T) {
 	}
 }
 
+func TestV1ParseNormalizesCrossFrameBoundaryAnchors(t *testing.T) {
+	source := `<xaligo version="1"><frames>
+  <frame id="overview"><rectangle id="web"/><connection src="web" dst="detail.db" src-frame-side="bottom" src-frame-anchor="far"><dst frame-side="top" frame-anchor="near" ref="detail.db"/></connection></frame>
+  <frame id="detail"><rectangle id="db"/></frame>
+</frames></xaligo>`
+	document, err := v1engine.ParseV1EngineParseDocument(strings.NewReader(source))
+	if err != nil {
+		t.Fatal(err)
+	}
+	connection := document.Root.Children[0].Children[1]
+	if connection.Attr("src-frame-side") != "bottom" || connection.Attr("src-frame-anchor") != "bottom-4" {
+		t.Fatalf("source frame anchor = %#v", connection.Attrs)
+	}
+	if connection.Attr("dst-frame-side") != "top" || connection.Attr("dst-frame-anchor") != "top-2" {
+		t.Fatalf("destination frame anchor = %#v", connection.Attrs)
+	}
+}
+
+func TestV1ParseRejectsInvalidOrLocalFrameBoundaryAnchors(t *testing.T) {
+	tests := []struct {
+		name   string
+		source string
+		want   string
+	}{
+		{
+			name:   "invalid slot",
+			source: `<xaligo version="1"><frames><frame id="a"><rectangle id="one"/><connection src="one" dst="b.two" src-frame-side="right" src-frame-anchor="6"/></frame><frame id="b"><rectangle id="two"/></frame></frames></xaligo>`,
+			want:   "position must be 1, 2, 3, 4, 5",
+		},
+		{
+			name:   "conflicting side",
+			source: `<xaligo version="1"><frames><frame id="a"><rectangle id="one"/><connection src="one" dst="b.two" src-frame-side="right" src-frame-anchor="top-2"/></frame><frame id="b"><rectangle id="two"/></frame></frames></xaligo>`,
+			want:   "conflicts with side",
+		},
+		{
+			name:   "same frame",
+			source: `<frame><rectangle id="one"/><rectangle id="two"/><connection src="one" dst="two" src-frame-anchor="right-3"/></frame>`,
+			want:   "only valid for a cross-frame connection",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			_, err := v1engine.ParseV1EngineParseDocument(strings.NewReader(test.source))
+			if err == nil || !strings.Contains(err.Error(), test.want) {
+				t.Fatalf("Parse() error = %v, want %q", err, test.want)
+			}
+		})
+	}
+}
+
 func TestV1ParseValidatesConnectionEnums(t *testing.T) {
 	valid := []string{
 		`kind="connection"`,

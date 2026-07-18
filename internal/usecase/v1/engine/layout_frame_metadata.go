@@ -1,12 +1,67 @@
 package engine
 
 import (
+	"fmt"
 	"math"
 	"strings"
 
 	"github.com/xaligo/xaligo/internal/entity"
 	"github.com/xaligo/xaligo/internal/share"
 )
+
+func validateFrameMetadataConnectionAnchorsV1EngineLayoutFrameMetadata(root *entity.Box, documentRoot *entity.Node) error {
+	if root == nil || documentRoot == nil {
+		return nil
+	}
+	frames := map[string]*entity.Box{}
+	if root.Tag == "frames" {
+		for _, frame := range root.Children {
+			if frame == nil || frame.Tag != "frame" {
+				continue
+			}
+			if frameID := strings.TrimSpace(frame.Attrs["id"]); frameID != "" {
+				frames[frameID] = frame
+			}
+		}
+	}
+	for _, connection := range CollectConnectionNodesV1EngineSceneConnection(documentRoot) {
+		if connection == nil || connection.Attr(internalConnectionCrossFrameAttrV1EngineParseDocument) != "true" {
+			continue
+		}
+		for _, endpoint := range []string{"src", "dst"} {
+			anchor, explicit := connectionFrameAnchorV1EngineSceneConnectionRoute(connection, endpoint)
+			if !explicit {
+				continue
+			}
+			frameID := strings.TrimSpace(connection.Attr(internalConnectionSrcFrameAttrV1EngineParseDocument))
+			if endpoint == "dst" {
+				frameID = strings.TrimSpace(connection.Attr(internalConnectionDstFrameAttrV1EngineParseDocument))
+			}
+			frame := frames[frameID]
+			if frame == nil || frame.FrameMetadata == nil || frame.FrameMetadata.ReservedW <= 0 || frame.FrameMetadata.ReservedH <= 0 {
+				continue
+			}
+			attribute := endpoint + "-frame-side"
+			if strings.TrimSpace(connection.Attr(endpoint+"-frame-anchor")) != "" {
+				attribute = endpoint + "-frame-anchor"
+			}
+			metadata := frame.FrameMetadata
+			if string(anchor.side) == metadata.Position {
+				return &entity.ParseError{Position: connection.Position, Err: fmt.Errorf("<connection %s=%q> selects frame %q metadata reservation edge %q", attribute, connection.Attr(attribute), frameID, metadata.Position)}
+			}
+			if !anchor.hasSlot || anchor.side != sideLeftV1EngineRouteTypes && anchor.side != sideRightV1EngineRouteTypes {
+				continue
+			}
+			position := (float64(anchor.slot) + 0.5) / 5.0
+			terminalY := frame.Y + frame.H*position
+			reservedBottom := metadata.ReservedY + metadata.ReservedH
+			if terminalY >= metadata.ReservedY-geometryEpsilonV1EngineLayoutValidation && terminalY <= reservedBottom+geometryEpsilonV1EngineLayoutValidation {
+				return &entity.ParseError{Position: connection.Position, Err: fmt.Errorf("<connection %s=%q> places the frame terminal inside frame %q metadata reservation", attribute, connection.Attr(attribute), frameID)}
+			}
+		}
+	}
+	return nil
+}
 
 const (
 	defaultFrameMetadataFontFamilyV1EngineLayoutFrameMetadata      = "virgil"

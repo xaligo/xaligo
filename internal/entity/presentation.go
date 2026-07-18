@@ -83,6 +83,10 @@ type CustomData struct {
 	ConnectorCrossFrame             bool        `json:"xaligoCrossFrame,omitempty"`
 	ConnectorSourceFrame            string      `json:"xaligoSourceFrame,omitempty"`
 	ConnectorDestinationFrame       string      `json:"xaligoDestinationFrame,omitempty"`
+	ConnectorSourceFrameSide        string      `json:"xaligoConnectorSourceFrameSide,omitempty"`
+	ConnectorDestinationFrameSide   string      `json:"xaligoConnectorDestinationFrameSide,omitempty"`
+	ConnectorSourceFrameAnchor      string      `json:"xaligoConnectorSourceFrameAnchor,omitempty"`
+	ConnectorDestinationFrameAnchor string      `json:"xaligoConnectorDestinationFrameAnchor,omitempty"`
 	ConnectorLogicalID              string      `json:"xaligoConnectorLogicalId,omitempty"`
 	ConnectorSourceElementID        string      `json:"xaligoConnectorSourceElementId,omitempty"`
 	ConnectorDestinationElementID   string      `json:"xaligoConnectorDestinationElementId,omitempty"`
@@ -203,6 +207,8 @@ type PlanSlide struct {
 	W          float64 `json:"w"`
 	H          float64 `json:"h"`
 	Background string  `json:"background"`
+	// CropToSlide makes page-oriented encoders treat W and H as hard bounds.
+	CropToSlide bool `json:"cropToSlide,omitempty"`
 }
 
 // DrawOp is a single encoder drawing instruction. Kind selects the dispatch:

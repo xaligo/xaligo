@@ -15,13 +15,32 @@ type crossFrameConnectorMetadataV1EngineSceneConnectionPage struct {
 	destinationElementID string
 }
 
-func renderCrossFrameConnectionV1EngineSceneConnectionPage(conn *entity.Node, srcKey, dstKey, srcElemID, dstElemID string, srcRect, dstRect, srcVisualRect, dstVisualRect [4]float64, srcFP, dstFP [2]float64, srcSide, dstSide, srcFrameID, dstFrameID string, srcFrameRect, dstFrameRect [4]float64, srcFrameEndpoint, dstFrameEndpoint bool, srcMetadata, dstMetadata frameMetadataSceneGeometryV1EngineSceneFrameMetadata, style resolvedConnectionStyleV1EngineSceneTypes, seed, index int, updated int64, elements *[]map[string]any, boundMap map[string][]map[string]any) {
+const (
+	pageLinkLabelGapV1EngineSceneConnectionPage = 4.0
+	pageLinkApproachV1EngineSceneConnectionPage = 24.0
+)
+
+func renderCrossFrameConnectionV1EngineSceneConnectionPage(conn *entity.Node, srcKey, dstKey, srcElemID, dstElemID string, srcRect, dstRect, srcVisualRect, dstVisualRect [4]float64, srcFP, dstFP [2]float64, srcSide, dstSide, srcFrameSide, dstFrameSide, srcFrameID, dstFrameID string, srcFrameRect, dstFrameRect [4]float64, srcFrameEndpoint, dstFrameEndpoint bool, srcMetadata, dstMetadata frameMetadataSceneGeometryV1EngineSceneFrameMetadata, style resolvedConnectionStyleV1EngineSceneTypes, seed, index int, updated int64, elements *[]map[string]any, boundMap map[string][]map[string]any) {
 	srcEdge := rectFixedPointV1EngineSceneConnection(srcRect, srcFP)
 	dstEdge := rectFixedPointV1EngineSceneConnection(dstRect, dstFP)
-	srcTerminal := pageTerminalPointV1EngineSceneConnectionPage(srcFrameRect, srcEdge, srcSide)
-	dstTerminal := pageTerminalPointV1EngineSceneConnectionPage(dstFrameRect, dstEdge, dstSide)
-	srcTerminal = avoidFrameMetadataTerminalV1EngineSceneConnectionPage(srcTerminal, srcFrameRect, srcSide, srcMetadata)
-	dstTerminal = avoidFrameMetadataTerminalV1EngineSceneConnectionPage(dstTerminal, dstFrameRect, dstSide, dstMetadata)
+	srcTerminal := pageTerminalPointV1EngineSceneConnectionPage(srcFrameRect, srcEdge, srcFrameSide)
+	srcFrameAnchorExplicit := false
+	if anchor, ok := connectionFrameAnchorV1EngineSceneConnectionRoute(conn, "src"); ok && anchor.hasSlot && string(anchor.side) == srcFrameSide {
+		srcTerminal = pageTerminalPointForAnchorV1EngineSceneConnectionPage(srcFrameRect, anchor)
+		srcFrameAnchorExplicit = true
+	}
+	dstTerminal := pageTerminalPointV1EngineSceneConnectionPage(dstFrameRect, dstEdge, dstFrameSide)
+	dstFrameAnchorExplicit := false
+	if anchor, ok := connectionFrameAnchorV1EngineSceneConnectionRoute(conn, "dst"); ok && anchor.hasSlot && string(anchor.side) == dstFrameSide {
+		dstTerminal = pageTerminalPointForAnchorV1EngineSceneConnectionPage(dstFrameRect, anchor)
+		dstFrameAnchorExplicit = true
+	}
+	if !srcFrameAnchorExplicit {
+		srcTerminal = avoidFrameMetadataTerminalV1EngineSceneConnectionPage(srcTerminal, srcFrameRect, srcFrameSide, srcMetadata)
+	}
+	if !dstFrameAnchorExplicit {
+		dstTerminal = avoidFrameMetadataTerminalV1EngineSceneConnectionPage(dstTerminal, dstFrameRect, dstFrameSide, dstMetadata)
+	}
 	sourceID := fmt.Sprintf("conn-%s-to-%s-%d", sanitizeElementIDV1EngineSceneConnectionRoute(srcKey), sanitizeElementIDV1EngineSceneConnectionRoute(dstFrameID), index)
 	destID := fmt.Sprintf("conn-%s-from-%s-%d", sanitizeElementIDV1EngineSceneConnectionRoute(dstKey), sanitizeElementIDV1EngineSceneConnectionRoute(srcFrameID), index)
 	metadata := crossFrameConnectorMetadataV1EngineSceneConnectionPage{
@@ -29,28 +48,38 @@ func renderCrossFrameConnectionV1EngineSceneConnectionPage(conn *entity.Node, sr
 		sourceElementID:      srcElemID,
 		destinationElementID: dstElemID,
 	}
-	appendCrossFrameArrowV1EngineSceneConnectionPage(elements, sourceID, srcEdge, srcTerminal, srcSide, srcFrameRect, srcFrameEndpoint, srcMetadata, style, seed, updated, map[string]any{
+	appendCrossFrameArrowV1EngineSceneConnectionPage(elements, sourceID, srcEdge, srcTerminal, srcSide, srcFrameSide, false, srcFrameRect, srcFrameEndpoint, srcMetadata, style, seed, updated, map[string]any{
 		"elementId":  srcElemID,
 		"focus":      0.0,
 		"gap":        5.0,
 		"fixedPoint": []float64{srcFP[0], srcFP[1]},
 	}, nil, srcFrameID, dstFrameID, srcFrameID, conn, metadata)
-	appendCrossFrameLabelV1EngineSceneConnectionPage(elements, sourceID+"-label", "to <"+dstFrameID+">", srcTerminal, srcFrameRect, srcVisualRect, srcSide, style.Color, srcFrameID, frameMetadataReservedRectsV1EngineSceneConnectionPage(srcMetadata), seed+1, updated)
-	appendCrossFrameArrowV1EngineSceneConnectionPage(elements, destID, dstTerminal, dstEdge, dstSide, dstFrameRect, dstFrameEndpoint, dstMetadata, style, seed+2, updated, nil, map[string]any{
+	appendCrossFrameLabelV1EngineSceneConnectionPage(elements, sourceID+"-label", "to <"+dstFrameID+">", srcTerminal, srcFrameRect, srcVisualRect, srcFrameSide, style.Color, srcFrameID, frameMetadataReservedRectsV1EngineSceneConnectionPage(srcMetadata), seed+1, updated)
+	appendCrossFrameArrowV1EngineSceneConnectionPage(elements, destID, dstTerminal, dstEdge, dstSide, dstFrameSide, true, dstFrameRect, dstFrameEndpoint, dstMetadata, style, seed+2, updated, nil, map[string]any{
 		"elementId":  dstElemID,
 		"focus":      0.0,
 		"gap":        5.0,
 		"fixedPoint": []float64{dstFP[0], dstFP[1]},
 	}, srcFrameID, dstFrameID, dstFrameID, conn, metadata)
-	appendCrossFrameLabelV1EngineSceneConnectionPage(elements, destID+"-label", "from <"+srcFrameID+">", dstTerminal, dstFrameRect, dstVisualRect, dstSide, style.Color, dstFrameID, frameMetadataReservedRectsV1EngineSceneConnectionPage(dstMetadata), seed+3, updated)
+	appendCrossFrameLabelV1EngineSceneConnectionPage(elements, destID+"-label", "from <"+srcFrameID+">", dstTerminal, dstFrameRect, dstVisualRect, dstFrameSide, style.Color, dstFrameID, frameMetadataReservedRectsV1EngineSceneConnectionPage(dstMetadata), seed+3, updated)
 	boundMap[srcElemID] = append(boundMap[srcElemID], map[string]any{"type": "arrow", "id": sourceID})
 	boundMap[dstElemID] = append(boundMap[dstElemID], map[string]any{"type": "arrow", "id": destID})
 }
 
-func appendCrossFrameArrowV1EngineSceneConnectionPage(elements *[]map[string]any, id string, start, end [2]float64, side string, frameRect [4]float64, frameEndpoint bool, frameMetadata frameMetadataSceneGeometryV1EngineSceneFrameMetadata, style resolvedConnectionStyleV1EngineSceneTypes, seed int, updated int64, startBinding, endBinding any, srcFrameID, dstFrameID, ownerFrameID string, conn *entity.Node, metadata crossFrameConnectorMetadataV1EngineSceneConnectionPage) {
+func appendCrossFrameArrowV1EngineSceneConnectionPage(elements *[]map[string]any, id string, start, end [2]float64, endpointSide, frameSide string, frameAtStart bool, frameRect [4]float64, frameEndpoint bool, frameMetadata frameMetadataSceneGeometryV1EngineSceneFrameMetadata, style resolvedConnectionStyleV1EngineSceneTypes, seed int, updated int64, startBinding, endBinding any, srcFrameID, dstFrameID, ownerFrameID string, conn *entity.Node, metadata crossFrameConnectorMetadataV1EngineSceneConnectionPage) {
 	dx := end[0] - start[0]
 	dy := end[1] - start[1]
-	points := crossFrameArrowPointsAvoidingMetadataV1EngineSceneConnectionPage(start, end, side, frameRect, frameEndpoint, frameMetadata)
+	points := crossFrameArrowPointsAvoidingMetadataV1EngineSceneConnectionPage(start, end, endpointSide, frameSide, frameAtStart, frameRect, frameEndpoint, frameMetadata)
+	width, height := math.Abs(dx), math.Abs(dy)
+	if len(points) > 0 {
+		minX, maxX := points[0][0], points[0][0]
+		minY, maxY := points[0][1], points[0][1]
+		for _, point := range points[1:] {
+			minX, maxX = math.Min(minX, point[0]), math.Max(maxX, point[0])
+			minY, maxY = math.Min(minY, point[1]), math.Max(maxY, point[1])
+		}
+		width, height = math.Max(width, maxX-minX), math.Max(height, maxY-minY)
+	}
 	customData := map[string]any{
 		"xaligoConnectorKind":                 style.Kind,
 		"xaligoConnectorStartArrowhead":       style.StartArrowhead,
@@ -88,12 +117,24 @@ func appendCrossFrameArrowV1EngineSceneConnectionPage(elements *[]map[string]any
 	if anchor, ok := connectionEndpointAnchorV1EngineSceneConnectionRoute(conn, "dst"); ok && anchor.hasSlot {
 		customData["xaligoConnectorDstAnchor"] = true
 	}
+	if anchor, ok := connectionFrameAnchorV1EngineSceneConnectionRoute(conn, "src"); ok {
+		customData["xaligoConnectorSourceFrameSide"] = string(anchor.side)
+		if anchor.hasSlot {
+			customData["xaligoConnectorSourceFrameAnchor"] = anchor.StringV1EngineParseConnection()
+		}
+	}
+	if anchor, ok := connectionFrameAnchorV1EngineSceneConnectionRoute(conn, "dst"); ok {
+		customData["xaligoConnectorDestinationFrameSide"] = string(anchor.side)
+		if anchor.hasSlot {
+			customData["xaligoConnectorDestinationFrameAnchor"] = anchor.StringV1EngineParseConnection()
+		}
+	}
 	applyDatabaseConnectionMetadataV1EngineSceneConnectionRender(customData, conn)
 	applyConnectionDiffStatusV1EngineSceneDiffHighlight(customData, conn)
 	*elements = append(*elements, map[string]any{
 		"id": id, "type": "arrow",
 		"x": start[0], "y": start[1],
-		"width": math.Abs(dx), "height": math.Abs(dy),
+		"width": width, "height": height,
 		"angle":       0,
 		"strokeColor": style.Color, "backgroundColor": "transparent",
 		"fillStyle": "solid", "strokeWidth": style.Width, "strokeStyle": style.StrokeStyle,
@@ -115,59 +156,116 @@ func appendCrossFrameArrowV1EngineSceneConnectionPage(elements *[]map[string]any
 	})
 }
 
-func crossFrameArrowPointsV1EngineSceneConnectionPage(dx, dy float64, side string) [][]float64 {
-	const epsilon = 1e-9
-	points := [][]float64{{0, 0}}
-	if math.Abs(dx) > epsilon && math.Abs(dy) > epsilon {
-		if side == "left" || side == "right" {
-			midX := dx / 2
-			points = append(points, []float64{midX, 0}, []float64{midX, dy})
-		} else {
-			midY := dy / 2
-			points = append(points, []float64{0, midY}, []float64{dx, midY})
-		}
+func crossFrameArrowPointsAvoidingMetadataV1EngineSceneConnectionPage(start, end [2]float64, endpointSide, frameSide string, frameAtStart bool, frameRect [4]float64, frameEndpoint bool, metadata frameMetadataSceneGeometryV1EngineSceneFrameMetadata) [][]float64 {
+	endpoint, terminal := start, end
+	if frameAtStart {
+		endpoint, terminal = end, start
 	}
-	return append(points, []float64{dx, dy})
-}
-
-func crossFrameArrowPointsAvoidingMetadataV1EngineSceneConnectionPage(start, end [2]float64, side string, frameRect [4]float64, frameEndpoint bool, metadata frameMetadataSceneGeometryV1EngineSceneFrameMetadata) [][]float64 {
-	if len(metadata.Rects) == 0 || metadata.Position != side || side != "top" && side != "bottom" {
-		return crossFrameArrowPointsV1EngineSceneConnectionPage(end[0]-start[0], end[1]-start[1], side)
-	}
+	endpointApproach := pageLinkApproachForSideV1EngineSceneConnectionPage(frameRect, endpointSide)
+	frameApproach := pageLinkApproachForSideV1EngineSceneConnectionPage(frameRect, frameSide)
+	endpointDirection := pageLinkSideVectorV1EngineSceneConnectionPage(endpointSide)
+	frameDirection := pageLinkSideVectorV1EngineSceneConnectionPage(frameSide)
 	if frameEndpoint {
-		return [][]float64{{0, 0}, {end[0] - start[0], end[1] - start[1]}}
+		endpointDirection[0] *= -1
+		endpointDirection[1] *= -1
+	}
+	endpointStub := [2]float64{
+		endpoint[0] + endpointDirection[0]*endpointApproach,
+		endpoint[1] + endpointDirection[1]*endpointApproach,
+	}
+	terminalStub := [2]float64{
+		terminal[0] - frameDirection[0]*frameApproach,
+		terminal[1] - frameDirection[1]*frameApproach,
 	}
 
-	const clearance = 8.0
-	corridorY := frameRect[1]
-	if side == "bottom" {
-		corridorY = frameRect[1] + frameRect[3]
+	frameRight := frameRect[0] + frameRect[2]
+	frameBottom := frameRect[1] + frameRect[3]
+	if endpointStub[0] < frameRect[0] || endpointStub[0] > frameRight || endpointStub[1] < frameRect[1] || endpointStub[1] > frameBottom {
+		// An item may touch a page edge. In that case the nominal outward
+		// approach would leave the physical page, so approach the same item
+		// side from the page interior while keeping the segment perpendicular.
+		endpointStub = [2]float64{
+			endpoint[0] - endpointDirection[0]*endpointApproach,
+			endpoint[1] - endpointDirection[1]*endpointApproach,
+		}
 	}
-	for _, rect := range metadata.Rects {
-		if side == "top" {
-			corridorY = math.Max(corridorY, rect[1]+rect[3]+clearance)
+	endpointStub[0] = clampFloatV1EngineLayoutPort(endpointStub[0], frameRect[0], frameRight)
+	endpointStub[1] = clampFloatV1EngineLayoutPort(endpointStub[1], frameRect[1], frameBottom)
+	terminalStub[0] = clampFloatV1EngineLayoutPort(terminalStub[0], frameRect[0], frameRight)
+	safeTop, safeBottom := frameRect[1], frameBottom
+	if metadata.Reserved[2] > 0 && metadata.Reserved[3] > 0 {
+		const clearance = 8.0
+		if metadata.Position == "bottom" {
+			safeBottom = math.Min(safeBottom, metadata.Reserved[1]-clearance)
 		} else {
-			corridorY = math.Min(corridorY, rect[1]-clearance)
+			safeTop = math.Max(safeTop, metadata.Reserved[1]+metadata.Reserved[3]+clearance)
+		}
+		if safeBottom < safeTop {
+			safeTop, safeBottom = frameRect[1], frameBottom
 		}
 	}
-	corridorY = clampFloatV1EngineLayoutPort(corridorY, frameRect[1], frameRect[1]+frameRect[3])
+	terminalStub[1] = clampFloatV1EngineLayoutPort(terminalStub[1], safeTop, safeBottom)
 
-	absolute := [][2]float64{}
+	absolute := make([][2]float64, 0, 6)
 	appendPoint := func(point [2]float64) {
-		if len(absolute) == 0 || math.Abs(absolute[len(absolute)-1][0]-point[0]) > 1e-9 || math.Abs(absolute[len(absolute)-1][1]-point[1]) > 1e-9 {
-			absolute = append(absolute, point)
+		if len(absolute) > 0 && math.Abs(absolute[len(absolute)-1][0]-point[0]) <= 1e-9 && math.Abs(absolute[len(absolute)-1][1]-point[1]) <= 1e-9 {
+			return
+		}
+		if len(absolute) >= 2 {
+			previous := absolute[len(absolute)-1]
+			beforePrevious := absolute[len(absolute)-2]
+			firstDirection := [2]float64{previous[0] - beforePrevious[0], previous[1] - beforePrevious[1]}
+			secondDirection := [2]float64{point[0] - previous[0], point[1] - previous[1]}
+			collinear := math.Abs(firstDirection[0]*secondDirection[1]-firstDirection[1]*secondDirection[0]) <= 1e-9
+			sameDirection := firstDirection[0]*secondDirection[0]+firstDirection[1]*secondDirection[1] >= 0
+			if collinear && sameDirection {
+				absolute[len(absolute)-1] = point
+				return
+			}
+		}
+		absolute = append(absolute, point)
+	}
+	appendPoint(endpoint)
+	appendPoint(endpointStub)
+	if endpointSide == "left" || endpointSide == "right" {
+		appendPoint([2]float64{endpointStub[0], terminalStub[1]})
+	} else {
+		appendPoint([2]float64{terminalStub[0], endpointStub[1]})
+	}
+	appendPoint(terminalStub)
+	appendPoint(terminal)
+	if frameAtStart {
+		for left, right := 0, len(absolute)-1; left < right; left, right = left+1, right-1 {
+			absolute[left], absolute[right] = absolute[right], absolute[left]
 		}
 	}
-	appendPoint(start)
-	appendPoint([2]float64{start[0], corridorY})
-	appendPoint([2]float64{end[0], corridorY})
-	appendPoint(end)
 
 	points := make([][]float64, 0, len(absolute))
 	for _, point := range absolute {
 		points = append(points, []float64{point[0] - start[0], point[1] - start[1]})
 	}
 	return points
+}
+
+func pageLinkApproachForSideV1EngineSceneConnectionPage(frameRect [4]float64, side string) float64 {
+	size := frameRect[2]
+	if side == "top" || side == "bottom" {
+		size = frameRect[3]
+	}
+	return math.Min(pageLinkApproachV1EngineSceneConnectionPage, math.Max(1, size/4))
+}
+
+func pageLinkSideVectorV1EngineSceneConnectionPage(side string) [2]float64 {
+	switch side {
+	case "top":
+		return [2]float64{0, -1}
+	case "bottom":
+		return [2]float64{0, 1}
+	case "left":
+		return [2]float64{-1, 0}
+	default:
+		return [2]float64{1, 0}
+	}
 }
 
 func appendCrossFrameLabelV1EngineSceneConnectionPage(elements *[]map[string]any, id, label string, terminal [2]float64, frameRect, endpointRect [4]float64, side, color, frameID string, metadataRects [][4]float64, seed int, updated int64) {
@@ -178,11 +276,11 @@ func appendCrossFrameLabelV1EngineSceneConnectionPage(elements *[]map[string]any
 	}
 	w := textWidthV1EngineSceneItem(label, fontSize*0.5)
 	h := math.Ceil(fontSize * 1.2)
-	availableW := frameRect[2] - 12
+	availableW := frameRect[2] - 2*pageLinkLabelGapV1EngineSceneConnectionPage
 	if availableW <= 0 {
 		availableW = frameRect[2]
 	}
-	availableH := frameRect[3] - 12
+	availableH := frameRect[3] - 2*pageLinkLabelGapV1EngineSceneConnectionPage
 	if availableH <= 0 {
 		availableH = frameRect[3]
 	}
@@ -192,7 +290,7 @@ func appendCrossFrameLabelV1EngineSceneConnectionPage(elements *[]map[string]any
 		h = math.Min(h, safeBottom-safeTop)
 	}
 	x, y := pageLinkLabelPositionV1EngineSceneConnectionPage(terminal, frameRect, endpointRect, w, h, side)
-	x, y = pageLinkLabelPositionAvoidingMetadataV1EngineSceneConnectionPage(x, y, w, h, terminal, frameRect, side, metadataRects)
+	x, y = pageLinkLabelPositionAvoidingMetadataV1EngineSceneConnectionPage(x, y, w, h, terminal, frameRect, endpointRect, side, metadataRects)
 	*elements = append(*elements, map[string]any{
 		"id": id, "type": "text",
 		"x": x, "y": y, "width": w, "height": h,
@@ -319,11 +417,11 @@ func nearestFreeCoordinateV1EngineSceneConnectionPage(preferred, minimum, maximu
 	return best, true
 }
 
-func pageLinkLabelPositionAvoidingMetadataV1EngineSceneConnectionPage(x, y, w, h float64, terminal [2]float64, frameRect [4]float64, side string, metadataRects [][4]float64) (float64, float64) {
+func pageLinkLabelPositionAvoidingMetadataV1EngineSceneConnectionPage(x, y, w, h float64, terminal [2]float64, frameRect, endpointRect [4]float64, side string, metadataRects [][4]float64) (float64, float64) {
 	if len(metadataRects) == 0 || !labelOverlapsMetadataV1EngineSceneConnectionPage(x, y, w, h, metadataRects) {
 		return x, y
 	}
-	const gap = 6.0
+	const gap = pageLinkLabelGapV1EngineSceneConnectionPage
 	frameRight := frameRect[0] + frameRect[2]
 	frameBottom := frameRect[1] + frameRect[3]
 	minimumY := frameRect[1] + gap
@@ -345,7 +443,8 @@ func pageLinkLabelPositionAvoidingMetadataV1EngineSceneConnectionPage(x, y, w, h
 		if side == "bottom" {
 			edgeY = frameBottom - h - gap
 		}
-		appendCandidate(terminal[0]-w/2, edgeY)
+		appendCandidate(terminal[0]+gap, edgeY)
+		appendCandidate(terminal[0]-w-gap, edgeY)
 		appendCandidate(frameRect[0]+gap, edgeY)
 		appendCandidate(frameRight-w-gap, edgeY)
 		for _, rect := range metadataRects {
@@ -357,27 +456,31 @@ func pageLinkLabelPositionAvoidingMetadataV1EngineSceneConnectionPage(x, y, w, h
 			for _, rect := range metadataRects {
 				metadataBottom = math.Max(metadataBottom, rect[1]+rect[3])
 			}
-			appendCandidate(terminal[0]-w/2, metadataBottom+gap)
+			appendCandidate(terminal[0]+gap, metadataBottom+gap)
+			appendCandidate(terminal[0]-w-gap, metadataBottom+gap)
 		} else {
 			metadataTop := frameBottom
 			for _, rect := range metadataRects {
 				metadataTop = math.Min(metadataTop, rect[1])
 			}
-			appendCandidate(terminal[0]-w/2, metadataTop-h-gap)
+			appendCandidate(terminal[0]+gap, metadataTop-h-gap)
+			appendCandidate(terminal[0]-w-gap, metadataTop-h-gap)
 		}
 	case "left", "right":
 		edgeX := frameRect[0] + gap
 		if side == "right" {
 			edgeX = frameRight - w - gap
 		}
-		appendCandidate(edgeX, terminal[1]-h/2)
+		appendCandidate(edgeX, terminal[1]+gap)
+		appendCandidate(edgeX, terminal[1]-h-gap)
 		for _, rect := range metadataRects {
 			appendCandidate(edgeX, rect[1]+rect[3]+gap)
 			appendCandidate(edgeX, rect[1]-h-gap)
 		}
 	}
 	for _, candidate := range candidates {
-		if !labelOverlapsMetadataV1EngineSceneConnectionPage(candidate[0], candidate[1], w, h, metadataRects) {
+		if !labelOverlapsMetadataV1EngineSceneConnectionPage(candidate[0], candidate[1], w, h, metadataRects) &&
+			!pageLinkRectOverlapsV1EngineSceneConnectionPage(candidate[0], candidate[1], w, h, endpointRect) {
 			return candidate[0], candidate[1]
 		}
 	}
@@ -415,52 +518,62 @@ func frameMetadataSafeVerticalIntervalV1EngineSceneConnectionPage(frameRect [4]f
 
 func labelOverlapsMetadataV1EngineSceneConnectionPage(x, y, w, h float64, metadataRects [][4]float64) bool {
 	for _, rect := range metadataRects {
-		if x < rect[0]+rect[2] && x+w > rect[0] && y < rect[1]+rect[3] && y+h > rect[1] {
+		if pageLinkRectOverlapsV1EngineSceneConnectionPage(x, y, w, h, rect) {
 			return true
 		}
 	}
 	return false
 }
 
+func pageLinkRectOverlapsV1EngineSceneConnectionPage(x, y, w, h float64, rect [4]float64) bool {
+	return x < rect[0]+rect[2] && x+w > rect[0] && y < rect[1]+rect[3] && y+h > rect[1]
+}
+
 func pageLinkLabelPositionV1EngineSceneConnectionPage(terminal [2]float64, frameRect, endpointRect [4]float64, w, h float64, side string) (float64, float64) {
-	const gap = 6.0
+	const gap = pageLinkLabelGapV1EngineSceneConnectionPage
 	frameRight := frameRect[0] + frameRect[2]
 	frameBottom := frameRect[1] + frameRect[3]
-	x := terminal[0] - w/2
-	y := terminal[1] - h/2
+	edgeX := frameRect[0] + gap
+	if side == "right" {
+		edgeX = frameRight - w - gap
+	}
+	edgeY := frameRect[1] + gap
+	if side == "bottom" {
+		edgeY = frameBottom - h - gap
+	}
+	candidates := make([][2]float64, 0, 6)
 	switch side {
-	case "left":
-		x = terminal[0] + 6
-		y = endpointRect[1] - h - gap
-		if y < frameRect[1]+gap {
-			y = endpointRect[1] + endpointRect[3] + gap
-		}
-	case "right":
-		x = terminal[0] - w - 6
-		y = endpointRect[1] - h - gap
-		if y < frameRect[1]+gap {
-			y = endpointRect[1] + endpointRect[3] + gap
-		}
-	case "top":
-		y = terminal[1] + 6
-		x = endpointRect[0] + endpointRect[2] + gap
-		if x+w > frameRight-gap {
-			x = endpointRect[0] - w - gap
-		}
-	case "bottom":
-		y = terminal[1] - h - 6
-		x = endpointRect[0] + endpointRect[2] + gap
-		if x+w > frameRight-gap {
-			x = endpointRect[0] - w - gap
+	case "left", "right":
+		candidates = append(candidates,
+			[2]float64{edgeX, terminal[1] + gap},
+			[2]float64{edgeX, terminal[1] - h - gap},
+			[2]float64{edgeX, endpointRect[1] + endpointRect[3] + gap},
+			[2]float64{edgeX, endpointRect[1] - h - gap},
+		)
+	case "top", "bottom":
+		candidates = append(candidates,
+			[2]float64{terminal[0] + gap, edgeY},
+			[2]float64{terminal[0] - w - gap, edgeY},
+			[2]float64{endpointRect[0] + endpointRect[2] + gap, edgeY},
+			[2]float64{endpointRect[0] - w - gap, edgeY},
+		)
+	}
+	inside := func(point [2]float64) bool {
+		return point[0] >= frameRect[0]+gap && point[0]+w <= frameRight-gap && point[1] >= frameRect[1]+gap && point[1]+h <= frameBottom-gap
+	}
+	overlapsEndpoint := func(point [2]float64) bool {
+		return pageLinkRectOverlapsV1EngineSceneConnectionPage(point[0], point[1], w, h, endpointRect)
+	}
+	for _, candidate := range candidates {
+		if inside(candidate) && !overlapsEndpoint(candidate) {
+			return candidate[0], candidate[1]
 		}
 	}
-	clamp := func(value, minimum, maximum float64) float64 {
-		if minimum > maximum {
-			return (minimum + maximum) / 2
-		}
-		return clampFloatV1EngineLayoutPort(value, minimum, maximum)
+	if len(candidates) == 0 {
+		candidates = append(candidates, [2]float64{terminal[0] - w/2, terminal[1] - h/2})
 	}
-	return clamp(x, frameRect[0]+gap, frameRight-w-gap), clamp(y, frameRect[1]+gap, frameBottom-h-gap)
+	return clampFloatV1EngineLayoutPort(candidates[0][0], frameRect[0]+gap, math.Max(frameRect[0]+gap, frameRight-w-gap)),
+		clampFloatV1EngineLayoutPort(candidates[0][1], frameRect[1]+gap, math.Max(frameRect[1]+gap, frameBottom-h-gap))
 }
 
 func endpointVisualRectV1EngineSceneConnectionPage(imageRect, labelRect [4]float64) [4]float64 {
@@ -534,6 +647,10 @@ func pageTerminalPointV1EngineSceneConnectionPage(frameRect [4]float64, anchor [
 		terminal = [2]float64{clampFloatV1EngineLayoutPort(anchor[0], minX, maxX), frameRect[1] + frameRect[3]}
 	}
 	return shiftCoincidentPageTerminalV1EngineSceneConnectionPage(terminal, anchor, side, minX, maxX, minY, maxY, cornerGutter)
+}
+
+func pageTerminalPointForAnchorV1EngineSceneConnectionPage(frameRect [4]float64, anchor connectionAnchorSpecV1EngineParseConnection) [2]float64 {
+	return rectFixedPointV1EngineSceneConnection(frameRect, fixedPointForAnchorV1EngineSceneConnection(anchor))
 }
 
 func shiftCoincidentPageTerminalV1EngineSceneConnectionPage(terminal, anchor [2]float64, side string, minX, maxX, minY, maxY, distance float64) [2]float64 {

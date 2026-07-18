@@ -665,6 +665,216 @@ func TestRenderExcalidrawCrossFrameExplicitSidesOverrideNearestEdge(t *testing.T
 	assertSceneBindingFixedPoint(t, destinationStub, "endBinding", [2]float64{1, 0.3})
 }
 
+func TestRenderExcalidrawCrossFrameBoundaryAnchorsAndNearbyLabels(t *testing.T) {
+	input := []byte(`<xaligo version="1"><frames gap="48">
+  <frame id="overview" width="320" height="180">
+    <rectangle id="web" title="Web" width="120" height="80" />
+    <connection src="web" dst="detail.db"
+                src-anchor="right-2" src-frame-anchor="bottom-4"
+                dst-anchor="left-4" dst-frame-anchor="top-2" />
+  </frame>
+  <frame id="detail" width="320" height="180">
+    <rectangle id="db" title="DB" width="120" height="80" />
+  </frame>
+</frames></xaligo>`)
+	out, err := newUsecase().RenderExcalidraw(context.Background(), input, entity.RenderOptions{Theme: "light"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var scene sceneFile
+	if err := json.Unmarshal(out, &scene); err != nil {
+		t.Fatal(err)
+	}
+	var sourceStub, destinationStub map[string]any
+	for _, element := range scene.Elements {
+		custom, _ := element["customData"].(map[string]any)
+		if custom["xaligoCrossFrame"] != true {
+			continue
+		}
+		if element["startBinding"] != nil {
+			sourceStub = element
+		} else {
+			destinationStub = element
+		}
+	}
+	if sourceStub == nil || destinationStub == nil {
+		t.Fatalf("cross-frame stubs missing: %#v", scene.Elements)
+	}
+	overviewFrame := sceneElementRect(t, scene.Elements, "paper-frame-overview")
+	detailFrame := sceneElementRect(t, scene.Elements, "paper-frame-detail")
+	sourceStart, sourceTerminal := sceneArrowEndpoints(t, sourceStub)
+	destinationTerminal, destinationEnd := sceneArrowEndpoints(t, destinationStub)
+	wantSourceTerminal := [2]float64{overviewFrame[0] + overviewFrame[2]*0.7, overviewFrame[1] + overviewFrame[3]}
+	wantDestinationTerminal := [2]float64{detailFrame[0] + detailFrame[2]*0.3, detailFrame[1]}
+	if math.Abs(sourceTerminal[0]-wantSourceTerminal[0]) > 1e-9 || math.Abs(sourceTerminal[1]-wantSourceTerminal[1]) > 1e-9 {
+		t.Fatalf("source frame terminal = %#v, want %#v", sourceTerminal, wantSourceTerminal)
+	}
+	if math.Abs(destinationTerminal[0]-wantDestinationTerminal[0]) > 1e-9 || math.Abs(destinationTerminal[1]-wantDestinationTerminal[1]) > 1e-9 {
+		t.Fatalf("destination frame terminal = %#v, want %#v", destinationTerminal, wantDestinationTerminal)
+	}
+	assertSceneBindingFixedPoint(t, sourceStub, "startBinding", [2]float64{1, 0.3})
+	assertSceneBindingFixedPoint(t, destinationStub, "endBinding", [2]float64{0, 0.7})
+	assertCrossFrameEndpointAndTerminalApproaches(t, sourceStub, "right", "bottom", false)
+	assertCrossFrameEndpointAndTerminalApproaches(t, destinationStub, "left", "top", true)
+	assertPageLinkLabelClearsStub(t, scene.Elements, sourceStub, sourceStart, sourceTerminal)
+	assertPageLinkLabelClearsStub(t, scene.Elements, destinationStub, destinationTerminal, destinationEnd)
+	assertPageLinkLabelGap(t, sceneTextRectByValue(t, scene.Elements, "to <detail>"), sourceTerminal, "bottom", 4)
+	assertPageLinkLabelGap(t, sceneTextRectByValue(t, scene.Elements, "from <overview>"), destinationTerminal, "top", 4)
+
+	artifacts, err := newUsecase().RenderArtifacts(context.Background(), input, entity.RenderOptions{Format: usecase.FormatSVG, Theme: "light"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(artifacts) != 2 {
+		t.Fatalf("SVG artifacts = %#v", artifacts)
+	}
+	for _, artifact := range artifacts {
+		svg := string(artifact.Data)
+		if !strings.Contains(svg, `width="320" height="180" viewBox="0 0 320 180"`) || !strings.Contains(svg, `transform="translate(0 0)" clip-path="url(#xaligo-slide-clip)"`) {
+			t.Fatalf("frame %q is not cropped to its logical page:\n%s", artifact.ID, svg)
+		}
+	}
+}
+
+func TestRenderExcalidrawCrossFrameSideDoesNotOverrideAutomaticItemSide(t *testing.T) {
+	input := []byte(`<xaligo version="1"><frames gap="48">
+  <frame id="overview" width="200" height="200" content-width="40" content-height="40" align="top-center">
+    <rectangle id="web" title="Web" width="40" height="40" />
+    <connection src="web" dst="detail.db" src-frame-side="bottom" />
+  </frame>
+  <frame id="detail" width="200" height="200"><rectangle id="db" width="80" height="80" /></frame>
+</frames></xaligo>`)
+	out, err := newUsecase().RenderExcalidraw(context.Background(), input, entity.RenderOptions{Theme: "light"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var scene sceneFile
+	if err := json.Unmarshal(out, &scene); err != nil {
+		t.Fatal(err)
+	}
+	var sourceStub map[string]any
+	for _, element := range scene.Elements {
+		custom, _ := element["customData"].(map[string]any)
+		if custom["xaligoCrossFrame"] == true && element["startBinding"] != nil {
+			sourceStub = element
+			break
+		}
+	}
+	if sourceStub == nil {
+		t.Fatalf("source page-link stub missing: %#v", scene.Elements)
+	}
+	frame := sceneElementRect(t, scene.Elements, "paper-frame-overview")
+	_, terminal := sceneArrowEndpoints(t, sourceStub)
+	if side := sceneFrameSideAtPoint(frame, terminal); side != "bottom" {
+		t.Fatalf("source frame terminal side = %q, want bottom", side)
+	}
+	assertSceneBindingFixedPoint(t, sourceStub, "startBinding", [2]float64{0.5, 0})
+	assertCrossFrameEndpointAndTerminalApproaches(t, sourceStub, "top", "bottom", false)
+}
+
+func TestRenderExcalidrawExactCoincidentFrameAnchorKeepsVisibleStub(t *testing.T) {
+	input := []byte(`<xaligo version="1"><frames gap="48">
+  <frame id="overview" width="100" height="100">
+    <rectangle id="web" title="Web" width="100" height="100" />
+    <connection src="web" dst="detail.db" src-anchor="top-3" src-frame-anchor="top-3" />
+  </frame>
+  <frame id="detail" width="100" height="100"><rectangle id="db" width="80" height="80" /></frame>
+</frames></xaligo>`)
+	out, err := newUsecase().RenderExcalidraw(context.Background(), input, entity.RenderOptions{Theme: "light"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var scene sceneFile
+	if err := json.Unmarshal(out, &scene); err != nil {
+		t.Fatal(err)
+	}
+	var sourceStub map[string]any
+	for _, element := range scene.Elements {
+		custom, _ := element["customData"].(map[string]any)
+		if custom["xaligoCrossFrame"] == true && element["startBinding"] != nil {
+			sourceStub = element
+			break
+		}
+	}
+	if sourceStub == nil {
+		t.Fatalf("source page-link stub missing: %#v", scene.Elements)
+	}
+	start, terminal := sceneArrowEndpoints(t, sourceStub)
+	if math.Abs(start[0]-terminal[0]) > 1e-9 || math.Abs(start[1]-terminal[1]) > 1e-9 {
+		t.Fatalf("explicit coincident terminal moved: start=%#v terminal=%#v", start, terminal)
+	}
+	points := sceneArrowPoints(t, sourceStub)
+	if len(points) < 3 || sceneNumber(t, sourceStub["width"]) <= 0 && sceneNumber(t, sourceStub["height"]) <= 0 {
+		t.Fatalf("coincident frame anchor produced invisible stub: %#v", sourceStub)
+	}
+	assertCrossFrameEndpointAndTerminalApproaches(t, sourceStub, "top", "top", false)
+}
+
+func assertCrossFrameEndpointAndTerminalApproaches(t *testing.T, stub map[string]any, endpointSide, frameSide string, frameAtStart bool) {
+	t.Helper()
+	points := sceneArrowPoints(t, stub)
+	if len(points) < 2 {
+		t.Fatalf("cross-frame stub %q points = %#v", stub["id"], points)
+	}
+	first, second := points[0], points[1]
+	penultimate, last := points[len(points)-2], points[len(points)-1]
+	if frameAtStart {
+		assertSegmentPerpendicularToSide(t, first, second, frameSide)
+		assertSegmentPerpendicularToSide(t, penultimate, last, endpointSide)
+		return
+	}
+	assertSegmentPerpendicularToSide(t, first, second, endpointSide)
+	assertSegmentPerpendicularToSide(t, penultimate, last, frameSide)
+}
+
+func assertSegmentPerpendicularToSide(t *testing.T, start, end [2]float64, side string) {
+	t.Helper()
+	dx := math.Abs(end[0] - start[0])
+	dy := math.Abs(end[1] - start[1])
+	if side == "left" || side == "right" {
+		if dx <= 1e-9 || dy > 1e-9 {
+			t.Fatalf("segment %#v -> %#v is not perpendicular to %s", start, end, side)
+		}
+		return
+	}
+	if dy <= 1e-9 || dx > 1e-9 {
+		t.Fatalf("segment %#v -> %#v is not perpendicular to %s", start, end, side)
+	}
+}
+
+func sceneTextRectByValue(t *testing.T, elements []map[string]any, value string) [4]float64 {
+	t.Helper()
+	for _, element := range elements {
+		if element["type"] == "text" && element["text"] == value {
+			return [4]float64{sceneNumber(t, element["x"]), sceneNumber(t, element["y"]), sceneNumber(t, element["width"]), sceneNumber(t, element["height"])}
+		}
+	}
+	t.Fatalf("scene text %q not found", value)
+	return [4]float64{}
+}
+
+func assertPageLinkLabelGap(t *testing.T, label [4]float64, terminal [2]float64, side string, want float64) {
+	t.Helper()
+	var normalGap, tangentGap float64
+	switch side {
+	case "top":
+		normalGap = label[1] - terminal[1]
+		tangentGap = math.Min(math.Abs(label[0]-terminal[0]), math.Abs(terminal[0]-(label[0]+label[2])))
+	case "bottom":
+		normalGap = terminal[1] - (label[1] + label[3])
+		tangentGap = math.Min(math.Abs(label[0]-terminal[0]), math.Abs(terminal[0]-(label[0]+label[2])))
+	case "left":
+		normalGap = label[0] - terminal[0]
+		tangentGap = math.Min(math.Abs(label[1]-terminal[1]), math.Abs(terminal[1]-(label[1]+label[3])))
+	case "right":
+		normalGap = terminal[0] - (label[0] + label[2])
+		tangentGap = math.Min(math.Abs(label[1]-terminal[1]), math.Abs(terminal[1]-(label[1]+label[3])))
+	}
+	if math.Abs(normalGap-want) > 1e-9 || tangentGap < want-1e-9 {
+		t.Fatalf("page-link label %#v gaps normal=%.3f tangent=%.3f, want normal %.3f and tangent >= %.3f from terminal %#v on %s", label, normalGap, tangentGap, want, want, terminal, side)
+	}
+}
+
 func sceneElementRect(t *testing.T, elements []map[string]any, id string) [4]float64 {
 	t.Helper()
 	for _, element := range elements {

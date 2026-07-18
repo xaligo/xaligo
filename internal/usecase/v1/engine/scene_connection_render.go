@@ -99,6 +99,7 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 			srcSide = umlSequenceVerticalSideV1EngineSceneConnectionRoute(srcSide)
 			dstSide = umlSequenceVerticalSideV1EngineSceneConnectionRoute(dstSide)
 		}
+		srcFrameSide, dstFrameSide := srcSide, dstSide
 
 		crossFrame := conn.Attrs[internalConnectionCrossFrameAttrV1EngineParseDocument] == "true"
 		srcFrameID := strings.TrimSpace(conn.Attrs[internalConnectionSrcFrameAttrV1EngineParseDocument])
@@ -118,21 +119,45 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 			// adapters and do not steer either page-local stub.
 			srcVisualRect = endpointVisualRectV1EngineSceneConnectionPage(srcImgRect, itemLblRects[srcKey])
 			dstVisualRect = endpointVisualRectV1EngineSceneConnectionPage(dstImgRect, itemLblRects[dstKey])
+			srcFrameAnchor, srcFrameSideExplicit := connectionFrameAnchorV1EngineSceneConnectionRoute(conn, "src")
+			dstFrameAnchor, dstFrameSideExplicit := connectionFrameAnchorV1EngineSceneConnectionRoute(conn, "dst")
 			if !srcSideExplicit {
 				srcSide = nearestFrameSideV1EngineSceneConnectionPage(srcFrameRect, srcVisualRect, dstFrameRect)
 			}
 			if !dstSideExplicit {
 				dstSide = nearestFrameSideV1EngineSceneConnectionPage(dstFrameRect, dstVisualRect, srcFrameRect)
 			}
-			adjustedSrcSide := pageLinkSideAvoidingFrameMetadataV1EngineSceneConnectionPage(srcSide, srcFrameRect, srcVisualRect, dstFrameRect, frameMetadata[srcFrameID])
-			if adjustedSrcSide != srcSide {
-				srcSide = adjustedSrcSide
+			if srcFrameSideExplicit {
+				srcFrameSide = string(srcFrameAnchor.side)
+			} else {
+				srcFrameSide = srcSide
+			}
+			if dstFrameSideExplicit {
+				dstFrameSide = string(dstFrameAnchor.side)
+			} else {
+				dstFrameSide = dstSide
+			}
+			if adjustedEndpointSide := pageLinkSideAvoidingFrameMetadataV1EngineSceneConnectionPage(srcSide, srcFrameRect, srcVisualRect, dstFrameRect, frameMetadata[srcFrameID]); adjustedEndpointSide != srcSide {
+				srcSide = adjustedEndpointSide
 				hasSrcAnchor = false
 			}
-			adjustedDstSide := pageLinkSideAvoidingFrameMetadataV1EngineSceneConnectionPage(dstSide, dstFrameRect, dstVisualRect, srcFrameRect, frameMetadata[dstFrameID])
-			if adjustedDstSide != dstSide {
-				dstSide = adjustedDstSide
+			if adjustedEndpointSide := pageLinkSideAvoidingFrameMetadataV1EngineSceneConnectionPage(dstSide, dstFrameRect, dstVisualRect, srcFrameRect, frameMetadata[dstFrameID]); adjustedEndpointSide != dstSide {
+				dstSide = adjustedEndpointSide
 				hasDstAnchor = false
+			}
+			if adjustedFrameSide := pageLinkSideAvoidingFrameMetadataV1EngineSceneConnectionPage(srcFrameSide, srcFrameRect, srcVisualRect, dstFrameRect, frameMetadata[srcFrameID]); adjustedFrameSide != srcFrameSide {
+				srcFrameSide = adjustedFrameSide
+				if !srcFrameSideExplicit {
+					srcSide = adjustedFrameSide
+					hasSrcAnchor = false
+				}
+			}
+			if adjustedFrameSide := pageLinkSideAvoidingFrameMetadataV1EngineSceneConnectionPage(dstFrameSide, dstFrameRect, dstVisualRect, srcFrameRect, frameMetadata[dstFrameID]); adjustedFrameSide != dstFrameSide {
+				dstFrameSide = adjustedFrameSide
+				if !dstFrameSideExplicit {
+					dstSide = adjustedFrameSide
+					hasDstAnchor = false
+				}
 			}
 		} else {
 			srcLocalVisualRect := endpointVisualRectV1EngineSceneConnectionPage(srcImgRect, itemLblRects[srcKey])
@@ -195,7 +220,7 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 		style := resolveConnectionStyleV1EngineSceneConnectionRoute(conn)
 		if crossFrame {
 			seed := stableConnectionSeedV1EngineSceneConnectionRoute(srcKey, dstKey, i)
-			renderCrossFrameConnectionV1EngineSceneConnectionPage(conn, srcKey, dstKey, srcElemID, dstElemID, srcRect, dstRect, srcVisualRect, dstVisualRect, srcFP, dstFP, srcSide, dstSide, srcFrameID, dstFrameID, srcFrameRect, dstFrameRect, srcElemID == frameElementIDs[srcFrameID], dstElemID == frameElementIDs[dstFrameID], frameMetadata[srcFrameID], frameMetadata[dstFrameID], style, seed, i, updated, elements, boundMap)
+			renderCrossFrameConnectionV1EngineSceneConnectionPage(conn, srcKey, dstKey, srcElemID, dstElemID, srcRect, dstRect, srcVisualRect, dstVisualRect, srcFP, dstFP, srcSide, dstSide, srcFrameSide, dstFrameSide, srcFrameID, dstFrameID, srcFrameRect, dstFrameRect, srcElemID == frameElementIDs[srcFrameID], dstElemID == frameElementIDs[dstFrameID], frameMetadata[srcFrameID], frameMetadata[dstFrameID], style, seed, i, updated, elements, boundMap)
 			continue
 		}
 		srcEdge := rectFixedPointV1EngineSceneConnection(srcRect, srcFP)

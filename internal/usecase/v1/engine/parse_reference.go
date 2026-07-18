@@ -132,6 +132,14 @@ func validateConnectionReferencesV1EngineParseReference(root *entity.Node) error
 		if conn.Attrs[internalConnectionSrcFrameAttrV1EngineParseDocument] != conn.Attrs[internalConnectionDstFrameAttrV1EngineParseDocument] {
 			conn.Attrs[internalConnectionCrossFrameAttrV1EngineParseDocument] = "true"
 		}
+		if conn.Attrs[internalConnectionCrossFrameAttrV1EngineParseDocument] != "true" {
+			for _, attribute := range []string{"src-frame-side", "src-frame-anchor", "dst-frame-side", "dst-frame-anchor"} {
+				if strings.TrimSpace(conn.Attrs[attribute]) == "" {
+					continue
+				}
+				return &entity.ParseError{Position: conn.Position, Err: fmt.Errorf("<connection %s=%q> is only valid for a cross-frame connection", attribute, conn.Attrs[attribute])}
+			}
+		}
 	}
 	return nil
 }

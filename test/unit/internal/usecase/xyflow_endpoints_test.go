@@ -26,7 +26,10 @@ func TestRenderXYFlowPreservesV1EndpointKinds(t *testing.T) {
       </connection>
       <connection src="port" dst="service" />
       <connection src="overview" dst="box" />
-      <connection src="box" dst="detail.remote" kind="route" src-anchor="right-5" dst-anchor="left-1" scale="2" grid="10">
+      <connection src="box" dst="detail.remote" kind="route"
+                  src-anchor="right-5" src-frame-anchor="bottom-4"
+                  dst-anchor="left-1" dst-frame-anchor="top-2"
+                  scale="2" grid="10">
         <bend x="330" y="140" />
       </connection>
     </connections>
@@ -109,6 +112,9 @@ func TestRenderXYFlowPreservesV1EndpointKinds(t *testing.T) {
 	}
 	if crossFrameEdge.Data["bends"] != "330.000,140.000" || crossFrameEdge.Data["scale"] != float64(2) || crossFrameEdge.Data["grid"] != float64(10) || crossFrameEdge.Data["sourceAnchorExplicit"] != true || crossFrameEdge.Data["targetAnchorExplicit"] != true {
 		t.Fatalf("cross-frame routing metadata = %#v", crossFrameEdge.Data)
+	}
+	if crossFrameEdge.Data["sourceFrameSide"] != "bottom" || crossFrameEdge.Data["targetFrameSide"] != "top" || crossFrameEdge.Data["sourceFrameAnchor"] != "bottom-4" || crossFrameEdge.Data["targetFrameAnchor"] != "top-2" {
+		t.Fatalf("cross-frame boundary anchors = %#v", crossFrameEdge.Data)
 	}
 	if crossFrameEdge.SourceHandle != "right" || crossFrameEdge.TargetHandle != "left" || !equalXYFlowFixedPoint(crossFrameEdge.Data["sourceFixedPoint"], []float64{1, 0.9}) || !equalXYFlowFixedPoint(crossFrameEdge.Data["targetFixedPoint"], []float64{0, 0.1}) {
 		t.Fatalf("cross-frame bindings were not reassembled: %#v", crossFrameEdge)

@@ -33,6 +33,7 @@ func BuildDocumentPlanV1EnginePlanDocument(scene *entity.PresentationScene, opt 
 	combined := BuildPlanV1EnginePlanBuild(scene, opt)
 	frames := pageFrameElementsV1EnginePlanDocument(scene)
 	if combineFrames || len(frames) == 0 {
+		combined.Slide.CropToSlide = !combineFrames
 		return entity.DocumentPlan{
 			SchemaVersion:   documentPlanSchemaVersionV1EnginePlanDocument,
 			Pages:           []entity.DocumentPage{documentPageFromPlanV1EnginePlanDocument(combinedPageIDV1EnginePlanDocument(frames), combined)},
@@ -47,6 +48,7 @@ func BuildDocumentPlanV1EnginePlanDocument(scene *entity.PresentationScene, opt 
 	for _, frame := range frames {
 		pageScene := projectPageSceneV1EnginePlanDocument(scene, frame)
 		pagePlan := BuildPlanV1EnginePlanBuild(&pageScene, opt)
+		pagePlan.Slide.CropToSlide = true
 		connectorIndex = renumberPageConnectorsV1EnginePlanDocument(&pagePlan, connectorIndex)
 		connectorLegend = append(connectorLegend, pagePlan.ConnectorLegend...)
 		pages = append(pages, documentPageFromPlanV1EnginePlanDocument(frame.CustomData.FrameID, pagePlan))

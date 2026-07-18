@@ -182,8 +182,12 @@ func TestBuildPPTXPlanPreservesExplicitCrossFrameConnectorStrokeWidth(t *testing
 		if op.W <= 0 && op.H <= 0 {
 			t.Fatalf("cross-frame line %q has zero length: %#v", op.ID, op)
 		}
-		if op.W > 1e-9 && op.H > 1e-9 {
-			t.Fatalf("cross-frame line %q is diagonal: %#v", op.ID, op)
+		for index := 1; index < len(op.Points); index++ {
+			dx := math.Abs(op.Points[index].X - op.Points[index-1].X)
+			dy := math.Abs(op.Points[index].Y - op.Points[index-1].Y)
+			if dx > 1e-9 && dy > 1e-9 {
+				t.Fatalf("cross-frame line %q has a diagonal segment: %#v", op.ID, op.Points)
+			}
 		}
 	}
 	if !labels["to <detail>"] || !labels["from <overview>"] {

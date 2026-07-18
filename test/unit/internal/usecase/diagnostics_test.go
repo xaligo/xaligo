@@ -24,6 +24,21 @@ func TestValidateReturnsDiagnosticsError(t *testing.T) {
 	}
 }
 
+func TestValidateRejectsExplicitFrameAnchorInsideMetadataReservation(t *testing.T) {
+	input := []byte(`<xaligo version="1"><frames>
+  <frame id="overview" title="Overview" width="320" height="180" margin-top="56">
+    <metadata width="120" key-width="40" />
+    <rectangle id="web" width="100" height="60" />
+    <connection src="web" dst="detail.db" src-frame-anchor="top-3" />
+  </frame>
+  <frame id="detail" width="320" height="180"><rectangle id="db" width="100" height="60" /></frame>
+</frames></xaligo>`)
+	err := usecase.Validate(context.Background(), input)
+	if err == nil || !strings.Contains(err.Error(), "src-frame-anchor") || !strings.Contains(err.Error(), "metadata reservation") {
+		t.Fatalf("Validate() error = %v, want frame-anchor metadata conflict", err)
+	}
+}
+
 func TestValidateReportsItemAndConnectionBranches(t *testing.T) {
 	cases := []struct {
 		name  string

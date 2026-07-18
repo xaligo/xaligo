@@ -1,10 +1,11 @@
 package engine
 
 import (
-	"github.com/xaligo/xaligo/internal/entity"
 	"math"
 	"strconv"
 	"strings"
+
+	"github.com/xaligo/xaligo/internal/entity"
 )
 
 func firstNonEmptyAttrV1EngineSceneConnectionRoute(node *entity.Node, names ...string) string {
@@ -32,6 +33,17 @@ func connectionEndpointAnchorV1EngineSceneConnectionRoute(conn *entity.Node, end
 	}
 	spec, ok, err := parseConnectionAnchorSpecV1EngineParseConnection(conn.Attrs[endpoint+"-side"], conn.Attrs[endpoint+"-anchor"])
 	if err != nil || !ok || !spec.hasSlot {
+		return connectionAnchorSpecV1EngineParseConnection{}, false
+	}
+	return spec, true
+}
+
+func connectionFrameAnchorV1EngineSceneConnectionRoute(conn *entity.Node, endpoint string) (connectionAnchorSpecV1EngineParseConnection, bool) {
+	if conn == nil {
+		return connectionAnchorSpecV1EngineParseConnection{}, false
+	}
+	spec, ok, err := parseConnectionAnchorSpecV1EngineParseConnection(conn.Attrs[endpoint+"-frame-side"], conn.Attrs[endpoint+"-frame-anchor"])
+	if err != nil || !ok {
 		return connectionAnchorSpecV1EngineParseConnection{}, false
 	}
 	return spec, true

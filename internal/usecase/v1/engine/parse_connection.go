@@ -243,6 +243,20 @@ func normalizeConnectionEndpointTagV1EngineParseConnection(conn *entity.Node, en
 				conn.Attrs[anchorAttr] = spec.StringV1EngineParseConnection()
 			}
 		}
+		frameSideValue := strings.TrimSpace(child.Attrs["frame-side"])
+		frameAnchorValue := strings.TrimSpace(child.Attrs["frame-anchor"])
+		if spec, ok, err := parseConnectionAnchorSpecV1EngineParseConnection(frameSideValue, frameAnchorValue); err != nil {
+			return &entity.ParseError{Position: child.Position, Err: err}
+		} else if ok {
+			frameSideAttr := endpoint + "-frame-side"
+			if strings.TrimSpace(conn.Attrs[frameSideAttr]) == "" {
+				conn.Attrs[frameSideAttr] = string(spec.side)
+			}
+			frameAnchorAttr := endpoint + "-frame-anchor"
+			if spec.hasSlot && strings.TrimSpace(conn.Attrs[frameAnchorAttr]) == "" {
+				conn.Attrs[frameAnchorAttr] = spec.StringV1EngineParseConnection()
+			}
+		}
 	}
 	return nil
 }
@@ -279,20 +293,26 @@ func validateConnectionEndpointPresenceV1EngineParseConnection(node *entity.Node
 
 func validateConnectionSideAttrsV1EngineParseConnection(node *entity.Node) error {
 	for _, endpoint := range []string{"src", "dst"} {
-		sideAttr := endpoint + "-side"
-		anchorAttr := endpoint + "-anchor"
-		sideValue := strings.TrimSpace(node.Attrs[sideAttr])
-		anchorValue := strings.TrimSpace(node.Attrs[anchorAttr])
-		if sideValue != "" || anchorValue != "" {
+		for _, attributes := range [][2]string{
+			{endpoint + "-side", endpoint + "-anchor"},
+			{endpoint + "-frame-side", endpoint + "-frame-anchor"},
+		} {
+			sideAttr, anchorAttr := attributes[0], attributes[1]
+			sideValue := strings.TrimSpace(node.Attrs[sideAttr])
+			anchorValue := strings.TrimSpace(node.Attrs[anchorAttr])
+			if sideValue == "" && anchorValue == "" {
+				continue
+			}
 			spec, ok, err := parseConnectionAnchorSpecV1EngineParseConnection(sideValue, anchorValue)
 			if err != nil {
 				return err
 			}
-			if ok {
-				node.Attrs[sideAttr] = string(spec.side)
-				if spec.hasSlot {
-					node.Attrs[anchorAttr] = spec.StringV1EngineParseConnection()
-				}
+			if !ok {
+				continue
+			}
+			node.Attrs[sideAttr] = string(spec.side)
+			if spec.hasSlot {
+				node.Attrs[anchorAttr] = spec.StringV1EngineParseConnection()
 			}
 		}
 	}

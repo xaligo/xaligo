@@ -353,6 +353,16 @@ func buildXYFlowEdge(element entity.Element, id, source, target string, sourceBi
 			data["crossFrame"] = true
 			data["sourceFrame"] = element.CustomData.ConnectorSourceFrame
 			data["targetFrame"] = element.CustomData.ConnectorDestinationFrame
+			for key, value := range map[string]string{
+				"sourceFrameSide":   element.CustomData.ConnectorSourceFrameSide,
+				"targetFrameSide":   element.CustomData.ConnectorDestinationFrameSide,
+				"sourceFrameAnchor": element.CustomData.ConnectorSourceFrameAnchor,
+				"targetFrameAnchor": element.CustomData.ConnectorDestinationFrameAnchor,
+			} {
+				if value = strings.TrimSpace(value); value != "" {
+					data[key] = value
+				}
+			}
 		}
 		addXYFlowUMLEdgeData(data, element.CustomData)
 	}

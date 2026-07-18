@@ -24,6 +24,9 @@ func TestDocumentPlanUsesOnePagePerFrameByDefault(t *testing.T) {
 	if document.Pages[0].Slide.W != 2 || document.Pages[1].Slide.W != 1.5 {
 		t.Fatalf("page widths = %v, %v", document.Pages[0].Slide.W, document.Pages[1].Slide.W)
 	}
+	if !document.Pages[0].Slide.CropToSlide || !document.Pages[1].Slide.CropToSlide {
+		t.Fatalf("page slides must crop to their logical frame: %#v", document.Pages)
+	}
 }
 
 func TestDocumentPlanCombineFramesRetainsSingleCanvas(t *testing.T) {
@@ -32,7 +35,20 @@ func TestDocumentPlanCombineFramesRetainsSingleCanvas(t *testing.T) {
 	if len(document.Pages) != 1 || document.Pages[0].ID != "combined" {
 		t.Fatalf("combined pages = %#v", document.Pages)
 	}
+	if document.Pages[0].Slide.CropToSlide {
+		t.Fatalf("combined compatibility canvas must retain marker-safe overflow: %#v", document.Pages[0].Slide)
+	}
 	assertDocumentPageRectCount(t, document.Pages[0], 2)
+}
+
+func TestDocumentPlanLegacySingleFrameCropsToLogicalSlideByDefault(t *testing.T) {
+	scene := entity.PresentationScene{Elements: []entity.Element{
+		{ID: "paper-frame", Type: "frame", Width: 200, Height: 100},
+	}}
+	document := v1engine.BuildDocumentPlanV1EnginePlanDocument(&scene, entity.PlanOptions{PxPerInch: 100}, false)
+	if len(document.Pages) != 1 || !document.Pages[0].Slide.CropToSlide {
+		t.Fatalf("legacy single-frame page must crop to its logical slide: %#v", document.Pages)
+	}
 }
 
 func TestNormalizeDocumentPageSizesCentresSmallerPages(t *testing.T) {

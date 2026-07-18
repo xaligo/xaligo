@@ -138,6 +138,31 @@ func TestRenderPlanExpandsCanvasForWideStrokeScaledMarkers(t *testing.T) {
 	}
 }
 
+func TestRenderPlanCropsPhysicalPageToLogicalSlide(t *testing.T) {
+	plan := entity.Plan{
+		Slide: entity.PlanSlide{W: 1, H: 0.5, Background: "ffffff", CropToSlide: true},
+		Ops: []entity.DrawOp{{
+			Kind: "line", X: 0, Y: 0, W: 1, H: 0.5,
+			Points: []entity.PtIn{{X: 0, Y: 0}, {X: 1, Y: 0.5}},
+			Line:   &entity.LineStyle{Color: "64748B", Width: 10, BeginArrowType: "diamond", EndArrowType: "diamond"},
+		}},
+	}
+	out, err := repository.NewSVGRepository().Render(plan, 96, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	svg := string(out)
+	for _, want := range []string{
+		`width="96" height="48" viewBox="0 0 96 48"`,
+		`clipPath id="xaligo-slide-clip"`,
+		`transform="translate(0 0)" clip-path="url(#xaligo-slide-clip)"`,
+	} {
+		if !strings.Contains(svg, want) {
+			t.Fatalf("cropped physical-page SVG missing %q:\n%s", want, svg)
+		}
+	}
+}
+
 func TestRenderPlanDrawsServiceLegendAtRequestedPosition(t *testing.T) {
 	plan := entity.Plan{
 		Slide: entity.PlanSlide{W: 2, H: 1, Background: "ffffff"},
