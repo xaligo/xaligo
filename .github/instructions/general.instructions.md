@@ -142,7 +142,17 @@ refreshed through the scripts declared in the root `package.json`.
 
 ## Verification
 
+Set up the repository-pinned security scanner and npm audit metadata once:
+
 ```bash
+make security-setup
+```
+
+Run the security gate before every commit, followed by the relevant tests and
+builds:
+
+```bash
+make security-check
 go test ./...
 go build ./...
 npm install

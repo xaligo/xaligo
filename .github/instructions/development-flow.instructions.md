@@ -109,11 +109,15 @@ Before each commit:
    `git diff --cached` to confirm that the index contains one responsibility
    and no unrelated user changes.
 3. Run `git diff --cached --check`.
-4. Run the narrowest relevant test, build, validation, or render command.
-5. Use the existing concise subject style, normally
+4. Run `make security-check`. Security scanning is a mandatory commit
+   precondition for every change, including documentation-only changes. Run
+   `make security-setup` once after cloning or whenever the pinned scanner
+   version changes.
+5. Run the narrowest relevant test, build, validation, or render command.
+6. Use the existing concise subject style, normally
    `<type>: <imperative summary>`, and describe the outcome rather than the
    edited filenames.
-6. Re-run `git status --short` after the commit and confirm that no unintended
+7. Re-run `git status --short` after the commit and confirm that no unintended
    path remains staged.
 
 Do not create empty checkpoint or `WIP` commits. Do not amend, squash, rebase,
@@ -157,6 +161,7 @@ every hunk:
 Typical final checks are selected by scope:
 
 ```bash
+make security-check
 go test ./... -count=1
 go build ./...
 npm --prefix external test

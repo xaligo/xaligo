@@ -39,14 +39,16 @@ When reporting rendering issues, include:
 Before opening a pull request:
 
 ```bash
+make security-setup # first run, or after scanner version updates
+make security-check # required before every commit
 go test ./...
 git diff --check
 cargo install mdbook-tabs --version 1.0.4 --locked
 mdbook build docs
 ```
 
-For documentation-only changes, `mdbook build docs` and `git diff --check` are
-usually enough.
+For documentation-only changes, the security check is still required;
+`mdbook build docs` and `git diff --check` cover the remaining verification.
 
 Keep changes focused. Prefer a small fix with a regression test over a broad
 refactor. When changing output behavior, update the relevant docs and examples
