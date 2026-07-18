@@ -41,7 +41,7 @@ Before opening a pull request:
 ```bash
 go test ./...
 git diff --check
-cargo install mdbook-tabs --version 0.2.3 --locked
+cargo install mdbook-tabs --version 1.0.4 --locked
 mdbook build docs
 ```
 

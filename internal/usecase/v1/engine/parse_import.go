@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/xaligo/xaligo/internal/entity"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 )
 
 func resolveTableImportsV1EngineParseImport(root, data *entity.Node, source *entity.ImportSource) error {

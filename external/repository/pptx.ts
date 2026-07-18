@@ -282,15 +282,15 @@ function fallbackLineGeometryForPptx(op: PlanOp): { x: number; y: number; w: num
   const points = [start, end];
   extendEndpoint(points, 0, 1, op.line?.beginArrowExtendIn);
   extendEndpoint(points, 1, 0, op.line?.endArrowExtendIn);
-  const x = Math.min(points[0].x, points[1].x);
-  const y = Math.min(points[0].y, points[1].y);
+  const x = Math.min(start.x, end.x);
+  const y = Math.min(start.y, end.y);
   return {
     x,
     y,
-    w: Math.abs(points[1].x - points[0].x),
-    h: Math.abs(points[1].y - points[0].y),
-    flipH: points[1].x < points[0].x,
-    flipV: points[1].y < points[0].y,
+    w: Math.abs(end.x - start.x),
+    h: Math.abs(end.y - start.y),
+    flipH: end.x < start.x,
+    flipV: end.y < start.y,
   };
 }
 

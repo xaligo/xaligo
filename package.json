@@ -32,6 +32,12 @@
   "workspaces": [
     "external"
   ],
+  "overrides": {
+    "esbuild": "0.28.1"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.1"
+  },
   "bin": {
     "xaligo": "bin/xaligo.cjs"
   },
@@ -62,7 +68,7 @@
     "import:yamaha-icons": "node scripts/tool/import_yamaha_icons.mjs"
   },
   "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=9.0.0"
+    "node": ">=24.0.0",
+    "npm": ">=11.0.0"
   }
 }

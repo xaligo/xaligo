@@ -3,41 +3,28 @@ package integration
 import (
 	"os"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strings"
 	"testing"
 )
 
-func TestRockyWASMBuilderCopiesTsupEntrypoints(t *testing.T) {
+func TestRockyWASMBuilderCopiesTypeScriptEntrypoints(t *testing.T) {
 	repositoryRoot := integrationRepositoryRoot(t)
-	tsupConfig := readIntegrationFile(t, filepath.Join(repositoryRoot, "external", "tsup.config.ts"))
+	packageJSON := readIntegrationFile(t, filepath.Join(repositoryRoot, "external", "package.json"))
 	dockerfile := readIntegrationFile(t, filepath.Join(repositoryRoot, "docker", "rocky.Dockerfile"))
-
-	entryBlockStart := strings.Index(tsupConfig, "entry: {")
-	if entryBlockStart < 0 {
-		t.Fatal("tsup config does not contain an entry block")
-	}
-	entryBlock := tsupConfig[entryBlockStart+len("entry: {"):]
-	entryBlockEnd := strings.Index(entryBlock, "}")
-	if entryBlockEnd < 0 {
-		t.Fatal("tsup config entry block is not closed")
-	}
-	entryPattern := regexp.MustCompile(`(?m)^\s*[A-Za-z0-9_-]+\s*:\s*['\"]([^'\"]+[.]ts)['\"]\s*,?\s*$`)
-	entryMatches := entryPattern.FindAllStringSubmatch(entryBlock[:entryBlockEnd], -1)
-	if len(entryMatches) == 0 {
-		t.Fatal("tsup config entry block does not contain TypeScript entrypoints")
-	}
 
 	buildStart := strings.Index(dockerfile, "npm run build:pptx-exporter-wasm")
 	if buildStart < 0 {
 		t.Fatal("Rocky Dockerfile does not invoke build:pptx-exporter-wasm")
 	}
 	copySources := rockyWASMBuilderCopySources(dockerfile[:buildStart])
-	for _, match := range entryMatches {
-		required := filepath.ToSlash(filepath.Join("external", match[1]))
+	for _, entrypoint := range []string{"index.ts", "command.ts"} {
+		if !strings.Contains(packageJSON, "esbuild "+entrypoint) {
+			t.Fatalf("external build script does not contain TypeScript entrypoint %q", entrypoint)
+		}
+		required := filepath.ToSlash(filepath.Join("external", entrypoint))
 		if !copySources[required] && !copySources["external"] {
-			t.Errorf("Rocky wasm-builder does not COPY tsup entrypoint %q before building", required)
+			t.Errorf("Rocky wasm-builder does not COPY TypeScript entrypoint %q before building", required)
 		}
 	}
 }

@@ -11,7 +11,7 @@ applyTo: "**"
 
 ```text
 module: github.com/xaligo/xaligo
-Go:     1.22
+Go:     1.26
 ```
 
 Read `development-flow.instructions.md` for task slicing, verification, and

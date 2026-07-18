@@ -63,7 +63,7 @@ See [Planned Work](docs/src/roadmap.md) for upcoming and exploratory features.
 Build the documentation locally:
 
 ```bash
-cargo install mdbook-tabs --version 0.2.3 --locked
+cargo install mdbook-tabs --version 1.0.4 --locked
 mdbook build docs
 ```
 

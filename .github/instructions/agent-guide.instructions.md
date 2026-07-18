@@ -16,7 +16,7 @@ preconditions before changing code:
 
 ## Project summary
 
-- Go 1.22 module: `github.com/xaligo/xaligo`
+- Go 1.26 module: `github.com/xaligo/xaligo`
 - CLI entry point: `cmd/main.go`
 - PPTX exporter WASM entry point: `external/command.ts`
 - TypeScript package and implementation: `external`
