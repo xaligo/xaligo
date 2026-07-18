@@ -6,6 +6,13 @@ The [canonical V1 envelope example](examples/canonical-v1-envelope.md) uses
 `<xaligo version="1">`, the document-wide `<data>` registry, identified frames,
 ports, and a cross-frame connection without producing a legacy-root warning.
 
+## Cross-Frame Page Links
+
+The [cross-frame page-link example](examples/page-links.md) demonstrates both
+automatic nearest-border selection and explicit side/anchor selection. It also
+shows the exact `to <frame ID>` and `from <frame ID>` labels generated on each
+page-local stub.
+
 ## Hybrid Enterprise Architecture
 
 ![Hybrid enterprise architecture sample](images/complex-hybrid-architecture.svg)

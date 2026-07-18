@@ -11,6 +11,7 @@
   - [Route and Traffic Separation](examples/route-traffic.md)
   - [Automatic Route Junctions](examples/junctions.md)
   - [Canonical V1 Envelope](examples/canonical-v1-envelope.md)
+  - [Cross-Frame Page Links](examples/page-links.md)
   - [Tables](examples/tables.md)
   - [Imported Tables](examples/table-imports.md)
   - [Relational Database](examples/databases.md)
