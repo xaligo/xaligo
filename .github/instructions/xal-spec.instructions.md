@@ -119,12 +119,13 @@ have been resolved.
 
 SVG, PPTX, PDF, and Excel omit the page-frame outline in both default and
 `--combine-frames` output. Frame geometry remains authoritative for page size,
-cropping, endpoint ownership, and the logical page edge used by cross-frame
-page-link stubs. A default page-local SVG uses the exact frame rectangle as its
-canvas and clip boundary; PDF pages and Excel page images inherit that strict
-crop. Combined SVG compatibility output retains marker-safe bounds expansion.
-Excalidraw retains editable frame structure with transparent page-frame
-strokes.
+cropping, endpoint ownership, and the outer logical page edge used to select a
+cross-frame page-link side and tangent anchor. The drawable frame terminal may
+sit on a parallel inward inset line. A default page-local SVG uses the exact
+frame rectangle as its canvas and clip boundary; PDF pages and Excel page
+images inherit that strict crop. Combined SVG compatibility output retains
+marker-safe bounds expansion. Excalidraw retains editable frame structure with
+transparent page-frame strokes.
 
 For a document with one child frame, SVG writes exactly the requested output
 path. For multiple child frames, an output request such as `diagram.svg`
@@ -213,6 +214,16 @@ strip. `overflow="visible"` never overrides this page-decoration exclusion.
 The frame's outer page size and invisible logical edge do not change.
 The inset is measured from that logical frame edge before any common PPTX slide
 centering and is unrelated to the export-only `--paper-margin*` options.
+For a cross-frame page link, the same resolved `row-gap` is also the inward
+normal inset of safe frame terminals on all four sides, independent of metadata
+`position`; zero retains the outer edge. A frame without metadata instead uses
+a 4-layout-pixel terminal inset. An explicit `src/dst-frame-side` or
+`src/dst-frame-anchor` requires the inset to be strictly smaller than its
+specified side's normal frame dimension: height for `top`/`bottom`, width for
+`left`/`right`. Without an explicit frame terminal, validation requires at
+least one side that satisfies this inset bound and the metadata reservation;
+the shared scene later selects among those safe sides from rendered visual
+geometry. The inset is never implicitly clamped.
 
 The shared layout and presentation scene own this geometry. SVG, PPTX, PDF,
 Excel, and Excalidraw render the owning frame's tags; per-frame projection
@@ -893,8 +904,8 @@ connector.
 | `dst` | string | ✓ | Catalog ID, or `id`/`name`/`ref` of the arrow end item, AWS group, rectangle, port, or identified child frame |
 | `src-side` / `dst-side` | string | — | Optional endpoint side: `top`, `right`, `bottom`, or `left` |
 | `src-anchor` / `dst-anchor` | string | — | Optional edge anchor. Each side has five inset positions (`top-1` through `top-5`, etc.) for 20 unique perimeter anchors |
-| `src-frame-side` / `dst-frame-side` | string | — | Cross-frame-only logical page-terminal side, independent of the endpoint side |
-| `src-frame-anchor` / `dst-frame-anchor` | string | — | Cross-frame-only logical page-terminal anchor. Uses `top|right|bottom|left-1..5`, or a side plus numeric/named slot |
+| `src-frame-side` / `dst-frame-side` | string | — | Cross-frame-only logical page side, independent of the endpoint side; the drawable terminal uses that side's inward inset line |
+| `src-frame-anchor` / `dst-frame-anchor` | string | — | Cross-frame-only logical page side and tangent slot. Uses `top|right|bottom|left-1..5`, or a side plus numeric/named slot; inward inset does not change the slot coordinate |
 | `arrowhead-size` | string | — | V1 fixed arrowhead size: `"s"` (small). This is the default; `m` and `l` are not V1 values because V1 cannot preserve them across all render formats |
 | `kind` | string | — | `connection` for the normal connector, `route` for a structural path without arrows, or `traffic` for directional flow drawn beside a matching route |
 | `color` | `#RRGGBB` | — | Six-digit hexadecimal stroke color override. Named, short, and alpha colors are invalid in V1 so every format preserves the same color |
@@ -928,10 +939,11 @@ When a connection references endpoints in different frames, the shared scene
 represents it as a page link instead of drawing one line across the inter-frame
 gap. SVG, PPTX, PDF, Excel, and Excalidraw derive exactly two local stubs:
 
-- the source stub runs from the source endpoint to the logical page edge of its
-  owning frame and has the exact label `to <destination frame ID>`; and
-- the destination stub runs from the logical page edge of its owning frame to
-  the destination endpoint and has the exact label `from <source frame ID>`.
+- the source stub runs from the source endpoint to the page-terminal inset line
+  of its owning frame and has the exact label `to <destination frame ID>`; and
+- the destination stub runs from the page-terminal inset line of its owning
+  frame to the destination endpoint and has the exact label
+  `from <source frame ID>`.
 
 Angle brackets in those forms are rendered as literal punctuation. For a
 connection from frame `overview` to frame `detail`, the visible strings are
@@ -941,51 +953,108 @@ Endpoint binding and logical frame-terminal geometry are separate. The
 endpoint uses `src-anchor`/`dst-anchor`, then `src-side`/`dst-side`, then its
 normal automatic binding. The logical page terminal uses
 `src-frame-anchor`/`dst-frame-anchor`, then
-`src-frame-side`/`dst-frame-side`, then the legacy endpoint anchor, then the
-endpoint side, then automatic nearest-border selection. An item's visual
-envelope is the union of its icon and external label; other endpoints use their
-rendered shape.
-Automatic selection minimizes the non-negative perpendicular distance from
-that envelope to the owning frame's four edges. When multiple borders have the
-same minimum distance, a tied border facing the remote frame wins; otherwise
-the stable order is `top`, `right`, `bottom`, `left`.
+`src-frame-side`/`dst-frame-side` as fixed choices. With neither frame-terminal
+attribute, the legacy endpoint anchor, endpoint side, or normal nearest-border
+result is only the preferred page side. The renderer keeps it when safe;
+otherwise it chooses the nearest safe side from the endpoint's rendered visual
+envelope. An item's envelope is the union of its icon and external label; other
+endpoints use their rendered shape. Distance ties prefer a tied side facing the
+remote frame, then `top`, `right`, `bottom`, `left`.
 
-The endpoint- and frame-adjacent segments are perpendicular to their own
-selected sides, so an endpoint may leave on `right` while its local stub exits
-the page on `bottom`. Frame-side and frame-anchor attributes are valid only
-when the resolved endpoints belong to different frames. Using any of them on a
-same-frame connection is a source-positioned validation error.
+A side is safe when the resolved inset fits its normal frame dimension, it is
+not the metadata edge, and an actual `top`/`bottom` terminal opposite metadata
+does not enter the reservation strip. Validation of an automatic page terminal
+checks only that this candidate set is non-empty. It must not infer the chosen
+automatic side from layout `Box` geometry; final selection belongs to shared
+scene construction after icon and label geometry is available. If the normal
+preferred side is unsafe, scene construction remaps it to the nearest safe
+candidate. No safe candidate is a source-positioned validation error at the
+connection.
 
-Frame metadata reservation is a final safety constraint on that choice. When
-no explicit frame-terminal attribute is present, a selected top/bottom edge
-that owns the metadata strip is remapped to the nearest safe edge. A terminal
-on a left or right edge is clamped along that edge so it lies outside the
-top/bottom reservation strip; any resulting coordinate difference is bridged
+The endpoint- and frame-terminal-adjacent segments are perpendicular to their
+own selected sides, so an endpoint may leave on `right` while its local stub
+terminates at the page's bottom inset line. Frame-side and frame-anchor
+attributes are valid only when the resolved endpoints belong to different
+frames. Using any of them on a same-frame connection is a source-positioned
+validation error.
+
+Frame metadata reservation is a final safety constraint on that choice. For an
+automatic page terminal, the metadata edge and any other unsafe side are
+removed before the renderer's nearest-side choice. A terminal on a safe left
+or right edge is clamped along that edge so it lies outside the top/bottom
+reservation strip; any resulting coordinate difference is bridged
 orthogonally. An explicit frame side or anchor that selects the reserved edge,
 or an exact left/right anchor whose point lies inside the strip, is a
 source-positioned validation error instead of being moved. Page-link paths and
 labels remain outside the full strip.
 
-The terminal lies on the frame's logical page edge, which is not drawn as a
-page-frame outline. Its unconstrained coordinate
-parallel to that border comes from the endpoint binding. If that coordinate
-enters a 24-layout-px corner gutter, the terminal is clamped and a two-bend
-orthogonal dogleg bridges the coordinate difference; the endpoint- and
-frame-adjacent segments stay perpendicular to their selected side. A border
-shorter than 96 layout pixels uses one quarter of its length as an adaptive
-gutter.
-If an unconstrained terminal would coincide with the endpoint binding on the
-same border, it moves by up to 24 layout pixels within the available range so
-the stub remains visible. An explicit frame anchor remains exact; its local
-orthogonal stub provides visibility without moving that terminal. Manual bends
-do not alter either local stub's geometry; bends remain logical routing
-metadata for graph adapters.
+When an explicit frame side is vertically opposite the metadata edge, its
+actual terminal must remain outside the reservation strip. For bottom metadata
+with explicit side `top`, the actual top terminal may not enter below the
+strip's top boundary. For top metadata with explicit side `bottom`, the actual
+bottom terminal may not enter above the strip's bottom boundary. A violation is
+a source-positioned validation error at the connection. For an automatic page
+terminal, the same conflict makes that candidate unsafe instead of immediately
+rejecting the connection. A safe explicit `left` or `right` terminal remains
+valid even if a hypothetical top/bottom inset line would enter the strip.
 
-Each `to <...>` / `from <...>` label is placed just inside its page with a
-4-layout-pixel inward gap and a minimum 4-layout-pixel tangent gap from the
-logical terminal. Placement chooses the closest tangent position that avoids
-the endpoint envelope and metadata reservation. Tiny pages clamp or shrink the
-label fallback instead of moving it farther inward from the terminal.
+The parallel coordinate is resolved against the selected outer logical frame
+edge before applying the normal inset. An explicit frame anchor keeps its exact
+10/30/50/70/90-percent coordinate along the outer frame extent. An automatic
+terminal's unconstrained parallel coordinate comes from the endpoint binding.
+If it enters a 24-layout-px corner gutter, the parallel coordinate is clamped
+and a two-bend orthogonal dogleg bridges the difference; a border shorter than
+96 layout pixels uses one quarter of its length as an adaptive gutter. A
+left/right terminal is also subject to the metadata reservation clamp described
+above. Automatic left/right coincidence avoidance normally intersects that
+corner-gutter range with an 8-layout-pixel clearance from the reservation. If a
+very small non-reserved range cannot satisfy both preferences, it falls back to
+the entire non-reserved interval, may touch its boundary, and never moves a
+point outside the frame or inside the metadata strip.
+
+The drawable terminal then lies on a page-terminal inset line parallel to that
+outer edge. Let `i` be the resolved metadata `row-gap` when the frame has
+metadata, or 4 layout pixels when it does not. The same `i` applies to every
+terminal side regardless of metadata `position`; `i = 0` retains the outer
+edge. An explicit `top`/`bottom` frame side requires `i < frame.height`; an
+explicit `left`/`right` side requires `i < frame.width`. Failure is a
+source-positioned validation error at that connection. For an automatic page
+terminal, those inequalities classify candidates instead; only an empty safe
+candidate set is an error. The resolved `i` is used exactly and is not reduced
+to fit. With the resolved parallel coordinate represented by `u` for a
+horizontal side or `v` for a vertical side, the terminal is:
+
+```text
+top:    (u, frame.y + i)
+right:  (frame.x + frame.width - i, v)
+bottom: (u, frame.y + frame.height - i)
+left:   (frame.x + i, v)
+```
+
+The inset step changes only the normal coordinate. An explicit frame anchor
+therefore retains its tangent slot and uses its local orthogonal stub for
+visible separation. If an unconstrained final inset terminal would coincide
+with the endpoint binding, its parallel coordinate moves by up to 24 layout
+pixels within the available range so the stub remains visible. Manual bends do
+not alter either local stub's geometry; bends remain logical routing metadata
+for graph adapters.
+
+There is one strict zero-inset case. When metadata is enabled with resolved
+`row-gap="0"`, an endpoint resolves to its owning frame itself, and its explicit
+frame anchor coincides with the resolved endpoint point, the connection is a
+source-positioned validation error. An explicit endpoint anchor supplies that
+point directly. An explicit endpoint side uses its center (`top` is `top-3`,
+and likewise for the other sides); with neither endpoint attribute, the
+automatically resolved endpoint side also uses its center. Fixed parallel
+coordinates, perpendicular segments at both ends, and a visible local stub
+cannot all be satisfied at that coincident point. The author must select a
+different endpoint or frame anchor, or use a positive metadata `row-gap`.
+
+Each `to <...>` / `from <...>` label is placed from the final inset terminal
+with a 4-layout-pixel inward gap and a minimum 4-layout-pixel tangent gap.
+Placement chooses the closest tangent position that avoids the endpoint
+envelope and metadata reservation. Tiny pages clamp or shrink the label
+fallback instead of moving it farther inward from that terminal.
 
 Both scene stubs carry the same logical connector ID, original endpoint/frame
 IDs, and V1 routing metadata. XYFlow and Isoflow use those fields to emit one
@@ -1009,11 +1078,12 @@ When `src-side`, `dst-side`, `src-anchor`, and `dst-anchor` are omitted,
 endpoint sides and anchor positions are calculated automatically from endpoint
 geometry. Use `src-anchor` and `dst-anchor` to pin an endpoint to a specific
 perimeter anchor. Cross-frame `src-frame-anchor` and `dst-frame-anchor` use the
-same grammar to pin the logical page terminal independently. Each side has
-five positions at 10, 30, 50, 70, and 90 percent of its length, giving 20
-unique perimeter anchors. Corner anchors are not shared: `top-1` sits inside
-the top edge near the left corner, while `left-1` sits inside the left edge
-near the top corner.
+same grammar to select the logical page side and tangent slot independently.
+Each side has five positions at 10, 30, 50, 70, and 90 percent of the outer
+frame extent, giving 20 unique tangent anchors. The drawable frame terminal
+then moves only in the inward normal direction to the page-terminal inset line.
+Corner anchors are not shared: `top-1` keeps a horizontal coordinate near the
+left corner, while `left-1` keeps a vertical coordinate near the top corner.
 
 ```text
 top:    top-1    top-2    top-3    top-4    top-5
@@ -1037,7 +1107,7 @@ The aliases map one-to-one as `start=1`, `near=2`, `center=3`, `far=4`, and
             src-side="right" src-anchor="3"
             dst-side="left" dst-anchor="3" />
 
-<!-- The item and logical page edge may use different sides. -->
+<!-- The item and logical page terminal may use different sides. -->
 <connection src="web" dst="detail.app"
             src-side="right" src-anchor="near"
             src-frame-side="bottom" src-frame-anchor="far"

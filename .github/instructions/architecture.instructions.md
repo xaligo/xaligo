@@ -185,12 +185,24 @@ allows V2 to render V1 while V1 remains unaware of V2.
     local/UML connector paths and labels, and cross-frame page links cannot
     enter it. Legacy/automatic page-link side selection remaps a reserved edge
     to the nearest safe edge and clamps left/right terminals outside the strip.
-    An explicit cross-frame
-    `src-frame-side`, `dst-frame-side`, `src-frame-anchor`, or
+    An explicit cross-frame `src-frame-side`, `dst-frame-side`,
+    `src-frame-anchor`, or
     `dst-frame-anchor` that selects the reservation is instead a validation
-    error. Page-link labels stay adjacent to their logical edge terminal with
-    a 4-layout-pixel gap while avoiding metadata and endpoint geometry. These
-    rules, text metrics, layer order, and per-page ownership are
+    error. When metadata is enabled, its resolved `row-gap` is also the inward
+    normal inset for page-link terminals on all four sides; without metadata,
+    the terminal inset is 4 layout pixels. A resolved zero `row-gap` retains
+    the outer logical frame edge. An explicit frame side/anchor requires the
+    inset to fit that side's normal dimension and its actual terminal to avoid
+    the reservation; failures are reported at the connection source position.
+    Without an explicit frame terminal, validation only requires a non-empty
+    set of sides satisfying those rules. Shared scene construction uses actual
+    endpoint visual geometry to retain a safe preference or choose the nearest
+    safe side; it does not use validator `Box` geometry to predict that side. A
+    safe selected `left`/`right` terminal is not rejected for an unused
+    top/bottom inset line. The inset is never implicitly clamped. Page-link
+    labels stay adjacent to the final inset terminal with a 4-layout-pixel gap
+    while avoiding metadata and endpoint geometry. These rules, text metrics,
+    layer order, and per-page ownership are
     encoder-independent. SVG, PPTX, PDF, Excel, and Excalidraw consume that
     shared result; XYFlow and Isoflow may omit the decoration but must not
     reinterpret it as graph nodes or endpoints.
@@ -198,9 +210,20 @@ allows V2 to render V1 while V1 remains unaware of V2.
     logical page terminal. `src-side`/`dst-side` and
     `src-anchor`/`dst-anchor` bind the endpoint; `src-frame-side`/
     `dst-frame-side` and `src-frame-anchor`/`dst-frame-anchor` select the
-    owning frame edge independently. The endpoint- and frame-adjacent route
+    owning frame side independently. The outer logical frame edge supplies the
+    side and 10/30/50/70/90-percent tangent coordinate, but the drawable frame
+    terminal is on the parallel page-terminal inset line. Applying the inset
+    changes only the normal coordinate; an explicit frame anchor retains its
+    tangent coordinate. The endpoint- and frame-terminal-adjacent route
     segments are perpendicular to their respective sides. Frame-terminal
-    attributes are invalid on same-frame connections.
+    attributes are invalid on same-frame connections. At zero inset, an owning
+    frame endpoint that coincides with an explicit frame anchor is a
+    source-positioned validation error; explicit endpoint anchors keep their
+    slot, while explicit endpoint sides and automatic endpoint sides resolve to
+    their center slot for this check. Automatic left/right coincidence
+    avoidance uses the corner gutter and metadata clearance when possible, but
+    a tiny safe range falls back to the full non-reserved interval without
+    leaving the frame.
 
 ## File organization
 

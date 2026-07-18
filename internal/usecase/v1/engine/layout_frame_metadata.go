@@ -29,25 +29,59 @@ func validateFrameMetadataConnectionAnchorsV1EngineLayoutFrameMetadata(root *ent
 			continue
 		}
 		for _, endpoint := range []string{"src", "dst"} {
-			anchor, explicit := connectionFrameAnchorV1EngineSceneConnectionRoute(connection, endpoint)
-			if !explicit {
-				continue
-			}
 			frameID := strings.TrimSpace(connection.Attr(internalConnectionSrcFrameAttrV1EngineParseDocument))
 			if endpoint == "dst" {
 				frameID = strings.TrimSpace(connection.Attr(internalConnectionDstFrameAttrV1EngineParseDocument))
 			}
 			frame := frames[frameID]
-			if frame == nil || frame.FrameMetadata == nil || frame.FrameMetadata.ReservedW <= 0 || frame.FrameMetadata.ReservedH <= 0 {
+			if frame == nil {
 				continue
 			}
-			attribute := endpoint + "-frame-side"
-			if strings.TrimSpace(connection.Attr(endpoint+"-frame-anchor")) != "" {
-				attribute = endpoint + "-frame-anchor"
+			attribute, attributeValue := pageLinkTerminalDiagnosticAttributeV1EngineLayoutFrameMetadata(connection, endpoint)
+			pageInset := defaultFrameMetadataRowGapV1EngineLayoutFrameMetadata
+			if frame.FrameMetadata != nil {
+				pageInset = frame.FrameMetadata.RowGap
 			}
 			metadata := frame.FrameMetadata
-			if string(anchor.side) == metadata.Position {
-				return &entity.ParseError{Position: connection.Position, Err: fmt.Errorf("<connection %s=%q> selects frame %q metadata reservation edge %q", attribute, connection.Attr(attribute), frameID, metadata.Position)}
+			anchor, explicit := connectionFrameAnchorV1EngineSceneConnectionRoute(connection, endpoint)
+			if explicit && metadata != nil && metadata.ReservedW > 0 && metadata.ReservedH > 0 && string(anchor.side) == metadata.Position {
+				return &entity.ParseError{Position: connection.Position, Err: fmt.Errorf("<connection %s=%q> selects frame %q metadata reservation edge %q", attribute, attributeValue, frameID, metadata.Position)}
+			}
+			frameRect := [4]float64{frame.X, frame.Y, frame.W, frame.H}
+			metadataPosition := ""
+			metadataReserved := [4]float64{}
+			if metadata != nil {
+				metadataPosition = metadata.Position
+				metadataReserved = [4]float64{metadata.ReservedX, metadata.ReservedY, metadata.ReservedW, metadata.ReservedH}
+			}
+			if explicit {
+				frameSide := string(anchor.side)
+				if pageInset >= pageLinkTerminalNormalSizeV1EngineLayoutFrameMetadata(frameSide, frameRect)-geometryEpsilonV1EngineLayoutValidation {
+					return &entity.ParseError{Position: connection.Position, Err: fmt.Errorf("<connection %s=%q> page terminal inset %.6g places the selected-side terminal outside frame %q or on its opposite edge", attribute, attributeValue, pageInset, frameID)}
+				}
+				if pageLinkTerminalEntersMetadataReservationV1EngineLayoutFrameMetadata(frameSide, frameRect, pageInset, metadataPosition, metadataReserved) {
+					return &entity.ParseError{Position: connection.Position, Err: fmt.Errorf("<connection %s=%q> page terminal inset %.6g enters frame %q metadata reservation", attribute, attributeValue, pageInset, frameID)}
+				}
+			} else if !pageLinkFrameHasSafeTerminalSideV1EngineLayoutFrameMetadata(frameRect, pageInset, metadataPosition, metadataReserved) {
+				return &entity.ParseError{Position: connection.Position, Err: fmt.Errorf("<connection %s=%q> page terminal inset %.6g leaves no safe terminal side inside frame %q", attribute, attributeValue, pageInset, frameID)}
+			}
+
+			if !explicit || metadata == nil || metadata.ReservedW <= 0 || metadata.ReservedH <= 0 {
+				continue
+			}
+			if pageInset == 0 && anchor.hasSlot {
+				endpointKeyAttribute := internalConnectionSrcKeyAttrV1EngineParseDocument
+				if endpoint == "dst" {
+					endpointKeyAttribute = internalConnectionDstKeyAttrV1EngineParseDocument
+				}
+				frameKey := strings.TrimSpace(frame.Attrs[internalConnectionKeyAttrV1EngineParseDocument])
+				if frameKey != "" && strings.TrimSpace(connection.Attr(endpointKeyAttribute)) == frameKey {
+					endpointFixedPoint, ok := frameEndpointFixedPointV1EngineLayoutFrameMetadata(connection, endpoint, frame, frames)
+					frameFixedPoint := fixedPointForAnchorV1EngineSceneConnection(anchor)
+					if ok && math.Abs(endpointFixedPoint[0]-frameFixedPoint[0]) <= geometryEpsilonV1EngineLayoutValidation && math.Abs(endpointFixedPoint[1]-frameFixedPoint[1]) <= geometryEpsilonV1EngineLayoutValidation {
+						return &entity.ParseError{Position: connection.Position, Err: fmt.Errorf("<connection %s=%q> coincides with the frame endpoint at zero page inset; choose a different endpoint/frame anchor or a positive metadata row-gap", attribute, attributeValue)}
+					}
+				}
 			}
 			if !anchor.hasSlot || anchor.side != sideLeftV1EngineRouteTypes && anchor.side != sideRightV1EngineRouteTypes {
 				continue
@@ -56,11 +90,101 @@ func validateFrameMetadataConnectionAnchorsV1EngineLayoutFrameMetadata(root *ent
 			terminalY := frame.Y + frame.H*position
 			reservedBottom := metadata.ReservedY + metadata.ReservedH
 			if terminalY >= metadata.ReservedY-geometryEpsilonV1EngineLayoutValidation && terminalY <= reservedBottom+geometryEpsilonV1EngineLayoutValidation {
-				return &entity.ParseError{Position: connection.Position, Err: fmt.Errorf("<connection %s=%q> places the frame terminal inside frame %q metadata reservation", attribute, connection.Attr(attribute), frameID)}
+				return &entity.ParseError{Position: connection.Position, Err: fmt.Errorf("<connection %s=%q> places the frame terminal inside frame %q metadata reservation", attribute, attributeValue, frameID)}
 			}
 		}
 	}
 	return nil
+}
+
+func pageLinkTerminalNormalSizeV1EngineLayoutFrameMetadata(side string, frameRect [4]float64) float64 {
+	if side == "top" || side == "bottom" {
+		return frameRect[3]
+	}
+	return frameRect[2]
+}
+
+func pageLinkTerminalEntersMetadataReservationV1EngineLayoutFrameMetadata(side string, frameRect [4]float64, pageInset float64, metadataPosition string, metadataReserved [4]float64) bool {
+	if metadataReserved[2] <= 0 || metadataReserved[3] <= 0 {
+		return false
+	}
+	if metadataPosition == "bottom" && side == "top" {
+		return frameRect[1]+pageInset > metadataReserved[1]+geometryEpsilonV1EngineLayoutValidation
+	}
+	if metadataPosition == "top" && side == "bottom" {
+		return frameRect[1]+frameRect[3]-pageInset < metadataReserved[1]+metadataReserved[3]-geometryEpsilonV1EngineLayoutValidation
+	}
+	return false
+}
+
+func pageLinkTerminalSideIsSafeV1EngineLayoutFrameMetadata(side string, frameRect [4]float64, pageInset float64, metadataPosition string, metadataReserved [4]float64) bool {
+	if pageInset >= pageLinkTerminalNormalSizeV1EngineLayoutFrameMetadata(side, frameRect)-geometryEpsilonV1EngineLayoutValidation {
+		return false
+	}
+	if metadataReserved[2] > 0 && metadataReserved[3] > 0 && side == metadataPosition {
+		return false
+	}
+	return !pageLinkTerminalEntersMetadataReservationV1EngineLayoutFrameMetadata(side, frameRect, pageInset, metadataPosition, metadataReserved)
+}
+
+func pageLinkFrameHasSafeTerminalSideV1EngineLayoutFrameMetadata(frameRect [4]float64, pageInset float64, metadataPosition string, metadataReserved [4]float64) bool {
+	for _, side := range []string{"top", "right", "bottom", "left"} {
+		if pageLinkTerminalSideIsSafeV1EngineLayoutFrameMetadata(side, frameRect, pageInset, metadataPosition, metadataReserved) {
+			return true
+		}
+	}
+	return false
+}
+
+func pageLinkTerminalDiagnosticAttributeV1EngineLayoutFrameMetadata(connection *entity.Node, endpoint string) (string, string) {
+	for _, suffix := range []string{"-frame-anchor", "-frame-side"} {
+		attribute := endpoint + suffix
+		if value := strings.TrimSpace(connection.Attr(attribute)); value != "" {
+			return attribute, value
+		}
+	}
+	return endpoint, connection.Attr(endpoint)
+}
+
+func frameEndpointFixedPointV1EngineLayoutFrameMetadata(connection *entity.Node, endpoint string, frame *entity.Box, frames map[string]*entity.Box) ([2]float64, bool) {
+	var fixedPoint [2]float64
+	var side string
+	if anchor, ok := connectionEndpointAnchorV1EngineSceneConnectionRoute(connection, endpoint); ok {
+		side = string(anchor.side)
+		fixedPoint = fixedPointForAnchorV1EngineSceneConnection(anchor)
+	} else if endpointSide, ok := connectionEndpointSideV1EngineSceneConnectionRoute(connection, endpoint); ok {
+		side = string(endpointSide)
+		fixedPoint = fixedPointForSideV1EngineSceneConnection(side)
+	} else {
+		remoteFrameAttribute := internalConnectionDstFrameAttrV1EngineParseDocument
+		if endpoint == "dst" {
+			remoteFrameAttribute = internalConnectionSrcFrameAttrV1EngineParseDocument
+		}
+		remoteFrame := frames[strings.TrimSpace(connection.Attr(remoteFrameAttribute))]
+		if remoteFrame == nil {
+			return fixedPoint, false
+		}
+		frameRect := [4]float64{frame.X, frame.Y, frame.W, frame.H}
+		remoteFrameRect := [4]float64{remoteFrame.X, remoteFrame.Y, remoteFrame.W, remoteFrame.H}
+		side = nearestFrameSideV1EngineSceneConnectionPage(frameRect, frameRect, remoteFrameRect)
+		fixedPoint = fixedPointForSideV1EngineSceneConnection(side)
+	}
+
+	if metadata := frame.FrameMetadata; metadata != nil && metadata.ReservedW > 0 && metadata.ReservedH > 0 && side == metadata.Position {
+		remoteFrameAttribute := internalConnectionDstFrameAttrV1EngineParseDocument
+		if endpoint == "dst" {
+			remoteFrameAttribute = internalConnectionSrcFrameAttrV1EngineParseDocument
+		}
+		remoteFrame := frames[strings.TrimSpace(connection.Attr(remoteFrameAttribute))]
+		if remoteFrame == nil {
+			return fixedPoint, false
+		}
+		frameRect := [4]float64{frame.X, frame.Y, frame.W, frame.H}
+		remoteFrameRect := [4]float64{remoteFrame.X, remoteFrame.Y, remoteFrame.W, remoteFrame.H}
+		side = nearestFrameSideExcludingV1EngineSceneConnectionPage(frameRect, frameRect, remoteFrameRect, metadata.Position)
+		fixedPoint = fixedPointForSideV1EngineSceneConnection(side)
+	}
+	return fixedPoint, true
 }
 
 const (

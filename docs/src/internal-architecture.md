@@ -271,41 +271,59 @@ migration; the neutral name does not pretend that migration is already complete.
 For a connection whose endpoints belong to different frames, V1 deliberately
 keeps two page-local editable stubs in `PresentationScene`, never one line
 across the inter-frame canvas. The source stub runs from its endpoint to the
-source frame's logical page edge and is labeled `to <destination frame ID>`;
-the destination stub runs from the destination frame's logical page edge to its
-endpoint and is labeled `from <source frame ID>`. The angle brackets are
+source frame's page-terminal inset line and is labeled
+`to <destination frame ID>`; the destination stub runs from the destination
+frame's page-terminal inset line to its endpoint and is labeled
+`from <source frame ID>`. The angle brackets are
 literal punctuation, so an `overview` to `detail` link displays `to <detail>`
 and `from <overview>`.
 
-The logical page edge is not a rendered frame outline in SVG, PPTX, PDF, or
-Excel. It remains available for sizing, projection, and page-link geometry.
+The outer logical page edge is not a rendered frame outline in SVG, PPTX, PDF,
+or Excel. It remains available for sizing, projection, side selection, and the
+tangent-anchor basis; the drawable page terminal may be on a parallel inward
+inset line.
 
 Shared scene construction resolves endpoint binding and frame-terminal geometry
 independently. `src/dst-anchor` and `src/dst-side` own the endpoint;
 cross-frame-only `src/dst-frame-anchor` and `src/dst-frame-side` own the
 logical page terminal. Frame-terminal precedence is frame anchor, frame side,
-legacy endpoint anchor, endpoint side, then automatic selection. Every frame
-edge has fixed anchors at 10/30/50/70/90 percent. Automatic selection minimizes
-the distance from the endpoint visual envelope to the four owning-frame edges;
+legacy endpoint anchor, endpoint side, then automatic selection. The first two
+are fixed; the rest supply a preferred side when no frame terminal is explicit.
+Every frame edge has fixed tangent anchors at 10/30/50/70/90 percent of the
+outer extent. Shared scene construction keeps a safe preference or minimizes
+distance from the actual endpoint visual envelope over only safe candidates;
 equal minima prefer the remote-facing candidate and then `top`, `right`,
-`bottom`, `left`. The endpoint and frame segments are perpendicular to their
-respective selected sides even when those sides differ.
+`bottom`, `left`. Layout validation checks that a safe candidate exists but
+does not infer the automatic side from `Box` positions. The endpoint and
+frame-terminal segments are perpendicular to their respective selected sides
+even when those sides differ.
 
 Without an explicit frame anchor, the unconstrained terminal parallel
 coordinate comes from the endpoint binding. A coordinate inside the
 24-layout-px corner gutter is clamped and bridged by a two-bend orthogonal
 dogleg. Borders shorter than 96 layout pixels use an adaptive quarter-length
-gutter. An unconstrained coincident terminal shifts by up to 24 layout pixels
-within the available range to retain a visible stub. An explicit frame anchor
-remains exact and uses an orthogonal local stub for visible separation.
+gutter. The final normal coordinate is shifted inward from the outer logical
+edge by the resolved metadata `row-gap`, or by 4 layout pixels when metadata is
+absent. The same value applies to all four sides, and zero keeps the outer edge.
+An explicit side must fit that side's normal frame dimension and avoid the
+metadata reservation. Without an explicit frame terminal, the same constraints
+filter candidate sides; an unsafe preference is remapped and only an empty set
+is a connection-positioned validation error. The resolved inset is not
+clamped.
+An unconstrained coincident inset terminal shifts by up to 24 layout pixels
+along the parallel axis within the available range to retain a visible stub.
+An explicit frame anchor retains its exact tangent coordinate and uses an
+orthogonal local stub for visible separation.
 
 Frame metadata adds a final safety pass after normal side precedence. Without
-explicit frame-terminal geometry, a reserved top/bottom edge is remapped to the
-nearest safe edge and left/right terminals are clamped beyond the full-width
-reservation strip. An explicit frame side/anchor that selects the reservation
-is a validation error. The path and label remain outside the strip. Page-link
+explicit frame-terminal geometry, unsafe sides are removed before the visual
+nearest-side choice and left/right terminals are clamped beyond the full-width
+reservation strip. An explicit frame side/anchor that conflicts with the
+reservation is a validation error. A safe explicit left/right side remains
+valid even if an unused top/bottom inset line would be unsafe. The path and
+label remain outside the strip. Page-link
 labels keep a 4-layout-pixel inward gap and at least a 4-layout-pixel tangent
-gap from the logical terminal. The closest tangent position that avoids
+gap from the final inset terminal. The closest tangent position that avoids
 endpoint geometry is selected.
 
 The stubs share a stable logical connector ID plus the original

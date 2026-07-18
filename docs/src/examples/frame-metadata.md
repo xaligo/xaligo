@@ -10,7 +10,18 @@ not replace or add to this inset. A full-width reservation strip still extends
 from the outer logical frame edge to the final content-box boundary and is at
 least `row-gap + complete band height + 8` pixels deep. Normal items, text,
 connector paths and labels, and page links stay outside it. The logical frame
-edge still controls page size, cropping, and safe page-link terminals.
+edge still controls page size, cropping, side selection, and frame-anchor
+tangent coordinates. The actual page-link terminal uses the same resolved
+`row-gap` as its inward normal inset on every side. An explicit frame side or
+anchor requires that value to fit its side's normal dimension and its actual
+terminal to avoid the reservation; a violation is a source-positioned
+validation error at the connection, and xaligo does not clamp the value.
+Without an explicit frame terminal, validation only requires at least one safe
+candidate. Rendering uses actual icon and label geometry to retain a safe
+preference or choose the nearest safe side; an unsafe normal preference is
+remapped, and only an empty candidate set is an error. A safe `left`/`right`
+candidate is not rejected for an unused top/bottom inset line.
+
 Default SVG artifacts, PDF pages, and Excel page images are strictly cropped
 to that logical frame, so the `row-gap` gutter rather than a tag cell reaches
 the physical page/image edge.
@@ -55,9 +66,18 @@ port faces the reserved top edge and its destination port faces the reserved
 bottom edge, page-link safety remaps them to the nearest safe edges. The
 page-local `to <release-notes>` and `from <aws-architecture>` paths and labels
 never enter either reservation strip; left/right terminals would likewise be
-clamped beyond the strip. An explicit `src/dst-frame-side` or
-`src/dst-frame-anchor` that selects a reserved edge is instead a validation
-error, which prevents a requested terminal from being silently relocated.
+clamped beyond the strip. Their final normal positions are also inset by 4
+pixels on `aws-architecture` and 6 pixels on `release-notes`. The labels are
+placed relative to those final inset terminals. An explicit
+`src/dst-frame-side` or `src/dst-frame-anchor` that selects a reserved edge is
+instead a validation error, which prevents a requested terminal from being
+silently relocated.
+
+For an automatic left/right terminal that coincides with its endpoint, xaligo
+normally preserves the corner gutter and 8-pixel metadata clearance. If the
+non-reserved interval is too small for both, it uses that entire interval and
+may touch its boundary, but never moves the route outside the frame or into the
+reservation.
 
 Source:
 

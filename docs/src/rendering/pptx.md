@@ -23,7 +23,10 @@ xaligo render diagram.xal --format pptx -o diagram.pptx --combine-frames
 ```
 
 The page frame is a logical slide boundary and is not drawn as a visible
-rectangle. Its edge still anchors cross-frame page-link stubs.
+rectangle. Its edge supplies each cross-frame side and frame-anchor tangent
+coordinate; the drawable stub terminal is on the parallel inward inset line.
+For a smaller frame centered on the common slide, that inset is measured from
+the logical frame edge before slide centering, not from the physical slide edge.
 
 PPTX-specific behavior:
 
@@ -38,8 +41,10 @@ PPTX-specific behavior:
 - Cross-frame connections are page links: the source slide contains
   `to <destination frame ID>` and the destination slide contains
   `from <source frame ID>`. Endpoint and logical frame anchors can select
-  different sides, and the page-link label stays 4 layout pixels inward and at
-  least 4 layout pixels along the edge from its terminal.
+  different sides. The terminal inset is the resolved metadata `row-gap`, or
+  4 layout pixels without metadata; zero keeps the outer edge. The page-link
+  label stays 4 layout pixels inward and at least 4 layout pixels along the
+  edge from that final terminal.
 
 The PPTX exporter should only translate the resolved draw plan into a
 presentation. Geometry and routing decisions belong on the Go side.

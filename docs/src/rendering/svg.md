@@ -61,7 +61,9 @@ A cross-frame connection therefore appears as `to <destination frame ID>` on
 the source SVG and `from <source frame ID>` on the destination SVG. Combined
 output keeps those two page-link stubs and does not reconnect them across the
 inter-frame gap. Explicit `src/dst-frame-side` or
-`src/dst-frame-anchor` attributes can place the logical frame terminal
-independently from the item endpoint. The label stays 4 layout pixels inside
-and at least 4 layout pixels alongside that terminal, using the closest
+`src/dst-frame-anchor` attributes select the outer frame side and tangent
+coordinate independently from the item endpoint. The drawable terminal is on
+a parallel inward line: resolved metadata `row-gap`, or 4 layout pixels without
+metadata; zero keeps the outer edge. The label stays 4 layout pixels inward and
+at least 4 layout pixels alongside that final terminal, using the closest
 along-edge position that avoids endpoint and metadata geometry.

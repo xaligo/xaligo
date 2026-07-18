@@ -465,10 +465,10 @@ func TestRenderExcalidrawFramesAndCrossFrameLabels(t *testing.T) {
 	assertCrossFrameStubGeometry(t, scene.Elements, destinationStub, destinationTerminal, destinationEnd, detailFrame, "endBinding")
 	assertPageLinkLabelClearsStub(t, scene.Elements, sourceStub, sourceStart, sourceTerminal)
 	assertPageLinkLabelClearsStub(t, scene.Elements, destinationStub, destinationTerminal, destinationEnd)
-	if side := sceneFrameSideAtPoint(overviewFrame, sourceTerminal); side != "top" {
+	if side := sceneFrameSideAtPageLinkInset(overviewFrame, sourceTerminal, 4); side != "top" {
 		t.Fatalf("equal-distance source tie selected %q, want stable top edge", side)
 	}
-	if side := sceneFrameSideAtPoint(detailFrame, destinationTerminal); side != "left" {
+	if side := sceneFrameSideAtPageLinkInset(detailFrame, destinationTerminal, 4); side != "left" {
 		t.Fatalf("equal-distance destination tie selected %q, want remote-facing left edge", side)
 	}
 
@@ -539,7 +539,7 @@ func TestRenderExcalidrawCrossFrameAutomaticSideUsesEveryNearestEdge(t *testing.
 		start, terminal := sceneArrowEndpoints(t, element)
 		frame := sceneElementRect(t, scene.Elements, "paper-frame-"+frameID)
 		assertCrossFrameStubGeometry(t, scene.Elements, element, start, terminal, frame, "startBinding")
-		if side := sceneFrameSideAtPoint(frame, terminal); side != wantSide {
+		if side := sceneFrameSideAtPageLinkInset(frame, terminal, 4); side != wantSide {
 			t.Fatalf("source frame %q page-link side = %q, want %q", frameID, side, wantSide)
 		}
 		if frameID == "corner-page" && len(sceneArrowPoints(t, element)) != 4 {
@@ -655,11 +655,11 @@ func TestRenderExcalidrawCrossFrameExplicitSidesOverrideNearestEdge(t *testing.T
 	detailFrame := sceneElementRect(t, scene.Elements, "paper-frame-detail")
 	_, sourceTerminal := sceneArrowEndpoints(t, sourceStub)
 	destinationTerminal, _ := sceneArrowEndpoints(t, destinationStub)
-	if math.Abs(sourceTerminal[1]-(overviewFrame[1]+overviewFrame[3])) > 1e-9 {
-		t.Fatalf("source terminal = %#v, want explicit bottom frame edge %#v", sourceTerminal, overviewFrame)
+	if math.Abs(sourceTerminal[1]-(overviewFrame[1]+overviewFrame[3]-4)) > 1e-9 {
+		t.Fatalf("source terminal = %#v, want 4px-inset bottom page edge %#v", sourceTerminal, overviewFrame)
 	}
-	if math.Abs(destinationTerminal[0]-(detailFrame[0]+detailFrame[2])) > 1e-9 {
-		t.Fatalf("destination terminal = %#v, want explicit right frame edge %#v", destinationTerminal, detailFrame)
+	if math.Abs(destinationTerminal[0]-(detailFrame[0]+detailFrame[2]-4)) > 1e-9 {
+		t.Fatalf("destination terminal = %#v, want 4px-inset right page edge %#v", destinationTerminal, detailFrame)
 	}
 	assertSceneBindingFixedPoint(t, sourceStub, "startBinding", [2]float64{0.5, 1})
 	assertSceneBindingFixedPoint(t, destinationStub, "endBinding", [2]float64{1, 0.3})
@@ -704,8 +704,8 @@ func TestRenderExcalidrawCrossFrameBoundaryAnchorsAndNearbyLabels(t *testing.T) 
 	detailFrame := sceneElementRect(t, scene.Elements, "paper-frame-detail")
 	sourceStart, sourceTerminal := sceneArrowEndpoints(t, sourceStub)
 	destinationTerminal, destinationEnd := sceneArrowEndpoints(t, destinationStub)
-	wantSourceTerminal := [2]float64{overviewFrame[0] + overviewFrame[2]*0.7, overviewFrame[1] + overviewFrame[3]}
-	wantDestinationTerminal := [2]float64{detailFrame[0] + detailFrame[2]*0.3, detailFrame[1]}
+	wantSourceTerminal := [2]float64{overviewFrame[0] + overviewFrame[2]*0.7, overviewFrame[1] + overviewFrame[3] - 4}
+	wantDestinationTerminal := [2]float64{detailFrame[0] + detailFrame[2]*0.3, detailFrame[1] + 4}
 	if math.Abs(sourceTerminal[0]-wantSourceTerminal[0]) > 1e-9 || math.Abs(sourceTerminal[1]-wantSourceTerminal[1]) > 1e-9 {
 		t.Fatalf("source frame terminal = %#v, want %#v", sourceTerminal, wantSourceTerminal)
 	}
@@ -765,14 +765,14 @@ func TestRenderExcalidrawCrossFrameSideDoesNotOverrideAutomaticItemSide(t *testi
 	}
 	frame := sceneElementRect(t, scene.Elements, "paper-frame-overview")
 	_, terminal := sceneArrowEndpoints(t, sourceStub)
-	if side := sceneFrameSideAtPoint(frame, terminal); side != "bottom" {
+	if side := sceneFrameSideAtPageLinkInset(frame, terminal, 4); side != "bottom" {
 		t.Fatalf("source frame terminal side = %q, want bottom", side)
 	}
 	assertSceneBindingFixedPoint(t, sourceStub, "startBinding", [2]float64{0.5, 0})
 	assertCrossFrameEndpointAndTerminalApproaches(t, sourceStub, "top", "bottom", false)
 }
 
-func TestRenderExcalidrawExactCoincidentFrameAnchorKeepsVisibleStub(t *testing.T) {
+func TestRenderExcalidrawExactFrameAnchorUsesDefaultPageLinkInset(t *testing.T) {
 	input := []byte(`<xaligo version="1"><frames gap="48">
   <frame id="overview" width="100" height="100">
     <rectangle id="web" title="Web" width="100" height="100" />
@@ -800,12 +800,12 @@ func TestRenderExcalidrawExactCoincidentFrameAnchorKeepsVisibleStub(t *testing.T
 		t.Fatalf("source page-link stub missing: %#v", scene.Elements)
 	}
 	start, terminal := sceneArrowEndpoints(t, sourceStub)
-	if math.Abs(start[0]-terminal[0]) > 1e-9 || math.Abs(start[1]-terminal[1]) > 1e-9 {
-		t.Fatalf("explicit coincident terminal moved: start=%#v terminal=%#v", start, terminal)
+	if math.Abs(start[0]-terminal[0]) > 1e-9 || math.Abs(terminal[1]-start[1]-4) > 1e-9 {
+		t.Fatalf("default page-link inset did not separate the coincident top anchors by 4px: start=%#v terminal=%#v", start, terminal)
 	}
 	points := sceneArrowPoints(t, sourceStub)
-	if len(points) < 3 || sceneNumber(t, sourceStub["width"]) <= 0 && sceneNumber(t, sourceStub["height"]) <= 0 {
-		t.Fatalf("coincident frame anchor produced invisible stub: %#v", sourceStub)
+	if len(points) < 2 || sceneNumber(t, sourceStub["width"]) <= 0 && sceneNumber(t, sourceStub["height"]) <= 0 {
+		t.Fatalf("default-inset frame anchor produced invisible stub: %#v", sourceStub)
 	}
 	assertCrossFrameEndpointAndTerminalApproaches(t, sourceStub, "top", "top", false)
 }
@@ -932,9 +932,9 @@ func assertCrossFrameStubGeometry(t *testing.T, elements []map[string]any, stub 
 	if bindingName == "endBinding" {
 		terminal = start
 	}
-	side := sceneFrameSideAtPoint(frame, terminal)
+	side := sceneFrameSideAtPageLinkInset(frame, terminal, 4)
 	if side == "" {
-		t.Fatalf("cross-frame terminal %#v is not on physical frame edge %#v", terminal, frame)
+		t.Fatalf("cross-frame terminal %#v is not on the default 4px page-link inset of frame %#v", terminal, frame)
 	}
 	if len(points) > 2 {
 		firstDX := math.Abs(points[1][0] - points[0][0])
@@ -996,16 +996,16 @@ func assertPageLinkLabelClearsStub(t *testing.T, elements []map[string]any, stub
 	}
 }
 
-func sceneFrameSideAtPoint(frame [4]float64, point [2]float64) string {
+func sceneFrameSideAtPageLinkInset(frame [4]float64, point [2]float64, inset float64) string {
 	const epsilon = 1e-9
 	switch {
-	case math.Abs(point[1]-frame[1]) <= epsilon:
+	case math.Abs(point[1]-(frame[1]+inset)) <= epsilon:
 		return "top"
-	case math.Abs(point[0]-(frame[0]+frame[2])) <= epsilon:
+	case math.Abs(point[0]-(frame[0]+frame[2]-inset)) <= epsilon:
 		return "right"
-	case math.Abs(point[1]-(frame[1]+frame[3])) <= epsilon:
+	case math.Abs(point[1]-(frame[1]+frame[3]-inset)) <= epsilon:
 		return "bottom"
-	case math.Abs(point[0]-frame[0]) <= epsilon:
+	case math.Abs(point[0]-(frame[0]+inset)) <= epsilon:
 		return "left"
 	default:
 		return ""

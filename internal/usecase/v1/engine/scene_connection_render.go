@@ -159,6 +159,12 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 					hasDstAnchor = false
 				}
 			}
+			if !srcFrameSideExplicit {
+				srcFrameSide = pageLinkSideAvoidingUnsafeInsetV1EngineSceneConnectionPage(srcFrameSide, srcFrameRect, srcVisualRect, dstFrameRect, frameMetadata[srcFrameID])
+			}
+			if !dstFrameSideExplicit {
+				dstFrameSide = pageLinkSideAvoidingUnsafeInsetV1EngineSceneConnectionPage(dstFrameSide, dstFrameRect, dstVisualRect, srcFrameRect, frameMetadata[dstFrameID])
+			}
 		} else {
 			srcLocalVisualRect := endpointVisualRectV1EngineSceneConnectionPage(srcImgRect, itemLblRects[srcKey])
 			dstLocalVisualRect := endpointVisualRectV1EngineSceneConnectionPage(dstImgRect, itemLblRects[dstKey])

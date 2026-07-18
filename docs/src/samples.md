@@ -12,9 +12,10 @@ compatibility view.
 
 The [cross-frame page-link example](examples/page-links.md) demonstrates both
 automatic nearest-border selection and independent endpoint/page-border
-side/anchor selection. It also shows the exact `to <frame ID>` and
-`from <frame ID>` labels generated next to each page-local terminal, plus PPTX,
-PDF, and Excel multi-page render commands.
+side/anchor selection. It also shows the default 4-pixel terminal inset, fixed
+tangent coordinates on explicit frame anchors, and the exact `to <frame ID>`
+and `from <frame ID>` labels generated next to each final inset terminal, plus
+PPTX, PDF, and Excel multi-page render commands.
 
 ## Frame Metadata Tags
 

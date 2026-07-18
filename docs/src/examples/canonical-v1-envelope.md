@@ -13,10 +13,12 @@ xaligo
 The two identified frames share one document. The qualified endpoint
 `database-detail.database-in` creates a page link from the overview DB port to
 the detail frame's SQL port. Page-oriented output draws one source stub to the
-nearest `overview` border labeled `to <database-detail>`, and one destination
-stub from the nearest `database-detail` border to the SQL port labeled
-`from <overview>`. `<data>` is the document-wide definition registry used by
-reusable table, database, and UML definitions.
+inset line parallel to the nearest `overview` border, labeled
+`to <database-detail>`, and one destination stub from the selected
+`database-detail` inset line to the SQL port, labeled `from <overview>`. These
+metadata-free frames use the default 4-layout-pixel terminal inset. `<data>` is
+the document-wide definition registry used by reusable table, database, and
+UML definitions.
 
 The checked-in image is the combined compatibility view. Default SVG output
 creates one artifact for `overview` and one for `database-detail`.

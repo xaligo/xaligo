@@ -41,6 +41,14 @@ func renderCrossFrameConnectionV1EngineSceneConnectionPage(conn *entity.Node, sr
 	if !dstFrameAnchorExplicit {
 		dstTerminal = avoidFrameMetadataTerminalV1EngineSceneConnectionPage(dstTerminal, dstFrameRect, dstFrameSide, dstMetadata)
 	}
+	srcTerminal = insetPageTerminalV1EngineSceneConnectionPage(srcTerminal, srcFrameRect, srcFrameSide, srcMetadata)
+	dstTerminal = insetPageTerminalV1EngineSceneConnectionPage(dstTerminal, dstFrameRect, dstFrameSide, dstMetadata)
+	if !srcFrameAnchorExplicit {
+		srcTerminal = shiftCoincidentInsetPageTerminalV1EngineSceneConnectionPage(srcTerminal, srcEdge, srcFrameRect, srcFrameSide, srcMetadata)
+	}
+	if !dstFrameAnchorExplicit {
+		dstTerminal = shiftCoincidentInsetPageTerminalV1EngineSceneConnectionPage(dstTerminal, dstEdge, dstFrameRect, dstFrameSide, dstMetadata)
+	}
 	sourceID := fmt.Sprintf("conn-%s-to-%s-%d", sanitizeElementIDV1EngineSceneConnectionRoute(srcKey), sanitizeElementIDV1EngineSceneConnectionRoute(dstFrameID), index)
 	destID := fmt.Sprintf("conn-%s-from-%s-%d", sanitizeElementIDV1EngineSceneConnectionRoute(dstKey), sanitizeElementIDV1EngineSceneConnectionRoute(srcFrameID), index)
 	metadata := crossFrameConnectorMetadataV1EngineSceneConnectionPage{
@@ -215,7 +223,12 @@ func crossFrameArrowPointsAvoidingMetadataV1EngineSceneConnectionPage(start, end
 			safeTop, safeBottom = frameRect[1], frameBottom
 		}
 	}
-	terminalStub[1] = clampFloatV1EngineLayoutPort(terminalStub[1], safeTop, safeBottom)
+	// A left/right terminal's Y coordinate has already passed reservation
+	// handling. Moving only the adjacent stub's tangent coordinate would turn
+	// the final segment diagonal instead of adding clearance.
+	if !frameHorizontal {
+		terminalStub[1] = clampFloatV1EngineLayoutPort(terminalStub[1], safeTop, safeBottom)
+	}
 
 	absolute := make([][2]float64, 0, 6)
 	appendPoint := func(point [2]float64) {
@@ -295,6 +308,18 @@ func appendCrossFrameLabelV1EngineSceneConnectionPage(elements *[]map[string]any
 	if availableH <= 0 {
 		availableH = frameRect[3]
 	}
+	frameRight := frameRect[0] + frameRect[2]
+	frameBottom := frameRect[1] + frameRect[3]
+	switch side {
+	case "left":
+		availableW = frameRight - terminal[0] - 2*pageLinkLabelGapV1EngineSceneConnectionPage
+	case "right":
+		availableW = terminal[0] - frameRect[0] - 2*pageLinkLabelGapV1EngineSceneConnectionPage
+	case "top":
+		availableH = frameBottom - terminal[1] - 2*pageLinkLabelGapV1EngineSceneConnectionPage
+	case "bottom":
+		availableH = terminal[1] - frameRect[1] - 2*pageLinkLabelGapV1EngineSceneConnectionPage
+	}
 	w = math.Min(w, math.Max(0.1, availableW))
 	h = math.Min(h, math.Max(0.1, availableH))
 	if hasMetadataReservation {
@@ -368,6 +393,60 @@ func avoidFrameMetadataTerminalV1EngineSceneConnectionPage(terminal [2]float64, 
 		terminal[0] = frameRect[0] + frameRect[2]
 	}
 	return terminal
+}
+
+func insetPageTerminalV1EngineSceneConnectionPage(terminal [2]float64, frameRect [4]float64, side string, metadata frameMetadataSceneGeometryV1EngineSceneFrameMetadata) [2]float64 {
+	inset := defaultFrameMetadataRowGapV1EngineLayoutFrameMetadata
+	if metadata.HasPageInset {
+		inset = metadata.PageInset
+	}
+	if inset <= 0 {
+		return terminal
+	}
+	switch side {
+	case "top":
+		terminal[1] = frameRect[1] + inset
+	case "right":
+		terminal[0] = frameRect[0] + frameRect[2] - inset
+	case "bottom":
+		terminal[1] = frameRect[1] + frameRect[3] - inset
+	case "left":
+		terminal[0] = frameRect[0] + inset
+	}
+	return terminal
+}
+
+func shiftCoincidentInsetPageTerminalV1EngineSceneConnectionPage(terminal, endpoint [2]float64, frameRect [4]float64, side string, metadata frameMetadataSceneGeometryV1EngineSceneFrameMetadata) [2]float64 {
+	const cornerGutter = 24.0
+	adaptiveGutter := func(size float64) float64 { return math.Min(cornerGutter, math.Max(0, size/4)) }
+	frameTop := frameRect[1]
+	frameBottom := frameRect[1] + frameRect[3]
+	minX := frameRect[0] + adaptiveGutter(frameRect[2])
+	maxX := frameRect[0] + frameRect[2] - adaptiveGutter(frameRect[2])
+	minY := frameTop + adaptiveGutter(frameRect[3])
+	maxY := frameBottom - adaptiveGutter(frameRect[3])
+	if (side == "left" || side == "right") && metadata.Reserved[2] > 0 && metadata.Reserved[3] > 0 {
+		const clearance = 8.0
+		if metadata.Position == "bottom" {
+			maxY = math.Min(maxY, metadata.Reserved[1]-clearance)
+		} else {
+			minY = math.Max(minY, metadata.Reserved[1]+metadata.Reserved[3]+clearance)
+		}
+		if minY > maxY {
+			// Tiny metadata-free intervals cannot retain both the normal corner
+			// gutter and the preferred reservation clearance. Fall back to the
+			// full non-reserved interval so the tangent shift stays inside the
+			// frame and never enters the metadata strip.
+			if metadata.Position == "bottom" {
+				minY = frameTop
+				maxY = clampFloatV1EngineLayoutPort(metadata.Reserved[1], frameTop, frameBottom)
+			} else {
+				minY = clampFloatV1EngineLayoutPort(metadata.Reserved[1]+metadata.Reserved[3], frameTop, frameBottom)
+				maxY = frameBottom
+			}
+		}
+	}
+	return shiftCoincidentPageTerminalV1EngineSceneConnectionPage(terminal, endpoint, side, minX, maxX, minY, maxY, cornerGutter)
 }
 
 func frameMetadataReservedRectsV1EngineSceneConnectionPage(metadata frameMetadataSceneGeometryV1EngineSceneFrameMetadata) [][4]float64 {
@@ -450,9 +529,9 @@ func pageLinkLabelPositionAvoidingMetadataV1EngineSceneConnectionPage(x, y, w, h
 	}
 	switch side {
 	case "top", "bottom":
-		edgeY := frameRect[1] + gap
+		edgeY := terminal[1] + gap
 		if side == "bottom" {
-			edgeY = frameBottom - h - gap
+			edgeY = terminal[1] - h - gap
 		}
 		appendCandidate(terminal[0]+gap, edgeY)
 		appendCandidate(terminal[0]-w-gap, edgeY)
@@ -478,9 +557,9 @@ func pageLinkLabelPositionAvoidingMetadataV1EngineSceneConnectionPage(x, y, w, h
 			appendCandidate(terminal[0]-w-gap, metadataTop-h-gap)
 		}
 	case "left", "right":
-		edgeX := frameRect[0] + gap
+		edgeX := terminal[0] + gap
 		if side == "right" {
-			edgeX = frameRight - w - gap
+			edgeX = terminal[0] - w - gap
 		}
 		appendCandidate(edgeX, terminal[1]+gap)
 		appendCandidate(edgeX, terminal[1]-h-gap)
@@ -544,13 +623,13 @@ func pageLinkLabelPositionV1EngineSceneConnectionPage(terminal [2]float64, frame
 	const gap = pageLinkLabelGapV1EngineSceneConnectionPage
 	frameRight := frameRect[0] + frameRect[2]
 	frameBottom := frameRect[1] + frameRect[3]
-	edgeX := frameRect[0] + gap
+	edgeX := terminal[0] + gap
 	if side == "right" {
-		edgeX = frameRight - w - gap
+		edgeX = terminal[0] - w - gap
 	}
-	edgeY := frameRect[1] + gap
+	edgeY := terminal[1] + gap
 	if side == "bottom" {
-		edgeY = frameBottom - h - gap
+		edgeY = terminal[1] - h - gap
 	}
 	candidates := make([][2]float64, 0, 6)
 	switch side {
@@ -609,7 +688,33 @@ func pageLinkSideAvoidingFrameMetadataV1EngineSceneConnectionPage(side string, f
 	return nearestFrameSideExcludingV1EngineSceneConnectionPage(frameRect, endpointRect, otherFrameRect, metadata.Position)
 }
 
+func pageLinkSideAvoidingUnsafeInsetV1EngineSceneConnectionPage(side string, frameRect, endpointRect, otherFrameRect [4]float64, metadata frameMetadataSceneGeometryV1EngineSceneFrameMetadata) string {
+	pageInset := defaultFrameMetadataRowGapV1EngineLayoutFrameMetadata
+	if metadata.HasPageInset {
+		pageInset = metadata.PageInset
+	}
+	if pageLinkTerminalSideIsSafeV1EngineLayoutFrameMetadata(side, frameRect, pageInset, metadata.Position, metadata.Reserved) {
+		return side
+	}
+	if safeSide, ok := nearestFrameSideMatchingV1EngineSceneConnectionPage(frameRect, endpointRect, otherFrameRect, func(candidate string) bool {
+		return pageLinkTerminalSideIsSafeV1EngineLayoutFrameMetadata(candidate, frameRect, pageInset, metadata.Position, metadata.Reserved)
+	}); ok {
+		return safeSide
+	}
+	return side
+}
+
 func nearestFrameSideExcludingV1EngineSceneConnectionPage(frameRect, endpointRect, otherFrameRect [4]float64, excluded string) string {
+	side, ok := nearestFrameSideMatchingV1EngineSceneConnectionPage(frameRect, endpointRect, otherFrameRect, func(candidate string) bool {
+		return candidate != excluded
+	})
+	if ok {
+		return side
+	}
+	return "top"
+}
+
+func nearestFrameSideMatchingV1EngineSceneConnectionPage(frameRect, endpointRect, otherFrameRect [4]float64, allowed func(string) bool) (string, bool) {
 	distances := map[string]float64{
 		"top":    math.Max(0, endpointRect[1]-frameRect[1]),
 		"right":  math.Max(0, frameRect[0]+frameRect[2]-(endpointRect[0]+endpointRect[2])),
@@ -618,9 +723,12 @@ func nearestFrameSideExcludingV1EngineSceneConnectionPage(frameRect, endpointRec
 	}
 	minimum := math.Inf(1)
 	for _, side := range []string{"top", "right", "bottom", "left"} {
-		if side != excluded {
+		if allowed(side) {
 			minimum = math.Min(minimum, distances[side])
 		}
+	}
+	if math.IsInf(minimum, 1) {
+		return "", false
 	}
 	const epsilon = 1e-9
 	ownCx := frameRect[0] + frameRect[2]/2
@@ -628,15 +736,15 @@ func nearestFrameSideExcludingV1EngineSceneConnectionPage(frameRect, endpointRec
 	otherCx := otherFrameRect[0] + otherFrameRect[2]/2
 	otherCy := otherFrameRect[1] + otherFrameRect[3]/2
 	remoteSide, _ := connectionSideV1EngineSceneConnection(ownCx, ownCy, otherCx, otherCy)
-	if remoteSide != excluded && distances[remoteSide] <= minimum+epsilon {
-		return remoteSide
+	if allowed(remoteSide) && distances[remoteSide] <= minimum+epsilon {
+		return remoteSide, true
 	}
 	for _, side := range []string{"top", "right", "bottom", "left"} {
-		if side != excluded && distances[side] <= minimum+epsilon {
-			return side
+		if allowed(side) && distances[side] <= minimum+epsilon {
+			return side, true
 		}
 	}
-	return "top"
+	return "", false
 }
 
 func pageTerminalPointV1EngineSceneConnectionPage(frameRect [4]float64, anchor [2]float64, side string) [2]float64 {

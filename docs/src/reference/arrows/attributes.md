@@ -11,8 +11,8 @@
 | `arrowhead-size` | `s` (V1 only) | `s` |
 | `src-side`, `dst-side` | `top`, `right`, `bottom`, `left` | automatic |
 | `src-anchor`, `dst-anchor` | `side-1` through `side-5` | automatic |
-| `src-frame-side`, `dst-frame-side` | cross-frame page edge: `top`, `right`, `bottom`, `left` | endpoint/automatic side |
-| `src-frame-anchor`, `dst-frame-anchor` | cross-frame page-edge `side-1` through `side-5` | endpoint/automatic position |
+| `src-frame-side`, `dst-frame-side` | cross-frame outer page side: `top`, `right`, `bottom`, `left`; terminal is drawn on its inward inset line | endpoint/automatic side |
+| `src-frame-anchor`, `dst-frame-anchor` | cross-frame outer page-side tangent slot `side-1` through `side-5`; inward inset preserves that coordinate | endpoint/automatic position |
 | `bends`, `points`, `via` | inline coordinate list | none |
 | `grid` | positive number | router default |
 | `scale`, `coordinate-scale` | positive number | `1` |
@@ -20,7 +20,10 @@
 Anchor position aliases are `start=1`, `near=2`, `center=3`, `far=4`, and
 `end=5`. Frame-side and frame-anchor attributes are valid only when the
 resolved endpoints belong to different frames; they select the logical page
-terminal independently from the item endpoint.
+terminal independently from the item endpoint. The drawable terminal is inset
+normally by the resolved metadata `row-gap`, or by 4 layout pixels when the
+frame has no metadata. A zero `row-gap` retains the outer edge. The page-link
+label's 4-pixel inward and tangent gaps are measured from that final terminal.
 
 A `<connections>` group inherits only non-empty `arrowhead-size`, `kind`,
 `color`, `stroke-width`, `width`, `stroke-style`, `start-arrowhead`,

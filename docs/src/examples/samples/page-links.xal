@@ -18,7 +18,7 @@
       </container>
 
       <connections>
-        <!-- Auto: each endpoint selects its nearest logical page edge. -->
+        <!-- Auto: each endpoint selects its nearest page side; the terminal is inset 4px. -->
         <connection src="api-out" dst="service-detail.api-in" />
 
         <!--

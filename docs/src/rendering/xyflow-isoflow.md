@@ -30,13 +30,15 @@ clamp V1 `overflow="visible"` geometry back inside the parent.
 
 A V1 connection between frames is represented by two editable local stubs in
 the canonical scene for page-oriented formats. The source projection runs from
-its endpoint to the logical frame edge with `to <destination frame ID>`; the
-destination projection runs from its logical frame edge to the endpoint with
-`from <source frame ID>`. Both stubs carry one logical connection ID, the two
-original endpoint/frame IDs, and routing metadata including manual bends and
-independent endpoint/frame side and anchor selections. The XYFlow adapter uses
-that metadata to emit one edge, including source and destination frame side and
-anchor data, instead of exporting the two page projections.
+its endpoint to the frame's inward terminal line with
+`to <destination frame ID>`; the destination projection runs from its inward
+terminal line to the endpoint with `from <source frame ID>`. The outer frame
+edge still supplies the selected side and tangent anchor. Both stubs carry one
+logical connection ID, the two original endpoint/frame IDs, and routing
+metadata including manual bends and independent endpoint/frame side and anchor
+selections. The XYFlow adapter uses that metadata to emit one edge, including
+source and destination frame-side and frame-anchor data, instead of exporting
+the two page projections.
 
 ## Isoflow
 

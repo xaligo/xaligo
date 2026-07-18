@@ -5,28 +5,53 @@ belong to different frames. The source endpoint is local to the frame that
 declares the connection. The destination uses the required
 `frame-id.endpoint-id` form.
 
-The HTTP connection leaves the nearest logical page edge of `overview` with
-`to <service-detail>` and enters `service-detail` with `from <overview>`. Its sides
-are selected automatically from the endpoint envelopes.
+The HTTP connection selects the nearest outer logical page side of `overview`
+and terminates on that side's inward page-terminal line with
+`to <service-detail>`. It starts from its selected inset line in
+`service-detail` with `from <overview>`. Its sides are selected automatically
+from the endpoint envelopes.
 
 The dashed CSV connection uses the child endpoint form to demonstrate that
 item and page-edge anchors are independent. It leaves the source port through
 the `near` slot on `right` (`right-2`) and exits the overview page through the
 `far` slot on `bottom` (`bottom-4`). On the destination page it enters through
 the `near` slot on `top` (`top-2`) and reaches the port through the `far` slot
-on `left` (`left-4`). Each end segment is
-perpendicular to its own selected side. It is labeled `to <database-detail>`
-in `overview` and `from <overview>` in `database-detail`.
+on `left` (`left-4`). The frame anchors keep their 70% and 30% tangent
+coordinates while the actual terminal moves only inward normally. Each end
+segment is perpendicular to its own selected side. It is labeled
+`to <database-detail>` in `overview` and `from <overview>` in
+`database-detail`.
 
-Each page-link label sits 4 layout pixels inward and at least 4 layout pixels
-sideways from its logical page terminal. It uses the closest sideways position
-that remains outside endpoint envelopes and metadata reservation strips.
+None of these frames enables metadata, so their page terminals use the default
+4-layout-pixel inset on every side. A metadata-enabled frame instead uses its
+resolved `row-gap`; `row-gap="0"` retains the outer logical frame edge. For
+an explicit frame side or anchor, the inset must be strictly smaller than the
+frame height on `top`/`bottom`, or the frame width on `left`/`right`, and an
+actual terminal must avoid the metadata reservation. Invalid explicit geometry
+is reported at the connection source position; the inset is never clamped.
+
+Without an explicit frame terminal, validation only requires one safe side.
+Rendering keeps a safe endpoint-side preference or chooses the nearest safe
+side from actual icon and label geometry when that preference is unsafe. Only
+an empty candidate set is an error. A safe `left`/`right` candidate remains
+available even if a hypothetical top/bottom line would enter metadata.
+
+At zero inset, a link whose endpoint is its owning frame cannot give an
+explicit frame anchor the same resolved point. An explicit endpoint anchor uses
+its own side and slot; a bare endpoint side and an automatically selected
+endpoint side both use their center (`side-3`) for this check.
+
+Each page-link label is placed from the final inset terminal, 4 layout pixels
+farther inward and at least 4 layout pixels sideways. It uses the closest
+sideways position that remains outside endpoint envelopes and metadata
+reservation strips.
 
 Default SVG export creates one file for each of the three frames. These are the
 actual page-local artifacts generated from the sample:
 
-The outer page-frame outline is intentionally absent; the invisible page edge
-still anchors each incoming or outgoing page-link stub. Each default SVG is
+The outer page-frame outline is intentionally absent. Its invisible edge still
+defines side selection and the frame-anchor tangent coordinate, while each
+incoming or outgoing stub ends on the parallel inset line. Each default SVG is
 strictly cropped to the frame rectangle, so no extra marker-safe padding is
 added around these three page artifacts.
 

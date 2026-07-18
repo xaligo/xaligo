@@ -37,7 +37,8 @@ Important rules:
   same value separates wrapped rows. Its full-width reservation strip still
   starts at the outer logical frame edge, excludes normal items, text, lines,
   and labels, follows that page projection, and does not become an XYFlow or
-  Isoflow node.
+  Isoflow node. It also supplies the inward normal inset for safe page-link
+  terminals; a frame without metadata uses 4 pixels instead.
 - The origin is the upper-left of the rendered frame.
 - Positive `x` extends right and positive `y` extends down.
 - Connections must be direct children of `<frame>` or inside frame-level

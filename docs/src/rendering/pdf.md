@@ -29,5 +29,7 @@ expansion.
 Cross-frame connections remain page links. The source page contains
 `to <destination frame ID>` and the destination page contains
 `from <source frame ID>`; no line is drawn through an inter-page gap. Explicit
-frame-side/frame-anchor geometry and the 4-layout-pixel terminal-label gap are
-resolved before the PDF projection.
+frame-side/frame-anchor geometry, the inward terminal line, and the
+4-layout-pixel label gap from that final terminal are resolved before the PDF
+projection. The terminal inset is the resolved metadata `row-gap`, or 4 layout
+pixels when metadata is absent; zero retains the outer edge.

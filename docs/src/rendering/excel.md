@@ -40,5 +40,7 @@ xaligo render diagram.xal --format excel -o diagram.xlsx --combine-frames
 Cross-frame connections retain their local page-link labels in the worksheet
 images: `to <destination frame ID>` on the source frame and
 `from <source frame ID>` on the destination frame. The shared scene resolves
-independent item/frame anchors and the 4-layout-pixel terminal-label gap before
-embedding either image.
+independent item/frame anchors, the inward terminal line, and the 4-layout-pixel
+label gap from that final terminal before embedding either image. The terminal
+inset is the resolved metadata `row-gap`, or 4 layout pixels when metadata is
+absent; zero retains the outer edge.

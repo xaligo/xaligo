@@ -55,8 +55,8 @@ type FrameMetadata struct {
 	FontFamily string
 	FontSize   float64
 
-	// RowGap is both the space between wrapped metadata rows and the V1
-	// metadata inset from its logical frame/page edge.
+	// RowGap is the space between wrapped metadata rows and the V1 page-edge
+	// inset shared by metadata tags and cross-frame page-link terminals.
 	RowGap float64
 
 	Color              string

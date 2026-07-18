@@ -34,7 +34,10 @@ nested container uses `overflow="visible"`. Metadata cell borders use a fixed
 `0.75`-pixel stroke.
 An automatic or legacy page terminal is remapped/clamped around this strip; an
 explicit cross-frame `src/dst-frame-side` or `src/dst-frame-anchor` that selects
-it is a validation error.
+it is a validation error. For a safe page-link side, this resolved `row-gap`
+also supplies the terminal's inward normal inset on all four sides; zero retains
+the outer logical frame edge. Frames without metadata use a 4-pixel terminal
+inset instead.
 
 ## AWS Group Border Styles
 

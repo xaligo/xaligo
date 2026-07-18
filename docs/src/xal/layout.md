@@ -114,7 +114,10 @@ the exclusion.
 A page link without an explicit frame terminal remaps a reserved top/bottom
 edge to the nearest safe edge and clamps a left/right terminal outside the
 strip. An explicit `src-frame-side`, `dst-frame-side`, `src-frame-anchor`, or
-`dst-frame-anchor` that selects the reservation is a validation error.
+`dst-frame-anchor` that selects the reservation is a validation error. On the
+resolved safe side, the drawable terminal uses this metadata `row-gap` as its
+inward normal inset; a zero value retains the outer logical edge. The
+`to <...>` / `from <...>` label is positioned from that final terminal.
 SVG, PPTX, PDF, Excel, and Excalidraw display the page-owned band; XYFlow and
 Isoflow omit it as page decoration. See the
 [frame metadata example](../examples/frame-metadata.md) for top, bottom,

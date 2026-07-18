@@ -330,17 +330,23 @@ Implemented or partially implemented:
   the outer logical frame edge, reaches the final content-box boundary, and is
   at least
   `row-gap + complete band height + 8` pixels deep; normal items, text,
-  local/UML lines and labels, and page links remain outside it. Page links
-  remap a reserved edge to the nearest safe edge and clamp side terminals
+  local/UML lines and labels, and page links remain outside it. Explicit page
+  sides reject normal-dimension or reservation conflicts. Automatic page links
+  filter unsafe candidates, remap a preferred side with rendered visual
+  geometry, and fail only when no safe side exists; side terminals are clamped
   beyond the strip. The band also supports auto/fixed widths, explicit row
   breaks, and font/color styling. It projects with its owning physical page;
   graph adapters omit it as page decoration.
 - Cross-frame connections independently support item endpoint
   `src/dst-side|anchor` and logical page-terminal
   `src/dst-frame-side|anchor` geometry. Explicit frame anchors use five fixed
-  slots per edge, remain perpendicular at the page edge, reject metadata-strip
-  conflicts, and keep `to <...>` / `from <...>` labels 4 layout pixels from
-  the terminal.
+  tangent slots per edge, then place the drawable terminal on a parallel inward
+  inset line. The inset is the resolved metadata `row-gap`, or 4 pixels when
+  metadata is absent; zero `row-gap` retains the outer edge. Terminals remain
+  perpendicular to the selected side, do not clamp the inset, reject unsafe
+  explicit geometry, remap unsafe automatic preferences to the nearest safe
+  visual side, and keep `to <...>` / `from <...>` labels 4 layout pixels from
+  the final inset terminal.
 - `xaligo render --format xyflow` and TypeScript/WASM `renderXYFlow()` export
   nested React Flow-compatible nodes and edges. V1 item, AWS group, rectangle,
   port, and identified child-frame endpoints are retained; cross-frame stubs

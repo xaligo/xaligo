@@ -14,9 +14,11 @@ const (
 )
 
 type frameMetadataSceneGeometryV1EngineSceneFrameMetadata struct {
-	Position string
-	Rects    [][4]float64
-	Reserved [4]float64
+	Position     string
+	Rects        [][4]float64
+	Reserved     [4]float64
+	PageInset    float64
+	HasPageInset bool
 }
 
 func appendFrameMetadataV1EngineSceneFrameMetadata(root *entity.Box, elements *[]map[string]any) map[string]frameMetadataSceneGeometryV1EngineSceneFrameMetadata {
@@ -34,8 +36,10 @@ func appendFrameMetadataV1EngineSceneFrameMetadata(root *entity.Box, elements *[
 				frameID = frame.ID
 			}
 			geometry := frameMetadataSceneGeometryV1EngineSceneFrameMetadata{
-				Position: frame.FrameMetadata.Position,
-				Reserved: frameMetadataReservedRectV1EngineSceneFrameMetadata(frame),
+				Position:     frame.FrameMetadata.Position,
+				Reserved:     frameMetadataReservedRectV1EngineSceneFrameMetadata(frame),
+				PageInset:    frame.FrameMetadata.RowGap,
+				HasPageInset: true,
 			}
 			appendFrameMetadataReservedZoneV1EngineSceneFrameMetadata(frame, frameID, geometry.Reserved, elements)
 			geometry.Rects = appendFrameMetadataBoxV1EngineSceneFrameMetadata(frame, frameID, pageFrameElementIDV1EngineSceneWalk(frame), elements)
@@ -46,8 +50,10 @@ func appendFrameMetadataV1EngineSceneFrameMetadata(root *entity.Box, elements *[
 	if root.Tag == "frame" && root.FrameMetadata != nil {
 		frameID := strings.TrimSpace(root.Attrs["id"])
 		geometry := frameMetadataSceneGeometryV1EngineSceneFrameMetadata{
-			Position: root.FrameMetadata.Position,
-			Reserved: frameMetadataReservedRectV1EngineSceneFrameMetadata(root),
+			Position:     root.FrameMetadata.Position,
+			Reserved:     frameMetadataReservedRectV1EngineSceneFrameMetadata(root),
+			PageInset:    root.FrameMetadata.RowGap,
+			HasPageInset: true,
 		}
 		appendFrameMetadataReservedZoneV1EngineSceneFrameMetadata(root, frameID, geometry.Reserved, elements)
 		geometry.Rects = appendFrameMetadataBoxV1EngineSceneFrameMetadata(root, frameID, "paper-frame", elements)

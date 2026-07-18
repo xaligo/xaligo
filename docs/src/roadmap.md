@@ -41,10 +41,15 @@ text, connector geometry and labels, and page links. Auto/fixed widths,
 typography, colors, ordered greedy row wrapping, explicit row breaks, per-row
 alignment, page ownership, and safe page-link edge selection are resolved
 before the physical formats project one frame per page. Cross-frame links can
-select item and logical page-edge anchors
-independently, reject explicit frame-anchor conflicts with the metadata strip,
-and keep their labels 4 layout pixels from the page terminal. XYFlow and
-Isoflow omit this page decoration.
+select item and logical page-edge anchors independently, preserve the frame
+anchor's tangent coordinate, and place the drawable terminal on a parallel
+inward line. That inset is the resolved metadata `row-gap`, or 4 pixels when
+metadata is absent; zero retains the outer edge and the value is never clamped.
+Links reject unsafe explicit geometry. Without an explicit frame terminal,
+unsafe candidates are filtered and rendering chooses the nearest safe side
+from actual visual geometry; only an empty candidate set is an error. Labels
+remain 4 layout pixels from the final inset terminal. XYFlow and Isoflow omit
+this page decoration.
 
 This frame pagination is separate from generic tiling. Remaining scale work is
 to split one oversized frame into multiple tiles, add large-diagram regression

@@ -155,9 +155,9 @@ outline is reintroduced.
 A qualified endpoint such as `detail.database` is a logical connection across
 frame/page boundaries. Page-oriented output does not draw one line through the
 space between frames. It projects the connection as two local page-link stubs:
-the source endpoint connects to its owning frame's logical page edge and is
-labeled `to <destination frame ID>`; the destination frame's logical page edge
-connects to the destination endpoint and is labeled
+the source endpoint connects to its owning frame's page-terminal inset line and
+is labeled `to <destination frame ID>`; the destination frame's
+page-terminal inset line connects to the destination endpoint and is labeled
 `from <source frame ID>`. For example, an `overview` to `detail` connection
 shows `to <detail>` on the source page and `from <overview>` on the destination
 page. The angle brackets are rendered as literal punctuation.
@@ -166,40 +166,52 @@ Endpoint binding and logical page termination are independent. Endpoint
 `src/dst-anchor` takes precedence over endpoint `src/dst-side`. For the page
 terminal, `src/dst-frame-anchor` takes precedence over
 `src/dst-frame-side`, which takes precedence over the legacy endpoint
-anchor, then the endpoint side, then the automatic nearest-border choice. Frame
-anchors provide five fixed positions at 10/30/50/70/90 percent along each edge.
-The endpoint- and page-adjacent route segments remain perpendicular to their
-respective sides, even when those sides differ. Equal automatic distances
-prefer the side facing the other frame, then the stable order top, right,
-bottom, left. Frame-terminal attributes are cross-frame-only; same-frame use is
-an error. Manual bends
-remain logical connection metadata and do not steer the two local stubs.
+anchor, then the endpoint side, then the automatic nearest-border preference.
+The first two choices are explicit and fixed. Otherwise rendering retains a
+safe preference or chooses the nearest safe side using the actual endpoint
+visual envelope; validation checks only that the safe candidate set is
+non-empty. Frame anchors provide five fixed tangent positions at
+10/30/50/70/90 percent along each outer frame extent. The endpoint- and
+page-terminal-adjacent route segments remain perpendicular to their respective
+sides, even when those sides differ. Equal automatic distances prefer the side
+facing the other frame, then the stable order top, right, bottom, left.
+Frame-terminal attributes are cross-frame-only; same-frame use is an error.
+Manual bends remain logical
+connection metadata and do not steer the two local stubs.
 Excalidraw, SVG, PPTX, PDF, and Excel preserve the two page-local projections;
 graph adapters combine their shared logical connection ID into one XYFlow or
 Isoflow edge.
 
 Metadata reservation is applied after that normal precedence. Without explicit
-frame-terminal geometry, a page-link side that selects the reserved top/bottom
-edge is remapped to the nearest safe edge. An explicit frame side/anchor that
-selects that edge, or an exact left/right anchor inside the strip, is a
-validation error rather than a silent move.
+frame-terminal geometry, unsafe candidates are excluded before the visual
+nearest-side choice. An explicit frame side/anchor that selects the metadata
+edge, has an inset that does not fit its normal frame dimension, or places its
+actual terminal in the strip is a validation error rather than a silent move.
+A safe explicit left/right terminal is allowed regardless of an unused
+top/bottom inset line. Automatic selection fails only when no safe side exists;
+the resolved inset is never clamped.
 
-The terminal itself lies on the logical page edge even though no frame outline
-is drawn. An explicit frame anchor uses its exact slot. Otherwise its
-unconstrained parallel coordinate follows the endpoint binding; a coordinate
-inside the 24-layout-pixel corner gutter is clamped and connected with a two-bend
-orthogonal dogleg so both the endpoint and border segments remain perpendicular
-to the selected side. Borders shorter than 96 layout pixels use an adaptive
-quarter-length gutter. An unconstrained coincident endpoint/border point shifts
-along the border within the available gutter range to keep the page-link stub
-visible. An explicit frame anchor remains at its exact slot.
+The outer logical page edge remains the side and tangent-coordinate reference
+even though no frame outline is drawn. The drawable terminal lies on a parallel
+inward inset line: it uses the resolved metadata `row-gap`, or 4 layout pixels
+when metadata is absent. That value applies to all four sides regardless of
+metadata position, and zero retains the outer edge. Applying it changes only
+the normal coordinate, so an explicit frame anchor keeps its exact
+10/30/50/70/90-percent tangent slot. Otherwise the unconstrained parallel
+coordinate follows the endpoint binding; a coordinate inside the
+24-layout-pixel corner gutter is clamped and connected with a two-bend
+orthogonal dogleg so both the endpoint and terminal segments remain
+perpendicular to the selected side. Borders shorter than 96 layout pixels use
+an adaptive quarter-length gutter. An unconstrained coincident inset terminal
+shifts along the parallel axis within the available gutter range to keep the
+page-link stub visible. An explicit frame anchor retains its tangent slot.
 On a left or right edge, the terminal is additionally clamped outside the
 metadata reservation strip. The path and label remain outside the strip, and
 any coordinate difference is bridged while preserving orthogonal routing.
 The `to <...>` / `from <...>` label stays just inside the page at a
 4-layout-pixel inward gap and a minimum 4-layout-pixel tangent gap from the
-terminal. It uses the closest tangent position that avoids endpoint and
-metadata geometry.
+final inset terminal. It uses the closest tangent position that avoids endpoint
+and metadata geometry.
 
 ## Processing boundaries
 
