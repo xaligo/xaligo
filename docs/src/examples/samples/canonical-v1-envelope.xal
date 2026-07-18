@@ -1,5 +1,7 @@
 <xaligo version="1">
-  <data />
+  <data>
+    <!-- Document-wide table, database, and UML definitions belong here. -->
+  </data>
 
   <frames gap="48">
     <frame id="overview" width="640" height="360" class="pa-3">
