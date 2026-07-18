@@ -61,7 +61,7 @@ func TestUseCaseAPIRendersStableFormats(t *testing.T) {
 	if err := diagnosticsUsecase.Validate(ctx, []byte(simpleXAL)); err != nil {
 		t.Fatal(err)
 	}
-	if diagnostics, err := diagnosticsUsecase.Diagnose(ctx, []byte(simpleXAL)); err != nil || len(diagnostics) != 0 {
+	if diagnostics, err := diagnosticsUsecase.Diagnose(ctx, []byte(simpleXAL)); err != nil || len(diagnostics) != 1 || diagnostics[0].Severity != usecase.SeverityWarning {
 		t.Fatalf("Diagnose() diagnostics=%#v err=%v", diagnostics, err)
 	}
 

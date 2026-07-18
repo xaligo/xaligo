@@ -60,8 +60,8 @@ The next structural steps are:
 
 ## V1 Compatibility and V2
 
-Explicitly versioned `<frame version="1">` and `<frames version="1">` are the
-recommended frozen V1 profile. Unversioned roots remain compatible but emit a warning. V2 will use
+`<xaligo version="1">` is the canonical V1 envelope. Historical root `<frame>`
+and `<frames>` documents remain compatible but emit a migration warning. V2 will use
 the distinct `<scene version="2">` root, allowing an existing V1 reader to
 reject V2 safely without understanding it.
 
@@ -82,13 +82,12 @@ geometry across native and embedded targets.
 - Import from existing diagram formats and conversion into `.xal`.
 - Better round-tripping between generated output and `.xal` source.
 
-The future structured-diagram profile proposes a document-wide data registry,
+The V1 structured-diagram profile adds a document-wide data registry,
 general tables, relational schema/ER views, and UML components. It deliberately
 keeps their semantic processors separate while reusing neutral drawing and
 encoding contracts. See [Structured Diagrams: Tables, Databases, and
-UML](design/structured-diagrams.md). Its `<xaligo>` envelope is not V1 or V2
-syntax; a language version and migration contract must be assigned before
-implementation.
+UML](design/structured-diagrams.md). Its `<xaligo version="1">` envelope is the
+canonical V1 syntax; legacy root documents continue to render with warnings.
 
 ## Editing and Automation
 

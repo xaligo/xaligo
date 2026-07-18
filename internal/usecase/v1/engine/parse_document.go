@@ -38,6 +38,7 @@ var (
 	IUPP015V1EngineParseDocument    = share.NewMCode("IUPP-015", "Parse invalid root branch")
 	IUPP016V1EngineParseDocument    = share.NewMCode("IUPP-016", "Parse expand connection shorthands failed")
 	IUPP017V1EngineParseDocument    = share.NewMCode("IUPP-017", "Parse implicit V1 version branch")
+	IUPP018V1EngineParseDocument    = share.NewMCode("IUPP-018", "Parse legacy V1 root branch")
 	IUPVGGN001V1EngineParseDocument = share.NewMCode("IUPVGGN-001", "Validate generic group empty icon ID branch")
 	IUPVGGN002V1EngineParseDocument = share.NewMCode("IUPVGGN-002", "Validate generic group invalid icon ID branch")
 	IUPECS001V1EngineParseDocument  = share.NewMCode("IUPECS-001", "Expand connection shorthands item branch")
@@ -163,16 +164,28 @@ func ParseV1EngineParseDocument(r io.Reader) (entity.Document, error) {
 		loggerV1EngineSharedLogging.ERROR(IUPP014V1EngineParseDocument, "branch empty document")
 		return entity.Document{}, &entity.ParseError{Position: entity.Position{Line: 1, Column: 1}, Err: fmt.Errorf("empty document")}
 	}
-	if root.Tag != "frame" && root.Tag != "frames" {
+	if root.Tag != "xaligo" && root.Tag != "frame" && root.Tag != "frames" {
 		loggerV1EngineSharedLogging.ERROR(IUPP015V1EngineParseDocument, "branch invalid root", map[string]any{"tag": root.Tag})
-		return entity.Document{}, &entity.ParseError{Position: root.Position, Err: fmt.Errorf("root tag must be <frame> or <frames>, got <%s>", root.Tag)}
+		return entity.Document{}, &entity.ParseError{Position: root.Position, Err: fmt.Errorf("root tag must be <xaligo>; legacy <frame> and <frames> roots are also accepted, got <%s>", root.Tag)}
 	}
 	if err := validateRootVersionV1EngineParseNode(root); err != nil {
 		loggerV1EngineSharedLogging.ERROR(IUPP015V1EngineParseDocument, "branch unsupported root version", map[string]any{"tag": root.Tag, "version": root.Attrs["version"]})
 		return entity.Document{}, &entity.ParseError{Position: root.Position, Err: err}
 	}
-	if _, specified := root.Attrs["version"]; !specified {
+	if _, specified := root.Attrs["version"]; !specified && root.Tag == "xaligo" {
 		loggerV1EngineSharedLogging.WARN(IUPP017V1EngineParseDocument, implicitV1VersionWarningV1EngineParseNode(root), map[string]any{"tag": root.Tag})
+	}
+	envelope := root
+	dataNode := (*entity.Node)(nil)
+	legacyRoot := root.Tag != "xaligo"
+	if legacyRoot {
+		loggerV1EngineSharedLogging.WARN(IUPP018V1EngineParseDocument, legacyV1RootWarningV1EngineParseNode(root), map[string]any{"tag": root.Tag})
+	} else {
+		var err error
+		root, dataNode, err = normalizeEnvelopeV1EngineParseNode(root)
+		if err != nil {
+			return entity.Document{}, err
+		}
 	}
 	if err := validateFrameHierarchyV1EngineParseNode(root); err != nil {
 		loggerV1EngineSharedLogging.ERROR(IUPP006V1EngineParseDocument, "frame hierarchy validation failed", map[string]any{"error": err})
@@ -196,7 +209,7 @@ func ParseV1EngineParseDocument(r io.Reader) (entity.Document, error) {
 		return entity.Document{}, err
 	}
 
-	return entity.Document{Root: root}, nil
+	return entity.Document{Root: root, Data: dataNode, Envelope: envelope, LegacyRoot: legacyRoot}, nil
 }
 
 func positionAtV1EngineParseDocument(data []byte, offset int) entity.Position {

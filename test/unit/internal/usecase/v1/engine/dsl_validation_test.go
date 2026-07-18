@@ -124,7 +124,7 @@ func TestV1ParseRejectsNonV1RootVersion(t *testing.T) {
 		{name: "V2 frame", source: `<frame version="2"><blank /></frame>`, want: `version="2"`},
 		{name: "empty version", source: `<frame version=""><blank /></frame>`, want: `version="1"`},
 		{name: "noncanonical V1 version", source: `<frame version="1.0"><blank /></frame>`, want: `version="1"`},
-		{name: "V2 scene root", source: `<scene version="2" />`, want: "root tag must be <frame> or <frames>"},
+		{name: "V2 scene root", source: `<scene version="2" />`, want: "root tag must be <xaligo>"},
 		{name: "versioned child frame", source: `<frames><frame id="one" version="1"><blank /></frame></frames>`, want: "only allowed on the V1 document root"},
 		{name: "versioned nested tag", source: `<frame><custom version="2" /></frame>`, want: "only allowed on the V1 document root"},
 	}

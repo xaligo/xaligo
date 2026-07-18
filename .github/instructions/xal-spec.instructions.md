@@ -6,18 +6,18 @@ applyTo: "**/*.xal"
 
 ## Overview
 
-`.xal` is a Vue-style layout DSL with XML syntax.
-The root tag is either `<frame>` for a single diagram page or `<frames>` for a
-multi-frame document.
+`.xal` is a Vue-style layout DSL with XML syntax. Canonical V1 documents use a
+`<xaligo>` envelope containing document-wide data and one `<frames>` page
+collection. Historical `<frame>` and `<frames>` roots remain readable but emit
+a migration warning.
 The parser uses `encoding/xml` and handles attributes, nested tags, and text content.
 
 ## V1 Compatibility Profile and Version Boundary
 
-This document defines the frozen V1 compatibility profile. Canonical V1 source
-explicitly sets `version="1"` on its `<frame>` or `<frames>` root. For backward
-compatibility, an unversioned V1 root still defaults to V1 but emits a warning
-recommending the explicit version. A `version` value other than `1` on a V1
-root is invalid; it must never silently select another language version.
+Canonical V1 source explicitly sets `version="1"` on `<xaligo>`. An
+unversioned `<xaligo>` defaults to V1 with a warning. A `version` value other
+than `1` is invalid. Legacy `<frame>` and `<frames>` roots accept the historical
+V1 version rules but always emit a warning recommending the canonical envelope.
 
 V2 uses a distinct, reject-safe root:
 
@@ -28,7 +28,7 @@ V2 uses a distinct, reject-safe root:
 ```
 
 `<scene>` requires `version="2"`; an unversioned `<scene>` is invalid. A V1
-reader is only required to understand `<frame>` and `<frames>`, so it rejects a
+reader recognizes `<xaligo>`, `<frame>`, and `<frames>`, but rejects a
 V2 document at the root instead of partially rendering V2 syntax as V1. Do not
 use `<frame version="2">` or `<frames version="2">`.
 
@@ -47,16 +47,24 @@ frontend canonicalizes the documented V1 values once at its input boundary.
 ## Root Tag
 
 ```xml
-<frame version="1" width="1440" height="900" class="pa-4">
-  ...
-</frame>
+<xaligo version="1">
+  <data>
+    <!-- reusable definitions -->
+  </data>
+  <frames gap="48">
+    <frame id="overview" width="1440" height="900" class="pa-4">
+      ...
+    </frame>
+  </frames>
+</xaligo>
 ```
 
-For multi-frame documents, wrap pages in `<frames>` and give each child
-`<frame>` a stable `id`.
+`<xaligo>` permits document-level metadata, imports, data, and styles, and
+requires exactly one `<frames>`. Give every child `<frame>` a stable `id`.
 
 ```xml
-<frames version="1" gap="48">
+<xaligo version="1">
+<frames gap="48">
   <frame id="overview" width="1440" height="900">
     ...
   </frame>
@@ -64,11 +72,12 @@ For multi-frame documents, wrap pages in `<frames>` and give each child
     ...
   </frame>
 </frames>
+</xaligo>
 ```
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
-| `version` | string | `"1"` with warning when omitted | Root only. Explicit `"1"` is recommended and is the only accepted value |
+| `version` | string | `"1"` with warning when omitted | `<xaligo>` only. Explicit `"1"` is recommended and is the only accepted value |
 | `width` | float | `1280` | Frame width (px) |
 | `height` | float | `720` | Frame height (px) |
 | `class` | string | — | Spacing class |
@@ -79,6 +88,10 @@ For multi-frame documents, wrap pages in `<frames>` and give each child
 | `content-width` / `content-height` | float | — | Shrink usable inner layout area |
 | `align` | string | — | Align usable content area (`top|middle|bottom` + `left|center|right`) |
 | `overflow` | string | `error` | Child containment policy: `error` or `visible` |
+
+Legacy input may still use root `<frame>` or `<frames>`. It remains renderable,
+but diagnostics recommend wrapping identified frames in the canonical
+`<xaligo version="1"><frames>...</frames></xaligo>` envelope.
 
 `<frames>` accepts `gap` and optional `layout="vertical"`. Without
 `layout="vertical"`, frames are arranged horizontally. A `<frame>` inside
@@ -813,9 +826,10 @@ Multiple classes are space-separated: `class="pa-4 mt-2"`
 
 ## Constraints and Notes
 
-- The root tag must be `<frame>` or `<frames>`. Any other root tag causes a
-  V1 parse error; direct children of `<frames>` must be identified `<frame>`
-  tags. V2 uses `<scene version="2">`, which is intentionally rejected by V1.
+- The canonical root is `<xaligo version="1">`. Legacy `<frame>` and
+  `<frames>` roots are accepted with a warning. Direct children of `<frames>`
+  must be identified `<frame>` tags. V2 uses `<scene version="2">`, which is
+  intentionally rejected by V1.
 - Both self-closing (`<card title="..." />`) and regular (`<card title="..."></card>`) forms are supported.
 - The sum of `span` values in direct children of `<row>` must not exceed 12.
   Excess is a validation error rather than implicit overflow to the right.

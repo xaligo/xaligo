@@ -22,6 +22,27 @@ func TestParseStoresNodePositions(t *testing.T) {
 	}
 }
 
+func TestParseCanonicalXaligoEnvelope(t *testing.T) {
+	doc, err := usecase.Parse(strings.NewReader(`<xaligo version="1"><data><table-data id="services" /></data><frames><frame id="main"><blank /></frame></frames></xaligo>`))
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+	if doc.Root == nil || doc.Root.Tag != "frames" || doc.Data == nil || doc.Data.Tag != "data" {
+		t.Fatalf("document = %#v, want normalized frames root and data registry", doc)
+	}
+	if doc.Envelope == nil || doc.Envelope.Tag != "xaligo" || doc.LegacyRoot {
+		t.Fatalf("envelope = %#v legacy=%v", doc.Envelope, doc.LegacyRoot)
+	}
+}
+
+func TestParseRejectsInvalidXaligoEnvelope(t *testing.T) {
+	_, err := usecase.Parse(strings.NewReader(`<xaligo version="1"><frame id="main" /></xaligo>`))
+	var parseErr *entity.ParseError
+	if !errors.As(err, &parseErr) || !strings.Contains(parseErr.Error(), "may only contain") {
+		t.Fatalf("error = %T %v, want envelope hierarchy error", err, err)
+	}
+}
+
 func TestParseValidationErrorHasPosition(t *testing.T) {
 	_, err := usecase.Parse(strings.NewReader("<frame>\n  <item id=\"bad\" />\n</frame>"))
 	var parseErr *entity.ParseError

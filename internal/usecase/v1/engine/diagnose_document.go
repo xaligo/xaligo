@@ -17,6 +17,15 @@ func DiagnoseV1EngineDiagnoseDocument(input []byte) []entity.Diagnostic {
 	if _, err := BuildV1EngineLayoutBuild(doc); err != nil {
 		return []entity.Diagnostic{diagnosticFromErrorV1EngineDiagnoseDocument(err)}
 	}
+	if doc.LegacyRoot {
+		return []entity.Diagnostic{{
+			Severity: SeverityWarningV1EngineOptionRender,
+			Message:  legacyV1RootWarningV1EngineParseNode(doc.Envelope),
+			Offset:   doc.Envelope.Position.Offset,
+			Line:     doc.Envelope.Position.Line,
+			Column:   doc.Envelope.Position.Column,
+		}}
+	}
 	if _, specified := doc.Root.Attrs["version"]; !specified {
 		return []entity.Diagnostic{{
 			Severity: SeverityWarningV1EngineOptionRender,

@@ -24,12 +24,12 @@ Implementation guidance:
 
 ## Product Architecture Preconditions
 
-### Future Structured-Diagram Profile
+### V1 Structured-Diagram Profile
 
-The table, relational-database, and UML design is a future language profile,
-not an extension of frozen V1 and not a replacement for the reserved V2
-`<scene version="2">` contract. Its version remains unassigned until the V2
-boundary is implemented and migration behavior is specified.
+The table, relational-database, and UML design extends the V1 engine. Canonical
+V1 uses `<xaligo version="1">`; historical root `<frame>` and `<frames>`
+documents remain compatible but emit a migration warning. This does not replace
+the reserved V2 `<scene version="2">` contract.
 
 The target document shape uses `<xaligo>` as a document envelope, a document-
 wide `<data>` registry, and `<frames>` containing identified `<frame>`
@@ -68,8 +68,9 @@ The user-facing design is documented in
 
 ### V1 Compatibility and V2 Input
 
-Freeze `<frame>` and `<frames>` as the V1 compatibility profile and recommend
-an explicit `version="1"`. Omission remains a V1 fallback but emits a warning. V2 uses a distinct
+Keep root `<frame>` and `<frames>` as legacy V1 compatibility inputs. Canonical
+V1 uses `<xaligo version="1">` with a document-wide `<data>` registry and
+identified frames. Legacy roots emit a migration warning. V2 uses a distinct
 `<scene version="2">` root; do not place `version="2"` on a V1 root. This is a
 reject-safe boundary: existing V1 readers reject V2 without having to know any
 V2 syntax.

@@ -94,13 +94,33 @@ func TestImplicitV1VersionProducesNonBlockingWarning(t *testing.T) {
 	}
 }
 
-func TestExplicitV1VersionDoesNotProduceWarning(t *testing.T) {
+func TestLegacyV1RootProducesMigrationWarning(t *testing.T) {
+	diagnostics, err := usecase.Diagnose(context.Background(), []byte(`<frame version="1"><blank /></frame>`))
+	if err != nil {
+		t.Fatalf("Diagnose() error = %v", err)
+	}
+	if len(diagnostics) != 1 || diagnostics[0].Severity != usecase.SeverityWarning || !strings.Contains(diagnostics[0].Message, "legacy V1 <frame> root") {
+		t.Fatalf("diagnostics = %#v, want legacy-root warning", diagnostics)
+	}
+}
+
+func TestCanonicalV1EnvelopeHasNoWarning(t *testing.T) {
+	diagnostics, err := usecase.Diagnose(context.Background(), []byte(`<xaligo version="1"><frames><frame id="main"><blank /></frame></frames></xaligo>`))
+	if err != nil {
+		t.Fatalf("Diagnose() error = %v", err)
+	}
+	if len(diagnostics) != 0 {
+		t.Fatalf("diagnostics = %#v, want none", diagnostics)
+	}
+}
+
+func TestExplicitVersionOnLegacyRootStillProducesMigrationWarning(t *testing.T) {
 	diagnostics, err := usecase.Diagnose(context.Background(), []byte(`<frame version="1"><blank /></frame>`))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(diagnostics) != 0 {
-		t.Fatalf("diagnostics = %#v, want none", diagnostics)
+	if len(diagnostics) != 1 || !strings.Contains(diagnostics[0].Message, "legacy V1 <frame> root") {
+		t.Fatalf("diagnostics = %#v, want legacy-root warning", diagnostics)
 	}
 }
 

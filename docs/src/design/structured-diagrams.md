@@ -1,10 +1,9 @@
 # Structured Diagrams: Tables, Databases, and UML
 
-> Status: design proposal for a future language profile. This is not accepted
-> V1 or V2 syntax. V1 remains rooted at `<frame version="1">` or
-> `<frames version="1">`; V2 remains reserved for `<scene version="2">`.
-> The version of the `<xaligo>` envelope below will be assigned only after its
-> compatibility and migration rules are defined.
+> Status: V1 implementation design. Canonical V1 uses
+> `<xaligo version="1">`. Historical root `<frame>` and `<frames>` documents
+> remain accepted and produce a migration warning. V2 remains reserved for
+> `<scene version="2">`.
 
 This design turns the table, relational-database, and UML discussions into one
 coherent target while keeping their semantic processing independent. It
@@ -49,7 +48,7 @@ xaligo
 Example:
 
 ```xml
-<xaligo version="TBD">
+<xaligo version="1">
   <data>
     <table-data id="service-inventory" src="services.csv" />
     <database-schema id="application-schema" src="schema.sql"
@@ -109,9 +108,8 @@ layout engine. The common boundary is a typed document registry plus neutral
 resolved drawing contracts.
 
 The envelope parser selects exactly one versioned frontend from the root and
-version pair. It must not retry parsers after an error. Because `<xaligo>` is
-neither a V1 nor V2 root, introducing it requires a new assigned language
-version and an explicit compatibility decision.
+version pair. It must not retry parsers after an error. `<xaligo version="1">`
+selects V1; `<scene version="2">` remains the reject-safe V2 boundary.
 
 ## General tables
 
@@ -326,17 +324,17 @@ alternate semantic models.
 
 ## Delivery sequence
 
-1. Assign the language version and specify compatibility/root dispatch.
-2. Add the `<xaligo>` envelope, data registry, frames, imports, and typed
+1. Add the `<xaligo version="1">` envelope, legacy-root warning, data registry,
+   frames, imports, and typed
    component dispatch without changing current V1/V2 behavior.
-3. Deliver general tables with pipe/tag normalization and SVG output.
-4. Add CSV, JSON, and YAML table imports.
-5. Deliver RDB entities, keys, relations, Crow's Foot rendering, and SQL DDL
+2. Deliver general tables with pipe/tag normalization and SVG output.
+3. Add CSV, JSON, and YAML table imports.
+4. Deliver RDB entities, keys, relations, Crow's Foot rendering, and SQL DDL
    import for PostgreSQL, MySQL, and SQLite.
-6. Deliver the six priority UML diagrams through their separate processors.
-7. Add remaining UML families, DBML/OpenAPI projections, richer table cells,
+5. Deliver the six priority UML diagrams through their separate processors.
+6. Add remaining UML families, DBML/OpenAPI projections, richer table cells,
    and additional encoders.
-8. Add explicit normalized/bundled output and GUI round-trip contracts.
+7. Add explicit normalized/bundled output and GUI round-trip contracts.
 
 Every phase requires parser/validation tests, model golden tests, resolved
 geometry tests, cross-format capability tests, source-positioned import

@@ -67,8 +67,45 @@ func validateRootVersionV1EngineParseNode(root *entity.Node) error {
 	return fmt.Errorf("<%s version=%q> is not supported by the V1 engine; use version=\"1\"", root.Tag, version)
 }
 
+func normalizeEnvelopeV1EngineParseNode(envelope *entity.Node) (*entity.Node, *entity.Node, error) {
+	var dataNode *entity.Node
+	var framesNode *entity.Node
+	for _, child := range envelope.Children {
+		switch child.Tag {
+		case "metadata", "imports", "styles":
+			continue
+		case "data":
+			if dataNode != nil {
+				return nil, nil, &entity.ParseError{Position: child.Position, Err: fmt.Errorf("<xaligo> may contain only one <data> child")}
+			}
+			dataNode = child
+		case "frames":
+			if framesNode != nil {
+				return nil, nil, &entity.ParseError{Position: child.Position, Err: fmt.Errorf("<xaligo> must contain exactly one <frames> child")}
+			}
+			framesNode = child
+		default:
+			return nil, nil, &entity.ParseError{Position: child.Position, Err: fmt.Errorf("<xaligo> may only contain <metadata>, <imports>, <data>, <styles>, and <frames> children, got <%s>", child.Tag)}
+		}
+	}
+	if framesNode == nil {
+		return nil, nil, &entity.ParseError{Position: envelope.Position, Err: fmt.Errorf("<xaligo> must contain exactly one <frames> child")}
+	}
+	if _, exists := framesNode.Attrs["version"]; exists {
+		return nil, nil, &entity.ParseError{Position: framesNode.Position, Err: fmt.Errorf("<frames> inside <xaligo> must not declare version; version belongs on <xaligo>")}
+	}
+	if version, exists := envelope.Attrs["version"]; exists {
+		framesNode.Attrs["version"] = version
+	}
+	return framesNode, dataNode, nil
+}
+
 func implicitV1VersionWarningV1EngineParseNode(root *entity.Node) string {
 	return fmt.Sprintf("V1 document version is implicit; add version=\"1\" to the <%s> root", root.Tag)
+}
+
+func legacyV1RootWarningV1EngineParseNode(root *entity.Node) string {
+	return fmt.Sprintf("legacy V1 <%s> root is deprecated; wrap identified frames in <xaligo version=\"1\"><frames>...</frames></xaligo>", root.Tag)
 }
 
 func validateNestedVersionV1EngineParseNode(node *entity.Node) error {

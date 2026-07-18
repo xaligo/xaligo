@@ -32,8 +32,8 @@ builders and repositories directly.
 
 ## Language-version boundary
 
-`<frame version="1">` and `<frames version="1">` select the frozen V1 profile.
-Unversioned roots remain a V1 compatibility fallback and emit a warning. Native V2
+`<xaligo version="1">` selects canonical V1. Root `<frame>` and `<frames>` are
+legacy V1 compatibility inputs and emit a migration warning. Native V2
 uses the reject-safe `<scene version="2">` root. The V1 parser is not extended
 to recognize `<scene>` and does not import or call V2 code.
 
