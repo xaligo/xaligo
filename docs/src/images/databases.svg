@@ -76,7 +76,7 @@
 <defs><clipPath id="xaligo-text-clip-8e506867443b5ad" clipPathUnits="userSpaceOnUse"><rect x="644" y="185.2" width="132" height="75.2"/></clipPath></defs>
 <text x="644" y="230.8" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-8e506867443b5ad)"><tspan x="644" y="230.8">bigint</tspan></text>
 <defs><clipPath id="xaligo-text-clip-d1e05524fa71fe89" clipPathUnits="userSpaceOnUse"><rect x="784" y="185.2" width="132" height="75.2"/></clipPath></defs>
-<text x="784" y="218.8" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-d1e05524fa71fe89)"><tspan x="784" y="218.8">PK, NOT</tspan><tspan x="784" dy="24">NULL</tspan></text>
+<text x="784" y="230.8" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-d1e05524fa71fe89)"><tspan x="784" y="230.8">PK</tspan></text>
 <defs><clipPath id="xaligo-text-clip-4a992dd5e2482852" clipPathUnits="userSpaceOnUse"><rect x="504" y="264.4" width="132" height="75.2"/></clipPath></defs>
 <text x="504" y="310" fill="#1E1E1E" font-family="Virgil" font-size="20" text-anchor="start" clip-path="url(#xaligo-text-clip-4a992dd5e2482852)"><tspan x="504" y="310">tenant_id</tspan></text>
 <defs><clipPath id="xaligo-text-clip-48e262ab3289d3e6" clipPathUnits="userSpaceOnUse"><rect x="644" y="264.4" width="132" height="75.2"/></clipPath></defs>

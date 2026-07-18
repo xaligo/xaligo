@@ -49,3 +49,41 @@ func TestParseWithImportsRejectsUnsafeAndMissingSourcesV1EngineParseImport(t *te
 		t.Fatalf("missing filesystem error = %v", err)
 	}
 }
+
+func TestParseWithImportsLoadsCompositeSQLSchemaV1EngineParseImport(t *testing.T) {
+	input := `<xaligo version="1"><data><database-schema id="app" src="schema.sql" dialect="postgresql" /></data><frames><frame id="erd"><database data="app" /></frame></frames></xaligo>`
+	sql := `CREATE TABLE roles (
+  tenant_id bigint NOT NULL,
+  id bigint NOT NULL,
+  PRIMARY KEY (tenant_id, id)
+);
+CREATE TABLE users (
+  id bigint PRIMARY KEY,
+  tenant_id bigint NOT NULL,
+  role_id bigint NOT NULL,
+  CONSTRAINT fk_role FOREIGN KEY (tenant_id, role_id)
+    REFERENCES roles (tenant_id, id) ON DELETE CASCADE
+);`
+	doc, err := engine.ParseWithImportsV1EngineParseDocument(strings.NewReader(input), &entity.ImportSource{FS: fstest.MapFS{
+		"schema.sql": {Data: []byte(sql)},
+	}})
+	if err != nil {
+		t.Fatalf("ParseWithImports() error = %v", err)
+	}
+	database := doc.Root.Children[0].Children[0]
+	if len(database.Children) != 2 || database.Children[0].Attr("id") != "roles" || database.Children[1].Attr("id") != "users" {
+		t.Fatalf("imported database = %#v", database)
+	}
+	connection := doc.Root.Children[0].Children[len(doc.Root.Children[0].Children)-1]
+	if connection.Attr("_xaligoDatabaseForeignKey") != "tenant_id,role_id" || connection.Attr("_xaligoDatabaseOnDelete") != "cascade" {
+		t.Fatalf("imported SQL relation = %#v", connection.Attrs)
+	}
+}
+
+func TestParseWithImportsRejectsUnsupportedSQLDialectV1EngineParseImport(t *testing.T) {
+	input := `<xaligo version="1"><data><database-schema id="app" src="schema.sql" dialect="oracle" /></data><frames><frame id="erd"><database data="app" /></frame></frames></xaligo>`
+	_, err := engine.ParseWithImportsV1EngineParseDocument(strings.NewReader(input), &entity.ImportSource{FS: fstest.MapFS{"schema.sql": {Data: []byte("CREATE TABLE t (id bigint);")}}})
+	if err == nil || !strings.Contains(err.Error(), "postgresql, mysql, or sqlite") {
+		t.Fatalf("ParseWithImports() error = %v, want dialect error", err)
+	}
+}

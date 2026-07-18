@@ -45,10 +45,29 @@ columns. They generate one entity-to-entity relation regardless of arity:
 `set-null`, or `set-default`. The normalized relation retains its source and
 referenced column lists and referential actions for downstream renderers.
 
+## SQL DDL imports
+
+Import a schema relative to the `.xal` input file:
+
+```xml
+<data>
+  <database-schema id="application-schema" src="schema.sql"
+                   format="sql" dialect="postgresql" />
+</data>
+```
+
+The V1 common profile accepts `postgresql` (and the `postgres` alias), `mysql`,
+and `sqlite`. It reads semicolon-terminated `CREATE TABLE` statements, quoted
+or schema-qualified identifiers, column types, `NOT NULL`, `UNIQUE`, inline or
+table primary keys, inline or table foreign keys, composite keys,
+`REFERENCES`, `ON DELETE`, and `ON UPDATE`. Dialect-specific indexes, generated
+expressions, checks, and table options are currently ignored when they do not
+affect the normalized keys.
+
 Validation rejects duplicate schema/entity/column IDs, missing references,
 unknown children, inline entities combined with `data`, malformed foreign
 keys, mismatched composite-key arity, missing columns, and invalid referential
-actions. Indexes, checks, SQL imports, and Crow's Foot endpoint markers remain
+actions. Rich indexes, checks, and Crow's Foot endpoint markers remain
 subsequent V1 work.
 
 See the [RDB example](../examples/databases.md).

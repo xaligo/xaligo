@@ -331,7 +331,8 @@ alternate semantic models.
 2. Deliver general tables with pipe/tag normalization and SVG output.
 3. Add CSV, JSON, and YAML table imports. (Implemented in V1.)
 4. Deliver RDB entities, keys, relations, Crow's Foot rendering, and SQL DDL
-   import for PostgreSQL, MySQL, and SQLite.
+   import for PostgreSQL, MySQL, and SQLite. (Entities, keys, relations, and
+   common SQL DDL import are implemented in V1; Crow's Foot remains.)
 5. Deliver the six priority UML diagrams through their separate processors.
 6. Add remaining UML families, DBML/OpenAPI projections, richer table cells,
    and additional encoders.
