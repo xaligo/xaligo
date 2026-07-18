@@ -76,10 +76,13 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 		bends := connectionBendPointsV1EngineSceneConnection(conn)
 		srcAnchor, hasSrcAnchor := connectionEndpointAnchorV1EngineSceneConnectionRoute(conn, "src")
 		dstAnchor, hasDstAnchor := connectionEndpointAnchorV1EngineSceneConnectionRoute(conn, "dst")
+		srcSideExplicit := hasSrcAnchor
+		dstSideExplicit := hasDstAnchor
 		if hasSrcAnchor {
 			srcSide = string(srcAnchor.side)
 		} else if explicit, ok := connectionEndpointSideV1EngineSceneConnectionRoute(conn, "src"); ok {
 			srcSide = string(explicit)
+			srcSideExplicit = true
 		} else if len(bends) > 0 {
 			srcSide = sideTowardPointV1EngineSceneConnection(srcImgRect, bends[0])
 		}
@@ -87,12 +90,40 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 			dstSide = string(dstAnchor.side)
 		} else if explicit, ok := connectionEndpointSideV1EngineSceneConnectionRoute(conn, "dst"); ok {
 			dstSide = string(explicit)
+			dstSideExplicit = true
 		} else if len(bends) > 0 {
 			dstSide = sideTowardPointV1EngineSceneConnection(dstImgRect, bends[len(bends)-1])
 		}
 		if _, ok := umlSequencePositionV1EngineSceneConnectionRoute(conn, "src"); ok {
 			srcSide = umlSequenceVerticalSideV1EngineSceneConnectionRoute(srcSide)
 			dstSide = umlSequenceVerticalSideV1EngineSceneConnectionRoute(dstSide)
+		}
+
+		crossFrame := conn.Attrs[internalConnectionCrossFrameAttrV1EngineParseDocument] == "true"
+		var srcFrameID, dstFrameID string
+		var srcFrameRect, dstFrameRect [4]float64
+		var srcVisualRect, dstVisualRect [4]float64
+		if crossFrame {
+			srcFrameID = strings.TrimSpace(conn.Attrs[internalConnectionSrcFrameAttrV1EngineParseDocument])
+			dstFrameID = strings.TrimSpace(conn.Attrs[internalConnectionDstFrameAttrV1EngineParseDocument])
+			var srcFrameOK, dstFrameOK bool
+			srcFrameRect, srcFrameOK = frameRects[srcFrameID]
+			dstFrameRect, dstFrameOK = frameRects[dstFrameID]
+			if !srcFrameOK || !dstFrameOK {
+				loggerV1EngineSharedLogging.WARN(IUESRC004V1EngineSceneTypes, "cross-frame connection frame not found or not rendered", map[string]any{"srcFrame": srcFrameID, "dstFrame": dstFrameID, "srcFrameRendered": srcFrameOK, "dstFrameRendered": dstFrameOK})
+				continue
+			}
+			// Page-link stubs select their endpoint and page side from the local
+			// endpoint geometry. Manual bends remain logical metadata for graph
+			// adapters and do not steer either page-local stub.
+			srcVisualRect = endpointVisualRectV1EngineSceneConnectionPage(srcImgRect, itemLblRects[srcKey])
+			dstVisualRect = endpointVisualRectV1EngineSceneConnectionPage(dstImgRect, itemLblRects[dstKey])
+			if !srcSideExplicit {
+				srcSide = nearestFrameSideV1EngineSceneConnectionPage(srcFrameRect, srcVisualRect, dstFrameRect)
+			}
+			if !dstSideExplicit {
+				dstSide = nearestFrameSideV1EngineSceneConnectionPage(dstFrameRect, dstVisualRect, srcFrameRect)
+			}
 		}
 
 		// Choose element: bottom edge → label text box; other edges → image element.
@@ -140,22 +171,16 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 		if fp, ok := umlSequenceFixedPointV1EngineSceneConnectionRoute(conn, "dst", dstSide); ok {
 			dstFP = fp
 		}
+		style := resolveConnectionStyleV1EngineSceneConnectionRoute(conn)
+		if crossFrame {
+			seed := stableConnectionSeedV1EngineSceneConnectionRoute(srcKey, dstKey, i)
+			renderCrossFrameConnectionV1EngineSceneConnectionPage(conn, srcKey, dstKey, srcElemID, dstElemID, srcRect, dstRect, srcVisualRect, dstVisualRect, srcFP, dstFP, srcSide, dstSide, srcFrameID, dstFrameID, srcFrameRect, dstFrameRect, style, seed, i, updated, elements, boundMap)
+			continue
+		}
 		srcEdge := rectFixedPointV1EngineSceneConnection(srcRect, srcFP)
 		dstEdge := rectFixedPointV1EngineSceneConnection(dstRect, dstFP)
 		dx := dstEdge[0] - srcEdge[0]
 		dy := dstEdge[1] - srcEdge[1]
-		style := resolveConnectionStyleV1EngineSceneConnectionRoute(conn)
-		if conn.Attrs[internalConnectionCrossFrameAttrV1EngineParseDocument] == "true" {
-			srcFrameID := strings.TrimSpace(conn.Attrs[internalConnectionSrcFrameAttrV1EngineParseDocument])
-			dstFrameID := strings.TrimSpace(conn.Attrs[internalConnectionDstFrameAttrV1EngineParseDocument])
-			srcFrameRect, srcFrameOK := frameRects[srcFrameID]
-			dstFrameRect, dstFrameOK := frameRects[dstFrameID]
-			if srcFrameOK && dstFrameOK {
-				seed := stableConnectionSeedV1EngineSceneConnectionRoute(srcKey, dstKey, i)
-				renderCrossFrameConnectionV1EngineSceneConnectionPage(conn, srcKey, dstKey, srcElemID, dstElemID, srcRect, dstRect, srcFP, dstFP, srcFrameID, dstFrameID, srcFrameRect, dstFrameRect, style, seed, i, updated, elements, boundMap)
-				continue
-			}
-		}
 		routePoints := excalidrawConnectionPointsV1EngineSceneConnectionRoute(conn, srcRect, dstRect, srcSide, dstSide, style.Kind, obstacles, placed, routePaths)
 		if style.Kind == "route" {
 			routePaths[routePairKeyV1EngineRouteBuild(excalidrawRouteRequestV1EngineSceneConnectionRoute(conn, srcRect, dstRect, srcSide, dstSide, style.Kind), false)] = append([]ptV1EngineRouteTypes(nil), routePoints...)

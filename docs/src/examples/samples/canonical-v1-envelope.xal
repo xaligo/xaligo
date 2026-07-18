@@ -17,7 +17,7 @@
 
       <connections>
         <connection src="client-api" dst="application-api" />
-        <connection src="application-db" dst="database" />
+        <connection src="application-db" dst="database-detail.database-in" />
       </connections>
     </frame>
 

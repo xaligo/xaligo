@@ -3,6 +3,7 @@ package usecase_test
 import (
 	"context"
 	"encoding/json"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -255,6 +256,8 @@ func TestRenderExcalidrawFramesAndCrossFrameLabels(t *testing.T) {
 	foundFromLabel := false
 	foundCrossArrows := 0
 	logicalID := ""
+	var sourceStub map[string]any
+	var destinationStub map[string]any
 	for _, element := range scene.Elements {
 		switch element["id"] {
 		case "paper-frame-overview":
@@ -272,6 +275,12 @@ func TestRenderExcalidrawFramesAndCrossFrameLabels(t *testing.T) {
 		}
 		if custom, _ := element["customData"].(map[string]any); custom["xaligoCrossFrame"] == true {
 			foundCrossArrows++
+			if element["startBinding"] != nil && element["endBinding"] == nil {
+				sourceStub = element
+			}
+			if element["startBinding"] == nil && element["endBinding"] != nil {
+				destinationStub = element
+			}
 			gotLogicalID, _ := custom["xaligoConnectorLogicalId"].(string)
 			sourceElementID, _ := custom["xaligoConnectorSourceElementId"].(string)
 			destinationElementID, _ := custom["xaligoConnectorDestinationElementId"].(string)
@@ -288,6 +297,367 @@ func TestRenderExcalidrawFramesAndCrossFrameLabels(t *testing.T) {
 	if !foundOverviewFrame || !foundDetailFrame || !foundToLabel || !foundFromLabel || foundCrossArrows != 2 {
 		t.Fatalf("frames/cross labels missing: overview=%v detail=%v to=%v from=%v arrows=%d elements=%#v", foundOverviewFrame, foundDetailFrame, foundToLabel, foundFromLabel, foundCrossArrows, scene.Elements)
 	}
+	if sourceStub == nil || destinationStub == nil {
+		t.Fatalf("cross-frame directions missing: source=%#v destination=%#v", sourceStub, destinationStub)
+	}
+	overviewFrame := sceneElementRect(t, scene.Elements, "paper-frame-overview")
+	detailFrame := sceneElementRect(t, scene.Elements, "paper-frame-detail")
+	sourceStart, sourceTerminal := sceneArrowEndpoints(t, sourceStub)
+	destinationTerminal, destinationEnd := sceneArrowEndpoints(t, destinationStub)
+	assertCrossFrameStubGeometry(t, scene.Elements, sourceStub, sourceStart, sourceTerminal, overviewFrame, "startBinding")
+	assertCrossFrameStubGeometry(t, scene.Elements, destinationStub, destinationTerminal, destinationEnd, detailFrame, "endBinding")
+	assertPageLinkLabelClearsStub(t, scene.Elements, sourceStub, sourceStart, sourceTerminal)
+	assertPageLinkLabelClearsStub(t, scene.Elements, destinationStub, destinationTerminal, destinationEnd)
+	if side := sceneFrameSideAtPoint(overviewFrame, sourceTerminal); side != "top" {
+		t.Fatalf("equal-distance source tie selected %q, want stable top edge", side)
+	}
+	if side := sceneFrameSideAtPoint(detailFrame, destinationTerminal); side != "left" {
+		t.Fatalf("equal-distance destination tie selected %q, want remote-facing left edge", side)
+	}
+
+	svgOut, err := newUsecase().RenderSVG(context.Background(), input, entity.RenderOptions{Format: usecase.FormatSVG, Theme: "light"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	svg := string(svgOut)
+	for _, label := range []string{"to detail", "from overview"} {
+		if !strings.Contains(svg, label) {
+			t.Fatalf("SVG cross-frame label %q missing:\n%s", label, svg)
+		}
+	}
+	if count := strings.Count(svg, `fill="none" stroke="#1E1E1E"`); count < 2 {
+		t.Fatalf("SVG visible cross-frame paths = %d, want at least two:\n%s", count, svg)
+	}
+}
+
+func TestRenderExcalidrawCrossFrameAutomaticSideUsesEveryNearestEdge(t *testing.T) {
+	input := []byte(`<xaligo version="1"><data></data><frames gap="48">
+  <frame id="top-page" width="200" height="200" content-width="40" content-height="40" align="top-center">
+    <rectangle id="node" title="Top" width="40" height="40" />
+    <connection src="node" dst="sink.target"><bend x="200" y="100" /></connection>
+  </frame>
+  <frame id="right-page" width="200" height="200" content-width="40" content-height="40" align="middle-right">
+    <rectangle id="node" title="Right" width="40" height="40" />
+    <connection src="node" dst="sink.target" />
+  </frame>
+  <frame id="bottom-page" width="200" height="200" content-width="40" content-height="40" align="bottom-center">
+    <rectangle id="node" title="Bottom" width="40" height="40" />
+    <connection src="node" dst="sink.target" />
+  </frame>
+  <frame id="left-page" width="200" height="200" content-width="40" content-height="40" align="middle-left">
+    <rectangle id="node" title="Left" width="40" height="40" />
+    <connection src="node" dst="sink.target" />
+  </frame>
+	<frame id="corner-page" width="100" height="100" class="pl-2 pt-1">
+	  <rectangle id="node" title="Corner" width="10" height="10" />
+	  <connection src="node" dst="sink.target" />
+	</frame>
+  <frame id="sink" width="200" height="200">
+    <rectangle id="target" title="Target" width="80" height="80" />
+  </frame>
+</frames></xaligo>`)
+	out, err := newUsecase().RenderExcalidraw(context.Background(), input, entity.RenderOptions{Theme: "light"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var scene sceneFile
+	if err := json.Unmarshal(out, &scene); err != nil {
+		t.Fatal(err)
+	}
+	wantSides := map[string]string{
+		"top-page":    "top",
+		"right-page":  "right",
+		"bottom-page": "bottom",
+		"left-page":   "left",
+		"corner-page": "top",
+	}
+	found := map[string]bool{}
+	for _, element := range scene.Elements {
+		custom, _ := element["customData"].(map[string]any)
+		frameID, _ := custom["xaligoSourceFrame"].(string)
+		wantSide, expected := wantSides[frameID]
+		if !expected || element["startBinding"] == nil || element["endBinding"] != nil {
+			continue
+		}
+		start, terminal := sceneArrowEndpoints(t, element)
+		frame := sceneElementRect(t, scene.Elements, "paper-frame-"+frameID)
+		assertCrossFrameStubGeometry(t, scene.Elements, element, start, terminal, frame, "startBinding")
+		if side := sceneFrameSideAtPoint(frame, terminal); side != wantSide {
+			t.Fatalf("source frame %q page-link side = %q, want %q", frameID, side, wantSide)
+		}
+		if frameID == "corner-page" && len(sceneArrowPoints(t, element)) != 4 {
+			t.Fatalf("corner page-link points = %#v, want an orthogonal border dogleg", element["points"])
+		}
+		found[frameID] = true
+	}
+	for frameID := range wantSides {
+		if !found[frameID] {
+			t.Fatalf("source page-link for frame %q missing: %#v", frameID, scene.Elements)
+		}
+	}
+}
+
+func TestRenderExcalidrawCrossFrameSmallPagesKeepStubsVisible(t *testing.T) {
+	input := []byte(`<xaligo version="1"><data></data><frames gap="16">
+  <frame id="source-page-with-long-id" width="48.000000001" height="48.000000001">
+    <rectangle id="node" title="A" width="48.000000001" height="48.000000001" />
+    <connection src="node" dst="destination-page-with-long-id.node" />
+  </frame>
+  <frame id="destination-page-with-long-id" width="49" height="49">
+    <rectangle id="node" title="B" width="49" height="49" />
+  </frame>
+</frames></xaligo>`)
+	out, err := newUsecase().RenderExcalidraw(context.Background(), input, entity.RenderOptions{Theme: "light"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var scene sceneFile
+	if err := json.Unmarshal(out, &scene); err != nil {
+		t.Fatal(err)
+	}
+	stubCount := 0
+	for _, element := range scene.Elements {
+		custom, _ := element["customData"].(map[string]any)
+		if custom["xaligoCrossFrame"] != true {
+			continue
+		}
+		stubCount++
+		start, end := sceneArrowEndpoints(t, element)
+		frameID := custom["xaligoSourceFrame"].(string)
+		bindingName := "startBinding"
+		if element["startBinding"] == nil {
+			frameID = custom["xaligoDestinationFrame"].(string)
+			bindingName = "endBinding"
+		}
+		assertCrossFrameStubGeometry(t, scene.Elements, element, start, end, sceneElementRect(t, scene.Elements, "paper-frame-"+frameID), bindingName)
+	}
+	if stubCount != 2 {
+		t.Fatalf("small-page cross-frame stubs = %d, want 2: %#v", stubCount, scene.Elements)
+	}
+	wantLabelFrames := map[string]string{
+		"to destination-page-with-long-id": "source-page-with-long-id",
+		"from source-page-with-long-id":    "destination-page-with-long-id",
+	}
+	for label, frameID := range wantLabelFrames {
+		var labelRect [4]float64
+		for _, element := range scene.Elements {
+			if element["text"] == label {
+				labelRect = sceneElementRect(t, scene.Elements, element["id"].(string))
+				break
+			}
+		}
+		frame := sceneElementRect(t, scene.Elements, "paper-frame-"+frameID)
+		if labelRect[2] <= 0 || labelRect[0] < frame[0]-1e-9 || labelRect[1] < frame[1]-1e-9 || labelRect[0]+labelRect[2] > frame[0]+frame[2]+1e-9 || labelRect[1]+labelRect[3] > frame[1]+frame[3]+1e-9 {
+			t.Fatalf("small-page label %q rect %#v escapes frame %#v", label, labelRect, frame)
+		}
+	}
+	svgOut, err := newUsecase().RenderSVG(context.Background(), input, entity.RenderOptions{Format: usecase.FormatSVG, Theme: "light"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count := strings.Count(string(svgOut), `fill="none" stroke="#1E1E1E"`); count < 2 {
+		t.Fatalf("small-page SVG visible cross-frame paths = %d, want at least 2:\n%s", count, svgOut)
+	}
+}
+
+func TestRenderExcalidrawCrossFrameExplicitSidesOverrideNearestEdge(t *testing.T) {
+	input := []byte(`<frames gap="48">
+  <frame id="overview" width="320" height="180">
+    <rectangle id="web" title="Web" width="120" height="80" />
+    <connection src="web" dst="detail.db" src-side="bottom" dst-anchor="right-2" />
+  </frame>
+  <frame id="detail" width="320" height="180">
+    <rectangle id="db" title="DB" width="120" height="80" />
+  </frame>
+</frames>`)
+	out, err := newUsecase().RenderExcalidraw(context.Background(), input, entity.RenderOptions{Theme: "light"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var scene sceneFile
+	if err := json.Unmarshal(out, &scene); err != nil {
+		t.Fatal(err)
+	}
+	var sourceStub, destinationStub map[string]any
+	for _, element := range scene.Elements {
+		custom, _ := element["customData"].(map[string]any)
+		if custom["xaligoCrossFrame"] != true {
+			continue
+		}
+		if element["startBinding"] != nil && element["endBinding"] == nil {
+			sourceStub = element
+		}
+		if element["startBinding"] == nil && element["endBinding"] != nil {
+			destinationStub = element
+		}
+	}
+	if sourceStub == nil || destinationStub == nil {
+		t.Fatalf("cross-frame stubs missing: %#v", scene.Elements)
+	}
+	overviewFrame := sceneElementRect(t, scene.Elements, "paper-frame-overview")
+	detailFrame := sceneElementRect(t, scene.Elements, "paper-frame-detail")
+	_, sourceTerminal := sceneArrowEndpoints(t, sourceStub)
+	destinationTerminal, _ := sceneArrowEndpoints(t, destinationStub)
+	if math.Abs(sourceTerminal[1]-(overviewFrame[1]+overviewFrame[3])) > 1e-9 {
+		t.Fatalf("source terminal = %#v, want explicit bottom frame edge %#v", sourceTerminal, overviewFrame)
+	}
+	if math.Abs(destinationTerminal[0]-(detailFrame[0]+detailFrame[2])) > 1e-9 {
+		t.Fatalf("destination terminal = %#v, want explicit right frame edge %#v", destinationTerminal, detailFrame)
+	}
+	assertSceneBindingFixedPoint(t, sourceStub, "startBinding", [2]float64{0.5, 1})
+	assertSceneBindingFixedPoint(t, destinationStub, "endBinding", [2]float64{1, 0.3})
+}
+
+func sceneElementRect(t *testing.T, elements []map[string]any, id string) [4]float64 {
+	t.Helper()
+	for _, element := range elements {
+		if element["id"] == id {
+			return [4]float64{sceneNumber(t, element["x"]), sceneNumber(t, element["y"]), sceneNumber(t, element["width"]), sceneNumber(t, element["height"])}
+		}
+	}
+	t.Fatalf("scene element %q not found", id)
+	return [4]float64{}
+}
+
+func sceneArrowEndpoints(t *testing.T, arrow map[string]any) ([2]float64, [2]float64) {
+	t.Helper()
+	points := sceneArrowPoints(t, arrow)
+	return points[0], points[len(points)-1]
+}
+
+func sceneArrowPoints(t *testing.T, arrow map[string]any) [][2]float64 {
+	t.Helper()
+	origin := [2]float64{sceneNumber(t, arrow["x"]), sceneNumber(t, arrow["y"])}
+	points, ok := arrow["points"].([]any)
+	if !ok || len(points) < 2 {
+		t.Fatalf("arrow points = %#v", arrow["points"])
+	}
+	absolute := make([][2]float64, 0, len(points))
+	for _, point := range points {
+		coordinates, ok := point.([]any)
+		if !ok || len(coordinates) < 2 {
+			t.Fatalf("arrow point = %#v", point)
+		}
+		absolute = append(absolute, [2]float64{origin[0] + sceneNumber(t, coordinates[0]), origin[1] + sceneNumber(t, coordinates[1])})
+	}
+	return absolute
+}
+
+func assertCrossFrameStubGeometry(t *testing.T, elements []map[string]any, stub map[string]any, start, end [2]float64, frame [4]float64, bindingName string) {
+	t.Helper()
+	points := sceneArrowPoints(t, stub)
+	totalLength := 0.0
+	for index := 1; index < len(points); index++ {
+		dx := math.Abs(points[index][0] - points[index-1][0])
+		dy := math.Abs(points[index][1] - points[index-1][1])
+		totalLength += dx + dy
+		if dx > 1e-9 && dy > 1e-9 {
+			t.Fatalf("cross-frame stub %q segment is diagonal: %#v", stub["id"], points)
+		}
+	}
+	if totalLength <= 1e-9 {
+		t.Fatalf("cross-frame stub %q has zero length: start=%#v end=%#v", stub["id"], start, end)
+	}
+	terminal := end
+	if bindingName == "endBinding" {
+		terminal = start
+	}
+	side := sceneFrameSideAtPoint(frame, terminal)
+	if side == "" {
+		t.Fatalf("cross-frame terminal %#v is not on physical frame edge %#v", terminal, frame)
+	}
+	if len(points) > 2 {
+		firstDX := math.Abs(points[1][0] - points[0][0])
+		firstDY := math.Abs(points[1][1] - points[0][1])
+		lastDX := math.Abs(points[len(points)-1][0] - points[len(points)-2][0])
+		lastDY := math.Abs(points[len(points)-1][1] - points[len(points)-2][1])
+		if side == "left" || side == "right" {
+			if firstDX <= 1e-9 || firstDY > 1e-9 || lastDX <= 1e-9 || lastDY > 1e-9 {
+				t.Fatalf("cross-frame stub %q must enter/leave a vertical border perpendicularly: %#v", stub["id"], points)
+			}
+		} else if firstDY <= 1e-9 || firstDX > 1e-9 || lastDY <= 1e-9 || lastDX > 1e-9 {
+			t.Fatalf("cross-frame stub %q must enter/leave a horizontal border perpendicularly: %#v", stub["id"], points)
+		}
+	}
+	binding, _ := stub[bindingName].(map[string]any)
+	elementID, _ := binding["elementId"].(string)
+	endpoint := sceneElementRect(t, elements, elementID)
+	distances := map[string]float64{
+		"top":    math.Max(0, endpoint[1]-frame[1]),
+		"right":  math.Max(0, frame[0]+frame[2]-(endpoint[0]+endpoint[2])),
+		"bottom": math.Max(0, frame[1]+frame[3]-(endpoint[1]+endpoint[3])),
+		"left":   math.Max(0, endpoint[0]-frame[0]),
+	}
+	minimum := math.Min(math.Min(distances["top"], distances["right"]), math.Min(distances["bottom"], distances["left"]))
+	if distances[side] > minimum+1e-9 {
+		t.Fatalf("cross-frame stub %q uses %s edge at distance %.2f, want nearest distance %.2f: endpoint=%#v frame=%#v", stub["id"], side, distances[side], minimum, endpoint, frame)
+	}
+}
+
+func assertPageLinkLabelClearsStub(t *testing.T, elements []map[string]any, stub map[string]any, start, end [2]float64) {
+	t.Helper()
+	id, _ := stub["id"].(string)
+	label := sceneElementRect(t, elements, id+"-label")
+	bindingName := "startBinding"
+	if stub[bindingName] == nil {
+		bindingName = "endBinding"
+	}
+	binding, _ := stub[bindingName].(map[string]any)
+	elementID, _ := binding["elementId"].(string)
+	endpoint := sceneElementRect(t, elements, elementID)
+	if label[0] < endpoint[0]+endpoint[2] && endpoint[0] < label[0]+label[2] && label[1] < endpoint[1]+endpoint[3] && endpoint[1] < label[1]+label[3] {
+		t.Fatalf("page-link label %#v overlaps endpoint %#v for stub %q", label, endpoint, id)
+	}
+	points := sceneArrowPoints(t, stub)
+	const epsilon = 1e-9
+	for index := 1; index < len(points); index++ {
+		segmentStart, segmentEnd := points[index-1], points[index]
+		if math.Abs(segmentEnd[1]-segmentStart[1]) <= epsilon {
+			minimumX, maximumX := math.Min(segmentStart[0], segmentEnd[0]), math.Max(segmentStart[0], segmentEnd[0])
+			if segmentStart[1] >= label[1]-epsilon && segmentStart[1] <= label[1]+label[3]+epsilon && maximumX >= label[0]-epsilon && minimumX <= label[0]+label[2]+epsilon {
+				t.Fatalf("page-link label %#v overlaps horizontal stub %q from %#v to %#v", label, id, start, end)
+			}
+			continue
+		}
+		minimumY, maximumY := math.Min(segmentStart[1], segmentEnd[1]), math.Max(segmentStart[1], segmentEnd[1])
+		if segmentStart[0] >= label[0]-epsilon && segmentStart[0] <= label[0]+label[2]+epsilon && maximumY >= label[1]-epsilon && minimumY <= label[1]+label[3]+epsilon {
+			t.Fatalf("page-link label %#v overlaps vertical stub %q from %#v to %#v", label, id, start, end)
+		}
+	}
+}
+
+func sceneFrameSideAtPoint(frame [4]float64, point [2]float64) string {
+	const epsilon = 1e-9
+	switch {
+	case math.Abs(point[1]-frame[1]) <= epsilon:
+		return "top"
+	case math.Abs(point[0]-(frame[0]+frame[2])) <= epsilon:
+		return "right"
+	case math.Abs(point[1]-(frame[1]+frame[3])) <= epsilon:
+		return "bottom"
+	case math.Abs(point[0]-frame[0]) <= epsilon:
+		return "left"
+	default:
+		return ""
+	}
+}
+
+func assertSceneBindingFixedPoint(t *testing.T, arrow map[string]any, bindingName string, want [2]float64) {
+	t.Helper()
+	binding, _ := arrow[bindingName].(map[string]any)
+	fixedPoint, ok := binding["fixedPoint"].([]any)
+	if !ok || len(fixedPoint) != 2 || math.Abs(sceneNumber(t, fixedPoint[0])-want[0]) > 1e-9 || math.Abs(sceneNumber(t, fixedPoint[1])-want[1]) > 1e-9 {
+		t.Fatalf("%s fixedPoint = %#v, want %#v", bindingName, binding["fixedPoint"], want)
+	}
+}
+
+func sceneNumber(t *testing.T, value any) float64 {
+	t.Helper()
+	number, ok := value.(float64)
+	if !ok {
+		t.Fatalf("scene number = %#v (%T)", value, value)
+	}
+	return number
 }
 
 func TestUseCaseAPIRenderPPTXHonorsCanceledContext(t *testing.T) {

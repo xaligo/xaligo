@@ -167,6 +167,39 @@ readable without hiding the connector endpoint. Excalidraw routing treats group
 header tags, item icons, and labels as obstacles where possible, and serializes
 arrowhead sizes as `"s"` for dense diagrams.
 
+### Cross-frame page links
+
+A connection between different frames is a page link in page-oriented output;
+it is never one line crossing the inter-frame canvas. The shared scene emits
+two axis-aligned local stubs for Excalidraw, SVG, and PPTX:
+
+- source endpoint to the source frame's physical border, with the exact label
+  `to <destination frame ID>`; and
+- destination frame's physical border to the destination endpoint, with the
+  exact label `from <source frame ID>`.
+
+Angle brackets are placeholders, so a link from `overview` to `detail` renders
+`to detail` and `from overview`. The shared scene, not the PPTX exporter,
+selects each local side independently. An explicit anchor takes precedence
+over an explicit side, which takes precedence over the automatic side. The
+automatic side minimizes the perpendicular distance from the endpoint visual
+envelope to the four physical frame borders. The endpoint binding and border
+terminal use the same side. Ties prefer a tied side facing the remote frame,
+then `top`, `right`, `bottom`, `left`.
+
+The unconstrained terminal uses the endpoint binding's coordinate parallel to
+the border. If that coordinate enters a 24-layout-px corner gutter, the
+terminal is clamped and a two-bend orthogonal dogleg bridges the coordinate
+difference; the segments at both the endpoint and frame border remain
+perpendicular to their selected side. A border shorter than 96 layout pixels
+uses one quarter of its length as an adaptive gutter. If the endpoint and
+terminal coincide on the border, the terminal shifts by up to 24 layout pixels
+within the available gutter range so the line remains visible.
+Manual bends remain connector metadata and
+do not steer page-local stubs. Both stubs retain one logical connector ID;
+XYFlow and Isoflow reconstruct one graph edge from that metadata rather than
+exporting the two page projections.
+
 ## Advanced Routing Features
 
 ### Line Jumps

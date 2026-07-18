@@ -141,11 +141,38 @@ The same qualification applies to connectable table, database, entity, group,
 rectangle, port, and item IDs. An unqualified reference never falls back to a
 different frame.
 
-When endpoints belong to different child frames, editable page-oriented output
-contains one local stub per frame, labeled `to <frame-id>` and
-`from <frame-id>`. The stubs share a logical connector ID and the original
-endpoint/routing metadata. Graph-oriented XYFlow and Isoflow output use that
-metadata to emit one logical edge rather than two disconnected stubs.
+When endpoints belong to different child frames, Excalidraw, SVG, and PPTX
+show the connection as a page link with two local stubs rather than one line
+across the inter-frame canvas:
+
+- The source stub runs from the source endpoint to the physical border of its
+  frame and is labeled exactly `to <destination frame ID>`.
+- The destination stub runs from the physical border of its frame to the
+  destination endpoint and is labeled exactly `from <source frame ID>`.
+
+Angle brackets are placeholders, not visible punctuation. The example above
+therefore renders `to detail` in `overview` and `from overview` in `detail`.
+
+For each endpoint, precedence is explicit anchor, then explicit side, then
+automatic nearest-border selection. Automatic selection uses the frame border
+nearest to that endpoint's visual envelope. An item envelope includes both its
+icon and label. The endpoint binding and frame terminal use the same side.
+Equal-distance ties prefer a tied side facing the other frame, then `top`,
+`right`, `bottom`, `left`.
+
+The terminal is on the actual frame border. Its initial position along that
+border follows the endpoint binding. If that position enters the normal
+24-layout-pixel corner gutter, xaligo clamps the terminal and inserts a
+two-bend orthogonal dogleg; the endpoint- and frame-adjacent segments remain
+perpendicular to the selected side. Borders shorter than 96 layout pixels use
+an adaptive quarter-length gutter. If the two points would coincide on the same
+border, the terminal moves by up to 24 layout pixels within the available range
+so the local stub remains visible. Manual bends are retained as logical routing
+metadata but do not change these page-local stub paths.
+
+The stubs share a logical connector ID and the original endpoint, frame, and
+routing metadata. Graph-oriented XYFlow and Isoflow output use that metadata
+to emit one logical edge rather than two disconnected stubs.
 
 ## Manual Bends
 

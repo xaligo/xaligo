@@ -10,9 +10,13 @@ xaligo
    └─ database-detail
 ```
 
-The two identified frames share one document and use a cross-frame connection.
-`<data>` is present as the document-wide definition registry; table, database,
-and UML definitions will populate it as those V1 processors are delivered.
+The two identified frames share one document. The qualified endpoint
+`database-detail.database-in` creates a page link from the overview DB port to
+the detail frame's SQL port. Page-oriented output draws one source stub to the
+nearest `overview` border labeled `to database-detail`, and one destination
+stub from the nearest `database-detail` border to the SQL port labeled
+`from overview`. `<data>` is the document-wide definition registry used by
+reusable table, database, and UML definitions.
 
 ![Canonical V1 envelope](../images/canonical-v1-envelope.svg)
 

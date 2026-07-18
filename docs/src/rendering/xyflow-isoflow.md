@@ -28,10 +28,13 @@ does not contain semantic metadata. An overflowing node keeps its semantic
 clamp V1 `overflow="visible"` geometry back inside the parent.
 
 A V1 connection between frames is represented by two editable local stubs in
-the canonical scene. Both stubs carry one logical connection ID and the two
-original endpoint IDs. The XYFlow adapter uses that metadata to emit one edge,
-including source and destination frame metadata, instead of exporting two
-half-connected edges.
+the canonical scene for page-oriented formats. The source projection runs from
+its endpoint to the frame border with `to <destination frame ID>`; the
+destination projection runs from its frame border to the endpoint with
+`from <source frame ID>`. Both stubs carry one logical connection ID, the two
+original endpoint/frame IDs, and routing metadata including manual bends. The
+XYFlow adapter uses that metadata to emit one edge, including source and
+destination frame metadata, instead of exporting the two page projections.
 
 ## Isoflow
 
@@ -47,7 +50,8 @@ The model follows the upstream Isoflow shape with `items`, `views`, `icons`,
 Items keep their existing IDs, order, and tile reservations. When a connection
 references an AWS group, rectangle, port, or identified child frame, the
 adapter additionally emits a generic Isoflow model/view item for that endpoint.
-Two cross-frame scene stubs are likewise combined into one logical connector.
+Two cross-frame page-link stubs are likewise combined by their shared logical
+ID into one connector; neither `to ...` nor `from ...` becomes an Isoflow item.
 For a same-frame connection with explicit bends, resolved interior points are
 encoded as native Isoflow tile anchors. A built-in isometric fallback icon is
 registered whenever an endpoint or source item has no target icon, so every

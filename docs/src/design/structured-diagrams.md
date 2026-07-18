@@ -84,6 +84,36 @@ components arranged with the normal row, column, container, and grid controls.
 The component selects its semantic processor; `frame` never carries values
 such as `type="uml-class"`.
 
+## Cross-frame page-link projection
+
+A qualified endpoint such as `detail.database` is a logical connection across
+frame/page boundaries. Page-oriented output does not draw one line through the
+space between frames. It projects the connection as two local page-link stubs:
+the source endpoint connects to its owning frame's physical border and is
+labeled `to <destination frame ID>`; the destination frame's physical border
+connects to the destination endpoint and is labeled
+`from <source frame ID>`. For example, an `overview` to `detail` connection
+shows `to detail` on the source page and `from overview` on the destination
+page. Angle brackets describe placeholders and are not rendered.
+
+Unless an endpoint anchor or side is explicit, each endpoint's visual envelope
+selects the nearest of its own frame's four borders. The chosen endpoint side
+and page-border side are the same. Equal distances prefer the side facing the
+other frame, then the stable order top, right, bottom, left. Explicit anchors
+take precedence over explicit sides, which take precedence over automatic
+selection. Manual bends remain logical connection metadata and do not steer
+the two local stubs. Excalidraw, SVG, and PPTX preserve the two page-local
+projections; graph adapters combine their shared logical connection ID into
+one XYFlow or Isoflow edge.
+
+The terminal itself lies on the physical frame border. Its unconstrained
+parallel coordinate follows the endpoint binding; a coordinate inside the
+24-layout-pixel corner gutter is clamped and connected with a two-bend
+orthogonal dogleg so both the endpoint and border segments remain perpendicular
+to the selected side. Borders shorter than 96 layout pixels use an adaptive
+quarter-length gutter. Coincident endpoint/border points shift along the border
+within the available gutter range to keep the page-link stub visible.
+
 ## Processing boundaries
 
 General tables, relational schemas, and UML are separate frontends:

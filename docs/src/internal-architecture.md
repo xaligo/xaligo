@@ -264,12 +264,32 @@ Removing the underlying Excalidraw field vocabulary is a separate compatibility
 migration; the neutral name does not pretend that migration is already complete.
 
 For a connection whose endpoints belong to different frames, V1 deliberately
-keeps two local editable stubs in `PresentationScene`. The stubs share a stable
-logical connector ID plus the original source/destination element and frame
-IDs. XYFlow and Isoflow use those fields to reconstruct one logical edge;
-Excalidraw, SVG, and PPTX keep the page-local representation. Routing metadata
-such as bends, scale, grid, and explicit anchors is stored on both stubs so a
-capable adapter does not have to infer it from generated geometry.
+keeps two page-local editable stubs in `PresentationScene`, never one line
+across the inter-frame canvas. The source stub runs from its endpoint to the
+source frame's physical border and is labeled `to <destination frame ID>`; the
+destination stub runs from the destination frame's physical border to its
+endpoint and is labeled `from <source frame ID>`. Angle brackets denote
+placeholders, so an `overview` to `detail` link displays `to detail` and
+`from overview`.
+
+Shared scene construction selects each endpoint and terminal side together.
+Precedence is explicit anchor, then explicit side, then automatic selection;
+automatic selection minimizes the distance from the endpoint visual envelope
+to the four owning-frame borders. Equal minima prefer the remote-facing
+candidate and then `top`, `right`, `bottom`, `left`. The unconstrained terminal
+parallel coordinate comes from the endpoint binding. A coordinate inside the
+24-layout-px corner gutter is clamped and bridged by a two-bend orthogonal
+dogleg whose endpoint and frame segments are perpendicular to the selected
+side. Borders shorter than 96 layout pixels use an adaptive quarter-length
+gutter. A coincident terminal shifts by up to 24 layout pixels within the
+available range to retain a visible stub.
+
+The stubs share a stable logical connector ID plus the original
+source/destination element and frame IDs. XYFlow and Isoflow use those fields
+to reconstruct one logical edge; Excalidraw, SVG, and PPTX keep the page-local
+representation. Routing metadata such as bends, scale, grid, and explicit
+anchors is stored on both stubs so a capable adapter does not have to infer it
+from generated geometry. Manual bends do not steer the two page-local paths.
 
 Rendered V1 nodes also carry `xaligoSemanticElementKind` and
 `xaligoSemanticParentElementId`, projected from the resolved Box tree. Pure

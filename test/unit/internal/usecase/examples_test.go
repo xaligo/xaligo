@@ -49,6 +49,7 @@ func TestRenderExamplesThroughPublicUseCases(t *testing.T) {
 		{"tabler", "tabler.xal", nil, `"type": "excalidraw"`, `<svg`, `"nodes"`, `"version": "3.3.0"`},
 		{"yamaha", "yamaha-icons.xal", nil, `"type": "excalidraw"`, `<svg`, `"nodes"`, `"version": "3.3.0"`},
 		{"all UML", "uml-all.xal", nil, `"type": "excalidraw"`, `<svg`, `"nodes"`, `"version": "3.3.0"`},
+		{"canonical V1 envelope", "canonical-v1-envelope.xal", nil, `to database-detail`, `from overview`, `"crossFrame": true`, `"connectors"`},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

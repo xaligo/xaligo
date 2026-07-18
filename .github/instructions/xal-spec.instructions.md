@@ -796,13 +796,44 @@ values take precedence, and `kind="route"` remains headless. Excalidraw,
 XYFlow, and Isoflow V1 output consume the resolved DSL scene rather than this
 Plan-only option.
 
-When a connection references endpoints in different frames, xaligo renders a
-local line stub in each frame instead of drawing a single line across pages.
-The source frame stub is labeled `to <frame-id>` near the frame edge, and the
-destination frame stub is labeled `from <frame-id>`. Both scene stubs carry the
-same logical connector ID, original endpoint/frame IDs, and V1 routing metadata.
-Adapters with a single-canvas graph model, such as XYFlow and Isoflow, use
-those fields to emit one logical edge instead of two partial edges.
+When a connection references endpoints in different frames, page-oriented
+output represents it as a page link instead of drawing one line across pages.
+Excalidraw, SVG, and PPTX render exactly two local stubs:
+
+- the source stub runs from the source endpoint to the physical border of its
+  owning frame and has the exact label `to <destination frame ID>`; and
+- the destination stub runs from the physical border of its owning frame to
+  the destination endpoint and has the exact label `from <source frame ID>`.
+
+Angle brackets in those forms denote placeholders and are not rendered. For a
+connection from frame `overview` to frame `detail`, the visible strings are
+therefore `to detail` and `from overview`.
+
+Unless an endpoint has an explicit anchor or side, its page-link side is the
+frame border with the shortest non-negative perpendicular distance from the
+endpoint's visual envelope. An item's visual envelope is the union of its icon
+and external label; other endpoints use their rendered shape. The endpoint
+binding and frame terminal use that same side, selected independently for the
+source and destination. Selection precedence is `src-anchor`/`dst-anchor`, then
+`src-side`/`dst-side`, then automatic nearest-border selection. When multiple
+borders have the same minimum distance, a tied border facing the remote frame
+wins; otherwise the stable order is `top`, `right`, `bottom`, `left`.
+
+The terminal lies on the frame's physical border. Its unconstrained coordinate
+parallel to that border comes from the endpoint binding. If that coordinate
+enters a 24-layout-px corner gutter, the terminal is clamped and a two-bend
+orthogonal dogleg bridges the coordinate difference; the endpoint- and
+frame-adjacent segments stay perpendicular to their selected side. A border
+shorter than 96 layout pixels uses one quarter of its length as an adaptive
+gutter.
+If the endpoint binding and terminal would coincide on the same border, the
+terminal moves by up to 24 layout pixels within the available range so the
+stub remains visible. Manual bends do not alter either local stub's geometry;
+bends remain logical routing metadata for graph adapters.
+
+Both scene stubs carry the same logical connector ID, original endpoint/frame
+IDs, and V1 routing metadata. XYFlow and Isoflow use those fields to emit one
+logical edge instead of two partial edges.
 
 Output formats are projections of this resolved V1 meaning. A target schema
 may not have fields for every V1 connector value; the upstream-compatible

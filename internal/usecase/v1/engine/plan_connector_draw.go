@@ -47,6 +47,16 @@ func rawLineOpV1EnginePlanConnectorDraw(el *entity.Element, frame rectV1EngineRo
 	startX := el.X - frame.X
 	startY := el.Y - frame.Y
 	points := el.Points
+	if len(points) > 2 {
+		absolute := make([]ptV1EngineRouteTypes, 0, len(points))
+		for _, point := range points {
+			if len(point) < 2 {
+				continue
+			}
+			absolute = append(absolute, ptV1EngineRouteTypes{X: el.X + point[0], Y: el.Y + point[1]})
+		}
+		return polylineOpV1EnginePlanConnectorDraw(el, absolute, frame, ppi, style)
+	}
 	if len(points) == 0 {
 		points = [][]float64{{0, 0}, {el.Width, el.Height}}
 	}
