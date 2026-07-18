@@ -1,5 +1,11 @@
 # Samples
 
+## Canonical V1 Envelope
+
+The [canonical V1 envelope example](examples/canonical-v1-envelope.md) uses
+`<xaligo version="1">`, the document-wide `<data>` registry, identified frames,
+ports, and a cross-frame connection without producing a legacy-root warning.
+
 ## Hybrid Enterprise Architecture
 
 ![Hybrid enterprise architecture sample](images/complex-hybrid-architecture.svg)
