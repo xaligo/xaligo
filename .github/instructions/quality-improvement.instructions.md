@@ -62,10 +62,10 @@ sample paths, and rendered artifact paths over prose-only status notes.
 | Order | Feature | Status | Evidence | Next action |
 |---:|---|---|---|---|
 | 1 | Canonical V1 document envelope | in-progress | `TestV1ParseValidatesCanonicalEnvelopeHierarchy`; canonical sample validates and renders two SVG artifacts | Finish migration-warning/docs-image audit, then close Q01. |
-| 2 | Data registry and imports | not-started | table data, database schema, SQL import commits exist | Inventory import coverage and diagnostics. |
-| 3 | Tables | not-started | `docs/src/examples/samples/tables.xal` | Audit table layout, pipe styling, text fitting, and docs image quality. |
-| 4 | Relational databases | not-started | `docs/src/examples/samples/databases.xal` | Audit entity layout, key styling, relation routing, and SQL import behavior. |
-| 5 | UML diagrams | not-started | `docs/src/examples/samples/uml-activity.xal` | Start with activity diagram visual and behavioral quality. |
+| 2 | UML diagrams | auditing | UML sample set includes activity, class, sequence, state machine, component, deployment, object, package, composite structure, communication, interaction overview, profile, timing, use-case, and `uml-all` | Prioritize per-diagram semantic accuracy, then visual design polish, then cross-format parity. |
+| 3 | Data registry and imports | not-started | table data, database schema, SQL import commits exist | Inventory import coverage and diagnostics after the UML precision/design pass starts. |
+| 4 | Tables | not-started | `docs/src/examples/samples/tables.xal` | Audit table layout, pipe styling, text fitting, and docs image quality. |
+| 5 | Relational databases | not-started | `docs/src/examples/samples/databases.xal` | Audit entity layout, key styling, relation routing, and SQL import behavior. |
 | 6 | Frame-scoped references | not-started | frame-qualified endpoint support exists | Audit duplicate ID handling and user-correctable diagnostics. |
 | 7 | Cross-frame page links | not-started | `docs/src/examples/samples/page-links.xal` | Audit terminal side selection, labels, insets, and invalid edge handling. |
 | 8 | Frame metadata bands | not-started | `docs/src/examples/samples/frame-metadata.xal` | Audit metadata layout, reservation strips, wrapping, and collisions. |
@@ -134,12 +134,22 @@ when the new task can be verified and committed independently.
 
 | Task | Status | Scope | Verification target |
 |---|---|---|---|
-| Q05.1 | not-started | Audit activity nodes: initial, action, object-node, decision, fork, join, merge, and final. | `uml-activity.xal` validate/render and scene assertions |
-| Q05.2 | not-started | Verify activity `control-flow`, `object-flow`, guards, labels, responsibilities, and constraints. | parser/scene tests plus SVG label geometry |
-| Q05.3 | not-started | Audit class diagrams: class boxes, attributes, operations, stereotypes, and relations. | class sample render and structural tests |
-| Q05.4 | not-started | Audit sequence diagrams: lifelines, messages, activation bars, ordering, and returns. | sequence sample render and layout tests |
-| Q05.5 | not-started | Audit state and component diagrams, including strict profile rejection rules. | valid/invalid UML profile tests |
-| Q05.6 | not-started | Review UML visual language for consistent shapes, spacing, typography, and connector readability. | design review plus SVG/PPTX checks when affected |
+| Q05.1 | not-started | Freeze the supported UML sample matrix and map each sample to its owning syntax, parser, scene, layout, routing, and renderer responsibilities. | inventory of `docs/src/examples/samples/uml-*.xal`; owner map recorded in this file or docs |
+| Q05.2 | not-started | Establish a per-UML visual baseline before edits: validate and render every `uml-*.xal` sample to SVG, then identify overlap, spacing, typography, connector, and semantic-notation gaps. | `go run ./cmd validate docs/src/examples/samples/uml-all.xal`; SVG render set under `output/uml-quality/` |
+| Q05.3 | not-started | Improve activity-diagram semantic accuracy: initial/final nodes, actions, object nodes, decisions, forks, joins, merges, responsibilities, constraints, guards, `control-flow`, and `object-flow`. | `uml-activity.xal` parser/scene assertions plus SVG geometry checks |
+| Q05.4 | not-started | Improve activity-diagram design quality: left-to-right reading flow, diamond/bar/final-node proportions, lane spacing, label placement, and control-vs-object-flow distinction. | regenerated activity SVG visual review plus focused coordinate assertions |
+| Q05.5 | not-started | Improve class-diagram semantic accuracy: class boxes, attributes, operations, visibility, stereotypes, abstract/static markers, inheritance, realization, association, aggregation, composition, dependency, and multiplicity. | `uml-class.xal` structural tests and relation routing assertions |
+| Q05.6 | not-started | Improve class-diagram design quality: compartment rhythm, long member wrapping, stereotype readability, relation label spacing, crow-foot/diamond marker clarity, and dense-layout crossing reduction. | class SVG/PPTX review and text-fit tests |
+| Q05.7 | not-started | Improve sequence-diagram semantic accuracy: lifelines, participants, activation bars, sync/async messages, returns, self messages, create/delete, ordering, and message labels. | `uml-sequence.xal` layout tests and route ordering assertions |
+| Q05.8 | not-started | Improve sequence-diagram design quality: timeline spacing, activation contrast, message arrow style, return-line distinction, lifeline header readability, and vertical density. | sequence SVG/PPTX review and geometry assertions |
+| Q05.9 | not-started | Improve state-machine semantic accuracy: initial/final states, composite states, transitions, events, guards, effects, entry/do/exit actions, and invalid transition diagnostics. | `uml-state-machine.xal` valid/invalid tests |
+| Q05.10 | not-started | Improve state-machine design quality: state shape proportions, nested-state padding, transition bend points, guard/effect label placement, and final-node readability. | state-machine SVG review and collision assertions |
+| Q05.11 | not-started | Improve component/deployment/package/composite-structure semantic accuracy: components, ports, interfaces, nodes, artifacts, packages, dependencies, connectors, and containment rules. | `uml-component.xal`, `uml-deployment.xal`, `uml-package.xal`, and `uml-composite-structure.xal` tests |
+| Q05.12 | not-started | Improve component/deployment/package/composite-structure design quality: UML adornment placement, nested group padding, port readability, dependency routing, and package tab proportions. | rendered SVG set plus shared group/port geometry assertions |
+| Q05.13 | not-started | Improve interaction, communication, timing, object, use-case, and profile diagrams for supported UML notation and explicit unsupported-profile diagnostics. | `uml-interaction-overview.xal`, `uml-communication.xal`, `uml-timing.xal`, `uml-object.xal`, `uml-use-case.xal`, and `uml-profile.xal` tests |
+| Q05.14 | not-started | Normalize shared UML visual language across all diagram types: typography scale, stroke weights, marker sizes, semantic colors, label backgrounds, and light/dark contrast. | design review checklist plus theme render comparisons |
+| Q05.15 | not-started | Verify UML cross-format parity for every shared scene/plan change: SVG baseline, Excalidraw editability, PPTX plan/export, PDF/Excel page projection, and XYFlow/Isoflow applicability. | focused renderer matrix for changed UML contracts |
+| Q05.16 | not-started | Refresh UML documentation and examples after implementation slices, including generated images and command accuracy. | `mdbook build docs`; regenerated UML docs assets where tracked |
 
 ### Q06 Frame-Scoped References
 
@@ -305,14 +315,17 @@ smaller local detour:
 1. Canonical V1 document envelope: `<xaligo version="1">`, `<data>`,
    `<frames>`, identified `<frame>`, legacy compatibility, and migration
    diagnostics.
-2. Data registry and imports: reusable table data, database schemas, SQL
+2. UML diagrams: first semantic accuracy for each UML kind, then design
+   polish for that kind, then shared UML visual-language and cross-format
+   parity. Prioritize activity, class, sequence, state machine,
+   component/deployment/package/composite-structure, then the remaining UML
+   samples and strict profile diagnostics.
+3. Data registry and imports: reusable table data, database schemas, SQL
    imports, relative paths, provenance, duplicate IDs, and missing resources.
-3. Tables: standard tables, pipe tables, styling, cell text, headers, column
+4. Tables: standard tables, pipe tables, styling, cell text, headers, column
    sizing, empty cells, and imported data.
-4. Relational databases: entities, columns, primary keys, foreign keys,
+5. Relational databases: entities, columns, primary keys, foreign keys,
    composite keys, SQL imports, relation routing, and notation-specific labels.
-5. UML diagrams: class, sequence, activity, state, component, strict profiles,
-   node shapes, flow types, guards, lifelines, activations, and nested metadata.
 6. Frame-scoped references: local endpoints, `frame-id.endpoint-id`, duplicate
    IDs across frames, and user-correctable diagnostics.
 7. Cross-frame page links: source/destination page terminals, automatic and
@@ -344,11 +357,13 @@ smaller local detour:
 18. Configuration, logging, and observability: precedence, wrapped errors,
     output streams, redaction, and optional stage telemetry.
 
-## First Quality Slice
+## First UML Quality Slice
 
-Start with `docs/src/examples/samples/uml-activity.xal` when beginning the
-feature-by-feature quality pass. It is a canonical V1 UML activity sample and
-should verify:
+After the current Q01 canonical-envelope follow-ups are closed or explicitly
+paused, start the UML quality pass with
+`docs/src/examples/samples/uml-activity.xal`. It is the smallest UML slice that
+exercises both semantic precision and visible design quality, and should
+verify:
 
 - `initial`, `action`, `object-node`, `decision`, `fork`, `join`, `merge`, and
   `final` nodes.
