@@ -463,7 +463,6 @@ func appendUMLRelationLabelV1EngineSceneConnectionRender(elements *[]map[string]
 	if label == "" || len(routePoints) == 0 {
 		return
 	}
-	point := umlRelationLabelPointV1EngineSceneConnectionRender(conn, routePoints, seed)
 	fontSize := 12.0
 	height := 20.0
 	if safeTop, safeBottom, ok := frameMetadataSafeVerticalIntervalV1EngineSceneConnectionPage(frameRect, frameMetadataReservedRectsV1EngineSceneConnectionPage(metadata)); ok {
@@ -474,7 +473,7 @@ func appendUMLRelationLabelV1EngineSceneConnectionRender(elements *[]map[string]
 	if frameRect[2] > 0 {
 		width = math.Min(width, frameRect[2])
 	}
-	x, y := point.X-width/2, point.Y-height/2
+	x, y := umlRelationLabelPositionV1EngineSceneConnectionRender(conn, routePoints, seed, width, height)
 	x, y = frameMetadataLabelPositionV1EngineSceneConnectionRender(x, y, width, height, frameRect, metadata)
 	labelID := connID + "-uml-label"
 	customData := map[string]any{}
@@ -513,9 +512,9 @@ func frameMetadataLabelPositionV1EngineSceneConnectionRender(x, y, width, height
 	return x, y
 }
 
-func umlRelationLabelPointV1EngineSceneConnectionRender(conn *entity.Node, routePoints []ptV1EngineRouteTypes, seed int) ptV1EngineRouteTypes {
+func umlRelationLabelPositionV1EngineSceneConnectionRender(conn *entity.Node, routePoints []ptV1EngineRouteTypes, seed int, width, height float64) (float64, float64) {
 	if len(routePoints) < 2 {
-		return routePoints[0]
+		return routePoints[0].X - width/2, routePoints[0].Y - height/2
 	}
 	bestStart, bestEnd := routePoints[0], routePoints[1]
 	bestLength := math.Hypot(bestEnd.X-bestStart.X, bestEnd.Y-bestStart.Y)
@@ -527,10 +526,22 @@ func umlRelationLabelPointV1EngineSceneConnectionRender(conn *entity.Node, route
 		}
 	}
 	point := ptV1EngineRouteTypes{X: (bestStart.X + bestEnd.X) / 2, Y: (bestStart.Y + bestEnd.Y) / 2}
-	offset := 12.0 + float64(seed%3)*6
 	if strings.TrimSpace(conn.Attr("uml-relation-kind")) != "" {
-		offset = 5.0 + float64(seed%2)*3
+		const gap = 8.0
+		if math.Abs(bestEnd.X-bestStart.X) >= math.Abs(bestEnd.Y-bestStart.Y) {
+			x := point.X - width/2
+			if seed%2 == 0 {
+				return x, point.Y - height - gap
+			}
+			return x, point.Y + gap
+		}
+		y := point.Y - height/2
+		if seed%2 == 0 {
+			return point.X + gap, y
+		}
+		return point.X - width - gap, y
 	}
+	offset := 12.0 + float64(seed%3)*6
 	if seed%2 != 0 {
 		offset = -offset
 	}
@@ -539,7 +550,7 @@ func umlRelationLabelPointV1EngineSceneConnectionRender(conn *entity.Node, route
 	} else {
 		point.X += offset
 	}
-	return point
+	return point.X - width/2, point.Y - height/2
 }
 
 func applyDatabaseConnectionMetadataV1EngineSceneConnectionRender(customData map[string]any, conn *entity.Node) {

@@ -80,6 +80,49 @@ func TestUMLActivitySwimlanesReachEditableScene(t *testing.T) {
 	}
 }
 
+func TestUMLGuardLabelsDoNotOverlapTheirConnectorSegment(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="420" height="320"><uml id="activity"><activity-diagram direction="down"><action id="one" title="One"/><action id="two" title="Two"/><control-flow src="one" dst="two" guard="next step"/></activity-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var scene entity.PresentationScene
+	if err := json.Unmarshal(rawScene, &scene); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	var arrow, label *entity.Element
+	for index := range scene.Elements {
+		element := &scene.Elements[index]
+		if element.CustomData == nil || element.CustomData.UMLGuard != "next step" {
+			continue
+		}
+		if element.Type == "arrow" {
+			arrow = element
+		} else if element.Type == "text" {
+			label = element
+		}
+	}
+	if arrow == nil || label == nil || len(arrow.Points) < 2 {
+		t.Fatalf("guard arrow/label not found: %#v", scene.Elements)
+	}
+	for index := 0; index < len(arrow.Points)-1; index++ {
+		start, end := arrow.Points[index], arrow.Points[index+1]
+		if len(start) < 2 || len(end) < 2 || math.Abs(start[0]-end[0]) > 0.01 {
+			continue
+		}
+		x := arrow.X + start[0]
+		y1, y2 := arrow.Y+start[1], arrow.Y+end[1]
+		if y1 > y2 {
+			y1, y2 = y2, y1
+		}
+		xIntersectsLabel := x >= label.X && x <= label.X+label.Width
+		yIntersectsLabel := y2 >= label.Y && y1 <= label.Y+label.Height
+		if xIntersectsLabel && yIntersectsLabel {
+			t.Fatalf("guard label overlaps vertical connector segment: arrow=%#v label=%#v", arrow, label)
+		}
+	}
+}
+
 func TestUMLTimingAndOwnerMetadataReachEditableScene(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="timing"><timing-diagram><lifeline id="api"/><time-state id="busy" owner="api" from="10" to="20"><region>work</region></time-state><occurrence src="api" dst="busy" at="15" title="dispatch"/></timing-diagram></uml></frame></frames></xaligo>`)
 	scene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
