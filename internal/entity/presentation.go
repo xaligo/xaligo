@@ -103,6 +103,9 @@ type CustomData struct {
 	UMLReference                    string      `json:"xaligoUmlReference,omitempty"`
 	UMLDiagramKind                  string      `json:"xaligoUmlDiagramKind,omitempty"`
 	UMLElementKind                  string      `json:"xaligoUmlElementKind,omitempty"`
+	UMLStereotype                   string      `json:"xaligoUmlStereotype,omitempty"`
+	UMLAbstract                     string      `json:"xaligoUmlAbstract,omitempty"`
+	UMLStatic                       string      `json:"xaligoUmlStatic,omitempty"`
 	UMLOwnerID                      string      `json:"xaligoUmlOwnerId,omitempty"`
 	UMLOwnerReference               string      `json:"xaligoUmlOwnerReference,omitempty"`
 	UMLCompartmentKinds             string      `json:"xaligoUmlCompartmentKinds,omitempty"`

@@ -163,6 +163,7 @@ func TestUMLStrictProfileValidationV1EngineParseUML(t *testing.T) {
 		{"invalid id dot", `<class-diagram><class id="a.b"/></class-diagram>`, "must not contain '.' or '/'"},
 		{"invalid id slash", `<class-diagram><class id="a/b"/></class-diagram>`, "must not contain '.' or '/'"},
 		{"invalid id whitespace", `<class-diagram><class id="a b"/></class-diagram>`, "must not contain whitespace"},
+		{"invalid abstract modifier", `<class-diagram><class id="a" abstract="maybe"/></class-diagram>`, "must be true or false"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

@@ -4,7 +4,7 @@
     <frame id="class" width="1440" height="760" class="pa-3">
       <uml id="domain-model" title="Ordering Domain">
         <class-diagram direction="right">
-          <interface id="repository" title="OrderRepository">
+          <interface id="repository" title="OrderRepository" stereotype="repository">
             <operation>+ save(order: Order)</operation>
             <operation>+ find(id: UUID): Order</operation>
           </interface>
@@ -18,11 +18,11 @@
             <attribute>- name: String</attribute>
             <operation>+ placeOrder(): Order</operation>
           </class>
-          <class id="premium-customer" title="PremiumCustomer">
+          <class id="premium-customer" title="PremiumCustomer" abstract="true">
             <attribute>- discountRate: Decimal</attribute>
             <operation>+ calculateDiscount(): Money</operation>
           </class>
-          <class id="order" title="Order">
+          <class id="order" title="Order" stereotype="aggregate-root">
             <attribute>- id: UUID</attribute>
             <attribute>- status: OrderStatus</attribute>
             <operation>+ confirm()</operation>
@@ -33,7 +33,7 @@
             <attribute>- quantity: Integer</attribute>
             <operation>+ subtotal(): Money</operation>
           </class>
-          <enumeration id="status" title="OrderStatus">
+          <enumeration id="status" title="OrderStatus" static="true">
             <literal>Draft</literal>
             <literal>Confirmed</literal>
             <literal>Cancelled</literal>

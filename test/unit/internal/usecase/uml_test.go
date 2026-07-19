@@ -307,6 +307,54 @@ func TestUMLAggregationAndCompositionRemainHeadlessAtDestination(t *testing.T) {
 	}
 }
 
+func TestUMLClassStereotypeAndModifiersReachEditableScene(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="640" height="360"><uml id="classes"><class-diagram><class id="repository" title="Repository" stereotype="service" abstract="true" static="true"><attribute>- store: Store</attribute><operation>+ find(id): Entity</operation></class></class-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var scene entity.PresentationScene
+	if err := json.Unmarshal(rawScene, &scene); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	var classElement *entity.Element
+	for index := range scene.Elements {
+		element := &scene.Elements[index]
+		if element.CustomData != nil && element.CustomData.UMLStereotype == "service" {
+			classElement = element
+			break
+		}
+	}
+	if classElement == nil || classElement.CustomData.UMLAbstract != "true" || classElement.CustomData.UMLStatic != "true" || classElement.CustomData.UMLCompartmentKinds != "attribute,operation" {
+		t.Fatalf("class UML metadata missing: %#v", scene.Elements)
+	}
+	var raw map[string]any
+	if err := json.Unmarshal(rawScene, &raw); err != nil {
+		t.Fatalf("json.Unmarshal(raw map) error = %v", err)
+	}
+	text := ""
+	for _, rawElement := range raw["elements"].([]any) {
+		element, _ := rawElement.(map[string]any)
+		if element["containerId"] == classElement.ID && element["type"] == "text" {
+			text, _ = element["text"].(string)
+			break
+		}
+	}
+	wantText := "<<service>>\n{abstract, static} Repository\n────────\n- store: Store\n+ find(id): Entity"
+	if text != wantText {
+		t.Fatalf("class label = %q, want %q", text, wantText)
+	}
+	xyflow, err := newUsecase().RenderXYFlow(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderXYFlow() error = %v", err)
+	}
+	for _, want := range []string{`"umlStereotype": "service"`, `"umlAbstract": "true"`, `"umlStatic": "true"`} {
+		if !strings.Contains(string(xyflow), want) {
+			t.Fatalf("XYFlow missing %q: %s", want, xyflow)
+		}
+	}
+}
+
 func TestUMLSequenceOrderAnchorsRemainTopToBottomForEveryConnectionSide(t *testing.T) {
 	tests := []struct {
 		name  string

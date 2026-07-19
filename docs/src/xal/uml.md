@@ -57,6 +57,13 @@ endpoint side/anchor, bends, coordinate scale, and grid use the normal
 connection rules. Element `name` is display text only; it does not become a
 frame-level connection alias. Use the element `id` itself instead.
 
+Class-diagram classifiers accept `stereotype="name"`, `abstract="true|false"`,
+and `static="true|false"`. Stereotypes render above the classifier name as
+`<<name>>`; enabled modifiers render before the classifier name as
+`{abstract, static}` and are retained in editable-scene and XYFlow UML metadata.
+Attributes, operations, literals, constraints, and notes remain classifier
+compartments.
+
 The generic `<element>` and `<relation>` spellings are not valid in the strict
 profile. Use the typed tags in the following table.
 

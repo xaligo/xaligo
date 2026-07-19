@@ -485,6 +485,15 @@ func validateUMLDiagramAttributesV1EngineParseUml(diagram *entity.Node) error {
 
 func validateUMLElementV1EngineParseUml(element *entity.Node) error {
 	allowed := umlElementCompartmentSpecsV1EngineParseUml[element.Tag]
+	for _, attribute := range []string{"abstract", "static"} {
+		if value := strings.TrimSpace(element.Attr(attribute)); value != "" {
+			normalized, ok := normalizeUMLBoolAttributeV1EngineParseUml(value)
+			if !ok {
+				return fmt.Errorf("UML <%s %s=%q> must be true or false", element.Tag, attribute, value)
+			}
+			element.Attrs[attribute] = normalized
+		}
+	}
 	for _, compartment := range element.Children {
 		if !umlCompartmentTagsV1EngineParseUml[compartment.Tag] {
 			return fmt.Errorf("UML <%s> does not allow compartment <%s>", element.Tag, compartment.Tag)
@@ -1014,6 +1023,18 @@ func normalizeUMLElementV1EngineParseUml(source *entity.Node, scopedID, diagramK
 	if attrs["title"] == "" {
 		attrs["title"] = source.Attr("id")
 	}
+	if diagramKind == "class-diagram" {
+		attrs["title"] = classElementTitleV1EngineParseUml(attrs)
+		if stereotype := strings.TrimSpace(attrs["stereotype"]); stereotype != "" {
+			attrs["uml-stereotype"] = stereotype
+		}
+		if attrs["abstract"] == "true" {
+			attrs["uml-abstract"] = "true"
+		}
+		if attrs["static"] == "true" {
+			attrs["uml-static"] = "true"
+		}
+	}
 	if diagramKind == "activity-diagram" && (source.Tag == "initial" || source.Tag == "final") && !hasExplicitLabel {
 		attrs["title"] = ""
 	}
@@ -1041,6 +1062,39 @@ func normalizeUMLElementV1EngineParseUml(source *entity.Node, scopedID, diagramK
 		attrs["uml-compartment-kinds"] = strings.Join(compartmentKinds, ",")
 	}
 	return &entity.Node{Tag: "rectangle", Attrs: attrs, Position: source.Position}
+}
+
+func normalizeUMLBoolAttributeV1EngineParseUml(value string) (string, bool) {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "true":
+		return "true", true
+	case "false":
+		return "false", true
+	default:
+		return "", false
+	}
+}
+
+func classElementTitleV1EngineParseUml(attrs map[string]string) string {
+	title := strings.TrimSpace(attrs["title"])
+	var lines []string
+	if stereotype := strings.TrimSpace(attrs["stereotype"]); stereotype != "" {
+		lines = append(lines, "<<"+stereotype+">>")
+	}
+	var modifiers []string
+	if attrs["abstract"] == "true" {
+		modifiers = append(modifiers, "abstract")
+	}
+	if attrs["static"] == "true" {
+		modifiers = append(modifiers, "static")
+	}
+	if len(modifiers) > 0 && title != "" {
+		title = "{" + strings.Join(modifiers, ", ") + "} " + title
+	}
+	if title != "" {
+		lines = append(lines, title)
+	}
+	return strings.Join(lines, "\n")
 }
 
 func normalizeUMLRelationV1EngineParseUml(source *entity.Node, scopedSrc, scopedDst, diagramKind, umlID string) *entity.Node {
