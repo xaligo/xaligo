@@ -274,6 +274,12 @@ func TestUseCaseRenderDispatcherBranches(t *testing.T) {
 	if _, err := uc.Render(ctx, []byte(simpleXAL), entity.RenderOptions{Format: "unknown", Theme: "light"}); err == nil || !strings.Contains(err.Error(), "unknown render format") {
 		t.Fatalf("unknown format err = %v", err)
 	}
+	umlXAL := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="320" height="180"><uml id="view"><component-diagram><component id="service" title="Service"><interface>API</interface></component></component-diagram></uml></frame></frames></xaligo>`)
+	for _, options := range []entity.RenderOptions{{Format: usecase.FormatExcalidraw, Theme: "light"}, {Theme: "light"}} {
+		if _, err := uc.Render(ctx, umlXAL, options); err == nil || !strings.Contains(err.Error(), "UML Excalidraw export is disabled") {
+			t.Fatalf("UML Excalidraw export err = %v", err)
+		}
+	}
 	canceled, cancel := context.WithCancel(ctx)
 	cancel()
 	if _, err := uc.Render(canceled, []byte(simpleXAL), entity.RenderOptions{Format: usecase.FormatSVG, Theme: "light"}); err == nil {

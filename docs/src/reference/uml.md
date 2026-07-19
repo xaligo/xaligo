@@ -47,6 +47,10 @@ metadata for visible titles, versions, owners, and review state.
 The generic `<element>` and `<relation>` spellings are not valid in the strict
 profile. Use the typed element and relation tags listed below.
 
+UML diagrams currently do not support user-facing Excalidraw export. Rendering
+UML with `--format excalidraw` returns an error; use SVG, PDF, PPTX, Excel,
+XYFlow, or Isoflow output instead.
+
 ## Diagram Families
 
 | Diagram kind | Elements | Relations | Required and constrained semantics | Sample |

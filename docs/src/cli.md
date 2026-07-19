@@ -19,6 +19,10 @@ Supported formats:
 | `xyflow` | React Flow / XYFlow JSON |
 | `isoflow` | Isoflow-compatible model JSON |
 
+UML input (`<uml>...</uml>`) currently rejects `--format excalidraw` because
+the editable UML Excalidraw export is disabled. Use `svg`, `pdf`, `pptx`,
+`excel`, `xyflow`, or `isoflow` for UML diagrams.
+
 ### Frames and physical pages
 
 Identified child frames are physical pages for SVG, PPTX, PDF, and Excel. They

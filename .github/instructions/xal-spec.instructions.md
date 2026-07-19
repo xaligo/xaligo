@@ -593,6 +593,10 @@ The following rules are normative:
   normal element font attributes override those defaults. An element `name`
   is display text only and never becomes a frame-level connection alias; use
   the public UML reference described below.
+- User-facing Excalidraw export is disabled for UML inputs. Rendering a source
+  containing `<uml>` with `--format excalidraw` or the public render dispatcher
+  returns an error; use SVG, PDF, PPTX, Excel, XYFlow, or Isoflow for UML
+  diagrams until editable UML Excalidraw output is redesigned.
 - The compatibility tags `<element>` and `<relation>` are not part of the
   strict V1 UML profile. A model must use one of the element and relation tags
   allowed for its selected family.
