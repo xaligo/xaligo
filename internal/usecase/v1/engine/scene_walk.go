@@ -1018,7 +1018,8 @@ func appendUMLComponentRequiredInterfacesV1EngineSceneWalk(box *entity.Box, elem
 	if len(labels) == 0 {
 		return
 	}
-	radius := math.Min(10, math.Max(7, box.H*0.065))
+	diameter := math.Min(21, math.Max(14, box.H*0.13))
+	radius := diameter / 2
 	stem := math.Min(18, math.Max(10, box.W*0.06))
 	for index, label := range labels {
 		cy := umlComponentInterfaceYV1EngineSceneWalk(box, len(labels), index, 0.48)
@@ -1027,7 +1028,7 @@ func appendUMLComponentRequiredInterfacesV1EngineSceneWalk(box *entity.Box, elem
 		socketSeed := stableSceneSeedV1EngineSceneTypes(socketID)
 		*elements = append(*elements, map[string]any{
 			"id": socketID, "type": "line",
-			"x": socketX, "y": cy - radius, "width": radius, "height": radius * 2,
+			"x": socketX, "y": cy - radius, "width": radius, "height": diameter,
 			"angle": 0, "strokeColor": "#052d6e", "backgroundColor": "transparent",
 			"fillStyle": "solid", "strokeWidth": 1.35, "strokeStyle": "solid",
 			"roughness": 0, "opacity": 100,
@@ -1035,12 +1036,24 @@ func appendUMLComponentRequiredInterfacesV1EngineSceneWalk(box *entity.Box, elem
 			"seed": socketSeed, "version": 1, "versionNonce": socketSeed,
 			"isDeleted": false, "boundElements": nil,
 			"updated": updated, "link": nil, "locked": false,
-			"points":     [][]float64{{0, 0}, {radius * 0.55, radius * 0.15}, {radius, radius}, {radius * 0.55, radius * 1.85}, {0, radius * 2}},
-			"customData": map[string]any{"xaligoUmlComponentInterfaceSymbol": true, "xaligoUmlComponentInterfaceKind": "required", "xaligoUmlComponentInterfaceLabel": label},
+			"points":     umlComponentRequiredSocketPointsV1EngineSceneWalk(radius),
+			"customData": map[string]any{"xaligoUmlComponentInterfaceSymbol": true, "xaligoUmlComponentInterfaceKind": "required", "xaligoUmlComponentInterfaceLabel": label, "xaligoUmlComponentInterfaceSemicircle": true},
 		})
 		appendUMLComponentInterfaceLineV1EngineSceneWalk(elements, fmt.Sprintf("%s-required-interface-%d-stem", box.ID, index), box.X+box.W, cy, socketX, cy, updated, map[string]any{"xaligoUmlComponentInterfaceStem": true, "xaligoUmlComponentInterfaceKind": "required"})
 		appendUMLComponentInterfaceLabelV1EngineSceneWalk(elements, fmt.Sprintf("%s-required-interface-%d-label", box.ID, index), socketX+radius+4, cy+radius*0.55, math.Max(60, box.W*0.35), label, "left", box, updated, map[string]any{"xaligoUmlComponentInterfaceLabelText": true, "xaligoUmlComponentInterfaceKind": "required"})
 	}
+}
+
+func umlComponentRequiredSocketPointsV1EngineSceneWalk(radius float64) [][]float64 {
+	const segments = 12
+	points := make([][]float64, 0, segments+1)
+	for index := 0; index <= segments; index++ {
+		theta := -math.Pi/2 + math.Pi*float64(index)/segments
+		x := radius - radius*math.Cos(theta)
+		y := radius + radius*math.Sin(theta)
+		points = append(points, []float64{x, y})
+	}
+	return points
 }
 
 func umlComponentInterfaceYV1EngineSceneWalk(box *entity.Box, count, index int, base float64) float64 {
