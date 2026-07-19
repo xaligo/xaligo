@@ -542,7 +542,7 @@ func appendUMLSequenceLifelineV1EngineSceneWalk(box *entity.Box, elements *[]map
 	*elements = append(*elements, map[string]any{
 		"id": headerID, "type": "rectangle",
 		"x": headerX, "y": headerY, "width": headerWidth, "height": headerHeight,
-		"angle": 0, "strokeColor": "#c45f1a", "backgroundColor": "#f5822a",
+		"angle": 0, "strokeColor": "#052d6e", "backgroundColor": "#08b8ea",
 		"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
 		"roughness": 0, "opacity": 100,
 		"groupIds": []string{}, "roundness": map[string]any{"type": 3},
@@ -578,7 +578,7 @@ func appendUMLSequenceLifelineV1EngineSceneWalk(box *entity.Box, elements *[]map
 	*elements = append(*elements, map[string]any{
 		"id": lineID, "type": "line",
 		"x": centerX, "y": lineY, "width": 0, "height": lineHeight,
-		"angle": 0, "strokeColor": "#f5822a", "backgroundColor": "transparent",
+		"angle": 0, "strokeColor": "#052d6e", "backgroundColor": "transparent",
 		"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "dashed",
 		"roughness": 0, "opacity": 100,
 		"groupIds": []string{}, "roundness": nil,

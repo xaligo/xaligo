@@ -400,13 +400,13 @@ func TestUMLSequenceParticipantsRenderAsLifelines(t *testing.T) {
 		}
 		if element.CustomData.UMLSequenceLifelineHeader {
 			headers++
-			if element.Height > 40 {
+			if element.Height > 40 || element.StrokeColor != "#052d6e" || element.BackgroundColor != "#08b8ea" {
 				t.Fatalf("lifeline header too tall: %#v", element)
 			}
 		}
 		if element.CustomData.UMLSequenceLifeline {
 			lines++
-			if element.Type != "line" || element.StrokeStyle != "dashed" || element.Width > 1 {
+			if element.Type != "line" || element.StrokeStyle != "dashed" || element.StrokeColor != "#052d6e" || element.Width > 1 {
 				t.Fatalf("lifeline line = %#v", element)
 			}
 		}
