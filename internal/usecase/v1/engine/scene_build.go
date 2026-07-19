@@ -303,7 +303,7 @@ func bindUMLComponentInterfaceConnectionsV1EngineSceneBuild(connections []*entit
 			bound = append(bound, conn)
 			continue
 		}
-		srcSide := umlComponentInterfaceSourceSideV1EngineSceneBuild(endpoints, srcKey, group.ownerRect)
+		srcSide, srcAnchor := umlComponentInterfaceSourceAnchorV1EngineSceneBuild(endpoints, srcKey, group.ownerRect)
 		endpointIndex := usedByBase[group.baseKey]
 		if endpointIndex >= len(group.endpointKeys) {
 			endpointIndex = len(group.endpointKeys) - 1
@@ -315,6 +315,7 @@ func bindUMLComponentInterfaceConnectionsV1EngineSceneBuild(connections []*entit
 		clone.Attrs[internalConnectionSrcKeyAttrV1EngineParseDocument] = srcKey
 		clone.Attrs[internalConnectionDstKeyAttrV1EngineParseDocument] = boundDst
 		clone.Attrs["src-side"] = srcSide
+		clone.Attrs["src-anchor"] = srcAnchor
 		clone.Attrs["dst-side"] = endpoints.sideByEndpoint[boundDst]
 		clone.Attrs["uml-component-interface-dst"] = "true"
 		clone.Attrs["uml-component-caller-socket"] = "true"
@@ -323,20 +324,35 @@ func bindUMLComponentInterfaceConnectionsV1EngineSceneBuild(connections []*entit
 	return bound
 }
 
-func umlComponentInterfaceSourceSideV1EngineSceneBuild(endpoints umlComponentInterfaceEndpointsV1EngineSceneBuild, srcOwnerKey string, dstOwnerRect [4]float64) string {
+func umlComponentInterfaceSourceAnchorV1EngineSceneBuild(endpoints umlComponentInterfaceEndpointsV1EngineSceneBuild, srcOwnerKey string, dstOwnerRect [4]float64) (string, string) {
 	srcByLabel := endpoints.byOwner[srcOwnerKey]
 	for _, group := range srcByLabel {
 		if group == nil || group.ownerRect[2] <= 0 || group.ownerRect[3] <= 0 || dstOwnerRect[2] <= 0 || dstOwnerRect[3] <= 0 {
 			continue
 		}
-		srcCx := group.ownerRect[0] + group.ownerRect[2]/2
-		srcCy := group.ownerRect[1] + group.ownerRect[3]/2
-		dstCx := dstOwnerRect[0] + dstOwnerRect[2]/2
-		dstCy := dstOwnerRect[1] + dstOwnerRect[3]/2
-		srcSide, _ := connectionSideV1EngineSceneConnection(srcCx, srcCy, dstCx, dstCy)
-		return srcSide
+		anchor := nearestUMLComponentCallerAnchorV1EngineSceneBuild(group.ownerRect, [2]float64{dstOwnerRect[0] + dstOwnerRect[2]/2, dstOwnerRect[1] + dstOwnerRect[3]/2})
+		return string(anchor.side), anchor.StringV1EngineParseConnection()
 	}
-	return "right"
+	return "right", "right-3"
+}
+
+func nearestUMLComponentCallerAnchorV1EngineSceneBuild(rect [4]float64, target [2]float64) connectionAnchorSpecV1EngineParseConnection {
+	best := connectionAnchorSpecV1EngineParseConnection{side: sideRightV1EngineRouteTypes, slot: 2, hasSlot: true}
+	bestDistance := math.Inf(1)
+	for _, side := range []sideV1EngineRouteTypes{sideTopV1EngineRouteTypes, sideRightV1EngineRouteTypes, sideBottomV1EngineRouteTypes} {
+		for slot := 0; slot < anchorGridV1EnginePlanBuild; slot++ {
+			fp := fixedPointForSideSlotV1EngineSceneConnection(string(side), slot)
+			x := rect[0] + rect[2]*fp[0]
+			y := rect[1] + rect[3]*fp[1]
+			distance := math.Hypot(target[0]-x, target[1]-y)
+			if distance >= bestDistance {
+				continue
+			}
+			best = connectionAnchorSpecV1EngineParseConnection{side: side, slot: slot, hasSlot: true}
+			bestDistance = distance
+		}
+	}
+	return best
 }
 
 func umlComponentInterfaceConnectionSideV1EngineSceneBuild(symbolRect, ownerRect [4]float64) string {

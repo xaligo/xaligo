@@ -847,8 +847,11 @@ func TestUMLComponentInterfaceCallerStartUsesComponentPosition(t *testing.T) {
 		}
 		startBinding, _ := element["startBinding"].(map[string]any)
 		startFixedPoint, _ := startBinding["fixedPoint"].([]any)
-		if len(startFixedPoint) < 2 || startFixedPoint[0] != 0.0 || startFixedPoint[1] != 0.5 {
-			t.Fatalf("association start fixed point = %#v, want left-center when caller component is right of callee component", startFixedPoint)
+		if len(startFixedPoint) < 2 || startFixedPoint[0] == 0.0 {
+			t.Fatalf("association start fixed point = %#v, want one of 15 non-interface-side component anchors", startFixedPoint)
+		}
+		if startFixedPoint[0] != 0.1 || startFixedPoint[1] != 0.0 {
+			t.Fatalf("association start fixed point = %#v, want nearest non-interface-side anchor top-1", startFixedPoint)
 		}
 		return
 	}
