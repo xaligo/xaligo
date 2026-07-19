@@ -382,6 +382,12 @@ func flattenUMLDiagramChildrenV1EngineParseUml(diagram *entity.Node, spec umlDia
 			if err := flattenUMLClassPackageV1EngineParseUml(child, spec, "", &flattened); err != nil {
 				return nil, err
 			}
+		case diagram.Tag == "state-machine-diagram" && child.Tag == "container":
+			entries, err := flattenUMLStateMachineContainerV1EngineParseUml(child, spec)
+			if err != nil {
+				return nil, err
+			}
+			flattened = append(flattened, entries...)
 		case umlElementTagsV1EngineParseUml[child.Tag]:
 			if !spec.elements[child.Tag] {
 				return nil, &entity.ParseError{Position: child.Position, Err: fmt.Errorf("<%s> does not allow UML element <%s>", diagram.Tag, child.Tag)}
@@ -404,6 +410,51 @@ func flattenUMLDiagramChildrenV1EngineParseUml(diagram *entity.Node, spec umlDia
 		return nil, &entity.ParseError{Position: entry.node.Position, Err: fmt.Errorf("UML <%s lane=%q> references an unknown partition", entry.node.Tag, entry.partition)}
 	}
 	return flattened, nil
+}
+
+func flattenUMLStateMachineContainerV1EngineParseUml(container *entity.Node, spec umlDiagramSpecV1EngineParseUml) ([]umlSourceElementV1EngineParseUml, error) {
+	var flattened []umlSourceElementV1EngineParseUml
+	rowIndex := 0
+	for _, row := range container.Children {
+		if row.Tag != "row" {
+			return nil, &entity.ParseError{Position: row.Position, Err: fmt.Errorf("UML <container> supports only <row> children, got <%s>", row.Tag)}
+		}
+		rowIndex++
+		colIndex := 0
+		for _, child := range row.Children {
+			switch child.Tag {
+			case "col":
+				colIndex++
+				for _, nested := range child.Children {
+					entry, err := stateMachineContainerElementEntryV1EngineParseUml(nested, spec, rowIndex, colIndex)
+					if err != nil {
+						return nil, err
+					}
+					flattened = append(flattened, entry)
+				}
+			default:
+				colIndex++
+				entry, err := stateMachineContainerElementEntryV1EngineParseUml(child, spec, rowIndex, colIndex)
+				if err != nil {
+					return nil, err
+				}
+				flattened = append(flattened, entry)
+			}
+		}
+	}
+	return flattened, nil
+}
+
+func stateMachineContainerElementEntryV1EngineParseUml(node *entity.Node, spec umlDiagramSpecV1EngineParseUml, row, col int) (umlSourceElementV1EngineParseUml, error) {
+	if !umlElementTagsV1EngineParseUml[node.Tag] {
+		return umlSourceElementV1EngineParseUml{}, &entity.ParseError{Position: node.Position, Err: fmt.Errorf("UML state-machine <container> does not support child <%s>", node.Tag)}
+	}
+	if !spec.elements[node.Tag] {
+		return umlSourceElementV1EngineParseUml{}, &entity.ParseError{Position: node.Position, Err: fmt.Errorf("<state-machine-diagram> does not allow UML element <%s>", node.Tag)}
+	}
+	node.Attrs["row"] = strconv.Itoa(row)
+	node.Attrs["col"] = strconv.Itoa(col)
+	return umlSourceElementV1EngineParseUml{node: node}, nil
 }
 
 func flattenUMLClassPackageV1EngineParseUml(pkg *entity.Node, spec umlDiagramSpecV1EngineParseUml, parentPackage string, flattened *[]umlSourceElementV1EngineParseUml) error {

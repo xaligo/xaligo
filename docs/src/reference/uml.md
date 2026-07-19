@@ -60,7 +60,7 @@ profile. Use the typed element and relation tags listed below.
 | `profile-diagram` | `profile`, `stereotype`, `metaclass` | `extension`, `reference`, `generalization` | At least one profile and stereotype. Extension is stereotype to metaclass; generalization joins stereotypes. | [uml-profile.xal](../examples/samples/uml-profile.xal) |
 | `use-case-diagram` | `actor`, `use-case`, `system-boundary` | `association`, `include`, `extend`, `generalization` | At least one use case. Association joins actor and use-case; include/extend join use-cases; generalization joins equal actor/use-case kinds. | [uml-use-case.xal](../examples/samples/uml-use-case.xal) |
 | `activity-diagram` | `initial`, `final`, `activity`, `action`, `decision`, `merge`, `fork`, `join`, `object-node`; optional `partition` containers | `control-flow`, `object-flow` | At least one activity/action. Control-flow excludes object-node; object-flow includes one. Control-node degrees are validated. | [uml-activity.xal](../examples/samples/uml-activity.xal) |
-| `state-machine-diagram` | `initial`, `final`, `state`, `history`, `choice`, `fork`, `join` | `transition` | At least one state. Initial/final direction and pseudostate degrees are validated. State entry/do/exit/internal/region compartments and transition event/guard/action labels render visibly. Initial/final/choice/history pseudostates keep compact proportions, and final states render the standard inner dot. Optional positive `row` separates branch rows. | [uml-state-machine.xal](../examples/samples/uml-state-machine.xal) |
+| `state-machine-diagram` | `initial`, `final`, `state`, `history`, `choice`, `fork`, `join`; optional layout-only `container`/`row`/`col` | `transition` | At least one state. Initial/final direction and pseudostate degrees are validated. State entry/do/exit/internal/region compartments and transition event/guard/action labels render visibly. Initial/final/choice/history pseudostates keep compact proportions, and final states render the standard inner dot. A layout-only `container` can group elements into `row` and `col` child tags. | [uml-state-machine.xal](../examples/samples/uml-state-machine.xal) |
 | `sequence-diagram` | `participant`, `lifeline` | `message`, `return-message`, `create-message`, `destroy-message` | At least one participant/lifeline. Every message has a unique `order`; non-participant sources must already be active; create/destroy cannot target themselves. | [uml-sequence.xal](../examples/samples/uml-sequence.xal) |
 | `communication-diagram` | `object`, `participant` | `link`, `message` | At least two participants, one link, and one message. Each ordered message needs a link between the same unordered pair. | [uml-communication.xal](../examples/samples/uml-communication.xal) |
 | `interaction-overview-diagram` | `initial`, `final`, `interaction`, `decision`, `fork`, `join` | `control-flow` | At least one interaction. Initial/final direction and control-node degrees are validated. | [uml-interaction-overview.xal](../examples/samples/uml-interaction-overview.xal) |
@@ -90,12 +90,12 @@ strokes. `message mode="async"` uses an open arrowhead. `destroy-message` draws
 a stop marker and its label must clearly describe destruction, deletion,
 disposal, removal, or termination.
 
-State-machine diagrams can use `row="N"` on elements to separate primary and
-exception branches, and `col="N"` to place related states on a shared grid
-across rows. When `col` is omitted, the row layout reuses nearby connected
-columns where possible before assigning the next free column, so branch states
-stay close to the state that leads to them. State compartments render UML state
-behavior rows for `entry`, `do`, `exit`, `internal`, `region`, and `note`;
+State-machine diagrams can use a layout-only `<container>` whose child `<row>`
+and `<col>` tags place states on a shared grid without adding UML elements.
+When an element is not placed in a container column, the row layout reuses
+nearby connected columns where possible before assigning the next free column,
+so branch states stay close to the state that leads to them. State compartments
+render UML state behavior rows for `entry`, `do`, `exit`, `internal`, `region`, and `note`;
 `note` is useful for simple descriptive states that do not need actions. Each
 state has a cyan name header with white text, a white body, horizontal row
 dividers, and a vertical key/value divider. Transition labels use
@@ -109,9 +109,10 @@ Class, activity, and state-machine relation tags can contain `<bend x="..."
 y="..." />` children. Bends steer the generated orthogonal connector route and
 are preserved in editable scene metadata. State-machine transition routing also
 treats intermediate state and pseudostate bodies as obstacles where possible, so
-default connector paths avoid cutting through nearby states. UML relation labels
-are automatically nudged away from endpoint items when a default label position
-would overlap a shape.
+default connector paths avoid cutting through nearby states; bent routes may use
+larger outside detours when a tight bend would still cross a state body. UML
+relation labels are automatically nudged away from endpoint items when a default
+label position would overlap a shape.
 
 ## Ownership
 

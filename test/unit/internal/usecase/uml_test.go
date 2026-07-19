@@ -289,6 +289,31 @@ func TestUMLStateMachineGridColumnsAlignRelatedRows(t *testing.T) {
 	}
 }
 
+func TestUMLStateMachineContainerRowsAndColumnsPlaceStates(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="1080" height="620"><uml id="state"><state-machine-diagram direction="right"><container><row><col><initial id="start"/></col><col><state id="paid" title="Paid"/></col><col><state id="shipped" title="Shipped"/></col></row><row><col></col><col></col><col><state id="return" title="Return"/></col></row><row><col></col><col></col><col><state id="cancelled" title="Cancelled"/></col></row></container><transition src="start" dst="paid"/><transition src="paid" dst="shipped"/><transition src="shipped" dst="return"/><transition src="return" dst="cancelled"/></state-machine-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	positions := umlElementPositionsV1UMLTest(t, rawScene)
+	paid, hasPaid := positions["paid"]
+	shipped, hasShipped := positions["shipped"]
+	returned, hasReturn := positions["return"]
+	cancelled, hasCancelled := positions["cancelled"]
+	if !hasPaid || !hasShipped || !hasReturn || !hasCancelled {
+		t.Fatalf("container row/col state-machine elements missing: %#v", positions)
+	}
+	shippedCenter := shipped.X + shipped.Width/2
+	returnCenter := returned.X + returned.Width/2
+	cancelledCenter := cancelled.X + cancelled.Width/2
+	if !(returned.Y > shipped.Y+100 && cancelled.Y > returned.Y+100) {
+		t.Fatalf("container rows not separated: shipped y=%.1f return y=%.1f cancelled y=%.1f", shipped.Y, returned.Y, cancelled.Y)
+	}
+	if math.Abs(shippedCenter-returnCenter) > 2 || math.Abs(returnCenter-cancelledCenter) > 2 || !(shipped.X > paid.X) {
+		t.Fatalf("container columns not aligned: paid=%.1f shipped=%.1f return=%.1f cancelled=%.1f", paid.X+paid.Width/2, shippedCenter, returnCenter, cancelledCenter)
+	}
+}
+
 func TestUMLStateMachineConnectorsAvoidIntermediateStates(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="960" height="360"><uml id="state"><state-machine-diagram direction="right"><state id="left" title="Left" row="1" col="1"/><state id="middle" title="Middle" row="1" col="2"/><state id="right" title="Right" row="1" col="3"/><transition src="left" dst="right" event="skip middle"/></state-machine-diagram></uml></frame></frames></xaligo>`)
 	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
@@ -321,6 +346,16 @@ func TestUMLStateMachineConnectorsAvoidIntermediateStates(t *testing.T) {
 			t.Fatalf("state-machine connector crosses intermediate state: segment=%#v->%#v middle=%#v arrow=%#v", start, end, middle, arrow)
 		}
 	}
+}
+
+func TestUMLStateMachineBentConnectorsAvoidIntermediateStates(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="960" height="520"><uml id="state"><state-machine-diagram direction="right"><state id="left" title="Left" row="1" col="1"/><state id="middle" title="Middle" row="1" col="2"/><state id="right" title="Right" row="1" col="3"/><transition src="left" dst="right" event="skip middle"><bend x="480" y="300"/></transition></state-machine-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	middle, arrow := umlStateAndArrowV1UMLTest(t, rawScene, "middle", "left", "right")
+	assertArrowDoesNotCrossRectV1UMLTest(t, arrow, middle)
 }
 
 func TestUMLStateMachineConceptLabelsReachEditableScene(t *testing.T) {
@@ -542,6 +577,57 @@ func TestUMLRelationLabelsAvoidEndpointItems(t *testing.T) {
 
 func rectsOverlapV1UMLTest(ax, ay, aw, ah, bx, by, bw, bh float64) bool {
 	return ax < bx+bw && ax+aw > bx && ay < by+bh && ay+ah > by
+}
+
+func umlElementPositionsV1UMLTest(t *testing.T, rawScene []byte) map[string]entity.Element {
+	t.Helper()
+	var scene entity.PresentationScene
+	if err := json.Unmarshal(rawScene, &scene); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	positions := map[string]entity.Element{}
+	for _, element := range scene.Elements {
+		if element.CustomData == nil || element.CustomData.UMLLocalID == "" || element.CustomData.UMLElementKind == "" || element.Type == "text" {
+			continue
+		}
+		positions[element.CustomData.UMLLocalID] = element
+	}
+	return positions
+}
+
+func umlStateAndArrowV1UMLTest(t *testing.T, rawScene []byte, stateID, src, dst string) (*entity.Element, *entity.Element) {
+	t.Helper()
+	var scene entity.PresentationScene
+	if err := json.Unmarshal(rawScene, &scene); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	var state, arrow *entity.Element
+	for index := range scene.Elements {
+		element := &scene.Elements[index]
+		if element.CustomData == nil {
+			continue
+		}
+		if element.CustomData.UMLLocalID == stateID && element.Type != "text" {
+			state = element
+		}
+		if element.Type == "arrow" && element.CustomData.UMLRelationSourceReference == src && element.CustomData.UMLRelationDestinationReference == dst {
+			arrow = element
+		}
+	}
+	if state == nil || arrow == nil || len(arrow.Points) < 2 {
+		t.Fatalf("state or arrow missing: state=%#v arrow=%#v", state, arrow)
+	}
+	return state, arrow
+}
+
+func assertArrowDoesNotCrossRectV1UMLTest(t *testing.T, arrow, rect *entity.Element) {
+	t.Helper()
+	for index := 0; index < len(arrow.Points)-1; index++ {
+		start, end := absoluteArrowSegmentV1UMLTest(arrow, index)
+		if segmentIntersectsRectV1UMLTest(start[0], start[1], end[0], end[1], rect.X, rect.Y, rect.Width, rect.Height) {
+			t.Fatalf("connector crosses state: segment=%#v->%#v rect=%#v arrow=%#v", start, end, rect, arrow)
+		}
+	}
 }
 
 func absoluteArrowSegmentV1UMLTest(arrow *entity.Element, index int) ([2]float64, [2]float64) {

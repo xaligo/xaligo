@@ -78,28 +78,24 @@
 <path d="M 783.5 490 L 849 490" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <path d="M 739.5 534 L 739.5 678.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <path d="M 1233 490 L 1298.5 490" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<path d="M 1072.3 551 L 1072.3 695.333 L 971.7 695.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<path d="M 1072.3 551 L 1152.3 551 L 1152.3 695.333 L 971.7 695.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <path d="M 1386.5 490 L 1452 490" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <path d="M 1342.5 534 L 1342.5 554 L 1352 554 L 1352 658.333 L 1342.5 658.333 L 1342.5 678.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<rect x="736.5" y="629" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
-<rect x="1069.3" y="629" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
-<rect x="1349" y="629" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
-<path d="M 429 716.933 L 429 632 L 1521.5 632 L 1521.5 254.267" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<path d="M 429 716.933 L 429 632 L 429 265.667 L 1521.5 265.667 L 1521.5 254.267" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <path d="M 648 739.333 L 628 739.333 L 628 728 L 453 728 L 453 739.333 L 429 739.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<rect x="1029" y="629" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
 <path d="M 956.1 695.333 L 956.1 679.333 L 1032 679.333 L 1032 301.667 L 975.1 301.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <path d="M 1434 739.333 L 1452 739.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <path d="M 158.5 240.667 L 246 240.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<path d="M 1543.5 678.333 L 1543.5 654.333 L 1656 654.333 L 1656 282.667 L 1543.5 282.667 L 1543.5 262.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<path d="M 337.5 301.667 L 337.5 337.667 L 144 337.667 L 144 648 L 226 648 L 226 694.533 L 246 694.533" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<path d="M 1543.5 678.333 L 1543.5 658.333 L 1656 658.333 L 1656 282.667 L 1543.5 282.667 L 1543.5 262.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<path d="M 337.5 301.667 L 337.5 337.667 L 248 337.667 L 248 648 L 250 648 L 250 694.533 L 246 694.533" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <path d="M 429 240.667 L 447 240.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <path d="M 538.5 301.667 L 538.5 337.667 L 536 337.667 L 536 360 L 538.5 360 L 538.5 429" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <path d="M 630 240.667 L 695.5 240.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<rect x="1505.9" y="629" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
-<path d="M 783.5 271.867 L 807.5 271.867 L 807.5 279.867 L 1448 279.867 L 1448 312 L 1508.9 312 L 1508.9 678.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<rect x="804.5" y="262.667" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
+<path d="M 783.5 271.867 L 807.5 271.867 L 807.5 143.867 L 1688 143.867 L 1688 808 L 1474.3 808 L 1474.3 800.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<rect x="804.5" y="253.267" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
 <path d="M 783.5 256.267 L 799.5 256.267 L 829 256.267 L 829 240.667 L 849 240.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<rect x="1029" y="406" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
-<path d="M 1009.7 301.667 L 1009.7 317.667 L 928 317.667 L 928 409 L 1072.3 409 L 1072.3 429" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<path d="M 1009.7 301.667 L 1057.7 301.667 L 1057.7 409 L 1072.3 409 L 1072.3 429" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <path d="M 1032 240.667 L 1050 240.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <path d="M 1233 240.667 L 1251 240.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <path d="M 1434 240.667 L 1521.5 240.667 L 1521.5 247.467" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
@@ -273,10 +269,10 @@
 <text x="1041" y="593.8" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-47c277a084154826)"><tspan x="1041" y="593.8">返品キャンセル / 直前状態へ復帰</tspan></text>
 <defs><clipPath id="xaligo-text-clip-48e8294e358dbf00" clipPathUnits="userSpaceOnUse"><rect x="848" y="488.5" width="80" height="20"/></clipPath></defs>
 <text x="888" y="503.3" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-48e8294e358dbf00)"><tspan x="888" y="503.3">復帰</tspan></text>
-<defs><clipPath id="xaligo-text-clip-5bfd2b4c8021b5b8" clipPathUnits="userSpaceOnUse"><rect x="1044.75" y="220.667" width="162" height="20"/></clipPath></defs>
-<text x="1125.75" y="235.467" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-5bfd2b4c8021b5b8)"><tspan x="1125.75" y="235.467">[在庫なし] / 注文を終了</tspan></text>
-<defs><clipPath id="xaligo-text-clip-a01531a86959d827" clipPathUnits="userSpaceOnUse"><rect x="935.25" y="376" width="80" height="20"/></clipPath></defs>
-<text x="975.25" y="390.8" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-a01531a86959d827)"><tspan x="975.25" y="390.8">クローズ</tspan></text>
+<defs><clipPath id="xaligo-text-clip-2cbcb1e746730c" clipPathUnits="userSpaceOnUse"><rect x="1140.75" y="340.667" width="162" height="20"/></clipPath></defs>
+<text x="1221.75" y="355.467" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-2cbcb1e746730c)"><tspan x="1221.75" y="355.467">[在庫なし] / 注文を終了</tspan></text>
+<defs><clipPath id="xaligo-text-clip-2b209fa8d1bef9a5" clipPathUnits="userSpaceOnUse"><rect x="935.25" y="424" width="80" height="20"/></clipPath></defs>
+<text x="975.25" y="438.8" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-2b209fa8d1bef9a5)"><tspan x="975.25" y="438.8">クローズ</tspan></text>
 <defs><clipPath id="xaligo-text-clip-81b49c24bc8b19a4" clipPathUnits="userSpaceOnUse"><rect x="1560" y="460.5" width="80" height="20"/></clipPath></defs>
 <text x="1600" y="475.3" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-81b49c24bc8b19a4)"><tspan x="1600" y="475.3">クローズ</tspan></text>
 <rect x="1192" y="4" width="56" height="19" fill="#F8FAFC" fill-opacity="1" stroke="#CBD5E1" stroke-width="0.75" stroke-opacity="1"/>

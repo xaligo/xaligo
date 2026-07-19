@@ -90,7 +90,7 @@ func separateObstacleHitsV1EngineRouteOverlap(points []ptV1EngineRouteTypes, pla
 		base := append([]ptV1EngineRouteTypes(nil), best...)
 		seg := segmentV1EngineRouteTypes{A: base[segmentIndex], B: base[segmentIndex+1]}
 		for _, direction := range []float64{-1, 1} {
-			for _, mult := range []float64{1, 2, 3} {
+			for _, mult := range []float64{1, 2, 3, 6, 10, 16, 24} {
 				candidate := append([]ptV1EngineRouteTypes(nil), base...)
 				offset := direction * mult * opt.LaneGap
 				if isHorizontalV1EngineRouteGeometry(seg) {
