@@ -221,6 +221,37 @@ func TestUMLStateMachinePseudostatesKeepCompactProportions(t *testing.T) {
 	}
 }
 
+func TestUMLStateMachineRowsSeparateBranches(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="960" height="620"><uml id="state"><state-machine-diagram direction="right"><initial id="start" row="1"/><state id="paid" title="Paid" row="1" background-color="#6F7BE8" color="#ffffff"/><final id="done" row="1"/><state id="refund" title="Refund" row="2" background-color="#F47C24" color="#ffffff"/><state id="cancelled" title="Cancelled" row="3" background-color="#6F7BE8" color="#ffffff"/><transition src="start" dst="paid"/><transition src="paid" dst="done"/><transition src="paid" dst="refund"/><transition src="refund" dst="cancelled"/></state-machine-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var scene entity.PresentationScene
+	if err := json.Unmarshal(rawScene, &scene); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	positions := map[string]entity.Element{}
+	for _, element := range scene.Elements {
+		if element.CustomData == nil || element.CustomData.UMLLocalID == "" || element.CustomData.UMLElementKind == "" {
+			continue
+		}
+		positions[element.CustomData.UMLLocalID] = element
+	}
+	paid, hasPaid := positions["paid"]
+	refund, hasRefund := positions["refund"]
+	cancelled, hasCancelled := positions["cancelled"]
+	if !hasPaid || !hasRefund || !hasCancelled {
+		t.Fatalf("state-machine row elements missing: %#v", positions)
+	}
+	if !(refund.Y > paid.Y+100 && cancelled.Y > refund.Y+100) {
+		t.Fatalf("state-machine rows not separated: paid y=%.1f refund y=%.1f cancelled y=%.1f", paid.Y, refund.Y, cancelled.Y)
+	}
+	if paid.BackgroundColor != "#6F7BE8" || refund.BackgroundColor != "#F47C24" {
+		t.Fatalf("state-machine row colors not retained: paid=%q refund=%q", paid.BackgroundColor, refund.BackgroundColor)
+	}
+}
+
 func TestUMLActivityHorizontalSwimlanesReachEditableScene(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="760" height="420"><uml id="activity"><activity-diagram direction="right" lanes="horizontal" theme="xaligo"><partition id="customer" title="Customer"><initial id="start"/><action id="choose" title="Choose amount" tone="primary"/></partition><partition id="atm" title="ATM"><action id="read" title="Read card"/><final id="done"/></partition><control-flow src="start" dst="choose"/><control-flow src="choose" dst="read"/><control-flow src="read" dst="done"/></activity-diagram></uml></frame></frames></xaligo>`)
 	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})

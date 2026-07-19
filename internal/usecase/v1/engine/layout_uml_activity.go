@@ -2,6 +2,7 @@ package engine
 
 import (
 	"math"
+	"sort"
 	"strings"
 
 	"github.com/xaligo/xaligo/internal/entity"
@@ -9,6 +10,11 @@ import (
 
 type umlActivityLaneV1EngineLayoutUmlActivity struct {
 	id    string
+	nodes []*entity.Node
+}
+
+type umlStateMachineRowV1EngineLayoutUmlActivity struct {
+	row   int
 	nodes []*entity.Node
 }
 
@@ -98,6 +104,9 @@ func layoutUMLStateMachineDiagramV1EngineLayoutUmlActivity(node *entity.Node, ta
 	if len(children) == 0 {
 		return nil
 	}
+	if rows, ok := umlStateMachineRowsV1EngineLayoutUmlActivity(children); ok {
+		return layoutUMLStateMachineRowsV1EngineLayoutUmlActivity(target, x, y, w, h, rows)
+	}
 	if strings.TrimSpace(node.Attr("direction")) == "down" {
 		return layoutUMLStateMachineDiagramDownV1EngineLayoutUmlActivity(node, target, x, y, w, h, children)
 	}
@@ -119,6 +128,63 @@ func layoutUMLStateMachineDiagramV1EngineLayoutUmlActivity(node *entity.Node, ta
 			return err
 		}
 		target.Children = append(target.Children, box)
+	}
+	return nil
+}
+
+func umlStateMachineRowsV1EngineLayoutUmlActivity(children []*entity.Node) ([]umlStateMachineRowV1EngineLayoutUmlActivity, bool) {
+	indices := map[int]int{}
+	var rows []umlStateMachineRowV1EngineLayoutUmlActivity
+	hasRow := false
+	for _, child := range children {
+		row := int(attrFloatV1EngineLayoutAttributes(child.Attr("row"), 1))
+		if row < 1 {
+			row = 1
+		}
+		if strings.TrimSpace(child.Attr("row")) != "" {
+			hasRow = true
+		}
+		index, ok := indices[row]
+		if !ok {
+			index = len(rows)
+			indices[row] = index
+			rows = append(rows, umlStateMachineRowV1EngineLayoutUmlActivity{row: row})
+		}
+		rows[index].nodes = append(rows[index].nodes, child)
+	}
+	if !hasRow {
+		return nil, false
+	}
+	sort.SliceStable(rows, func(left, right int) bool {
+		return rows[left].row < rows[right].row
+	})
+	return rows, true
+}
+
+func layoutUMLStateMachineRowsV1EngineLayoutUmlActivity(target *entity.Box, x, y, w, h float64, rows []umlStateMachineRowV1EngineLayoutUmlActivity) error {
+	rowH := math.Max(MinBoxHeightV1EngineLayoutFlow, h/float64(len(rows)))
+	for rowIndex, row := range rows {
+		centerY := y + float64(rowIndex)*rowH + rowH/2
+		count := len(row.nodes)
+		if count == 0 {
+			continue
+		}
+		step := umlActivityNodeStepHorizontalV1EngineLayoutUmlActivity(count, w)
+		usedW := step*float64(count-1) + 180
+		startX := x
+		if usedW < w {
+			startX = x + (w-usedW)/2
+		}
+		for nodeIndex, child := range row.nodes {
+			nodeW, nodeH := umlActivityNodeSizeV1EngineLayoutUmlActivity(child, 180)
+			nodeX := startX + float64(nodeIndex)*step
+			nodeY := centerY - nodeH/2
+			box := &entity.Box{ID: childIDV1EngineLayoutAttributes(target.ID, len(target.Children)), Tag: child.Tag, Label: labelOfV1EngineLayoutAttributes(child), Position: child.Position}
+			if err := layoutNodeV1EngineLayoutNode(child, box, nodeX, nodeY, nodeW, nodeH); err != nil {
+				return err
+			}
+			target.Children = append(target.Children, box)
+		}
 	}
 	return nil
 }

@@ -1,48 +1,84 @@
 <xaligo version="1">
   <data></data>
   <frames>
-    <frame id="state-machine" title="Order State Machine" version="2026.07" width="1680" height="860" class="pa-3" margin-top="48">
+    <frame id="state-machine" title="ECオーダーステータスマシン" version="2026.07" width="1680" height="900" class="pa-3" margin-top="48">
       <metadata align="right" width="156" key-width="56" font-size="12" />
       <uml id="order-state">
         <state-machine-diagram direction="right">
-          <initial id="start" title="Start" />
-          <state id="draft" title="Draft">
-            <entry>create order</entry>
-            <do>edit order lines</do>
-            <exit>validate order</exit>
+          <initial id="start" row="1" />
+          <state id="unpaid" title="注文" row="1" background-color="#6F7BE8" border-color="#5662D9" color="#ffffff">
+            <note>未払い/決済前</note>
           </state>
-          <state id="submitted" title="Submitted">
-            <entry>request payment</entry>
+          <state id="awaiting-shipment" title="注文" row="1" background-color="#6F7BE8" border-color="#5662D9" color="#ffffff">
+            <note>出荷待ち</note>
           </state>
-          <choice id="payment-result" title="Payment result?" />
-          <state id="paid" title="Paid">
-            <entry>record authorization</entry>
-            <do>prepare fulfilment</do>
+          <choice id="stock-check" title="在庫確認" row="1" background-color="#6F7BE8" border-color="#5662D9" color="#ffffff" />
+          <state id="shipped" title="注文" row="1" background-color="#6F7BE8" border-color="#5662D9" color="#ffffff">
+            <note>出荷済み</note>
           </state>
-          <state id="cancelled" title="Cancelled">
-            <entry>release reservations</entry>
+          <state id="delivering" title="注文" row="1" background-color="#6F7BE8" border-color="#5662D9" color="#ffffff">
+            <note>配送中</note>
           </state>
-          <state id="paused" title="Fulfilment Paused">
-            <do>wait for operator</do>
+          <state id="completed" title="注文" row="1" background-color="#6F7BE8" border-color="#5662D9" color="#ffffff">
+            <note>完了</note>
           </state>
-          <history id="fulfilment-history" title="H*" />
-          <state id="fulfilled" title="Fulfilled">
-            <entry>publish shipment event</entry>
-          </state>
-          <final id="closed" title="Closed" />
+          <final id="closed" row="1" />
 
-          <transition src="start" dst="draft" />
-          <transition src="draft" dst="submitted" title="submit" guard="valid" />
-          <transition src="submitted" dst="payment-result" title="payment completed" />
-          <transition src="payment-result" dst="paid" guard="authorized" />
-          <transition src="payment-result" dst="submitted" guard="retryable" />
-          <transition src="payment-result" dst="cancelled" guard="declined" />
-          <transition src="paid" dst="paused" title="pause fulfilment" />
-          <transition src="paused" dst="fulfilment-history" title="resume" />
-          <transition src="fulfilment-history" dst="paid" title="restore last substate" />
-          <transition src="paid" dst="fulfilled" title="ship" />
-          <transition src="fulfilled" dst="closed" title="complete" />
-          <transition src="cancelled" dst="closed" title="close" />
+          <state id="refund-requested" title="返金書" row="2" background-color="#F47C24" border-color="#E56813" color="#ffffff">
+            <note>返金待ち</note>
+          </state>
+          <choice id="refund-result" title="返金結果" row="2" background-color="#F47C24" border-color="#E56813" color="#ffffff" />
+          <state id="refund-failed" title="返金書" row="2" background-color="#F47C24" border-color="#E56813" color="#ffffff">
+            <note>返金失敗</note>
+          </state>
+          <state id="return-requested" title="返品書" row="2" background-color="#FFC400" border-color="#E0A800" color="#ffffff">
+            <note>返品待ち</note>
+          </state>
+          <choice id="return-result" title="返品結果" row="2" background-color="#FFC400" border-color="#E0A800" color="#ffffff" />
+          <state id="return-failed" title="返品書" row="2" background-color="#FFC400" border-color="#E0A800" color="#ffffff">
+            <note>返品に失敗しました</note>
+          </state>
+
+          <state id="buyer-cancelled" title="注文書" row="3" background-color="#F47C24" border-color="#E56813" color="#ffffff">
+            <note>キャンセル済み</note>
+          </state>
+          <state id="refund-succeeded" title="返金書" row="3" background-color="#F47C24" border-color="#E56813" color="#ffffff">
+            <note>返金成功</note>
+          </state>
+          <state id="return-cancelled" title="返品書" row="3" background-color="#FFC400" border-color="#E0A800" color="#ffffff">
+            <note>キャンセル済み</note>
+          </state>
+          <state id="return-succeeded" title="返品書" row="3" background-color="#FFC400" border-color="#E0A800" color="#ffffff">
+            <note>返品成功</note>
+          </state>
+          <state id="system-cancelled" title="注文" row="3" background-color="#6F7BE8" border-color="#5662D9" color="#ffffff">
+            <note>キャンセル済み</note>
+          </state>
+
+          <transition src="start" dst="unpaid" />
+          <transition src="unpaid" dst="awaiting-shipment" title="支払い成功" color="#5B9FBE" />
+          <transition src="awaiting-shipment" dst="stock-check" color="#5B9FBE" />
+          <transition src="stock-check" dst="shipped" guard="在庫あり" color="#5B9FBE" />
+          <transition src="shipped" dst="delivering" color="#5B9FBE" />
+          <transition src="delivering" dst="completed" color="#5B9FBE" />
+          <transition src="completed" dst="closed" color="#5B9FBE" />
+
+          <transition src="awaiting-shipment" dst="refund-requested" title="購入者が返金を申請" color="#E56813" />
+          <transition src="refund-requested" dst="refund-result" title="返金処理" color="#E56813" />
+          <transition src="refund-result" dst="refund-failed" guard="N" color="#E56813" />
+          <transition src="refund-result" dst="refund-succeeded" guard="Y" color="#E56813" />
+          <transition src="refund-succeeded" dst="buyer-cancelled" color="#E56813" />
+          <transition src="unpaid" dst="buyer-cancelled" title="購入者がキャンセル" color="#E56813" />
+
+          <transition src="shipped" dst="return-requested" title="購入者が返品を申請" color="#E0A800" />
+          <transition src="return-requested" dst="return-result" title="返品処理" color="#E0A800" />
+          <transition src="return-result" dst="return-failed" guard="N" color="#E0A800" />
+          <transition src="return-result" dst="return-succeeded" guard="Y" color="#E0A800" />
+          <transition src="return-succeeded" dst="system-cancelled" color="#E0A800" />
+          <transition src="stock-check" dst="system-cancelled" guard="在庫なし" color="#E0A800" />
+          <transition src="return-requested" dst="return-cancelled" title="返品をキャンセル" color="#E0A800" />
+
+          <transition src="system-cancelled" dst="closed" color="#5B9FBE" />
         </state-machine-diagram>
       </uml>
     </frame>

@@ -1148,7 +1148,7 @@ func normalizeUMLElementV1EngineParseUml(source *entity.Node, scopedID, diagramK
 			attrs["uml-static"] = "true"
 		}
 	}
-	if diagramKind == "activity-diagram" && (source.Tag == "initial" || source.Tag == "final") && !hasExplicitLabel {
+	if (diagramKind == "activity-diagram" || diagramKind == "state-machine-diagram") && (source.Tag == "initial" || source.Tag == "final") && !hasExplicitLabel {
 		attrs["title"] = ""
 	}
 	// UML names are display text, not frame-level connection aliases. Public

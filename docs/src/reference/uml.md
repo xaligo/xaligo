@@ -60,7 +60,7 @@ profile. Use the typed element and relation tags listed below.
 | `profile-diagram` | `profile`, `stereotype`, `metaclass` | `extension`, `reference`, `generalization` | At least one profile and stereotype. Extension is stereotype to metaclass; generalization joins stereotypes. | [uml-profile.xal](../examples/samples/uml-profile.xal) |
 | `use-case-diagram` | `actor`, `use-case`, `system-boundary` | `association`, `include`, `extend`, `generalization` | At least one use case. Association joins actor and use-case; include/extend join use-cases; generalization joins equal actor/use-case kinds. | [uml-use-case.xal](../examples/samples/uml-use-case.xal) |
 | `activity-diagram` | `initial`, `final`, `activity`, `action`, `decision`, `merge`, `fork`, `join`, `object-node`; optional `partition` containers | `control-flow`, `object-flow` | At least one activity/action. Control-flow excludes object-node; object-flow includes one. Control-node degrees are validated. | [uml-activity.xal](../examples/samples/uml-activity.xal) |
-| `state-machine-diagram` | `initial`, `final`, `state`, `history`, `choice`, `fork`, `join` | `transition` | At least one state. Initial/final direction and pseudostate degrees are validated. Initial/final/choice/history pseudostates keep compact proportions, and final states render the standard inner dot. | [uml-state-machine.xal](../examples/samples/uml-state-machine.xal) |
+| `state-machine-diagram` | `initial`, `final`, `state`, `history`, `choice`, `fork`, `join` | `transition` | At least one state. Initial/final direction and pseudostate degrees are validated. Initial/final/choice/history pseudostates keep compact proportions, and final states render the standard inner dot. Optional positive `row` separates branch rows. | [uml-state-machine.xal](../examples/samples/uml-state-machine.xal) |
 | `sequence-diagram` | `participant`, `lifeline` | `message`, `return-message`, `create-message`, `destroy-message` | At least one participant/lifeline. Every message has a unique `order`; non-participant sources must already be active; create/destroy cannot target themselves. | [uml-sequence.xal](../examples/samples/uml-sequence.xal) |
 | `communication-diagram` | `object`, `participant` | `link`, `message` | At least two participants, one link, and one message. Each ordered message needs a link between the same unordered pair. | [uml-communication.xal](../examples/samples/uml-communication.xal) |
 | `interaction-overview-diagram` | `initial`, `final`, `interaction`, `decision`, `fork`, `join` | `control-flow` | At least one interaction. Initial/final direction and control-node degrees are validated. | [uml-interaction-overview.xal](../examples/samples/uml-interaction-overview.xal) |
@@ -89,6 +89,11 @@ activations merge into their covering bar so nested self-calls do not add inner
 strokes. `message mode="async"` uses an open arrowhead. `destroy-message` draws
 a stop marker and its label must clearly describe destruction, deletion,
 disposal, removal, or termination.
+
+State-machine diagrams can use `row="N"` on elements to separate primary and
+exception branches while preserving source order inside each row. Presentation
+attributes such as `background-color`, `border-color`, and `color` apply to
+state and pseudostate shapes, which is useful for status-family color coding.
 
 ## Ownership
 
