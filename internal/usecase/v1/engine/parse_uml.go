@@ -310,7 +310,7 @@ func normalizeUMLComponentV1EngineParseUml(uml, frame *entity.Node, models map[s
 		if err := validateUMLRelationEndpointsV1EngineParseUml(diagram.Tag, relation, elementKinds[src], elementKinds[dst]); err != nil {
 			return &entity.ParseError{Position: relation.Position, Err: err}
 		}
-		if err := validateUMLRelationAttributesV1EngineParseUml(relation); err != nil {
+		if err := validateUMLRelationAttributesV1EngineParseUml(diagram.Tag, relation); err != nil {
 			return &entity.ParseError{Position: relation.Position, Err: err}
 		}
 	}
@@ -835,7 +835,7 @@ func validateUMLMessageOrderV1EngineParseUml(relation *entity.Node) error {
 	return nil
 }
 
-func validateUMLRelationAttributesV1EngineParseUml(relation *entity.Node) error {
+func validateUMLRelationAttributesV1EngineParseUml(diagramKind string, relation *entity.Node) error {
 	for _, attribute := range []string{"kind", "stroke-style", "arrowhead", "start-arrowhead", "end-arrowhead"} {
 		if _, exists := relation.Attrs[attribute]; exists {
 			return fmt.Errorf("UML <%s> does not allow %s; connector semantics are derived from the relation kind", relation.Tag, attribute)
@@ -856,6 +856,19 @@ func validateUMLRelationAttributesV1EngineParseUml(relation *entity.Node) error 
 		case "control-flow", "object-flow", "transition":
 		default:
 			return fmt.Errorf("UML <%s> does not allow guard", relation.Tag)
+		}
+	}
+	for _, child := range relation.Children {
+		if !isBendNodeV1EngineLayoutValidation(child.Tag) {
+			return fmt.Errorf("UML <%s> does not allow child <%s>", relation.Tag, child.Tag)
+		}
+		switch diagramKind {
+		case "class-diagram", "activity-diagram", "state-machine-diagram":
+			if err := validateBendNodeV1EngineLayoutValidation(child); err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf("UML <%s> does not allow bend children in <%s>", relation.Tag, diagramKind)
 		}
 	}
 	if route := strings.ToLower(strings.TrimSpace(relation.Attr("route"))); route != "" {
@@ -1353,7 +1366,7 @@ func normalizeUMLRelationV1EngineParseUml(source *entity.Node, scopedSrc, scoped
 	if diagramKind == "sequence-diagram" && source.Tag == "message" && strings.TrimSpace(attrs["uml-mode"]) == "async" {
 		attrs["end-arrowhead"] = "arrow"
 	}
-	return &entity.Node{Tag: "connection", Attrs: attrs, Position: source.Position}
+	return &entity.Node{Tag: "connection", Attrs: attrs, Children: cloneUMLChildrenV1EngineParseUml(source.Children), Position: source.Position}
 }
 
 func umlRelationLabelV1EngineParseUml(source *entity.Node) string {

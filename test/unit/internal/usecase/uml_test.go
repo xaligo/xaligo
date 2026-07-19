@@ -427,6 +427,89 @@ func TestUMLGuardLabelsDoNotOverlapTheirConnectorSegment(t *testing.T) {
 	}
 }
 
+func TestUMLRelationBendsReachEditableScene(t *testing.T) {
+	for _, test := range []struct {
+		name         string
+		source       []byte
+		relationKind string
+	}{
+		{
+			name:         "class dependency",
+			relationKind: "dependency",
+			source:       []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="360"><uml id="class"><class-diagram><class id="service" title="Service"/><class id="repo" title="Repository"/><dependency src="service" dst="repo" title="uses"><bend x="360" y="80"/><bend x="360" y="260"/></dependency></class-diagram></uml></frame></frames></xaligo>`),
+		},
+		{
+			name:         "activity control flow",
+			relationKind: "control-flow",
+			source:       []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="360"><uml id="activity"><activity-diagram direction="right"><initial id="start"/><action id="review" title="Review"/><final id="done"/><control-flow src="start" dst="review"><bend x="240" y="80"/></control-flow><control-flow src="review" dst="done"><bend x="480" y="280"/></control-flow></activity-diagram></uml></frame></frames></xaligo>`),
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			rawScene, err := newUsecase().RenderExcalidraw(context.Background(), test.source, entity.RenderOptions{PxPerInch: 96})
+			if err != nil {
+				t.Fatalf("RenderExcalidraw() error = %v", err)
+			}
+			if !strings.Contains(string(rawScene), `"xaligoConnectorBends":`) {
+				t.Fatalf("UML relation bend metadata missing: %s", rawScene)
+			}
+			var scene entity.PresentationScene
+			if err := json.Unmarshal(rawScene, &scene); err != nil {
+				t.Fatalf("json.Unmarshal() error = %v", err)
+			}
+			var arrow *entity.Element
+			for index := range scene.Elements {
+				element := &scene.Elements[index]
+				if element.Type == "arrow" && element.CustomData != nil && element.CustomData.UMLRelationKind == test.relationKind && element.CustomData.ConnectorBends != "" {
+					arrow = element
+					break
+				}
+			}
+			if arrow == nil || len(arrow.Points) < 4 {
+				t.Fatalf("bent UML relation arrow not found: %#v", scene.Elements)
+			}
+		})
+	}
+}
+
+func TestUMLRelationLabelsAvoidEndpointItems(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="360"><uml id="state"><state-machine-diagram direction="right"><state id="left" title="Left" row="1" col="1"/><state id="right" title="Right" row="1" col="2"/><transition src="left" dst="right" event="label" action="that should avoid boxes"><bend x="360" y="180"/></transition></state-machine-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var scene entity.PresentationScene
+	if err := json.Unmarshal(rawScene, &scene); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	var left, right, label *entity.Element
+	for index := range scene.Elements {
+		element := &scene.Elements[index]
+		if element.CustomData == nil {
+			continue
+		}
+		switch {
+		case element.CustomData.UMLLocalID == "left" && element.Type != "text":
+			left = element
+		case element.CustomData.UMLLocalID == "right" && element.Type != "text":
+			right = element
+		case element.Type == "text" && element.CustomData.UMLRelationLabel != "":
+			label = element
+		}
+	}
+	if left == nil || right == nil || label == nil {
+		t.Fatalf("state label test elements missing: left=%#v right=%#v label=%#v", left, right, label)
+	}
+	for _, item := range []*entity.Element{left, right} {
+		if rectsOverlapV1UMLTest(label.X, label.Y, label.Width, label.Height, item.X, item.Y, item.Width, item.Height) {
+			t.Fatalf("UML relation label overlaps endpoint item: label=%#v item=%#v", label, item)
+		}
+	}
+}
+
+func rectsOverlapV1UMLTest(ax, ay, aw, ah, bx, by, bw, bh float64) bool {
+	return ax < bx+bw && ax+aw > bx && ay < by+bh && ay+ah > by
+}
+
 func TestUMLTimingAndOwnerMetadataReachEditableScene(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="timing"><timing-diagram><lifeline id="api"/><time-state id="busy" owner="api" from="10" to="20"><region>work</region></time-state><occurrence src="api" dst="busy" at="15" title="dispatch"/></timing-diagram></uml></frame></frames></xaligo>`)
 	scene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})

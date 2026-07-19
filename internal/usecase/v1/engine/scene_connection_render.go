@@ -350,7 +350,7 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 			"elbowed":            true,
 			"customData":         customData,
 		})
-		appendUMLRelationLabelV1EngineSceneConnectionRender(elements, conn, connID, routePoints, style.Color, updated, seed, frameRects[srcFrameID], frameMetadata[srcFrameID])
+		appendUMLRelationLabelV1EngineSceneConnectionRender(elements, conn, connID, routePoints, style.Color, updated, seed, frameRects[srcFrameID], frameMetadata[srcFrameID], srcImgRect, dstImgRect)
 
 		// Register this arrow in boundMap for both endpoints.
 		entry := map[string]any{"type": "arrow", "id": connID}
@@ -682,7 +682,7 @@ func applyUMLConnectionMetadataV1EngineSceneConnectionRender(customData map[stri
 	}
 }
 
-func appendUMLRelationLabelV1EngineSceneConnectionRender(elements *[]map[string]any, conn *entity.Node, connID string, routePoints []ptV1EngineRouteTypes, color string, updated int64, seed int, frameRect [4]float64, metadata frameMetadataSceneGeometryV1EngineSceneFrameMetadata) {
+func appendUMLRelationLabelV1EngineSceneConnectionRender(elements *[]map[string]any, conn *entity.Node, connID string, routePoints []ptV1EngineRouteTypes, color string, updated int64, seed int, frameRect [4]float64, metadata frameMetadataSceneGeometryV1EngineSceneFrameMetadata, srcRect, dstRect [4]float64) {
 	label := strings.TrimSpace(conn.Attr("uml-relation-label"))
 	if label == "" || len(routePoints) == 0 {
 		return
@@ -698,6 +698,7 @@ func appendUMLRelationLabelV1EngineSceneConnectionRender(elements *[]map[string]
 		width = math.Min(width, frameRect[2])
 	}
 	x, y := umlRelationLabelPositionV1EngineSceneConnectionRender(conn, routePoints, seed, width, height)
+	x, y = avoidUMLRelationLabelEndpointOverlapV1EngineSceneConnectionRender(x, y, width, height, routePoints, frameRect, [][4]float64{srcRect, dstRect})
 	x, y = frameMetadataLabelPositionV1EngineSceneConnectionRender(x, y, width, height, frameRect, metadata)
 	labelID := connID + "-uml-label"
 	customData := map[string]any{}
@@ -716,6 +717,65 @@ func appendUMLRelationLabelV1EngineSceneConnectionRender(elements *[]map[string]
 		"originalText": label, "lineHeight": 1.2,
 		"customData": customData,
 	})
+}
+
+func avoidUMLRelationLabelEndpointOverlapV1EngineSceneConnectionRender(x, y, width, height float64, routePoints []ptV1EngineRouteTypes, frameRect [4]float64, obstacles [][4]float64) (float64, float64) {
+	if !labelOverlapsAnyRectV1EngineSceneConnectionRender(x, y, width, height, obstacles) {
+		return x, y
+	}
+	gap := 10.0
+	candidates := make([][2]float64, 0, 32)
+	for multiplier := 1.0; multiplier <= 5; multiplier++ {
+		offsetX := multiplier * (width + gap)
+		offsetY := multiplier * (height + gap)
+		candidates = append(candidates,
+			[2]float64{x, y - offsetY},
+			[2]float64{x, y + offsetY},
+			[2]float64{x - offsetX, y},
+			[2]float64{x + offsetX, y},
+		)
+	}
+	if len(routePoints) >= 2 {
+		for _, point := range routePoints {
+			for multiplier := 1.0; multiplier <= 3; multiplier++ {
+				candidates = append(candidates,
+					[2]float64{point.X - width/2, point.Y - multiplier*(height+gap)},
+					[2]float64{point.X - width/2, point.Y + multiplier*gap},
+					[2]float64{point.X - multiplier*(width+gap), point.Y - height/2},
+					[2]float64{point.X + multiplier*gap, point.Y - height/2},
+				)
+			}
+		}
+	}
+	for _, candidate := range candidates {
+		candidateX, candidateY := clampLabelToFrameV1EngineSceneConnectionRender(candidate[0], candidate[1], width, height, frameRect)
+		if !labelOverlapsAnyRectV1EngineSceneConnectionRender(candidateX, candidateY, width, height, obstacles) {
+			return candidateX, candidateY
+		}
+	}
+	return x, y
+}
+
+func labelOverlapsAnyRectV1EngineSceneConnectionRender(x, y, width, height float64, rects [][4]float64) bool {
+	for _, rect := range rects {
+		if rect[2] <= 0 || rect[3] <= 0 {
+			continue
+		}
+		if x < rect[0]+rect[2] && x+width > rect[0] && y < rect[1]+rect[3] && y+height > rect[1] {
+			return true
+		}
+	}
+	return false
+}
+
+func clampLabelToFrameV1EngineSceneConnectionRender(x, y, width, height float64, frameRect [4]float64) (float64, float64) {
+	if frameRect[2] <= 0 || frameRect[3] <= 0 {
+		return x, y
+	}
+	const gap = 6.0
+	x = clampFloatV1EngineLayoutPort(x, frameRect[0]+gap, math.Max(frameRect[0]+gap, frameRect[0]+frameRect[2]-width-gap))
+	y = clampFloatV1EngineLayoutPort(y, frameRect[1]+gap, math.Max(frameRect[1]+gap, frameRect[1]+frameRect[3]-height-gap))
+	return x, y
 }
 
 func frameMetadataLabelPositionV1EngineSceneConnectionRender(x, y, width, height float64, frameRect [4]float64, metadata frameMetadataSceneGeometryV1EngineSceneFrameMetadata) (float64, float64) {

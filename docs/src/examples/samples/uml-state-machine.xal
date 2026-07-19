@@ -72,8 +72,12 @@
           <transition src="delivering" dst="completed" event="配達完了" effect="売上を確定" />
           <transition src="completed" dst="closed" event="クローズ" />
 
-          <transition src="created" dst="buyer-cancelled" event="購入者キャンセル" guard="未出荷" action="注文を取消" />
-          <transition src="awaiting-shipment" dst="refund-requested" event="返金申請" guard="決済済み" action="返金処理を開始" />
+          <transition src="created" dst="buyer-cancelled" event="購入者キャンセル" guard="未出荷" action="注文を取消">
+            <bend x="120" y="650" />
+          </transition>
+          <transition src="awaiting-shipment" dst="refund-requested" event="返金申請" guard="決済済み" action="返金処理を開始">
+            <bend x="540" y="360" />
+          </transition>
           <transition src="refund-requested" dst="refund-result" event="返金結果" />
           <transition src="refund-result" dst="refund-failed" guard="NG" action="再処理を依頼" />
           <transition src="refund-result" dst="refund-succeeded" guard="OK" action="返金済みにする" />
@@ -86,7 +90,9 @@
           <transition src="return-succeeded" dst="system-cancelled" event="返品完了" />
           <transition src="return-requested" dst="order-history" event="返品キャンセル" action="直前状態へ復帰" />
           <transition src="order-history" dst="shipped" event="復帰" />
-          <transition src="stock-check" dst="system-cancelled" guard="在庫なし" action="注文を終了" />
+          <transition src="stock-check" dst="system-cancelled" guard="在庫なし" action="注文を終了">
+            <bend x="1444" y="312" />
+          </transition>
 
           <transition src="buyer-cancelled" dst="closed" event="クローズ" />
           <transition src="system-cancelled" dst="closed" event="クローズ" />
