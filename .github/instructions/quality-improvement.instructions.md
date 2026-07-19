@@ -61,7 +61,7 @@ sample paths, and rendered artifact paths over prose-only status notes.
 
 | Order | Feature | Status | Evidence | Next action |
 |---:|---|---|---|---|
-| 1 | Canonical V1 document envelope | not-started | `docs/src/examples/samples/canonical-v1-envelope.xal` | Audit contract, validation, rendering, and migration diagnostics. |
+| 1 | Canonical V1 document envelope | in-progress | `TestV1ParseValidatesCanonicalEnvelopeHierarchy`; canonical sample validates and renders two SVG artifacts | Finish migration-warning/docs-image audit, then close Q01. |
 | 2 | Data registry and imports | not-started | table data, database schema, SQL import commits exist | Inventory import coverage and diagnostics. |
 | 3 | Tables | not-started | `docs/src/examples/samples/tables.xal` | Audit table layout, pipe styling, text fitting, and docs image quality. |
 | 4 | Relational databases | not-started | `docs/src/examples/samples/databases.xal` | Audit entity layout, key styling, relation routing, and SQL import behavior. |
@@ -94,10 +94,10 @@ when the new task can be verified and committed independently.
 
 | Task | Status | Scope | Verification target |
 |---|---|---|---|
-| Q01.1 | not-started | Confirm `<xaligo version="1">`, `<data>`, `<frames>`, and `<frame>` parse as the canonical V1 document shape. | parser/unit tests and `xaligo validate docs/src/examples/samples/canonical-v1-envelope.xal` |
+| Q01.1 | done | Confirm `<xaligo version="1">`, `<data>`, `<frames>`, and `<frame>` parse as the canonical V1 document shape. | `TestV1ParseValidatesCanonicalEnvelopeHierarchy`; `go run ./cmd validate docs/src/examples/samples/canonical-v1-envelope.xal` |
 | Q01.2 | not-started | Confirm legacy `<frame>` and `<frames>` inputs remain compatible and emit the intended migration warning. | diagnostics tests covering warning text and source position |
-| Q01.3 | not-started | Validate duplicate, missing, or unsafe frame IDs and document-level IDs. | invalid-input unit tests with user-correctable diagnostics |
-| Q01.4 | not-started | Confirm canonical samples render as separate artifacts and combined compatibility output. | SVG artifact integration check and docs sample render |
+| Q01.3 | done | Validate duplicate, missing, or unsafe frame IDs and document-level IDs. | `TestV1ParseValidatesCanonicalEnvelopeHierarchy` |
+| Q01.4 | in-progress | Confirm canonical samples render as separate artifacts and combined compatibility output. | canonical sample renders `canonical-v1-envelope-overview.svg` and `canonical-v1-envelope-database-detail.svg`; combined compatibility still pending |
 | Q01.5 | not-started | Review canonical-envelope docs for current behavior, command accuracy, and image freshness. | `mdbook build docs` and regenerated SVG comparison |
 
 ### Q02 Data Registry and Imports

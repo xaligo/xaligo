@@ -142,6 +142,30 @@ func TestV1ParseRejectsNonV1RootVersion(t *testing.T) {
 	}
 }
 
+func TestV1ParseValidatesCanonicalEnvelopeHierarchy(t *testing.T) {
+	tests := []struct {
+		name   string
+		source string
+		want   string
+	}{
+		{name: "missing frames", source: `<xaligo version="1"><data></data></xaligo>`, want: `exactly one <frames>`},
+		{name: "multiple frames", source: `<xaligo version="1"><frames></frames><frames></frames></xaligo>`, want: `exactly one <frames>`},
+		{name: "unexpected envelope child", source: `<xaligo version="1"><frame id="page" /></xaligo>`, want: `may only contain <metadata>, <imports>, <data>, <styles>, and <frames>`},
+		{name: "version on canonical frames", source: `<xaligo version="1"><frames version="1"><frame id="page" /></frames></xaligo>`, want: `version belongs on <xaligo>`},
+		{name: "missing child frame id", source: `<xaligo version="1"><frames><frame><blank /></frame></frames></xaligo>`, want: `requires a non-empty id attribute`},
+		{name: "whitespace child frame id", source: `<xaligo version="1"><frames><frame id="bad id"><blank /></frame></frames></xaligo>`, want: `must not contain whitespace`},
+		{name: "duplicate child frame id", source: `<xaligo version="1"><frames><frame id="page" /><frame id="page" /></frames></xaligo>`, want: `duplicate frame id "page"`},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			_, err := v1engine.ParseV1EngineParseDocument(strings.NewReader(test.source))
+			if err == nil || !strings.Contains(err.Error(), test.want) {
+				t.Fatalf("Parse() error = %v, want %q", err, test.want)
+			}
+		})
+	}
+}
+
 func TestV1ParseRejectsFrameContentVersionOutsideSelectedPageFrames(t *testing.T) {
 	tests := []struct {
 		name   string
