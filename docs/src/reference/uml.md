@@ -109,10 +109,11 @@ Class, activity, and state-machine relation tags can contain `<bend x="..."
 y="..." />` children. Bends steer the generated orthogonal connector route and
 are preserved in editable scene metadata. State-machine transition routing also
 treats intermediate state and pseudostate bodies as obstacles where possible, so
-default connector paths avoid cutting through nearby states; bent routes may use
-larger outside detours when a tight bend would still cross a state body. UML
-relation labels are automatically nudged away from endpoint items when a default
-label position would overlap a shape.
+default connector paths avoid cutting through nearby states. Same-frame route
+points stay inside the frame bounds, and distant state pairs or tight bent routes
+may use larger outside detours when an interior path would cross a state body.
+UML relation labels are automatically nudged away from endpoint items when a
+default label position would overlap a shape.
 
 ## Ownership
 

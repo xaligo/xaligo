@@ -56,6 +56,9 @@ type routerOptionsV1EngineRouteTypes struct {
 	// HardObstacles are exclusion zones that the final polyline may never
 	// enter. Frame metadata reserve strips use this stricter postcondition.
 	HardObstacles []rectV1EngineRouteTypes
+	// Bounds is an optional drawing area clamp for local frame routes. Candidate
+	// paths outside this rectangle are rejected before scoring.
+	Bounds *rectV1EngineRouteTypes
 }
 
 func defaultRouterOptionsV1EngineRouteTypes() routerOptionsV1EngineRouteTypes {

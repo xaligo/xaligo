@@ -101,6 +101,9 @@ func separateObstacleHitsV1EngineRouteOverlap(points []ptV1EngineRouteTypes, pla
 					candidate[segmentIndex+1].X += offset
 				}
 				candidate = simplifyV1EngineRouteGeometry(candidate)
+				if !pathWithinBoundsV1EngineRoutePath(candidate, opt.Bounds) {
+					continue
+				}
 				hits := obstacleHitCountV1EngineRouteCandidate(candidate, obstacles)
 				overlap := exactOverlapLengthV1EngineRouteOverlap(toSegmentsV1EngineRouteGeometry(candidate), placed)
 				score := scorePathV1EngineRouteCandidate(candidate, obstacles, placed, opt.LineMargin)
@@ -130,6 +133,9 @@ func bypassStraightObstacleHitV1EngineRouteOverlap(points []ptV1EngineRouteTypes
 		}
 		candidates := straightObstacleBypassCandidatesV1EngineRouteOverlap(seg, obstacle, opt)
 		for _, candidate := range candidates {
+			if !pathWithinBoundsV1EngineRoutePath(candidate, opt.Bounds) {
+				continue
+			}
 			hits := obstacleHitCountV1EngineRouteCandidate(candidate, obstacles)
 			score := scorePathV1EngineRouteCandidate(candidate, obstacles, placed, opt.LineMargin)
 			if hits < bestHits-epsV1EngineRouteTypes || (math.Abs(hits-bestHits) < epsV1EngineRouteTypes && score < bestScore) {

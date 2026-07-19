@@ -234,7 +234,8 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 		dstEdge := rectFixedPointV1EngineSceneConnection(dstRect, dstFP)
 		dx := dstEdge[0] - srcEdge[0]
 		dy := dstEdge[1] - srcEdge[1]
-		routePoints := excalidrawConnectionPointsV1EngineSceneConnectionRoute(conn, srcRect, dstRect, srcSide, dstSide, style.Kind, obstacles, hardObstacles, placed, routePaths)
+		routeBounds := routeBoundsForFrameV1EngineSceneConnectionRender(srcFrameID, dstFrameID, frameRects)
+		routePoints := excalidrawConnectionPointsV1EngineSceneConnectionRoute(conn, srcRect, dstRect, srcSide, dstSide, style.Kind, obstacles, hardObstacles, routeBounds, placed, routePaths)
 		if len(routePoints) < 2 {
 			continue
 		}
@@ -414,6 +415,17 @@ func frameMetadataReservedObstaclesV1EngineSceneConnectionRender(metadata map[st
 		}
 	}
 	return obstacles
+}
+
+func routeBoundsForFrameV1EngineSceneConnectionRender(srcFrameID, dstFrameID string, frameRects map[string][4]float64) *rectV1EngineRouteTypes {
+	if srcFrameID == "" || srcFrameID != dstFrameID {
+		return nil
+	}
+	raw, ok := frameRects[srcFrameID]
+	if !ok || raw[2] <= 0 || raw[3] <= 0 {
+		return nil
+	}
+	return &rectV1EngineRouteTypes{X: raw[0], Y: raw[1], W: raw[2], H: raw[3]}
 }
 
 func localConnectionSideAvoidingFrameMetadataV1EngineSceneConnectionRender(side string, endpointRect, otherRect, frameRect [4]float64, metadata frameMetadataSceneGeometryV1EngineSceneFrameMetadata) string {

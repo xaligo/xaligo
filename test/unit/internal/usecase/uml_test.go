@@ -358,6 +358,36 @@ func TestUMLStateMachineBentConnectorsAvoidIntermediateStates(t *testing.T) {
 	assertArrowDoesNotCrossRectV1UMLTest(t, arrow, middle)
 }
 
+func TestUMLStateMachineBentRouteAvoidanceStaysInsideFrame(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="960" height="520"><uml id="state"><state-machine-diagram direction="right"><state id="left" title="Left" row="1" col="1"/><state id="middle" title="Middle" row="1" col="2"/><state id="right" title="Right" row="1" col="3"/><state id="cancelled" title="Cancelled" row="3" col="3"/><transition src="left" dst="cancelled" event="outside"><bend x="920" y="170"/><bend x="920" y="430"/></transition></state-machine-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	middle, arrow := umlStateAndArrowV1UMLTest(t, rawScene, "middle", "left", "cancelled")
+	assertArrowDoesNotCrossRectV1UMLTest(t, arrow, middle)
+	assertArrowInsideFrameV1UMLTest(t, arrow, 0, 0, 960, 520)
+}
+
+func TestUMLStateMachineDistantConnectorsUseOuterDetours(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="1200" height="620"><uml id="state"><state-machine-diagram direction="right"><container><row><col><state id="source" title="Source"/></col><col><state id="top-a" title="Top A"/></col><col><state id="top-b" title="Top B"/></col><col><state id="top-c" title="Top C"/></col><col><state id="top-d" title="Top D"/></col></row><row><col/><col><state id="mid-a" title="Mid A"/></col><col><state id="mid-b" title="Mid B"/></col><col><state id="mid-c" title="Mid C"/></col><col/></row><row><col/><col/><col/><col/><col><state id="destination" title="Destination"/></col></row></container><transition src="source" dst="destination" event="far"/></state-machine-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	_, arrow := umlStateAndArrowV1UMLTest(t, rawScene, "mid-b", "source", "destination")
+	minY := math.Inf(1)
+	maxY := math.Inf(-1)
+	for _, point := range arrow.Points {
+		y := arrow.Y + point[1]
+		minY = math.Min(minY, y)
+		maxY = math.Max(maxY, y)
+	}
+	if minY >= 80 && maxY <= 540 {
+		t.Fatalf("distant state-machine connector should use an outer detour: arrow=%#v minY=%.1f maxY=%.1f", arrow, minY, maxY)
+	}
+}
+
 func TestUMLStateMachineConceptLabelsReachEditableScene(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="960" height="520"><uml id="state"><state-machine-diagram direction="right"><initial id="start"/><state id="processing" title="Processing"><entry>reserve stock</entry><do>pack order</do><internal>timeout / notify operator</internal><exit>publish event</exit><region>fulfilment</region></state><choice id="result" title="Result"/><final id="done"/><transition src="start" dst="processing" event="created"/><transition src="processing" dst="result" event="paymentCaptured" guard="stock available" action="ship"/><transition src="result" dst="done" guard="ok"/><transition src="result" dst="processing" guard="retry"/></state-machine-diagram></uml></frame></frames></xaligo>`)
 	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
@@ -626,6 +656,17 @@ func assertArrowDoesNotCrossRectV1UMLTest(t *testing.T, arrow, rect *entity.Elem
 		start, end := absoluteArrowSegmentV1UMLTest(arrow, index)
 		if segmentIntersectsRectV1UMLTest(start[0], start[1], end[0], end[1], rect.X, rect.Y, rect.Width, rect.Height) {
 			t.Fatalf("connector crosses state: segment=%#v->%#v rect=%#v arrow=%#v", start, end, rect, arrow)
+		}
+	}
+}
+
+func assertArrowInsideFrameV1UMLTest(t *testing.T, arrow *entity.Element, frameX, frameY, frameW, frameH float64) {
+	t.Helper()
+	for index, point := range arrow.Points {
+		x := arrow.X + point[0]
+		y := arrow.Y + point[1]
+		if x < frameX || x > frameX+frameW || y < frameY || y > frameY+frameH {
+			t.Fatalf("arrow point %d is outside frame: point=(%.1f, %.1f) frame=(%.1f, %.1f, %.1f, %.1f) arrow=%#v", index, x, y, frameX, frameY, frameW, frameH, arrow)
 		}
 	}
 }

@@ -49,15 +49,19 @@ func connectionFrameAnchorV1EngineSceneConnectionRoute(conn *entity.Node, endpoi
 	return spec, true
 }
 
-func excalidrawConnectionPointsV1EngineSceneConnectionRoute(conn *entity.Node, srcRect, dstRect [4]float64, srcSide, dstSide, kind string, obstacles, hardObstacles []rectV1EngineRouteTypes, placed [][]segmentV1EngineRouteTypes, routePaths map[string][]ptV1EngineRouteTypes) []ptV1EngineRouteTypes {
+func excalidrawConnectionPointsV1EngineSceneConnectionRoute(conn *entity.Node, srcRect, dstRect [4]float64, srcSide, dstSide, kind string, obstacles, hardObstacles []rectV1EngineRouteTypes, routeBounds *rectV1EngineRouteTypes, placed [][]segmentV1EngineRouteTypes, routePaths map[string][]ptV1EngineRouteTypes) []ptV1EngineRouteTypes {
 	if points, ok := umlSequenceSelfMessagePointsV1EngineSceneConnectionRoute(conn, srcRect); ok {
 		return points
 	}
 	req := excalidrawRouteRequestV1EngineSceneConnectionRoute(conn, srcRect, dstRect, srcSide, dstSide, kind)
 	opt := defaultRouterOptionsV1EngineRouteTypes()
 	opt.HardObstacles = hardObstacles
+	opt.Bounds = routeBounds
 	local := filterObstaclesV1EngineRouteOverlap(obstacles, req)
 	path := routeOneV1EngineRoutePath(req, local, placed, opt)
+	if candidate, ok := stateMachineDistantOuterDetourV1EngineSceneConnectionRoute(conn, req, local, placed, opt); ok {
+		path.Points = candidate
+	}
 	followedRoute := false
 	if req.Kind == "traffic" {
 		if base, ok := matchingRoutePathV1EngineRouteBuild(req, routePaths); ok {
@@ -81,6 +85,40 @@ func excalidrawConnectionPointsV1EngineSceneConnectionRoute(conn *entity.Node, s
 	}
 	path.Points = enforceOrthogonalPolylineV1EngineRoutePath(path.Points)
 	return enforceHardObstacleExclusionV1EngineRouteBuild(req, path.Points, local, placed, opt)
+}
+
+func stateMachineDistantOuterDetourV1EngineSceneConnectionRoute(conn *entity.Node, req routeRequestV1EngineRouteTypes, obstacles []rectV1EngineRouteTypes, placed [][]segmentV1EngineRouteTypes, opt routerOptionsV1EngineRouteTypes) ([]ptV1EngineRouteTypes, bool) {
+	if conn == nil || conn.Attr("uml-diagram-kind") != "state-machine-diagram" || strings.TrimSpace(conn.Attr("uml-relation-kind")) != "transition" || opt.Bounds == nil || len(req.Bends) > 0 {
+		return nil, false
+	}
+	source, sourceStub, destination, destinationStub := routeEndpointStubsV1EngineRouteHardObstacle(req, opt)
+	dx := math.Abs(destination.X - source.X)
+	dy := math.Abs(destination.Y - source.Y)
+	if dx < 360 || dy < 160 {
+		return nil, false
+	}
+	railGap := math.Max(opt.Clearance+opt.LaneGap, 24)
+	candidates := [][]ptV1EngineRouteTypes{
+		{source, sourceStub, {X: sourceStub.X, Y: opt.Bounds.Y + railGap}, {X: destinationStub.X, Y: opt.Bounds.Y + railGap}, destinationStub, destination},
+		{source, sourceStub, {X: sourceStub.X, Y: opt.Bounds.Y + opt.Bounds.H - railGap}, {X: destinationStub.X, Y: opt.Bounds.Y + opt.Bounds.H - railGap}, destinationStub, destination},
+	}
+	var best []ptV1EngineRouteTypes
+	bestScore := math.Inf(1)
+	for _, candidate := range candidates {
+		candidate = simplifyRouteCandidateV1EngineRoutePath(candidate)
+		if !pathWithinBoundsV1EngineRoutePath(candidate, opt.Bounds) || obstacleHitCountV1EngineRouteCandidate(candidate, obstacles) > 0 {
+			continue
+		}
+		score := scorePathV1EngineRouteCandidate(candidate, obstacles, placed, opt.LineMargin)
+		if score < bestScore {
+			best = candidate
+			bestScore = score
+		}
+	}
+	if best == nil {
+		return nil, false
+	}
+	return best, true
 }
 
 func umlSequenceSelfMessagePointsV1EngineSceneConnectionRoute(conn *entity.Node, rect [4]float64) ([]ptV1EngineRouteTypes, bool) {
