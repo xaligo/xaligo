@@ -466,8 +466,8 @@ func validateUMLDiagramAttributesV1EngineParseUml(diagram *entity.Node) error {
 		if diagram.Tag != "activity-diagram" {
 			return fmt.Errorf("<%s> does not allow lanes", diagram.Tag)
 		}
-		if lanes != "vertical" {
-			return fmt.Errorf("<%s lanes=%q> must be vertical", diagram.Tag, lanes)
+		if lanes != "vertical" && lanes != "horizontal" {
+			return fmt.Errorf("<%s lanes=%q> must be vertical or horizontal", diagram.Tag, lanes)
 		}
 		diagram.Attrs["lanes"] = lanes
 	}

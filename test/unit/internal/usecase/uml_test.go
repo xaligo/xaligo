@@ -80,6 +80,67 @@ func TestUMLActivitySwimlanesReachEditableScene(t *testing.T) {
 	}
 }
 
+func TestUMLActivityHorizontalSwimlanesReachEditableScene(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="760" height="420"><uml id="activity"><activity-diagram direction="right" lanes="horizontal" theme="xaligo"><partition id="customer" title="Customer"><initial id="start"/><action id="choose" title="Choose amount" tone="primary"/></partition><partition id="atm" title="ATM"><action id="read" title="Read card"/><final id="done"/></partition><control-flow src="start" dst="choose"/><control-flow src="choose" dst="read"/><control-flow src="read" dst="done"/></activity-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var scene map[string]any
+	if err := json.Unmarshal(rawScene, &scene); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	elements, _ := scene["elements"].([]any)
+	var header map[string]any
+	for _, rawElement := range elements {
+		element, _ := rawElement.(map[string]any)
+		customData, _ := element["customData"].(map[string]any)
+		if customData["xaligoUmlPartitionHeader"] == true && customData["xaligoUmlPartitionId"] == "customer" {
+			header = element
+			break
+		}
+	}
+	if header == nil {
+		t.Fatalf("horizontal partition header missing: %s", rawScene)
+	}
+	width, _ := header["width"].(float64)
+	height, _ := header["height"].(float64)
+	if !(height > width) {
+		t.Fatalf("horizontal partition header = width %.1f height %.1f, want side header taller than wide", width, height)
+	}
+}
+
+func TestUMLActivityElementsSupportCrossFramePageLinks(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames>
+<frame id="overview" width="620" height="360"><uml id="start"><activity-diagram direction="right" lanes="horizontal"><partition id="actor" title="Actor"><action id="request" title="Request"/></partition></activity-diagram></uml><connection src="start/request" dst="detail.finish/done" src-frame-side="right" dst-frame-side="left"/></frame>
+<frame id="detail" width="620" height="360"><uml id="finish"><activity-diagram direction="right" lanes="horizontal"><partition id="system" title="System"><action id="done" title="Complete"/></partition></activity-diagram></uml></frame>
+</frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var scene map[string]any
+	if err := json.Unmarshal(rawScene, &scene); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	elements, _ := scene["elements"].([]any)
+	crossFrameArrows := 0
+	for _, rawElement := range elements {
+		element, _ := rawElement.(map[string]any)
+		customData, _ := element["customData"].(map[string]any)
+		if customData["xaligoCrossFrame"] != true {
+			continue
+		}
+		crossFrameArrows++
+		if customData["xaligoConnectorSourceFrameSide"] != "right" || customData["xaligoConnectorDestinationFrameSide"] != "left" {
+			t.Fatalf("cross-frame activity sides = %#v", customData)
+		}
+	}
+	if crossFrameArrows != 2 {
+		t.Fatalf("cross-frame activity arrows = %d, want two page-local stubs: %s", crossFrameArrows, rawScene)
+	}
+}
+
 func TestUMLGuardLabelsDoNotOverlapTheirConnectorSegment(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="420" height="320"><uml id="activity"><activity-diagram direction="down"><action id="one" title="One"/><action id="two" title="Two"/><control-flow src="one" dst="two" guard="next step"/></activity-diagram></uml></frame></frames></xaligo>`)
 	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})

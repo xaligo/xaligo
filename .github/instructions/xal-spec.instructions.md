@@ -623,7 +623,7 @@ connection form.
 | `composite-structure-diagram` | `structure`, `collaboration`, `part`, `port`, `component` | `connector`, `assembly`, `delegation`, `dependency` | Requires a part or port. Parts/ports require typed owners. Connector endpoints are parts/ports, assembly is port to port, and delegation starts at a port. |
 | `profile-diagram` | `profile`, `stereotype`, `metaclass` | `extension`, `reference`, `generalization` | Requires a profile and stereotype. Extension is stereotype to metaclass; generalization is stereotype to stereotype. |
 | `use-case-diagram` | `actor`, `use-case`, `system-boundary` | `association`, `include`, `extend`, `generalization` | Requires a use case. Association joins actor and use-case; include/extend join use-cases; generalization joins equal actor/use-case kinds. |
-| `activity-diagram` | `initial`, `final`, `activity`, `action`, `decision`, `merge`, `fork`, `join`, `object-node`; optional `partition` containers | `control-flow`, `object-flow` | Requires an activity/action. Control-flow excludes object-node. Object-flow requires an object-node endpoint. Initial/final direction and control-node degrees are validated. `lanes="vertical"`, `theme="xaligo"`, partition swimlanes, and loop flow metadata are supported. |
+| `activity-diagram` | `initial`, `final`, `activity`, `action`, `decision`, `merge`, `fork`, `join`, `object-node`; optional `partition` containers | `control-flow`, `object-flow` | Requires an activity/action. Control-flow excludes object-node. Object-flow requires an object-node endpoint. Initial/final direction and control-node degrees are validated. `lanes="vertical|horizontal"`, `theme="xaligo"`, partition swimlanes, and loop flow metadata are supported. |
 | `state-machine-diagram` | `initial`, `final`, `state`, `history`, `choice`, `fork`, `join` | `transition` | Requires a state. Initial/final direction and pseudostate degrees are validated. |
 | `sequence-diagram` | `participant`, `lifeline` | `message`, `return-message`, `create-message`, `destroy-message` | Requires a participant/lifeline. Every message has a diagram-unique order. Create/destroy cannot be self messages. |
 | `communication-diagram` | `object`, `participant` | `link`, `message` | Requires two participants, one link, and one message. Every message has a unique order and matching unordered link pair. |
@@ -635,12 +635,12 @@ pair not described by its row is a validation error.
 
 ### Activity partitions and swimlanes
 
-An `activity-diagram` may use `lanes="vertical"` to render vertical
-responsibility swimlanes. With lanes enabled, `theme="xaligo"` applies the
+An `activity-diagram` may use `lanes="vertical"` or `lanes="horizontal"` to
+render responsibility swimlanes. With lanes enabled, `theme="xaligo"` applies the
 xaligo logo palette: `#08b8ea` for lane headers and primary actions,
 `#052d6e` for activity text/borders, and `#04b79f` reserved for follow-up
 object-flow/success accents. The only accepted V1 values are
-`lanes="vertical"` and `theme="xaligo"`; other values are errors.
+`lanes="vertical|horizontal"` and `theme="xaligo"`; other values are errors.
 
 Each `<partition>` must be a direct child of `<activity-diagram>` and must
 have a stable `id` and non-empty `title`. A partition contains only activity
@@ -668,10 +668,15 @@ partition ID; any other `lane` value is a validation error. Partition IDs use
 the same local UML identifier restrictions as element IDs and must be unique
 within the activity diagram.
 
-Partitioned activities are laid out with equal-width vertical lanes, a top
-lane-header band, and each node centered within its owning lane. `tone="primary"`
-on `activity` or `action` uses the primary xaligo fill and white text. The
-partition ID and title are retained in editable-scene custom data.
+Partitioned activities with `lanes="vertical"` are laid out with equal-width
+vertical lanes and a top lane-header band. With `lanes="horizontal"`, partitions
+become equal-height horizontal lanes with a left lane-header band. In both
+orientations, each node is centered within its owning lane. `tone="primary"` on
+`activity` or `action` uses the primary xaligo fill and white text. The partition
+ID and title are retained in editable-scene custom data. Normal frame-level
+`<connection>` elements may target activity elements by public UML reference
+such as `activity-id/action-id`, including `frame-id.activity-id/action-id` for
+cross-frame page links.
 
 ### Ownership
 

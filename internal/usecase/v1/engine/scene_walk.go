@@ -322,6 +322,10 @@ func appendUMLActivityPartitionsV1EngineSceneWalk(box *entity.Box, elements *[]m
 	if len(partitions) == 0 {
 		return
 	}
+	if strings.TrimSpace(box.Attrs["layout"]) == "horizontal" || strings.TrimSpace(box.Attrs["lanes"]) == "horizontal" {
+		appendUMLActivityHorizontalPartitionsV1EngineSceneWalk(box, elements, updated, partitions)
+		return
+	}
 	innerX, innerY := box.X+8, box.Y+40
 	innerW, innerH := math.Max(1, box.W-16), math.Max(1, box.H-48)
 	headerH := math.Min(44, innerH*0.2)
@@ -370,6 +374,70 @@ func appendUMLActivityPartitionsV1EngineSceneWalk(box *entity.Box, elements *[]m
 			"id": textID, "type": "text",
 			"x": x + 4, "y": innerY + 8,
 			"width": math.Max(1, width-8), "height": math.Max(1, headerH-12),
+			"angle": 0, "strokeColor": "#ffffff", "backgroundColor": "transparent",
+			"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
+			"roughness": 0, "opacity": 100,
+			"groupIds": []string{}, "roundness": nil,
+			"seed": textSeed, "version": 1, "versionNonce": textSeed,
+			"isDeleted": false, "boundElements": nil,
+			"updated": updated, "link": nil, "locked": false,
+			"text": partition.title, "fontSize": 18, "fontFamily": 2,
+			"textAlign": "center", "verticalAlign": "middle",
+			"containerId": nil, "originalText": partition.title, "lineHeight": 1.2,
+			"customData": map[string]any{"xaligoUmlPartitionHeaderContent": true, "xaligoTextLayout": sceneTextLayoutV1EngineSceneBuild(entity.TextRoleGroupHeader, false, 1.2)},
+		})
+	}
+}
+
+func appendUMLActivityHorizontalPartitionsV1EngineSceneWalk(box *entity.Box, elements *[]map[string]any, updated int64, partitions []umlActivityPartitionV1EngineSceneWalk) {
+	innerX, innerY := box.X+8, box.Y+40
+	innerW, innerH := math.Max(1, box.W-16), math.Max(1, box.H-48)
+	headerW := math.Min(132, innerW*0.24)
+	laneH := innerH / float64(len(partitions))
+	for index, partition := range partitions {
+		y := innerY + float64(index)*laneH
+		height := laneH
+		if index == len(partitions)-1 {
+			height = innerY + innerH - y
+		}
+		backgroundID := fmt.Sprintf("%s-partition-%s-bg", box.ID, partition.id)
+		backgroundSeed := stableSceneSeedV1EngineSceneTypes(backgroundID)
+		backgroundColor := "#ffffff"
+		if index%2 == 1 {
+			backgroundColor = "#f8fbff"
+		}
+		*elements = append(*elements, map[string]any{
+			"id": backgroundID, "type": "rectangle",
+			"x": innerX, "y": y, "width": innerW, "height": height,
+			"angle": 0, "strokeColor": "#052d6e", "backgroundColor": backgroundColor,
+			"fillStyle": "solid", "strokeWidth": 1.15, "strokeStyle": "solid",
+			"roughness": 0, "opacity": 100,
+			"groupIds": []string{}, "roundness": nil,
+			"seed": backgroundSeed, "version": 1, "versionNonce": backgroundSeed,
+			"isDeleted": false, "boundElements": nil,
+			"updated": updated, "link": nil, "locked": false,
+			"customData": map[string]any{"xaligoUmlPartition": true, "xaligoUmlPartitionId": partition.id, "xaligoUmlPartitionTitle": partition.title},
+		})
+		headerID := fmt.Sprintf("%s-partition-%s-header", box.ID, partition.id)
+		headerSeed := stableSceneSeedV1EngineSceneTypes(headerID)
+		*elements = append(*elements, map[string]any{
+			"id": headerID, "type": "rectangle",
+			"x": innerX, "y": y, "width": headerW, "height": height,
+			"angle": 0, "strokeColor": "#052d6e", "backgroundColor": "#08b8ea",
+			"fillStyle": "solid", "strokeWidth": 1.25, "strokeStyle": "solid",
+			"roughness": 0, "opacity": 100,
+			"groupIds": []string{}, "roundness": nil,
+			"seed": headerSeed, "version": 1, "versionNonce": headerSeed,
+			"isDeleted": false, "boundElements": nil,
+			"updated": updated, "link": nil, "locked": false,
+			"customData": map[string]any{"xaligoUmlPartitionHeader": true, "xaligoUmlPartitionId": partition.id, "xaligoUmlPartitionTitle": partition.title},
+		})
+		textID := fmt.Sprintf("%s-partition-%s-title", box.ID, partition.id)
+		textSeed := stableSceneSeedV1EngineSceneTypes(textID)
+		*elements = append(*elements, map[string]any{
+			"id": textID, "type": "text",
+			"x": innerX + 4, "y": y + 8,
+			"width": math.Max(1, headerW-8), "height": math.Max(1, height-16),
 			"angle": 0, "strokeColor": "#ffffff", "backgroundColor": "transparent",
 			"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
 			"roughness": 0, "opacity": 100,
