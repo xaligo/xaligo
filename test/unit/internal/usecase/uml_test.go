@@ -437,6 +437,33 @@ func TestUMLComponentPortsAttachToOwners(t *testing.T) {
 	}
 }
 
+func TestUMLComponentRendersComponentNotation(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="640" height="360"><uml id="components"><component-diagram><component id="service" title="Order Service"/></component-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var raw map[string]any
+	if err := json.Unmarshal(rawScene, &raw); err != nil {
+		t.Fatalf("json.Unmarshal(raw map) error = %v", err)
+	}
+	elements, _ := raw["elements"].([]any)
+	adornmentCount := 0
+	for _, rawElement := range elements {
+		element, _ := rawElement.(map[string]any)
+		customData, _ := element["customData"].(map[string]any)
+		if customData["xaligoUmlComponentAdornment"] == true {
+			adornmentCount++
+			if element["strokeColor"] != "#052d6e" || element["backgroundColor"] != "#ffffff" {
+				t.Fatalf("component adornment style = stroke %q background %q", element["strokeColor"], element["backgroundColor"])
+			}
+		}
+	}
+	if adornmentCount != 2 {
+		t.Fatalf("component adornment count = %d, want 2", adornmentCount)
+	}
+}
+
 func TestUMLStateMachineFinalRendersFinalDot(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="760" height="420"><uml id="state"><state-machine-diagram><initial id="start"/><state id="open" title="Open"/><final id="done"/><transition src="start" dst="open"/><transition src="open" dst="done"/></state-machine-diagram></uml></frame></frames></xaligo>`)
 	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})

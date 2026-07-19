@@ -234,6 +234,13 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 				backgroundColor = umlClassShapeBackgroundV1EngineSceneWalk(b)
 				fillStyle = "solid"
 			}
+			componentShape := isXaligoComponentDiagramShapeV1EngineSceneWalk(b)
+			if componentShape {
+				genStroke = "#052d6e"
+				strokeWidth = 1.35
+				backgroundColor = "#ffffff"
+				fillStyle = "solid"
+			}
 			stateMachineShape := isXaligoStateMachineShapeV1EngineSceneWalk(b)
 			if stateMachineShape {
 				genStroke = "#052d6e"
@@ -276,6 +283,9 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 				}
 				if isXaligoStateMachineStateShapeV1EngineSceneWalk(b) {
 					appendUMLStateMachineCompartmentsV1EngineSceneWalk(b, elements, updated)
+				}
+				if isXaligoComponentShapeV1EngineSceneWalk(b) {
+					appendUMLComponentAdornmentV1EngineSceneWalk(b, elements, updated)
 				}
 				if b.Tag == "entity" {
 					registerConnectionEndpointV1EngineSceneWalk(b, rectID, [4]float64{b.X, b.Y, b.W, b.H}, itemImgRects, itemImgIDs)
@@ -517,6 +527,14 @@ func isXaligoActivityShapeV1EngineSceneWalk(box *entity.Box) bool {
 
 func isXaligoClassShapeV1EngineSceneWalk(box *entity.Box) bool {
 	return box != nil && box.Tag == "rectangle" && box.Attrs["uml-diagram-kind"] == "class-diagram"
+}
+
+func isXaligoComponentDiagramShapeV1EngineSceneWalk(box *entity.Box) bool {
+	return box != nil && box.Tag == "rectangle" && box.Attrs["uml-diagram-kind"] == "component-diagram"
+}
+
+func isXaligoComponentShapeV1EngineSceneWalk(box *entity.Box) bool {
+	return isXaligoComponentDiagramShapeV1EngineSceneWalk(box) && strings.TrimSpace(box.Attrs["uml-element-kind"]) == "component"
 }
 
 func isXaligoStateMachineShapeV1EngineSceneWalk(box *entity.Box) bool {
@@ -916,10 +934,37 @@ func umlShapeTextColorV1EngineSceneWalk(box *entity.Box) string {
 	if isXaligoClassShapeV1EngineSceneWalk(box) {
 		return "#052d6e"
 	}
+	if isXaligoComponentDiagramShapeV1EngineSceneWalk(box) {
+		return "#052d6e"
+	}
 	if isXaligoStateMachineShapeV1EngineSceneWalk(box) {
 		return "#052d6e"
 	}
 	return tableTextColorV1EngineSceneWalk(box)
+}
+
+func appendUMLComponentAdornmentV1EngineSceneWalk(box *entity.Box, elements *[]map[string]any, updated int64) {
+	markW := math.Min(20, math.Max(12, box.W*0.08))
+	markH := math.Min(12, math.Max(8, box.H*0.08))
+	x := box.X + 10
+	y := box.Y + math.Max(10, box.H*0.16)
+	gap := math.Max(4, markH*0.45)
+	for index := 0; index < 2; index++ {
+		id := fmt.Sprintf("%s-component-adornment-%d", box.ID, index)
+		seed := stableSceneSeedV1EngineSceneTypes(id)
+		*elements = append(*elements, map[string]any{
+			"id": id, "type": "rectangle",
+			"x": x, "y": y + float64(index)*(markH+gap), "width": markW, "height": markH,
+			"angle": 0, "strokeColor": "#052d6e", "backgroundColor": "#ffffff",
+			"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
+			"roughness": 0, "opacity": 100,
+			"groupIds": []string{}, "roundness": nil,
+			"seed": seed, "version": 1, "versionNonce": seed,
+			"isDeleted": false, "boundElements": nil,
+			"updated": updated, "link": nil, "locked": false,
+			"customData": map[string]any{"xaligoUmlComponentAdornment": true},
+		})
+	}
 }
 
 func groupHeaderYAvoidingFrameMetadataV1EngineSceneWalk(y, height float64, frame *entity.Box) float64 {
