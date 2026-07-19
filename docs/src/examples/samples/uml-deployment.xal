@@ -28,7 +28,7 @@
             <property>OCI image</property>
           </artifact>
           <component id="migration" title="Schema Migrator">
-            <responsibility>Apply database migrations</responsibility>
+            <interface title="Migration runner" />
           </component>
 
           <communication-path src="browser" dst="edge" title="HTTPS / 443" />

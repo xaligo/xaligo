@@ -7,7 +7,7 @@
         <composite-structure-diagram direction="right">
           <structure id="checkout" title="Checkout">
             <property>session: CheckoutSession</property>
-            <required-interface>Payment Authorization</required-interface>
+            <property>requires Payment Authorization</property>
           </structure>
           <collaboration id="checkout-rules" title="Checkout Collaboration" />
           <part id="cart" owner="checkout" title="cart: Cart">
