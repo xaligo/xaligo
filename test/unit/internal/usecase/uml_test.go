@@ -105,6 +105,29 @@ func TestUMLActivityHidesRedundantContainerBorderAndTitle(t *testing.T) {
 	}
 }
 
+func TestUMLClassHidesRedundantContainerBorderAndTitle(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" title="Class Model" width="760" height="420"><uml id="classes" title="Domain Classes"><class-diagram><class id="user" title="User"><attribute>- id: int</attribute><operation>+ login()</operation></class></class-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var scene map[string]any
+	if err := json.Unmarshal(rawScene, &scene); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	elements, _ := scene["elements"].([]any)
+	for _, rawElement := range elements {
+		element, _ := rawElement.(map[string]any)
+		customData, _ := element["customData"].(map[string]any)
+		if element["type"] == "rectangle" && customData["xaligoUmlDiagramKind"] == "class-diagram" && customData["xaligoUmlElementKind"] == nil {
+			t.Fatalf("class container border should not render: %#v", element)
+		}
+		if element["type"] == "text" && element["text"] == "Domain Classes" {
+			t.Fatalf("class container title should not render when frame metadata can carry the title: %#v", element)
+		}
+	}
+}
+
 func TestUMLActivityHorizontalSwimlanesReachEditableScene(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="760" height="420"><uml id="activity"><activity-diagram direction="right" lanes="horizontal" theme="xaligo"><partition id="customer" title="Customer"><initial id="start"/><action id="choose" title="Choose amount" tone="primary"/></partition><partition id="atm" title="ATM"><action id="read" title="Read card"/><final id="done"/></partition><control-flow src="start" dst="choose"/><control-flow src="choose" dst="read"/><control-flow src="read" dst="done"/></activity-diagram></uml></frame></frames></xaligo>`)
 	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
@@ -403,7 +426,7 @@ func TestUMLClassStereotypeAndModifiersReachEditableScene(t *testing.T) {
 }
 
 func TestUMLClassDiagramSupportsPackageGroups(t *testing.T) {
-	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="classes"><class-diagram><package id="identity" title="Identity"><class id="user" title="User"><attribute>- id: int</attribute><operation>+ login()</operation></class><class id="session" title="Session"><attribute>- token: string</attribute></class><association src="user" dst="session" label="1 -> *"/></package></class-diagram></uml></frame></frames></xaligo>`)
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="900" height="520"><uml id="classes"><class-diagram grid="1"><package id="identity" title="Identity" grid="2"><class id="user" title="User"><attribute>- id: int</attribute><operation>+ login()</operation></class><class id="session" title="Session"><attribute>- token: string</attribute></class><association src="user" dst="session" label="1 -> *"/></package><package id="billing" title="Billing"><class id="invoice" title="Invoice"><attribute>- id: UUID</attribute><operation>+ issue()</operation></class></package></class-diagram></uml></frame></frames></xaligo>`)
 	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
 		t.Fatalf("RenderExcalidraw() error = %v", err)
@@ -413,8 +436,9 @@ func TestUMLClassDiagramSupportsPackageGroups(t *testing.T) {
 		t.Fatalf("json.Unmarshal() error = %v", err)
 	}
 	classCount := 0
-	foundPackage := false
+	packageCount := 0
 	foundRelation := false
+	var packageWidths []float64
 	for _, element := range scene.Elements {
 		if element.CustomData == nil {
 			continue
@@ -422,15 +446,21 @@ func TestUMLClassDiagramSupportsPackageGroups(t *testing.T) {
 		if element.CustomData.UMLElementKind == "class" {
 			classCount++
 		}
-		if element.CustomData.UMLElementKind == "package" || element.CustomData.GroupBorder {
-			foundPackage = true
+		if element.CustomData.GroupBorder {
+			packageCount++
+			packageWidths = append(packageWidths, element.Width)
 		}
 		if element.CustomData.UMLRelationKind == "association" {
 			foundRelation = true
 		}
 	}
-	if classCount != 2 || !foundPackage || !foundRelation {
-		t.Fatalf("package class diagram scene = classes %d package %t relation %t: %#v", classCount, foundPackage, foundRelation, scene.Elements)
+	if classCount != 3 || packageCount != 2 || !foundRelation {
+		t.Fatalf("package class diagram scene = classes %d packages %d relation %t: %#v", classCount, packageCount, foundRelation, scene.Elements)
+	}
+	for _, width := range packageWidths {
+		if width < 700 {
+			t.Fatalf("package width %.1f is not optimized to its grid cell: %#v", width, scene.Elements)
+		}
 	}
 }
 

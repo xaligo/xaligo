@@ -70,12 +70,17 @@ Class diagrams also accept `<package id="..." title="...">` as a grouping
 container around classifiers and package-local relations. Packages render with
 the same general-group visual language used elsewhere in xaligo while contained
 classifiers keep their frame-local `id` references.
+Set `grid="N"` on `<class-diagram>` or a class-diagram `<package>` to choose
+the classifier/package column count. Package boxes expand to the assigned grid
+cell so grouped classifiers use the frame area instead of floating in a small
+cluster.
 
 Class diagrams use compact multi-row classifier placement by default so boxes
 read as independent UML classifiers instead of full-width layout panels. The
 default theme follows the xaligo activity-diagram palette: deep blue borders,
 xaligo-cyan classifier headers, white classifier bodies, and deep blue relation
-lines.
+lines. The UML container itself does not render an outer border or title;
+document titles should be carried by frame metadata when needed.
 
 The generic `<element>` and `<relation>` spellings are not valid in the strict
 profile. Use the typed tags in the following table.

@@ -215,10 +215,13 @@ func normalizeUMLComponentV1EngineParseUml(uml, frame *entity.Node, models map[s
 	if len(diagram.Children) == 0 {
 		return &entity.ParseError{Position: diagram.Position, Err: fmt.Errorf("<%s> must contain UML elements", diagram.Tag)}
 	}
-	if uml.Attr("title") == "" {
+	if uml.Attr("title") == "" && diagram.Tag != "class-diagram" {
 		uml.Attrs["title"] = strings.TrimSuffix(diagram.Tag, "-diagram")
 	}
 	uml.Attrs["uml-kind"] = diagram.Tag
+	if diagram.Tag == "class-diagram" && strings.TrimSpace(uml.Attr("grid")) == "" && strings.TrimSpace(diagram.Attr("grid")) != "" {
+		uml.Attrs["grid"] = strings.TrimSpace(diagram.Attr("grid"))
+	}
 	if uml.Attr("layout") == "" {
 		if diagram.Attr("direction") == "right" || diagram.Tag == "sequence-diagram" || diagram.Tag == "timing-diagram" {
 			uml.Attrs["layout"] = "horizontal"

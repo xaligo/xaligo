@@ -2,9 +2,9 @@
   <data></data>
   <frames>
     <frame id="class" width="1440" height="760" class="pa-3">
-      <uml id="domain-model" title="Ordering Domain">
-        <class-diagram direction="right">
-          <package id="infrastructure" title="Infrastructure">
+      <uml id="domain-model">
+        <class-diagram direction="right" grid="2">
+          <package id="infrastructure" title="Infrastructure" grid="2">
             <interface id="repository" title="OrderRepository" stereotype="repository">
               <operation>+ save(order: Order)</operation>
               <operation>+ find(id: UUID): Order</operation>
@@ -15,7 +15,7 @@
               <operation>+ find(id: UUID): Order</operation>
             </class>
           </package>
-          <package id="domain" title="Domain Model">
+          <package id="domain" title="Domain Model" grid="2">
             <class id="customer" title="Customer">
               <attribute>- id: UUID</attribute>
               <attribute>- name: String</attribute>

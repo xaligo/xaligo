@@ -215,6 +215,8 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 				backgroundColor = configured
 			}
 			activityContainer := isUMLActivityContainerV1EngineSceneWalk(b)
+			classContainer := isUMLClassContainerV1EngineSceneWalk(b)
+			hiddenUMLContainer := activityContainer || classContainer
 			if activityContainer {
 				genStroke = "#052d6e"
 				strokeWidth = 1.5
@@ -233,7 +235,7 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 				backgroundColor = umlClassShapeBackgroundV1EngineSceneWalk(b)
 				fillStyle = "solid"
 			}
-			if !activityContainer {
+			if !hiddenUMLContainer {
 				boundElements := any(nil)
 				shapeCustomData := umlShapeCustomDataV1EngineSceneWalk(b)
 				if b.Label != "" {
@@ -270,7 +272,7 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 					registerConnectionEndpointV1EngineSceneWalk(b, rectID, [4]float64{b.X, b.Y, b.W, b.H}, itemImgRects, itemImgIDs)
 				}
 			}
-			if !activityContainer && b.Label != "" && !isXaligoClassShapeV1EngineSceneWalk(b) {
+			if !hiddenUMLContainer && b.Label != "" && !isXaligoClassShapeV1EngineSceneWalk(b) {
 				fontSize := attrFloatV1EngineLayoutAttributes(b.Attrs["font-size"], 20)
 				textX, textY := b.X+4, b.Y+2
 				textW, textH := math.Max(1, b.W-8), math.Max(1, math.Min(math.Ceil(fontSize*1.2), b.H-4))
@@ -499,6 +501,10 @@ func isXaligoClassShapeV1EngineSceneWalk(box *entity.Box) bool {
 
 func isUMLActivityContainerV1EngineSceneWalk(box *entity.Box) bool {
 	return box != nil && box.Tag == "uml" && box.Attrs["uml-kind"] == "activity-diagram"
+}
+
+func isUMLClassContainerV1EngineSceneWalk(box *entity.Box) bool {
+	return box != nil && box.Tag == "uml" && box.Attrs["uml-kind"] == "class-diagram"
 }
 
 func umlActivityShapeBackgroundV1EngineSceneWalk(box *entity.Box) string {
