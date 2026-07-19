@@ -1,43 +1,48 @@
 <xaligo version="1">
   <data></data>
   <frames>
-    <frame id="activity" title="Order Fulfilment Activity" version="2026.07" width="1800" height="900" class="pa-3" margin-top="48">
+    <frame id="activity" title="ATM Withdrawal Activity" version="2026.07" width="960" height="1160" class="pa-3" margin-top="48">
       <metadata align="right" width="156" key-width="56" font-size="12" />
-      <uml id="fulfilment-activity">
-        <activity-diagram direction="right">
-          <initial id="start" title="Start" />
-          <action id="receive" title="Receive order">
-            <responsibility>Accept the checkout command</responsibility>
-          </action>
-          <action id="validate" title="Validate order">
-            <constraint>At least one order line exists</constraint>
-          </action>
-          <object-node id="validated-order" title="Validated Order" />
-          <decision id="valid" title="Order valid?" />
-          <action id="reject" title="Reject order" />
-          <fork id="fulfilment-fork" title="Fork" />
-          <action id="reserve" title="Reserve inventory" />
-          <action id="authorize" title="Authorize payment" />
-          <join id="fulfilment-join" title="Join" />
-          <action id="dispatch" title="Dispatch order" />
-          <merge id="completion" title="Merge outcome" />
-          <final id="done" title="Completed" />
+      <uml id="atm-withdrawal" title="ATM Withdrawal Process">
+        <activity-diagram direction="down" theme="xaligo" lanes="vertical">
+          <partition id="customer" title="Customer">
+            <initial id="start" />
+            <action id="start-session" title="Start session" tone="primary" />
+            <action id="enter-pin" title="Enter PIN" />
+            <action id="enter-amount" title="Enter amount" />
+            <action id="take-cash" title="Take cash" tone="primary" />
+            <final id="done" />
+          </partition>
 
-          <control-flow src="start" dst="receive" />
-          <control-flow src="receive" dst="validate" />
-          <object-flow src="validate" dst="validated-order" title="result" />
-          <control-flow src="validate" dst="valid" />
-          <control-flow src="valid" dst="reject" guard="no" />
-          <control-flow src="reject" dst="completion" />
-          <control-flow src="valid" dst="fulfilment-fork" guard="yes" />
-          <object-flow src="validated-order" dst="reserve" title="order" />
-          <control-flow src="fulfilment-fork" dst="reserve" />
-          <control-flow src="fulfilment-fork" dst="authorize" />
-          <control-flow src="reserve" dst="fulfilment-join" />
-          <control-flow src="authorize" dst="fulfilment-join" />
-          <control-flow src="fulfilment-join" dst="dispatch" />
-          <control-flow src="dispatch" dst="completion" />
-          <control-flow src="completion" dst="done" />
+          <partition id="atm" title="ATM">
+            <action id="request-pin" title="Request PIN" tone="primary" />
+            <decision id="pin-valid" title="PIN valid?" />
+            <action id="process-pin" title="Process PIN" />
+            <action id="request-amount" title="Request withdrawal amount" tone="primary" />
+            <decision id="amount-valid" title="Amount valid?" />
+            <action id="process-withdrawal" title="Process withdrawal" />
+          </partition>
+
+          <partition id="bank" title="Bank">
+            <action id="approve-card" title="Approve card" />
+            <action id="approve-withdrawal" title="Approve withdrawal" />
+          </partition>
+
+          <control-flow src="start" dst="start-session" />
+          <control-flow src="start-session" dst="request-pin" />
+          <control-flow src="request-pin" dst="enter-pin" />
+          <control-flow src="enter-pin" dst="process-pin" guard="PIN entered" />
+          <control-flow src="process-pin" dst="pin-valid" />
+          <control-flow src="pin-valid" dst="request-pin" guard="invalid PIN" route="loop" />
+          <control-flow src="pin-valid" dst="approve-card" guard="valid PIN" />
+          <control-flow src="approve-card" dst="request-amount" />
+          <control-flow src="request-amount" dst="enter-amount" />
+          <control-flow src="enter-amount" dst="amount-valid" guard="amount entered" />
+          <control-flow src="amount-valid" dst="request-amount" guard="invalid amount" route="loop" />
+          <control-flow src="amount-valid" dst="approve-withdrawal" guard="valid amount" />
+          <control-flow src="approve-withdrawal" dst="process-withdrawal" />
+          <control-flow src="process-withdrawal" dst="take-cash" />
+          <control-flow src="take-cash" dst="done" />
         </activity-diagram>
       </uml>
     </frame>

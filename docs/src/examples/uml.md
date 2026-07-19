@@ -1,34 +1,74 @@
 # UML Diagrams
 
-These examples are complete `.xal` files rendered through the same validation,
-layout, scene, and SVG pipeline used by the CLI. Syntax details live in the
-[UML Reference](../reference/uml.md); this page stays as a compact sample index.
+These examples use the supported core UML strict V1 tags. Each source is
+validated and rendered through the same pipeline used by the CLI.
 
-## Gallery
+## Class diagram
 
-![All UML diagram families](../images/uml-all.svg)
+Classes, interfaces, enumerations, typed compartments, realization, and
+multiplicity-bearing associations.
 
-The combined source is useful as a renderer smoke test:
-[samples/uml-all.xal](samples/uml-all.xal).
+![Class diagram](../images/uml-class.svg)
 
-## Individual samples
+```xml
+{{#include samples/uml-class.xal}}
+```
 
-| Diagram | Source | Preview |
-|---|---|---|
-| Class | [samples/uml-class.xal](samples/uml-class.xal) | [SVG](../images/uml-class.svg) |
-| Component | [samples/uml-component.xal](samples/uml-component.xal) | [SVG](../images/uml-component.svg) |
-| Deployment | [samples/uml-deployment.xal](samples/uml-deployment.xal) | [SVG](../images/uml-deployment.svg) |
-| Package | [samples/uml-package.xal](samples/uml-package.xal) | [SVG](../images/uml-package.svg) |
-| Composite structure | [samples/uml-composite-structure.xal](samples/uml-composite-structure.xal) | [SVG](../images/uml-composite-structure.svg) |
-| Activity | [samples/uml-activity.xal](samples/uml-activity.xal) | [SVG](../images/uml-activity.svg) |
-| State machine | [samples/uml-state-machine.xal](samples/uml-state-machine.xal) | [SVG](../images/uml-state-machine.svg) |
-| Sequence | [samples/uml-sequence.xal](samples/uml-sequence.xal) | [SVG](../images/uml-sequence.svg) |
-| Communication | [samples/uml-communication.xal](samples/uml-communication.xal) | [SVG](../images/uml-communication.svg) |
-| Timing | [samples/uml-timing.xal](samples/uml-timing.xal) | [SVG](../images/uml-timing.svg) |
+## Component diagram
 
-## Render one sample
+Components, artifacts, provided interfaces, associations, dependencies, and
+automatic interface/fan-out-based component heights. Diagram-level
+`component-width` and `component-height` provide defaults; per-component
+`width` and `height` override them. The Order Workflow component also shows
+`interface-width`, which gives every interface name in that component one
+shared width while descriptions use the remaining space.
 
-```bash
-go run ./cmd validate docs/src/examples/samples/uml-sequence.xal
-go run ./cmd render docs/src/examples/samples/uml-sequence.xal --format svg -o output/uml-sequence.svg
+![Component diagram](../images/uml-component.svg)
+
+```xml
+{{#include samples/uml-component.xal}}
+```
+
+## Activity diagram
+
+ATM withdrawal swimlanes with supported activity partitions, decisions,
+guards, loop routes, and the xaligo activity theme.
+
+![Activity diagram](../images/uml-activity.svg)
+
+```xml
+{{#include samples/uml-activity.xal}}
+```
+
+## Activity diagram - horizontal swimlanes
+
+The same ATM withdrawal flow arranged as horizontal swimlanes for wide process
+views.
+
+![Horizontal activity diagram](../images/uml-activity-horizontal.svg)
+
+```xml
+{{#include samples/uml-activity-horizontal.xal}}
+```
+
+## State-machine diagram
+
+States, initial/final pseudostates, transitions, guards, and state
+compartments.
+
+![State-machine diagram](../images/uml-state-machine.svg)
+
+```xml
+{{#include samples/uml-state-machine.xal}}
+```
+
+## Sequence diagram
+
+Participants/lifelines and ordered call, self, create, return, and destroy
+messages.
+
+![Sequence diagram](../images/uml-sequence.svg)
+
+```xml
+{{#include samples/uml-sequence.xal}}
 ```

@@ -36,6 +36,7 @@ type routeRequestV1EngineRouteTypes struct {
 	DstProfile string
 	Bends      []ptV1EngineRouteTypes
 	Grid       float64
+	HardAvoid  bool
 }
 
 type routedPathV1EngineRouteTypes struct {

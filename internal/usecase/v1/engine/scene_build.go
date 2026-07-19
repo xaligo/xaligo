@@ -157,6 +157,7 @@ type umlComponentInterfaceEndpointsV1EngineSceneBuild struct {
 
 type umlComponentInterfaceEndpointGroupV1EngineSceneBuild struct {
 	ownerKey     string
+	ownerLocalID string
 	label        string
 	baseKey      string
 	baseID       string
@@ -191,6 +192,7 @@ func registerUMLComponentInterfaceEndpointsV1EngineSceneBuild(elements []map[str
 			continue
 		}
 		ownerKey, _ := customData["xaligoUmlComponentOwnerConnectionKey"].(string)
+		ownerLocalID, _ := customData["xaligoUmlComponentOwnerLocalId"].(string)
 		label, _ := customData["xaligoUmlComponentInterfaceLabel"].(string)
 		id, _ := element["id"].(string)
 		if ownerKey == "" || label == "" || id == "" {
@@ -210,7 +212,7 @@ func registerUMLComponentInterfaceEndpointsV1EngineSceneBuild(elements []map[str
 		if result.byOwner[ownerKey] == nil {
 			result.byOwner[ownerKey] = map[string]*umlComponentInterfaceEndpointGroupV1EngineSceneBuild{}
 		}
-		group := &umlComponentInterfaceEndpointGroupV1EngineSceneBuild{ownerKey: ownerKey, label: label, baseKey: endpointKey, baseID: id, baseRect: [4]float64{x, y, w, h}, ownerRect: endpointRects[ownerKey], portRect: portRects[endpointKey], endpointKeys: []string{endpointKey}}
+		group := &umlComponentInterfaceEndpointGroupV1EngineSceneBuild{ownerKey: ownerKey, ownerLocalID: ownerLocalID, label: label, baseKey: endpointKey, baseID: id, baseRect: [4]float64{x, y, w, h}, ownerRect: endpointRects[ownerKey], portRect: portRects[endpointKey], endpointKeys: []string{endpointKey}}
 		result.byOwner[ownerKey][label] = group
 		result.byKey[endpointKey] = group
 	}
@@ -221,6 +223,7 @@ func expandUMLComponentInterfaceEndpointsV1EngineSceneBuild(elements *[]map[stri
 	if elements == nil || endpoints == nil || len(connections) == 0 || len(endpoints.byOwner) == 0 {
 		return
 	}
+	headerBottoms := umlComponentHeaderBottomsV1EngineSceneBuild(*elements, endpoints.byOwner)
 	counts := map[string]int{}
 	for _, conn := range connections {
 		if conn == nil || conn.Attr("uml-diagram-kind") != "component-diagram" || conn.Attr("uml-relation-kind") != "association" || conn.Attr("uml-src-kind") != "component" || conn.Attr("uml-dst-kind") != "component" {
@@ -233,6 +236,7 @@ func expandUMLComponentInterfaceEndpointsV1EngineSceneBuild(elements *[]map[stri
 			counts[boundDst]++
 		}
 	}
+	rebalanceUMLComponentInterfaceGroupsV1EngineSceneBuild(elements, *endpoints, endpointRects, counts, headerBottoms)
 	updated := excalidrawUpdatedV1EngineSceneTypes
 	for baseKey, count := range counts {
 		if count <= 1 {
@@ -251,6 +255,16 @@ func expandUMLComponentInterfaceEndpointsV1EngineSceneBuild(elements *[]map[stri
 		step := math.Max(umlComponentCallerSocketRadiusForCircleV1EngineSceneBuild(rect)*2+2, 16)
 		baseCenterY := rect[1] + rect[3]/2
 		startY := baseCenterY - step*float64(count-1)/2
+		if count > 1 && group.ownerRect[2] > 0 && group.ownerRect[3] > 0 {
+			radius := diameter / 2
+			minCenter := math.Max(group.ownerRect[1]+radius+4, headerBottoms[group.ownerKey]+radius+4)
+			maxCenter := group.ownerRect[1] + group.ownerRect[3] - radius - 4
+			if availableSpan := maxCenter - minCenter; availableSpan > 0 {
+				step = math.Min(step, availableSpan/float64(count-1))
+				span := step * float64(count-1)
+				startY = math.Min(math.Max(baseCenterY-span/2, minCenter), maxCenter-span)
+			}
+		}
 		circleLeft := rect[0]
 		circleRight := circleLeft + diameter
 		trunkX := circleRight + math.Max(1.5, (port[0]-circleRight)/2)
@@ -276,6 +290,197 @@ func expandUMLComponentInterfaceEndpointsV1EngineSceneBuild(elements *[]map[stri
 		for index := 0; index < count; index++ {
 			cy := startY + step*float64(index)
 			appendUMLComponentInterfaceLineV1EngineSceneWalk(elements, fmt.Sprintf("%s-multi-circle-stem-%d", group.baseID, index), circleLeft+diameter, cy, trunkX, cy, updated, map[string]any{"xaligoUmlComponentInterfaceStem": true})
+		}
+	}
+}
+
+func rebalanceUMLComponentInterfaceGroupsV1EngineSceneBuild(elements *[]map[string]any, endpoints umlComponentInterfaceEndpointsV1EngineSceneBuild, endpointRects map[string][4]float64, counts map[string]int, headerBottoms map[string]float64) {
+	if elements == nil || len(endpoints.byOwner) == 0 {
+		return
+	}
+	for _, byLabel := range endpoints.byOwner {
+		groups := make([]*umlComponentInterfaceEndpointGroupV1EngineSceneBuild, 0, len(byLabel))
+		for _, group := range byLabel {
+			if group != nil && group.ownerRect[2] > 0 && group.ownerRect[3] > 0 {
+				groups = append(groups, group)
+			}
+		}
+		if len(groups) < 2 {
+			continue
+		}
+		sort.Slice(groups, func(i, j int) bool {
+			return groups[i].baseRect[1]+groups[i].baseRect[3]/2 < groups[j].baseRect[1]+groups[j].baseRect[3]/2
+		})
+		owner := groups[0].ownerRect
+		halfHeights := make([]float64, len(groups))
+		connectionCounts := make([]int, len(groups))
+		maxHalfHeight := 0.0
+		for index, group := range groups {
+			connectionCount := counts[group.baseKey]
+			connectionCounts[index] = connectionCount
+			halfHeight := umlComponentInterfaceGroupHalfHeightV1EngineSceneBuild(group, connectionCount)
+			halfHeights[index] = halfHeight
+			maxHalfHeight = math.Max(maxHalfHeight, halfHeight)
+		}
+		if maxHalfHeight <= 0 {
+			maxHalfHeight = groups[0].baseRect[3] / 2
+		}
+		for index, halfHeight := range halfHeights {
+			if halfHeight <= 0 {
+				halfHeights[index] = maxHalfHeight
+			}
+		}
+		minCenter := math.Max(owner[1]+halfHeights[0]+6, headerBottoms[groups[0].ownerKey]+halfHeights[0]+6)
+		maxCenter := owner[1] + owner[3] - halfHeights[len(halfHeights)-1] - 6
+		if maxCenter <= minCenter {
+			continue
+		}
+		totalWeight := 0.0
+		weights := make([]float64, len(groups))
+		for index, group := range groups {
+			weight := math.Max(1, float64(counts[group.baseKey]))
+			weights[index] = weight
+			totalWeight += weight
+		}
+		if totalWeight <= 0 {
+			continue
+		}
+		cursor := 0.0
+		targetCenters := make([]float64, len(groups))
+		for index := range groups {
+			targetCenters[index] = minCenter + (cursor+weights[index]/2)/totalWeight*(maxCenter-minCenter)
+			cursor += weights[index]
+		}
+		targetCenters = separateUMLComponentInterfaceCentersV1EngineSceneBuild(targetCenters, halfHeights, umlComponentInterfacePairGapsV1EngineSceneBuild(connectionCounts), minCenter, maxCenter)
+		for index, group := range groups {
+			currentCenter := group.baseRect[1] + group.baseRect[3]/2
+			targetCenter := targetCenters[index]
+			dy := targetCenter - currentCenter
+			if math.Abs(dy) < 0.1 {
+				continue
+			}
+			moveUMLComponentInterfaceGroupYV1EngineSceneBuild(*elements, group, dy)
+			group.baseRect[1] += dy
+			group.portRect[1] += dy
+			endpointRects[group.baseKey] = group.baseRect
+		}
+	}
+}
+
+func umlComponentInterfaceGroupHalfHeightV1EngineSceneBuild(group *umlComponentInterfaceEndpointGroupV1EngineSceneBuild, connectionCount int) float64 {
+	if group == nil {
+		return 0
+	}
+	halfHeight := math.Max(group.baseRect[3]/2, group.portRect[3]/2)
+	if connectionCount > 1 {
+		radius := umlComponentCallerSocketRadiusForCircleV1EngineSceneBuild(group.baseRect)
+		step := math.Max(radius*2+2, 16)
+		halfHeight = math.Max(halfHeight, step*float64(connectionCount-1)/2+radius)
+	}
+	return halfHeight
+}
+
+func umlComponentInterfacePairGapsV1EngineSceneBuild(connectionCounts []int) []float64 {
+	if len(connectionCounts) < 2 {
+		return nil
+	}
+	gaps := make([]float64, len(connectionCounts)-1)
+	for index := range gaps {
+		if connectionCounts[index] <= 1 && connectionCounts[index+1] <= 1 {
+			gaps[index] = 2
+			continue
+		}
+		gaps[index] = 16
+	}
+	return gaps
+}
+
+func separateUMLComponentInterfaceCentersV1EngineSceneBuild(centers []float64, halfHeights []float64, pairGaps []float64, minCenter, maxCenter float64) []float64 {
+	if len(centers) == 0 || len(centers) != len(halfHeights) {
+		return centers
+	}
+	gaps := append([]float64(nil), pairGaps...)
+	if len(gaps) != len(centers)-1 {
+		gaps = make([]float64, len(centers)-1)
+		for index := range gaps {
+			gaps[index] = 2
+		}
+	}
+	availableSpan := math.Max(0, maxCenter-minCenter)
+	requiredWithoutGap := 0.0
+	for index := 1; index < len(centers); index++ {
+		requiredWithoutGap += halfHeights[index-1] + halfHeights[index]
+	}
+	desiredGap := 0.0
+	for _, gap := range gaps {
+		desiredGap += gap
+	}
+	if desiredGap > 0 && requiredWithoutGap+desiredGap > availableSpan {
+		scale := math.Max(0, availableSpan-requiredWithoutGap) / desiredGap
+		for index, gap := range gaps {
+			gaps[index] = math.Max(2, gap*scale)
+		}
+	}
+	requiredSpan := requiredWithoutGap
+	for _, gap := range gaps {
+		requiredSpan += gap
+	}
+	start := math.Min(minCenter, maxCenter-requiredSpan)
+	separated := make([]float64, len(centers))
+	separated[0] = start
+	for index := 1; index < len(separated); index++ {
+		separated[index] = separated[index-1] + halfHeights[index-1] + halfHeights[index] + gaps[index-1]
+	}
+	if len(separated) == 1 {
+		separated[0] = math.Max(minCenter, math.Min(centers[0], maxCenter))
+	}
+	return separated
+}
+
+func umlComponentHeaderBottomsV1EngineSceneBuild(elements []map[string]any, byOwner map[string]map[string]*umlComponentInterfaceEndpointGroupV1EngineSceneBuild) map[string]float64 {
+	result := map[string]float64{}
+	for ownerKey, byLabel := range byOwner {
+		var owner [4]float64
+		for _, group := range byLabel {
+			if group != nil && group.ownerRect[2] > 0 && group.ownerRect[3] > 0 {
+				owner = group.ownerRect
+				break
+			}
+		}
+		if owner[2] <= 0 || owner[3] <= 0 {
+			continue
+		}
+		for _, element := range elements {
+			customData, _ := element["customData"].(map[string]any)
+			if customData["xaligoUmlComponentHeader"] != true {
+				continue
+			}
+			x, okX := element["x"].(float64)
+			y, okY := element["y"].(float64)
+			w, okW := element["width"].(float64)
+			h, okH := element["height"].(float64)
+			if !okX || !okY || !okW || !okH {
+				continue
+			}
+			if math.Abs(x-owner[0]) < 0.1 && math.Abs(w-owner[2]) < 0.1 && y >= owner[1]-0.1 && y <= owner[1]+owner[3]+0.1 {
+				result[ownerKey] = math.Max(result[ownerKey], y+h)
+			}
+		}
+	}
+	return result
+}
+
+func moveUMLComponentInterfaceGroupYV1EngineSceneBuild(elements []map[string]any, group *umlComponentInterfaceEndpointGroupV1EngineSceneBuild, dy float64) {
+	if group == nil {
+		return
+	}
+	for _, element := range elements {
+		customData, _ := element["customData"].(map[string]any)
+		if customData["xaligoUmlComponentOwnerConnectionKey"] != group.ownerKey || customData["xaligoUmlComponentInterfaceLabel"] != group.label {
+			continue
+		}
+		if y, ok := element["y"].(float64); ok {
+			element["y"] = y + dy
 		}
 	}
 }
@@ -401,6 +606,7 @@ func appendUMLComponentInterfaceCircleV1EngineSceneBuild(elements *[]map[string]
 		"customData": map[string]any{
 			"xaligoUmlComponentInterfaceLabel":     group.label,
 			"xaligoUmlComponentOwnerConnectionKey": group.ownerKey,
+			"xaligoUmlComponentOwnerLocalId":       group.ownerLocalID,
 			"xaligoUmlComponentInterfaceSymbol":    true,
 			"xaligoUmlComponentInterfaceCircle":    true,
 		},
@@ -502,17 +708,25 @@ func appendUMLComponentCallerSocketsV1EngineSceneBuild(elements *[]map[string]an
 		if radius <= 0 {
 			radius = 7
 		}
-		appendUMLComponentCallerSocketV1EngineSceneBuild(elements, id+"-caller-socket", endpoint, radius, updated)
+		centerX := positiveNumberV1EngineSceneBuild(customData["xaligoUmlComponentCallerSocketCenterX"])
+		centerY := positiveNumberV1EngineSceneBuild(customData["xaligoUmlComponentCallerSocketCenterY"])
+		if centerX <= 0 {
+			centerX = endpoint[0] + math.Max(0, radius-umlComponentCallerSocketRadiusPaddingV1EngineSceneBuild)
+		}
+		if centerY <= 0 {
+			centerY = endpoint[1]
+		}
+		appendUMLComponentCallerSocketV1EngineSceneBuild(elements, id+"-caller-socket", [2]float64{centerX, centerY}, radius, updated)
 	}
 }
 
-func appendUMLComponentCallerSocketV1EngineSceneBuild(elements *[]map[string]any, id string, endpoint [2]float64, radius float64, updated int64) {
+func appendUMLComponentCallerSocketV1EngineSceneBuild(elements *[]map[string]any, id string, center [2]float64, radius float64, updated int64) {
 	absolute := make([][2]float64, 0, 13)
 	minX, minY := math.Inf(1), math.Inf(1)
 	maxX, maxY := math.Inf(-1), math.Inf(-1)
 	for index := 0; index <= 12; index++ {
 		theta := -math.Pi/2 - math.Pi*float64(index)/12
-		point := [2]float64{endpoint[0] + radius + math.Cos(theta)*radius, endpoint[1] + math.Sin(theta)*radius}
+		point := [2]float64{center[0] + math.Cos(theta)*radius, center[1] + math.Sin(theta)*radius}
 		absolute = append(absolute, point)
 		minX = math.Min(minX, point[0])
 		minY = math.Min(minY, point[1])

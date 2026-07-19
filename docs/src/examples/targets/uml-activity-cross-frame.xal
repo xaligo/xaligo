@@ -23,8 +23,8 @@
         </activity-diagram>
       </uml>
 
-      <connection src="request-auth"
-                  dst="bank-detail.reserve-funds"
+      <connection src="atm-flow/request-auth"
+          dst="bank-detail.bank-auth/reserve-funds"
                   src-side="bottom"
                   dst-side="bottom"
                   src-frame-side="bottom"

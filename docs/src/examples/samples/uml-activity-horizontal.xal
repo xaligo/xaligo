@@ -1,0 +1,50 @@
+<xaligo version="1">
+  <data></data>
+  <frames>
+    <frame id="activity-horizontal" title="ATM Withdrawal Activity - Horizontal" version="2026.07" width="1480" height="720" class="pa-3" margin-top="48">
+      <metadata align="right" width="156" key-width="56" font-size="12" />
+      <uml id="atm-withdrawal-horizontal" title="ATM Withdrawal Process">
+        <activity-diagram direction="right" theme="xaligo" lanes="horizontal">
+          <partition id="customer" title="Customer">
+            <initial id="start" />
+            <action id="insert-card" title="Insert card" tone="primary" />
+            <action id="enter-pin" title="Enter PIN" />
+            <action id="enter-amount" title="Enter amount" />
+            <action id="take-cash" title="Take cash" tone="primary" />
+            <final id="done" />
+          </partition>
+
+          <partition id="atm" title="ATM">
+            <action id="read-card" title="Read card" />
+            <action id="request-pin" title="Request PIN" tone="primary" />
+            <decision id="pin-valid" title="PIN valid?" />
+            <action id="request-amount" title="Request amount" tone="primary" />
+            <decision id="amount-valid" title="Amount valid?" />
+            <action id="dispense-cash" title="Dispense cash" />
+          </partition>
+
+          <partition id="bank" title="Bank">
+            <action id="authorize-card" title="Authorize card" />
+            <action id="authorize-withdrawal" title="Authorize withdrawal" />
+          </partition>
+
+          <control-flow src="start" dst="insert-card" />
+          <control-flow src="insert-card" dst="read-card" />
+          <control-flow src="read-card" dst="request-pin" />
+          <control-flow src="request-pin" dst="enter-pin" />
+          <control-flow src="enter-pin" dst="pin-valid" guard="PIN entered" />
+          <control-flow src="pin-valid" dst="request-pin" guard="invalid PIN" route="loop" />
+          <control-flow src="pin-valid" dst="authorize-card" guard="valid PIN" />
+          <control-flow src="authorize-card" dst="request-amount" />
+          <control-flow src="request-amount" dst="enter-amount" />
+          <control-flow src="enter-amount" dst="amount-valid" guard="amount entered" />
+          <control-flow src="amount-valid" dst="request-amount" guard="invalid amount" route="loop" />
+          <control-flow src="amount-valid" dst="authorize-withdrawal" guard="valid amount" />
+          <control-flow src="authorize-withdrawal" dst="dispense-cash" />
+          <control-flow src="dispense-cash" dst="take-cash" />
+          <control-flow src="take-cash" dst="done" />
+        </activity-diagram>
+      </uml>
+    </frame>
+  </frames>
+</xaligo>

@@ -1,8 +1,7 @@
 <!--
-  Target sample for the planned UML activity partition/swimlane capability.
-  This file documents the intended syntax and visual contract; it is not part
-  of the current validated sample corpus until <partition>, lane ownership, and
-  the xaligo activity theme are implemented.
+  Reference source for the supported UML activity partition/swimlane design.
+  The public sample at docs/src/examples/samples/uml-activity.xal uses the same
+  syntax and regenerates docs/src/images/uml-activity.svg.
 -->
 <xaligo version="1">
   <frames>

@@ -16,7 +16,11 @@ func routeConnectionsV1EngineRouteBuild(requests []routeRequestV1EngineRouteType
 	routePaths := map[string][]ptV1EngineRouteTypes{}
 	for _, req := range requests {
 		local := filterObstaclesV1EngineRouteOverlap(obstacles, req)
-		path := routeOneV1EngineRoutePath(req, local, placed, opt)
+		requestOpt := opt
+		if req.HardAvoid {
+			requestOpt.HardObstacles = append(append([]rectV1EngineRouteTypes(nil), opt.HardObstacles...), local...)
+		}
+		path := routeOneV1EngineRoutePath(req, local, placed, requestOpt)
 		followedRoute := false
 		if req.Kind == "traffic" {
 			if base, ok := matchingRoutePathV1EngineRouteBuild(req, routePaths); ok {
@@ -38,6 +42,7 @@ func routeConnectionsV1EngineRouteBuild(requests []routeRequestV1EngineRouteType
 		}
 		path.Points = enforceOrthogonalPolylineV1EngineRoutePath(path.Points)
 		path.Points = enforceHardObstacleExclusionV1EngineRouteBuild(req, path.Points, local, placed, opt)
+		path.Points = enforceHardObstacleExclusionV1EngineRouteBuild(req, path.Points, local, placed, requestOpt)
 		results = append(results, path)
 		if req.Kind == "route" && len(path.Points) >= 2 {
 			routePaths[routePairKeyV1EngineRouteBuild(req, false)] = append([]ptV1EngineRouteTypes(nil), path.Points...)

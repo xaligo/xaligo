@@ -10,6 +10,9 @@ func polylineOpV1EnginePlanConnectorDraw(el *entity.Element, points []ptV1Engine
 	if len(points) < 2 {
 		return entity.DrawOp{}, false
 	}
+	if el.CustomData != nil && el.CustomData.UMLDiagramKind == "component-diagram" && el.CustomData.UMLRelationKind == "association" {
+		points = enforceOrthogonalPolylineV1EngineRoutePath(points)
+	}
 	inch := make([]ptV1EngineRouteTypes, len(points))
 	for i, p := range points {
 		inch[i] = ptV1EngineRouteTypes{X: (p.X - frame.X) / ppi, Y: (p.Y - frame.Y) / ppi}

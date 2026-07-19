@@ -79,6 +79,15 @@ func validateLayoutNodeAttributesV1EngineLayoutValidation(node *entity.Node) err
 	if node.Tag == "entry" {
 		rules = append(rules, layoutNumberRuleV1EngineLayoutValidation{name: "key-width"})
 	}
+	if node.Tag == "uml" && node.Attr("uml-kind") == "component-diagram" {
+		rules = append(rules,
+			layoutNumberRuleV1EngineLayoutValidation{name: "component-width"},
+			layoutNumberRuleV1EngineLayoutValidation{name: "component-height"},
+		)
+	}
+	if node.Tag == "rectangle" && node.Attr("uml-diagram-kind") == "component-diagram" && node.Attr("uml-element-kind") == "component" {
+		rules = append(rules, layoutNumberRuleV1EngineLayoutValidation{name: "interface-width"})
+	}
 	if node.Tag == "port" {
 		rules = append(rules,
 			layoutNumberRuleV1EngineLayoutValidation{name: "w"},

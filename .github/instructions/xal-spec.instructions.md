@@ -245,7 +245,7 @@ The following domain rules apply:
 
 | Attributes | Required domain |
 |---|---|
-| `width`, `height`, `content-width`, `content-height`, `item-size`, `font-size`, `key-width` | greater than `0` when specified |
+| `width`, `height`, `component-width`, `component-height`, `interface-width`, `content-width`, `content-height`, `item-size`, `font-size`, `key-width` | greater than `0` when specified |
 | `row`, `col` | greater than `0` when specified |
 | `span` | greater than `0` and at most `12`; flexible sibling spans in one `<row>` must total at most `12` |
 | `gap`, `row-gap`, margins, spacing-class padding | greater than or equal to `0` |
@@ -533,7 +533,7 @@ indexes, checks, and import dialects remain planned V1 extensions.
 
 ## UML Tags
 
-`<uml>` is the common V1 component for the fourteen UML diagram families. It
+`<uml>` is the common V1 component for the supported core UML diagram families. It
 adapts their typed elements, compartments, and relations to xaligo's shared
 layout, shape, connector, and output pipeline. Supporting a family selector
 does not imply support for every UML 2.x glyph or interchange construct; the
@@ -571,32 +571,25 @@ The following rules are normative:
   exactly one supported diagram-kind child. UML IDs must be unique within that
   frame. The same UML ID may be reused in a different frame.
 - UML component IDs and diagram-local element IDs must not contain whitespace,
-  `.` or `/`. `.` is reserved for the frame boundary; `/` is rejected so V1
-  sources do not use path-like UML endpoint expressions.
+  `.` or `/`. `.` is reserved for the frame boundary and `/` for the UML
+  boundary in public connection references.
 - The diagram-kind child contains a non-empty set of direct element and
   relation children. Unknown diagram kinds and unknown children are errors;
-  arbitrary custom tags are not generic UML elements. The activity-diagram
-  exception is `<partition>`, which groups activity nodes into swimlanes.
+  arbitrary custom tags are not generic UML elements.
 - Every UML element requires a non-empty diagram-local `id`, unique within the
   UML component. A UML relation's `src` and `dst` use those local IDs, without
   a UML or frame prefix, and both endpoints must exist in the selected model.
 - `direction` on the diagram-kind child accepts only `right` or `down`. When
-  `<uml layout>` is omitted, `direction="right"`, sequence diagrams, and timing
+  `<uml layout>` is omitted, `direction="right"` and sequence diagrams
   diagrams select horizontal xaligo layout; the other cases select vertical
   layout. This controls the V1 projection and is not a UML semantic ordering
   rule.
-- The `<uml>` container is semantic and does not render an outer border or
-  title for any UML diagram family. Visible diagram titles, versions, owners,
-  and review state belong in frame metadata. Element labels resolve in the
-  order `title`, `name`, direct text, then local `id`. UML elements default to
-  `font-family="helvetica"` and `font-size="14"`;
+- When `<uml title>` is omitted, the selector name without `-diagram` is used.
+  Element labels resolve in the order `title`, `name`, direct text, then local
+  `id`. UML elements default to `font-family="helvetica"` and `font-size="14"`;
   normal element font attributes override those defaults. An element `name`
   is display text only and never becomes a frame-level connection alias; use
   the public UML reference described below.
-- User-facing Excalidraw export is disabled for UML inputs. Rendering a source
-  containing `<uml>` with `--format excalidraw` or the public render dispatcher
-  returns an error; use SVG, PDF, PPTX, Excel, XYFlow, or Isoflow for UML
-  diagrams until editable UML Excalidraw output is redesigned.
 - The compatibility tags `<element>` and `<relation>` are not part of the
   strict V1 UML profile. A model must use one of the element and relation tags
   allowed for its selected family.
@@ -607,98 +600,69 @@ scene ID is opaque and must not be written in source:
 
 | Location | Public endpoint reference | Meaning |
 |---|---|---|
-| Same frame | `local-id` | UML element `local-id`; the ID must be unique among frame-level connection references |
-| Another frame | `frame-id.local-id` | The same UML element reached across a frame boundary |
+| Same frame | `uml-id/local-id` | Element `local-id` in UML component `uml-id` |
+| Another frame | `frame-id.uml-id/local-id` | The same UML element reached across a frame boundary |
 
 For example, element `order` in `<uml id="model">` inside frame `overview` is
-`order` to a normal connection in that frame and `overview.order` to a normal
-connection in another frame. Omitting the `frame-id.` prefix for a cross-frame
-endpoint is an unresolved-reference error. If another UML element, rectangle,
-port, table, database, entity, group, or other connection endpoint in the same
-frame exposes the same public ID/reference, parsing fails with a duplicate frame
-reference error. UML-native relations continue to use `src="order"`, not either
-public connection form.
+`model/order` to a normal connection in that frame and
+`overview.model/order` to a normal connection in another frame. Omitting the
+`frame-id.` prefix for a cross-frame endpoint is an unresolved-reference
+error. UML-native relations continue to use `src="order"`, not either public
+connection form.
 
 ### Diagram-kind vocabulary
 
 | Diagram kind | Allowed elements | Allowed relations | Additional V1 semantic checks |
 |---|---|---|---|
-| `class-diagram` | `package`, `class`, `interface`, `enumeration` | `association`, `aggregation`, `composition`, `generalization`, `realization`, `dependency` | Requires one classifier. `package` groups classifiers and package-local relations using the general-group visual language. `grid="N"` on `<class-diagram>` or package selects the package/classifier column count. When the class diagram contains only packages and omits `grid`, the package grid is computed from frame aspect ratio and empty-cell count. Packages expand to their assigned grid cell. Classifiers accept `stereotype`, `abstract="true|false"`, and `static="true|false"`; stereotypes and enabled modifiers are visible classifier-header metadata. Classifiers use compact multi-row placement, a cyan header with white text, separate attribute/operation body regions, white bodies, and deep-blue relation lines by default. Aggregation/composition are class to class; generalization joins equal classifier kinds; realization is class to interface. |
-| `component-diagram` | `component`, `interface`, `port`, `artifact` | `dependency`, `realization`, `association`, `assembly`, `delegation` | Requires one component. Component boxes render with a cyan header, white body, left-aligned white component name, and no two-rectangle adornment. A component may contain only child `interface` entries; each child interface renders as a small white boundary port box with the interface text inside and outside circle symbols, clears the component header, and sits mostly inside the component with only a small outside protrusion. Child interfaces may set `description`, which renders in a same-height white rectangle immediately to the right of the interface text box. Matching component associations keep the interface user endpoint on the source component's nearest non-interface-side anchor, selected from 15 top/right/bottom component anchors, add a left-bulging caller-side semicircle as a forked connection endpoint, bind the destination endpoint to a same-named interface circle, and approach the circle horizontally from the outside-left side of left-side interface circles at the circle center height; the line ends at the semicircle's left bend, and the semicircle radius is 2px larger than and center-aligned with the interface circle. When multiple associations target the same component interface, the destination renders one circle per incoming association with enough vertical spacing to prevent caller-side semicircle overlap and groups them back to the interface box with a bracket-style stem. Component diagrams use compact grid placement by default. Realization is component to interface. Assembly uses port/interface endpoints and includes a port. A port requires a component owner and renders on that owner boundary. Delegation is port to component/port. |
-| `deployment-diagram` | `node`, `artifact`, `component` | `deployment`, `communication-path`, `dependency` | Requires one node. Deployment is artifact/component to node; communication-path is node to node. |
-| `package-diagram` | `package`, `class`, `interface`, `component` | `dependency`, `package-import`, `package-merge` | Requires one package. Import/merge are package to package. |
-| `composite-structure-diagram` | `structure`, `collaboration`, `part`, `port`, `component` | `connector`, `assembly`, `delegation`, `dependency` | Requires a part or port. Parts/ports require typed owners. Connector endpoints are parts/ports, assembly is port to port, and delegation starts at a port. |
-| `activity-diagram` | `initial`, `final`, `activity`, `action`, `decision`, `merge`, `fork`, `join`, `object-node`; optional `partition` containers | `control-flow`, `object-flow` | Requires an activity/action. Control-flow excludes object-node. Object-flow requires an object-node endpoint. Initial/final direction and control-node degrees are validated. `lanes="vertical|horizontal"`, `theme="xaligo"`, partition swimlanes, and loop flow metadata are supported. |
-| `state-machine-diagram` | `initial`, `final`, `state`, `history`, `choice`, `fork`, `join`; optional layout-only `container` with `row` and `col` children | `transition` | Requires a state. Initial/final direction and pseudostate degrees are validated. `state` compartments render state actions and activities: `entry`, `do`, `exit`, `internal`, `region`, and `note`. The state name renders in a cyan header with white text; the white body is split into rows, and each row has a key/value column divider. Transitions render `event [guard] / action-or-effect` labels. Initial/final/choice/history pseudostates keep compact proportions; final states render the standard inner dot. A state-machine `<container>` may group elements by child `<row>` and `<col>` tags; these layout-only tags assign grid rows and columns without becoming UML elements. When no container column is supplied, the row layout reuses nearby connected columns where possible before assigning the next free column. State-machine shapes use the class-diagram xaligo palette by default: deep-blue borders/text/relations, white bodies, cyan state-name headers, and a deep-blue initial dot. Relation child `<bend x="..." y="..." />` tags are supported on class, activity, and state-machine relation tags and are used to steer orthogonal connector routes. State-machine transition routing treats intermediate state and pseudostate bodies as obstacles where possible, keeps same-frame route points inside the frame bounds, and may choose larger outside detours for distant states or bent routes that would otherwise cross a state body. UML relation labels are shifted away from endpoint items when a default label position would overlap them. |
-| `sequence-diagram` | `participant`, `lifeline` | `message`, `return-message`, `create-message`, `destroy-message` | Requires a participant/lifeline. Participants and lifelines render as top headers with dashed vertical lifeline axes, not full container boxes. Every message has a diagram-unique order that controls top-to-bottom anchoring. `message` is synchronous by default; `message mode="async"` renders an asynchronous open-arrow call. `message`, `create-message`, and `destroy-message` draw destination-lifeline activation bars; `return-message` is a dashed response connector and does not start a new activation. Non-participant sources must already be active before sending a non-return message or return. Activation bars extend through the related messages up to the matching return from that lifeline; a fully contained activation is merged into its covering bar. `destroy-message` also draws a stop marker at the destination lifeline and its label must clearly describe destruction, deletion, disposal, removal, or termination. Create/destroy cannot be self messages. |
-| `communication-diagram` | `object`, `participant` | `link`, `message` | Requires two participants, one link, and one message. Every message has a unique order and matching unordered link pair. |
-| `timing-diagram` | `lifeline`, `time-state` | `transition`, `occurrence`, `duration` | Requires a lifeline and time-state. Time-state intervals do not overlap per owner. Transition joins chronological states of one owner; occurrence has `at`; duration joins time-states. |
+| `class-diagram` | `class`, `interface`, `enumeration` | `association`, `aggregation`, `composition`, `generalization`, `realization`, `dependency` | Requires one classifier. Aggregation/composition are class to class; generalization joins equal classifier kinds; realization is class to interface. |
+| `component-diagram` | `component`, `interface`, `port`, `artifact` | `dependency`, `realization`, `association`, `assembly`, `delegation` | Requires one component. Realization is component to interface. Assembly requires at least one port endpoint. Delegation starts at a port. |
+| `activity-diagram` | `initial`, `final`, `activity`, `action`, `decision`, `merge`, `fork`, `join`, `object-node` | `control-flow`, `object-flow` | Requires an activity/action. Control-flow excludes object-node. Object-flow requires an object-node endpoint. Initial/final direction and control-node degrees are validated. |
+| `state-machine-diagram` | `initial`, `final`, `state`, `history`, `choice`, `fork`, `join` | `transition` | Requires a state. Initial/final direction and pseudostate degrees are validated. |
+| `sequence-diagram` | `participant`, `lifeline` | `message`, `return-message`, `create-message`, `destroy-message` | Requires a participant/lifeline. Every message has a diagram-unique order. Create/destroy cannot be self messages. |
 
 The endpoint contracts above are closed. An admitted relation with an endpoint
 pair not described by its row is a validation error.
 
-### Activity partitions and swimlanes
+### Component diagram sizing
 
-An `activity-diagram` may use `lanes="vertical"` or `lanes="horizontal"` to
-render responsibility swimlanes. With lanes enabled, `theme="xaligo"` applies the
-xaligo logo palette: `#08b8ea` for lane headers and primary actions,
-`#052d6e` for activity text/borders, and `#04b79f` reserved for follow-up
-object-flow/success accents. The only accepted V1 values are
-`lanes="vertical|horizontal"` and `theme="xaligo"`; other values are errors.
+Component boxes use automatic height by default. The resolved height reserves
+the component header, one compact row for every declared boundary interface,
+and additional vertical space when multiple incoming component associations
+bind to the same destination interface. Interface groups are packed from the
+header downward; unused diagram height is not redistributed into component
+rows.
 
-Each `<partition>` must be a direct child of `<activity-diagram>` and must
-have a stable `id` and non-empty `title`. A partition contains only activity
-element children, not relations. Relations remain direct children of the
-diagram and keep using normal local element IDs:
+`component-width` and `component-height` on `<component-diagram>` set positive
+diagram-wide defaults. `width` and `height` on an individual `<component>`
+override the corresponding diagram default. When neither height attribute is
+present, automatic height remains active. An explicit height is authoritative
+and must be large enough for its interface and connection visuals to remain
+inside the component.
 
-```xml
-<activity-diagram direction="down" lanes="vertical" theme="xaligo">
-  <partition id="customer" title="Customer">
-    <initial id="start" />
-    <action id="enter-pin" title="Enter PIN" tone="primary" />
-  </partition>
-  <partition id="atm" title="ATM">
-    <action id="request-pin" title="Request PIN" />
-    <decision id="pin-valid" title="PIN valid?" />
-  </partition>
-  <control-flow src="enter-pin" dst="request-pin" />
-  <control-flow src="pin-valid" dst="request-pin" guard="invalid PIN" route="loop" />
-</activity-diagram>
-```
+A positive `interface-width` on `<component>` sets one common width for every
+interface-name box in that component. It is not accepted on individual
+`<interface>` children. The configured width must leave enough horizontal
+space for the component's interface descriptions when they are present.
 
-A direct activity element may instead use `lane="partition-id"` to join a
-declared partition. A nested element may omit `lane` or repeat the enclosing
-partition ID; any other `lane` value is a validation error. Partition IDs use
-the same local UML identifier restrictions as element IDs and must be unique
-within the activity diagram.
+### Activity partitions
 
-Partitioned activities with `lanes="vertical"` are laid out with equal-width
-vertical lanes and a top lane-header band. With `lanes="horizontal"`, partitions
-become equal-height horizontal lanes with a left lane-header band. In both
-orientations, each node is centered within its owning lane. `tone="primary"` on
-`activity` or `action` uses the primary xaligo fill and white text. The partition
-ID and title are retained in editable-scene custom data. The UML activity
-container border and automatic diagram-kind title are omitted because page frame
-metadata supplies the visible page title. Normal frame-level
-`<connection>` elements may target activity elements by public UML reference
-such as `action-id`, including `frame-id.action-id` for cross-frame page links.
+An `activity-diagram` may group activity elements in swimlanes with direct
+`<partition id="..." title="...">` children. A partition may contain only
+activity elements allowed by the `activity-diagram` row above. Partition IDs
+are diagram-local identifiers and must be unique. A nested element may repeat
+`lane="partition-id"`; when present, it must match the enclosing partition.
+Elements may also be declared directly under the diagram with
+`lane="partition-id"`, but the referenced partition must exist.
+
+`lanes="vertical|horizontal"` is accepted only on `activity-diagram`.
+`theme="xaligo"` selects the supported activity swimlane visual theme. Other
+diagram families reject `lanes` and `theme`.
 
 ### Ownership
 
-`owner` is a same-diagram local element reference. Forward references are
-allowed because ownership is resolved after all elements are collected, but
-the referenced element must exist and have an allowed kind.
-
-| Element and diagram | `owner` | Allowed owner kinds |
-|---|---|---|
-| `component-diagram/port` | required | `component` |
-| `composite-structure-diagram/part` | required | `structure`, `component`, `collaboration` |
-| `composite-structure-diagram/port` | required | `structure`, `part`, `component`, `collaboration` |
-| `timing-diagram/time-state` | required | `lifeline` |
-
-Every other use of `owner` is invalid. Ownership is retained as semantic
-metadata and a stable reference. The V1 shared layout is flat and does not
-promise that an owned shape is spatially nested inside its owner.
+`owner` is reserved except for component `port` elements. A component port
+requires `owner="component-id"`, and that owner must reference a component in
+the same diagram.
 
 ### Element compartments
 
@@ -712,15 +676,10 @@ typed compartment vocabulary is:
 | `class` | `attribute`, `operation`, `constraint`, `note` |
 | `interface` | `operation`, `constraint`, `note` |
 | `enumeration` | `literal`, `operation`, `note` |
-| `object` | `slot`, `note` |
-| `component` | `interface` |
-| `node`, `artifact` | `property`, `responsibility`, `note` |
-| `package` | `responsibility`, `note` |
-| `structure` | `property`, `provided-interface`, `required-interface`, `note` |
-| `part` | `property`, `responsibility`, `note` |
+| `component` | `interface`, `provided-interface`, `required-interface`, `property`, `constraint`, `note` |
+| `artifact` | `property`, `responsibility`, `note` |
 | `activity`, `action` | `responsibility`, `constraint`, `note` |
-| `state` | `entry`, `do`, `exit`, `internal`, `region`, `note` |
-| `time-state` | `region`, `constraint`, `note` |
+| `state` | `entry`, `do`, `exit`, `region`, `note` |
 
 Elements absent from this table do not accept compartments. The generic
 `<compartment>` child is a compatibility spelling accepted wherever a typed
@@ -731,19 +690,17 @@ but compartments are not independent connection endpoints.
 ### Relation attributes, order, and time
 
 Every relation requires `src` and `dst`. `title` or `label` supplies its
-visible text. When omitted, `event` supplies the label. `guard` is allowed only
-on flows/transitions and is appended as `[guard]`. `effect` or `action` is
-appended as `/ effect-or-action`, with `effect` taking priority when both are
-present. `src-multiplicity` and `dst-multiplicity` are allowed only on
-association, aggregation, composition, and link and are appended in
+visible text. `guard` is allowed only on flows/transitions and is appended as
+`[guard]`. `route` is retained as UML relation metadata for flow/transition
+routing hints such as `route="loop"`. `src-multiplicity` and
+`dst-multiplicity` are allowed only on association, aggregation, and
+composition and are appended in
 source-to-destination order. Relation color and normal connector side, anchor,
 stroke-width, bend, scale, and grid attributes use the `<connection>` rules.
 `kind`, `stroke-style`, `arrowhead`, `start-arrowhead`, and `end-arrowhead` are
 invalid because the UML relation kind owns line and marker semantics.
-`route="loop"` is allowed only on `control-flow` and `object-flow`; it is
-retained as UML route metadata for renderers and editors.
 
-Sequence and communication message kinds require `order`. Its canonical form
+Sequence message kinds require `order`. Its canonical form
 is one or more positive decimal integers without leading zeroes, separated by
 dots, for example `1`, `2`, or `1.1`. The complete order string must be unique
 across all messages in one diagram. Numeric order is prepended to the rendered
@@ -754,19 +711,6 @@ element edge so the ordering remains vertical: explicit `top` is normalized to
 `left`, explicit `bottom` to `right`, and an explicit anchor slot is superseded
 by the normalized order position.
 
-In a communication diagram, a message is valid only when a `<link>` connects
-the same two endpoints. Link direction is ignored for this structural check,
-so a link `a -> b` also supports a message `b -> a`.
-
-Timing attributes use finite base-10 numbers in one caller-chosen unit. Unit
-suffixes such as `20ms` are invalid; put the unit in a label instead.
-
-| Timing construct | Required attributes | Domain |
-|---|---|---|
-| `time-state` | `owner`, `from`, `to` | `owner` is a lifeline; `from >= 0`; `to > from` |
-| `occurrence` | `src`, `dst`, `at` | `at >= 0`; both endpoints are lifelines or time-states |
-| `duration` | `src`, `dst`; optional `from` and `to` pair | Both endpoints are time-states; when supplied, `from >= 0` and `to > from` |
-
 ### Relation projection
 
 UML relations lower to the shared orthogonal connector model with the
@@ -774,10 +718,10 @@ following fixed semantic defaults:
 
 | Projection | Relation kinds |
 |---|---|
-| Dashed line with destination triangle | `dependency`, `realization`, `package-import`, `package-merge`, `return-message`, `deployment` |
-| Solid line with destination triangle | `generalization`, `control-flow`, `object-flow`, `transition`, `message`, `create-message`, `destroy-message`, `delegation` |
+| Dashed line with destination triangle | `dependency`, `realization`, `return-message` |
+| Solid line with destination triangle | `generalization`, `control-flow`, `object-flow`, `transition`, `message`, `create-message`, `destroy-message` |
 | Source diamond | `aggregation`, `composition` |
-| No destination arrowhead | `association`, `link`, `occurrence`, `duration`, `communication-path`, `assembly`, `connector` |
+| No destination arrowhead | `association` |
 
 The visible relation label is placed near the routed connector midpoint and
 the UML diagram/relation kind is retained as semantic metadata where the target
@@ -790,19 +734,15 @@ Reusable definitions use `<uml-model id="...">` directly below document
 
 ```xml
 <data>
-  <uml-model id="domain-model">
-    <class id="customer" title="Customer">
-      <attribute>name: String</attribute>
-    </class>
-    <class id="order" title="Order">
-      <attribute>status: OrderStatus</attribute>
-    </class>
+  <uml-model id="order-domain">
+    <class id="customer" title="Customer" />
+    <class id="order" title="Order" />
     <association src="customer" dst="order" title="places" />
   </uml-model>
 </data>
 <frames>
-  <frame id="snapshot">
-    <uml id="domain"><class-diagram data="domain-model" direction="right" /></uml>
+  <frame id="domain">
+    <uml id="model"><class-diagram data="order-domain" direction="right" /></uml>
   </frame>
 </frames>
 ```
@@ -830,16 +770,7 @@ capabilities common to xaligo outputs:
 - sequence order is retained in labels and metadata and controls top-to-bottom
   message anchors, but V1 does not draw dashed lifelines, activations, combined
   fragments, or a separate vertical event axis;
-- timing intervals and occurrences are validated and retained, but V1 does not
-  draw a continuous time axis, waveforms, or proportional time geometry; and
-- `owner` records semantic containment without requiring spatial nesting.
-
-State-machine diagrams may set `show-element-names="false"` to hide the
-compartment element names such as `entry`, `do`, `exit`, `internal`, `note`,
-and `region` without hiding state titles, compartment values, transition
-labels, or the underlying shapes. The value is inherited by state-machine
-elements unless an element sets its own `show-element-names` value. Other UML
-diagram families do not accept the diagram-level attribute.
+- current V1 UML elements do not support semantic ownership.
 
 SVG, Excalidraw, PPTX, PDF, Excel, XYFlow, and Isoflow all consume this same resolved
 geometry. Excalidraw-compatible output carries xaligo UML custom data for
@@ -1016,14 +947,6 @@ otherwise it chooses the nearest safe side from the endpoint's rendered visual
 envelope. An item's envelope is the union of its icon and external label; other
 endpoints use their rendered shape. Distance ties prefer a tied side facing the
 remote frame, then `top`, `right`, `bottom`, `left`.
-
-UML relations use a shared endpoint anchor profile across Excalidraw, SVG,
-PPTX, PDF, and Excel plan geometry. Sequence-diagram messages keep their
-chronological lifeline position. Other UML rectangle-like endpoints snap to the
-five fixed inset anchors on each side (`side-1` through `side-5`), giving 20
-perimeter anchors in total. UML diamond-like endpoints such as `choice`,
-`decision`, `merge`, and `history` snap to the four shape vertices; an explicit
-anchor on a diamond chooses the side vertex rather than an inset side slot.
 
 A side is safe when the resolved inset fits its normal frame dimension, it is
 not the metadata edge, and an actual `top`/`bottom` terminal opposite metadata

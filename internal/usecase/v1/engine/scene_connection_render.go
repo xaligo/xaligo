@@ -258,6 +258,9 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 		if len(routePoints) < 2 {
 			continue
 		}
+		if boolishV1EngineSceneBuild(conn.Attr("uml-component-interface-dst")) {
+			routePoints = enforceOrthogonalPolylineV1EngineRoutePath(routePoints)
+		}
 		if style.Kind == "route" {
 			routePaths[routePairKeyV1EngineRouteBuild(excalidrawRouteRequestV1EngineSceneConnectionRoute(conn, srcRect, dstRect, srcSide, dstSide, style.Kind), false)] = append([]ptV1EngineRouteTypes(nil), routePoints...)
 		}
@@ -335,6 +338,8 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 		applyUMLConnectionMetadataV1EngineSceneConnectionRender(customData, conn)
 		if boolishV1EngineSceneBuild(conn.Attr("uml-component-interface-dst")) {
 			customData["xaligoUmlComponentCallerSocketRadius"] = umlComponentCallerSocketRadiusForCircleV1EngineSceneBuild(dstRect)
+			customData["xaligoUmlComponentCallerSocketCenterX"] = dstRect[0] + dstRect[2]/2
+			customData["xaligoUmlComponentCallerSocketCenterY"] = dstRect[1] + dstRect[3]/2
 		}
 		applyConnectionDiffStatusV1EngineSceneDiffHighlight(customData, conn)
 		appendUMLSequenceActivationV1EngineSceneConnectionRender(elements, conn, connID, dstImgRect, dstEdge[1], activationRanges[conn], srcFrameID, dstFrameID, updated, seed)

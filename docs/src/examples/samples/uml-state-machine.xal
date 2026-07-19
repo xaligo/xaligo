@@ -4,102 +4,63 @@
     <frame id="state-machine" title="E-Commerce Order State Machine" version="2026.07" width="1680" height="900" class="pa-3" margin-top="48">
       <metadata align="right" width="156" key-width="56" font-size="12" />
       <uml id="order-state">
-        <state-machine-diagram direction="right" show-element-names="false">
-          <container>
-            <row>
-              <col><initial id="start" /></col>
-              <col>
-                <state id="created" title="Order Created">
-                  <entry>Assign order number</entry>
-                  <do>Wait for payment</do>
-                  <internal>Expire / notify</internal>
-                  <exit>Record result</exit>
-                </state>
-              </col>
-              <col>
-                <state id="awaiting-shipment" title="Awaiting Shipment">
-                  <entry>Reserve inventory</entry>
-                  <do>Request shipment</do>
-                </state>
-              </col>
-              <col><choice id="stock-check" title="Stock Check" /></col>
-              <col>
-                <state id="shipped" title="Shipped">
-                  <entry>Register tracking number</entry>
-                  <do>Track delivery status</do>
-                </state>
-              </col>
-              <col>
-                <state id="delivering" title="In Transit">
-                  <note>Monitor delivery events</note>
-                </state>
-              </col>
-              <col>
-                <state id="completed" title="Completed">
-                  <note>Revenue has been finalized</note>
-                </state>
-              </col>
-              <col><final id="closed" /></col>
-            </row>
-            <row>
-              <col />
-              <col />
-              <col>
-                <state id="refund-requested" title="Refund Requested">
-                  <entry>Create refund ticket</entry>
-                  <do>Request refund</do>
-                  <exit>Store refund result</exit>
-                </state>
-              </col>
-              <col><choice id="refund-result" title="Refund Result" /></col>
-              <col>
-                <state id="refund-failed" title="Refund Failed">
-                  <note>Operator retries or contacts buyer</note>
-                </state>
-              </col>
-              <col>
-                <state id="return-requested" title="Return Requested">
-                  <entry>Assign return request number</entry>
-                  <do>Wait for returned item</do>
-                  <internal>Cancel return / close request</internal>
-                </state>
-              </col>
-              <col><choice id="return-result" title="Return Result" /></col>
-              <col>
-                <state id="return-failed" title="Return Failed">
-                  <note>Inspection failed or window expired</note>
-                </state>
-              </col>
-            </row>
-            <row>
-              <col />
-              <col>
-                <state id="buyer-cancelled" title="Buyer Cancelled">
-                  <note>Cancelled by buyer request</note>
-                </state>
-              </col>
-              <col />
-              <col>
-                <state id="refund-succeeded" title="Refund Succeeded">
-                  <note>Refunded event has been emitted</note>
-                </state>
-              </col>
-              <col><history id="order-history" title="H" /></col>
-              <col />
-              <col>
-                <state id="return-succeeded" title="Return Succeeded">
-                  <entry>Return item to inventory</entry>
-                  <exit>Mark order as cancelled</exit>
-                </state>
-              </col>
-              <col>
-                <state id="system-cancelled" title="System Cancelled">
-                  <region>Exceptional close</region>
-                  <note>Out of stock or return completed</note>
-                </state>
-              </col>
-            </row>
-          </container>
+        <state-machine-diagram direction="right">
+          <initial id="start" row="1" col="1" />
+          <state id="created" title="Order Created" row="1" col="2">
+            <entry>Assign order number</entry>
+            <do>Wait for payment</do>
+            <exit>Record result</exit>
+          </state>
+          <state id="awaiting-shipment" title="Awaiting Shipment" row="1" col="3">
+            <entry>Reserve inventory</entry>
+            <do>Request shipment</do>
+          </state>
+          <choice id="stock-check" title="Stock Check" row="1" col="4" />
+          <state id="shipped" title="Shipped" row="1" col="5">
+            <entry>Register tracking number</entry>
+            <do>Track delivery status</do>
+          </state>
+          <state id="delivering" title="In Transit" row="1" col="6">
+            <note>Monitor delivery events</note>
+          </state>
+          <state id="completed" title="Completed" row="1" col="7">
+            <note>Revenue has been finalized</note>
+          </state>
+          <final id="closed" row="1" col="8" />
+
+          <state id="refund-requested" title="Refund Requested" row="2" col="3">
+            <entry>Create refund ticket</entry>
+            <do>Request refund</do>
+            <exit>Store refund result</exit>
+          </state>
+          <choice id="refund-result" title="Refund Result" row="2" col="4" />
+          <state id="refund-failed" title="Refund Failed" row="2" col="5">
+            <note>Operator retries or contacts buyer</note>
+          </state>
+          <state id="return-requested" title="Return Requested" row="2" col="6">
+            <entry>Assign return request number</entry>
+            <do>Wait for returned item</do>
+          </state>
+          <choice id="return-result" title="Return Result" row="2" col="7" />
+          <state id="return-failed" title="Return Failed" row="2" col="8">
+            <note>Inspection failed or window expired</note>
+          </state>
+
+          <state id="buyer-cancelled" title="Buyer Cancelled" row="3" col="2">
+            <note>Cancelled by buyer request</note>
+          </state>
+          <state id="refund-succeeded" title="Refund Succeeded" row="3" col="4">
+            <note>Refunded event has been emitted</note>
+          </state>
+          <history id="order-history" title="H" row="3" col="5" />
+          <state id="return-succeeded" title="Return Succeeded" row="3" col="7">
+            <entry>Return item to inventory</entry>
+            <exit>Mark order as cancelled</exit>
+          </state>
+          <state id="system-cancelled" title="System Cancelled" row="3" col="8">
+            <region>Exceptional close</region>
+            <note>Out of stock or return completed</note>
+          </state>
 
           <transition src="start" dst="created" event="Create order" />
           <transition src="created" dst="awaiting-shipment" event="Payment succeeded" guard="Payment approved" action="Reserve inventory" />

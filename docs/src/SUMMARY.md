@@ -48,7 +48,6 @@
 # Reference
 
 - [Reference](reference/index.md)
-  - [UML Reference](reference/uml.md)
   - [Icon Reference](reference/icons/index.md)
     - [Architecture Group Icons](reference/icons/architecture-group-icons.md)
     - [Architecture Service Icons](reference/icons/architecture-service-icons.md)

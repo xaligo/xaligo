@@ -1,8 +1,9 @@
 # UML
 
-V1 supports a strict xaligo UML profile for the fourteen UML diagram families.
-Use this page as the authoring overview; keep detailed tag tables, validation
-rules, and complete sample links in the [UML Reference](../reference/uml.md).
+V1 supports a strict xaligo UML profile for class, component, activity,
+state-machine, and sequence diagrams. Use this page as the authoring overview;
+see the
+[UML examples](../examples/uml.md) for rendered sample sources.
 
 ## Minimal shape
 
@@ -33,18 +34,28 @@ titles, versions, owners, and review state in the owning frame metadata.
 - Exactly one diagram family is allowed inside each `<uml>` component.
 - Every diagram family has a closed element/relation vocabulary.
 - Relation endpoints must reference existing local UML element IDs.
-- `direction="right|down"` selects layout direction; sequence and timing
-  diagrams default to horizontal.
-- Sequence/communication messages require unique positive dot-separated
-  `order` values such as `1`, `2`, and `1.1`.
+- `direction="right|down"` selects layout direction; sequence diagrams default
+  to horizontal.
+- Component diagrams may use `component`, `interface`, `port`, and `artifact`
+  elements with `dependency`, `realization`, `association`, `assembly`, and
+  `delegation` relations.
+- Component boxes automatically grow with their interface rows and incoming
+  association fan-out. Set `component-width="280"` or
+  `component-height="180"` on `<component-diagram>` for diagram defaults, and
+  override one box with `<component width="340" height="220">`. Omitting both
+  height attributes keeps compact automatic height enabled.
+- Set `interface-width="88"` on a `<component>` to use that width for every
+  interface-name box inside the component. Interface descriptions continue to
+  use the remaining horizontal space.
+- Activity diagrams may group elements in `<partition id="..." title="...">`
+  swimlanes and set `lanes="vertical|horizontal"` with `theme="xaligo"`.
+- Sequence messages require unique positive dot-separated `order` values such
+  as `1`, `2`, and `1.1`.
 - Non-participant sequence sources must already be active before sending a
   message or return.
 
 ## Where to go next
 
-- [UML Reference](../reference/uml.md): complete diagram-family matrix,
-  relation semantics, sequence activation rules, compartments, reusable models,
-  and sample source links.
 - [UML Examples](../examples/uml.md): compact visual gallery and sample index.
 - [Structured diagram design](../design/structured-diagrams.md): product and
   implementation direction for tables, databases, and UML.

@@ -127,6 +127,10 @@ type CustomData struct {
 	UMLGuard                         string      `json:"xaligoUmlGuard,omitempty"`
 	UMLSourceMultiplicity            string      `json:"xaligoUmlSourceMultiplicity,omitempty"`
 	UMLDestinationMultiplicity       string      `json:"xaligoUmlDestinationMultiplicity,omitempty"`
+	UMLComponentHeader               bool        `json:"xaligoUmlComponentHeader,omitempty"`
+	UMLComponentInterfaceCircle      bool        `json:"xaligoUmlComponentInterfaceCircle,omitempty"`
+	UMLComponentInterfacePort        bool        `json:"xaligoUmlComponentInterfacePort,omitempty"`
+	UMLComponentInterfaceDescription bool        `json:"xaligoUmlComponentInterfaceDescription,omitempty"`
 	UMLComponentInterfaceDestination any         `json:"xaligoUmlComponentInterfaceDestination,omitempty"`
 	UMLOccurrenceAt                  string      `json:"xaligoUmlOccurrenceAt,omitempty"`
 	UMLDurationFrom                  string      `json:"xaligoUmlDurationFrom,omitempty"`

@@ -55,9 +55,12 @@ func excalidrawConnectionPointsV1EngineSceneConnectionRoute(conn *entity.Node, s
 	}
 	req := excalidrawRouteRequestV1EngineSceneConnectionRoute(conn, srcRect, dstRect, srcSide, dstSide, kind)
 	opt := defaultRouterOptionsV1EngineRouteTypes()
-	opt.HardObstacles = hardObstacles
 	opt.Bounds = routeBounds
 	local := filterObstaclesV1EngineRouteOverlap(obstacles, req)
+	opt.HardObstacles = hardObstacles
+	if conn.Attr("uml-diagram-kind") == "component-diagram" {
+		opt.HardObstacles = append(opt.HardObstacles, local...)
+	}
 	path := routeOneV1EngineRoutePath(req, local, placed, opt)
 	if candidate, ok := stateMachineDistantOuterDetourV1EngineSceneConnectionRoute(conn, req, local, placed, opt); ok {
 		path.Points = candidate
@@ -86,8 +89,14 @@ func excalidrawConnectionPointsV1EngineSceneConnectionRoute(conn *entity.Node, s
 	path.Points = enforceOrthogonalPolylineV1EngineRoutePath(path.Points)
 	if boolishV1EngineSceneBuild(conn.Attr("uml-component-interface-dst")) {
 		path.Points = restoreDestinationApproachV1EngineRouteBuild(path.Points, req.DstSide, opt.Stub)
+		path.Points = enforceOrthogonalPolylineV1EngineRoutePath(path.Points)
 	}
-	return enforceHardObstacleExclusionV1EngineRouteBuild(req, path.Points, local, placed, opt)
+	path.Points = enforceHardObstacleExclusionV1EngineRouteBuild(req, path.Points, local, placed, opt)
+	if boolishV1EngineSceneBuild(conn.Attr("uml-component-interface-dst")) {
+		path.Points = restoreDestinationApproachV1EngineRouteBuild(path.Points, req.DstSide, opt.Stub)
+		path.Points = enforceOrthogonalPolylineV1EngineRoutePath(path.Points)
+	}
+	return path.Points
 }
 
 func stateMachineDistantOuterDetourV1EngineSceneConnectionRoute(conn *entity.Node, req routeRequestV1EngineRouteTypes, obstacles []rectV1EngineRouteTypes, placed [][]segmentV1EngineRouteTypes, opt routerOptionsV1EngineRouteTypes) ([]ptV1EngineRouteTypes, bool) {
@@ -295,7 +304,8 @@ func excalidrawRouteObstaclesV1EngineSceneConnectionRoute(elements []map[string]
 		isFrameMetadata := customDataBoolV1EngineSceneConnectionRoute(customData, "xaligoFrameMetadata")
 		isFrameMetadataReserved := customDataBoolV1EngineSceneConnectionRoute(customData, "xaligoFrameMetadataReserved")
 		isStateMachineNode := isStateMachineNodeRouteObstacleV1EngineSceneConnectionRoute(el, customData)
-		if !isAnchorContent && !isHeader && !isHeaderContent && !isFrameMetadata && !isFrameMetadataReserved && !isStateMachineNode {
+		isComponentNode := isUMLComponentRouteObstacleV1EngineSceneConnectionRoute(el, customData)
+		if !isAnchorContent && !isHeader && !isHeaderContent && !isFrameMetadata && !isFrameMetadataReserved && !isStateMachineNode && !isComponentNode {
 			continue
 		}
 		r, ok := elementRectV1EngineSceneConnectionRoute(el)
@@ -314,6 +324,14 @@ func appendUniqueObstacleV1EngineSceneConnectionRoute(obstacles []rectV1EngineRo
 		}
 	}
 	return append(obstacles, rect)
+}
+
+func isUMLComponentRouteObstacleV1EngineSceneConnectionRoute(el map[string]any, customData any) bool {
+	if customDataStringV1EngineSceneConnectionRoute(customData, "xaligoUmlDiagramKind") != "component-diagram" || customDataStringV1EngineSceneConnectionRoute(customData, "xaligoUmlElementKind") != "component" {
+		return false
+	}
+	typeName, _ := el["type"].(string)
+	return typeName == "rectangle" && !customDataBoolV1EngineSceneConnectionRoute(customData, "xaligoUmlComponentHeader")
 }
 
 func isStateMachineNodeRouteObstacleV1EngineSceneConnectionRoute(el map[string]any, customData any) bool {

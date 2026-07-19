@@ -167,6 +167,7 @@ func prepareConnectorsV1EnginePlanConnectorPrepare(connectors []*entity.Element,
 			DstGap:     it.dstGap,
 			SrcProfile: it.srcProfile,
 			DstProfile: it.dstProfile,
+			HardAvoid:  it.el.CustomData != nil && it.el.CustomData.UMLDiagramKind == "component-diagram",
 		}
 		if it.el.CustomData != nil {
 			scale := it.el.CustomData.ConnectorScale

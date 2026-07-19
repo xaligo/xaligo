@@ -234,13 +234,6 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 				backgroundColor = umlClassShapeBackgroundV1EngineSceneWalk(b)
 				fillStyle = "solid"
 			}
-			componentShape := isXaligoComponentDiagramShapeV1EngineSceneWalk(b)
-			if componentShape {
-				genStroke = "#052d6e"
-				strokeWidth = 1.35
-				backgroundColor = "#ffffff"
-				fillStyle = "solid"
-			}
 			stateMachineShape := isXaligoStateMachineShapeV1EngineSceneWalk(b)
 			if stateMachineShape {
 				genStroke = "#052d6e"
@@ -938,9 +931,6 @@ func umlShapeTextColorV1EngineSceneWalk(box *entity.Box) string {
 	if isXaligoClassShapeV1EngineSceneWalk(box) {
 		return "#052d6e"
 	}
-	if isXaligoComponentDiagramShapeV1EngineSceneWalk(box) {
-		return "#052d6e"
-	}
 	if isXaligoStateMachineShapeV1EngineSceneWalk(box) {
 		return "#052d6e"
 	}
@@ -949,7 +939,7 @@ func umlShapeTextColorV1EngineSceneWalk(box *entity.Box) string {
 
 func appendUMLComponentHeaderV1EngineSceneWalk(box *entity.Box, elements *[]map[string]any, updated int64) {
 	fontSize := attrFloatV1EngineLayoutAttributes(box.Attrs["font-size"], 14)
-	headerH := math.Min(math.Max(30, fontSize*2.4), math.Max(30, box.H*0.38))
+	headerH := umlComponentHeaderHeightV1EngineSceneWalk(box)
 	headerID := fmt.Sprintf("%s-component-header", box.ID)
 	headerSeed := stableSceneSeedV1EngineSceneTypes(headerID)
 	*elements = append(*elements, map[string]any{
@@ -968,6 +958,11 @@ func appendUMLComponentHeaderV1EngineSceneWalk(box *entity.Box, elements *[]map[
 		appendUMLClassTextV1EngineSceneWalk(elements, fmt.Sprintf("%s-component-header-text", box.ID), box.X+10, box.Y+4, math.Max(1, box.W-20), math.Max(1, headerH-8), headerText, "#ffffff", "left", "middle", fontSize, box, updated, map[string]any{"xaligoUmlComponentHeaderContent": true})
 	}
 	appendUMLClassHeaderDividerV1EngineSceneWalk(box, elements, updated, box.Y+headerH)
+}
+
+func umlComponentHeaderHeightV1EngineSceneWalk(box *entity.Box) float64 {
+	fontSize := attrFloatV1EngineLayoutAttributes(box.Attrs["font-size"], 14)
+	return math.Min(math.Max(30, fontSize*2.4), math.Max(30, box.H*0.38))
 }
 
 func appendUMLComponentBoundaryInterfacesV1EngineSceneWalk(box *entity.Box, elements *[]map[string]any, updated int64) {
@@ -1001,16 +996,45 @@ func appendUMLComponentInterfacesV1EngineSceneWalk(box *entity.Box, elements *[]
 	if len(interfaces) == 0 {
 		return
 	}
-	diameter := math.Min(18, math.Max(12, box.H*0.12))
-	stem := math.Min(5, math.Max(3, box.W*0.015))
-	portW := math.Min(72, math.Max(52, box.W*0.22))
+	count := len(interfaces)
+	diameter := 14.0
 	portH := math.Min(22, math.Max(18, box.H*0.17))
-	descriptionGap := math.Min(5, math.Max(3, box.W*0.012))
-	descriptionW := math.Min(128, math.Max(76, box.W*0.34))
+	stem := 4.0
+	inset := 10.0
+	interfaceOffset := 21.0
+	descriptionGap := 4.0
+	hasDescription := false
+	for _, item := range interfaces {
+		if item.description != "" {
+			hasDescription = true
+			break
+		}
+	}
+	availableW := math.Max(1, box.W+interfaceOffset-inset-diameter-stem)
+	configuredPortW := attrFloatV1EngineLayoutAttributes(box.Attrs["interface-width"], 0)
+	portW := math.Min(96, math.Max(52, availableW))
+	if configuredPortW > 0 {
+		portW = configuredPortW
+	}
+	descriptionW := 0.0
+	if hasDescription {
+		if configuredPortW <= 0 {
+			portW = math.Min(72, math.Max(44, availableW*0.42))
+		}
+		descriptionW = math.Min(128, math.Max(48, availableW-portW-descriptionGap))
+		if totalW := portW + descriptionGap + descriptionW; totalW > availableW {
+			overflow := totalW - availableW
+			descriptionW = math.Max(32, descriptionW-overflow)
+		}
+		if totalW := portW + descriptionGap + descriptionW; totalW > availableW && configuredPortW <= 0 {
+			portW = math.Max(32, availableW-descriptionGap-descriptionW)
+		}
+	}
 	for index, item := range interfaces {
-		cy := umlComponentInterfaceYV1EngineSceneWalk(box, len(interfaces), index, 0.36, portH)
+		cy := umlComponentInterfaceYV1EngineSceneWalk(box, count, index, 0.36, portH)
 		label := item.label
-		portX := box.X - portW*0.12
+		circleX := box.X - interfaceOffset
+		portX := circleX + diameter + stem
 		portY := cy - portH/2
 		portID := fmt.Sprintf("%s-interface-%d-port", box.ID, index)
 		portSeed := stableSceneSeedV1EngineSceneTypes(portID)
@@ -1026,12 +1050,11 @@ func appendUMLComponentInterfacesV1EngineSceneWalk(box *entity.Box, elements *[]
 			"updated": updated, "link": nil, "locked": false,
 			"customData": umlComponentInterfaceCustomDataV1EngineSceneWalk(box, label, map[string]any{"xaligoUmlComponentInterfacePort": true}),
 		})
-		appendUMLComponentInterfacePortLabelV1EngineSceneWalk(elements, fmt.Sprintf("%s-interface-%d-port-label", box.ID, index), portX+3, cy, portW-6, portH-4, label, box, updated, map[string]any{"xaligoUmlComponentInterfacePortLabel": true})
+		appendUMLComponentInterfacePortLabelV1EngineSceneWalk(elements, fmt.Sprintf("%s-interface-%d-port-label", box.ID, index), portX+3, cy, portW-6, portH-4, label, box, updated, umlComponentInterfaceCustomDataV1EngineSceneWalk(box, label, map[string]any{"xaligoUmlComponentInterfacePortLabel": true}))
 		if item.description != "" {
 			appendUMLComponentInterfaceDescriptionV1EngineSceneWalk(elements, fmt.Sprintf("%s-interface-%d-description", box.ID, index), portX+portW+descriptionGap, portY, descriptionW, portH, label, item.description, box, updated, umlComponentInterfaceCustomDataV1EngineSceneWalk(box, label, map[string]any{"xaligoUmlComponentInterfaceDescription": true}))
 		}
 
-		circleX := portX - stem - diameter
 		circleY := cy - diameter/2
 		circleID := fmt.Sprintf("%s-interface-%d", box.ID, index)
 		circleSeed := stableSceneSeedV1EngineSceneTypes(circleID)
@@ -1063,29 +1086,36 @@ func umlComponentInterfaceYV1EngineSceneWalk(box *entity.Box, count, index int, 
 		count = 1
 	}
 	fontSize := attrFloatV1EngineLayoutAttributes(box.Attrs["font-size"], 14)
-	headerH := math.Min(math.Max(30, fontSize*2.4), math.Max(30, box.H*0.38))
+	headerH := umlComponentHeaderHeightV1EngineSceneWalk(box)
 	minCenter := box.Y + headerH + math.Max(8, fontSize*0.7) + portH/2
 	if count == 1 {
 		return math.Max(box.Y+box.H*base, minCenter)
 	}
-	minStep := math.Min(34, math.Max(26, box.H*0.22))
-	span := minStep * float64(count-1)
-	top := box.Y + box.H*base - span/2
 	maxBottom := box.Y + box.H - math.Max(16, box.H*0.12)
+	availableSpan := math.Max(0, maxBottom-minCenter)
+	idealStep := math.Min(40, math.Max(22, box.H*0.18))
+	step := idealStep
+	if count > 1 && availableSpan > 0 {
+		step = math.Min(idealStep, availableSpan/float64(count-1))
+	}
+	span := step * float64(count-1)
+	top := box.Y + box.H*base - span/2
 	if top < minCenter {
 		top = minCenter
 	}
 	if bottom := top + span; bottom > maxBottom {
 		top = math.Max(minCenter, maxBottom-span)
 	}
-	return top + minStep*float64(index)
+	return top + step*float64(index)
 }
 
 func appendUMLComponentInterfaceLineV1EngineSceneWalk(elements *[]map[string]any, id string, x1, y1, x2, y2 float64, updated int64, customData map[string]any) {
 	seed := stableSceneSeedV1EngineSceneTypes(id)
+	x := math.Min(x1, x2)
+	y := math.Min(y1, y2)
 	*elements = append(*elements, map[string]any{
 		"id": id, "type": "line",
-		"x": x1, "y": y1, "width": x2 - x1, "height": y2 - y1,
+		"x": x, "y": y, "width": math.Abs(x2 - x1), "height": math.Abs(y2 - y1),
 		"angle": 0, "strokeColor": "#052d6e", "backgroundColor": "transparent",
 		"fillStyle": "solid", "strokeWidth": 1.2, "strokeStyle": "solid",
 		"roughness": 0, "opacity": 100,
@@ -1093,7 +1123,7 @@ func appendUMLComponentInterfaceLineV1EngineSceneWalk(elements *[]map[string]any
 		"seed": seed, "version": 1, "versionNonce": seed,
 		"isDeleted": false, "boundElements": nil,
 		"updated": updated, "link": nil, "locked": false,
-		"points":     [][]float64{{0, 0}, {x2 - x1, y2 - y1}},
+		"points":     [][]float64{{x1 - x, y1 - y}, {x2 - x, y2 - y}},
 		"customData": customData,
 	})
 }

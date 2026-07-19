@@ -200,7 +200,7 @@ func reversePointsV1EngineRoutePath(points []ptV1EngineRouteTypes) []ptV1EngineR
 }
 
 func reverseRequestV1EngineRoutePath(req routeRequestV1EngineRouteTypes) routeRequestV1EngineRouteTypes {
-	return routeRequestV1EngineRouteTypes{ID: req.ID, Kind: req.Kind, Src: req.Dst, Dst: req.Src, SrcSide: req.DstSide, DstSide: req.SrcSide, SrcGap: req.DstGap, DstGap: req.SrcGap, Grid: req.Grid}
+	return routeRequestV1EngineRouteTypes{ID: req.ID, Kind: req.Kind, Src: req.Dst, Dst: req.Src, SrcSide: req.DstSide, DstSide: req.SrcSide, SrcGap: req.DstGap, DstGap: req.SrcGap, Grid: req.Grid, HardAvoid: req.HardAvoid}
 }
 
 func simplifyRouteCandidateV1EngineRoutePath(points []ptV1EngineRouteTypes) []ptV1EngineRouteTypes {

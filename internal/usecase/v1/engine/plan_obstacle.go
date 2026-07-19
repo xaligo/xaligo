@@ -20,7 +20,8 @@ func collectObstaclesV1EnginePlanObstacle(elements []*entity.Element) []rectV1En
 		isFrameMetadata := el.CustomData != nil && el.CustomData.FrameMetadata
 		isFrameMetadataReserved := el.CustomData != nil && el.CustomData.FrameMetadataReserved
 		isStateMachineNode := isStateMachineNodeObstacleV1EnginePlanObstacle(el)
-		if el.Type != "image" && el.Type != "text" && !isHeader && !isFrameMetadata && !isFrameMetadataReserved && !isStateMachineNode {
+		isComponentVisual := isUMLComponentObstacleV1EnginePlanObstacle(el)
+		if el.Type != "image" && el.Type != "text" && !isHeader && !isFrameMetadata && !isFrameMetadataReserved && !isStateMachineNode && !isComponentVisual {
 			continue
 		}
 		r, ok := rectOfV1EnginePlanGeometry(el)
@@ -30,6 +31,19 @@ func collectObstaclesV1EnginePlanObstacle(elements []*entity.Element) []rectV1En
 		rects = append(rects, r)
 	}
 	return rects
+}
+
+func isUMLComponentObstacleV1EnginePlanObstacle(el *entity.Element) bool {
+	if el == nil || el.CustomData == nil {
+		return false
+	}
+	if el.CustomData.UMLDiagramKind == "component-diagram" && el.CustomData.UMLElementKind == "component" && el.Type == "rectangle" && !el.CustomData.UMLComponentHeader {
+		return true
+	}
+	if !el.CustomData.UMLComponentInterfaceCircle && !el.CustomData.UMLComponentInterfacePort && !el.CustomData.UMLComponentInterfaceDescription {
+		return false
+	}
+	return el.Type == "rectangle" || el.Type == "ellipse"
 }
 
 func isStateMachineNodeObstacleV1EnginePlanObstacle(el *entity.Element) bool {
