@@ -1,0 +1,63 @@
+<xaligo version="1">
+  <data></data>
+
+  <frames gap="64">
+    <frame id="overview"
+           title="ATM Customer Session"
+           version="target-2026.07"
+           width="720" height="480"
+           class="pa-3">
+      <uml id="atm-flow">
+        <activity-diagram direction="right" theme="xaligo" lanes="horizontal">
+          <partition id="customer" title="Customer">
+            <initial id="start" />
+            <action id="insert-card" title="Insert card" tone="primary" />
+          </partition>
+
+          <partition id="atm" title="ATM">
+            <action id="read-card" title="Read card" />
+            <action id="request-auth" title="Request authorization" tone="primary" />
+          </partition>
+
+          <control-flow src="start" dst="insert-card" />
+          <control-flow src="insert-card" dst="read-card" />
+          <control-flow src="read-card" dst="request-auth" />
+        </activity-diagram>
+      </uml>
+
+      <connection src="atm-flow/request-auth"
+                  dst="bank-detail.bank-auth/validate-account"
+                  src-side="bottom"
+                  dst-side="bottom"
+                  src-frame-side="bottom"
+                  dst-frame-side="bottom"
+                  color="#04b79f" />
+    </frame>
+
+    <frame id="bank-detail"
+           title="Bank Authorization"
+           version="target-2026.07"
+           width="720" height="480"
+           class="pa-3">
+      <uml id="bank-auth">
+        <activity-diagram direction="right" theme="xaligo" lanes="horizontal">
+          <partition id="bank" title="Bank">
+            <initial id="auth-start" />
+            <action id="validate-account" title="Validate account" tone="primary" />
+            <action id="approve-request" title="Approve request" tone="primary" />
+            <final id="auth-done" />
+          </partition>
+
+          <partition id="ledger" title="Ledger">
+            <action id="reserve-funds" title="Reserve funds" />
+          </partition>
+
+          <control-flow src="auth-start" dst="validate-account" />
+          <control-flow src="validate-account" dst="reserve-funds" />
+          <control-flow src="reserve-funds" dst="approve-request" />
+          <control-flow src="approve-request" dst="auth-done" />
+        </activity-diagram>
+      </uml>
+    </frame>
+  </frames>
+</xaligo>

@@ -100,3 +100,32 @@ func TestRenderExamplesThroughPublicUseCases(t *testing.T) {
 		})
 	}
 }
+
+func TestRenderActivityCrossFrameTargetExample(t *testing.T) {
+	root := repoRoot(t)
+	source, err := os.ReadFile(filepath.Join(root, "docs", "src", "examples", "targets", "uml-activity-cross-frame.xal"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	opts := entity.RenderOptions{Theme: "light", PxPerInch: 96, Mode: usecase.ModeNetwork}
+	scene, err := newUsecase().RenderExcalidraw(context.Background(), source, opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{`"xaligoCrossFrame": true`, `to \u003cbank-detail\u003e`, `from \u003coverview\u003e`} {
+		if !strings.Contains(string(scene), want) {
+			t.Fatalf("scene output missing %q", want)
+		}
+	}
+	svgOpts := opts
+	svgOpts.CombineFrames = true
+	svg, err := newUsecase().RenderSVG(context.Background(), source, svgOpts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{`to &lt;bank-detail&gt;`, `from &lt;overview&gt;`, `#04B79F`} {
+		if !strings.Contains(string(svg), want) {
+			t.Fatalf("svg output missing %q", want)
+		}
+	}
+}
