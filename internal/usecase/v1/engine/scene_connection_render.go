@@ -463,7 +463,7 @@ func appendUMLRelationLabelV1EngineSceneConnectionRender(elements *[]map[string]
 	if label == "" || len(routePoints) == 0 {
 		return
 	}
-	point := umlRelationLabelPointV1EngineSceneConnectionRender(routePoints, seed)
+	point := umlRelationLabelPointV1EngineSceneConnectionRender(conn, routePoints, seed)
 	fontSize := 12.0
 	height := 20.0
 	if safeTop, safeBottom, ok := frameMetadataSafeVerticalIntervalV1EngineSceneConnectionPage(frameRect, frameMetadataReservedRectsV1EngineSceneConnectionPage(metadata)); ok {
@@ -513,7 +513,7 @@ func frameMetadataLabelPositionV1EngineSceneConnectionRender(x, y, width, height
 	return x, y
 }
 
-func umlRelationLabelPointV1EngineSceneConnectionRender(routePoints []ptV1EngineRouteTypes, seed int) ptV1EngineRouteTypes {
+func umlRelationLabelPointV1EngineSceneConnectionRender(conn *entity.Node, routePoints []ptV1EngineRouteTypes, seed int) ptV1EngineRouteTypes {
 	if len(routePoints) < 2 {
 		return routePoints[0]
 	}
@@ -528,6 +528,9 @@ func umlRelationLabelPointV1EngineSceneConnectionRender(routePoints []ptV1Engine
 	}
 	point := ptV1EngineRouteTypes{X: (bestStart.X + bestEnd.X) / 2, Y: (bestStart.Y + bestEnd.Y) / 2}
 	offset := 12.0 + float64(seed%3)*6
+	if strings.TrimSpace(conn.Attr("uml-relation-kind")) != "" {
+		offset = 5.0 + float64(seed%2)*3
+	}
 	if seed%2 != 0 {
 		offset = -offset
 	}

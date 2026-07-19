@@ -253,6 +253,8 @@ func writeOp(b *bytes.Buffer, op entity.DrawOp, ppi float64) {
 		fmt.Fprintf(b, `<rect x="%s" y="%s" width="%s" height="%s"%s%s%s/>`+"\n", num(x), num(y), num(w), num(h), fillAttrs(op.Fill), lineAttrs(op.Line, ppi), transform)
 	case "ellipse":
 		fmt.Fprintf(b, `<ellipse cx="%s" cy="%s" rx="%s" ry="%s"%s%s%s/>`+"\n", num(x+w/2), num(y+h/2), num(w/2), num(h/2), fillAttrs(op.Fill), lineAttrs(op.Line, ppi), transform)
+	case "diamond":
+		fmt.Fprintf(b, `<polygon points="%s,%s %s,%s %s,%s %s,%s"%s%s%s/>`+"\n", num(x+w/2), num(y), num(x+w), num(y+h/2), num(x+w/2), num(y+h), num(x), num(y+h/2), fillAttrs(op.Fill), lineAttrs(op.Line, ppi), transform)
 	case "polygon":
 		writePolygon(b, op, x, y, w, h, ppi, transform)
 	case "text":

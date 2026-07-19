@@ -186,6 +186,7 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 			rectID := fmt.Sprintf("%s-rect", b.ID)
 			textID := fmt.Sprintf("%s-text", b.ID)
 			genStroke := "#1e1e1e"
+			strokeWidth := 1.0
 			if configured := strings.TrimSpace(b.Attrs["border-color"]); configured != "" {
 				genStroke = configured
 			}
@@ -214,15 +215,15 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 				backgroundColor = configured
 			}
 			if b.Tag == "uml" && b.Attrs["uml-kind"] == "activity-diagram" {
+				genStroke = "#052d6e"
+				strokeWidth = 1.5
 				appendUMLActivityPartitionsV1EngineSceneWalk(b, elements, updated)
 			}
 			if isXaligoActivityShapeV1EngineSceneWalk(b) {
 				genStroke = "#052d6e"
+				strokeWidth = 1.35
 				backgroundColor = umlActivityShapeBackgroundV1EngineSceneWalk(b)
 				fillStyle = "solid"
-				if b.Attrs["uml-element-kind"] == "final" {
-					backgroundColor = "#052d6e"
-				}
 			}
 			boundElements := any(nil)
 			shapeCustomData := umlShapeCustomDataV1EngineSceneWalk(b)
@@ -234,7 +235,7 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 				"id": rectID, "type": shapeType,
 				"x": b.X, "y": b.Y, "width": b.W, "height": b.H,
 				"angle": 0, "strokeColor": genStroke, "backgroundColor": backgroundColor,
-				"fillStyle": fillStyle, "strokeWidth": 1, "strokeStyle": "solid",
+				"fillStyle": fillStyle, "strokeWidth": strokeWidth, "strokeStyle": "solid",
 				"roughness": 0, "opacity": 100,
 				"groupIds": []string{}, "roundness": roundness,
 				"seed": stableSceneSeedV1EngineSceneTypes(rectID), "version": 1,
@@ -244,6 +245,9 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 				"updated":       updated, "link": nil, "locked": false,
 				"customData": shapeCustomData,
 			})
+			if isXaligoActivityFinalV1EngineSceneWalk(b) {
+				appendUMLActivityFinalDotV1EngineSceneWalk(b, elements, updated)
+			}
 			if b.Tag == "entity" {
 				registerConnectionEndpointV1EngineSceneWalk(b, rectID, [4]float64{b.X, b.Y, b.W, b.H}, itemImgRects, itemImgIDs)
 			}
@@ -337,8 +341,8 @@ func appendUMLActivityPartitionsV1EngineSceneWalk(box *entity.Box, elements *[]m
 		*elements = append(*elements, map[string]any{
 			"id": backgroundID, "type": "rectangle",
 			"x": x, "y": innerY, "width": width, "height": innerH,
-			"angle": 0, "strokeColor": "#08b8ea", "backgroundColor": backgroundColor,
-			"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
+			"angle": 0, "strokeColor": "#052d6e", "backgroundColor": backgroundColor,
+			"fillStyle": "solid", "strokeWidth": 1.15, "strokeStyle": "solid",
 			"roughness": 0, "opacity": 100,
 			"groupIds": []string{}, "roundness": nil,
 			"seed": backgroundSeed, "version": 1, "versionNonce": backgroundSeed,
@@ -351,8 +355,8 @@ func appendUMLActivityPartitionsV1EngineSceneWalk(box *entity.Box, elements *[]m
 		*elements = append(*elements, map[string]any{
 			"id": headerID, "type": "rectangle",
 			"x": x, "y": innerY, "width": width, "height": headerH,
-			"angle": 0, "strokeColor": "#08b8ea", "backgroundColor": "#08b8ea",
-			"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
+			"angle": 0, "strokeColor": "#052d6e", "backgroundColor": "#08b8ea",
+			"fillStyle": "solid", "strokeWidth": 1.25, "strokeStyle": "solid",
 			"roughness": 0, "opacity": 100,
 			"groupIds": []string{}, "roundness": nil,
 			"seed": headerSeed, "version": 1, "versionNonce": headerSeed,
@@ -410,11 +414,39 @@ func umlActivityShapeBackgroundV1EngineSceneWalk(box *entity.Box) string {
 		return "#08b8ea"
 	}
 	switch strings.TrimSpace(box.Attrs["uml-element-kind"]) {
+	case "initial":
+		return "#052d6e"
+	case "final":
+		return "#ffffff"
 	case "object-node":
 		return "#e6fbf7"
 	default:
 		return "#e8f7fd"
 	}
+}
+
+func isXaligoActivityFinalV1EngineSceneWalk(box *entity.Box) bool {
+	return isXaligoActivityShapeV1EngineSceneWalk(box) && strings.TrimSpace(box.Attrs["uml-element-kind"]) == "final"
+}
+
+func appendUMLActivityFinalDotV1EngineSceneWalk(box *entity.Box, elements *[]map[string]any, updated int64) {
+	diameter := math.Max(8, math.Min(box.W, box.H)*0.46)
+	x := box.X + (box.W-diameter)/2
+	y := box.Y + (box.H-diameter)/2
+	id := fmt.Sprintf("%s-final-dot", box.ID)
+	seed := stableSceneSeedV1EngineSceneTypes(id)
+	*elements = append(*elements, map[string]any{
+		"id": id, "type": "ellipse",
+		"x": x, "y": y, "width": diameter, "height": diameter,
+		"angle": 0, "strokeColor": "#052d6e", "backgroundColor": "#052d6e",
+		"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
+		"roughness": 0, "opacity": 100,
+		"groupIds": []string{}, "roundness": nil,
+		"seed": seed, "version": 1, "versionNonce": seed,
+		"isDeleted": false, "boundElements": nil,
+		"updated": updated, "link": nil, "locked": false,
+		"customData": map[string]any{"xaligoUmlFinalDot": true},
+	})
 }
 
 func umlShapeTextColorV1EngineSceneWalk(box *entity.Box) string {

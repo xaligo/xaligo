@@ -421,7 +421,7 @@ The activity layout reserves the top header band for lane titles, divides the
 content area into equal vertical lanes, and keeps each node inside its owning
 lane. Remaining follow-up work includes explicit lane weights, specialized
 backward-loop routing outside the forward path, object-flow accent styling,
-fork/join bar polish, and UML bullseye final-node rendering.
+and fork/join bar polish.
 
 Use the xaligo readme logo as the activity theme source:
 

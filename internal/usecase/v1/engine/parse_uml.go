@@ -991,6 +991,7 @@ func validateUMLTimingSetV1EngineParseUml(relations []*entity.Node, elements map
 func normalizeUMLElementV1EngineParseUml(source *entity.Node, scopedID, diagramKind, umlID string) *entity.Node {
 	attrs := cloneAttrsV1EngineParseTable(source.Attrs)
 	displayName := attrs["name"]
+	hasExplicitLabel := strings.TrimSpace(attrs["title"]) != "" || strings.TrimSpace(displayName) != "" || strings.TrimSpace(source.Text) != ""
 	attrs["uml-local-id"] = source.Attr("id")
 	attrs["id"] = scopedID
 	attrs["ref"] = publicUMLRefV1EngineParseUml(umlID, source.Attr("id"))
@@ -1012,6 +1013,9 @@ func normalizeUMLElementV1EngineParseUml(source *entity.Node, scopedID, diagramK
 	}
 	if attrs["title"] == "" {
 		attrs["title"] = source.Attr("id")
+	}
+	if diagramKind == "activity-diagram" && (source.Tag == "initial" || source.Tag == "final") && !hasExplicitLabel {
+		attrs["title"] = ""
 	}
 	// UML names are display text, not frame-level connection aliases. Public
 	// endpoint references are exclusively uml-id/local-id, so retaining name on
@@ -1053,6 +1057,12 @@ func normalizeUMLRelationV1EngineParseUml(source *entity.Node, scopedSrc, scoped
 		if value := strings.TrimSpace(source.Attr(attribute)); value != "" {
 			attrs["uml-"+attribute] = value
 		}
+	}
+	if diagramKind == "activity-diagram" && strings.TrimSpace(attrs["color"]) == "" {
+		attrs["color"] = "#052d6e"
+	}
+	if diagramKind == "activity-diagram" && strings.TrimSpace(attrs["stroke-width"]) == "" {
+		attrs["stroke-width"] = "1.4"
 	}
 	switch source.Tag {
 	case "dependency", "realization", "package-import", "package-merge", "reference", "include", "extend", "return-message", "deployment":
