@@ -1,0 +1,58 @@
+<!--
+  Target sample for the planned UML activity partition/swimlane capability.
+  This file documents the intended syntax and visual contract; it is not part
+  of the current validated sample corpus until <partition>, lane ownership, and
+  the xaligo activity theme are implemented.
+-->
+<xaligo version="1">
+  <frames>
+    <frame id="uml-activity-atm-swimlane"
+           title="ATM Withdrawal Activity"
+           version="target-2026.07"
+           width="960" height="1160"
+           class="pa-3">
+      <uml id="atm-withdrawal" title="ATM Withdrawal Process">
+        <activity-diagram direction="down" theme="xaligo" lanes="vertical">
+          <partition id="customer" title="Customer">
+            <initial id="start" />
+            <action id="start-session" title="Start session" tone="primary" />
+            <action id="enter-pin" title="Enter PIN" />
+            <action id="enter-amount" title="Enter amount" />
+            <action id="take-cash" title="Take cash" tone="primary" />
+            <final id="done" />
+          </partition>
+
+          <partition id="atm" title="ATM">
+            <action id="request-pin" title="Request PIN" tone="primary" />
+            <decision id="pin-valid" title="PIN valid?" />
+            <action id="process-pin" title="Process PIN" />
+            <action id="request-amount" title="Request withdrawal amount" tone="primary" />
+            <decision id="amount-valid" title="Amount valid?" />
+            <action id="process-withdrawal" title="Process withdrawal" />
+          </partition>
+
+          <partition id="bank" title="Bank">
+            <action id="approve-card" title="Approve card" />
+            <action id="approve-withdrawal" title="Approve withdrawal" />
+          </partition>
+
+          <control-flow src="start" dst="start-session" />
+          <control-flow src="start-session" dst="request-pin" />
+          <control-flow src="request-pin" dst="enter-pin" />
+          <control-flow src="enter-pin" dst="process-pin" guard="PIN entered" />
+          <control-flow src="process-pin" dst="pin-valid" />
+          <control-flow src="pin-valid" dst="request-pin" guard="invalid PIN" route="loop" />
+          <control-flow src="pin-valid" dst="approve-card" guard="valid PIN" />
+          <control-flow src="approve-card" dst="request-amount" />
+          <control-flow src="request-amount" dst="enter-amount" />
+          <control-flow src="enter-amount" dst="amount-valid" guard="amount entered" />
+          <control-flow src="amount-valid" dst="request-amount" guard="invalid amount" route="loop" />
+          <control-flow src="amount-valid" dst="approve-withdrawal" guard="valid amount" />
+          <control-flow src="approve-withdrawal" dst="process-withdrawal" />
+          <control-flow src="process-withdrawal" dst="take-cash" />
+          <control-flow src="take-cash" dst="done" />
+        </activity-diagram>
+      </uml>
+    </frame>
+  </frames>
+</xaligo>

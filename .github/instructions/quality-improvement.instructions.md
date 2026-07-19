@@ -136,7 +136,7 @@ when the new task can be verified and committed independently.
 |---|---|---|---|
 | Q05.1 | not-started | Freeze the supported UML sample matrix and map each sample to its owning syntax, parser, scene, layout, routing, and renderer responsibilities. | inventory of `docs/src/examples/samples/uml-*.xal`; owner map recorded in this file or docs |
 | Q05.2 | not-started | Establish a per-UML visual baseline before edits: validate and render every `uml-*.xal` sample to SVG, then identify overlap, spacing, typography, connector, and semantic-notation gaps. | `go run ./cmd validate docs/src/examples/samples/uml-all.xal`; SVG render set under `output/uml-quality/` |
-| Q05.3 | not-started | Improve activity-diagram semantic accuracy: activity partitions/swimlanes, initial/final nodes, actions, object nodes, decisions, forks, joins, merges, responsibilities, constraints, guards, `control-flow`, `object-flow`, and backward loop edges. | `uml-activity.xal` plus an ATM-style swimlane sample with parser/scene assertions and SVG geometry checks |
+| Q05.3 | not-started | Improve activity-diagram semantic accuracy: activity partitions/swimlanes, initial/final nodes, actions, object nodes, decisions, forks, joins, merges, responsibilities, constraints, guards, `control-flow`, `object-flow`, and backward loop edges. | `uml-activity.xal` plus `docs/src/examples/targets/uml-activity-atm-swimlane.xal` with parser/scene assertions and SVG geometry checks |
 | Q05.4 | not-started | Improve activity-diagram design quality: xaligo-logo color theme, vertical lane headers, left-to-right/top-to-bottom reading flow, diamond/bar/final-node proportions, lane spacing, label placement, and control-vs-object-flow distinction. | regenerated activity SVG visual review plus focused coordinate assertions |
 | Q05.5 | not-started | Improve class-diagram semantic accuracy: class boxes, attributes, operations, visibility, stereotypes, abstract/static markers, inheritance, realization, association, aggregation, composition, dependency, and multiplicity. | `uml-class.xal` structural tests and relation routing assertions |
 | Q05.6 | not-started | Improve class-diagram design quality: compartment rhythm, long member wrapping, stereotype readability, relation label spacing, crow-foot/diamond marker clarity, and dense-layout crossing reduction. | class SVG/PPTX review and text-fit tests |
@@ -438,11 +438,13 @@ Recommended derived fills are `#e8f7fd` for normal activity nodes,
 backgrounds. Do not use the reference image's yellow/orange palette as the
 default xaligo activity theme.
 
-The first implementation slice should add a small ATM-style `.xal` sample,
-focused parser/layout tests for partitions and loop routing, SVG geometry
-assertions for lane headers and label clearance, and a visual render check for
-the generated sample. Cross-format checks become mandatory when the shared
-scene or draw plan changes.
+The first implementation slice should make
+`docs/src/examples/targets/uml-activity-atm-swimlane.xal` validate and render,
+then promote or mirror it into the validated sample corpus. Add focused
+parser/layout tests for partitions and loop routing, SVG geometry assertions
+for lane headers and label clearance, and a visual render check for the
+generated sample. Cross-format checks become mandatory when the shared scene or
+draw plan changes.
 
 ## Definition of Done
 
