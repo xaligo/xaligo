@@ -30,6 +30,12 @@ reservation, and automatic safe-edge selection for page links.
 
 ![Hybrid enterprise architecture sample](images/complex-hybrid-architecture.svg)
 
+This sample combines the larger network-routing showcase with canonical V1
+page metadata. Its frame declares a stable `id`, visible `title`, and content
+`version`, so the built-in metadata band reserves its edge strip while the
+existing route/traffic lanes, line jumps, junctions, and manual bends continue
+to use the shared routing pipeline.
+
 Source: [`docs/src/examples/samples/complex-hybrid-architecture.xal`](examples/samples/complex-hybrid-architecture.xal)
 
 ```bash
