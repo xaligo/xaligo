@@ -71,9 +71,10 @@ container around classifiers and package-local relations. Packages render with
 the same general-group visual language used elsewhere in xaligo while contained
 classifiers keep their frame-local `id` references.
 Set `grid="N"` on `<class-diagram>` or a class-diagram `<package>` to choose
-the classifier/package column count. Package boxes expand to the assigned grid
-cell so grouped classifiers use the frame area instead of floating in a small
-cluster.
+the classifier/package column count. When a class diagram contains only
+packages and omits `grid`, xaligo chooses a package grid from the frame aspect
+ratio and empty-cell count. Package boxes expand to the assigned grid cell so
+grouped classifiers use the frame area instead of floating in a small cluster.
 
 Class diagrams use compact multi-row classifier placement by default so boxes
 read as independent UML classifiers instead of full-width layout panels. The

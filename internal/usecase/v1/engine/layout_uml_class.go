@@ -12,9 +12,12 @@ func layoutUMLClassDiagramV1EngineLayoutUmlClass(node *entity.Node, target *enti
 	if len(children) == 0 {
 		return nil
 	}
-	cols, configuredGrid := umlClassGridColumnsV1EngineLayoutUmlClass(node, len(children))
+	packageGrid := umlClassPackageGridV1EngineLayoutUmlClass(node, children)
+	cols, configuredGrid := umlClassGridColumnsV1EngineLayoutUmlClass(node, len(children), w, h, packageGrid)
 	maxCols := 3
-	if node.Attr("uml-diagram-kind") == "class-diagram" && node.Attr("uml-element-kind") == "package" {
+	if packageGrid {
+		maxCols = len(children)
+	} else if node.Attr("uml-diagram-kind") == "class-diagram" && node.Attr("uml-element-kind") == "package" {
 		maxCols = 2
 		if w < 560 {
 			maxCols = 1
@@ -33,6 +36,10 @@ func layoutUMLClassDiagramV1EngineLayoutUmlClass(node *entity.Node, target *enti
 		row := index / cols
 		col := index % cols
 		nodeW, nodeH := umlClassNodeSizeV1EngineLayoutUmlClass(child, cellW, cellH)
+		if packageGrid && isUMLClassPackageNodeV1EngineLayoutUmlClass(child) {
+			nodeW = math.Max(1, cellW-16)
+			nodeH = math.Max(1, cellH-16)
+		}
 		nodeX := x + float64(col)*cellW + (cellW-nodeW)/2
 		nodeY := y + float64(row)*cellH + (cellH-nodeH)/2
 		box := &entity.Box{ID: childIDV1EngineLayoutAttributes(target.ID, len(target.Children)), Tag: child.Tag, Label: labelOfV1EngineLayoutAttributes(child), Position: child.Position}
@@ -63,7 +70,7 @@ func umlClassNodeSizeV1EngineLayoutUmlClass(node *entity.Node, maxW, maxH float6
 	return width, height
 }
 
-func umlClassGridColumnsV1EngineLayoutUmlClass(node *entity.Node, childCount int) (int, bool) {
+func umlClassGridColumnsV1EngineLayoutUmlClass(node *entity.Node, childCount int, width, height float64, balanceToFrame bool) (int, bool) {
 	if childCount <= 0 {
 		return 1, false
 	}
@@ -77,7 +84,52 @@ func umlClassGridColumnsV1EngineLayoutUmlClass(node *entity.Node, childCount int
 		}
 		return cols, true
 	}
+	if balanceToFrame {
+		return balancedUMLClassGridColumnsV1EngineLayoutUmlClass(childCount, width, height), false
+	}
 	return int(math.Ceil(math.Sqrt(float64(childCount) * 1.25))), false
+}
+
+func balancedUMLClassGridColumnsV1EngineLayoutUmlClass(childCount int, width, height float64) int {
+	if childCount <= 1 || width <= 0 || height <= 0 {
+		return 1
+	}
+	idealAspect := 1.15
+	bestCols := 1
+	bestScore := math.Inf(1)
+	bestEmpty := childCount
+	for cols := 1; cols <= childCount; cols++ {
+		rows := int(math.Ceil(float64(childCount) / float64(cols)))
+		cellW := width / float64(cols)
+		cellH := height / float64(rows)
+		if cellW <= 0 || cellH <= 0 {
+			continue
+		}
+		empty := cols*rows - childCount
+		score := math.Abs(math.Log((cellW/cellH)/idealAspect)) + float64(empty)*0.35
+		if score < bestScore || (math.Abs(score-bestScore) < 0.001 && empty < bestEmpty) {
+			bestCols = cols
+			bestScore = score
+			bestEmpty = empty
+		}
+	}
+	return bestCols
+}
+
+func umlClassPackageGridV1EngineLayoutUmlClass(node *entity.Node, children []*entity.Node) bool {
+	if node == nil || node.Tag != "uml" || node.Attr("uml-kind") != "class-diagram" || len(children) == 0 {
+		return false
+	}
+	for _, child := range children {
+		if !isUMLClassPackageNodeV1EngineLayoutUmlClass(child) {
+			return false
+		}
+	}
+	return true
+}
+
+func isUMLClassPackageNodeV1EngineLayoutUmlClass(node *entity.Node) bool {
+	return node != nil && node.Attr("uml-diagram-kind") == "class-diagram" && node.Attr("uml-element-kind") == "package"
 }
 
 func umlClassNodeHeightV1EngineLayoutUmlClass(node *entity.Node) float64 {

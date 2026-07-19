@@ -464,6 +464,38 @@ func TestUMLClassDiagramSupportsPackageGroups(t *testing.T) {
 	}
 }
 
+func TestUMLClassPackagesAutoBalanceToFrameArea(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="1200" height="520"><uml id="classes"><class-diagram><package id="identity" title="Identity"><class id="user" title="User" /></package><package id="billing" title="Billing"><class id="invoice" title="Invoice" /></package><package id="shipping" title="Shipping"><class id="shipment" title="Shipment" /></package></class-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var scene entity.PresentationScene
+	if err := json.Unmarshal(rawScene, &scene); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	var packageElements []entity.Element
+	for _, element := range scene.Elements {
+		if element.CustomData != nil && element.CustomData.GroupBorder {
+			packageElements = append(packageElements, element)
+		}
+	}
+	if len(packageElements) != 3 {
+		t.Fatalf("package count = %d, want 3: %#v", len(packageElements), scene.Elements)
+	}
+	baseY := packageElements[0].Y
+	baseWidth := packageElements[0].Width
+	baseHeight := packageElements[0].Height
+	for _, element := range packageElements {
+		if math.Abs(element.Y-baseY) > 1 || math.Abs(element.Width-baseWidth) > 1 || math.Abs(element.Height-baseHeight) > 1 {
+			t.Fatalf("packages should share one balanced row and equal size: %#v", packageElements)
+		}
+		if element.Height < 430 {
+			t.Fatalf("package height %.1f should use the frame height: %#v", element.Height, packageElements)
+		}
+	}
+}
+
 func TestUMLClassPackageSVGKeepsReadableCompartmentText(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="1440" height="760"><uml id="classes"><class-diagram><package id="domain" title="Domain"><class id="order" title="Order" stereotype="aggregate-root"><attribute>- id: UUID</attribute><attribute>- status: OrderStatus</attribute><operation>+ confirm()</operation><operation>+ total(): Money</operation></class><class id="customer" title="Customer"><attribute>- id: UUID</attribute><attribute>- name: String</attribute><operation>+ placeOrder(): Order</operation></class><class id="premium" title="PremiumCustomer" abstract="true"><attribute>- discountRate: Decimal</attribute><operation>+ calculateDiscount(): Money</operation></class></package><association src="customer" dst="order" src-multiplicity="1" dst-multiplicity="0..*"/></class-diagram></uml></frame></frames></xaligo>`)
 	svg, err := newUsecase().RenderSVG(context.Background(), source, entity.RenderOptions{PxPerInch: 96})

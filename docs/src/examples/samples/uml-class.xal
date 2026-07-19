@@ -1,7 +1,8 @@
 <xaligo version="1">
   <data></data>
   <frames>
-    <frame id="class" width="1440" height="760" class="pa-3">
+    <frame id="class" title="Ordering Domain" version="2026.07" width="1440" height="760" class="pa-3" margin-top="48">
+      <metadata align="right" width="156" key-width="56" font-size="12" />
       <uml id="domain-model">
         <class-diagram direction="right" grid="2">
           <package id="infrastructure" title="Infrastructure" grid="2">
