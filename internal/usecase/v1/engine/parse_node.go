@@ -119,6 +119,9 @@ func validateNestedVersionV1EngineParseNode(node, parent *entity.Node) error {
 	if node.Tag == "frame" && parent != nil && parent.Tag == "frames" {
 		return nil
 	}
+	if node.Tag == "frames" && parent != nil && parent.Tag == "xaligo" {
+		return nil
+	}
 	return fmt.Errorf("<%s version=%q> is invalid: version is only allowed on the V1 document root", node.Tag, version)
 }
 
