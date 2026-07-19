@@ -626,6 +626,11 @@ func umlRelationLabelPositionV1EngineSceneConnectionRender(conn *entity.Node, ro
 	if len(routePoints) < 2 {
 		return routePoints[0].X - width/2, routePoints[0].Y - height/2
 	}
+	if conn != nil && conn.Attr("uml-diagram-kind") == "sequence-diagram" && conn.Attr("src") == conn.Attr("dst") {
+		start, end := routePoints[0], routePoints[1]
+		const gap = 8.0
+		return (start.X+end.X)/2 - width/2, math.Min(start.Y, end.Y) - height - gap
+	}
 	bestStart, bestEnd := routePoints[0], routePoints[1]
 	bestLength := math.Hypot(bestEnd.X-bestStart.X, bestEnd.Y-bestStart.Y)
 	for index := 1; index < len(routePoints)-1; index++ {

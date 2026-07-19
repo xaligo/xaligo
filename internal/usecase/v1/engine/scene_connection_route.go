@@ -97,13 +97,24 @@ func umlSequenceSelfMessagePointsV1EngineSceneConnectionRoute(conn *entity.Node,
 	}
 	start := ptV1EngineRouteTypes{X: rect[0] + rect[2]*srcFP[0], Y: rect[1] + rect[3]*srcFP[1]}
 	end := ptV1EngineRouteTypes{X: rect[0] + rect[2]*dstFP[0], Y: rect[1] + rect[3]*dstFP[1]}
-	loopWidth := math.Max(44, rect[2]*3)
+	visualX := rect[0] + rect[2] + 4
+	start.X = visualX
+	end.X = visualX
+	loopWidth := math.Max(math.Max(72, rect[2]*3), umlSequenceSelfMessageLabelWidthV1EngineSceneConnectionRoute(conn)+24)
 	return []ptV1EngineRouteTypes{
 		start,
 		{X: start.X + loopWidth, Y: start.Y},
 		{X: start.X + loopWidth, Y: end.Y},
 		end,
 	}, true
+}
+
+func umlSequenceSelfMessageLabelWidthV1EngineSceneConnectionRoute(conn *entity.Node) float64 {
+	label := strings.TrimSpace(conn.Attr("uml-relation-label"))
+	if label == "" {
+		return 0
+	}
+	return math.Max(80, math.Min(220, textWidthV1EngineSceneItem(label, 6)+16))
 }
 
 func separatePinnedExactOverlapsV1EngineSceneConnectionRoute(points []ptV1EngineRouteTypes, placed [][]segmentV1EngineRouteTypes, obstacles []rectV1EngineRouteTypes, opt routerOptionsV1EngineRouteTypes) []ptV1EngineRouteTypes {

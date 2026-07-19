@@ -285,14 +285,23 @@ func TestUMLSequenceOrderControlsVerticalMessageAnchors(t *testing.T) {
 		t.Fatalf("json.Unmarshal() error = %v", err)
 	}
 	anchors := map[string][2]float64{}
+	var selfMessage *entity.Element
+	var selfMessageLabel *entity.Element
 	selfMessagePoints := [][]float64{}
-	for _, element := range scene.Elements {
-		if element.Type != "arrow" || element.CustomData == nil || element.CustomData.UMLMessageOrder == "" || element.StartBinding == nil || element.EndBinding == nil {
+	for index := range scene.Elements {
+		element := &scene.Elements[index]
+		if element.CustomData == nil || element.CustomData.UMLMessageOrder == "" {
 			continue
 		}
-		anchors[element.CustomData.UMLMessageOrder] = [2]float64{element.StartBinding.FixedPoint[1], element.EndBinding.FixedPoint[1]}
-		if element.CustomData.UMLMessageOrder == "2" {
-			selfMessagePoints = element.Points
+		if element.Type == "arrow" && element.StartBinding != nil && element.EndBinding != nil {
+			anchors[element.CustomData.UMLMessageOrder] = [2]float64{element.StartBinding.FixedPoint[1], element.EndBinding.FixedPoint[1]}
+			if element.CustomData.UMLMessageOrder == "2" {
+				selfMessage = element
+				selfMessagePoints = element.Points
+			}
+		}
+		if element.Type == "text" && element.CustomData.UMLMessageOrder == "2" {
+			selfMessageLabel = element
 		}
 	}
 	if len(anchors) != 3 {
@@ -304,8 +313,15 @@ func TestUMLSequenceOrderControlsVerticalMessageAnchors(t *testing.T) {
 	if math.Abs(anchors["2"][0]-anchors["2"][1]) < 0.01 {
 		t.Fatalf("self-message endpoints should form a loop: %#v", anchors["2"])
 	}
-	if len(selfMessagePoints) < 4 || selfMessagePoints[1][0] < 24 || math.Abs(selfMessagePoints[len(selfMessagePoints)-1][0]) > 0.01 {
+	if len(selfMessagePoints) < 4 || selfMessagePoints[0][0] <= 0 || selfMessagePoints[1][0] < 96 || math.Abs(selfMessagePoints[len(selfMessagePoints)-1][0]-selfMessagePoints[0][0]) > 0.01 {
 		t.Fatalf("self-message should route as a right-side loop, got %#v", selfMessagePoints)
+	}
+	if selfMessage == nil || selfMessageLabel == nil {
+		t.Fatalf("self-message or label missing: arrow=%#v label=%#v", selfMessage, selfMessageLabel)
+	}
+	loopTopY := selfMessage.Y + selfMessagePoints[0][1]
+	if selfMessageLabel.Y+selfMessageLabel.Height > loopTopY-4 {
+		t.Fatalf("self-message label overlaps loop: arrow=%#v label=%#v", selfMessage, selfMessageLabel)
 	}
 }
 
