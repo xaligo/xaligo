@@ -738,12 +738,40 @@ func TestUMLComponentMultipleCallersRenderSeparateInterfaceCircles(t *testing.T)
 	interfaceCircles := map[string]map[string]any{}
 	associationEndIDs := map[string]bool{}
 	associations := 0
+	multiTrunks := 0
+	multiPortStems := 0
+	multiCircleStems := 0
+	maxCircleStemWidth := 0.0
+	portStemWidth := 0.0
 	for _, rawElement := range elements {
 		element, _ := rawElement.(map[string]any)
 		id, _ := element["id"].(string)
 		customData, _ := element["customData"].(map[string]any)
 		if customData["xaligoUmlComponentInterfaceCircle"] == true {
 			interfaceCircles[id] = element
+		}
+		if customData["xaligoUmlComponentInterfaceStem"] == true {
+			width, _ := element["width"].(float64)
+			height, _ := element["height"].(float64)
+			switch {
+			case strings.HasSuffix(id, "-multi-trunk"):
+				multiTrunks++
+				if math.Abs(width) > 0.1 || height <= 0 {
+					t.Fatalf("multi trunk %q width %.1f height %.1f, want vertical trunk", id, width, height)
+				}
+			case strings.HasSuffix(id, "-multi-port-stem"):
+				multiPortStems++
+				if width <= 0 || math.Abs(height) > 0.1 {
+					t.Fatalf("multi port stem %q width %.1f height %.1f, want horizontal stem", id, width, height)
+				}
+				portStemWidth = width
+			case strings.Contains(id, "-multi-circle-stem-"):
+				multiCircleStems++
+				if width <= 0 || math.Abs(height) > 0.1 {
+					t.Fatalf("multi circle stem %q width %.1f height %.1f, want horizontal stem", id, width, height)
+				}
+				maxCircleStemWidth = math.Max(maxCircleStemWidth, width)
+			}
 		}
 		if customData["xaligoUmlRelationKind"] != "association" {
 			continue
@@ -781,6 +809,12 @@ func TestUMLComponentMultipleCallersRenderSeparateInterfaceCircles(t *testing.T)
 	}
 	if len(interfaceCircles) != 4 {
 		t.Fatalf("interface circles = %d, want three component interfaces plus one extra destination circle", len(interfaceCircles))
+	}
+	if multiTrunks != 1 || multiPortStems != 1 || multiCircleStems != 2 {
+		t.Fatalf("multi interface stems = trunks %d port stems %d circle stems %d, want 1, 1, and 2", multiTrunks, multiPortStems, multiCircleStems)
+	}
+	if maxCircleStemWidth <= 0 || portStemWidth <= 0 || maxCircleStemWidth > portStemWidth*1.25 {
+		t.Fatalf("multi interface stem widths = circle %.1f port %.1f, want compact circle branches with a visible port stem", maxCircleStemWidth, portStemWidth)
 	}
 }
 
