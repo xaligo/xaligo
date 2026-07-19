@@ -208,6 +208,9 @@ func layoutNodeV1EngineLayoutNode(node *entity.Node, target *entity.Box, x, y, w
 			if node.Tag == "uml" && node.Attr("uml-kind") == "class-diagram" {
 				return layoutUMLClassDiagramV1EngineLayoutUmlClass(node, target, gInnerX, gInnerY, gInnerW, gInnerH)
 			}
+			if node.Attr("uml-diagram-kind") == "class-diagram" && node.Attr("uml-element-kind") == "package" {
+				return layoutUMLClassDiagramV1EngineLayoutUmlClass(node, target, gInnerX, gInnerY, gInnerW, gInnerH)
+			}
 			if node.Attr("layout") == "staggered" {
 				loggerV1EngineSharedLogging.DEBUG(IULN012V1EngineLayoutNode, "branch staggered", map[string]any{"tag": node.Tag})
 				return layoutStaggerV1EngineLayoutFlow(node, target, gInnerX, gInnerY, gInnerW, gInnerH)

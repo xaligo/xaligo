@@ -38,6 +38,12 @@ func layoutUMLClassDiagramV1EngineLayoutUmlClass(node *entity.Node, target *enti
 }
 
 func umlClassNodeSizeV1EngineLayoutUmlClass(node *entity.Node, maxW, maxH float64) (float64, float64) {
+	if node.Attr("uml-diagram-kind") == "class-diagram" && node.Attr("uml-element-kind") == "package" {
+		childCount := math.Max(1, float64(len(layoutKidsV1EngineLayoutNode(node))))
+		width := math.Min(math.Max(360, maxW*0.86), math.Max(260, maxW-16))
+		height := math.Min(math.Max(220, 120+math.Ceil(childCount/2)*132), math.Max(180, maxH-16))
+		return width, height
+	}
 	lines := strings.Count(labelOfV1EngineLayoutAttributes(node), "\n") + 1
 	width := math.Min(math.Max(170, maxW*0.58), 230)
 	height := math.Min(math.Max(78, 32+float64(lines)*18), 160)

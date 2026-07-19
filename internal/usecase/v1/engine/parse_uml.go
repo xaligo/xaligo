@@ -25,12 +25,13 @@ type umlRequiredElementsV1EngineParseUml struct {
 }
 
 type umlSourceElementV1EngineParseUml struct {
-	node      *entity.Node
-	partition string
+	node          *entity.Node
+	partition     string
+	parentPackage string
 }
 
 var umlDiagramSpecsV1EngineParseUml = map[string]umlDiagramSpecV1EngineParseUml{
-	"class-diagram": umlSpecV1EngineParseUml("class,interface,enumeration", "association,aggregation,composition,generalization,realization,dependency",
+	"class-diagram": umlSpecV1EngineParseUml("package,class,interface,enumeration", "association,aggregation,composition,generalization,realization,dependency",
 		umlRequiredElementsV1EngineParseUml{"classifier", umlTagSetV1EngineParseUml("class,interface,enumeration"), 1}),
 	"object-diagram": umlSpecV1EngineParseUml("object", "link,dependency",
 		umlRequiredElementsV1EngineParseUml{"object", umlTagSetV1EngineParseUml("object"), 1}),
@@ -230,8 +231,8 @@ func normalizeUMLComponentV1EngineParseUml(uml, frame *entity.Node, models map[s
 	scopedIDs := map[string]string{}
 	umlID := strings.TrimSpace(uml.Attr("id"))
 	uml.Attrs["id"] = umlID
-	var elements []*entity.Node
 	var relations []*entity.Node
+	var elementEntries []umlSourceElementV1EngineParseUml
 	normalizedElements := map[string]*entity.Node{}
 	sourceElements := map[string]*entity.Node{}
 	elementCounts := map[string]int{}
@@ -264,7 +265,7 @@ func normalizeUMLComponentV1EngineParseUml(uml, frame *entity.Node, models map[s
 			sourceElements[id] = child
 			elementCounts[child.Tag]++
 			scopedIDs[id] = scopedUMLIDV1EngineParseUml(umlID, id)
-			if err := validateUMLElementV1EngineParseUml(child); err != nil {
+			if err := validateUMLElementInDiagramV1EngineParseUml(diagram.Tag, child); err != nil {
 				return &entity.ParseError{Position: child.Position, Err: err}
 			}
 			normalized := normalizeUMLElementV1EngineParseUml(child, scopedIDs[id], diagram.Tag, umlID)
@@ -273,7 +274,7 @@ func normalizeUMLComponentV1EngineParseUml(uml, frame *entity.Node, models map[s
 				normalized.Attrs["uml-partition-title"] = partitions[entry.partition]
 			}
 			normalizedElements[id] = normalized
-			elements = append(elements, normalized)
+			elementEntries = append(elementEntries, entry)
 		case umlRelationTagsV1EngineParseUml[child.Tag]:
 			relations = append(relations, child)
 		default:
@@ -324,6 +325,19 @@ func normalizeUMLComponentV1EngineParseUml(uml, frame *entity.Node, models map[s
 		}
 		frame.Children = append(frame.Children, connection)
 	}
+	var elements []*entity.Node
+	for _, entry := range elementEntries {
+		id := entry.node.Attr("id")
+		normalized := normalizedElements[id]
+		if entry.parentPackage != "" {
+			parent := normalizedElements[entry.parentPackage]
+			if parent != nil {
+				parent.Children = append(parent.Children, normalized)
+				continue
+			}
+		}
+		elements = append(elements, normalized)
+	}
 	uml.Children = elements
 	return nil
 }
@@ -360,6 +374,10 @@ func flattenUMLDiagramChildrenV1EngineParseUml(diagram *entity.Node, spec umlDia
 				}
 				flattened = append(flattened, umlSourceElementV1EngineParseUml{node: nested, partition: id})
 			}
+		case diagram.Tag == "class-diagram" && child.Tag == "package":
+			if err := flattenUMLClassPackageV1EngineParseUml(child, spec, "", &flattened); err != nil {
+				return nil, err
+			}
 		case umlElementTagsV1EngineParseUml[child.Tag]:
 			if !spec.elements[child.Tag] {
 				return nil, &entity.ParseError{Position: child.Position, Err: fmt.Errorf("<%s> does not allow UML element <%s>", diagram.Tag, child.Tag)}
@@ -382,6 +400,38 @@ func flattenUMLDiagramChildrenV1EngineParseUml(diagram *entity.Node, spec umlDia
 		return nil, &entity.ParseError{Position: entry.node.Position, Err: fmt.Errorf("UML <%s lane=%q> references an unknown partition", entry.node.Tag, entry.partition)}
 	}
 	return flattened, nil
+}
+
+func flattenUMLClassPackageV1EngineParseUml(pkg *entity.Node, spec umlDiagramSpecV1EngineParseUml, parentPackage string, flattened *[]umlSourceElementV1EngineParseUml) error {
+	id := strings.TrimSpace(pkg.Attr("id"))
+	if id == "" {
+		return &entity.ParseError{Position: pkg.Position, Err: fmt.Errorf("UML <package> requires id")}
+	}
+	if err := validateUMLIdentifierV1EngineParseUml("UML <package> id", pkg.Attr("id")); err != nil {
+		return &entity.ParseError{Position: pkg.Position, Err: err}
+	}
+	*flattened = append(*flattened, umlSourceElementV1EngineParseUml{node: pkg, parentPackage: parentPackage})
+	for _, nested := range pkg.Children {
+		switch {
+		case nested.Tag == "package":
+			if err := flattenUMLClassPackageV1EngineParseUml(nested, spec, id, flattened); err != nil {
+				return err
+			}
+		case umlElementTagsV1EngineParseUml[nested.Tag]:
+			if !spec.elements[nested.Tag] || nested.Tag == "package" {
+				return &entity.ParseError{Position: nested.Position, Err: fmt.Errorf("<class-diagram> does not allow UML element <%s> inside <package>", nested.Tag)}
+			}
+			*flattened = append(*flattened, umlSourceElementV1EngineParseUml{node: nested, parentPackage: id})
+		case umlRelationTagsV1EngineParseUml[nested.Tag]:
+			if !spec.relations[nested.Tag] {
+				return &entity.ParseError{Position: nested.Position, Err: fmt.Errorf("<class-diagram> does not allow UML relation <%s> inside <package>", nested.Tag)}
+			}
+			*flattened = append(*flattened, umlSourceElementV1EngineParseUml{node: nested})
+		default:
+			return &entity.ParseError{Position: nested.Position, Err: fmt.Errorf("UML <package> does not support child <%s>", nested.Tag)}
+		}
+	}
+	return nil
 }
 
 func scopedUMLIDV1EngineParseUml(umlID, localID string) string {
@@ -528,6 +578,13 @@ func validateUMLElementV1EngineParseUml(element *entity.Node) error {
 		}
 	}
 	return nil
+}
+
+func validateUMLElementInDiagramV1EngineParseUml(diagramKind string, element *entity.Node) error {
+	if diagramKind == "class-diagram" && element.Tag == "package" {
+		return nil
+	}
+	return validateUMLElementV1EngineParseUml(element)
 }
 
 func requiredFiniteUMLNumberV1EngineParseUml(node *entity.Node, attribute string, nonNegative bool) (float64, error) {
@@ -1023,8 +1080,14 @@ func normalizeUMLElementV1EngineParseUml(source *entity.Node, scopedID, diagramK
 	if attrs["title"] == "" {
 		attrs["title"] = source.Attr("id")
 	}
+	if diagramKind == "class-diagram" && source.Tag == "package" {
+		return &entity.Node{Tag: "generic-group", Attrs: attrs, Position: source.Position}
+	}
 	if diagramKind == "class-diagram" {
 		attrs["title"] = classElementTitleV1EngineParseUml(attrs)
+		if attrs["title"] != "" {
+			attrs["uml-class-header-lines"] = strconv.Itoa(strings.Count(attrs["title"], "\n") + 1)
+		}
 		if stereotype := strings.TrimSpace(attrs["stereotype"]); stereotype != "" {
 			attrs["uml-stereotype"] = stereotype
 		}
@@ -1044,6 +1107,8 @@ func normalizeUMLElementV1EngineParseUml(source *entity.Node, scopedID, diagramK
 	delete(attrs, "name")
 	var compartments []string
 	var compartmentKinds []string
+	attributeLines := 0
+	operationLines := 0
 	for _, child := range source.Children {
 		label := strings.TrimSpace(child.Attr("title"))
 		if label == "" {
@@ -1055,11 +1120,18 @@ func normalizeUMLElementV1EngineParseUml(source *entity.Node, scopedID, diagramK
 		if label != "" {
 			compartments = append(compartments, label)
 			compartmentKinds = append(compartmentKinds, child.Tag)
+			if child.Tag == "operation" {
+				operationLines += strings.Count(label, "\n") + 1
+			} else {
+				attributeLines += strings.Count(label, "\n") + 1
+			}
 		}
 	}
 	if len(compartments) > 0 {
 		attrs["title"] += "\n" + strings.Join(compartments, "\n")
 		attrs["uml-compartment-kinds"] = strings.Join(compartmentKinds, ",")
+		attrs["uml-class-attribute-lines"] = strconv.Itoa(attributeLines)
+		attrs["uml-class-operation-lines"] = strconv.Itoa(operationLines)
 	}
 	return &entity.Node{Tag: "rectangle", Attrs: attrs, Position: source.Position}
 }

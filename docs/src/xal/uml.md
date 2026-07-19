@@ -62,15 +62,20 @@ and `static="true|false"`. Stereotypes render above the classifier name as
 `<<name>>`; enabled modifiers render before the classifier name as
 `{abstract, static}` and are retained in editable-scene and XYFlow UML metadata.
 Attributes, operations, literals, constraints, and notes remain classifier
-compartments.
+compartments. The classifier header, attribute area, and operation/literal area
+are rendered as separate visual regions. The header uses the xaligo cyan fill
+with white text; the body remains white with deep-blue text.
+
+Class diagrams also accept `<package id="..." title="...">` as a grouping
+container around classifiers and package-local relations. Packages render with
+the same general-group visual language used elsewhere in xaligo while contained
+classifiers keep their frame-local `id` references.
 
 Class diagrams use compact multi-row classifier placement by default so boxes
-read as independent UML classifiers instead of full-width layout panels. Each
-classifier has a real header divider line, and the default theme follows the
-xaligo activity-diagram palette: deep blue borders/text, pale cyan classifier
-fills, green-tinted interfaces, white enumerations, and deep blue relation
-lines. Set `tone="primary"` on an important classifier to use the bright xaligo
-blue fill with white text.
+read as independent UML classifiers instead of full-width layout panels. The
+default theme follows the xaligo activity-diagram palette: deep blue borders,
+xaligo-cyan classifier headers, white classifier bodies, and deep blue relation
+lines.
 
 The generic `<element>` and `<relation>` spellings are not valid in the strict
 profile. Use the typed tags in the following table.
@@ -79,7 +84,7 @@ profile. Use the typed tags in the following table.
 
 | Diagram kind | Elements | Relations | Required and constrained semantics |
 |---|---|---|---|
-| `class-diagram` | `class`, `interface`, `enumeration` | `association`, `aggregation`, `composition`, `generalization`, `realization`, `dependency` | At least one classifier. Aggregation/composition are class to class; generalization joins equal classifier kinds; realization is class to interface. |
+| `class-diagram` | `package`, `class`, `interface`, `enumeration` | `association`, `aggregation`, `composition`, `generalization`, `realization`, `dependency` | At least one classifier. Packages group classifiers and package-local relations. Aggregation/composition are class to class; generalization joins equal classifier kinds; realization is class to interface. |
 | `object-diagram` | `object` | `link`, `dependency` | At least one object; every relation joins objects. |
 | `component-diagram` | `component`, `interface`, `port`, `artifact` | `dependency`, `realization`, `association`, `assembly`, `delegation` | At least one component. Realization is component to interface. Assembly uses port/interface endpoints and includes a port. Delegation starts at a port. |
 | `deployment-diagram` | `node`, `artifact`, `component` | `deployment`, `communication-path`, `dependency` | At least one node. Deployment is artifact/component to node; communication-path is node to node. |

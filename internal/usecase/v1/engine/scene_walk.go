@@ -226,7 +226,8 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 				backgroundColor = umlActivityShapeBackgroundV1EngineSceneWalk(b)
 				fillStyle = "solid"
 			}
-			if isXaligoClassShapeV1EngineSceneWalk(b) {
+			classShape := isXaligoClassShapeV1EngineSceneWalk(b)
+			if classShape {
 				genStroke = "#052d6e"
 				strokeWidth = 1.35
 				backgroundColor = umlClassShapeBackgroundV1EngineSceneWalk(b)
@@ -237,6 +238,9 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 				shapeCustomData := umlShapeCustomDataV1EngineSceneWalk(b)
 				if b.Label != "" {
 					boundElements = []map[string]any{{"type": "text", "id": textID}}
+				}
+				if classShape {
+					boundElements = []map[string]any{{"type": "text", "id": fmt.Sprintf("%s-class-header-text", b.ID)}, {"type": "text", "id": fmt.Sprintf("%s-class-body-text", b.ID)}}
 				}
 				shapeType := umlShapeTypeV1EngineSceneWalk(b)
 				*elements = append(*elements, map[string]any{
@@ -256,8 +260,8 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 				if isXaligoActivityFinalV1EngineSceneWalk(b) {
 					appendUMLActivityFinalDotV1EngineSceneWalk(b, elements, updated)
 				}
-				if isXaligoClassShapeV1EngineSceneWalk(b) {
-					appendUMLClassHeaderDividerV1EngineSceneWalk(b, elements, updated)
+				if classShape {
+					appendUMLClassCompartmentsV1EngineSceneWalk(b, elements, updated)
 				}
 				if b.Tag == "entity" {
 					registerConnectionEndpointV1EngineSceneWalk(b, rectID, [4]float64{b.X, b.Y, b.W, b.H}, itemImgRects, itemImgIDs)
@@ -266,7 +270,7 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 					registerConnectionEndpointV1EngineSceneWalk(b, rectID, [4]float64{b.X, b.Y, b.W, b.H}, itemImgRects, itemImgIDs)
 				}
 			}
-			if !activityContainer && b.Label != "" {
+			if !activityContainer && b.Label != "" && !isXaligoClassShapeV1EngineSceneWalk(b) {
 				fontSize := attrFloatV1EngineLayoutAttributes(b.Attrs["font-size"], 20)
 				textX, textY := b.X+4, b.Y+2
 				textW, textH := math.Max(1, b.W-8), math.Max(1, math.Min(math.Ceil(fontSize*1.2), b.H-4))
@@ -514,21 +518,43 @@ func umlActivityShapeBackgroundV1EngineSceneWalk(box *entity.Box) string {
 }
 
 func umlClassShapeBackgroundV1EngineSceneWalk(box *entity.Box) string {
-	if strings.TrimSpace(box.Attrs["tone"]) == "primary" {
-		return "#08b8ea"
+	return "#ffffff"
+}
+
+func appendUMLClassCompartmentsV1EngineSceneWalk(box *entity.Box, elements *[]map[string]any, updated int64) {
+	fontSize := attrFloatV1EngineLayoutAttributes(box.Attrs["font-size"], 14)
+	lineHeight := fontSize * 1.2
+	headerText, bodyText, attributeLines, operationLines := umlClassTextSectionsV1EngineSceneWalk(box)
+	headerH := umlClassHeaderHeightV1EngineSceneWalk(box, lineHeight, headerText)
+	headerID := fmt.Sprintf("%s-class-header", box.ID)
+	headerSeed := stableSceneSeedV1EngineSceneTypes(headerID)
+	*elements = append(*elements, map[string]any{
+		"id": headerID, "type": "rectangle",
+		"x": box.X, "y": box.Y, "width": box.W, "height": headerH,
+		"angle": 0, "strokeColor": "#052d6e", "backgroundColor": "#08b8ea",
+		"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
+		"roughness": 0, "opacity": 100,
+		"groupIds": []string{}, "roundness": nil,
+		"seed": headerSeed, "version": 1, "versionNonce": headerSeed,
+		"isDeleted": false, "boundElements": nil,
+		"updated": updated, "link": nil, "locked": false,
+		"customData": map[string]any{"xaligoUmlClassHeader": true},
+	})
+	appendUMLClassTextV1EngineSceneWalk(elements, fmt.Sprintf("%s-class-header-text", box.ID), box.X+6, box.Y+4, math.Max(1, box.W-12), math.Max(1, headerH-8), headerText, "#ffffff", "center", "middle", fontSize, box, updated, map[string]any{"xaligoUmlClassHeaderContent": true})
+	appendUMLClassHeaderDividerV1EngineSceneWalk(box, elements, updated, box.Y+headerH)
+	if bodyText == "" {
+		return
 	}
-	switch strings.TrimSpace(box.Attrs["uml-element-kind"]) {
-	case "interface":
-		return "#e6fbf7"
-	case "enumeration":
-		return "#ffffff"
-	default:
-		return "#e8f7fd"
+	bodyY := box.Y + headerH + 7
+	bodyH := math.Max(1, box.Y+box.H-bodyY-6)
+	appendUMLClassTextV1EngineSceneWalk(elements, fmt.Sprintf("%s-class-body-text", box.ID), box.X+8, bodyY, math.Max(1, box.W-16), bodyH, bodyText, "#052d6e", "left", "top", fontSize, box, updated, map[string]any{"xaligoUmlClassBodyContent": true})
+	if attributeLines > 0 && operationLines > 0 {
+		dividerY := bodyY + float64(attributeLines)*lineHeight + 4
+		appendUMLClassBodyDividerV1EngineSceneWalk(box, elements, updated, dividerY)
 	}
 }
 
-func appendUMLClassHeaderDividerV1EngineSceneWalk(box *entity.Box, elements *[]map[string]any, updated int64) {
-	y := box.Y + math.Min(44, math.Max(28, box.H*0.28))
+func appendUMLClassHeaderDividerV1EngineSceneWalk(box *entity.Box, elements *[]map[string]any, updated int64, y float64) {
 	id := fmt.Sprintf("%s-class-divider", box.ID)
 	seed := stableSceneSeedV1EngineSceneTypes(id)
 	*elements = append(*elements, map[string]any{
@@ -544,6 +570,70 @@ func appendUMLClassHeaderDividerV1EngineSceneWalk(box *entity.Box, elements *[]m
 		"points":     [][]float64{{0, 0}, {box.W, 0}},
 		"customData": map[string]any{"xaligoUmlClassHeaderDivider": true},
 	})
+}
+
+func appendUMLClassBodyDividerV1EngineSceneWalk(box *entity.Box, elements *[]map[string]any, updated int64, y float64) {
+	id := fmt.Sprintf("%s-class-body-divider", box.ID)
+	seed := stableSceneSeedV1EngineSceneTypes(id)
+	*elements = append(*elements, map[string]any{
+		"id": id, "type": "line",
+		"x": box.X, "y": y, "width": box.W, "height": 0,
+		"angle": 0, "strokeColor": "#052d6e", "backgroundColor": "transparent",
+		"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
+		"roughness": 0, "opacity": 70,
+		"groupIds": []string{}, "roundness": nil,
+		"seed": seed, "version": 1, "versionNonce": seed,
+		"isDeleted": false, "boundElements": nil,
+		"updated": updated, "link": nil, "locked": false,
+		"points":     [][]float64{{0, 0}, {box.W, 0}},
+		"customData": map[string]any{"xaligoUmlClassBodyDivider": true},
+	})
+}
+
+func appendUMLClassTextV1EngineSceneWalk(elements *[]map[string]any, id string, x, y, w, h float64, text, color, align, valign string, fontSize float64, box *entity.Box, updated int64, customData map[string]any) {
+	if strings.TrimSpace(text) == "" {
+		return
+	}
+	customData["xaligoTextLayout"] = sceneTextLayoutV1EngineSceneBuild(entity.TextRoleLabel, true, 1.2)
+	seed := stableSceneSeedV1EngineSceneTypes(id)
+	*elements = append(*elements, map[string]any{
+		"id": id, "type": "text",
+		"x": x, "y": y, "width": w, "height": h,
+		"angle": 0, "strokeColor": color, "backgroundColor": "transparent",
+		"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
+		"roughness": 0, "opacity": 100,
+		"groupIds": []string{}, "roundness": nil,
+		"seed": seed, "version": 1, "versionNonce": seed,
+		"isDeleted": false, "boundElements": nil,
+		"updated": updated, "link": nil, "locked": false,
+		"text": text, "fontSize": fontSize, "fontFamily": fontFamilyV1EngineSceneWalk(box.Attrs["font-family"]),
+		"textAlign": align, "verticalAlign": valign,
+		"containerId": fmt.Sprintf("%s-rect", box.ID), "originalText": text, "lineHeight": 1.2,
+		"customData": customData,
+	})
+}
+
+func umlClassTextSectionsV1EngineSceneWalk(box *entity.Box) (string, string, int, int) {
+	lines := strings.Split(box.Label, "\n")
+	headerLines := int(attrFloatV1EngineLayoutAttributes(box.Attrs["uml-class-header-lines"], 1))
+	attributeLines := int(attrFloatV1EngineLayoutAttributes(box.Attrs["uml-class-attribute-lines"], 0))
+	operationLines := int(attrFloatV1EngineLayoutAttributes(box.Attrs["uml-class-operation-lines"], 0))
+	if headerLines < 1 || headerLines > len(lines) {
+		headerLines = 1
+	}
+	headerText := strings.Join(lines[:headerLines], "\n")
+	bodyLines := lines[headerLines:]
+	bodyText := strings.Join(bodyLines, "\n")
+	if attributeLines+operationLines > len(bodyLines) {
+		attributeLines = len(bodyLines)
+		operationLines = 0
+	}
+	return headerText, bodyText, attributeLines, operationLines
+}
+
+func umlClassHeaderHeightV1EngineSceneWalk(box *entity.Box, lineHeight float64, headerText string) float64 {
+	lines := strings.Count(headerText, "\n") + 1
+	return math.Min(math.Max(34, 10+float64(lines)*lineHeight), math.Max(34, box.H*0.48))
 }
 
 func isXaligoActivityFinalV1EngineSceneWalk(box *entity.Box) bool {

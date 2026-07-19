@@ -334,7 +334,7 @@ func TestUMLClassStereotypeAndModifiersReachEditableScene(t *testing.T) {
 	if classElement == nil || classElement.CustomData.UMLAbstract != "true" || classElement.CustomData.UMLStatic != "true" || classElement.CustomData.UMLCompartmentKinds != "attribute,operation" {
 		t.Fatalf("class UML metadata missing: %#v", scene.Elements)
 	}
-	if classElement.StrokeColor != "#052d6e" || classElement.BackgroundColor != "#e8f7fd" || classElement.StrokeWidth < 1.3 {
+	if classElement.StrokeColor != "#052d6e" || classElement.BackgroundColor != "#ffffff" || classElement.StrokeWidth < 1.3 {
 		t.Fatalf("class style = stroke %q background %q width %.2f, want xaligo activity palette", classElement.StrokeColor, classElement.BackgroundColor, classElement.StrokeWidth)
 	}
 	if classElement.Width > 260 || classElement.Height > 180 {
@@ -344,22 +344,32 @@ func TestUMLClassStereotypeAndModifiersReachEditableScene(t *testing.T) {
 	if err := json.Unmarshal(rawScene, &raw); err != nil {
 		t.Fatalf("json.Unmarshal(raw map) error = %v", err)
 	}
-	text := ""
-	var textElement map[string]any
+	foundHeader := false
+	foundHeaderText := false
+	foundBodyText := false
+	foundBodyDivider := false
 	for _, rawElement := range raw["elements"].([]any) {
 		element, _ := rawElement.(map[string]any)
-		if element["containerId"] == classElement.ID && element["type"] == "text" {
-			text, _ = element["text"].(string)
-			textElement = element
-			break
+		customData, _ := element["customData"].(map[string]any)
+		if customData["xaligoUmlClassHeader"] == true && element["backgroundColor"] == "#08b8ea" {
+			foundHeader = true
+		}
+		if customData["xaligoUmlClassHeaderContent"] == true && element["strokeColor"] == "#ffffff" {
+			if element["text"] == "<<service>>\n{abstract, static} Repository" {
+				foundHeaderText = true
+			}
+		}
+		if customData["xaligoUmlClassBodyContent"] == true && element["strokeColor"] == "#052d6e" {
+			if element["text"] == "- store: Store\n+ find(id): Entity" {
+				foundBodyText = true
+			}
+		}
+		if customData["xaligoUmlClassBodyDivider"] == true {
+			foundBodyDivider = true
 		}
 	}
-	wantText := "<<service>>\n{abstract, static} Repository\n- store: Store\n+ find(id): Entity"
-	if text != wantText {
-		t.Fatalf("class label = %q, want %q", text, wantText)
-	}
-	if textElement["strokeColor"] != "#052d6e" {
-		t.Fatalf("class text color = %q, want xaligo text color", textElement["strokeColor"])
+	if !foundHeader || !foundHeaderText || !foundBodyText || !foundBodyDivider {
+		t.Fatalf("class compartment rendering missing header=%t headerText=%t bodyText=%t bodyDivider=%t: %s", foundHeader, foundHeaderText, foundBodyText, foundBodyDivider, rawScene)
 	}
 	foundDivider := false
 	for _, rawElement := range raw["elements"].([]any) {
@@ -381,6 +391,38 @@ func TestUMLClassStereotypeAndModifiersReachEditableScene(t *testing.T) {
 		if !strings.Contains(string(xyflow), want) {
 			t.Fatalf("XYFlow missing %q: %s", want, xyflow)
 		}
+	}
+}
+
+func TestUMLClassDiagramSupportsPackageGroups(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="classes"><class-diagram><package id="identity" title="Identity"><class id="user" title="User"><attribute>- id: int</attribute><operation>+ login()</operation></class><class id="session" title="Session"><attribute>- token: string</attribute></class><association src="user" dst="session" label="1 -> *"/></package></class-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var scene entity.PresentationScene
+	if err := json.Unmarshal(rawScene, &scene); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	classCount := 0
+	foundPackage := false
+	foundRelation := false
+	for _, element := range scene.Elements {
+		if element.CustomData == nil {
+			continue
+		}
+		if element.CustomData.UMLElementKind == "class" {
+			classCount++
+		}
+		if element.CustomData.UMLElementKind == "package" || element.CustomData.GroupBorder {
+			foundPackage = true
+		}
+		if element.CustomData.UMLRelationKind == "association" {
+			foundRelation = true
+		}
+	}
+	if classCount != 2 || !foundPackage || !foundRelation {
+		t.Fatalf("package class diagram scene = classes %d package %t relation %t: %#v", classCount, foundPackage, foundRelation, scene.Elements)
 	}
 }
 
