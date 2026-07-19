@@ -595,6 +595,7 @@ func TestUMLConnectedComponentSampleRendersBoundaryInterfaces(t *testing.T) {
 	interfaceSymbols, circles, callerSockets, associations := 0, 0, 0, 0
 	lastInterfaceIndex, associationIndex := -1, -1
 	interfaceIDs := map[string]bool{}
+	interfaceElements := map[string]map[string]any{}
 	associationStartID, associationEndID := "", ""
 	var callerSocketElement map[string]any
 	var associationElement map[string]any
@@ -606,6 +607,7 @@ func TestUMLConnectedComponentSampleRendersBoundaryInterfaces(t *testing.T) {
 			lastInterfaceIndex = index
 			id, _ := element["id"].(string)
 			interfaceIDs[id] = true
+			interfaceElements[id] = element
 			if customData["xaligoUmlComponentInterfaceCircle"] == true {
 				circles++
 			}
@@ -633,6 +635,10 @@ func TestUMLConnectedComponentSampleRendersBoundaryInterfaces(t *testing.T) {
 	if interfaceIDs[associationStartID] || !interfaceIDs[associationEndID] {
 		t.Fatalf("association binding = %q -> %q, want component anchor -> interface circle IDs %#v", associationStartID, associationEndID, interfaceIDs)
 	}
+	endInterface := interfaceElements[associationEndID]
+	if endInterface == nil {
+		t.Fatalf("association end interface element missing: %q", associationEndID)
+	}
 	if callerSocketElement == nil {
 		t.Fatalf("caller socket element missing")
 	}
@@ -646,17 +652,22 @@ func TestUMLConnectedComponentSampleRendersBoundaryInterfaces(t *testing.T) {
 	associationLast, _ := associationPoints[len(associationPoints)-1].([]any)
 	associationEndX := associationElement["x"].(float64) + associationLast[0].(float64)
 	associationEndY := associationElement["y"].(float64) + associationLast[1].(float64)
+	interfaceLeft := endInterface["x"].(float64)
+	interfaceCenterY := endInterface["y"].(float64) + endInterface["height"].(float64)/2
+	if math.Abs(associationEndX+7-interfaceLeft) > 0.1 || math.Abs(associationEndY-interfaceCenterY) > 0.1 {
+		t.Fatalf("association end = %.1f %.1f, want socket fork left of interface left/center %.1f %.1f", associationEndX, associationEndY, interfaceLeft, interfaceCenterY)
+	}
 	socketX := callerSocketElement["x"].(float64)
 	socketY := callerSocketElement["y"].(float64)
 	socketW := callerSocketElement["width"].(float64)
 	socketH := callerSocketElement["height"].(float64)
-	if math.Abs(socketX+socketW-associationEndX) > 0.1 || math.Abs(socketY+socketH/2-associationEndY) > 0.1 {
-		t.Fatalf("caller socket endpoint = right %.1f centerY %.1f, association end %.1f %.1f", socketX+socketW, socketY+socketH/2, associationEndX, associationEndY)
+	if math.Abs(socketX-associationEndX) > 0.1 || math.Abs(socketY+socketH/2-associationEndY) > 0.1 || math.Abs(socketX+socketW-interfaceLeft) > 0.1 {
+		t.Fatalf("caller socket = left %.1f right %.1f centerY %.1f, association end %.1f %.1f interface left %.1f", socketX, socketX+socketW, socketY+socketH/2, associationEndX, associationEndY, interfaceLeft)
 	}
 	socketPoints, _ := callerSocketElement["points"].([]any)
 	mid, _ := socketPoints[len(socketPoints)/2].([]any)
 	if mid[0].(float64) > 0.1 || math.Abs(mid[1].(float64)-socketH/2) > 0.1 {
-		t.Fatalf("caller socket midpoint = %#v, want left-bulging semicircle", mid)
+		t.Fatalf("caller socket midpoint = %#v, want socket fork with the line ending at the left bend", mid)
 	}
 	svg, err := newUsecase().RenderSVG(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {

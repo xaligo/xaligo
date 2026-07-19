@@ -239,6 +239,10 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 		if boolishV1EngineSceneBuild(conn.Attr("uml-component-interface-dst")) {
 			dstFP = fixedPointForSideV1EngineSceneConnection(dstSide)
 		}
+		endBindingGap := 5.0
+		if boolishV1EngineSceneBuild(conn.Attr("uml-component-interface-dst")) {
+			endBindingGap = umlComponentCallerSocketRadiusV1EngineSceneBuild
+		}
 		style := resolveConnectionStyleV1EngineSceneConnectionRoute(conn)
 		if crossFrame {
 			seed := stableConnectionSeedV1EngineSceneConnectionRoute(srcKey, dstKey, i)
@@ -356,7 +360,7 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 			"endBinding": map[string]any{
 				"elementId":  dstElemID,
 				"focus":      0.0,
-				"gap":        5.0,
+				"gap":        endBindingGap,
 				"fixedPoint": []float64{dstFP[0], dstFP[1]},
 			},
 			"startArrowhead":     style.ExcalidrawStartArrowhead,

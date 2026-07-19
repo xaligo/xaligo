@@ -458,6 +458,8 @@ func umlComponentInterfaceEndpointKeyV1EngineSceneBuild(ownerKey, label string) 
 	return ownerKey + "|uml-component-interface|" + label
 }
 
+const umlComponentCallerSocketRadiusV1EngineSceneBuild = 7.0
+
 func appendUMLComponentCallerSocketsV1EngineSceneBuild(elements *[]map[string]any) {
 	if elements == nil {
 		return
@@ -491,13 +493,13 @@ func appendUMLComponentCallerSocketsV1EngineSceneBuild(elements *[]map[string]an
 }
 
 func appendUMLComponentCallerSocketV1EngineSceneBuild(elements *[]map[string]any, id string, endpoint [2]float64, updated int64) {
-	const radius = 7.0
+	radius := umlComponentCallerSocketRadiusV1EngineSceneBuild
 	absolute := make([][2]float64, 0, 13)
 	minX, minY := math.Inf(1), math.Inf(1)
 	maxX, maxY := math.Inf(-1), math.Inf(-1)
 	for index := 0; index <= 12; index++ {
 		theta := -math.Pi/2 - math.Pi*float64(index)/12
-		point := [2]float64{endpoint[0] + math.Cos(theta)*radius, endpoint[1] + math.Sin(theta)*radius}
+		point := [2]float64{endpoint[0] + radius + math.Cos(theta)*radius, endpoint[1] + math.Sin(theta)*radius}
 		absolute = append(absolute, point)
 		minX = math.Min(minX, point[0])
 		minY = math.Min(minY, point[1])

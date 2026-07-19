@@ -234,6 +234,7 @@ func excalidrawRouteRequestV1EngineSceneConnectionRoute(conn *entity.Node, srcRe
 	if boolishV1EngineSceneBuild(conn.Attr("uml-component-interface-dst")) {
 		fp := fixedPointForSideV1EngineSceneConnection(dstSide)
 		req.DstAnchor = &ptV1EngineRouteTypes{X: dst.X + dst.W*fp[0], Y: dst.Y + dst.H*fp[1]}
+		req.DstGap = umlComponentCallerSocketRadiusV1EngineSceneBuild
 	}
 	if scale, ok := positiveFloatAttrV1EngineSceneConnectionRoute(conn, "coordinate-scale", "scale"); ok {
 		req.Bends = parseConnectorBendsV1EnginePlanConnectorPrepare(connectionBendsV1EngineSceneConnectionRoute(conn), scale)

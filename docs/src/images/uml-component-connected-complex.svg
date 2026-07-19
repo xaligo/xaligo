@@ -41,15 +41,15 @@
 <path d="M 187.83 546.4 L 190.08 546.4" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
 <path d="M 185.58 538.4 L 187.83 538.4" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
 <path d="M 185.58 554.4 L 187.83 554.4" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
-<path d="M 792.58 255.4 L 790.768 255.639 L 789.08 256.338 L 787.63 257.45 L 786.518 258.9 L 785.819 260.588 L 785.58 262.4 L 785.819 264.212 L 786.518 265.9 L 787.63 267.35 L 789.08 268.462 L 790.768 269.161 L 792.58 269.4" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
-<path d="M 168.58 531.4 L 166.768 531.639 L 165.08 532.338 L 163.63 533.45 L 162.518 534.9 L 161.819 536.588 L 161.58 538.4 L 161.819 540.212 L 162.518 541.9 L 163.63 543.35 L 165.08 544.462 L 166.768 545.161 L 168.58 545.4" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
-<path d="M 168.58 547.4 L 166.768 547.639 L 165.08 548.338 L 163.63 549.45 L 162.518 550.9 L 161.819 552.588 L 161.58 554.4 L 161.819 556.212 L 162.518 557.9 L 163.63 559.35 L 165.08 560.462 L 166.768 561.161 L 168.58 561.4" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
-<path d="M 792.58 539.4 L 790.768 539.639 L 789.08 540.338 L 787.63 541.45 L 786.518 542.9 L 785.819 544.588 L 785.58 546.4 L 785.819 548.212 L 786.518 549.9 L 787.63 551.35 L 789.08 552.462 L 790.768 553.161 L 792.58 553.4" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
-<path d="M 503 258 L 523 258 L 772.58 258 L 772.58 262.4 L 792.58 262.4" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
-<path d="M 348 311 L 348 331 L 148.58 331 L 148.58 538.4 L 168.58 538.4" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
-<rect x="145.58" y="477" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
-<path d="M 852 311 L 852 480 L 140.58 480 L 140.58 554.4 L 168.58 554.4" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
-<path d="M 503 542 L 523 542 L 772.58 542 L 772.58 546.4 L 792.58 546.4" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<path d="M 797.58 255.4 L 795.768 255.639 L 794.08 256.338 L 792.63 257.45 L 791.518 258.9 L 790.819 260.588 L 790.58 262.4 L 790.819 264.212 L 791.518 265.9 L 792.63 267.35 L 794.08 268.462 L 795.768 269.161 L 797.58 269.4" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
+<path d="M 173.58 531.4 L 171.768 531.639 L 170.08 532.338 L 168.63 533.45 L 167.518 534.9 L 166.819 536.588 L 166.58 538.4 L 166.819 540.212 L 167.518 541.9 L 168.63 543.35 L 170.08 544.462 L 171.768 545.161 L 173.58 545.4" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
+<path d="M 173.58 547.4 L 171.768 547.639 L 170.08 548.338 L 168.63 549.45 L 167.518 550.9 L 166.819 552.588 L 166.58 554.4 L 166.819 556.212 L 167.518 557.9 L 168.63 559.35 L 170.08 560.462 L 171.768 561.161 L 173.58 561.4" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
+<path d="M 797.58 539.4 L 795.768 539.639 L 794.08 540.338 L 792.63 541.45 L 791.518 542.9 L 790.819 544.588 L 790.58 546.4 L 790.819 548.212 L 791.518 549.9 L 792.63 551.35 L 794.08 552.462 L 795.768 553.161 L 797.58 553.4" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
+<path d="M 503 258 L 523 258 L 770.58 258 L 770.58 262.4 L 790.58 262.4" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<path d="M 348 311 L 348 331 L 146.58 331 L 146.58 538.4 L 166.58 538.4" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="143.58" y="477" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
+<path d="M 852 311 L 852 480 L 138.58 480 L 138.58 554.4 L 166.58 554.4" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<path d="M 503 542 L 523 542 L 770.58 542 L 770.58 546.4 L 790.58 546.4" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
 <defs><clipPath id="xaligo-text-clip-fad0bad75af9a19d" clipPathUnits="userSpaceOnUse"><rect x="208" y="214" width="280" height="25.6"/></clipPath></defs>
 <text x="208" y="232.4" fill="#FFFFFF" font-family="Helvetica" font-size="14" text-anchor="start" clip-path="url(#xaligo-text-clip-fad0bad75af9a19d)"><tspan x="208" y="232.4">Storefront</tspan></text>
 <defs><clipPath id="xaligo-text-clip-ac2ad72aadf9b6fb" clipPathUnits="userSpaceOnUse"><rect x="193.08" y="255.4" width="60" height="14"/></clipPath></defs>
