@@ -27,7 +27,6 @@ The combined source is useful as a renderer smoke test:
 | State machine | [samples/uml-state-machine.xal](samples/uml-state-machine.xal) | [SVG](../images/uml-state-machine.svg) |
 | Sequence | [samples/uml-sequence.xal](samples/uml-sequence.xal) | [SVG](../images/uml-sequence.svg) |
 | Communication | [samples/uml-communication.xal](samples/uml-communication.xal) | [SVG](../images/uml-communication.svg) |
-| Interaction overview | [samples/uml-interaction-overview.xal](samples/uml-interaction-overview.xal) | [SVG](../images/uml-interaction-overview.svg) |
 | Timing | [samples/uml-timing.xal](samples/uml-timing.xal) | [SVG](../images/uml-timing.svg) |
 
 ## Render one sample

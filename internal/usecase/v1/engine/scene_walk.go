@@ -227,12 +227,6 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 				backgroundColor = umlActivityShapeBackgroundV1EngineSceneWalk(b)
 				fillStyle = "solid"
 			}
-			if isXaligoInteractionOverviewShapeV1EngineSceneWalk(b) {
-				genStroke = "#052d6e"
-				strokeWidth = 1.35
-				backgroundColor = umlInteractionOverviewShapeBackgroundV1EngineSceneWalk(b)
-				fillStyle = "solid"
-			}
 			classShape := isXaligoClassShapeV1EngineSceneWalk(b)
 			if classShape {
 				genStroke = "#052d6e"
@@ -269,9 +263,6 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 				if isXaligoComponentShapeV1EngineSceneWalk(b) {
 					boundElements = []map[string]any{{"type": "text", "id": fmt.Sprintf("%s-component-header-text", b.ID)}}
 				}
-				if isXaligoInteractionReferenceV1EngineSceneWalk(b) {
-					boundElements = []map[string]any{{"type": "text", "id": fmt.Sprintf("%s-interaction-title", b.ID)}}
-				}
 				shapeType := umlShapeTypeV1EngineSceneWalk(b)
 				*elements = append(*elements, map[string]any{
 					"id": rectID, "type": shapeType,
@@ -300,9 +291,6 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 					appendUMLComponentHeaderV1EngineSceneWalk(b, elements, updated)
 					appendUMLComponentBoundaryInterfacesV1EngineSceneWalk(b, elements, updated)
 				}
-				if isXaligoInteractionReferenceV1EngineSceneWalk(b) {
-					appendUMLInteractionReferenceV1EngineSceneWalk(b, elements, updated)
-				}
 				if b.Tag == "entity" {
 					registerConnectionEndpointV1EngineSceneWalk(b, rectID, [4]float64{b.X, b.Y, b.W, b.H}, itemImgRects, itemImgIDs)
 				}
@@ -310,7 +298,7 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 					registerConnectionEndpointV1EngineSceneWalk(b, rectID, [4]float64{b.X, b.Y, b.W, b.H}, itemImgRects, itemImgIDs)
 				}
 			}
-			if !hiddenUMLContainer && !sequenceLifeline && b.Label != "" && !isXaligoClassShapeV1EngineSceneWalk(b) && !isXaligoStateMachineStateShapeV1EngineSceneWalk(b) && !isXaligoComponentShapeV1EngineSceneWalk(b) && !isXaligoInteractionReferenceV1EngineSceneWalk(b) {
+			if !hiddenUMLContainer && !sequenceLifeline && b.Label != "" && !isXaligoClassShapeV1EngineSceneWalk(b) && !isXaligoStateMachineStateShapeV1EngineSceneWalk(b) && !isXaligoComponentShapeV1EngineSceneWalk(b) {
 				fontSize := attrFloatV1EngineLayoutAttributes(b.Attrs["font-size"], 20)
 				textX, textY := b.X+4, b.Y+2
 				textW, textH := math.Max(1, b.W-8), math.Max(1, math.Min(math.Ceil(fontSize*1.2), b.H-4))
@@ -541,14 +529,6 @@ func isXaligoActivityShapeV1EngineSceneWalk(box *entity.Box) bool {
 	return box != nil && box.Tag == "rectangle" && box.Attrs["uml-diagram-kind"] == "activity-diagram"
 }
 
-func isXaligoInteractionOverviewShapeV1EngineSceneWalk(box *entity.Box) bool {
-	return box != nil && box.Tag == "rectangle" && box.Attrs["uml-diagram-kind"] == "interaction-overview-diagram"
-}
-
-func isXaligoInteractionReferenceV1EngineSceneWalk(box *entity.Box) bool {
-	return isXaligoInteractionOverviewShapeV1EngineSceneWalk(box) && strings.TrimSpace(box.Attrs["uml-element-kind"]) == "interaction"
-}
-
 func isXaligoClassShapeV1EngineSceneWalk(box *entity.Box) bool {
 	return box != nil && box.Tag == "rectangle" && box.Attrs["uml-diagram-kind"] == "class-diagram"
 }
@@ -678,17 +658,6 @@ func umlActivityShapeBackgroundV1EngineSceneWalk(box *entity.Box) string {
 		return "#ffffff"
 	case "object-node":
 		return "#e6fbf7"
-	default:
-		return "#e8f7fd"
-	}
-}
-
-func umlInteractionOverviewShapeBackgroundV1EngineSceneWalk(box *entity.Box) string {
-	switch strings.TrimSpace(box.Attrs["uml-element-kind"]) {
-	case "initial":
-		return "#052d6e"
-	case "final", "interaction":
-		return "#ffffff"
 	default:
 		return "#e8f7fd"
 	}
@@ -929,45 +898,11 @@ func isXaligoFinalWithDotV1EngineSceneWalk(box *entity.Box) bool {
 		return false
 	}
 	switch strings.TrimSpace(box.Attrs["uml-diagram-kind"]) {
-	case "activity-diagram", "state-machine-diagram", "interaction-overview-diagram":
+	case "activity-diagram", "state-machine-diagram":
 		return true
 	default:
 		return false
 	}
-}
-
-func appendUMLInteractionReferenceV1EngineSceneWalk(box *entity.Box, elements *[]map[string]any, updated int64) {
-	fontSize := attrFloatV1EngineLayoutAttributes(box.Attrs["font-size"], 14)
-	headerH := math.Min(math.Max(26, fontSize*2.1), math.Max(26, box.H*0.34))
-	headerID := fmt.Sprintf("%s-interaction-header", box.ID)
-	headerSeed := stableSceneSeedV1EngineSceneTypes(headerID)
-	*elements = append(*elements, map[string]any{
-		"id": headerID, "type": "rectangle",
-		"x": box.X, "y": box.Y, "width": box.W, "height": headerH,
-		"angle": 0, "strokeColor": "#052d6e", "backgroundColor": "#08b8ea",
-		"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
-		"roughness": 0, "opacity": 100,
-		"groupIds": []string{}, "roundness": nil,
-		"seed": headerSeed, "version": 1, "versionNonce": headerSeed,
-		"isDeleted": false, "boundElements": nil,
-		"updated": updated, "link": nil, "locked": false,
-		"customData": map[string]any{"xaligoUmlInteractionReferenceHeader": true},
-	})
-	title := strings.TrimSpace(strings.Split(box.Label, "\n")[0])
-	notation := strings.TrimSpace(box.Attrs["uml-interaction-notation"])
-	if notation == "" {
-		notation = "ref"
-	}
-	if title != "" && !strings.HasPrefix(strings.ToLower(title), notation+" ") {
-		title = notation + " " + title
-	}
-	appendUMLClassTextV1EngineSceneWalk(elements, fmt.Sprintf("%s-interaction-title", box.ID), box.X+8, box.Y+4, math.Max(1, box.W-16), math.Max(1, headerH-8), title, "#ffffff", "left", "middle", fontSize, box, updated, map[string]any{"xaligoUmlInteractionReferenceTitle": true})
-	note := strings.TrimSpace(box.Attrs["uml-interaction-note-text"])
-	if note == "" {
-		return
-	}
-	bodyY := box.Y + headerH
-	appendUMLClassTextV1EngineSceneWalk(elements, fmt.Sprintf("%s-interaction-note", box.ID), box.X+8, bodyY+6, math.Max(1, box.W-16), math.Max(1, box.Y+box.H-bodyY-12), note, "#052d6e", "left", "top", math.Min(fontSize, 12), box, updated, map[string]any{"xaligoUmlInteractionReferenceNote": true})
 }
 
 func appendUMLFinalDotV1EngineSceneWalk(box *entity.Box, elements *[]map[string]any, updated int64) {

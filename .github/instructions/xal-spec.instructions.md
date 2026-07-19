@@ -635,7 +635,6 @@ public connection form.
 | `state-machine-diagram` | `initial`, `final`, `state`, `history`, `choice`, `fork`, `join`; optional layout-only `container` with `row` and `col` children | `transition` | Requires a state. Initial/final direction and pseudostate degrees are validated. `state` compartments render state actions and activities: `entry`, `do`, `exit`, `internal`, `region`, and `note`. The state name renders in a cyan header with white text; the white body is split into rows, and each row has a key/value column divider. Transitions render `event [guard] / action-or-effect` labels. Initial/final/choice/history pseudostates keep compact proportions; final states render the standard inner dot. A state-machine `<container>` may group elements by child `<row>` and `<col>` tags; these layout-only tags assign grid rows and columns without becoming UML elements. When no container column is supplied, the row layout reuses nearby connected columns where possible before assigning the next free column. State-machine shapes use the class-diagram xaligo palette by default: deep-blue borders/text/relations, white bodies, cyan state-name headers, and a deep-blue initial dot. Relation child `<bend x="..." y="..." />` tags are supported on class, activity, and state-machine relation tags and are used to steer orthogonal connector routes. State-machine transition routing treats intermediate state and pseudostate bodies as obstacles where possible, keeps same-frame route points inside the frame bounds, and may choose larger outside detours for distant states or bent routes that would otherwise cross a state body. UML relation labels are shifted away from endpoint items when a default label position would overlap them. |
 | `sequence-diagram` | `participant`, `lifeline` | `message`, `return-message`, `create-message`, `destroy-message` | Requires a participant/lifeline. Participants and lifelines render as top headers with dashed vertical lifeline axes, not full container boxes. Every message has a diagram-unique order that controls top-to-bottom anchoring. `message` is synchronous by default; `message mode="async"` renders an asynchronous open-arrow call. `message`, `create-message`, and `destroy-message` draw destination-lifeline activation bars; `return-message` is a dashed response connector and does not start a new activation. Non-participant sources must already be active before sending a non-return message or return. Activation bars extend through the related messages up to the matching return from that lifeline; a fully contained activation is merged into its covering bar. `destroy-message` also draws a stop marker at the destination lifeline and its label must clearly describe destruction, deletion, disposal, removal, or termination. Create/destroy cannot be self messages. |
 | `communication-diagram` | `object`, `participant` | `link`, `message` | Requires two participants, one link, and one message. Every message has a unique order and matching unordered link pair. |
-| `interaction-overview-diagram` | `initial`, `final`, `interaction`, `decision`, `merge`, `fork`, `join` | `control-flow` | Requires an interaction. Initial/final direction and control-node degrees are validated. Interactions render as white boxes with cyan `ref ...` or `sd ...` headers and optional note bodies. Final nodes render the standard inner dot. |
 | `timing-diagram` | `lifeline`, `time-state` | `transition`, `occurrence`, `duration` | Requires a lifeline and time-state. Time-state intervals do not overlap per owner. Transition joins chronological states of one owner; occurrence has `at`; duration joins time-states. |
 
 The endpoint contracts above are closed. An admitted relation with an endpoint
@@ -729,7 +728,6 @@ typed compartment vocabulary is:
 | `actor` | `responsibility`, `note` |
 | `use-case`, `activity`, `action` | `responsibility`, `constraint`, `note` |
 | `state` | `entry`, `do`, `exit`, `internal`, `region`, `note` |
-| `interaction` | `note` |
 | `time-state` | `region`, `constraint`, `note` |
 
 Elements absent from this table do not accept compartments. The generic
@@ -737,12 +735,6 @@ Elements absent from this table do not accept compartments. The generic
 compartment is allowed; new source should use the typed tag because its meaning
 survives future semantic processing. Compartment source order is preserved,
 but compartments are not independent connection endpoints.
-
-In an `interaction-overview-diagram`, `interaction` accepts
-`notation="ref|sd"`. `ref` is the default and renders an InteractionUse-style
-header; `sd` renders an inline interaction header. The visual theme remains the
-shared UML xaligo palette: cyan headers, white bodies, and deep-blue text,
-borders, and control-flow lines.
 
 ### Relation attributes, order, and time
 

@@ -67,7 +67,6 @@ XYFlow, or Isoflow output instead.
 | `state-machine-diagram` | `initial`, `final`, `state`, `history`, `choice`, `fork`, `join`; optional layout-only `container`/`row`/`col` | `transition` | At least one state. Initial/final direction and pseudostate degrees are validated. State entry/do/exit/internal/region compartments and transition event/guard/action labels render visibly. Initial/final/choice/history pseudostates keep compact proportions, and final states render the standard inner dot. `show-element-names="false"` hides compartment element names such as `entry` and `do` while retaining state titles, compartment values, and transition labels; an element can override it with `show-element-names="true"`. A layout-only `container` can group elements into `row` and `col` child tags. | [uml-state-machine.xal](../examples/samples/uml-state-machine.xal) |
 | `sequence-diagram` | `participant`, `lifeline` | `message`, `return-message`, `create-message`, `destroy-message` | At least one participant/lifeline. Every message has a unique `order`; non-participant sources must already be active; create/destroy cannot target themselves. | [uml-sequence.xal](../examples/samples/uml-sequence.xal) |
 | `communication-diagram` | `object`, `participant` | `link`, `message` | At least two participants, one link, and one message. Each ordered message needs a link between the same unordered pair. | [uml-communication.xal](../examples/samples/uml-communication.xal) |
-| `interaction-overview-diagram` | `initial`, `final`, `interaction`, `decision`, `merge`, `fork`, `join` | `control-flow` | At least one interaction. Initial/final direction and control-node degrees are validated. Interactions render as white boxes with cyan `ref ...` or `sd ...` headers and optional note bodies. Final nodes render the standard inner dot. | [uml-interaction-overview.xal](../examples/samples/uml-interaction-overview.xal) |
 | `timing-diagram` | `lifeline`, `time-state` | `transition`, `occurrence`, `duration` | At least one lifeline/time-state. Owned intervals cannot overlap; transitions are chronological within one lifeline. | [uml-timing.xal](../examples/samples/uml-timing.xal) |
 
 ## Presentation Defaults
@@ -109,13 +108,6 @@ activations merge into their covering bar so nested self-calls do not add inner
 strokes. `message mode="async"` uses an open arrowhead. `destroy-message` draws
 a stop marker and its label must clearly describe destruction, deletion,
 disposal, removal, or termination.
-
-Interaction-overview diagrams follow activity-style control flow for initial,
-final, decision, merge, fork, and join nodes. Each `interaction` renders as a
-white interaction box with a cyan header. Set `notation="ref"` for an
-InteractionUse header or `notation="sd"` for an inline interaction header;
-the default is `ref`. Direct `note` children render in the body instead of
-being mixed into the header title. Final nodes use the standard UML inner dot.
 
 State-machine diagrams can use a layout-only `<container>` whose child `<row>`
 and `<col>` tags place states on a shared grid without adding UML elements.
@@ -182,7 +174,6 @@ needs text, `title`, or `name` and cannot contain child elements.
 | `actor` | `responsibility`, `note` |
 | `use-case`, `activity`, `action` | `responsibility`, `constraint`, `note` |
 | `state` | `entry`, `do`, `exit`, `internal`, `region`, `note` |
-| `interaction` | `note` |
 | `time-state` | `region`, `constraint`, `note` |
 
 Elements absent from this table reject compartments. Generic `<compartment>` is
@@ -204,7 +195,7 @@ structural links have no destination marker. When their label is omitted,
 include, extend, import, merge, deployment, extension, and occurrence receive a
 semantic default label.
 
-Activity, state-machine, and interaction-overview graphs enforce flat V1 rules:
+Activity and state-machine graphs enforce flat V1 rules:
 
 - `initial` has no incoming edge and at least one outgoing edge;
 - `final` has no outgoing edge and at least one incoming edge;

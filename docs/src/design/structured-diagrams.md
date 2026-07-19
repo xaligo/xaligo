@@ -395,7 +395,6 @@ uml
 ├─ state-machine-diagram
 ├─ sequence-diagram
 ├─ communication-diagram
-├─ interaction-overview-diagram
 └─ timing-diagram
 ```
 
