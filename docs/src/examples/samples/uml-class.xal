@@ -1,10 +1,11 @@
 <xaligo version="1">
   <data></data>
-  <frames>
-    <frame id="class" width="1440" height="760" class="pa-3">
-      <uml id="domain-model" title="Ordering Domain">
-        <class-diagram direction="right">
-          <interface id="repository" title="OrderRepository">
+  <frames gap="56">
+    <frame id="class" title="Ordering Domain" version="2026.07" width="1440" height="760" class="pa-3" margin-top="48">
+      <metadata align="right" width="156" key-width="56" font-size="12" />
+      <uml id="domain-model">
+        <class-diagram direction="right" grid="3">
+          <interface id="repository" title="OrderRepository" stereotype="repository">
             <operation>+ save(order: Order)</operation>
             <operation>+ find(id: UUID): Order</operation>
           </interface>
@@ -18,11 +19,11 @@
             <attribute>- name: String</attribute>
             <operation>+ placeOrder(): Order</operation>
           </class>
-          <class id="premium-customer" title="PremiumCustomer">
+          <class id="premium-customer" title="PremiumCustomer" abstract="true">
             <attribute>- discountRate: Decimal</attribute>
             <operation>+ calculateDiscount(): Money</operation>
           </class>
-          <class id="order" title="Order">
+          <class id="order" title="Order" stereotype="aggregate-root">
             <attribute>- id: UUID</attribute>
             <attribute>- status: OrderStatus</attribute>
             <operation>+ confirm()</operation>
@@ -33,7 +34,7 @@
             <attribute>- quantity: Integer</attribute>
             <operation>+ subtotal(): Money</operation>
           </class>
-          <enumeration id="status" title="OrderStatus">
+          <enumeration id="status" title="OrderStatus" static="true">
             <literal>Draft</literal>
             <literal>Confirmed</literal>
             <literal>Cancelled</literal>
@@ -47,6 +48,17 @@
           <dependency src="order" dst="repository" title="persists through" />
         </class-diagram>
       </uml>
+
+      <connections>
+        <connection src="domain-model/repository" dst="repository-detail.repository-in" title="repository details" color="#052d6e" />
+      </connections>
+    </frame>
+
+    <frame id="repository-detail" title="Repository Contract" version="2026.07" width="720" height="420" class="pa-3" margin-top="48">
+      <metadata align="right" width="156" key-width="56" font-size="12" />
+      <rectangle id="repository-card" title="OrderRepository responsibilities" width="560" height="220">
+        <port id="repository-in" side="left" title="details" />
+      </rectangle>
     </frame>
   </frames>
 </xaligo>

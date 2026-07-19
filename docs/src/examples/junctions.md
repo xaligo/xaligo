@@ -11,9 +11,10 @@ them through a shared trunk and draw the fan-out junction.
 {{#endtab}}
 {{#tab name="Code"}}
 
-```xml
-{{#include samples/junctions.xal}}
-```
+Source: [samples/junctions.xal](samples/junctions.xal).
+
+See [Anchors and Bends](../reference/arrows/anchors-bends.md) for related
+connector placement rules.
 
 {{#endtab}}
 {{#endtabs}}

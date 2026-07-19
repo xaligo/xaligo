@@ -11,9 +11,10 @@ overrides in one compact diagram.
 {{#endtab}}
 {{#tab name="Code"}}
 
-```xml
-{{#include samples/line-variants.xal}}
-```
+Source: [samples/line-variants.xal](samples/line-variants.xal).
+
+See [Connector Types](../reference/arrows/connector-types.md) and
+[Arrow Attributes](../reference/arrows/attributes.md) for detailed syntax.
 
 {{#endtab}}
 {{#endtabs}}

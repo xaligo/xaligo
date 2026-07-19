@@ -25,11 +25,7 @@ creates one artifact for `overview` and one for `database-detail`.
 
 ![Canonical V1 envelope, combined compatibility view](../images/canonical-v1-envelope.svg)
 
-Source:
-
-```xml
-{{#include samples/canonical-v1-envelope.xal}}
-```
+Source: [samples/canonical-v1-envelope.xal](samples/canonical-v1-envelope.xal).
 
 Validate and render it with:
 

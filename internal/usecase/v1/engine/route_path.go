@@ -45,6 +45,9 @@ func routeOneV1EngineRoutePath(req routeRequestV1EngineRouteTypes, obstacles []r
 		if len(points) < 2 {
 			continue
 		}
+		if !pathWithinBoundsV1EngineRoutePath(points, opt.Bounds) {
+			continue
+		}
 		if endpointApproachHitsTargetV1EngineRoutePath(points, req) {
 			continue
 		}
@@ -64,9 +67,25 @@ func routeOneV1EngineRoutePath(req routeRequestV1EngineRouteTypes, obstacles []r
 		}
 	}
 	if best == nil {
-		return routedPathV1EngineRouteTypes{ID: req.ID, Points: fallbackOrthogonalRouteV1EngineRoutePath(s, d, s2, d2)}
+		fallback := fallbackOrthogonalRouteV1EngineRoutePath(s, d, s2, d2)
+		if !pathWithinBoundsV1EngineRoutePath(fallback, opt.Bounds) {
+			fallback = []ptV1EngineRouteTypes{s, d}
+		}
+		return routedPathV1EngineRouteTypes{ID: req.ID, Points: fallback}
 	}
 	return routedPathV1EngineRouteTypes{ID: req.ID, Points: best}
+}
+
+func pathWithinBoundsV1EngineRoutePath(points []ptV1EngineRouteTypes, bounds *rectV1EngineRouteTypes) bool {
+	if bounds == nil {
+		return true
+	}
+	for _, point := range points {
+		if point.X < bounds.X || point.X > bounds.X+bounds.W || point.Y < bounds.Y || point.Y > bounds.Y+bounds.H {
+			return false
+		}
+	}
+	return true
 }
 
 func routeViaBendsV1EngineRoutePath(s, d, s2, d2 ptV1EngineRouteTypes, bends []ptV1EngineRouteTypes, opt routerOptionsV1EngineRouteTypes) []ptV1EngineRouteTypes {
@@ -181,7 +200,7 @@ func reversePointsV1EngineRoutePath(points []ptV1EngineRouteTypes) []ptV1EngineR
 }
 
 func reverseRequestV1EngineRoutePath(req routeRequestV1EngineRouteTypes) routeRequestV1EngineRouteTypes {
-	return routeRequestV1EngineRouteTypes{ID: req.ID, Kind: req.Kind, Src: req.Dst, Dst: req.Src, SrcSide: req.DstSide, DstSide: req.SrcSide, SrcGap: req.DstGap, DstGap: req.SrcGap, Grid: req.Grid}
+	return routeRequestV1EngineRouteTypes{ID: req.ID, Kind: req.Kind, Src: req.Dst, Dst: req.Src, SrcSide: req.DstSide, DstSide: req.SrcSide, SrcGap: req.DstGap, DstGap: req.SrcGap, Grid: req.Grid, HardAvoid: req.HardAvoid}
 }
 
 func simplifyRouteCandidateV1EngineRoutePath(points []ptV1EngineRouteTypes) []ptV1EngineRouteTypes {

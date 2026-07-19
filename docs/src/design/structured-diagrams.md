@@ -384,19 +384,10 @@ child, which selects the semantic processor:
 ```text
 uml
 ├─ class-diagram
-├─ object-diagram
 ├─ component-diagram
-├─ deployment-diagram
-├─ package-diagram
-├─ composite-structure-diagram
-├─ profile-diagram
-├─ use-case-diagram
 ├─ activity-diagram
 ├─ state-machine-diagram
-├─ sequence-diagram
-├─ communication-diagram
-├─ interaction-overview-diagram
-└─ timing-diagram
+└─ sequence-diagram
 ```
 
 Example:
@@ -414,14 +405,24 @@ accepts `direction="right|down"` and either inline children or one `data`
 reference, never both. Every element has a diagram-local ID, and relations use
 those local IDs for `src` and `dst`.
 
-V1 implements all fourteen diagram-kind selectors through closed per-family
-element and relation vocabularies. It validates ownership for ports, composite
-parts, use cases, and timing states; message order for sequence and
-communication diagrams; structural links for communication messages; and
-numeric intervals/events for timing diagrams. Neutral `element` and `relation`
-escape hatches are not part of the strict profile. The authoritative matrix,
-compartment vocabulary, endpoint constraints, and timing domains are in the
+V1 implements the core class, component, activity, state-machine, and sequence
+selectors through closed per-family element and relation vocabularies. It
+validates component relation endpoints, control-flow degrees, state-machine
+transition rules, and sequence message order. Neutral `element` and `relation`
+escape hatches are not part of the
+strict profile. The authoritative matrix, compartment vocabulary, endpoint
+constraints, and order domains are in the
 [UML language reference](../xal/uml.md).
+
+Component diagrams derive each component height from its interface rows and
+per-interface incoming association fan-out, then pack those rows directly below
+the header. A positive `component-height` on the diagram supplies a common
+height, while an individual component `height` takes precedence. Omitting both
+retains automatic height; `component-width` and component `width` follow the
+same default/override relationship. A positive `interface-width` on a component
+sets one shared interface-name width for all of its interfaces; descriptions
+use the remaining horizontal space, so the configured width must leave enough
+room when descriptions are present.
 
 Existing layout ideas are reused at the component boundary: `<uml>` can sit in
 rows, columns, grids, or containers and returns resolved width, height, draw
@@ -432,14 +433,13 @@ provide edge style, anchors, bends, routing, and line jumps, while UML
 relationships keep their own semantic kinds.
 
 The current V1 renderer is deliberately a common-capability projection. It
-uses ellipses for use cases and initial/final nodes, diamonds for decision-like
-nodes, rectangles with flattened text compartments for the other elements,
-and orthogonal semantic connectors for relations. Sequence order sets
-top-to-bottom connector anchors but does not draw separate lifeline/activation
-axes; timing diagrams do not draw proportional waveforms, and semantic owners
-do not imply spatial nesting. This keeps the resolved geometry shared by SVG,
-Excalidraw, PPTX, PDF, Excel, XYFlow, and Isoflow; target formats may omit UML metadata or
-marker details they cannot represent without private schema extensions.
+uses ellipses for initial/final nodes, diamonds for decision-like nodes,
+rectangles with flattened text compartments for the other elements, and
+orthogonal semantic connectors for relations. Sequence order sets top-to-bottom
+connector anchors, and semantic owners do not imply spatial nesting. This keeps
+the resolved geometry shared by SVG, Excalidraw, PPTX, PDF, Excel, XYFlow, and
+Isoflow; target formats may omit UML metadata or marker details they cannot
+represent without private schema extensions.
 
 ## Imports and overrides
 
@@ -509,8 +509,10 @@ alternate semantic models.
 4. Deliver RDB entities, keys, relations, Crow's Foot rendering, and SQL DDL
    import for PostgreSQL, MySQL, and SQLite. (Entities, keys, relations, and
    common SQL DDL import are implemented in V1; Crow's Foot remains.)
-5. Deliver all fourteen UML diagram families through common typed primitives
-   and diagram-kind validation. (Implemented in V1.)
+5. Deliver class, component, activity, state-machine, and sequence UML diagram
+  families through common typed primitives and diagram-kind validation.
+  (Implemented in V1.) Keep the remaining non-substitutable UML families as
+  planned work until their typed semantics and quality gates are defined.
 6. Add DBML/OpenAPI projections, richer table cells, and additional encoders.
 7. Add explicit normalized/bundled output and GUI round-trip contracts.
 

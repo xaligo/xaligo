@@ -2,29 +2,23 @@
 
 ## Canonical V1 Envelope
 
-The [canonical V1 envelope example](examples/canonical-v1-envelope.md) uses
-`<xaligo version="1">`, the document-wide `<data>` registry, identified frames,
-ports, and a cross-frame connection without producing a legacy-root warning.
-It also shows the default per-frame SVG filenames and the combined
-compatibility view.
+The [canonical V1 envelope example](examples/canonical-v1-envelope.md) shows
+the current document hierarchy, document-wide `<data>`, identified frames, and
+default per-frame SVG output.
 
 ## Cross-Frame Page Links
 
-The [cross-frame page-link example](examples/page-links.md) demonstrates both
-automatic nearest-border selection and independent endpoint/page-border
-side/anchor selection. It also shows the default 4-pixel terminal inset, fixed
-tangent coordinates on explicit frame anchors, and the exact `to <frame ID>`
-and `from <frame ID>` labels generated next to each final inset terminal, plus
-PPTX, PDF, and Excel multi-page render commands.
+The [cross-frame page-link example](examples/page-links.md) demonstrates local
+page stubs, `to <frame ID>` / `from <frame ID>` labels, and multi-page render
+commands. Detailed anchor rules live in the
+[Arrow Reference](reference/arrows/anchors-bends.md).
 
 ## Frame Metadata Tags
 
 The [frame metadata example](examples/frame-metadata.md) shows built-in
-`id`/`title`/content-`version` tags and arbitrary key/value entries. Its two
-pages cover top/right-aligned and bottom/center-aligned placement, automatic
-and fixed widths, an explicit row break, per-entry overrides, font/color
-settings, default and explicit `row-gap` page insets, full-width metadata
-reservation, and automatic safe-edge selection for page links.
+`id`/`title`/content-`version` tags, custom entries, top/bottom placement, and
+page links that route around metadata reservations. Detailed metadata rules
+live in the [Frame Reference](reference/frames/attributes.md).
 
 ## Hybrid Enterprise Architecture
 

@@ -105,10 +105,10 @@ geometry across native and embedded targets.
 - Better round-tripping between generated output and `.xal` source.
 
 The V1 structured-diagram profile includes a document-wide data registry,
-general tables, relational schema/ER views, and all fourteen UML diagram-kind
-components. It deliberately
-keeps their semantic processors separate while reusing neutral drawing and
-encoding contracts. See [Structured Diagrams: Tables, Databases, and
+general tables, relational schema/ER views, and the supported class, component,
+activity, state-machine, and sequence UML diagram components. It deliberately
+keeps their semantic processors separate while reusing neutral drawing and encoding
+contracts. See [Structured Diagrams: Tables, Databases, and
 UML](design/structured-diagrams.md). Its `<xaligo version="1">` envelope is the
 canonical V1 syntax; legacy root documents continue to render with warnings.
 

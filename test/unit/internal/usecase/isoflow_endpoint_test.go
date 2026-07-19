@@ -72,13 +72,13 @@ func TestRenderIsoflowDeduplicatesCrossFrameConnectionAndEmitsUMLShapeEndpoint(t
 	source := []byte(`<frames gap="80">
   <frame id="left" width="400" height="300">
     <rectangle id="left-node" title="Left Node" width="160" height="100" />
-    <connection src="left" dst="left-node" />
-    <connection src="left-node" dst="right.use-cases/remote" kind="traffic" />
+	<connection src="left" dst="left-node" />
+	<connection src="left-node" dst="right.activity/remote" kind="traffic" />
   </frame>
-  <frame id="right" width="400" height="300">
-    <uml id="use-cases"><use-case-diagram>
-      <use-case id="remote" title="Remote Use Case" />
-    </use-case-diagram></uml>
+	<frame id="right" width="400" height="300">
+		<uml id="activity"><activity-diagram>
+			<action id="remote" title="Remote Action" />
+		</activity-diagram></uml>
   </frame>
 </frames>`)
 
@@ -86,7 +86,7 @@ func TestRenderIsoflowDeduplicatesCrossFrameConnectionAndEmitsUMLShapeEndpoint(t
 	view := document.Views[0]
 	leftFrameID := isoflowModelItemIDByName(t, document.Items, "left")
 	leftNodeID := isoflowModelItemIDByName(t, document.Items, "Left Node")
-	rightNodeID := isoflowModelItemIDByName(t, document.Items, "Remote Use Case")
+	rightNodeID := isoflowModelItemIDByName(t, document.Items, "Remote Action")
 	viewItemIDs := isoflowViewItemIDs(view.Items)
 	for _, id := range []string{leftFrameID, leftNodeID, rightNodeID} {
 		if !viewItemIDs[id] {
@@ -120,15 +120,15 @@ func TestRenderIsoflowPreservesUMLShapeEndpoints(t *testing.T) {
 		connectorPairs [][2]string
 	}{
 		{
-			name: "use-case ellipse",
+			name: "activity final ellipse",
 			source: `<xaligo version="1"><data></data><frames><frame id="main" width="640" height="360">
-  <uml id="use-cases"><use-case-diagram direction="right">
-    <actor id="user" title="User"/><use-case id="sign-in" title="Sign in"/>
-    <association src="user" dst="sign-in"/>
-  </use-case-diagram></uml>
+	<uml id="activity"><activity-diagram direction="right">
+		<initial id="start" title="Start"/><action id="active" title="Active"/><final id="done" title="Done"/>
+		<control-flow src="start" dst="active"/><control-flow src="active" dst="done"/>
+	</activity-diagram></uml>
 </frame></frames></xaligo>`,
-			endpointNames:  []string{"User", "Sign in"},
-			connectorPairs: [][2]string{{"User", "Sign in"}},
+			endpointNames:  []string{"Start", "Active", "Done"},
+			connectorPairs: [][2]string{{"Start", "Active"}, {"Active", "Done"}},
 		},
 		{
 			name: "activity decision diamond",

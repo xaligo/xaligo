@@ -146,6 +146,7 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 	// 2) Containers/shapes in scene order. Group title tags are deferred until
 	// after every group border so a nested child border cannot cover a parent tag.
 	headerShapes := []*entity.Element{}
+	sequenceActivationShapes := []entity.DrawOp{}
 	for _, el := range elements {
 		if el.ID == "paper-frame" || (el.CustomData != nil && el.CustomData.PageFrame) {
 			continue
@@ -163,7 +164,9 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 		switch el.Type {
 		case "frame", "rectangle", "ellipse", "diamond":
 			if op, ok := shapeOpV1EnginePlanShape(el, frame, ppi); ok {
-				if el.CustomData != nil && el.CustomData.FrameMetadata {
+				if el.CustomData != nil && el.CustomData.UMLSequenceActivation {
+					sequenceActivationShapes = append(sequenceActivationShapes, op)
+				} else if el.CustomData != nil && el.CustomData.FrameMetadata {
 					frameMetadataShapes = append(frameMetadataShapes, op)
 				} else if el.CustomData != nil && el.CustomData.DiffHighlight {
 					diffAreaHighlights = append(diffAreaHighlights, op)
@@ -175,6 +178,18 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 	}
 	// 3) Connectors above containers but below icons/labels.
 	for _, el := range prepared.raw {
+		if el.CustomData == nil || !el.CustomData.UMLSequenceLifeline {
+			continue
+		}
+		if op, ok := rawLineOpV1EnginePlanConnectorDraw(el, frame, ppi, style); ok {
+			ops = append(ops, op)
+		}
+	}
+	ops = append(ops, sequenceActivationShapes...)
+	for _, el := range prepared.raw {
+		if el.CustomData != nil && el.CustomData.UMLSequenceLifeline {
+			continue
+		}
 		if op, ok := rawLineOpV1EnginePlanConnectorDraw(el, frame, ppi, style); ok {
 			if highlight, highlighted := connectorDiffHighlightOpV1EnginePlanDiffHighlight(op, connectorDiffStatusV1EnginePlanDiffHighlight(el)); highlighted {
 				ops = append(ops, highlight)
@@ -203,11 +218,14 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 	rOpt.LineMargin = marginPx
 	rOpt.Reserved = collectContainerBorderPathsV1EnginePlanObstacle(elements)
 	rOpt.HardObstacles = frameMetadataReserved
+	rOpt.Bounds = &frame
 	groupBorders := collectGroupBorderPathsV1EnginePlanObstacle(elements)
 	routed := routeConnectionsV1EngineRouteBuild(reqs, obstacles, rOpt)
 	elByConn := map[string]*entity.Element{}
+	reqByConn := map[string]routeRequestV1EngineRouteTypes{}
 	for _, pc := range ordered {
 		elByConn[pc.req.ID] = pc.el
+		reqByConn[pc.req.ID] = pc.req
 	}
 	connectorLabels := []entity.DrawOp{}
 	connectorLabelRects := []rectV1EngineRouteTypes{}
@@ -216,6 +234,18 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 		el := elByConn[path.ID]
 		if el == nil {
 			continue
+		}
+		if el.CustomData != nil && boolishV1EngineSceneBuild(el.CustomData.UMLComponentInterfaceDestination) {
+			if req, ok := reqByConn[path.ID]; ok {
+				path.Points = restoreDestinationApproachV1EngineRouteBuild(path.Points, req.DstSide, rOpt.Stub)
+				if endpoint, ok := connectorSceneEndpointV1EnginePlanBuild(el); ok && len(path.Points) > 0 {
+					path.Points[len(path.Points)-1] = endpoint
+					if len(path.Points) > 1 {
+						path.Points[len(path.Points)-2].Y = endpoint.Y
+					}
+				}
+				routed[i] = path
+			}
 		}
 		connectorID := fmt.Sprintf("L%02d", i+1)
 		for maskIndex, crossing := range pathBorderCrossingsV1EnginePlanObstacle(path, groupBorders) {
@@ -292,4 +322,15 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 		Legend:          buildLegendV1EnginePlanLegend(scene, opt.LegendEntries),
 		ConnectorLegend: connectorLegend,
 	}
+}
+
+func connectorSceneEndpointV1EnginePlanBuild(el *entity.Element) (ptV1EngineRouteTypes, bool) {
+	if el == nil || len(el.Points) == 0 {
+		return ptV1EngineRouteTypes{}, false
+	}
+	last := el.Points[len(el.Points)-1]
+	if len(last) < 2 {
+		return ptV1EngineRouteTypes{}, false
+	}
+	return ptV1EngineRouteTypes{X: el.X + last[0], Y: el.Y + last[1]}, true
 }

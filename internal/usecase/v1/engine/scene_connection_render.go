@@ -42,6 +42,7 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 	})
 	obstacles := excalidrawRouteObstaclesV1EngineSceneConnectionRoute(*elements)
 	hardObstacles := frameMetadataReservedObstaclesV1EngineSceneConnectionRender(frameMetadata)
+	activationRanges := umlSequenceActivationRangesV1EngineSceneConnectionRender(orderedConnections)
 	placed := [][]segmentV1EngineRouteTypes{}
 	routePaths := map[string][]ptV1EngineRouteTypes{}
 
@@ -211,17 +212,36 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 
 		srcFP := fixedPointForSideV1EngineSceneConnection(srcSide)
 		if hasSrcAnchor {
-			srcFP = fixedPointForAnchorV1EngineSceneConnection(srcAnchor)
+			if umlEndpointAnchorProfileV1EngineSceneConnection(conn.Attr("uml-src-kind")) == "diamond" {
+				srcFP = fixedPointForSideV1EngineSceneConnection(string(srcAnchor.side))
+			} else {
+				srcFP = fixedPointForAnchorV1EngineSceneConnection(srcAnchor)
+			}
+		} else if fp, ok := fixedPointForUMLProfileV1EngineSceneConnection(conn, "src", srcSide, srcRect, dstRect); ok {
+			srcFP = fp
 		}
 		dstFP := fixedPointForSideV1EngineSceneConnection(dstSide)
 		if hasDstAnchor {
-			dstFP = fixedPointForAnchorV1EngineSceneConnection(dstAnchor)
+			if umlEndpointAnchorProfileV1EngineSceneConnection(conn.Attr("uml-dst-kind")) == "diamond" {
+				dstFP = fixedPointForSideV1EngineSceneConnection(string(dstAnchor.side))
+			} else {
+				dstFP = fixedPointForAnchorV1EngineSceneConnection(dstAnchor)
+			}
+		} else if fp, ok := fixedPointForUMLProfileV1EngineSceneConnection(conn, "dst", dstSide, dstRect, srcRect); ok {
+			dstFP = fp
 		}
 		if fp, ok := umlSequenceFixedPointV1EngineSceneConnectionRoute(conn, "src", srcSide); ok {
 			srcFP = fp
 		}
 		if fp, ok := umlSequenceFixedPointV1EngineSceneConnectionRoute(conn, "dst", dstSide); ok {
 			dstFP = fp
+		}
+		if boolishV1EngineSceneBuild(conn.Attr("uml-component-interface-dst")) {
+			dstFP = fixedPointForSideV1EngineSceneConnection(dstSide)
+		}
+		endBindingGap := 5.0
+		if boolishV1EngineSceneBuild(conn.Attr("uml-component-interface-dst")) {
+			endBindingGap = umlComponentCallerSocketGapForCircleV1EngineSceneBuild(dstRect)
 		}
 		style := resolveConnectionStyleV1EngineSceneConnectionRoute(conn)
 		if crossFrame {
@@ -233,9 +253,13 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 		dstEdge := rectFixedPointV1EngineSceneConnection(dstRect, dstFP)
 		dx := dstEdge[0] - srcEdge[0]
 		dy := dstEdge[1] - srcEdge[1]
-		routePoints := excalidrawConnectionPointsV1EngineSceneConnectionRoute(conn, srcRect, dstRect, srcSide, dstSide, style.Kind, obstacles, hardObstacles, placed, routePaths)
+		routeBounds := routeBoundsForFrameV1EngineSceneConnectionRender(srcFrameID, dstFrameID, frameRects)
+		routePoints := excalidrawConnectionPointsV1EngineSceneConnectionRoute(conn, srcRect, dstRect, srcSide, dstSide, style.Kind, obstacles, hardObstacles, routeBounds, placed, routePaths)
 		if len(routePoints) < 2 {
 			continue
+		}
+		if boolishV1EngineSceneBuild(conn.Attr("uml-component-interface-dst")) {
+			routePoints = enforceOrthogonalPolylineV1EngineRoutePath(routePoints)
 		}
 		if style.Kind == "route" {
 			routePaths[routePairKeyV1EngineRouteBuild(excalidrawRouteRequestV1EngineSceneConnectionRoute(conn, srcRect, dstRect, srcSide, dstSide, style.Kind), false)] = append([]ptV1EngineRouteTypes(nil), routePoints...)
@@ -312,7 +336,14 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 		}
 		applyDatabaseConnectionMetadataV1EngineSceneConnectionRender(customData, conn)
 		applyUMLConnectionMetadataV1EngineSceneConnectionRender(customData, conn)
+		if boolishV1EngineSceneBuild(conn.Attr("uml-component-interface-dst")) {
+			customData["xaligoUmlComponentCallerSocketRadius"] = umlComponentCallerSocketRadiusForCircleV1EngineSceneBuild(dstRect)
+			customData["xaligoUmlComponentCallerSocketCenterX"] = dstRect[0] + dstRect[2]/2
+			customData["xaligoUmlComponentCallerSocketCenterY"] = dstRect[1] + dstRect[3]/2
+		}
 		applyConnectionDiffStatusV1EngineSceneDiffHighlight(customData, conn)
+		appendUMLSequenceActivationV1EngineSceneConnectionRender(elements, conn, connID, dstImgRect, dstEdge[1], activationRanges[conn], srcFrameID, dstFrameID, updated, seed)
+		appendUMLSequenceStopV1EngineSceneConnectionRender(elements, conn, connID, dstEdge, srcFrameID, dstFrameID, updated, seed)
 
 		*elements = append(*elements, map[string]any{
 			"id": connID, "type": "arrow",
@@ -337,7 +368,7 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 			"endBinding": map[string]any{
 				"elementId":  dstElemID,
 				"focus":      0.0,
-				"gap":        5.0,
+				"gap":        endBindingGap,
 				"fixedPoint": []float64{dstFP[0], dstFP[1]},
 			},
 			"startArrowhead":     style.ExcalidrawStartArrowhead,
@@ -347,7 +378,7 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 			"elbowed":            true,
 			"customData":         customData,
 		})
-		appendUMLRelationLabelV1EngineSceneConnectionRender(elements, conn, connID, routePoints, style.Color, updated, seed, frameRects[srcFrameID], frameMetadata[srcFrameID])
+		appendUMLRelationLabelV1EngineSceneConnectionRender(elements, conn, connID, routePoints, style.Color, updated, seed, frameRects[srcFrameID], frameMetadata[srcFrameID], srcImgRect, dstImgRect)
 
 		// Register this arrow in boundMap for both endpoints.
 		entry := map[string]any{"type": "arrow", "id": connID}
@@ -413,6 +444,17 @@ func frameMetadataReservedObstaclesV1EngineSceneConnectionRender(metadata map[st
 	return obstacles
 }
 
+func routeBoundsForFrameV1EngineSceneConnectionRender(srcFrameID, dstFrameID string, frameRects map[string][4]float64) *rectV1EngineRouteTypes {
+	if srcFrameID == "" || srcFrameID != dstFrameID {
+		return nil
+	}
+	raw, ok := frameRects[srcFrameID]
+	if !ok || raw[2] <= 0 || raw[3] <= 0 {
+		return nil
+	}
+	return &rectV1EngineRouteTypes{X: raw[0], Y: raw[1], W: raw[2], H: raw[3]}
+}
+
 func localConnectionSideAvoidingFrameMetadataV1EngineSceneConnectionRender(side string, endpointRect, otherRect, frameRect [4]float64, metadata frameMetadataSceneGeometryV1EngineSceneFrameMetadata) string {
 	reserved := metadata.Reserved
 	if reserved[2] <= 0 || reserved[3] <= 0 || side != metadata.Position || frameRect[2] <= 0 || frameRect[3] <= 0 {
@@ -432,24 +474,250 @@ func localConnectionSideAvoidingFrameMetadataV1EngineSceneConnectionRender(side 
 	return nearestFrameSideExcludingV1EngineSceneConnectionPage(frameRect, endpointRect, otherRect, metadata.Position)
 }
 
+type umlSequenceActivationRangeV1EngineSceneConnectionRender struct {
+	Top    float64
+	Bottom float64
+	Hidden bool
+}
+
+func umlSequenceActivationRangesV1EngineSceneConnectionRender(connections []*entity.Node) map[*entity.Node]umlSequenceActivationRangeV1EngineSceneConnectionRender {
+	ranges := map[*entity.Node]umlSequenceActivationRangeV1EngineSceneConnectionRender{}
+	messages := umlSequenceOrderedMessagesV1EngineSceneConnectionRender(connections)
+	visibleByOwner := map[string][]umlSequenceActivationRangeV1EngineSceneConnectionRender{}
+	for index, conn := range messages {
+		if !isUMLSequenceActivationRelationV1EngineSceneConnectionRender(conn) {
+			continue
+		}
+		owner := umlSequenceEndpointReferenceV1EngineSceneConnectionRender(conn, "dst")
+		if owner == "" {
+			continue
+		}
+		top, bottom, ok := umlSequenceMessagePositionRangeV1EngineSceneConnectionRender(conn, owner)
+		if !ok {
+			continue
+		}
+		for _, other := range messages[index+1:] {
+			if otherTop, otherBottom, ok := umlSequenceMessagePositionRangeV1EngineSceneConnectionRender(other, owner); ok {
+				top = math.Min(top, otherTop)
+				bottom = math.Max(bottom, otherBottom)
+			}
+			if strings.TrimSpace(other.Attr("uml-relation-kind")) == "return-message" && umlSequenceEndpointReferenceV1EngineSceneConnectionRender(other, "src") == owner {
+				break
+			}
+		}
+		rangeValue := umlSequenceActivationRangeV1EngineSceneConnectionRender{Top: top, Bottom: bottom}
+		for _, previous := range visibleByOwner[owner] {
+			if top >= previous.Top && bottom <= previous.Bottom {
+				rangeValue.Hidden = true
+				break
+			}
+		}
+		ranges[conn] = rangeValue
+		if !rangeValue.Hidden {
+			visibleByOwner[owner] = append(visibleByOwner[owner], rangeValue)
+		}
+	}
+	return ranges
+}
+
+func umlSequenceOrderedMessagesV1EngineSceneConnectionRender(connections []*entity.Node) []*entity.Node {
+	messages := make([]*entity.Node, 0, len(connections))
+	for _, conn := range connections {
+		if conn == nil || conn.Attr("uml-diagram-kind") != "sequence-diagram" {
+			continue
+		}
+		switch strings.TrimSpace(conn.Attr("uml-relation-kind")) {
+		case "message", "return-message", "create-message", "destroy-message":
+			messages = append(messages, conn)
+		}
+	}
+	sort.SliceStable(messages, func(i, j int) bool {
+		return compareUMLMessageOrderV1EngineParseUml(messages[i].Attr("uml-order"), messages[j].Attr("uml-order")) < 0
+	})
+	return messages
+}
+
+func isUMLSequenceActivationRelationV1EngineSceneConnectionRender(conn *entity.Node) bool {
+	if conn == nil || conn.Attr("uml-diagram-kind") != "sequence-diagram" {
+		return false
+	}
+	relationKind := strings.TrimSpace(conn.Attr("uml-relation-kind"))
+	if relationKind == "" {
+		relationKind = strings.TrimSpace(conn.Tag)
+	}
+	return relationKind != "" && relationKind != "return-message"
+}
+
+func umlSequenceMessagePositionRangeV1EngineSceneConnectionRender(conn *entity.Node, owner string) (float64, float64, bool) {
+	top := math.Inf(1)
+	bottom := math.Inf(-1)
+	for _, endpoint := range []string{"src", "dst"} {
+		if umlSequenceEndpointReferenceV1EngineSceneConnectionRender(conn, endpoint) != owner {
+			continue
+		}
+		position, ok := umlSequencePositionV1EngineSceneConnectionRoute(conn, endpoint)
+		if !ok {
+			continue
+		}
+		top = math.Min(top, position)
+		bottom = math.Max(bottom, position)
+	}
+	return top, bottom, !math.IsInf(top, 0) && !math.IsInf(bottom, 0)
+}
+
+func umlSequenceEndpointReferenceV1EngineSceneConnectionRender(conn *entity.Node, endpoint string) string {
+	return firstNonEmptyAttrV1EngineSceneConnectionRoute(conn, "uml-"+endpoint+"-ref", endpoint)
+}
+
+func appendUMLSequenceActivationV1EngineSceneConnectionRender(elements *[]map[string]any, conn *entity.Node, connID string, dstRect [4]float64, messageY float64, activationRange umlSequenceActivationRangeV1EngineSceneConnectionRender, srcFrameID, dstFrameID string, updated int64, seed int) {
+	if elements == nil || conn == nil || conn.Attr("uml-diagram-kind") != "sequence-diagram" {
+		return
+	}
+	relationKind := strings.TrimSpace(conn.Attr("uml-relation-kind"))
+	if relationKind == "" {
+		relationKind = strings.TrimSpace(conn.Tag)
+	}
+	if relationKind == "" || relationKind == "return-message" {
+		return
+	}
+	owner := strings.TrimSpace(conn.Attr("uml-dst-ref"))
+	if owner == "" {
+		owner = strings.TrimSpace(conn.Attr("dst"))
+	}
+	if owner == "" {
+		return
+	}
+	if activationRange.Hidden {
+		return
+	}
+	barWidth := 16.0
+	barHeight := 48.0
+	switch relationKind {
+	case "create-message":
+		barHeight = 58
+	case "destroy-message":
+		barHeight = 38
+	}
+	x := dstRect[0] + dstRect[2]/2 - barWidth/2
+	activationTopY := messageY
+	activationBottomY := messageY
+	if conn.Attr("src") == conn.Attr("dst") {
+		if srcFP, ok := umlSequenceFixedPointV1EngineSceneConnectionRoute(conn, "src", "right"); ok {
+			activationTopY = math.Min(activationTopY, dstRect[1]+dstRect[3]*srcFP[1])
+		}
+	}
+	if activationRange.Bottom >= activationRange.Top && activationRange.Top > 0 {
+		activationTopY = math.Min(activationTopY, dstRect[1]+dstRect[3]*activationRange.Top)
+		activationBottomY = math.Max(activationBottomY, dstRect[1]+dstRect[3]*activationRange.Bottom)
+	}
+	y := math.Max(dstRect[1]+8, activationTopY-6)
+	barHeight = math.Max(barHeight, activationBottomY-activationTopY+12)
+	if bottom := dstRect[1] + dstRect[3] - 8; y+barHeight > bottom {
+		y = math.Max(dstRect[1]+8, bottom-barHeight)
+	}
+	activationID := connID + "-sequence-activation"
+	customData := map[string]any{
+		"xaligoUmlDiagramKind":                  "sequence-diagram",
+		"xaligoUmlElementKind":                  "activation",
+		"xaligoUmlSequenceActivation":           true,
+		"xaligoUmlSequenceActivationOwner":      owner,
+		"xaligoUmlRelationKind":                 relationKind,
+		"xaligoUmlMessageOrder":                 strings.TrimSpace(conn.Attr("uml-order")),
+		"xaligoUmlRelationSourceReference":      firstNonEmptyAttrV1EngineSceneConnectionRoute(conn, "uml-src-ref", "src"),
+		"xaligoUmlRelationDestinationReference": owner,
+	}
+	if srcFrameID != "" && srcFrameID == dstFrameID {
+		customData["xaligoFrameID"] = srcFrameID
+	}
+	*elements = append(*elements, map[string]any{
+		"id": activationID, "type": "rectangle",
+		"x": x, "y": y, "width": barWidth, "height": barHeight,
+		"angle": 0, "strokeColor": "#052d6e", "backgroundColor": "#ffffff",
+		"fillStyle": "solid", "strokeWidth": 1.25, "strokeStyle": "solid",
+		"roughness": 0, "opacity": 100,
+		"groupIds": []string{}, "roundness": map[string]any{"type": 3},
+		"seed": seed + 17, "version": 1, "versionNonce": seed + 17,
+		"isDeleted": false, "boundElements": nil,
+		"updated": updated, "link": nil, "locked": false,
+		"customData": customData,
+	})
+}
+
+func appendUMLSequenceStopV1EngineSceneConnectionRender(elements *[]map[string]any, conn *entity.Node, connID string, dstEdge [2]float64, srcFrameID, dstFrameID string, updated int64, seed int) {
+	if elements == nil || conn == nil || conn.Attr("uml-diagram-kind") != "sequence-diagram" || strings.TrimSpace(conn.Attr("uml-relation-kind")) != "destroy-message" {
+		return
+	}
+	owner := strings.TrimSpace(conn.Attr("uml-dst-ref"))
+	if owner == "" {
+		owner = strings.TrimSpace(conn.Attr("dst"))
+	}
+	if owner == "" {
+		return
+	}
+	size := 16.0
+	x := dstEdge[0] - size/2
+	y := dstEdge[1] - size/2
+	for index, points := range [][][]float64{
+		{{0, 0}, {size, size}},
+		{{0, size}, {size, 0}},
+	} {
+		customData := map[string]any{
+			"xaligoUmlDiagramKind":                  "sequence-diagram",
+			"xaligoUmlElementKind":                  "stop",
+			"xaligoUmlSequenceStop":                 true,
+			"xaligoUmlSequenceStopOwner":            owner,
+			"xaligoUmlRelationKind":                 "destroy-message",
+			"xaligoUmlMessageOrder":                 strings.TrimSpace(conn.Attr("uml-order")),
+			"xaligoUmlRelationSourceReference":      firstNonEmptyAttrV1EngineSceneConnectionRoute(conn, "uml-src-ref", "src"),
+			"xaligoUmlRelationDestinationReference": owner,
+		}
+		if srcFrameID != "" && srcFrameID == dstFrameID {
+			customData["xaligoFrameID"] = srcFrameID
+		}
+		lineSeed := seed + 31 + index
+		*elements = append(*elements, map[string]any{
+			"id": fmt.Sprintf("%s-sequence-stop-%d", connID, index), "type": "line",
+			"x": x, "y": y, "width": size, "height": size,
+			"angle": 0, "strokeColor": "#052d6e", "backgroundColor": "transparent",
+			"fillStyle": "solid", "strokeWidth": 1.5, "strokeStyle": "solid",
+			"roughness": 0, "opacity": 100,
+			"groupIds": []string{}, "roundness": nil,
+			"seed": lineSeed, "version": 1, "versionNonce": lineSeed,
+			"isDeleted": false, "boundElements": nil,
+			"updated": updated, "link": nil, "locked": false,
+			"points":     points,
+			"customData": customData,
+		})
+	}
+}
+
 func applyUMLConnectionMetadataV1EngineSceneConnectionRender(customData map[string]any, conn *entity.Node) {
 	if customData == nil || conn == nil {
 		return
 	}
 	for source, target := range map[string]string{
-		"uml-id":               "xaligoUmlId",
-		"uml-diagram-kind":     "xaligoUmlDiagramKind",
-		"uml-relation-kind":    "xaligoUmlRelationKind",
-		"uml-relation-label":   "xaligoUmlRelationLabel",
-		"uml-src-ref":          "xaligoUmlRelationSourceReference",
-		"uml-dst-ref":          "xaligoUmlRelationDestinationReference",
-		"uml-order":            "xaligoUmlMessageOrder",
-		"uml-guard":            "xaligoUmlGuard",
-		"uml-src-multiplicity": "xaligoUmlSourceMultiplicity",
-		"uml-dst-multiplicity": "xaligoUmlDestinationMultiplicity",
-		"uml-at":               "xaligoUmlOccurrenceAt",
-		"uml-from":             "xaligoUmlDurationFrom",
-		"uml-to":               "xaligoUmlDurationTo",
+		"uml-id":                      "xaligoUmlId",
+		"uml-diagram-kind":            "xaligoUmlDiagramKind",
+		"uml-relation-kind":           "xaligoUmlRelationKind",
+		"uml-relation-label":          "xaligoUmlRelationLabel",
+		"uml-src-ref":                 "xaligoUmlRelationSourceReference",
+		"uml-dst-ref":                 "xaligoUmlRelationDestinationReference",
+		"uml-src-kind":                "xaligoUmlRelationSourceKind",
+		"uml-dst-kind":                "xaligoUmlRelationDestinationKind",
+		"uml-order":                   "xaligoUmlMessageOrder",
+		"uml-mode":                    "xaligoUmlMessageMode",
+		"uml-event":                   "xaligoUmlEvent",
+		"uml-guard":                   "xaligoUmlGuard",
+		"uml-action":                  "xaligoUmlAction",
+		"uml-effect":                  "xaligoUmlEffect",
+		"uml-route":                   "xaligoUmlRoute",
+		"uml-src-multiplicity":        "xaligoUmlSourceMultiplicity",
+		"uml-dst-multiplicity":        "xaligoUmlDestinationMultiplicity",
+		"uml-component-interface-dst": "xaligoUmlComponentInterfaceDestination",
+		"uml-component-caller-socket": "xaligoUmlComponentCallerSocket",
+		"uml-at":                      "xaligoUmlOccurrenceAt",
+		"uml-from":                    "xaligoUmlDurationFrom",
+		"uml-to":                      "xaligoUmlDurationTo",
 	} {
 		if value := strings.TrimSpace(conn.Attr(source)); value != "" {
 			customData[target] = value
@@ -457,12 +725,11 @@ func applyUMLConnectionMetadataV1EngineSceneConnectionRender(customData map[stri
 	}
 }
 
-func appendUMLRelationLabelV1EngineSceneConnectionRender(elements *[]map[string]any, conn *entity.Node, connID string, routePoints []ptV1EngineRouteTypes, color string, updated int64, seed int, frameRect [4]float64, metadata frameMetadataSceneGeometryV1EngineSceneFrameMetadata) {
+func appendUMLRelationLabelV1EngineSceneConnectionRender(elements *[]map[string]any, conn *entity.Node, connID string, routePoints []ptV1EngineRouteTypes, color string, updated int64, seed int, frameRect [4]float64, metadata frameMetadataSceneGeometryV1EngineSceneFrameMetadata, srcRect, dstRect [4]float64) {
 	label := strings.TrimSpace(conn.Attr("uml-relation-label"))
 	if label == "" || len(routePoints) == 0 {
 		return
 	}
-	point := umlRelationLabelPointV1EngineSceneConnectionRender(routePoints, seed)
 	fontSize := 12.0
 	height := 20.0
 	if safeTop, safeBottom, ok := frameMetadataSafeVerticalIntervalV1EngineSceneConnectionPage(frameRect, frameMetadataReservedRectsV1EngineSceneConnectionPage(metadata)); ok {
@@ -473,7 +740,8 @@ func appendUMLRelationLabelV1EngineSceneConnectionRender(elements *[]map[string]
 	if frameRect[2] > 0 {
 		width = math.Min(width, frameRect[2])
 	}
-	x, y := point.X-width/2, point.Y-height/2
+	x, y := umlRelationLabelPositionV1EngineSceneConnectionRender(conn, routePoints, seed, width, height)
+	x, y = avoidUMLRelationLabelEndpointOverlapV1EngineSceneConnectionRender(x, y, width, height, routePoints, frameRect, [][4]float64{srcRect, dstRect})
 	x, y = frameMetadataLabelPositionV1EngineSceneConnectionRender(x, y, width, height, frameRect, metadata)
 	labelID := connID + "-uml-label"
 	customData := map[string]any{}
@@ -494,6 +762,65 @@ func appendUMLRelationLabelV1EngineSceneConnectionRender(elements *[]map[string]
 	})
 }
 
+func avoidUMLRelationLabelEndpointOverlapV1EngineSceneConnectionRender(x, y, width, height float64, routePoints []ptV1EngineRouteTypes, frameRect [4]float64, obstacles [][4]float64) (float64, float64) {
+	if !labelOverlapsAnyRectV1EngineSceneConnectionRender(x, y, width, height, obstacles) {
+		return x, y
+	}
+	gap := 10.0
+	candidates := make([][2]float64, 0, 32)
+	for multiplier := 1.0; multiplier <= 5; multiplier++ {
+		offsetX := multiplier * (width + gap)
+		offsetY := multiplier * (height + gap)
+		candidates = append(candidates,
+			[2]float64{x, y - offsetY},
+			[2]float64{x, y + offsetY},
+			[2]float64{x - offsetX, y},
+			[2]float64{x + offsetX, y},
+		)
+	}
+	if len(routePoints) >= 2 {
+		for _, point := range routePoints {
+			for multiplier := 1.0; multiplier <= 3; multiplier++ {
+				candidates = append(candidates,
+					[2]float64{point.X - width/2, point.Y - multiplier*(height+gap)},
+					[2]float64{point.X - width/2, point.Y + multiplier*gap},
+					[2]float64{point.X - multiplier*(width+gap), point.Y - height/2},
+					[2]float64{point.X + multiplier*gap, point.Y - height/2},
+				)
+			}
+		}
+	}
+	for _, candidate := range candidates {
+		candidateX, candidateY := clampLabelToFrameV1EngineSceneConnectionRender(candidate[0], candidate[1], width, height, frameRect)
+		if !labelOverlapsAnyRectV1EngineSceneConnectionRender(candidateX, candidateY, width, height, obstacles) {
+			return candidateX, candidateY
+		}
+	}
+	return x, y
+}
+
+func labelOverlapsAnyRectV1EngineSceneConnectionRender(x, y, width, height float64, rects [][4]float64) bool {
+	for _, rect := range rects {
+		if rect[2] <= 0 || rect[3] <= 0 {
+			continue
+		}
+		if x < rect[0]+rect[2] && x+width > rect[0] && y < rect[1]+rect[3] && y+height > rect[1] {
+			return true
+		}
+	}
+	return false
+}
+
+func clampLabelToFrameV1EngineSceneConnectionRender(x, y, width, height float64, frameRect [4]float64) (float64, float64) {
+	if frameRect[2] <= 0 || frameRect[3] <= 0 {
+		return x, y
+	}
+	const gap = 6.0
+	x = clampFloatV1EngineLayoutPort(x, frameRect[0]+gap, math.Max(frameRect[0]+gap, frameRect[0]+frameRect[2]-width-gap))
+	y = clampFloatV1EngineLayoutPort(y, frameRect[1]+gap, math.Max(frameRect[1]+gap, frameRect[1]+frameRect[3]-height-gap))
+	return x, y
+}
+
 func frameMetadataLabelPositionV1EngineSceneConnectionRender(x, y, width, height float64, frameRect [4]float64, metadata frameMetadataSceneGeometryV1EngineSceneFrameMetadata) (float64, float64) {
 	reserved := metadata.Reserved
 	if reserved[2] <= 0 || reserved[3] <= 0 {
@@ -512,9 +839,14 @@ func frameMetadataLabelPositionV1EngineSceneConnectionRender(x, y, width, height
 	return x, y
 }
 
-func umlRelationLabelPointV1EngineSceneConnectionRender(routePoints []ptV1EngineRouteTypes, seed int) ptV1EngineRouteTypes {
+func umlRelationLabelPositionV1EngineSceneConnectionRender(conn *entity.Node, routePoints []ptV1EngineRouteTypes, seed int, width, height float64) (float64, float64) {
 	if len(routePoints) < 2 {
-		return routePoints[0]
+		return routePoints[0].X - width/2, routePoints[0].Y - height/2
+	}
+	if conn != nil && conn.Attr("uml-diagram-kind") == "sequence-diagram" && conn.Attr("src") == conn.Attr("dst") {
+		start, end := routePoints[0], routePoints[1]
+		const gap = 8.0
+		return (start.X+end.X)/2 - width/2, math.Min(start.Y, end.Y) - height - gap
 	}
 	bestStart, bestEnd := routePoints[0], routePoints[1]
 	bestLength := math.Hypot(bestEnd.X-bestStart.X, bestEnd.Y-bestStart.Y)
@@ -526,6 +858,21 @@ func umlRelationLabelPointV1EngineSceneConnectionRender(routePoints []ptV1Engine
 		}
 	}
 	point := ptV1EngineRouteTypes{X: (bestStart.X + bestEnd.X) / 2, Y: (bestStart.Y + bestEnd.Y) / 2}
+	if strings.TrimSpace(conn.Attr("uml-relation-kind")) != "" {
+		const gap = 8.0
+		if math.Abs(bestEnd.X-bestStart.X) >= math.Abs(bestEnd.Y-bestStart.Y) {
+			x := point.X - width/2
+			if seed%2 == 0 {
+				return x, point.Y - height - gap
+			}
+			return x, point.Y + gap
+		}
+		y := point.Y - height/2
+		if seed%2 == 0 {
+			return point.X + gap, y
+		}
+		return point.X - width - gap, y
+	}
 	offset := 12.0 + float64(seed%3)*6
 	if seed%2 != 0 {
 		offset = -offset
@@ -535,7 +882,7 @@ func umlRelationLabelPointV1EngineSceneConnectionRender(routePoints []ptV1Engine
 	} else {
 		point.X += offset
 	}
-	return point
+	return point.X - width/2, point.Y - height/2
 }
 
 func applyDatabaseConnectionMetadataV1EngineSceneConnectionRender(customData map[string]any, conn *entity.Node) {

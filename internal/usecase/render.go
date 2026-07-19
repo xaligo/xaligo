@@ -133,6 +133,9 @@ func (rcvr *renderUsecase) Render(ctx context.Context, input []byte, opts entity
 		format = FormatExcalidraw
 	}
 	opts.Format = format
+	if format == FormatExcalidraw && containsUMLRenderUsecase(input) {
+		return nil, fmt.Errorf("UML Excalidraw export is disabled; use svg, pdf, pptx, excel, xyflow, or isoflow instead")
+	}
 	switch format {
 	case FormatExcalidraw:
 		logger.DEBUG(IURR004, "branch excalidraw")
@@ -156,6 +159,23 @@ func (rcvr *renderUsecase) Render(ctx context.Context, input []byte, opts entity
 	default:
 		logger.ERROR(IURR009, "branch unknown format", map[string]any{"format": format})
 		return nil, fmt.Errorf("unknown render format %q", format)
+	}
+}
+
+func containsUMLRenderUsecase(input []byte) bool {
+	decoder := xml.NewDecoder(bytes.NewReader(input))
+	for {
+		token, err := decoder.Token()
+		if err != nil {
+			return false
+		}
+		start, ok := token.(xml.StartElement)
+		if !ok {
+			continue
+		}
+		if start.Name.Local == "uml" {
+			return true
+		}
 	}
 }
 

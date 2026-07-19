@@ -223,19 +223,20 @@ func TestRenderXYFlowPreservesUMLShapeEndpointsAndMetadata(t *testing.T) {
 		relationKind   string
 	}{
 		{
-			name: "use-case ellipse",
+			name: "activity final ellipse",
 			source: `<xaligo version="1"><data></data><frames><frame id="main" width="640" height="360">
-  <uml id="use-cases"><use-case-diagram direction="right">
-    <actor id="user" title="User"/><use-case id="sign-in" title="Sign in"/>
-    <association src="user" dst="sign-in"/>
-  </use-case-diagram></uml>
+  <uml id="activity"><activity-diagram direction="right">
+    <initial id="start" title="Start"/><action id="active" title="Active"/><final id="done" title="Done"/>
+    <control-flow src="start" dst="active"/><control-flow src="active" dst="done"/>
+  </activity-diagram></uml>
 </frame></frames></xaligo>`,
 			nodes: map[string][3]string{
-				"User":    {"rectangle", "actor", "use-cases/user"},
-				"Sign in": {"ellipse", "use-case", "use-cases/sign-in"},
+				"Start":  {"ellipse", "initial", "start"},
+				"Active": {"rectangle", "action", "active"},
+				"Done":   {"ellipse", "final", "done"},
 			},
-			connectorPairs: [][2]string{{"User", "Sign in"}},
-			relationKind:   "association",
+			connectorPairs: [][2]string{{"Start", "Active"}, {"Active", "Done"}},
+			relationKind:   "control-flow",
 		},
 		{
 			name: "activity decision diamond",
@@ -249,10 +250,10 @@ func TestRenderXYFlowPreservesUMLShapeEndpointsAndMetadata(t *testing.T) {
   </activity-diagram></uml>
 </frame></frames></xaligo>`,
 			nodes: map[string][3]string{
-				"Validate": {"rectangle", "action", "activity/validate"},
-				"Valid?":   {"diamond", "decision", "activity/decision"},
-				"Accept":   {"rectangle", "action", "activity/accept"},
-				"Reject":   {"rectangle", "action", "activity/reject"},
+				"Validate": {"rectangle", "action", "validate"},
+				"Valid?":   {"diamond", "decision", "decision"},
+				"Accept":   {"rectangle", "action", "accept"},
+				"Reject":   {"rectangle", "action", "reject"},
 			},
 			connectorPairs: [][2]string{
 				{"Validate", "Valid?"}, {"Valid?", "Accept"}, {"Valid?", "Reject"},
@@ -277,7 +278,8 @@ func TestRenderXYFlowPreservesUMLShapeEndpointsAndMetadata(t *testing.T) {
 			nodeIDs := make(map[string]string, len(test.nodes))
 			for label, want := range test.nodes {
 				node := xyFlowNodeByLabel(t, document.Nodes, label)
-				if node.Data["shape"] != want[0] || node.Data["umlElementKind"] != want[1] || node.Data["umlReference"] != want[2] {
+				wantReference := "activity/" + want[2]
+				if node.Data["shape"] != want[0] || node.Data["umlElementKind"] != want[1] || node.Data["umlReference"] != wantReference {
 					t.Fatalf("UML node %q data = %#v, want shape=%q kind=%q ref=%q", label, node.Data, want[0], want[1], want[2])
 				}
 				nodeIDs[label] = node.ID
@@ -295,7 +297,7 @@ func TestRenderXYFlowPreservesUMLShapeEndpointsAndMetadata(t *testing.T) {
 				if !found {
 					t.Fatalf("UML edge %q -> %q is missing: %#v", pair[0], pair[1], document.Edges)
 				}
-				if edge.Data["umlRelationKind"] != test.relationKind || edge.Data["umlSourceReference"] != test.nodes[pair[0]][2] || edge.Data["umlDestinationReference"] != test.nodes[pair[1]][2] {
+				if edge.Data["umlRelationKind"] != test.relationKind || edge.Data["umlSourceReference"] != "activity/"+test.nodes[pair[0]][2] || edge.Data["umlDestinationReference"] != "activity/"+test.nodes[pair[1]][2] {
 					t.Fatalf("UML edge %q -> %q data = %#v", pair[0], pair[1], edge.Data)
 				}
 			}

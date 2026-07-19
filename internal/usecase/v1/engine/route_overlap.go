@@ -67,12 +67,21 @@ func separateExactOverlapsV1EngineRouteOverlap(points []ptV1EngineRouteTypes, pl
 // limited to internal segments so endpoint bindings and their short stubs stay
 // stable; it is mainly used for crowded group-header tag bands.
 func separateObstacleHitsV1EngineRouteOverlap(points []ptV1EngineRouteTypes, placed [][]segmentV1EngineRouteTypes, obstacles []rectV1EngineRouteTypes, opt routerOptionsV1EngineRouteTypes) []ptV1EngineRouteTypes {
-	if len(points) < 4 || len(obstacles) == 0 || opt.LaneGap <= 0 {
+	if len(points) < 2 || len(obstacles) == 0 || opt.LaneGap <= 0 {
 		return points
 	}
 	best := append([]ptV1EngineRouteTypes(nil), points...)
 	bestHits := obstacleHitCountV1EngineRouteCandidate(best, obstacles)
 	if bestHits <= epsV1EngineRouteTypes {
+		return best
+	}
+	if len(best) == 2 {
+		if candidate, ok := bypassStraightObstacleHitV1EngineRouteOverlap(best, obstacles, placed, opt); ok {
+			return candidate
+		}
+		return best
+	}
+	if len(best) < 4 {
 		return best
 	}
 	bestOverlap := exactOverlapLengthV1EngineRouteOverlap(toSegmentsV1EngineRouteGeometry(best), placed)
@@ -81,7 +90,7 @@ func separateObstacleHitsV1EngineRouteOverlap(points []ptV1EngineRouteTypes, pla
 		base := append([]ptV1EngineRouteTypes(nil), best...)
 		seg := segmentV1EngineRouteTypes{A: base[segmentIndex], B: base[segmentIndex+1]}
 		for _, direction := range []float64{-1, 1} {
-			for _, mult := range []float64{1, 2, 3} {
+			for _, mult := range []float64{1, 2, 3, 6, 10, 16, 24} {
 				candidate := append([]ptV1EngineRouteTypes(nil), base...)
 				offset := direction * mult * opt.LaneGap
 				if isHorizontalV1EngineRouteGeometry(seg) {
@@ -92,6 +101,9 @@ func separateObstacleHitsV1EngineRouteOverlap(points []ptV1EngineRouteTypes, pla
 					candidate[segmentIndex+1].X += offset
 				}
 				candidate = simplifyV1EngineRouteGeometry(candidate)
+				if !pathWithinBoundsV1EngineRoutePath(candidate, opt.Bounds) {
+					continue
+				}
 				hits := obstacleHitCountV1EngineRouteCandidate(candidate, obstacles)
 				overlap := exactOverlapLengthV1EngineRouteOverlap(toSegmentsV1EngineRouteGeometry(candidate), placed)
 				score := scorePathV1EngineRouteCandidate(candidate, obstacles, placed, opt.LineMargin)
@@ -102,6 +114,60 @@ func separateObstacleHitsV1EngineRouteOverlap(points []ptV1EngineRouteTypes, pla
 		}
 	}
 	return best
+}
+
+func bypassStraightObstacleHitV1EngineRouteOverlap(points []ptV1EngineRouteTypes, obstacles []rectV1EngineRouteTypes, placed [][]segmentV1EngineRouteTypes, opt routerOptionsV1EngineRouteTypes) ([]ptV1EngineRouteTypes, bool) {
+	if len(points) != 2 {
+		return nil, false
+	}
+	seg := segmentV1EngineRouteTypes{A: points[0], B: points[1]}
+	if !isHorizontalV1EngineRouteGeometry(seg) && !isVerticalV1EngineRouteOverlap(seg) {
+		return nil, false
+	}
+	var best []ptV1EngineRouteTypes
+	bestHits := math.Inf(1)
+	bestScore := math.Inf(1)
+	for _, obstacle := range obstacles {
+		if !segIntersectsRectV1EngineRouteGeometry(seg, obstacle) {
+			continue
+		}
+		candidates := straightObstacleBypassCandidatesV1EngineRouteOverlap(seg, obstacle, opt)
+		for _, candidate := range candidates {
+			if !pathWithinBoundsV1EngineRoutePath(candidate, opt.Bounds) {
+				continue
+			}
+			hits := obstacleHitCountV1EngineRouteCandidate(candidate, obstacles)
+			score := scorePathV1EngineRouteCandidate(candidate, obstacles, placed, opt.LineMargin)
+			if hits < bestHits-epsV1EngineRouteTypes || (math.Abs(hits-bestHits) < epsV1EngineRouteTypes && score < bestScore) {
+				best, bestHits, bestScore = candidate, hits, score
+			}
+		}
+	}
+	if best == nil || bestHits > epsV1EngineRouteTypes {
+		return nil, false
+	}
+	return simplifyV1EngineRouteGeometry(best), true
+}
+
+func straightObstacleBypassCandidatesV1EngineRouteOverlap(seg segmentV1EngineRouteTypes, obstacle rectV1EngineRouteTypes, opt routerOptionsV1EngineRouteTypes) [][]ptV1EngineRouteTypes {
+	if isHorizontalV1EngineRouteGeometry(seg) {
+		yAbove := snapV1EngineRouteGeometry(obstacle.Y-opt.LaneGap, opt.Grid)
+		yBelow := snapV1EngineRouteGeometry(obstacle.Y+obstacle.H+opt.LaneGap, opt.Grid)
+		return [][]ptV1EngineRouteTypes{
+			{seg.A, {X: seg.A.X, Y: yAbove}, {X: seg.B.X, Y: yAbove}, seg.B},
+			{seg.A, {X: seg.A.X, Y: yBelow}, {X: seg.B.X, Y: yBelow}, seg.B},
+		}
+	}
+	xLeft := snapV1EngineRouteGeometry(obstacle.X-opt.LaneGap, opt.Grid)
+	xRight := snapV1EngineRouteGeometry(obstacle.X+obstacle.W+opt.LaneGap, opt.Grid)
+	return [][]ptV1EngineRouteTypes{
+		{seg.A, {X: xLeft, Y: seg.A.Y}, {X: xLeft, Y: seg.B.Y}, seg.B},
+		{seg.A, {X: xRight, Y: seg.A.Y}, {X: xRight, Y: seg.B.Y}, seg.B},
+	}
+}
+
+func isVerticalV1EngineRouteOverlap(seg segmentV1EngineRouteTypes) bool {
+	return math.Abs(seg.A.X-seg.B.X) < epsV1EngineRouteTypes
 }
 
 // offsetFirstStub escapes an overlapping source stub with a short local jog onto

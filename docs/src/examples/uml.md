@@ -1,6 +1,6 @@
 # UML Diagrams
 
-These examples use the diagram-specific strict V1 tags. Each source is
+These examples use the supported core UML strict V1 tags. Each source is
 validated and rendered through the same pipeline used by the CLI.
 
 ## Class diagram
@@ -14,20 +14,14 @@ multiplicity-bearing associations.
 {{#include samples/uml-class.xal}}
 ```
 
-## Object diagram
-
-An object snapshot with slots and instance links.
-
-![Object diagram](../images/uml-object.svg)
-
-```xml
-{{#include samples/uml-object.xal}}
-```
-
 ## Component diagram
 
-Owned required/provided ports, assemblies, realizations, and an artifact
-dependency.
+Components, artifacts, provided interfaces, associations, dependencies, and
+automatic interface/fan-out-based component heights. Diagram-level
+`component-width` and `component-height` provide defaults; per-component
+`width` and `height` override them. The Order Workflow component also shows
+`interface-width`, which gives every interface name in that component one
+shared width while descriptions use the remaining space.
 
 ![Component diagram](../images/uml-component.svg)
 
@@ -35,61 +29,10 @@ dependency.
 {{#include samples/uml-component.xal}}
 ```
 
-## Deployment diagram
-
-Runtime nodes, a deployed artifact, and communication paths.
-
-![Deployment diagram](../images/uml-deployment.svg)
-
-```xml
-{{#include samples/uml-deployment.xal}}
-```
-
-## Package diagram
-
-Layered packages and package imports.
-
-![Package diagram](../images/uml-package.svg)
-
-```xml
-{{#include samples/uml-package.xal}}
-```
-
-## Composite structure diagram
-
-Owned structures, parts, boundary/internal ports, connector, assembly, and
-delegation.
-
-![Composite structure diagram](../images/uml-composite-structure.svg)
-
-```xml
-{{#include samples/uml-composite-structure.xal}}
-```
-
-## Profile diagram
-
-A profile, stereotype, metaclass, reference, and extension.
-
-![Profile diagram](../images/uml-profile.svg)
-
-```xml
-{{#include samples/uml-profile.xal}}
-```
-
-## Use-case diagram
-
-Actors and system-owned use cases with association, include, extend, and actor
-generalization.
-
-![Use-case diagram](../images/uml-use-case.svg)
-
-```xml
-{{#include samples/uml-use-case.xal}}
-```
-
 ## Activity diagram
 
-Object flow plus validated decision/merge and fork/join control structures.
+ATM withdrawal swimlanes with supported activity partitions, decisions,
+guards, loop routes, and the xaligo activity theme.
 
 ![Activity diagram](../images/uml-activity.svg)
 
@@ -97,9 +40,21 @@ Object flow plus validated decision/merge and fork/join control structures.
 {{#include samples/uml-activity.xal}}
 ```
 
+## Activity diagram - horizontal swimlanes
+
+The same ATM withdrawal flow arranged as horizontal swimlanes for wide process
+views.
+
+![Horizontal activity diagram](../images/uml-activity-horizontal.svg)
+
+```xml
+{{#include samples/uml-activity-horizontal.xal}}
+```
+
 ## State-machine diagram
 
-States with entry/do/exit behavior, guarded choice, and deep-history recovery.
+States, initial/final pseudostates, transitions, guards, and state
+compartments.
 
 ![State-machine diagram](../images/uml-state-machine.svg)
 
@@ -117,37 +72,3 @@ messages.
 ```xml
 {{#include samples/uml-sequence.xal}}
 ```
-
-## Communication diagram
-
-Objects, structural links for every message pair, and hierarchical order.
-
-![Communication diagram](../images/uml-communication.svg)
-
-```xml
-{{#include samples/uml-communication.xal}}
-```
-
-## Interaction-overview diagram
-
-Referenced interactions connected through decision and fork/join overview flow.
-
-![Interaction-overview diagram](../images/uml-interaction-overview.svg)
-
-```xml
-{{#include samples/uml-interaction-overview.xal}}
-```
-
-## Timing diagram
-
-Owned non-overlapping time states, chronological transitions, occurrences, and
-a duration observation.
-
-![Timing diagram](../images/uml-timing.svg)
-
-```xml
-{{#include samples/uml-timing.xal}}
-```
-
-The compact [all-kinds source](samples/uml-all.xal) remains useful as a format
-matrix smoke test. Use the individual examples above as authoring templates.

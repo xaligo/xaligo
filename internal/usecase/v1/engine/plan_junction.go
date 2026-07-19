@@ -18,6 +18,7 @@ type junctionEndpointV1EnginePlanJunction struct {
 	side         sideV1EngineRouteTypes
 	gap          float64
 	source       bool
+	profile      string
 }
 
 // applyRouteJunctions makes route fan-out/fan-in connections share a centered
@@ -37,8 +38,8 @@ func applyRouteJunctionsV1EnginePlanJunction(requests []routeRequestV1EngineRout
 		if req.Kind != "route" {
 			continue
 		}
-		add(junctionGroupKeyV1EnginePlanJunction("src", req.Src, req.SrcSide), junctionEndpointV1EnginePlanJunction{i, req.Src, req.SrcSide, req.SrcGap, true})
-		add(junctionGroupKeyV1EnginePlanJunction("dst", req.Dst, req.DstSide), junctionEndpointV1EnginePlanJunction{i, req.Dst, req.DstSide, req.DstGap, false})
+		add(junctionGroupKeyV1EnginePlanJunction("src", req.Src, req.SrcSide), junctionEndpointV1EnginePlanJunction{i, req.Src, req.SrcSide, req.SrcGap, true, req.SrcProfile})
+		add(junctionGroupKeyV1EnginePlanJunction("dst", req.Dst, req.DstSide), junctionEndpointV1EnginePlanJunction{i, req.Dst, req.DstSide, req.DstGap, false, req.DstProfile})
 	}
 
 	junctions := []routeJunctionV1EnginePlanJunction{}
@@ -49,7 +50,7 @@ func applyRouteJunctionsV1EnginePlanJunction(requests []routeRequestV1EngineRout
 			continue
 		}
 		first := group[0]
-		anchor := anchorPointV1EnginePlanConnectorPrepare(first.rect, first.side, anchorGridV1EnginePlanBuild/2)
+		anchor := anchorPointForProfileV1EnginePlanConnectorPrepare(first.rect, first.side, anchorGridV1EnginePlanBuild/2, first.profile)
 		for _, endpoint := range group {
 			copyPoint := anchor
 			if endpoint.source {

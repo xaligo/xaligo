@@ -24,24 +24,31 @@ make build
 Create a `.xal` file:
 
 ```xml
-<frame version="1" width="1122" height="794" class="pa-4">
-  <aws-cloud id="cloud" title="AWS Cloud">
-    <region id="region-apne1" title="ap-northeast-1">
-      <vpc id="prod-vpc" title="Production VPC">
-        <public-subnet id="public" title="Public Subnet">
-          <item id="1178" name="web" />
-        </public-subnet>
-        <private-subnet id="app" title="Application Subnet">
-          <item id="27" name="app-server" />
-        </private-subnet>
-      </vpc>
-    </region>
-  </aws-cloud>
+<xaligo version="1">
+  <frames>
+    <frame id="getting-started" title="Getting Started" version="2026.07"
+           width="1122" height="794" class="pa-4" margin-top="48">
+      <metadata align="right" width="156" key-width="56" font-size="12" />
 
-  <connections kind="traffic" color="#2563eb">
-    <connection src="web" dst="app-server" />
-  </connections>
-</frame>
+      <aws-cloud id="cloud" title="AWS Cloud">
+        <region id="region-apne1" title="ap-northeast-1">
+          <vpc id="prod-vpc" title="Production VPC">
+            <public-subnet id="public" title="Public Subnet">
+              <item id="1178" name="web" />
+            </public-subnet>
+            <private-subnet id="app" title="Application Subnet">
+              <item id="27" name="app-server" />
+            </private-subnet>
+          </vpc>
+        </region>
+      </aws-cloud>
+
+      <connections kind="traffic" color="#2563eb">
+        <connection src="web" dst="app-server" />
+      </connections>
+    </frame>
+  </frames>
+</xaligo>
 ```
 
 Render it:

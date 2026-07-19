@@ -10,6 +10,9 @@ func polylineOpV1EnginePlanConnectorDraw(el *entity.Element, points []ptV1Engine
 	if len(points) < 2 {
 		return entity.DrawOp{}, false
 	}
+	if el.CustomData != nil && el.CustomData.UMLDiagramKind == "component-diagram" && el.CustomData.UMLRelationKind == "association" {
+		points = enforceOrthogonalPolylineV1EngineRoutePath(points)
+	}
 	inch := make([]ptV1EngineRouteTypes, len(points))
 	for i, p := range points {
 		inch[i] = ptV1EngineRouteTypes{X: (p.X - frame.X) / ppi, Y: (p.Y - frame.Y) / ppi}
@@ -47,7 +50,7 @@ func rawLineOpV1EnginePlanConnectorDraw(el *entity.Element, frame rectV1EngineRo
 	startX := el.X - frame.X
 	startY := el.Y - frame.Y
 	points := el.Points
-	if len(points) > 2 {
+	if rawLineNeedsPolylineV1EnginePlanConnectorDraw(points) {
 		absolute := make([]ptV1EngineRouteTypes, 0, len(points))
 		for _, point := range points {
 			if len(point) < 2 {
@@ -86,6 +89,16 @@ func rawLineOpV1EnginePlanConnectorDraw(el *entity.Element, frame rectV1EngineRo
 		FlipV:      dy < 0,
 		Line:       &ln,
 	}, true
+}
+
+func rawLineNeedsPolylineV1EnginePlanConnectorDraw(points [][]float64) bool {
+	if len(points) > 2 {
+		return true
+	}
+	if len(points) < 2 || len(points[0]) < 2 {
+		return false
+	}
+	return points[0][0] != 0 || points[0][1] != 0
 }
 
 func connectorLineV1EnginePlanConnectorDraw(el *entity.Element, style connectorStyleV1EnginePlanConnectorStyle, ppi float64) entity.LineStyle {

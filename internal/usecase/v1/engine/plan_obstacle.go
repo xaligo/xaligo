@@ -19,7 +19,9 @@ func collectObstaclesV1EnginePlanObstacle(elements []*entity.Element) []rectV1En
 		isHeader := el.CustomData != nil && el.CustomData.GroupHeader
 		isFrameMetadata := el.CustomData != nil && el.CustomData.FrameMetadata
 		isFrameMetadataReserved := el.CustomData != nil && el.CustomData.FrameMetadataReserved
-		if el.Type != "image" && el.Type != "text" && !isHeader && !isFrameMetadata && !isFrameMetadataReserved {
+		isStateMachineNode := isStateMachineNodeObstacleV1EnginePlanObstacle(el)
+		isComponentVisual := isUMLComponentObstacleV1EnginePlanObstacle(el)
+		if el.Type != "image" && el.Type != "text" && !isHeader && !isFrameMetadata && !isFrameMetadataReserved && !isStateMachineNode && !isComponentVisual {
 			continue
 		}
 		r, ok := rectOfV1EnginePlanGeometry(el)
@@ -29,6 +31,36 @@ func collectObstaclesV1EnginePlanObstacle(elements []*entity.Element) []rectV1En
 		rects = append(rects, r)
 	}
 	return rects
+}
+
+func isUMLComponentObstacleV1EnginePlanObstacle(el *entity.Element) bool {
+	if el == nil || el.CustomData == nil {
+		return false
+	}
+	if el.CustomData.UMLDiagramKind == "component-diagram" && el.CustomData.UMLElementKind == "component" && el.Type == "rectangle" && !el.CustomData.UMLComponentHeader {
+		return true
+	}
+	if !el.CustomData.UMLComponentInterfaceCircle && !el.CustomData.UMLComponentInterfacePort && !el.CustomData.UMLComponentInterfaceDescription {
+		return false
+	}
+	return el.Type == "rectangle" || el.Type == "ellipse"
+}
+
+func isStateMachineNodeObstacleV1EnginePlanObstacle(el *entity.Element) bool {
+	if el == nil || el.CustomData == nil || el.CustomData.UMLDiagramKind != "state-machine-diagram" {
+		return false
+	}
+	switch el.CustomData.UMLElementKind {
+	case "state", "initial", "final", "choice", "history":
+	default:
+		return false
+	}
+	switch el.Type {
+	case "rectangle", "ellipse", "diamond":
+		return true
+	default:
+		return false
+	}
 }
 
 func collectFrameMetadataReservedZonesV1EnginePlanObstacle(elements []*entity.Element) []rectV1EngineRouteTypes {

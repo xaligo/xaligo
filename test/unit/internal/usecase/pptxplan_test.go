@@ -673,6 +673,22 @@ func TestBuildPlanConvertsStylesAndFallbacks(t *testing.T) {
 	}
 }
 
+func TestBuildPlanPreservesTwoPointLineOffsets(t *testing.T) {
+	scene := entity.PptxScene{
+		Elements: []entity.Element{
+			{ID: "paper-frame", Type: "frame", Width: 120, Height: 120},
+			{ID: "diagonal", Type: "line", X: 20, Y: 20, Width: 16, Height: 16, StrokeColor: "#052d6e", StrokeWidth: 1.5, Points: [][]float64{{0, 16}, {16, 0}}},
+		},
+	}
+	plan := usecase.BuildPlan(&scene, entity.PptxOptions{PxPerInch: 96})
+	if len(plan.Ops) != 1 || len(plan.Ops[0].Points) != 2 {
+		t.Fatalf("line op = %#v", plan.Ops)
+	}
+	if plan.Ops[0].Points[0].Y <= plan.Ops[0].Points[1].Y {
+		t.Fatalf("two-point line offsets were not preserved: %#v", plan.Ops[0].Points)
+	}
+}
+
 func TestBuildPlanEmitsRendererNeutralTextLayoutAtRequestedPPI(t *testing.T) {
 	fontSize := 12.0
 	lineHeight := 1.25

@@ -1,7 +1,8 @@
 # Examples
 
-These examples show complete `.xal` files alongside their rendered SVG output.
-Use the tabs on each page to switch between the source and the preview.
+These examples show rendered SVG output and link to complete sample sources.
+Keep syntax details in the reference and `.xal DSL` pages so this section stays
+compact.
 
 - [Line Variants](line-variants.md)
 - [Route and Traffic Separation](route-traffic.md)
@@ -11,3 +12,4 @@ Use the tabs on each page to switch between the source and the preview.
 - [Frame Metadata Tags](frame-metadata.md)
 - [Tables](tables.md)
 - [Relational Database](databases.md)
+- [UML Diagrams](uml.md)

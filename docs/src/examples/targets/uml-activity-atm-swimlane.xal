@@ -1,8 +1,15 @@
+<!--
+  Reference source for the supported UML activity partition/swimlane design.
+  The public sample at docs/src/examples/samples/uml-activity.xal uses the same
+  syntax and regenerates docs/src/images/uml-activity.svg.
+-->
 <xaligo version="1">
-  <data></data>
   <frames>
-    <frame id="activity" title="ATM Withdrawal Activity" version="2026.07" width="960" height="1160" class="pa-3" margin-top="48">
-      <metadata align="right" width="156" key-width="56" font-size="12" />
+    <frame id="uml-activity-atm-swimlane"
+           title="ATM Withdrawal Activity"
+           version="target-2026.07"
+           width="960" height="1160"
+           class="pa-3">
       <uml id="atm-withdrawal" title="ATM Withdrawal Process">
         <activity-diagram direction="down" theme="xaligo" lanes="vertical">
           <partition id="customer" title="Customer">

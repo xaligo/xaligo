@@ -6,9 +6,8 @@ pipeline.
 
 ![V1 table example](../images/tables.svg)
 
-```xml
-{{#include samples/tables.xal}}
-```
+Source: [samples/tables.xal](samples/tables.xal).
+See [.xal Tables](../xal/tables.md) for the detailed table model.
 
 ```bash
 xaligo validate docs/src/examples/samples/tables.xal

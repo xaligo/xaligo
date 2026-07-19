@@ -1,47 +1,103 @@
 <xaligo version="1">
   <data></data>
   <frames>
-    <frame id="state-machine" width="1680" height="860" class="pa-3">
-      <uml id="order-state" title="Order State Machine">
+    <frame id="state-machine" title="E-Commerce Order State Machine" version="2026.07" width="1680" height="900" class="pa-3" margin-top="48">
+      <metadata align="right" width="156" key-width="56" font-size="12" />
+      <uml id="order-state">
         <state-machine-diagram direction="right">
-          <initial id="start" title="Start" />
-          <state id="draft" title="Draft">
-            <entry>create order</entry>
-            <do>edit order lines</do>
-            <exit>validate order</exit>
+          <initial id="start" row="1" col="1" />
+          <state id="created" title="Order Created" row="1" col="2">
+            <entry>Assign order number</entry>
+            <do>Wait for payment</do>
+            <exit>Record result</exit>
           </state>
-          <state id="submitted" title="Submitted">
-            <entry>request payment</entry>
+          <state id="awaiting-shipment" title="Awaiting Shipment" row="1" col="3">
+            <entry>Reserve inventory</entry>
+            <do>Request shipment</do>
           </state>
-          <choice id="payment-result" title="Payment result?" />
-          <state id="paid" title="Paid">
-            <entry>record authorization</entry>
-            <do>prepare fulfilment</do>
+          <choice id="stock-check" title="Stock Check" row="1" col="4" />
+          <state id="shipped" title="Shipped" row="1" col="5">
+            <entry>Register tracking number</entry>
+            <do>Track delivery status</do>
           </state>
-          <state id="cancelled" title="Cancelled">
-            <entry>release reservations</entry>
+          <state id="delivering" title="In Transit" row="1" col="6">
+            <note>Monitor delivery events</note>
           </state>
-          <state id="paused" title="Fulfilment Paused">
-            <do>wait for operator</do>
+          <state id="completed" title="Completed" row="1" col="7">
+            <note>Revenue has been finalized</note>
           </state>
-          <history id="fulfilment-history" title="H*" />
-          <state id="fulfilled" title="Fulfilled">
-            <entry>publish shipment event</entry>
-          </state>
-          <final id="closed" title="Closed" />
+          <final id="closed" row="1" col="8" />
 
-          <transition src="start" dst="draft" />
-          <transition src="draft" dst="submitted" title="submit" guard="valid" />
-          <transition src="submitted" dst="payment-result" title="payment completed" />
-          <transition src="payment-result" dst="paid" guard="authorized" />
-          <transition src="payment-result" dst="submitted" guard="retryable" />
-          <transition src="payment-result" dst="cancelled" guard="declined" />
-          <transition src="paid" dst="paused" title="pause fulfilment" />
-          <transition src="paused" dst="fulfilment-history" title="resume" />
-          <transition src="fulfilment-history" dst="paid" title="restore last substate" />
-          <transition src="paid" dst="fulfilled" title="ship" />
-          <transition src="fulfilled" dst="closed" title="complete" />
-          <transition src="cancelled" dst="closed" title="close" />
+          <state id="refund-requested" title="Refund Requested" row="2" col="3">
+            <entry>Create refund ticket</entry>
+            <do>Request refund</do>
+            <exit>Store refund result</exit>
+          </state>
+          <choice id="refund-result" title="Refund Result" row="2" col="4" />
+          <state id="refund-failed" title="Refund Failed" row="2" col="5">
+            <note>Operator retries or contacts buyer</note>
+          </state>
+          <state id="return-requested" title="Return Requested" row="2" col="6">
+            <entry>Assign return request number</entry>
+            <do>Wait for returned item</do>
+          </state>
+          <choice id="return-result" title="Return Result" row="2" col="7" />
+          <state id="return-failed" title="Return Failed" row="2" col="8">
+            <note>Inspection failed or window expired</note>
+          </state>
+
+          <state id="buyer-cancelled" title="Buyer Cancelled" row="3" col="2">
+            <note>Cancelled by buyer request</note>
+          </state>
+          <state id="refund-succeeded" title="Refund Succeeded" row="3" col="4">
+            <note>Refunded event has been emitted</note>
+          </state>
+          <history id="order-history" title="H" row="3" col="5" />
+          <state id="return-succeeded" title="Return Succeeded" row="3" col="7">
+            <entry>Return item to inventory</entry>
+            <exit>Mark order as cancelled</exit>
+          </state>
+          <state id="system-cancelled" title="System Cancelled" row="3" col="8">
+            <region>Exceptional close</region>
+            <note>Out of stock or return completed</note>
+          </state>
+
+          <transition src="start" dst="created" event="Create order" />
+          <transition src="created" dst="awaiting-shipment" event="Payment succeeded" guard="Payment approved" action="Reserve inventory" />
+          <transition src="awaiting-shipment" dst="stock-check" event="Prepare shipment" />
+          <transition src="stock-check" dst="shipped" guard="In stock" action="Issue shipment" />
+          <transition src="shipped" dst="delivering" event="Start delivery" />
+          <transition src="delivering" dst="completed" event="Delivered" effect="Finalize revenue" />
+          <transition src="completed" dst="closed" event="Close" />
+
+          <transition src="created" dst="buyer-cancelled" event="Buyer cancels" guard="Not shipped" action="Cancel order">
+            <bend x="120" y="650" />
+          </transition>
+          <transition src="awaiting-shipment" dst="refund-requested" event="Refund requested" guard="Paid" action="Start refund">
+            <bend x="540" y="360" />
+          </transition>
+          <transition src="refund-requested" dst="refund-result" event="Refund result" />
+          <transition src="refund-result" dst="refund-failed" guard="Failed" action="Request retry" />
+          <transition src="refund-result" dst="refund-succeeded" guard="Succeeded" action="Mark refunded" />
+          <transition src="refund-succeeded" dst="buyer-cancelled" event="Refund completed" />
+
+          <transition src="shipped" dst="return-requested" event="Return requested" guard="Within return window" action="Accept return" />
+          <transition src="return-requested" dst="return-result" event="Inspection complete" />
+          <transition src="return-result" dst="return-failed" guard="Failed" action="Contact buyer" />
+          <transition src="return-result" dst="return-succeeded" guard="Succeeded" action="Refund and restock" />
+          <transition src="return-succeeded" dst="system-cancelled" event="Return completed" />
+          <transition src="return-requested" dst="order-history" event="Return cancelled" action="Resume previous state" />
+          <transition src="order-history" dst="shipped" event="Resume" />
+          <transition src="stock-check" dst="system-cancelled" guard="Out of stock" action="Close order">
+            <bend x="1560" y="196" />
+            <bend x="1560" y="760" />
+          </transition>
+
+          <transition src="buyer-cancelled" dst="closed" event="Close">
+            <bend x="1660" y="820" />
+            <bend x="1660" y="252" />
+          </transition>
+          <transition src="system-cancelled" dst="closed" event="Close" />
         </state-machine-diagram>
       </uml>
     </frame>

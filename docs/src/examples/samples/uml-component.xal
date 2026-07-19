@@ -1,41 +1,88 @@
 <xaligo version="1">
   <data></data>
   <frames>
-    <frame id="component" width="1560" height="820" class="pa-3">
-      <uml id="service-components" title="Ordering Service Components">
-        <component-diagram direction="right">
+    <frame id="component" title="Ordering Platform Components" version="2026.07" width="1920" height="1180" class="pa-3" margin-top="48">
+      <metadata align="right" width="156" key-width="56" font-size="12" />
+      <uml id="service-components">
+        <component-diagram direction="right" grid="4" component-width="280">
           <component id="web" title="Web UI">
-            <required-interface>Ordering API</required-interface>
+            <interface description="Checkout commands">Ordering API</interface>
           </component>
-          <port id="web-api" owner="web" title="orders: required" />
-          <interface id="ordering-api" title="Ordering API">
-            <operation>+ submitOrder(command)</operation>
-            <operation>+ getOrder(id)</operation>
-          </interface>
-          <component id="orders" title="Order Service">
-            <provided-interface>Ordering API</provided-interface>
-            <required-interface>Order Store</required-interface>
-            <responsibility>Ordering use cases</responsibility>
+          <component id="mobile" title="Mobile App">
+            <interface description="Customer checkout">Ordering API</interface>
           </component>
-          <port id="orders-http" owner="orders" title="http: provided" />
-          <port id="orders-store" owner="orders" title="store: required" />
-          <interface id="store-api" title="Order Store">
-            <operation>+ save(order)</operation>
-            <operation>+ find(id)</operation>
-          </interface>
+          <component id="kiosk" title="Store Kiosk">
+            <interface description="In-store ordering">Ordering API</interface>
+          </component>
+          <component id="admin" title="Admin Console">
+            <interface description="Operational commands">Operations API</interface>
+          </component>
+          <component id="partner" title="Partner Portal">
+            <interface description="Partner order intake">Partner API</interface>
+          </component>
+          <component id="api" title="API Gateway" width="320">
+            <interface description="Public ordering boundary">Ordering API</interface>
+            <interface description="Back-office boundary">Operations API</interface>
+            <interface description="Partner integration boundary">Partner API</interface>
+            <interface description="Workflow command boundary">Workflow Commands</interface>
+          </component>
+          <component id="workflow" title="Order Workflow" width="340" interface-width="88">
+            <interface description="Workflow command handler">Workflow Commands</interface>
+            <interface description="Inventory reservation">Inventory API</interface>
+            <interface description="Payment authorization">Payment Gateway</interface>
+            <interface description="Shipment booking">Shipping API</interface>
+            <interface description="Persistence boundary">Order Store</interface>
+            <interface description="Domain event stream">Order Events</interface>
+            <interface description="Compliance event stream">Audit Events</interface>
+          </component>
+          <component id="inventory" title="Inventory Service">
+            <interface description="Stock reservation">Inventory API</interface>
+          </component>
+          <component id="payment" title="Payment Service">
+            <interface description="Authorization provider">Payment Gateway</interface>
+          </component>
+          <component id="shipping" title="Shipping Service">
+            <interface description="Carrier booking">Shipping API</interface>
+          </component>
           <component id="repository-adapter" title="PostgreSQL Adapter">
-            <provided-interface>Order Store</provided-interface>
+            <interface description="Order records">Order Store</interface>
           </component>
-          <port id="adapter-store" owner="repository-adapter" title="store: provided" />
+          <component id="event-bus" title="Event Bus Adapter">
+            <interface description="Order domain events">Order Events</interface>
+            <interface description="Notification dispatch events">Notification Events</interface>
+          </component>
+          <component id="notification" title="Notification Service">
+            <interface description="Email and push delivery">Notification Events</interface>
+          </component>
+          <component id="audit" title="Audit Service">
+            <interface description="Immutable compliance trail">Audit Events</interface>
+          </component>
           <artifact id="schema" title="order-schema.sql">
             <property>version = 12</property>
           </artifact>
+          <artifact id="event-schema" title="order-events.avsc">
+            <property>compatibility = backward</property>
+          </artifact>
+          <artifact id="template" title="message-template.md">
+            <property>locale = ja-JP</property>
+          </artifact>
 
-          <assembly src="web-api" dst="orders-http" title="HTTP assembly" />
-          <realization src="orders" dst="ordering-api" title="provides" />
-          <assembly src="orders-store" dst="adapter-store" title="persistence assembly" />
-          <realization src="repository-adapter" dst="store-api" title="provides" />
-          <dependency src="repository-adapter" dst="schema" title="uses schema" />
+          <association src="web" dst="api" />
+          <association src="mobile" dst="api" />
+          <association src="kiosk" dst="api" />
+          <association src="admin" dst="api" />
+          <association src="partner" dst="api" />
+          <association src="api" dst="workflow" />
+          <association src="workflow" dst="inventory" />
+          <association src="workflow" dst="payment" />
+          <association src="workflow" dst="shipping" />
+          <association src="workflow" dst="repository-adapter" />
+          <association src="workflow" dst="event-bus" />
+          <association src="workflow" dst="audit" />
+          <association src="event-bus" dst="notification" />
+          <dependency src="repository-adapter" dst="schema" />
+          <dependency src="event-bus" dst="event-schema" />
+          <dependency src="notification" dst="template" />
         </component-diagram>
       </uml>
     </frame>

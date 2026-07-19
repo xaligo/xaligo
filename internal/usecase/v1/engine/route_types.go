@@ -20,20 +20,23 @@ const (
 )
 
 type routeRequestV1EngineRouteTypes struct {
-	ID        string
-	Kind      string
-	Src       rectV1EngineRouteTypes
-	Dst       rectV1EngineRouteTypes
-	SrcSide   sideV1EngineRouteTypes
-	DstSide   sideV1EngineRouteTypes
-	SrcAnchor *ptV1EngineRouteTypes
-	DstAnchor *ptV1EngineRouteTypes
-	SrcGap    float64
-	DstGap    float64
-	SrcLane   float64
-	DstLane   float64
-	Bends     []ptV1EngineRouteTypes
-	Grid      float64
+	ID         string
+	Kind       string
+	Src        rectV1EngineRouteTypes
+	Dst        rectV1EngineRouteTypes
+	SrcSide    sideV1EngineRouteTypes
+	DstSide    sideV1EngineRouteTypes
+	SrcAnchor  *ptV1EngineRouteTypes
+	DstAnchor  *ptV1EngineRouteTypes
+	SrcGap     float64
+	DstGap     float64
+	SrcLane    float64
+	DstLane    float64
+	SrcProfile string
+	DstProfile string
+	Bends      []ptV1EngineRouteTypes
+	Grid       float64
+	HardAvoid  bool
 }
 
 type routedPathV1EngineRouteTypes struct {
@@ -56,6 +59,9 @@ type routerOptionsV1EngineRouteTypes struct {
 	// HardObstacles are exclusion zones that the final polyline may never
 	// enter. Frame metadata reserve strips use this stricter postcondition.
 	HardObstacles []rectV1EngineRouteTypes
+	// Bounds is an optional drawing area clamp for local frame routes. Candidate
+	// paths outside this rectangle are rejected before scoring.
+	Bounds *rectV1EngineRouteTypes
 }
 
 func defaultRouterOptionsV1EngineRouteTypes() routerOptionsV1EngineRouteTypes {
