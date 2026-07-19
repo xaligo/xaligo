@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"testing"
@@ -645,24 +646,27 @@ func TestUMLConnectedComponentSampleRendersBoundaryInterfaces(t *testing.T) {
 	if associationElement == nil {
 		t.Fatalf("association element missing")
 	}
-	if math.Abs(callerSocketElement["width"].(float64)-7) > 0.1 || math.Abs(callerSocketElement["height"].(float64)-14) > 0.1 {
-		t.Fatalf("caller socket size = %.1fx%.1f, want fixed left semicircle", callerSocketElement["width"].(float64), callerSocketElement["height"].(float64))
+	interfaceLeft := endInterface["x"].(float64)
+	interfaceRadius := endInterface["width"].(float64) / 2
+	interfaceCenterX := interfaceLeft + interfaceRadius
+	interfaceCenterY := endInterface["y"].(float64) + endInterface["height"].(float64)/2
+	socketRadius := interfaceRadius + 1
+	if math.Abs(callerSocketElement["width"].(float64)-socketRadius) > 0.1 || math.Abs(callerSocketElement["height"].(float64)-socketRadius*2) > 0.1 {
+		t.Fatalf("caller socket size = %.1fx%.1f, want semicircle radius %.1f", callerSocketElement["width"].(float64), callerSocketElement["height"].(float64), socketRadius)
 	}
 	associationPoints, _ := associationElement["points"].([]any)
 	associationLast, _ := associationPoints[len(associationPoints)-1].([]any)
 	associationEndX := associationElement["x"].(float64) + associationLast[0].(float64)
 	associationEndY := associationElement["y"].(float64) + associationLast[1].(float64)
-	interfaceLeft := endInterface["x"].(float64)
-	interfaceCenterY := endInterface["y"].(float64) + endInterface["height"].(float64)/2
-	if math.Abs(associationEndX+7-interfaceLeft) > 0.1 || math.Abs(associationEndY-interfaceCenterY) > 0.1 {
-		t.Fatalf("association end = %.1f %.1f, want socket fork left of interface left/center %.1f %.1f", associationEndX, associationEndY, interfaceLeft, interfaceCenterY)
+	if math.Abs(associationEndX+socketRadius-interfaceCenterX) > 0.1 || math.Abs(associationEndY-interfaceCenterY) > 0.1 {
+		t.Fatalf("association end = %.1f %.1f, want socket fork centered on interface circle %.1f %.1f", associationEndX, associationEndY, interfaceCenterX, interfaceCenterY)
 	}
 	socketX := callerSocketElement["x"].(float64)
 	socketY := callerSocketElement["y"].(float64)
 	socketW := callerSocketElement["width"].(float64)
 	socketH := callerSocketElement["height"].(float64)
-	if math.Abs(socketX-associationEndX) > 0.1 || math.Abs(socketY+socketH/2-associationEndY) > 0.1 || math.Abs(socketX+socketW-interfaceLeft) > 0.1 {
-		t.Fatalf("caller socket = left %.1f right %.1f centerY %.1f, association end %.1f %.1f interface left %.1f", socketX, socketX+socketW, socketY+socketH/2, associationEndX, associationEndY, interfaceLeft)
+	if math.Abs(socketX-associationEndX) > 0.1 || math.Abs(socketY+socketH/2-interfaceCenterY) > 0.1 || math.Abs(socketX+socketW-interfaceCenterX) > 0.1 {
+		t.Fatalf("caller socket = left %.1f centerX %.1f centerY %.1f, association end %.1f %.1f interface center %.1f %.1f", socketX, socketX+socketW, socketY+socketH/2, associationEndX, associationEndY, interfaceCenterX, interfaceCenterY)
 	}
 	socketPoints, _ := callerSocketElement["points"].([]any)
 	mid, _ := socketPoints[len(socketPoints)/2].([]any)
@@ -782,6 +786,8 @@ func TestUMLComponentMultipleCallersRenderSeparateInterfaceCircles(t *testing.T)
 	associations := 0
 	minAPICircleX := math.Inf(1)
 	maxAPICircleX := math.Inf(-1)
+	apiCircleCentersY := []float64{}
+	apiCircleRadius := 0.0
 	multiTrunks := 0
 	multiPortStems := 0
 	multiCircleStems := 0
@@ -797,6 +803,9 @@ func TestUMLComponentMultipleCallersRenderSeparateInterfaceCircles(t *testing.T)
 				x, _ := element["x"].(float64)
 				minAPICircleX = math.Min(minAPICircleX, x)
 				maxAPICircleX = math.Max(maxAPICircleX, x)
+				centerY := element["y"].(float64) + element["height"].(float64)/2
+				apiCircleCentersY = append(apiCircleCentersY, centerY)
+				apiCircleRadius = math.Max(apiCircleRadius, element["height"].(float64)/2)
 			}
 		}
 		if customData["xaligoUmlComponentInterfaceStem"] == true {
@@ -861,6 +870,13 @@ func TestUMLComponentMultipleCallersRenderSeparateInterfaceCircles(t *testing.T)
 	}
 	if math.Abs(maxAPICircleX-minAPICircleX) > 0.1 {
 		t.Fatalf("API interface circle x range = %.1f..%.1f, want single and multiple circles horizontally aligned", minAPICircleX, maxAPICircleX)
+	}
+	sort.Float64s(apiCircleCentersY)
+	for index := 1; index < len(apiCircleCentersY); index++ {
+		minGap := (apiCircleRadius + 1) * 2
+		if apiCircleCentersY[index]-apiCircleCentersY[index-1] <= minGap {
+			t.Fatalf("API interface circle center gap = %.1f, want greater than caller socket diameter %.1f", apiCircleCentersY[index]-apiCircleCentersY[index-1], minGap)
+		}
 	}
 	if multiTrunks != 1 || multiPortStems != 1 || multiCircleStems != 2 {
 		t.Fatalf("multi interface stems = trunks %d port stems %d circle stems %d, want 1, 1, and 2", multiTrunks, multiPortStems, multiCircleStems)

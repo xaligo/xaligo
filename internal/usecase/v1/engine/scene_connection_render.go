@@ -241,7 +241,7 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 		}
 		endBindingGap := 5.0
 		if boolishV1EngineSceneBuild(conn.Attr("uml-component-interface-dst")) {
-			endBindingGap = umlComponentCallerSocketRadiusV1EngineSceneBuild
+			endBindingGap = umlComponentCallerSocketGapForCircleV1EngineSceneBuild(dstRect)
 		}
 		style := resolveConnectionStyleV1EngineSceneConnectionRoute(conn)
 		if crossFrame {
@@ -333,6 +333,9 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 		}
 		applyDatabaseConnectionMetadataV1EngineSceneConnectionRender(customData, conn)
 		applyUMLConnectionMetadataV1EngineSceneConnectionRender(customData, conn)
+		if boolishV1EngineSceneBuild(conn.Attr("uml-component-interface-dst")) {
+			customData["xaligoUmlComponentCallerSocketRadius"] = umlComponentCallerSocketRadiusForCircleV1EngineSceneBuild(dstRect)
+		}
 		applyConnectionDiffStatusV1EngineSceneDiffHighlight(customData, conn)
 		appendUMLSequenceActivationV1EngineSceneConnectionRender(elements, conn, connID, dstImgRect, dstEdge[1], activationRanges[conn], srcFrameID, dstFrameID, updated, seed)
 		appendUMLSequenceStopV1EngineSceneConnectionRender(elements, conn, connID, dstEdge, srcFrameID, dstFrameID, updated, seed)

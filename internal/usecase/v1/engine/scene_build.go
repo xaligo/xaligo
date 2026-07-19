@@ -248,7 +248,7 @@ func expandUMLComponentInterfaceEndpointsV1EngineSceneBuild(elements *[]map[stri
 			continue
 		}
 		diameter := rect[2]
-		step := math.Max(diameter+4, 16)
+		step := math.Max(umlComponentCallerSocketRadiusForCircleV1EngineSceneBuild(rect)*2+2, 16)
 		baseCenterY := rect[1] + rect[3]/2
 		startY := baseCenterY - step*float64(count-1)/2
 		circleLeft := rect[0]
@@ -458,7 +458,17 @@ func umlComponentInterfaceEndpointKeyV1EngineSceneBuild(ownerKey, label string) 
 	return ownerKey + "|uml-component-interface|" + label
 }
 
-const umlComponentCallerSocketRadiusV1EngineSceneBuild = 7.0
+const umlComponentCallerSocketRadiusPaddingV1EngineSceneBuild = 1.0
+
+func umlComponentCallerSocketRadiusForCircleV1EngineSceneBuild(circleRect [4]float64) float64 {
+	circleRadius := math.Max(circleRect[2], circleRect[3]) / 2
+	return circleRadius + umlComponentCallerSocketRadiusPaddingV1EngineSceneBuild
+}
+
+func umlComponentCallerSocketGapForCircleV1EngineSceneBuild(circleRect [4]float64) float64 {
+	circleRadius := math.Max(circleRect[2], circleRect[3]) / 2
+	return math.Max(0, umlComponentCallerSocketRadiusForCircleV1EngineSceneBuild(circleRect)-circleRadius)
+}
 
 func appendUMLComponentCallerSocketsV1EngineSceneBuild(elements *[]map[string]any) {
 	if elements == nil {
@@ -488,12 +498,15 @@ func appendUMLComponentCallerSocketsV1EngineSceneBuild(elements *[]map[string]an
 			continue
 		}
 		endpoint := absolutePoints[len(absolutePoints)-1]
-		appendUMLComponentCallerSocketV1EngineSceneBuild(elements, id+"-caller-socket", endpoint, updated)
+		radius := positiveNumberV1EngineSceneBuild(customData["xaligoUmlComponentCallerSocketRadius"])
+		if radius <= 0 {
+			radius = 7
+		}
+		appendUMLComponentCallerSocketV1EngineSceneBuild(elements, id+"-caller-socket", endpoint, radius, updated)
 	}
 }
 
-func appendUMLComponentCallerSocketV1EngineSceneBuild(elements *[]map[string]any, id string, endpoint [2]float64, updated int64) {
-	radius := umlComponentCallerSocketRadiusV1EngineSceneBuild
+func appendUMLComponentCallerSocketV1EngineSceneBuild(elements *[]map[string]any, id string, endpoint [2]float64, radius float64, updated int64) {
 	absolute := make([][2]float64, 0, 13)
 	minX, minY := math.Inf(1), math.Inf(1)
 	maxX, maxY := math.Inf(-1), math.Inf(-1)
@@ -535,6 +548,25 @@ func boolishV1EngineSceneBuild(value any) bool {
 	default:
 		return false
 	}
+}
+
+func positiveNumberV1EngineSceneBuild(value any) float64 {
+	switch typed := value.(type) {
+	case float64:
+		if typed > 0 {
+			return typed
+		}
+	case int:
+		if typed > 0 {
+			return float64(typed)
+		}
+	case string:
+		parsed, err := strconv.ParseFloat(strings.TrimSpace(typed), 64)
+		if err == nil && parsed > 0 {
+			return parsed
+		}
+	}
+	return 0
 }
 
 // orderSceneLayers keeps connectors below readable content while preserving
