@@ -50,6 +50,9 @@ func connectionFrameAnchorV1EngineSceneConnectionRoute(conn *entity.Node, endpoi
 }
 
 func excalidrawConnectionPointsV1EngineSceneConnectionRoute(conn *entity.Node, srcRect, dstRect [4]float64, srcSide, dstSide, kind string, obstacles, hardObstacles []rectV1EngineRouteTypes, placed [][]segmentV1EngineRouteTypes, routePaths map[string][]ptV1EngineRouteTypes) []ptV1EngineRouteTypes {
+	if points, ok := umlSequenceSelfMessagePointsV1EngineSceneConnectionRoute(conn, srcRect); ok {
+		return points
+	}
 	req := excalidrawRouteRequestV1EngineSceneConnectionRoute(conn, srcRect, dstRect, srcSide, dstSide, kind)
 	opt := defaultRouterOptionsV1EngineRouteTypes()
 	opt.HardObstacles = hardObstacles
@@ -78,6 +81,29 @@ func excalidrawConnectionPointsV1EngineSceneConnectionRoute(conn *entity.Node, s
 	}
 	path.Points = enforceOrthogonalPolylineV1EngineRoutePath(path.Points)
 	return enforceHardObstacleExclusionV1EngineRouteBuild(req, path.Points, local, placed, opt)
+}
+
+func umlSequenceSelfMessagePointsV1EngineSceneConnectionRoute(conn *entity.Node, rect [4]float64) ([]ptV1EngineRouteTypes, bool) {
+	if conn == nil || conn.Attr("uml-diagram-kind") != "sequence-diagram" || conn.Attr("src") != conn.Attr("dst") {
+		return nil, false
+	}
+	srcFP, ok := umlSequenceFixedPointV1EngineSceneConnectionRoute(conn, "src", "right")
+	if !ok {
+		return nil, false
+	}
+	dstFP, ok := umlSequenceFixedPointV1EngineSceneConnectionRoute(conn, "dst", "right")
+	if !ok {
+		return nil, false
+	}
+	start := ptV1EngineRouteTypes{X: rect[0] + rect[2]*srcFP[0], Y: rect[1] + rect[3]*srcFP[1]}
+	end := ptV1EngineRouteTypes{X: rect[0] + rect[2]*dstFP[0], Y: rect[1] + rect[3]*dstFP[1]}
+	loopWidth := math.Max(44, rect[2]*3)
+	return []ptV1EngineRouteTypes{
+		start,
+		{X: start.X + loopWidth, Y: start.Y},
+		{X: start.X + loopWidth, Y: end.Y},
+		end,
+	}, true
 }
 
 func separatePinnedExactOverlapsV1EngineSceneConnectionRoute(points []ptV1EngineRouteTypes, placed [][]segmentV1EngineRouteTypes, obstacles []rectV1EngineRouteTypes, opt routerOptionsV1EngineRouteTypes) []ptV1EngineRouteTypes {

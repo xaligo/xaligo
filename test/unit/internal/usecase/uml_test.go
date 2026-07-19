@@ -285,11 +285,15 @@ func TestUMLSequenceOrderControlsVerticalMessageAnchors(t *testing.T) {
 		t.Fatalf("json.Unmarshal() error = %v", err)
 	}
 	anchors := map[string][2]float64{}
+	selfMessagePoints := [][]float64{}
 	for _, element := range scene.Elements {
 		if element.Type != "arrow" || element.CustomData == nil || element.CustomData.UMLMessageOrder == "" || element.StartBinding == nil || element.EndBinding == nil {
 			continue
 		}
 		anchors[element.CustomData.UMLMessageOrder] = [2]float64{element.StartBinding.FixedPoint[1], element.EndBinding.FixedPoint[1]}
+		if element.CustomData.UMLMessageOrder == "2" {
+			selfMessagePoints = element.Points
+		}
 	}
 	if len(anchors) != 3 {
 		t.Fatalf("sequence anchors = %#v", anchors)
@@ -300,10 +304,13 @@ func TestUMLSequenceOrderControlsVerticalMessageAnchors(t *testing.T) {
 	if math.Abs(anchors["2"][0]-anchors["2"][1]) < 0.01 {
 		t.Fatalf("self-message endpoints should form a loop: %#v", anchors["2"])
 	}
+	if len(selfMessagePoints) < 4 || selfMessagePoints[1][0] < 24 || math.Abs(selfMessagePoints[len(selfMessagePoints)-1][0]) > 0.01 {
+		t.Fatalf("self-message should route as a right-side loop, got %#v", selfMessagePoints)
+	}
 }
 
 func TestUMLSequenceMessagesRenderActivationBars(t *testing.T) {
-	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="sequence"><sequence-diagram><participant id="user" title="User"/><lifeline id="api" title="API"/><lifeline id="worker" title="Worker"/><message src="user" dst="api" order="1" title="submit()"/><create-message src="api" dst="worker" order="2" title="create"/><return-message src="worker" dst="api" order="3" title="ok"/><destroy-message src="api" dst="worker" order="4" title="release"/></sequence-diagram></uml></frame></frames></xaligo>`)
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="sequence"><sequence-diagram><participant id="user" title="User"/><lifeline id="api" title="API"/><lifeline id="worker" title="Worker"/><message src="user" dst="api" order="1" title="submit()"/><create-message src="api" dst="worker" order="2" title="create"/><return-message src="worker" dst="api" order="3" title="ok"/><destroy-message src="api" dst="worker" order="4" title="destroy"/></sequence-diagram></uml></frame></frames></xaligo>`)
 	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
 		t.Fatalf("RenderExcalidraw() error = %v", err)
@@ -328,7 +335,7 @@ func TestUMLSequenceMessagesRenderActivationBars(t *testing.T) {
 }
 
 func TestUMLSequenceMessagesUseResponseAndStopNotation(t *testing.T) {
-	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="sequence"><sequence-diagram><participant id="user" title="User"/><lifeline id="api" title="API"/><lifeline id="worker" title="Worker"/><message src="user" dst="api" order="1" title="submit()"/><create-message src="api" dst="worker" order="2" title="create"/><return-message src="worker" dst="api" order="3" title="ok"/><destroy-message src="api" dst="worker" order="4" title="release"/></sequence-diagram></uml></frame></frames></xaligo>`)
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="sequence"><sequence-diagram><participant id="user" title="User"/><lifeline id="api" title="API"/><lifeline id="worker" title="Worker"/><message src="user" dst="api" order="1" title="submit()"/><create-message src="api" dst="worker" order="2" title="create"/><return-message src="worker" dst="api" order="3" title="ok"/><destroy-message src="api" dst="worker" order="4" title="destroy"/></sequence-diagram></uml></frame></frames></xaligo>`)
 	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
 		t.Fatalf("RenderExcalidraw() error = %v", err)

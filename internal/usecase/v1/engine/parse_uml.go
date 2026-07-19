@@ -735,6 +735,9 @@ func validateUMLRelationEndpointsV1EngineParseUml(diagramKind string, relation *
 		if (relationKind == "create-message" || relationKind == "destroy-message") && relation.Attr("src") == relation.Attr("dst") {
 			return fmt.Errorf("UML <%s> does not allow a self message", relationKind)
 		}
+		if relationKind == "destroy-message" && !isUMLDestroyMessageLabelV1EngineParseUml(relation) {
+			return fmt.Errorf("UML <destroy-message> title must clearly describe destruction, deletion, disposal, removal, or termination")
+		}
 		return nil
 	case "communication-diagram":
 		participants := umlTagSetV1EngineParseUml("object,participant")
@@ -759,6 +762,19 @@ func validateUMLRelationEndpointsV1EngineParseUml(diagramKind string, relation *
 		}
 	}
 	return fmt.Errorf("UML <%s> has no endpoint contract for <%s>", diagramKind, relationKind)
+}
+
+func isUMLDestroyMessageLabelV1EngineParseUml(relation *entity.Node) bool {
+	label := strings.ToLower(strings.TrimSpace(relation.Attr("title")))
+	if label == "" {
+		label = strings.ToLower(strings.TrimSpace(relation.Text))
+	}
+	for _, keyword := range []string{"destroy", "delete", "dispose", "terminate", "remove"} {
+		if strings.Contains(label, keyword) {
+			return true
+		}
+	}
+	return false
 }
 
 func validateUMLFlowEndpointsV1EngineParseUml(relation *entity.Node, srcKind, dstKind string, allowed map[string]bool) error {

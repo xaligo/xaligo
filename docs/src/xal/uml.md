@@ -97,6 +97,8 @@ connector and does not start a new activation bar. Plain `message` is synchronou
 by default and uses a filled triangle arrowhead; `message mode="async"` uses an
 open arrowhead for an asynchronous call. Response connectors render dashed, and
 `destroy-message` adds the standard stop marker at the destination lifeline.
+To avoid accidental stop markers, `destroy-message` labels must clearly describe
+destruction, deletion, disposal, removal, or termination.
 Activation, lifeline, and stop metadata are retained in editable scene output so
 sequence lifetimes remain inspectable after export.
 
