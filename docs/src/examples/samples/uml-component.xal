@@ -8,25 +8,21 @@
           <component id="web" title="Web UI">
             <required-interface>Ordering API</required-interface>
           </component>
-          <port id="web-api" owner="web" side="right" title="orders: required" />
           <component id="orders" title="Order Service">
             <provided-interface>Ordering API</provided-interface>
             <required-interface>Order Store</required-interface>
             <responsibility>Ordering use cases</responsibility>
           </component>
-          <port id="orders-http" owner="orders" side="left" title="http: provided" />
-          <port id="orders-store" owner="orders" side="right" title="store: required" />
           <component id="repository-adapter" title="PostgreSQL Adapter">
             <provided-interface>Order Store</provided-interface>
           </component>
-          <port id="adapter-store" owner="repository-adapter" side="left" title="store: provided" />
           <artifact id="schema" title="order-schema.sql">
             <property>version = 12</property>
           </artifact>
 
-          <assembly src="web-api" dst="orders-http" title="HTTP assembly" />
-          <assembly src="orders-store" dst="adapter-store" title="persistence assembly" />
-          <dependency src="repository-adapter" dst="schema" title="uses schema" />
+          <association src="web" dst="orders" />
+          <association src="orders" dst="repository-adapter" />
+          <dependency src="repository-adapter" dst="schema" />
         </component-diagram>
       </uml>
     </frame>

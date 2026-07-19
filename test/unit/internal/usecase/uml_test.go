@@ -497,6 +497,42 @@ func TestUMLComponentRendersBoundaryInterfaces(t *testing.T) {
 	}
 }
 
+func TestUMLComponentSampleUsesBoundaryInterfacesWithoutPorts(t *testing.T) {
+	source, err := os.ReadFile("../../../../docs/src/examples/samples/uml-component.xal")
+	if err != nil {
+		t.Fatalf("os.ReadFile() error = %v", err)
+	}
+	if strings.Contains(string(source), "<port ") || strings.Contains(string(source), "<assembly ") {
+		t.Fatalf("component sample should use component boundary interfaces without explicit ports or assemblies")
+	}
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var raw map[string]any
+	if err := json.Unmarshal(rawScene, &raw); err != nil {
+		t.Fatalf("json.Unmarshal(raw map) error = %v", err)
+	}
+	elements, _ := raw["elements"].([]any)
+	ports, provided, required := 0, 0, 0
+	for _, rawElement := range elements {
+		element, _ := rawElement.(map[string]any)
+		customData, _ := element["customData"].(map[string]any)
+		if customData["xaligoUmlElementKind"] == "port" {
+			ports++
+		}
+		if customData["xaligoUmlComponentInterfaceSymbol"] == true && customData["xaligoUmlComponentInterfaceKind"] == "provided" {
+			provided++
+		}
+		if customData["xaligoUmlComponentInterfaceSymbol"] == true && customData["xaligoUmlComponentInterfaceKind"] == "required" {
+			required++
+		}
+	}
+	if ports != 0 || provided != 2 || required != 2 {
+		t.Fatalf("sample symbols = ports %d provided %d required %d, want ports 0 provided 2 required 2", ports, provided, required)
+	}
+}
+
 func TestUMLStateMachineFinalRendersFinalDot(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="760" height="420"><uml id="state"><state-machine-diagram><initial id="start"/><state id="open" title="Open"/><final id="done"/><transition src="start" dst="open"/><transition src="open" dst="done"/></state-machine-diagram></uml></frame></frames></xaligo>`)
 	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
