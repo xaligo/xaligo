@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"math"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -388,6 +390,21 @@ func TestUMLStateMachineDistantConnectorsUseOuterDetours(t *testing.T) {
 	}
 }
 
+func TestUMLStateMachineSampleSVGRoutesStayInsideFrameAndAvoidStates(t *testing.T) {
+	source, err := os.ReadFile(filepath.Join(repoRoot(t), "docs", "src", "examples", "samples", "uml-state-machine.xal"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	svg, err := newUsecase().RenderSVG(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderSVG() error = %v", err)
+	}
+	paths := svgConnectorPathsV1UMLTest(t, string(svg))
+	stateRects := svgStateBodyRectsV1UMLTest(t, string(svg))
+	assertSVGConnectorPathsInsideFrameV1UMLTest(t, paths, 0, 0, 1680, 900)
+	assertSVGConnectorPathsAvoidRectsV1UMLTest(t, paths, stateRects)
+}
+
 func TestUMLStateMachineConceptLabelsReachEditableScene(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="960" height="520"><uml id="state"><state-machine-diagram direction="right"><initial id="start"/><state id="processing" title="Processing"><entry>reserve stock</entry><do>pack order</do><internal>timeout / notify operator</internal><exit>publish event</exit><region>fulfilment</region></state><choice id="result" title="Result"/><final id="done"/><transition src="start" dst="processing" event="created"/><transition src="processing" dst="result" event="paymentCaptured" guard="stock available" action="ship"/><transition src="result" dst="done" guard="ok"/><transition src="result" dst="processing" guard="retry"/></state-machine-diagram></uml></frame></frames></xaligo>`)
 	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
@@ -667,6 +684,96 @@ func assertArrowInsideFrameV1UMLTest(t *testing.T, arrow *entity.Element, frameX
 		y := arrow.Y + point[1]
 		if x < frameX || x > frameX+frameW || y < frameY || y > frameY+frameH {
 			t.Fatalf("arrow point %d is outside frame: point=(%.1f, %.1f) frame=(%.1f, %.1f, %.1f, %.1f) arrow=%#v", index, x, y, frameX, frameY, frameW, frameH, arrow)
+		}
+	}
+}
+
+type svgPointV1UMLTest struct {
+	x float64
+	y float64
+}
+
+type svgRectV1UMLTest struct {
+	x float64
+	y float64
+	w float64
+	h float64
+}
+
+func svgConnectorPathsV1UMLTest(t *testing.T, svg string) [][]svgPointV1UMLTest {
+	t.Helper()
+	pathRE := regexp.MustCompile(`<path d="([^"]+)"[^>]*marker-end="url\(#xaligo-triangle\)"`)
+	pointRE := regexp.MustCompile(`[ML] (-?[0-9]+(?:\.[0-9]+)?) (-?[0-9]+(?:\.[0-9]+)?)`)
+	matches := pathRE.FindAllStringSubmatch(svg, -1)
+	paths := make([][]svgPointV1UMLTest, 0, len(matches))
+	for _, match := range matches {
+		pointMatches := pointRE.FindAllStringSubmatch(match[1], -1)
+		points := make([]svgPointV1UMLTest, 0, len(pointMatches))
+		for _, pointMatch := range pointMatches {
+			x, err := strconv.ParseFloat(pointMatch[1], 64)
+			if err != nil {
+				t.Fatalf("parse SVG path x %q: %v", pointMatch[1], err)
+			}
+			y, err := strconv.ParseFloat(pointMatch[2], 64)
+			if err != nil {
+				t.Fatalf("parse SVG path y %q: %v", pointMatch[2], err)
+			}
+			points = append(points, svgPointV1UMLTest{x: x, y: y})
+		}
+		if len(points) >= 2 {
+			paths = append(paths, points)
+		}
+	}
+	if len(paths) == 0 {
+		t.Fatalf("no SVG connector paths found")
+	}
+	return paths
+}
+
+func svgStateBodyRectsV1UMLTest(t *testing.T, svg string) []svgRectV1UMLTest {
+	t.Helper()
+	rectRE := regexp.MustCompile(`<rect x="([0-9]+(?:\.[0-9]+)?)" y="([0-9]+(?:\.[0-9]+)?)" width="([0-9]+(?:\.[0-9]+)?)" height="([0-9]+(?:\.[0-9]+)?)" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1\.35"`)
+	matches := rectRE.FindAllStringSubmatch(svg, -1)
+	rects := make([]svgRectV1UMLTest, 0, len(matches))
+	for _, match := range matches {
+		values := make([]float64, 4)
+		for i := range values {
+			value, err := strconv.ParseFloat(match[i+1], 64)
+			if err != nil {
+				t.Fatalf("parse SVG state rect value %q: %v", match[i+1], err)
+			}
+			values[i] = value
+		}
+		rects = append(rects, svgRectV1UMLTest{x: values[0], y: values[1], w: values[2], h: values[3]})
+	}
+	if len(rects) == 0 {
+		t.Fatalf("no SVG state body rectangles found")
+	}
+	return rects
+}
+
+func assertSVGConnectorPathsInsideFrameV1UMLTest(t *testing.T, paths [][]svgPointV1UMLTest, frameX, frameY, frameW, frameH float64) {
+	t.Helper()
+	for pathIndex, path := range paths {
+		for pointIndex, point := range path {
+			if point.x < frameX || point.x > frameX+frameW || point.y < frameY || point.y > frameY+frameH {
+				t.Fatalf("SVG connector point outside frame: path=%d point=%d value=(%.1f, %.1f) frame=(%.1f, %.1f, %.1f, %.1f) path=%#v", pathIndex, pointIndex, point.x, point.y, frameX, frameY, frameW, frameH, path)
+			}
+		}
+	}
+}
+
+func assertSVGConnectorPathsAvoidRectsV1UMLTest(t *testing.T, paths [][]svgPointV1UMLTest, rects []svgRectV1UMLTest) {
+	t.Helper()
+	for pathIndex, path := range paths {
+		for segmentIndex := 0; segmentIndex < len(path)-1; segmentIndex++ {
+			start := path[segmentIndex]
+			end := path[segmentIndex+1]
+			for rectIndex, rect := range rects {
+				if segmentIntersectsRectV1UMLTest(start.x, start.y, end.x, end.y, rect.x, rect.y, rect.w, rect.h) {
+					t.Fatalf("SVG connector crosses state body: path=%d segment=%d rect=%d start=(%.1f, %.1f) end=(%.1f, %.1f) rect=(%.1f, %.1f, %.1f, %.1f) path=%#v", pathIndex, segmentIndex, rectIndex, start.x, start.y, end.x, end.y, rect.x, rect.y, rect.w, rect.h, path)
+				}
+			}
 		}
 	}
 }

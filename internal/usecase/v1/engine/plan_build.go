@@ -218,6 +218,7 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 	rOpt.LineMargin = marginPx
 	rOpt.Reserved = collectContainerBorderPathsV1EnginePlanObstacle(elements)
 	rOpt.HardObstacles = frameMetadataReserved
+	rOpt.Bounds = &frame
 	groupBorders := collectGroupBorderPathsV1EnginePlanObstacle(elements)
 	routed := routeConnectionsV1EngineRouteBuild(reqs, obstacles, rOpt)
 	elByConn := map[string]*entity.Element{}

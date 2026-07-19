@@ -81,8 +81,13 @@
 <path d="M 1072.3 551 L 1152.3 551 L 1152.3 695.333 L 971.7 695.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <path d="M 1386.5 490 L 1452 490" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <path d="M 1342.5 534 L 1342.5 554 L 1352 554 L 1352 658.333 L 1342.5 658.333 L 1342.5 678.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<path d="M 429 716.933 L 429 632 L 429 265.667 L 1521.5 265.667 L 1521.5 254.267" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<rect x="736.5" y="629" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
+<rect x="1149.3" y="629" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
+<rect x="1349" y="629" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
+<rect x="1446.5" y="487" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
+<path d="M 429 716.933 L 429 632 L 1449.5 632 L 1449.5 254.267 L 1521.5 254.267" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <path d="M 648 739.333 L 628 739.333 L 628 728 L 453 728 L 453 739.333 L 429 739.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<rect x="1029" y="629" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
 <path d="M 956.1 695.333 L 956.1 679.333 L 1032 679.333 L 1032 301.667 L 975.1 301.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <path d="M 1434 739.333 L 1452 739.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <path d="M 158.5 240.667 L 246 240.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
@@ -91,8 +96,9 @@
 <path d="M 429 240.667 L 447 240.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <path d="M 538.5 301.667 L 538.5 337.667 L 536 337.667 L 536 360 L 538.5 360 L 538.5 429" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <path d="M 630 240.667 L 695.5 240.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<rect x="804.5" y="262.667" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
-<path d="M 783.5 271.867 L 807.5 271.867 L 807.5 143.867 L 1688 143.867 L 1688 808 L 1474.3 808 L 1474.3 800.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<rect x="1637" y="655.333" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
+<rect x="1637" y="279.667" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
+<path d="M 783.5 271.867 L 807.5 271.867 L 807.5 143.867 L 1640 143.867 L 1640 808 L 1474.3 808 L 1474.3 800.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <rect x="804.5" y="253.267" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
 <path d="M 783.5 256.267 L 799.5 256.267 L 829 256.267 L 829 240.667 L 849 240.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <path d="M 1009.7 301.667 L 1057.7 301.667 L 1057.7 409 L 1072.3 409 L 1072.3 429" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
