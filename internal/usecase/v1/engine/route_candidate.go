@@ -21,8 +21,8 @@ func buildCandidatesV1EngineRouteCandidate(s, d, s2, d2 ptV1EngineRouteTypes, in
 	obstacleXEdges := []float64{}
 	obstacleYEdges := []float64{}
 	for _, r := range inflated {
-		obstacleXEdges = append(obstacleXEdges, r.X, r.X+r.W)
-		obstacleYEdges = append(obstacleYEdges, r.Y, r.Y+r.H)
+		obstacleXEdges = append(obstacleXEdges, r.X-opt.LaneGap, r.X, r.X+r.W, r.X+r.W+opt.LaneGap)
+		obstacleYEdges = append(obstacleYEdges, r.Y-opt.LaneGap, r.Y, r.Y+r.H, r.Y+r.H+opt.LaneGap)
 	}
 
 	xRaw := []float64{midX, midX - opt.LaneGap, midX + opt.LaneGap, midX - 2*opt.LaneGap, midX + 2*opt.LaneGap}

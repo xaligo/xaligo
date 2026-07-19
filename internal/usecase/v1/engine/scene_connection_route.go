@@ -230,22 +230,104 @@ func umlSequenceVerticalSideV1EngineSceneConnectionRoute(side string) string {
 func excalidrawRouteObstaclesV1EngineSceneConnectionRoute(elements []map[string]any) []rectV1EngineRouteTypes {
 	obstacles := make([]rectV1EngineRouteTypes, 0)
 	for _, el := range elements {
-		custom, _ := el["customData"].(map[string]any)
-		isAnchorContent, _ := custom["xaligoAnchorContent"].(bool)
-		isHeader, _ := custom["xaligoGroupHeader"].(bool)
-		isHeaderContent, _ := custom["xaligoGroupHeaderContent"].(bool)
-		isFrameMetadata, _ := custom["xaligoFrameMetadata"].(bool)
-		isFrameMetadataReserved, _ := custom["xaligoFrameMetadataReserved"].(bool)
-		if !isAnchorContent && !isHeader && !isHeaderContent && !isFrameMetadata && !isFrameMetadataReserved {
+		customData := el["customData"]
+		isAnchorContent := customDataBoolV1EngineSceneConnectionRoute(customData, "xaligoAnchorContent")
+		isHeader := customDataBoolV1EngineSceneConnectionRoute(customData, "xaligoGroupHeader")
+		isHeaderContent := customDataBoolV1EngineSceneConnectionRoute(customData, "xaligoGroupHeaderContent")
+		isFrameMetadata := customDataBoolV1EngineSceneConnectionRoute(customData, "xaligoFrameMetadata")
+		isFrameMetadataReserved := customDataBoolV1EngineSceneConnectionRoute(customData, "xaligoFrameMetadataReserved")
+		isStateMachineNode := isStateMachineNodeRouteObstacleV1EngineSceneConnectionRoute(el, customData)
+		if !isAnchorContent && !isHeader && !isHeaderContent && !isFrameMetadata && !isFrameMetadataReserved && !isStateMachineNode {
 			continue
 		}
 		r, ok := elementRectV1EngineSceneConnectionRoute(el)
 		if !ok {
 			continue
 		}
-		obstacles = append(obstacles, r)
+		obstacles = appendUniqueObstacleV1EngineSceneConnectionRoute(obstacles, r)
 	}
 	return obstacles
+}
+
+func appendUniqueObstacleV1EngineSceneConnectionRoute(obstacles []rectV1EngineRouteTypes, rect rectV1EngineRouteTypes) []rectV1EngineRouteTypes {
+	for _, existing := range obstacles {
+		if sameRectV1EngineRouteGeometry(existing, rect) {
+			return obstacles
+		}
+	}
+	return append(obstacles, rect)
+}
+
+func isStateMachineNodeRouteObstacleV1EngineSceneConnectionRoute(el map[string]any, customData any) bool {
+	if customDataStringV1EngineSceneConnectionRoute(customData, "xaligoUmlDiagramKind") != "state-machine-diagram" {
+		return false
+	}
+	switch customDataStringV1EngineSceneConnectionRoute(customData, "xaligoUmlElementKind") {
+	case "state", "initial", "final", "choice", "history":
+	default:
+		return false
+	}
+	typeName, _ := el["type"].(string)
+	switch typeName {
+	case "rectangle", "ellipse", "diamond":
+		return true
+	default:
+		return false
+	}
+}
+
+func customDataBoolV1EngineSceneConnectionRoute(customData any, key string) bool {
+	switch data := customData.(type) {
+	case map[string]any:
+		value, _ := data[key].(bool)
+		return value
+	case entity.CustomData:
+		return customDataBoolV1EngineSceneConnectionRoute(&data, key)
+	case *entity.CustomData:
+		if data == nil {
+			return false
+		}
+		switch key {
+		case "xaligoAnchorContent":
+			return data.AnchorContent
+		case "xaligoGroupHeader":
+			return data.GroupHeader
+		case "xaligoGroupHeaderContent":
+			return data.GroupHeaderContent
+		case "xaligoFrameMetadata":
+			return data.FrameMetadata
+		case "xaligoFrameMetadataReserved":
+			return data.FrameMetadataReserved
+		default:
+			return false
+		}
+	default:
+		return false
+	}
+}
+
+func customDataStringV1EngineSceneConnectionRoute(customData any, key string) string {
+	switch data := customData.(type) {
+	case map[string]any:
+		value, _ := data[key].(string)
+		return value
+	case entity.CustomData:
+		return customDataStringV1EngineSceneConnectionRoute(&data, key)
+	case *entity.CustomData:
+		if data == nil {
+			return ""
+		}
+		switch key {
+		case "xaligoUmlDiagramKind":
+			return data.UMLDiagramKind
+		case "xaligoUmlElementKind":
+			return data.UMLElementKind
+		default:
+			return ""
+		}
+	default:
+		return ""
+	}
 }
 
 func elementRectV1EngineSceneConnectionRoute(el map[string]any) (rectV1EngineRouteTypes, bool) {

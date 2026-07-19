@@ -289,6 +289,40 @@ func TestUMLStateMachineGridColumnsAlignRelatedRows(t *testing.T) {
 	}
 }
 
+func TestUMLStateMachineConnectorsAvoidIntermediateStates(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="960" height="360"><uml id="state"><state-machine-diagram direction="right"><state id="left" title="Left" row="1" col="1"/><state id="middle" title="Middle" row="1" col="2"/><state id="right" title="Right" row="1" col="3"/><transition src="left" dst="right" event="skip middle"/></state-machine-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var scene entity.PresentationScene
+	if err := json.Unmarshal(rawScene, &scene); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	var middle, arrow *entity.Element
+	for index := range scene.Elements {
+		element := &scene.Elements[index]
+		if element.CustomData == nil {
+			continue
+		}
+		if element.CustomData.UMLLocalID == "middle" && element.Type != "text" {
+			middle = element
+		}
+		if element.Type == "arrow" && element.CustomData.UMLRelationSourceReference == "left" && element.CustomData.UMLRelationDestinationReference == "right" {
+			arrow = element
+		}
+	}
+	if middle == nil || arrow == nil || len(arrow.Points) < 2 {
+		t.Fatalf("intermediate state or arrow missing: middle=%#v arrow=%#v", middle, arrow)
+	}
+	for index := 0; index < len(arrow.Points)-1; index++ {
+		start, end := absoluteArrowSegmentV1UMLTest(arrow, index)
+		if segmentIntersectsRectV1UMLTest(start[0], start[1], end[0], end[1], middle.X, middle.Y, middle.Width, middle.Height) {
+			t.Fatalf("state-machine connector crosses intermediate state: segment=%#v->%#v middle=%#v arrow=%#v", start, end, middle, arrow)
+		}
+	}
+}
+
 func TestUMLStateMachineConceptLabelsReachEditableScene(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="960" height="520"><uml id="state"><state-machine-diagram direction="right"><initial id="start"/><state id="processing" title="Processing"><entry>reserve stock</entry><do>pack order</do><internal>timeout / notify operator</internal><exit>publish event</exit><region>fulfilment</region></state><choice id="result" title="Result"/><final id="done"/><transition src="start" dst="processing" event="created"/><transition src="processing" dst="result" event="paymentCaptured" guard="stock available" action="ship"/><transition src="result" dst="done" guard="ok"/><transition src="result" dst="processing" guard="retry"/></state-machine-diagram></uml></frame></frames></xaligo>`)
 	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
@@ -508,6 +542,41 @@ func TestUMLRelationLabelsAvoidEndpointItems(t *testing.T) {
 
 func rectsOverlapV1UMLTest(ax, ay, aw, ah, bx, by, bw, bh float64) bool {
 	return ax < bx+bw && ax+aw > bx && ay < by+bh && ay+ah > by
+}
+
+func absoluteArrowSegmentV1UMLTest(arrow *entity.Element, index int) ([2]float64, [2]float64) {
+	start := arrow.Points[index]
+	end := arrow.Points[index+1]
+	return [2]float64{arrow.X + start[0], arrow.Y + start[1]}, [2]float64{arrow.X + end[0], arrow.Y + end[1]}
+}
+
+func segmentIntersectsRectV1UMLTest(x1, y1, x2, y2, rx, ry, rw, rh float64) bool {
+	const tolerance = 0.5
+	rx -= tolerance
+	ry -= tolerance
+	rw += tolerance * 2
+	rh += tolerance * 2
+	if math.Abs(x1-x2) <= tolerance {
+		x := x1
+		if x < rx || x > rx+rw {
+			return false
+		}
+		if y1 > y2 {
+			y1, y2 = y2, y1
+		}
+		return y2 >= ry && y1 <= ry+rh
+	}
+	if math.Abs(y1-y2) <= tolerance {
+		y := y1
+		if y < ry || y > ry+rh {
+			return false
+		}
+		if x1 > x2 {
+			x1, x2 = x2, x1
+		}
+		return x2 >= rx && x1 <= rx+rw
+	}
+	return false
 }
 
 func TestUMLTimingAndOwnerMetadataReachEditableScene(t *testing.T) {

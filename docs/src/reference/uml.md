@@ -107,9 +107,11 @@ can still override individual shapes.
 
 Class, activity, and state-machine relation tags can contain `<bend x="..."
 y="..." />` children. Bends steer the generated orthogonal connector route and
-are preserved in editable scene metadata. UML relation labels are automatically
-nudged away from endpoint items when a default label position would overlap a
-shape.
+are preserved in editable scene metadata. State-machine transition routing also
+treats intermediate state and pseudostate bodies as obstacles where possible, so
+default connector paths avoid cutting through nearby states. UML relation labels
+are automatically nudged away from endpoint items when a default label position
+would overlap a shape.
 
 ## Ownership
 
