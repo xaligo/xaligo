@@ -62,7 +62,7 @@ sample paths, and rendered artifact paths over prose-only status notes.
 | Order | Feature | Status | Evidence | Next action |
 |---:|---|---|---|---|
 | 1 | Canonical V1 document envelope | in-progress | `TestV1ParseValidatesCanonicalEnvelopeHierarchy`; canonical sample validates and renders two SVG artifacts | Finish migration-warning/docs-image audit, then close Q01. |
-| 2 | UML diagrams | in-progress | Activity swimlane slice adds parser/layout/scene support for `partition`, `lanes="vertical"`, `theme="xaligo"`, and `route="loop"`; target SVG renders from `docs/src/examples/targets/uml-activity-atm-swimlane.xal` | Finish activity visual parity and cross-format checks, then continue per-diagram semantic/design passes. |
+| 2 | UML diagrams | in-progress | The supported sample matrix is frozen to class, component, activity, state-machine, and sequence; all retained samples validate under the strict profile. | Finish per-diagram visual baselines and focused semantics, then verify cross-format parity. |
 | 3 | Data registry and imports | not-started | table data, database schema, SQL import commits exist | Inventory import coverage and diagnostics after the UML precision/design pass starts. |
 | 4 | Tables | not-started | `docs/src/examples/samples/tables.xal` | Audit table layout, pipe styling, text fitting, and docs image quality. |
 | 5 | Relational databases | not-started | `docs/src/examples/samples/databases.xal` | Audit entity layout, key styling, relation routing, and SQL import behavior. |
@@ -134,22 +134,22 @@ when the new task can be verified and committed independently.
 
 | Task | Status | Scope | Verification target |
 |---|---|---|---|
-| Q05.1 | not-started | Freeze the supported UML sample matrix and map each sample to its owning syntax, parser, scene, layout, routing, and renderer responsibilities. | inventory of `docs/src/examples/samples/uml-*.xal`; owner map recorded in this file or docs |
-| Q05.2 | not-started | Establish a per-UML visual baseline before edits: validate and render every `uml-*.xal` sample to SVG, then identify overlap, spacing, typography, connector, and semantic-notation gaps. | `go run ./cmd validate docs/src/examples/samples/uml-all.xal`; SVG render set under `output/uml-quality/` |
-| Q05.3 | in-progress | Improve activity-diagram semantic accuracy: activity partitions/swimlanes, initial/final nodes, actions, object nodes, decisions, forks, joins, merges, responsibilities, constraints, guards, `control-flow`, `object-flow`, cross-frame page links, and backward loop edges. | `TestUMLActivityPartitionsNormalizeV1EngineParseUML`; `TestUMLActivityElementsSupportCrossFramePageLinks`; `TestRenderActivityCrossFrameTargetExample`; `route="loop"` retained as UML route metadata; target samples render |
-| Q05.4 | in-progress | Improve activity-diagram design quality: xaligo-logo color theme, vertical/horizontal lane headers, left-to-right/top-to-bottom reading flow, diamond/bar/final-node proportions, lane spacing, label placement, no redundant container title/border, and control-vs-object-flow distinction. | `TestUMLActivitySwimlanesReachEditableScene`; `TestUMLActivityHorizontalSwimlanesReachEditableScene`; `TestUMLActivityHidesRedundantContainerBorderAndTitle`; regenerated `output/uml-activity-atm-swimlane-rendered.svg` visual reference |
-| Q05.5 | in-progress | Improve class-diagram semantic accuracy: class boxes, attributes, operations, visibility, stereotypes, abstract/static markers, inheritance, realization, association, aggregation, composition, dependency, and multiplicity. | `TestUMLClassStereotypeAndModifiersReachEditableScene`; `TestUMLAggregationAndCompositionRemainHeadlessAtDestination`; `uml-class.xal` includes stereotype/abstract/static classifier examples |
-| Q05.6 | in-progress | Improve class-diagram design quality: compartment rhythm, long member wrapping, stereotype readability, relation label spacing, crow-foot/diamond marker clarity, and dense-layout crossing reduction. | Class classifiers use compact multi-row placement, cyan headers with white text, white bodies, real attribute/operation dividers, and deep-blue relation lines; UML class containers hide redundant border/title; package grids auto-balance to the frame and expand to assigned cells; `uml-class.xal` includes frame metadata and a cross-frame repository detail arrow; `TestUMLClassPackagesAutoBalanceToFrameArea`, `TestUMLClassHidesRedundantContainerBorderAndTitle`, `TestUMLClassDiagramSupportsPackageGroups`, and `TestUMLClassPackageSVGKeepsReadableCompartmentText` cover the behavior |
-| Q05.7 | in-progress | Improve sequence-diagram semantic accuracy: lifelines, participants, activation bars, sync/async messages, returns, self messages, create/delete, ordering, and message labels. | `TestUMLSequenceMessagesRenderActivationBars`; `TestUMLSequenceMessagesUseResponseAndStopNotation`; `TestUMLSequenceMessagesDistinguishSyncAndAsyncNotation`; `TestUMLSequenceOrderControlsVerticalMessageAnchors`; `TestUMLSequenceOrderAnchorsRemainTopToBottomForEveryConnectionSide`; validation rejects non-destructive `destroy-message` labels and messages leaving inactive lifelines; `uml-sequence.xal` includes message/create/return examples |
-| Q05.8 | in-progress | Improve sequence-diagram design quality: timeline spacing, activation contrast, message arrow style, return-line distinction, lifeline header readability, and vertical density. | Participants and lifelines render as compact cyan headers with deep-blue dashed vertical axes; sequence messages render destination activation bars with deep-blue outlines and white bodies; activation bars extend through related calls, returns, and cleanup messages, and fully contained activations merge into their covering bar; synchronous messages use filled triangle arrows; asynchronous messages use open arrows in SVG/plan output; return messages are dashed response connectors; destroy messages add destination stop markers; sequence metadata is retained in editable scene output |
-| Q05.9 | in-progress | Improve state-machine semantic accuracy: initial/final states, composite states, transitions, events, guards, effects, entry/do/exit/internal actions, history states, and invalid transition diagnostics. | `TestUMLStateMachineFinalRendersFinalDot`; `TestUMLStateMachineConceptLabelsReachEditableScene`; `uml-state-machine.xal` validates and renders event/guard/action labels plus state behavior compartments |
-| Q05.10 | in-progress | Improve state-machine design quality: state shape proportions, grid placement, nested-state padding, transition bend points, guard/effect label placement, class-aligned color theme, optional compartment element-name visibility, and final-node readability. | `TestUMLStateMachinePseudostatesKeepCompactProportions`; `TestUMLStateMachineRowsSeparateBranches`; `TestUMLStateMachineGridColumnsAlignRelatedRows`; `TestUMLStateMachineContainerRowsAndColumnsPlaceStates`; `TestUMLStateMachineConnectorsAvoidIntermediateStates`; `TestUMLStateMachineBentConnectorsAvoidIntermediateStates`; `TestUMLStateMachineBentRouteAvoidanceStaysInsideFrame`; `TestUMLStateMachineDistantConnectorsUseOuterDetours`; `TestUMLStateMachineSampleSVGRoutesStayInsideFrameAndAvoidStates`; `TestUMLStateMachineCanHideCompartmentElementNames`; `TestUMLRelationBendsReachEditableScene`; `TestUMLRelationLabelsAvoidEndpointItems`; state-machine final nodes render as compact UML final states with an inner dot; layout-only `container`/`row`/`col` tags provide grid placement and relation-aware column inference remains available; class/activity/state-machine relations support child `bend` tags; state-machine transition routes avoid intermediate state bodies, stay inside same-frame bounds, and can use larger outside detours for distant or tight bent routes; SVG draw-plan routing also treats state-machine nodes as obstacles and clamps routes to the page frame; UML relation labels avoid endpoint items; state titles use cyan headers with white text by default; state compartment element names such as `entry` and `do` can be suppressed with `show-element-names="false"` while retaining titles and compartment values; state bodies are white with row dividers, plus key/value dividers when keys are visible; state boxes use uniform sizing where practical; `uml-state-machine.xal` models the EC order status flow with container-separated normal/refund/return/cancel branches and regenerated `docs/src/images/uml-state-machine.svg` |
-| Q05.11 | in-progress | Improve component/deployment/package/composite-structure semantic accuracy: components, ports, interfaces, nodes, artifacts, packages, dependencies, connectors, and containment rules. | `TestUMLComponentPortsAttachToOwners`; `TestUMLComponentSampleUsesBoundaryInterfacesWithoutPorts`; component owned ports normalize under their owning component and render on the owner boundary; component child notation is limited to neutral `interface` entries; `uml-component.xal` demonstrates boundary interfaces without explicit ports or assemblies and regenerated `docs/src/images/uml-component.svg`; deployment/package/composite checks remain pending |
-| Q05.12 | in-progress | Improve component/deployment/package/composite-structure design quality: UML adornment placement, nested group padding, port readability, dependency routing, and package tab proportions. | `TestUMLComponentRendersComponentNotation`; `TestUMLComponentRendersBoundaryInterfaces`; `TestUMLConnectedComponentSampleRendersBoundaryInterfaces`; `TestUMLComplexConnectedComponentSampleBindsInterfaces`; `TestUMLComponentMultipleCallersRenderSeparateInterfaceCircles`; `TestUMLComponentInterfaceCallerStartUsesComponentPosition`; component boxes render with a cyan header, white body, left-aligned white component name, and no two-rectangle adornment; component child interfaces render as small white boundary port boxes with interface text inside and outside circle symbols; interface port boxes clear the header, sit mostly inside the component with a small outside protrusion, keep a compact circle gap, and render an optional `description` in a same-height white rectangle immediately to the right of the interface text box; matching component associations keep the interface user endpoint on the source component's nearest non-interface-side anchor selected from 15 top/right/bottom component anchors, place a left-bulging caller-side semicircle as a forked connection endpoint whose radius is 2px larger than and center-aligned with the interface circle, bind the destination endpoint to a same-named interface circle, and approach left-side interface circles horizontally from the outside-left side at the circle center height in both scene and SVG output; multiple incoming associations to the same destination interface render one circle per association with enough vertical spacing to prevent caller-side semicircle overlap and group them back to the interface box with bracket-style stems; component diagrams use compact grid placement by default; regenerated `docs/src/images/uml-component.svg`, `docs/src/images/uml-component-connected.svg`, and `docs/src/images/uml-component-connected-complex.svg`; deployment/package/composite visual passes remain pending |
-| Q05.13 | in-progress | Improve communication and timing diagrams for supported UML notation; keep substitutable UML families out of V1. | Removed `interaction-overview-diagram`, `object-diagram`, `profile-diagram`, and `use-case-diagram` from the V1 spec and docs. Interaction overview is covered by activity diagrams for control flow plus sequence/communication diagrams for interactions; object snapshots can be represented with class diagrams using instance-style labels/slots; profile diagrams can be represented with class/package diagrams and stereotypes until profile-specific extension semantics are needed; simple use-case overviews can be represented as activity diagrams when actors/boundaries are not essential. Communication and timing remain planned because they expose relation ordering/topology and time-state semantics not covered cleanly by existing diagrams. |
-| Q05.14 | in-progress | Normalize shared UML visual language across all diagram types: typography scale, stroke weights, marker sizes, semantic colors, label backgrounds, anchor profiles, and light/dark contrast. | All UML containers omit redundant outer border/title; visible titles/versions move to frame metadata in the individual UML samples and `uml-all.xal`; `TestUMLSequenceHidesRedundantContainerBorderAndTitle` extends the chrome rule beyond activity/class diagrams; `TestUMLCommonRelationAnchorsUseShapeProfiles` fixes rectangle-like endpoints to five anchors per side and diamond-like endpoints to vertices in editable scene output |
-| Q05.15 | in-progress | Verify UML cross-format parity for every shared scene/plan change: SVG baseline, PPTX plan/export, PDF/Excel page projection, and XYFlow/Isoflow applicability; keep user-facing UML Excalidraw export disabled until editable UML output is redesigned. | `TestUMLCommonRelationAnchorsReachDrawPlanRoutes` verifies shared plan route endpoints use the same rectangle and diamond UML anchor profiles as scene bindings; `TestUseCaseRenderDispatcherBranches` rejects UML Excalidraw export through the public render dispatcher; broader renderer matrix remains pending |
-| Q05.16 | in-progress | Refresh UML documentation and examples after implementation slices, including generated images and command accuracy. | Individual `uml-*.xal` samples and `uml-all.xal` use frame metadata for titles/versions; docs/spec describe `<uml>` as a semantic container and frame metadata as the visible title surface; UML reference/spec document common rectangle 20-point and diamond 4-vertex relation endpoint profiles |
+| Q05.1 | done | Freeze the supported UML sample matrix and map each sample to its owning syntax, parser, scene, layout, routing, and renderer responsibilities. | `docs/src/examples/uml.md` indexes class, component, vertical/horizontal activity, state-machine, and sequence sources; parser/layout/scene/routing ownership is documented in the repository architecture instructions. |
+| Q05.2 | in-progress | Establish a per-UML visual baseline before edits: validate and render each supported individual `uml-*.xal` sample to SVG, then identify overlap, spacing, typography, connector, and semantic-notation gaps. | all retained UML samples validate; tracked SVG baselines exist, with component and activity visual audits completed. |
+| Q05.3 | in-progress | Improve activity-diagram semantic accuracy: initial/final nodes, actions, object nodes, decisions, forks, joins, merges, responsibilities, constraints, guards, `control-flow`, and `object-flow`. | vertical and horizontal partition samples validate; focused parser/scene tests cover partitions, loop routes, and activity metadata. |
+| Q05.4 | in-progress | Improve activity-diagram design quality: left-to-right reading flow, diamond/bar/final-node proportions, lane spacing, label placement, and control-vs-object-flow distinction. | vertical and horizontal activity SVG baselines are regenerated; focused geometry tests cover lane placement and loop routing. |
+| Q05.5 | not-started | Improve class-diagram semantic accuracy: class boxes, attributes, operations, visibility, stereotypes, abstract/static markers, inheritance, realization, association, aggregation, composition, dependency, and multiplicity. | `uml-class.xal` structural tests and relation routing assertions |
+| Q05.6 | not-started | Improve class-diagram design quality: compartment rhythm, long member wrapping, stereotype readability, relation label spacing, crow-foot/diamond marker clarity, and dense-layout crossing reduction. | class SVG/PPTX review and text-fit tests |
+| Q05.7 | not-started | Improve sequence-diagram semantic accuracy: lifelines, participants, activation bars, sync/async messages, returns, self messages, create/delete, ordering, and message labels. | `uml-sequence.xal` layout tests and route ordering assertions |
+| Q05.8 | not-started | Improve sequence-diagram design quality: timeline spacing, activation contrast, message arrow style, return-line distinction, lifeline header readability, and vertical density. | sequence SVG/PPTX review and geometry assertions |
+| Q05.9 | not-started | Improve state-machine semantic accuracy: initial/final states, composite states, transitions, events, guards, effects, entry/do/exit actions, and invalid transition diagnostics. | `uml-state-machine.xal` valid/invalid tests |
+| Q05.10 | not-started | Improve state-machine design quality: state shape proportions, nested-state padding, transition bend points, guard/effect label placement, and final-node readability. | state-machine SVG review and collision assertions |
+| Q05.11 | in-progress | Improve component-diagram semantic and design quality: boundary interfaces, shared interface-name widths, compact automatic height, explicit sizing, fan-out, and connector routing. | component parser/layout/scene/routing tests plus `uml-component.xal` and its regenerated SVG baseline |
+| Q05.12 | not-started | Plan future communication/timing support only when ordered topology or time-state semantics are explicitly required beyond sequence/state-machine diagrams. | plan entry only; no implementation, samples, or generated assets until restarted |
+| Q05.13 | not-started | Keep object, use-case, profile, and interaction-overview out of the supported UML set unless a non-substitutable use case is identified. | unsupported parser diagnostics and documentation review |
+| Q05.14 | not-started | Normalize shared UML visual language across all diagram types: typography scale, stroke weights, marker sizes, semantic colors, label backgrounds, and light/dark contrast. | design review checklist plus theme render comparisons |
+| Q05.15 | not-started | Verify UML cross-format parity for every shared scene/plan change: SVG baseline, Excalidraw editability, PPTX plan/export, PDF/Excel page projection, and XYFlow/Isoflow applicability. | focused renderer matrix for changed UML contracts |
+| Q05.16 | done | Refresh UML documentation and examples after implementation slices, including generated images and command accuracy. | all retained UML samples validate; tracked sources and SVGs are paired; `mdbook build docs` passes. |
 
 ### Q06 Frame-Scoped References
 
@@ -374,75 +374,6 @@ verify:
   labels avoiding collisions.
 - SVG output quality sufficient for documentation, with additional format
   checks added when shared contracts or encoder behavior changes.
-
-## Target Activity Diagram Capability
-
-This section tracks the activity-diagram target and the remaining follow-up
-work beyond the initial swimlane implementation slice.
-
-The reference capability is an ATM withdrawal activity diagram with three
-vertical swimlanes for actor/system responsibility, a visible lane-header row,
-start and final nodes, rounded action nodes, object-processing nodes, decision
-diamonds, guard labels, repeated PIN and amount loops, and orthogonal arrows
-that cross lane boundaries without obscuring labels. The resulting xaligo
-sample should be able to express the same diagram structure while using xaligo
-brand colors rather than the reference image's yellow/orange palette.
-
-Implemented syntax additions preserve existing `<activity-diagram>` inputs:
-
-```xml
-<activity-diagram direction="right" theme="xaligo" lanes="vertical">
-  <partition id="customer" title="Customer">
-    <initial id="start" />
-    <action id="start-session" title="Start session" tone="primary" />
-  </partition>
-  <partition id="atm" title="ATM">
-    <action id="request-pin" title="Request PIN" tone="primary" />
-    <decision id="pin-valid" />
-    <action id="process-pin" title="Process PIN" />
-  </partition>
-  <partition id="bank" title="Bank">
-    <action id="approve-card" title="Approve card" />
-  </partition>
-
-  <control-flow src="start" dst="start-session" />
-  <control-flow src="request-pin" dst="pin-valid" guard="PIN entered" />
-  <control-flow src="pin-valid" dst="request-pin" guard="invalid PIN" />
-</activity-diagram>
-```
-
-The parser accepts either nested nodes inside `<partition>` or a node-level
-`lane="partition-id"` reference, but not both for the same node.
-Every partition requires a stable `id` and non-empty `title`. A node may belong
-to at most one partition. Flow endpoints remain normal activity node IDs, and
-cross-partition flow is allowed.
-
-The activity layout reserves the top header band for lane titles, divides the
-content area into equal vertical lanes, and keeps each node inside its owning
-lane. Remaining follow-up work includes explicit lane weights, specialized
-backward-loop routing outside the forward path, object-flow accent styling,
-and fork/join bar polish.
-
-Use the xaligo readme logo as the activity theme source:
-
-| Token | Color | Usage |
-|---|---|---|
-| `xaligo-cyan` | `#08b8ea` | primary lane headers, primary action fills, selected emphasis |
-| `xaligo-navy` | `#052d6e` | text, borders, arrows, decision outlines, fork/join bars |
-| `xaligo-teal` | `#04b79f` | success/object-flow accent and secondary emphasis |
-
-Recommended derived fills are `#e8f7fd` for normal activity nodes,
-`#e6fbf7` for object-flow or data-processing nodes, and `#f8fbff` for lane
-backgrounds. Do not use the reference image's yellow/orange palette as the
-default xaligo activity theme.
-
-The first implementation slice should make
-`docs/src/examples/targets/uml-activity-atm-swimlane.xal` validate and render,
-then promote or mirror it into the validated sample corpus. Add focused
-parser/layout tests for partitions and loop routing, SVG geometry assertions
-for lane headers and label clearance, and a visual render check for the
-generated sample. Cross-format checks become mandatory when the shared scene or
-draw plan changes.
 
 ## Definition of Done
 
