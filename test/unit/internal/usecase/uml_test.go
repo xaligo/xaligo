@@ -302,6 +302,31 @@ func TestUMLSequenceOrderControlsVerticalMessageAnchors(t *testing.T) {
 	}
 }
 
+func TestUMLSequenceMessagesRenderActivationBars(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="sequence"><sequence-diagram><participant id="user" title="User"/><lifeline id="api" title="API"/><lifeline id="worker" title="Worker"/><message src="user" dst="api" order="1" title="submit()"/><create-message src="api" dst="worker" order="2" title="create"/><return-message src="worker" dst="api" order="3" title="ok"/><destroy-message src="api" dst="worker" order="4" title="release"/></sequence-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var scene entity.PresentationScene
+	if err := json.Unmarshal(rawScene, &scene); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	activations := map[string]int{}
+	for _, element := range scene.Elements {
+		if element.CustomData == nil || !element.CustomData.UMLSequenceActivation {
+			continue
+		}
+		activations[element.CustomData.UMLSequenceActivationOwner]++
+		if element.Width < 8 || element.Width > 18 || element.Height < 36 {
+			t.Fatalf("activation bar has unexpected geometry: %#v", element)
+		}
+	}
+	if activations["api"] != 1 || activations["worker"] != 2 || activations["user"] != 0 {
+		t.Fatalf("activation bars = %#v", activations)
+	}
+}
+
 func TestUMLAggregationAndCompositionRemainHeadlessAtDestination(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="classes"><class-diagram><class id="whole"/><class id="aggregate"/><class id="composite"/><aggregation src="whole" dst="aggregate"/><composition src="whole" dst="composite"/></class-diagram></uml></frame></frames></xaligo>`)
 	options := entity.RenderOptions{PxPerInch: 96}

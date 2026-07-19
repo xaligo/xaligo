@@ -89,6 +89,12 @@ default theme follows the xaligo activity-diagram palette: deep blue borders,
 xaligo-cyan classifier headers, white classifier bodies, and deep blue relation
 lines.
 
+Sequence diagrams place messages by numeric `order` from top to bottom and draw
+activation bars on the destination lifeline for `message`, `create-message`, and
+`destroy-message`. `return-message` remains a response connector and does not
+start a new activation bar. Activation metadata is retained in editable scene
+output so sequence lifetimes remain inspectable after export.
+
 The generic `<element>` and `<relation>` spellings are not valid in the strict
 profile. Use the typed tags in the following table.
 
