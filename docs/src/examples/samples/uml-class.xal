@@ -1,6 +1,6 @@
 <xaligo version="1">
   <data></data>
-  <frames>
+  <frames gap="56">
     <frame id="class" title="Ordering Domain" version="2026.07" width="1440" height="760" class="pa-3" margin-top="48">
       <metadata align="right" width="156" key-width="56" font-size="12" />
       <uml id="domain-model">
@@ -52,6 +52,17 @@
           <dependency src="order" dst="repository" title="persists through" />
         </class-diagram>
       </uml>
+
+      <connections>
+        <connection src="repository" dst="repository-detail.repository-in" title="repository details" color="#052d6e" />
+      </connections>
+    </frame>
+
+    <frame id="repository-detail" title="Repository Contract" version="2026.07" width="720" height="420" class="pa-3" margin-top="48">
+      <metadata align="right" width="156" key-width="56" font-size="12" />
+      <rectangle id="repository-card" title="OrderRepository responsibilities" width="560" height="220">
+        <port id="repository-in" side="left" title="details" />
+      </rectangle>
     </frame>
   </frames>
 </xaligo>
