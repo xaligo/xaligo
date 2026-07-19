@@ -118,6 +118,8 @@ type CustomData struct {
 	UMLMessageOrder                 string      `json:"xaligoUmlMessageOrder,omitempty"`
 	UMLSequenceActivation           bool        `json:"xaligoUmlSequenceActivation,omitempty"`
 	UMLSequenceActivationOwner      string      `json:"xaligoUmlSequenceActivationOwner,omitempty"`
+	UMLSequenceStop                 bool        `json:"xaligoUmlSequenceStop,omitempty"`
+	UMLSequenceStopOwner            string      `json:"xaligoUmlSequenceStopOwner,omitempty"`
 	UMLGuard                        string      `json:"xaligoUmlGuard,omitempty"`
 	UMLSourceMultiplicity           string      `json:"xaligoUmlSourceMultiplicity,omitempty"`
 	UMLDestinationMultiplicity      string      `json:"xaligoUmlDestinationMultiplicity,omitempty"`

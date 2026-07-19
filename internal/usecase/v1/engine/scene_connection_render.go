@@ -314,6 +314,7 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 		applyUMLConnectionMetadataV1EngineSceneConnectionRender(customData, conn)
 		applyConnectionDiffStatusV1EngineSceneDiffHighlight(customData, conn)
 		appendUMLSequenceActivationV1EngineSceneConnectionRender(elements, conn, connID, dstImgRect, dstEdge[1], srcFrameID, dstFrameID, updated, seed)
+		appendUMLSequenceStopV1EngineSceneConnectionRender(elements, conn, connID, dstEdge, srcFrameID, dstFrameID, updated, seed)
 
 		*elements = append(*elements, map[string]any{
 			"id": connID, "type": "arrow",
@@ -490,6 +491,54 @@ func appendUMLSequenceActivationV1EngineSceneConnectionRender(elements *[]map[st
 		"updated": updated, "link": nil, "locked": false,
 		"customData": customData,
 	})
+}
+
+func appendUMLSequenceStopV1EngineSceneConnectionRender(elements *[]map[string]any, conn *entity.Node, connID string, dstEdge [2]float64, srcFrameID, dstFrameID string, updated int64, seed int) {
+	if elements == nil || conn == nil || conn.Attr("uml-diagram-kind") != "sequence-diagram" || strings.TrimSpace(conn.Attr("uml-relation-kind")) != "destroy-message" {
+		return
+	}
+	owner := strings.TrimSpace(conn.Attr("uml-dst-ref"))
+	if owner == "" {
+		owner = strings.TrimSpace(conn.Attr("dst"))
+	}
+	if owner == "" {
+		return
+	}
+	size := 16.0
+	x := dstEdge[0] - size/2
+	y := dstEdge[1] - size/2
+	for index, points := range [][][]float64{
+		{{0, 0}, {size, size}},
+		{{0, size}, {size, 0}},
+	} {
+		customData := map[string]any{
+			"xaligoUmlDiagramKind":                  "sequence-diagram",
+			"xaligoUmlElementKind":                  "stop",
+			"xaligoUmlSequenceStop":                 true,
+			"xaligoUmlSequenceStopOwner":            owner,
+			"xaligoUmlRelationKind":                 "destroy-message",
+			"xaligoUmlMessageOrder":                 strings.TrimSpace(conn.Attr("uml-order")),
+			"xaligoUmlRelationSourceReference":      firstNonEmptyAttrV1EngineSceneConnectionRoute(conn, "uml-src-ref", "src"),
+			"xaligoUmlRelationDestinationReference": owner,
+		}
+		if srcFrameID != "" && srcFrameID == dstFrameID {
+			customData["xaligoFrameID"] = srcFrameID
+		}
+		lineSeed := seed + 31 + index
+		*elements = append(*elements, map[string]any{
+			"id": fmt.Sprintf("%s-sequence-stop-%d", connID, index), "type": "line",
+			"x": x, "y": y, "width": size, "height": size,
+			"angle": 0, "strokeColor": "#052d6e", "backgroundColor": "transparent",
+			"fillStyle": "solid", "strokeWidth": 1.5, "strokeStyle": "solid",
+			"roughness": 0, "opacity": 100,
+			"groupIds": []string{}, "roundness": nil,
+			"seed": lineSeed, "version": 1, "versionNonce": lineSeed,
+			"isDeleted": false, "boundElements": nil,
+			"updated": updated, "link": nil, "locked": false,
+			"points":     points,
+			"customData": customData,
+		})
+	}
 }
 
 func applyUMLConnectionMetadataV1EngineSceneConnectionRender(customData map[string]any, conn *entity.Node) {

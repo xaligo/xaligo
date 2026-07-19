@@ -92,8 +92,10 @@ lines.
 Sequence diagrams place messages by numeric `order` from top to bottom and draw
 activation bars on the destination lifeline for `message`, `create-message`, and
 `destroy-message`. `return-message` remains a response connector and does not
-start a new activation bar. Activation metadata is retained in editable scene
-output so sequence lifetimes remain inspectable after export.
+start a new activation bar. Response connectors render dashed, and
+`destroy-message` adds the standard stop marker at the destination lifeline.
+Activation and stop metadata are retained in editable scene output so sequence
+lifetimes remain inspectable after export.
 
 The generic `<element>` and `<relation>` spellings are not valid in the strict
 profile. Use the typed tags in the following table.

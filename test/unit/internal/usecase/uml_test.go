@@ -327,6 +327,37 @@ func TestUMLSequenceMessagesRenderActivationBars(t *testing.T) {
 	}
 }
 
+func TestUMLSequenceMessagesUseResponseAndStopNotation(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="sequence"><sequence-diagram><participant id="user" title="User"/><lifeline id="api" title="API"/><lifeline id="worker" title="Worker"/><message src="user" dst="api" order="1" title="submit()"/><create-message src="api" dst="worker" order="2" title="create"/><return-message src="worker" dst="api" order="3" title="ok"/><destroy-message src="api" dst="worker" order="4" title="release"/></sequence-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var scene entity.PresentationScene
+	if err := json.Unmarshal(rawScene, &scene); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	returnDashed := false
+	stopMarks := 0
+	for _, element := range scene.Elements {
+		if element.CustomData == nil {
+			continue
+		}
+		if element.CustomData.UMLRelationKind == "return-message" && element.Type == "arrow" && element.StrokeStyle == "dashed" {
+			returnDashed = true
+		}
+		if element.CustomData.UMLSequenceStop {
+			stopMarks++
+			if element.CustomData.UMLSequenceStopOwner != "worker" || element.StrokeColor != "#052d6e" {
+				t.Fatalf("destroy stop marker = %#v", element)
+			}
+		}
+	}
+	if !returnDashed || stopMarks != 2 {
+		t.Fatalf("return dashed = %t, stop marks = %d, scene = %#v", returnDashed, stopMarks, scene.Elements)
+	}
+}
+
 func TestUMLAggregationAndCompositionRemainHeadlessAtDestination(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="classes"><class-diagram><class id="whole"/><class id="aggregate"/><class id="composite"/><aggregation src="whole" dst="aggregate"/><composition src="whole" dst="composite"/></class-diagram></uml></frame></frames></xaligo>`)
 	options := entity.RenderOptions{PxPerInch: 96}
