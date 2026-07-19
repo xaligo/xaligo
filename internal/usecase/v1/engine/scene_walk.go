@@ -215,8 +215,7 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 				backgroundColor = configured
 			}
 			activityContainer := isUMLActivityContainerV1EngineSceneWalk(b)
-			classContainer := isUMLClassContainerV1EngineSceneWalk(b)
-			hiddenUMLContainer := activityContainer || classContainer
+			hiddenUMLContainer := isUMLContainerV1EngineSceneWalk(b)
 			if activityContainer {
 				genStroke = "#052d6e"
 				strokeWidth = 1.5
@@ -503,8 +502,8 @@ func isUMLActivityContainerV1EngineSceneWalk(box *entity.Box) bool {
 	return box != nil && box.Tag == "uml" && box.Attrs["uml-kind"] == "activity-diagram"
 }
 
-func isUMLClassContainerV1EngineSceneWalk(box *entity.Box) bool {
-	return box != nil && box.Tag == "uml" && box.Attrs["uml-kind"] == "class-diagram"
+func isUMLContainerV1EngineSceneWalk(box *entity.Box) bool {
+	return box != nil && box.Tag == "uml" && strings.TrimSpace(box.Attrs["uml-kind"]) != ""
 }
 
 func umlActivityShapeBackgroundV1EngineSceneWalk(box *entity.Box) string {

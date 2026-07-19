@@ -1,8 +1,9 @@
 <xaligo version="1">
   <data></data>
   <frames>
-    <frame id="state-machine" width="1680" height="860" class="pa-3">
-      <uml id="order-state" title="Order State Machine">
+    <frame id="state-machine" title="Order State Machine" version="2026.07" width="1680" height="860" class="pa-3" margin-top="48">
+      <metadata align="right" width="156" key-width="56" font-size="12" />
+      <uml id="order-state">
         <state-machine-diagram direction="right">
           <initial id="start" title="Start" />
           <state id="draft" title="Draft">

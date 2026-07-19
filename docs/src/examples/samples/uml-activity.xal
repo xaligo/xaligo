@@ -1,8 +1,9 @@
 <xaligo version="1">
   <data></data>
   <frames>
-    <frame id="activity" width="1800" height="900" class="pa-3">
-      <uml id="fulfilment-activity" title="Order Fulfilment Activity">
+    <frame id="activity" title="Order Fulfilment Activity" version="2026.07" width="1800" height="900" class="pa-3" margin-top="48">
+      <metadata align="right" width="156" key-width="56" font-size="12" />
+      <uml id="fulfilment-activity">
         <activity-diagram direction="right">
           <initial id="start" title="Start" />
           <action id="receive" title="Receive order">

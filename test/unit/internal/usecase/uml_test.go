@@ -128,6 +128,29 @@ func TestUMLClassHidesRedundantContainerBorderAndTitle(t *testing.T) {
 	}
 }
 
+func TestUMLSequenceHidesRedundantContainerBorderAndTitle(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" title="Sequence Model" width="760" height="420"><uml id="sequence" title="Checkout Sequence"><sequence-diagram><participant id="user" title="User"/><lifeline id="api" title="API"/><message src="user" dst="api" order="1" title="submit()"/></sequence-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var scene map[string]any
+	if err := json.Unmarshal(rawScene, &scene); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	elements, _ := scene["elements"].([]any)
+	for _, rawElement := range elements {
+		element, _ := rawElement.(map[string]any)
+		customData, _ := element["customData"].(map[string]any)
+		if element["type"] == "rectangle" && customData["xaligoUmlDiagramKind"] == "sequence-diagram" && customData["xaligoUmlElementKind"] == nil {
+			t.Fatalf("sequence container border should not render: %#v", element)
+		}
+		if element["type"] == "text" && element["text"] == "Checkout Sequence" {
+			t.Fatalf("sequence container title should not render when frame metadata can carry the title: %#v", element)
+		}
+	}
+}
+
 func TestUMLActivityHorizontalSwimlanesReachEditableScene(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="760" height="420"><uml id="activity"><activity-diagram direction="right" lanes="horizontal" theme="xaligo"><partition id="customer" title="Customer"><initial id="start"/><action id="choose" title="Choose amount" tone="primary"/></partition><partition id="atm" title="ATM"><action id="read" title="Read card"/><final id="done"/></partition><control-flow src="start" dst="choose"/><control-flow src="choose" dst="read"/><control-flow src="read" dst="done"/></activity-diagram></uml></frame></frames></xaligo>`)
 	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})

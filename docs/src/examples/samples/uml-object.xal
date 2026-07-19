@@ -1,8 +1,9 @@
 <xaligo version="1">
   <data></data>
   <frames>
-    <frame id="object" width="1280" height="700" class="pa-3">
-      <uml id="runtime-snapshot" title="Confirmed Order Snapshot">
+    <frame id="object" title="Confirmed Order Snapshot" version="2026.07" width="1280" height="700" class="pa-3" margin-top="48">
+      <metadata align="right" width="156" key-width="56" font-size="12" />
+      <uml id="runtime-snapshot">
         <object-diagram direction="right">
           <object id="customer" title="customer: Customer">
             <slot>id = C-1042</slot>

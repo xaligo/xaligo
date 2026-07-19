@@ -1,8 +1,9 @@
 <xaligo version="1">
   <data></data>
   <frames>
-    <frame id="communication" width="1280" height="720" class="pa-3">
-      <uml id="checkout-communication" title="Checkout Communication">
+    <frame id="communication" title="Checkout Communication" version="2026.07" width="1280" height="720" class="pa-3" margin-top="48">
+      <metadata align="right" width="156" key-width="56" font-size="12" />
+      <uml id="checkout-communication">
         <communication-diagram direction="right">
           <object id="ui" title="ui: CheckoutPage">
             <slot>cartId = C-1042</slot>

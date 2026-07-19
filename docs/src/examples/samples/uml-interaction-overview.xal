@@ -1,8 +1,9 @@
 <xaligo version="1">
   <data></data>
   <frames>
-    <frame id="interaction-overview" width="1800" height="900" class="pa-3">
-      <uml id="checkout-overview" title="Checkout Interaction Overview">
+    <frame id="interaction-overview" title="Checkout Interaction Overview" version="2026.07" width="1800" height="900" class="pa-3" margin-top="48">
+      <metadata align="right" width="156" key-width="56" font-size="12" />
+      <uml id="checkout-overview">
         <interaction-overview-diagram direction="right">
           <initial id="start" title="Start" />
           <interaction id="browse" title="ref Browse products">

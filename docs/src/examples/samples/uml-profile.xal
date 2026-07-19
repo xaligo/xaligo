@@ -1,8 +1,9 @@
 <xaligo version="1">
   <data></data>
   <frames>
-    <frame id="profile" width="1280" height="700" class="pa-3">
-      <uml id="cloud-profile" title="Cloud Modeling Profile">
+    <frame id="profile" title="Cloud Modeling Profile" version="2026.07" width="1280" height="700" class="pa-3" margin-top="48">
+      <metadata align="right" width="156" key-width="56" font-size="12" />
+      <uml id="cloud-profile">
         <profile-diagram direction="right">
           <profile id="cloud" title="CloudProfile">
             <constraint>provider must be specified</constraint>

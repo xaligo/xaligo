@@ -585,9 +585,11 @@ The following rules are normative:
   diagrams select horizontal xaligo layout; the other cases select vertical
   layout. This controls the V1 projection and is not a UML semantic ordering
   rule.
-- When `<uml title>` is omitted, the selector name without `-diagram` is used.
-  Element labels resolve in the order `title`, `name`, direct text, then local
-  `id`. UML elements default to `font-family="helvetica"` and `font-size="14"`;
+- The `<uml>` container is semantic and does not render an outer border or
+  title for any UML diagram family. Visible diagram titles, versions, owners,
+  and review state belong in frame metadata. Element labels resolve in the
+  order `title`, `name`, direct text, then local `id`. UML elements default to
+  `font-family="helvetica"` and `font-size="14"`;
   normal element font attributes override those defaults. An element `name`
   is display text only and never becomes a frame-level connection alias; use
   the public UML reference described below.
@@ -617,7 +619,7 @@ public connection form.
 
 | Diagram kind | Allowed elements | Allowed relations | Additional V1 semantic checks |
 |---|---|---|---|
-| `class-diagram` | `package`, `class`, `interface`, `enumeration` | `association`, `aggregation`, `composition`, `generalization`, `realization`, `dependency` | Requires one classifier. `package` groups classifiers and package-local relations using the general-group visual language. `grid="N"` on `<class-diagram>` or package selects the package/classifier column count. When the class diagram contains only packages and omits `grid`, the package grid is computed from frame aspect ratio and empty-cell count. Packages expand to their assigned grid cell. The UML container itself does not render an outer border or title. Classifiers accept `stereotype`, `abstract="true|false"`, and `static="true|false"`; stereotypes and enabled modifiers are visible classifier-header metadata. Classifiers use compact multi-row placement, a cyan header with white text, separate attribute/operation body regions, white bodies, and deep-blue relation lines by default. Aggregation/composition are class to class; generalization joins equal classifier kinds; realization is class to interface. |
+| `class-diagram` | `package`, `class`, `interface`, `enumeration` | `association`, `aggregation`, `composition`, `generalization`, `realization`, `dependency` | Requires one classifier. `package` groups classifiers and package-local relations using the general-group visual language. `grid="N"` on `<class-diagram>` or package selects the package/classifier column count. When the class diagram contains only packages and omits `grid`, the package grid is computed from frame aspect ratio and empty-cell count. Packages expand to their assigned grid cell. Classifiers accept `stereotype`, `abstract="true|false"`, and `static="true|false"`; stereotypes and enabled modifiers are visible classifier-header metadata. Classifiers use compact multi-row placement, a cyan header with white text, separate attribute/operation body regions, white bodies, and deep-blue relation lines by default. Aggregation/composition are class to class; generalization joins equal classifier kinds; realization is class to interface. |
 | `object-diagram` | `object` | `link`, `dependency` | Requires one object. Every relation endpoint is an object. |
 | `component-diagram` | `component`, `interface`, `port`, `artifact` | `dependency`, `realization`, `association`, `assembly`, `delegation` | Requires one component. Realization is component to interface. Assembly uses port/interface endpoints and includes a port. A port requires a component owner. Delegation is port to component/port. |
 | `deployment-diagram` | `node`, `artifact`, `component` | `deployment`, `communication-path`, `dependency` | Requires one node. Deployment is artifact/component to node; communication-path is node to node. |

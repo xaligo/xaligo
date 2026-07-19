@@ -1,8 +1,9 @@
 <xaligo version="1">
   <data></data>
   <frames>
-    <frame id="sequence" width="1360" height="760" class="pa-3">
-      <uml id="checkout-sequence" title="Checkout Sequence">
+    <frame id="sequence" title="Checkout Sequence" version="2026.07" width="1360" height="760" class="pa-3" margin-top="48">
+      <metadata align="right" width="156" key-width="56" font-size="12" />
+      <uml id="checkout-sequence">
         <sequence-diagram>
           <participant id="customer" title="Customer" />
           <lifeline id="api" title="Ordering API" />

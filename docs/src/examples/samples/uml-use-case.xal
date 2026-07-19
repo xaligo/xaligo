@@ -1,8 +1,9 @@
 <xaligo version="1">
   <data></data>
   <frames>
-    <frame id="use-case" width="1440" height="760" class="pa-3">
-      <uml id="ordering-use-cases" title="Ordering Use Cases">
+    <frame id="use-case" title="Ordering Use Cases" version="2026.07" width="1440" height="760" class="pa-3" margin-top="48">
+      <metadata align="right" width="156" key-width="56" font-size="12" />
+      <uml id="ordering-use-cases">
         <use-case-diagram direction="right">
           <actor id="customer" title="Customer">
             <responsibility>Place and track orders</responsibility>

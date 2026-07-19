@@ -1,102 +1,116 @@
 <xaligo version="1">
   <data></data>
   <frames gap="32">
-    <frame id="class" width="480" height="280">
-      <uml id="class-view" title="Class"><class-diagram direction="right">
+    <frame id="class" title="Class" version="2026.07" width="480" height="280" margin-top="36">
+      <metadata align="right" width="96" key-width="42" font-size="10" />
+      <uml id="class-view"><class-diagram direction="right">
         <class id="order" title="Order" />
         <interface id="repository" title="Repository" />
         <realization src="order" dst="repository" />
       </class-diagram></uml>
     </frame>
-    <frame id="object" width="480" height="280">
-      <uml id="object-view" title="Object"><object-diagram direction="right">
+    <frame id="object" title="Object" version="2026.07" width="480" height="280" margin-top="36">
+      <metadata align="right" width="96" key-width="42" font-size="10" />
+      <uml id="object-view"><object-diagram direction="right">
         <object id="customer" title="customer: Customer" />
         <object id="order" title="order: Order" />
         <link src="customer" dst="order" />
       </object-diagram></uml>
     </frame>
-    <frame id="component" width="480" height="280">
-      <uml id="component-view" title="Component"><component-diagram direction="right">
+    <frame id="component" title="Component" version="2026.07" width="480" height="280" margin-top="36">
+      <metadata align="right" width="96" key-width="42" font-size="10" />
+      <uml id="component-view"><component-diagram direction="right">
         <component id="service" title="Service" />
         <interface id="api" title="API" />
         <realization src="service" dst="api" />
       </component-diagram></uml>
     </frame>
-    <frame id="deployment" width="480" height="280">
-      <uml id="deployment-view" title="Deployment"><deployment-diagram direction="right">
+    <frame id="deployment" title="Deployment" version="2026.07" width="480" height="280" margin-top="36">
+      <metadata align="right" width="96" key-width="42" font-size="10" />
+      <uml id="deployment-view"><deployment-diagram direction="right">
         <artifact id="app" title="app.jar" />
         <node id="runtime" title="Runtime" />
         <deployment src="app" dst="runtime" />
       </deployment-diagram></uml>
     </frame>
-    <frame id="package" width="480" height="280">
-      <uml id="package-view" title="Package"><package-diagram direction="right">
+    <frame id="package" title="Package" version="2026.07" width="480" height="280" margin-top="36">
+      <metadata align="right" width="96" key-width="42" font-size="10" />
+      <uml id="package-view"><package-diagram direction="right">
         <package id="web" title="Web" />
         <package id="domain" title="Domain" />
         <package-import src="web" dst="domain" />
       </package-diagram></uml>
     </frame>
-    <frame id="composite" width="480" height="280">
-      <uml id="composite-view" title="Composite Structure"><composite-structure-diagram direction="right">
+    <frame id="composite" title="Composite Structure" version="2026.07" width="480" height="280" margin-top="36">
+      <metadata align="right" width="96" key-width="42" font-size="10" />
+      <uml id="composite-view"><composite-structure-diagram direction="right">
         <structure id="checkout" title="Checkout" />
         <part id="cart" owner="checkout" title="cart: Cart" />
         <port id="api" owner="checkout" title="api" />
         <connector src="cart" dst="api" />
       </composite-structure-diagram></uml>
     </frame>
-    <frame id="profile" width="480" height="280">
-      <uml id="profile-view" title="Profile"><profile-diagram direction="right">
+    <frame id="profile" title="Profile" version="2026.07" width="480" height="280" margin-top="36">
+      <metadata align="right" width="96" key-width="42" font-size="10" />
+      <uml id="profile-view"><profile-diagram direction="right">
         <profile id="cloud" title="Cloud" />
         <stereotype id="service" title="Service" />
         <metaclass id="component" title="Component" />
         <extension src="service" dst="component" />
       </profile-diagram></uml>
     </frame>
-    <frame id="use-case" width="480" height="280">
-      <uml id="use-case-view" title="Use Case"><use-case-diagram direction="right">
+    <frame id="use-case" title="Use Case" version="2026.07" width="480" height="280" margin-top="36">
+      <metadata align="right" width="96" key-width="42" font-size="10" />
+      <uml id="use-case-view"><use-case-diagram direction="right">
         <actor id="customer" title="Customer" />
         <use-case id="checkout" title="Checkout" />
         <association src="customer" dst="checkout" />
       </use-case-diagram></uml>
     </frame>
-    <frame id="activity" width="480" height="280">
-      <uml id="activity-view" title="Activity"><activity-diagram direction="right">
+    <frame id="activity" title="Activity" version="2026.07" width="480" height="280" margin-top="36">
+      <metadata align="right" width="96" key-width="42" font-size="10" />
+      <uml id="activity-view"><activity-diagram direction="right">
         <action id="validate" title="Validate" />
         <action id="save" title="Save" />
         <control-flow src="validate" dst="save" />
       </activity-diagram></uml>
     </frame>
-    <frame id="state-machine" width="480" height="280">
-      <uml id="state-machine-view" title="State Machine"><state-machine-diagram direction="right">
+    <frame id="state-machine" title="State Machine" version="2026.07" width="480" height="280" margin-top="36">
+      <metadata align="right" width="96" key-width="42" font-size="10" />
+      <uml id="state-machine-view"><state-machine-diagram direction="right">
         <state id="draft" title="Draft" />
         <state id="confirmed" title="Confirmed" />
         <transition src="draft" dst="confirmed" />
       </state-machine-diagram></uml>
     </frame>
-    <frame id="sequence" width="480" height="280">
-      <uml id="sequence-view" title="Sequence"><sequence-diagram>
+    <frame id="sequence" title="Sequence" version="2026.07" width="480" height="280" margin-top="36">
+      <metadata align="right" width="96" key-width="42" font-size="10" />
+      <uml id="sequence-view"><sequence-diagram>
         <participant id="user" title="User" />
         <lifeline id="api" title="API" />
         <message src="user" dst="api" order="1" title="submit()" />
       </sequence-diagram></uml>
     </frame>
-    <frame id="communication" width="480" height="280">
-      <uml id="communication-view" title="Communication"><communication-diagram direction="right">
+    <frame id="communication" title="Communication" version="2026.07" width="480" height="280" margin-top="36">
+      <metadata align="right" width="96" key-width="42" font-size="10" />
+      <uml id="communication-view"><communication-diagram direction="right">
         <object id="ui" title="ui: Page" />
         <object id="api" title="api: Service" />
         <link src="ui" dst="api" />
         <message src="ui" dst="api" order="1" title="submit()" />
       </communication-diagram></uml>
     </frame>
-    <frame id="interaction-overview" width="480" height="280">
-      <uml id="interaction-overview-view" title="Interaction Overview"><interaction-overview-diagram direction="right">
+    <frame id="interaction-overview" title="Interaction Overview" version="2026.07" width="480" height="280" margin-top="36">
+      <metadata align="right" width="96" key-width="42" font-size="10" />
+      <uml id="interaction-overview-view"><interaction-overview-diagram direction="right">
         <interaction id="browse" title="ref Browse" />
         <interaction id="checkout" title="ref Checkout" />
         <control-flow src="browse" dst="checkout" />
       </interaction-overview-diagram></uml>
     </frame>
-    <frame id="timing" width="480" height="280">
-      <uml id="timing-view" title="Timing"><timing-diagram>
+    <frame id="timing" title="Timing" version="2026.07" width="480" height="280" margin-top="36">
+      <metadata align="right" width="96" key-width="42" font-size="10" />
+      <uml id="timing-view"><timing-diagram>
         <lifeline id="client" title="Client" />
         <time-state id="idle" owner="client" from="0" to="20" title="Idle" />
         <time-state id="waiting" owner="client" from="20" to="100" title="Waiting" />

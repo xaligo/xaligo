@@ -1,8 +1,9 @@
 <xaligo version="1">
   <data></data>
   <frames>
-    <frame id="composite" width="1560" height="820" class="pa-3">
-      <uml id="checkout-internals" title="Checkout Internal Structure">
+    <frame id="composite" title="Checkout Internal Structure" version="2026.07" width="1560" height="820" class="pa-3" margin-top="48">
+      <metadata align="right" width="156" key-width="56" font-size="12" />
+      <uml id="checkout-internals">
         <composite-structure-diagram direction="right">
           <structure id="checkout" title="Checkout">
             <property>session: CheckoutSession</property>

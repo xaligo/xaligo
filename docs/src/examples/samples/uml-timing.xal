@@ -1,8 +1,9 @@
 <xaligo version="1">
   <data></data>
   <frames>
-    <frame id="timing" width="1560" height="820" class="pa-3">
-      <uml id="request-timing" title="Checkout Request Timing">
+    <frame id="timing" title="Checkout Request Timing" version="2026.07" width="1560" height="820" class="pa-3" margin-top="48">
+      <metadata align="right" width="156" key-width="56" font-size="12" />
+      <uml id="request-timing">
         <timing-diagram>
           <lifeline id="client" title="Client" />
           <time-state id="client-idle" owner="client" from="0" to="20" title="Idle">

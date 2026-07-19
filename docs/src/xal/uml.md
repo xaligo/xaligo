@@ -16,17 +16,20 @@ metadata that its target schema can represent.
 exactly one diagram-kind child.
 
 ```xml
-<uml id="domain" title="Domain model">
-  <class-diagram direction="right">
-    <interface id="repository" title="OrderRepository">
-      <operation>save(order: Order)</operation>
-    </interface>
-    <class id="sql-repository" title="SqlOrderRepository">
-      <operation>save(order: Order)</operation>
-    </class>
-    <realization src="sql-repository" dst="repository" />
-  </class-diagram>
-</uml>
+<frame id="domain-page" title="Domain model" version="2026.07" margin-top="48">
+  <metadata align="right" width="156" key-width="56" font-size="12" />
+  <uml id="domain">
+    <class-diagram direction="right">
+      <interface id="repository" title="OrderRepository">
+        <operation>save(order: Order)</operation>
+      </interface>
+      <class id="sql-repository" title="SqlOrderRepository">
+        <operation>save(order: Order)</operation>
+      </class>
+      <realization src="sql-repository" dst="repository" />
+    </class-diagram>
+  </uml>
+</frame>
 ```
 
 Element IDs are public frame-level connection references. UML-native relations
@@ -49,6 +52,10 @@ expressions. The opaque hex-scoped internal ID must not be written in source.
 layout. Sequence and timing diagrams also default to horizontal; the remaining
 families default to vertical. This selects the shared layout direction, not UML
 event ordering.
+
+The `<uml>` container is semantic only: it does not render an outer border or
+title for any UML diagram family. Put visible diagram titles, versions, owners,
+and review state in the owning frame's metadata instead.
 
 Elements accept normal xaligo presentation attributes such as `width`,
 `height`, `color`, `background-color`, `border-color`, `font-family`, and
@@ -80,8 +87,7 @@ Class diagrams use compact multi-row classifier placement by default so boxes
 read as independent UML classifiers instead of full-width layout panels. The
 default theme follows the xaligo activity-diagram palette: deep blue borders,
 xaligo-cyan classifier headers, white classifier bodies, and deep blue relation
-lines. The UML container itself does not render an outer border or title;
-document titles should be carried by frame metadata when needed.
+lines.
 
 The generic `<element>` and `<relation>` spellings are not valid in the strict
 profile. Use the typed tags in the following table.

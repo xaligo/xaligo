@@ -1,8 +1,9 @@
 <xaligo version="1">
   <data></data>
   <frames>
-    <frame id="deployment" width="1440" height="760" class="pa-3">
-      <uml id="production-deployment" title="Production Deployment">
+    <frame id="deployment" title="Production Deployment" version="2026.07" width="1440" height="760" class="pa-3" margin-top="48">
+      <metadata align="right" width="156" key-width="56" font-size="12" />
+      <uml id="production-deployment">
         <deployment-diagram direction="right">
           <node id="browser" title="Client Device">
             <property>Chrome 128</property>
