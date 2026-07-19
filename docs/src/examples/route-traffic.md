@@ -11,9 +11,10 @@ endpoints and render on nearby lanes with independent colors and arrow styles.
 {{#endtab}}
 {{#tab name="Code"}}
 
-```xml
-{{#include samples/route-traffic.xal}}
-```
+Source: [samples/route-traffic.xal](samples/route-traffic.xal).
+
+See [Connector Types](../reference/arrows/connector-types.md) for route and
+traffic syntax.
 
 {{#endtab}}
 {{#endtabs}}

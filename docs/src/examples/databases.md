@@ -6,13 +6,10 @@ the composite foreign key.
 
 ![V1 relational database example](../images/databases.svg)
 
-```xml
-{{#include samples/databases.xal}}
-```
-
-```sql
-{{#include samples/databases.sql}}
-```
+Sources: [samples/databases.xal](samples/databases.xal) and
+[samples/databases.sql](samples/databases.sql).
+See [.xal Relational Databases](../xal/databases.md) for database and SQL
+import syntax.
 
 ```bash
 xaligo validate docs/src/examples/samples/databases.xal
