@@ -11,3 +11,4 @@ Use the tabs on each page to switch between the source and the preview.
 - [Frame Metadata Tags](frame-metadata.md)
 - [Tables](tables.md)
 - [Relational Database](databases.md)
+- [UML Diagrams](uml.md)
