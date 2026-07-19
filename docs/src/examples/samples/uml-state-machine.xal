@@ -1,42 +1,42 @@
 <xaligo version="1">
   <data></data>
   <frames>
-    <frame id="state-machine" title="ECオーダーステータスマシン" version="2026.07" width="1680" height="900" class="pa-3" margin-top="48">
+    <frame id="state-machine" title="E-Commerce Order State Machine" version="2026.07" width="1680" height="900" class="pa-3" margin-top="48">
       <metadata align="right" width="156" key-width="56" font-size="12" />
       <uml id="order-state">
-        <state-machine-diagram direction="right">
+        <state-machine-diagram direction="right" show-element-names="false">
           <container>
             <row>
               <col><initial id="start" /></col>
               <col>
-                <state id="created" title="注文作成">
-                  <entry>注文番号を採番</entry>
-                  <do>支払い待機</do>
-                  <internal>期限切れ / 通知</internal>
-                  <exit>結果を記録</exit>
+                <state id="created" title="Order Created">
+                  <entry>Assign order number</entry>
+                  <do>Wait for payment</do>
+                  <internal>Expire / notify</internal>
+                  <exit>Record result</exit>
                 </state>
               </col>
               <col>
-                <state id="awaiting-shipment" title="出荷待ち">
-                  <entry>在庫を引当</entry>
-                  <do>出荷依頼</do>
+                <state id="awaiting-shipment" title="Awaiting Shipment">
+                  <entry>Reserve inventory</entry>
+                  <do>Request shipment</do>
                 </state>
               </col>
-              <col><choice id="stock-check" title="在庫確認" /></col>
+              <col><choice id="stock-check" title="Stock Check" /></col>
               <col>
-                <state id="shipped" title="出荷済み">
-                  <entry>送り状番号を登録</entry>
-                  <do>配送状況を追跡</do>
-                </state>
-              </col>
-              <col>
-                <state id="delivering" title="配送中">
-                  <note>配送イベントを監視</note>
+                <state id="shipped" title="Shipped">
+                  <entry>Register tracking number</entry>
+                  <do>Track delivery status</do>
                 </state>
               </col>
               <col>
-                <state id="completed" title="完了">
-                  <note>売上確定済み</note>
+                <state id="delivering" title="In Transit">
+                  <note>Monitor delivery events</note>
+                </state>
+              </col>
+              <col>
+                <state id="completed" title="Completed">
+                  <note>Revenue has been finalized</note>
                 </state>
               </col>
               <col><final id="closed" /></col>
@@ -45,95 +45,98 @@
               <col />
               <col />
               <col>
-                <state id="refund-requested" title="返金申請">
-                  <entry>返金チケット作成</entry>
-                  <do>返金要求</do>
-                  <exit>返金結果を保存</exit>
+                <state id="refund-requested" title="Refund Requested">
+                  <entry>Create refund ticket</entry>
+                  <do>Request refund</do>
+                  <exit>Store refund result</exit>
                 </state>
               </col>
-              <col><choice id="refund-result" title="返金結果" /></col>
+              <col><choice id="refund-result" title="Refund Result" /></col>
               <col>
-                <state id="refund-failed" title="返金失敗">
-                  <note>運用者が再処理または連絡</note>
+                <state id="refund-failed" title="Refund Failed">
+                  <note>Operator retries or contacts buyer</note>
                 </state>
               </col>
               <col>
-                <state id="return-requested" title="返品申請">
-                  <entry>返品受付番号を採番</entry>
-                  <do>返送品の到着を待機</do>
-                  <internal>返品キャンセル / 受付終了</internal>
+                <state id="return-requested" title="Return Requested">
+                  <entry>Assign return request number</entry>
+                  <do>Wait for returned item</do>
+                  <internal>Cancel return / close request</internal>
                 </state>
               </col>
-              <col><choice id="return-result" title="返品結果" /></col>
+              <col><choice id="return-result" title="Return Result" /></col>
               <col>
-                <state id="return-failed" title="返品失敗">
-                  <note>検品NGまたは期限切れ</note>
+                <state id="return-failed" title="Return Failed">
+                  <note>Inspection failed or window expired</note>
                 </state>
               </col>
             </row>
             <row>
               <col />
               <col>
-                <state id="buyer-cancelled" title="購入者キャンセル">
-                  <note>購入者都合で取消済み</note>
+                <state id="buyer-cancelled" title="Buyer Cancelled">
+                  <note>Cancelled by buyer request</note>
                 </state>
               </col>
               <col />
               <col>
-                <state id="refund-succeeded" title="返金成功">
-                  <note>返金済みイベント発行済み</note>
+                <state id="refund-succeeded" title="Refund Succeeded">
+                  <note>Refunded event has been emitted</note>
                 </state>
               </col>
               <col><history id="order-history" title="H" /></col>
               <col />
               <col>
-                <state id="return-succeeded" title="返品成功">
-                  <entry>在庫へ戻し入れ</entry>
-                  <exit>注文を取消済みに変更</exit>
+                <state id="return-succeeded" title="Return Succeeded">
+                  <entry>Return item to inventory</entry>
+                  <exit>Mark order as cancelled</exit>
                 </state>
               </col>
               <col>
-                <state id="system-cancelled" title="システムキャンセル">
-                  <region>例外終了</region>
-                  <note>在庫なし・返品成功</note>
+                <state id="system-cancelled" title="System Cancelled">
+                  <region>Exceptional close</region>
+                  <note>Out of stock or return completed</note>
                 </state>
               </col>
             </row>
           </container>
 
-          <transition src="start" dst="created" event="注文作成" />
-          <transition src="created" dst="awaiting-shipment" event="支払い成功" guard="決済承認済み" action="在庫を引当" />
-          <transition src="awaiting-shipment" dst="stock-check" event="出荷準備" />
-          <transition src="stock-check" dst="shipped" guard="在庫あり" action="出荷指示" />
-          <transition src="shipped" dst="delivering" event="配送開始" />
-          <transition src="delivering" dst="completed" event="配達完了" effect="売上を確定" />
-          <transition src="completed" dst="closed" event="クローズ" />
+          <transition src="start" dst="created" event="Create order" />
+          <transition src="created" dst="awaiting-shipment" event="Payment succeeded" guard="Payment approved" action="Reserve inventory" />
+          <transition src="awaiting-shipment" dst="stock-check" event="Prepare shipment" />
+          <transition src="stock-check" dst="shipped" guard="In stock" action="Issue shipment" />
+          <transition src="shipped" dst="delivering" event="Start delivery" />
+          <transition src="delivering" dst="completed" event="Delivered" effect="Finalize revenue" />
+          <transition src="completed" dst="closed" event="Close" />
 
-          <transition src="created" dst="buyer-cancelled" event="購入者キャンセル" guard="未出荷" action="注文を取消">
+          <transition src="created" dst="buyer-cancelled" event="Buyer cancels" guard="Not shipped" action="Cancel order">
             <bend x="120" y="650" />
           </transition>
-          <transition src="awaiting-shipment" dst="refund-requested" event="返金申請" guard="決済済み" action="返金処理を開始">
+          <transition src="awaiting-shipment" dst="refund-requested" event="Refund requested" guard="Paid" action="Start refund">
             <bend x="540" y="360" />
           </transition>
-          <transition src="refund-requested" dst="refund-result" event="返金結果" />
-          <transition src="refund-result" dst="refund-failed" guard="NG" action="再処理を依頼" />
-          <transition src="refund-result" dst="refund-succeeded" guard="OK" action="返金済みにする" />
-          <transition src="refund-succeeded" dst="buyer-cancelled" event="返金完了" />
+          <transition src="refund-requested" dst="refund-result" event="Refund result" />
+          <transition src="refund-result" dst="refund-failed" guard="Failed" action="Request retry" />
+          <transition src="refund-result" dst="refund-succeeded" guard="Succeeded" action="Mark refunded" />
+          <transition src="refund-succeeded" dst="buyer-cancelled" event="Refund completed" />
 
-          <transition src="shipped" dst="return-requested" event="返品申請" guard="返品期間内" action="返品受付" />
-          <transition src="return-requested" dst="return-result" event="検品完了" />
-          <transition src="return-result" dst="return-failed" guard="NG" action="購入者へ連絡" />
-          <transition src="return-result" dst="return-succeeded" guard="OK" action="返金と在庫戻し" />
-          <transition src="return-succeeded" dst="system-cancelled" event="返品完了" />
-          <transition src="return-requested" dst="order-history" event="返品キャンセル" action="直前状態へ復帰" />
-          <transition src="order-history" dst="shipped" event="復帰" />
-          <transition src="stock-check" dst="system-cancelled" guard="在庫なし" action="注文を終了">
+          <transition src="shipped" dst="return-requested" event="Return requested" guard="Within return window" action="Accept return" />
+          <transition src="return-requested" dst="return-result" event="Inspection complete" />
+          <transition src="return-result" dst="return-failed" guard="Failed" action="Contact buyer" />
+          <transition src="return-result" dst="return-succeeded" guard="Succeeded" action="Refund and restock" />
+          <transition src="return-succeeded" dst="system-cancelled" event="Return completed" />
+          <transition src="return-requested" dst="order-history" event="Return cancelled" action="Resume previous state" />
+          <transition src="order-history" dst="shipped" event="Resume" />
+          <transition src="stock-check" dst="system-cancelled" guard="Out of stock" action="Close order">
             <bend x="1560" y="196" />
             <bend x="1560" y="760" />
           </transition>
 
-          <transition src="buyer-cancelled" dst="closed" event="クローズ" />
-          <transition src="system-cancelled" dst="closed" event="クローズ" />
+          <transition src="buyer-cancelled" dst="closed" event="Close">
+            <bend x="1660" y="820" />
+            <bend x="1660" y="252" />
+          </transition>
+          <transition src="system-cancelled" dst="closed" event="Close" />
         </state-machine-diagram>
       </uml>
     </frame>
