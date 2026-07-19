@@ -214,7 +214,8 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 			if configured, exists := b.Attrs["background-color"]; exists {
 				backgroundColor = configured
 			}
-			if b.Tag == "uml" && b.Attrs["uml-kind"] == "activity-diagram" {
+			activityContainer := isUMLActivityContainerV1EngineSceneWalk(b)
+			if activityContainer {
 				genStroke = "#052d6e"
 				strokeWidth = 1.5
 				appendUMLActivityPartitionsV1EngineSceneWalk(b, elements, updated)
@@ -225,36 +226,38 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 				backgroundColor = umlActivityShapeBackgroundV1EngineSceneWalk(b)
 				fillStyle = "solid"
 			}
-			boundElements := any(nil)
-			shapeCustomData := umlShapeCustomDataV1EngineSceneWalk(b)
-			if b.Label != "" {
-				boundElements = []map[string]any{{"type": "text", "id": textID}}
+			if !activityContainer {
+				boundElements := any(nil)
+				shapeCustomData := umlShapeCustomDataV1EngineSceneWalk(b)
+				if b.Label != "" {
+					boundElements = []map[string]any{{"type": "text", "id": textID}}
+				}
+				shapeType := umlShapeTypeV1EngineSceneWalk(b)
+				*elements = append(*elements, map[string]any{
+					"id": rectID, "type": shapeType,
+					"x": b.X, "y": b.Y, "width": b.W, "height": b.H,
+					"angle": 0, "strokeColor": genStroke, "backgroundColor": backgroundColor,
+					"fillStyle": fillStyle, "strokeWidth": strokeWidth, "strokeStyle": "solid",
+					"roughness": 0, "opacity": 100,
+					"groupIds": []string{}, "roundness": roundness,
+					"seed": stableSceneSeedV1EngineSceneTypes(rectID), "version": 1,
+					"versionNonce":  stableSceneSeedV1EngineSceneTypes(rectID),
+					"isDeleted":     false,
+					"boundElements": boundElements,
+					"updated":       updated, "link": nil, "locked": false,
+					"customData": shapeCustomData,
+				})
+				if isXaligoActivityFinalV1EngineSceneWalk(b) {
+					appendUMLActivityFinalDotV1EngineSceneWalk(b, elements, updated)
+				}
+				if b.Tag == "entity" {
+					registerConnectionEndpointV1EngineSceneWalk(b, rectID, [4]float64{b.X, b.Y, b.W, b.H}, itemImgRects, itemImgIDs)
+				}
+				if b.Tag == "rectangle" || b.Tag == "port" {
+					registerConnectionEndpointV1EngineSceneWalk(b, rectID, [4]float64{b.X, b.Y, b.W, b.H}, itemImgRects, itemImgIDs)
+				}
 			}
-			shapeType := umlShapeTypeV1EngineSceneWalk(b)
-			*elements = append(*elements, map[string]any{
-				"id": rectID, "type": shapeType,
-				"x": b.X, "y": b.Y, "width": b.W, "height": b.H,
-				"angle": 0, "strokeColor": genStroke, "backgroundColor": backgroundColor,
-				"fillStyle": fillStyle, "strokeWidth": strokeWidth, "strokeStyle": "solid",
-				"roughness": 0, "opacity": 100,
-				"groupIds": []string{}, "roundness": roundness,
-				"seed": stableSceneSeedV1EngineSceneTypes(rectID), "version": 1,
-				"versionNonce":  stableSceneSeedV1EngineSceneTypes(rectID),
-				"isDeleted":     false,
-				"boundElements": boundElements,
-				"updated":       updated, "link": nil, "locked": false,
-				"customData": shapeCustomData,
-			})
-			if isXaligoActivityFinalV1EngineSceneWalk(b) {
-				appendUMLActivityFinalDotV1EngineSceneWalk(b, elements, updated)
-			}
-			if b.Tag == "entity" {
-				registerConnectionEndpointV1EngineSceneWalk(b, rectID, [4]float64{b.X, b.Y, b.W, b.H}, itemImgRects, itemImgIDs)
-			}
-			if b.Tag == "rectangle" || b.Tag == "port" {
-				registerConnectionEndpointV1EngineSceneWalk(b, rectID, [4]float64{b.X, b.Y, b.W, b.H}, itemImgRects, itemImgIDs)
-			}
-			if b.Label != "" {
+			if !activityContainer && b.Label != "" {
 				fontSize := attrFloatV1EngineLayoutAttributes(b.Attrs["font-size"], 20)
 				textX, textY := b.X+4, b.Y+2
 				textW, textH := math.Max(1, b.W-8), math.Max(1, math.Min(math.Ceil(fontSize*1.2), b.H-4))
@@ -326,8 +329,8 @@ func appendUMLActivityPartitionsV1EngineSceneWalk(box *entity.Box, elements *[]m
 		appendUMLActivityHorizontalPartitionsV1EngineSceneWalk(box, elements, updated, partitions)
 		return
 	}
-	innerX, innerY := box.X+8, box.Y+40
-	innerW, innerH := math.Max(1, box.W-16), math.Max(1, box.H-48)
+	innerX, innerY := box.X+8, box.Y+8
+	innerW, innerH := math.Max(1, box.W-16), math.Max(1, box.H-16)
 	headerH := math.Min(44, innerH*0.2)
 	laneW := innerW / float64(len(partitions))
 	for index, partition := range partitions {
@@ -390,8 +393,8 @@ func appendUMLActivityPartitionsV1EngineSceneWalk(box *entity.Box, elements *[]m
 }
 
 func appendUMLActivityHorizontalPartitionsV1EngineSceneWalk(box *entity.Box, elements *[]map[string]any, updated int64, partitions []umlActivityPartitionV1EngineSceneWalk) {
-	innerX, innerY := box.X+8, box.Y+40
-	innerW, innerH := math.Max(1, box.W-16), math.Max(1, box.H-48)
+	innerX, innerY := box.X+8, box.Y+8
+	innerW, innerH := math.Max(1, box.W-16), math.Max(1, box.H-16)
 	headerW := math.Min(132, innerW*0.24)
 	laneH := innerH / float64(len(partitions))
 	for index, partition := range partitions {
@@ -475,6 +478,10 @@ func umlActivityPartitionsV1EngineSceneWalk(box *entity.Box) []umlActivityPartit
 
 func isXaligoActivityShapeV1EngineSceneWalk(box *entity.Box) bool {
 	return box != nil && box.Tag == "rectangle" && box.Attrs["uml-diagram-kind"] == "activity-diagram"
+}
+
+func isUMLActivityContainerV1EngineSceneWalk(box *entity.Box) bool {
+	return box != nil && box.Tag == "uml" && box.Attrs["uml-kind"] == "activity-diagram"
 }
 
 func umlActivityShapeBackgroundV1EngineSceneWalk(box *entity.Box) string {

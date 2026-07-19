@@ -61,9 +61,10 @@ func layoutUMLActivityPartitionsV1EngineLayoutUmlActivity(node *entity.Node, tar
 }
 
 func layoutUMLActivityHorizontalPartitionsV1EngineLayoutUmlActivity(node *entity.Node, target *entity.Box, x, y, w, h float64, lanes []umlActivityLaneV1EngineLayoutUmlActivity) error {
-	laneH := h / float64(len(lanes))
-	usableX := x + 148
-	usableW := math.Max(MinBoxWidthV1EngineLayoutFlow, w-164)
+	laneY := y + 8
+	laneH := math.Max(MinBoxHeightV1EngineLayoutFlow, h-16) / float64(len(lanes))
+	usableX := x + 156
+	usableW := math.Max(MinBoxWidthV1EngineLayoutFlow, w-172)
 	maxNodes := 1
 	for _, lane := range lanes {
 		if len(lane.nodes) > maxNodes {
@@ -72,9 +73,9 @@ func layoutUMLActivityHorizontalPartitionsV1EngineLayoutUmlActivity(node *entity
 	}
 	step := umlActivityNodeStepHorizontalV1EngineLayoutUmlActivity(maxNodes, usableW)
 	for laneIndex, lane := range lanes {
-		laneY := y + float64(laneIndex)*laneH
+		currentLaneY := laneY + float64(laneIndex)*laneH
 		laneInnerH := math.Max(MinBoxHeightV1EngineLayoutFlow, laneH-24)
-		centerY := laneY + laneH/2
+		centerY := currentLaneY + laneH/2
 		for nodeIndex, child := range lane.nodes {
 			nodeW, nodeH := umlActivityNodeSizeV1EngineLayoutUmlActivity(child, usableW)
 			if nodeH > laneInnerH {

@@ -673,7 +673,9 @@ vertical lanes and a top lane-header band. With `lanes="horizontal"`, partitions
 become equal-height horizontal lanes with a left lane-header band. In both
 orientations, each node is centered within its owning lane. `tone="primary"` on
 `activity` or `action` uses the primary xaligo fill and white text. The partition
-ID and title are retained in editable-scene custom data. Normal frame-level
+ID and title are retained in editable-scene custom data. The UML activity
+container border and automatic diagram-kind title are omitted because page frame
+metadata supplies the visible page title. Normal frame-level
 `<connection>` elements may target activity elements by public UML reference
 such as `activity-id/action-id`, including `frame-id.activity-id/action-id` for
 cross-frame page links.
