@@ -128,6 +128,7 @@ func BuildJSONV1EngineSceneBuild(root *entity.Box, svgGroupDir string, catalogCS
 	frameMetadata := appendFrameMetadataV1EngineSceneFrameMetadata(root, &elements)
 	applySemanticElementMetadataV1EngineSceneWalk(elements, collectSemanticElementMetadataV1EngineSceneWalk(root))
 	componentInterfaces := registerUMLComponentInterfaceEndpointsV1EngineSceneBuild(elements, itemImgRects, itemImgIDs)
+	expandUMLComponentInterfaceEndpointsV1EngineSceneBuild(&elements, &componentInterfaces, itemImgRects, itemImgIDs, connections)
 	connectionsForRender := bindUMLComponentInterfaceConnectionsV1EngineSceneBuild(connections, componentInterfaces)
 	renderConnectionsV1EngineSceneConnectionRender(connectionsForRender, itemImgRects, itemLblRects, itemImgIDs, itemLblIDs, frameRects, frameElementIDs, frameMetadata, &elements)
 	appendUMLComponentCallerSocketsV1EngineSceneBuild(&elements)
@@ -149,12 +150,40 @@ func BuildJSONV1EngineSceneBuild(root *entity.Box, svgGroupDir string, catalogCS
 }
 
 type umlComponentInterfaceEndpointsV1EngineSceneBuild struct {
-	byOwner        map[string]map[string]string
+	byOwner        map[string]map[string]*umlComponentInterfaceEndpointGroupV1EngineSceneBuild
+	byKey          map[string]*umlComponentInterfaceEndpointGroupV1EngineSceneBuild
 	sideByEndpoint map[string]string
 }
 
+type umlComponentInterfaceEndpointGroupV1EngineSceneBuild struct {
+	ownerKey     string
+	label        string
+	baseKey      string
+	baseID       string
+	baseRect     [4]float64
+	portRect     [4]float64
+	endpointKeys []string
+}
+
 func registerUMLComponentInterfaceEndpointsV1EngineSceneBuild(elements []map[string]any, endpointRects map[string][4]float64, endpointIDs map[string]string) umlComponentInterfaceEndpointsV1EngineSceneBuild {
-	result := umlComponentInterfaceEndpointsV1EngineSceneBuild{byOwner: map[string]map[string]string{}, sideByEndpoint: map[string]string{}}
+	result := umlComponentInterfaceEndpointsV1EngineSceneBuild{byOwner: map[string]map[string]*umlComponentInterfaceEndpointGroupV1EngineSceneBuild{}, byKey: map[string]*umlComponentInterfaceEndpointGroupV1EngineSceneBuild{}, sideByEndpoint: map[string]string{}}
+	portRects := map[string][4]float64{}
+	for _, element := range elements {
+		customData, _ := element["customData"].(map[string]any)
+		if customData["xaligoUmlComponentInterfacePort"] != true {
+			continue
+		}
+		ownerKey, _ := customData["xaligoUmlComponentOwnerConnectionKey"].(string)
+		label, _ := customData["xaligoUmlComponentInterfaceLabel"].(string)
+		x, okX := element["x"].(float64)
+		y, okY := element["y"].(float64)
+		w, okW := element["width"].(float64)
+		h, okH := element["height"].(float64)
+		if ownerKey == "" || label == "" || !okX || !okY || !okW || !okH || w <= 0 || h <= 0 {
+			continue
+		}
+		portRects[umlComponentInterfaceEndpointKeyV1EngineSceneBuild(ownerKey, label)] = [4]float64{x, y, w, h}
+	}
 	for _, element := range elements {
 		customData, _ := element["customData"].(map[string]any)
 		if customData["xaligoUmlComponentInterfaceSymbol"] != true {
@@ -178,11 +207,75 @@ func registerUMLComponentInterfaceEndpointsV1EngineSceneBuild(elements []map[str
 		endpointIDs[endpointKey] = id
 		result.sideByEndpoint[endpointKey] = umlComponentInterfaceConnectionSideV1EngineSceneBuild([4]float64{x, y, w, h}, endpointRects[ownerKey])
 		if result.byOwner[ownerKey] == nil {
-			result.byOwner[ownerKey] = map[string]string{}
+			result.byOwner[ownerKey] = map[string]*umlComponentInterfaceEndpointGroupV1EngineSceneBuild{}
 		}
-		result.byOwner[ownerKey][label] = endpointKey
+		group := &umlComponentInterfaceEndpointGroupV1EngineSceneBuild{ownerKey: ownerKey, label: label, baseKey: endpointKey, baseID: id, baseRect: [4]float64{x, y, w, h}, portRect: portRects[endpointKey], endpointKeys: []string{endpointKey}}
+		result.byOwner[ownerKey][label] = group
+		result.byKey[endpointKey] = group
 	}
 	return result
+}
+
+func expandUMLComponentInterfaceEndpointsV1EngineSceneBuild(elements *[]map[string]any, endpoints *umlComponentInterfaceEndpointsV1EngineSceneBuild, endpointRects map[string][4]float64, endpointIDs map[string]string, connections []*entity.Node) {
+	if elements == nil || endpoints == nil || len(connections) == 0 || len(endpoints.byOwner) == 0 {
+		return
+	}
+	counts := map[string]int{}
+	for _, conn := range connections {
+		if conn == nil || conn.Attr("uml-diagram-kind") != "component-diagram" || conn.Attr("uml-relation-kind") != "association" || conn.Attr("uml-src-kind") != "component" || conn.Attr("uml-dst-kind") != "component" {
+			continue
+		}
+		srcKey := strings.TrimSpace(conn.Attrs[internalConnectionSrcKeyAttrV1EngineParseDocument])
+		dstKey := strings.TrimSpace(conn.Attrs[internalConnectionDstKeyAttrV1EngineParseDocument])
+		boundDst, ok := matchingUMLComponentInterfaceEndpointKeyV1EngineSceneBuild(*endpoints, srcKey, dstKey)
+		if ok {
+			counts[boundDst]++
+		}
+	}
+	updated := excalidrawUpdatedV1EngineSceneTypes
+	for baseKey, count := range counts {
+		if count <= 1 {
+			continue
+		}
+		group := endpoints.byKey[baseKey]
+		if group == nil {
+			continue
+		}
+		rect := group.baseRect
+		port := group.portRect
+		if port[2] <= 0 || port[3] <= 0 {
+			continue
+		}
+		diameter := rect[2]
+		step := math.Max(diameter+4, 16)
+		baseCenterY := rect[1] + rect[3]/2
+		startY := baseCenterY - step*float64(count-1)/2
+		circleLeft := rect[0]
+		trunkX := port[0] - math.Max(4, math.Min(8, port[2]*0.08))
+		for index := 0; index < count; index++ {
+			cy := startY + step*float64(index)
+			endpointKey := baseKey
+			circleID := group.baseID
+			if index == 0 {
+				moveUMLComponentInterfaceElementV1EngineSceneBuild(*elements, circleID, circleLeft, cy-diameter/2)
+			} else {
+				endpointKey = fmt.Sprintf("%s|connection-%d", baseKey, index)
+				circleID = fmt.Sprintf("%s-connection-%d", group.baseID, index)
+				appendUMLComponentInterfaceCircleV1EngineSceneBuild(elements, circleID, circleLeft, cy-diameter/2, diameter, updated, group)
+				group.endpointKeys = append(group.endpointKeys, endpointKey)
+			}
+			endpointRects[endpointKey] = [4]float64{circleLeft, cy - diameter/2, diameter, diameter}
+			endpointIDs[endpointKey] = circleID
+			endpoints.sideByEndpoint[endpointKey] = "left"
+		}
+		removeUMLComponentInterfaceStemsV1EngineSceneBuild(elements, group)
+		appendUMLComponentInterfaceLineV1EngineSceneWalk(elements, group.baseID+"-multi-trunk", trunkX, startY, trunkX, startY+step*float64(count-1), updated, map[string]any{"xaligoUmlComponentInterfaceStem": true})
+		appendUMLComponentInterfaceLineV1EngineSceneWalk(elements, group.baseID+"-multi-port-stem", trunkX, baseCenterY, port[0], baseCenterY, updated, map[string]any{"xaligoUmlComponentInterfaceStem": true})
+		for index := 0; index < count; index++ {
+			cy := startY + step*float64(index)
+			appendUMLComponentInterfaceLineV1EngineSceneWalk(elements, fmt.Sprintf("%s-multi-circle-stem-%d", group.baseID, index), circleLeft+diameter, cy, trunkX, cy, updated, map[string]any{"xaligoUmlComponentInterfaceStem": true})
+		}
+	}
 }
 
 func bindUMLComponentInterfaceConnectionsV1EngineSceneBuild(connections []*entity.Node, endpoints umlComponentInterfaceEndpointsV1EngineSceneBuild) []*entity.Node {
@@ -190,6 +283,7 @@ func bindUMLComponentInterfaceConnectionsV1EngineSceneBuild(connections []*entit
 		return connections
 	}
 	bound := make([]*entity.Node, 0, len(connections))
+	usedByBase := map[string]int{}
 	for _, conn := range connections {
 		if conn == nil || conn.Attr("uml-diagram-kind") != "component-diagram" || conn.Attr("uml-relation-kind") != "association" || conn.Attr("uml-src-kind") != "component" || conn.Attr("uml-dst-kind") != "component" {
 			bound = append(bound, conn)
@@ -202,6 +296,17 @@ func bindUMLComponentInterfaceConnectionsV1EngineSceneBuild(connections []*entit
 			bound = append(bound, conn)
 			continue
 		}
+		group := endpoints.byKey[boundDst]
+		if group == nil || len(group.endpointKeys) == 0 {
+			bound = append(bound, conn)
+			continue
+		}
+		endpointIndex := usedByBase[group.baseKey]
+		if endpointIndex >= len(group.endpointKeys) {
+			endpointIndex = len(group.endpointKeys) - 1
+		}
+		boundDst = group.endpointKeys[endpointIndex]
+		usedByBase[group.baseKey]++
 		clone := *conn
 		clone.Attrs = cloneAttrsV1EngineParseTable(conn.Attrs)
 		clone.Attrs[internalConnectionSrcKeyAttrV1EngineParseDocument] = srcKey
@@ -242,6 +347,57 @@ func umlComponentInterfaceConnectionSideV1EngineSceneBuild(symbolRect, ownerRect
 	return "right"
 }
 
+func appendUMLComponentInterfaceCircleV1EngineSceneBuild(elements *[]map[string]any, id string, x, y, diameter float64, updated int64, group *umlComponentInterfaceEndpointGroupV1EngineSceneBuild) {
+	if elements == nil || group == nil {
+		return
+	}
+	seed := stableSceneSeedV1EngineSceneTypes(id)
+	*elements = append(*elements, map[string]any{
+		"id": id, "type": "ellipse",
+		"x": x, "y": y, "width": diameter, "height": diameter,
+		"angle": 0, "strokeColor": "#052d6e", "backgroundColor": "#ffffff",
+		"fillStyle": "solid", "strokeWidth": 1.2, "strokeStyle": "solid",
+		"roughness": 0, "opacity": 100,
+		"groupIds": []string{}, "roundness": nil,
+		"seed": seed, "version": 1, "versionNonce": seed,
+		"isDeleted": false, "boundElements": nil,
+		"updated": updated, "link": nil, "locked": false,
+		"customData": map[string]any{
+			"xaligoUmlComponentInterfaceLabel":     group.label,
+			"xaligoUmlComponentOwnerConnectionKey": group.ownerKey,
+			"xaligoUmlComponentInterfaceSymbol":    true,
+			"xaligoUmlComponentInterfaceCircle":    true,
+		},
+	})
+}
+
+func moveUMLComponentInterfaceElementV1EngineSceneBuild(elements []map[string]any, id string, x, y float64) {
+	for _, element := range elements {
+		elementID, _ := element["id"].(string)
+		if elementID != id {
+			continue
+		}
+		element["x"] = x
+		element["y"] = y
+		return
+	}
+}
+
+func removeUMLComponentInterfaceStemsV1EngineSceneBuild(elements *[]map[string]any, group *umlComponentInterfaceEndpointGroupV1EngineSceneBuild) {
+	if elements == nil || group == nil {
+		return
+	}
+	filtered := (*elements)[:0]
+	for _, element := range *elements {
+		customData, _ := element["customData"].(map[string]any)
+		if customData["xaligoUmlComponentInterfaceStem"] == true && customData["xaligoUmlComponentOwnerConnectionKey"] == group.ownerKey && customData["xaligoUmlComponentInterfaceLabel"] == group.label {
+			continue
+		}
+		filtered = append(filtered, element)
+	}
+	*elements = filtered
+}
+
 func matchingUMLComponentInterfaceEndpointKeyV1EngineSceneBuild(endpoints umlComponentInterfaceEndpointsV1EngineSceneBuild, srcOwnerKey, dstOwnerKey string) (string, bool) {
 	srcByLabel := endpoints.byOwner[srcOwnerKey]
 	dstByLabel := endpoints.byOwner[dstOwnerKey]
@@ -259,7 +415,7 @@ func matchingUMLComponentInterfaceEndpointKeyV1EngineSceneBuild(endpoints umlCom
 	}
 	sort.Strings(labels)
 	label := labels[0]
-	return dstByLabel[label], true
+	return dstByLabel[label].baseKey, true
 }
 
 func umlComponentInterfaceEndpointKeyV1EngineSceneBuild(ownerKey, label string) string {

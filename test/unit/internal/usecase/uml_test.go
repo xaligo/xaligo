@@ -701,16 +701,16 @@ func TestUMLComplexConnectedComponentSampleBindsInterfaces(t *testing.T) {
 		}
 		associationBindings++
 	}
-	if len(interfaceIDs) != 6 || callerSockets != 3 || associationBindings != 3 {
-		t.Fatalf("complex sample counts = interface symbols %d caller sockets %d associations %d, want 6, 3, and 3", len(interfaceIDs), callerSockets, associationBindings)
+	if len(interfaceIDs) != 8 || callerSockets != 4 || associationBindings != 4 {
+		t.Fatalf("complex sample counts = interface symbols %d caller sockets %d associations %d, want 8, 4, and 4", len(interfaceIDs), callerSockets, associationBindings)
 	}
 	svg, err := newUsecase().RenderSVG(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
 		t.Fatalf("RenderSVG() error = %v", err)
 	}
 	paths := svgUMLComponentAssociationPathsV1UMLTest(t, string(svg))
-	if len(paths) != 3 {
-		t.Fatalf("SVG association paths = %d, want 3", len(paths))
+	if len(paths) != 4 {
+		t.Fatalf("SVG association paths = %d, want 4", len(paths))
 	}
 	for _, path := range paths {
 		prev := path[len(path)-2]
@@ -721,6 +721,66 @@ func TestUMLComplexConnectedComponentSampleBindsInterfaces(t *testing.T) {
 		if prev.x >= last.x {
 			t.Fatalf("SVG association final segment = %#v -> %#v, want approach from left of interface circle", prev, last)
 		}
+	}
+}
+
+func TestUMLComponentMultipleCallersRenderSeparateInterfaceCircles(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="980" height="520"><uml id="components"><component-diagram grid="3"><component id="web" title="Web"><interface>Shared API</interface></component><component id="worker" title="Worker"><interface>Shared API</interface></component><component id="api" title="API"><interface>Shared API</interface></component><association src="web" dst="api"/><association src="worker" dst="api"/></component-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var raw map[string]any
+	if err := json.Unmarshal(rawScene, &raw); err != nil {
+		t.Fatalf("json.Unmarshal(raw map) error = %v", err)
+	}
+	elements, _ := raw["elements"].([]any)
+	interfaceCircles := map[string]map[string]any{}
+	associationEndIDs := map[string]bool{}
+	associations := 0
+	for _, rawElement := range elements {
+		element, _ := rawElement.(map[string]any)
+		id, _ := element["id"].(string)
+		customData, _ := element["customData"].(map[string]any)
+		if customData["xaligoUmlComponentInterfaceCircle"] == true {
+			interfaceCircles[id] = element
+		}
+		if customData["xaligoUmlRelationKind"] != "association" {
+			continue
+		}
+		associations++
+		endBinding, _ := element["endBinding"].(map[string]any)
+		endID, _ := endBinding["elementId"].(string)
+		endFixedPoint, _ := endBinding["fixedPoint"].([]any)
+		if len(endFixedPoint) < 2 || endFixedPoint[0] != 0.0 || endFixedPoint[1] != 0.5 {
+			t.Fatalf("association end fixed point = %#v, want left-center of interface circle", endFixedPoint)
+		}
+		circle := interfaceCircles[endID]
+		if circle == nil {
+			t.Fatalf("association end %q is not an interface circle", endID)
+		}
+		points, _ := element["points"].([]any)
+		prev, _ := points[len(points)-2].([]any)
+		last, _ := points[len(points)-1].([]any)
+		prevX, _ := prev[0].(float64)
+		lastX, _ := last[0].(float64)
+		prevY, _ := prev[1].(float64)
+		lastY, _ := last[1].(float64)
+		if math.Abs(prevY-lastY) > 0.1 || prevX >= lastX {
+			t.Fatalf("association final segment = %#v -> %#v, want horizontal approach from left", prev, last)
+		}
+		absoluteEndY := element["y"].(float64) + lastY
+		circleCenterY := circle["y"].(float64) + circle["height"].(float64)/2
+		if math.Abs(absoluteEndY-circleCenterY) > 0.1 {
+			t.Fatalf("association end y = %.1f, circle center y = %.1f", absoluteEndY, circleCenterY)
+		}
+		associationEndIDs[endID] = true
+	}
+	if associations != 2 || len(associationEndIDs) != 2 {
+		t.Fatalf("associations = %d distinct destination circles = %d, want 2 and 2", associations, len(associationEndIDs))
+	}
+	if len(interfaceCircles) != 4 {
+		t.Fatalf("interface circles = %d, want three component interfaces plus one extra destination circle", len(interfaceCircles))
 	}
 }
 

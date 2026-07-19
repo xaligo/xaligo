@@ -1029,7 +1029,7 @@ func appendUMLComponentInterfacesV1EngineSceneWalk(box *entity.Box, elements *[]
 			"updated": updated, "link": nil, "locked": false,
 			"customData": umlComponentInterfaceCustomDataV1EngineSceneWalk(box, label, map[string]any{"xaligoUmlComponentInterfaceSymbol": true, "xaligoUmlComponentInterfaceCircle": true}),
 		})
-		appendUMLComponentInterfaceLineV1EngineSceneWalk(elements, fmt.Sprintf("%s-interface-%d-stem", box.ID, index), circleX+diameter, cy, portX, cy, updated, map[string]any{"xaligoUmlComponentInterfaceStem": true})
+		appendUMLComponentInterfaceLineV1EngineSceneWalk(elements, fmt.Sprintf("%s-interface-%d-stem", box.ID, index), circleX+diameter, cy, portX, cy, updated, umlComponentInterfaceCustomDataV1EngineSceneWalk(box, label, map[string]any{"xaligoUmlComponentInterfaceStem": true}))
 	}
 }
 

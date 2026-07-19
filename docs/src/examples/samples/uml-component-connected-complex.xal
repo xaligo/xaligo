@@ -11,6 +11,7 @@
           </component>
           <component id="catalog" title="Catalog Service">
             <interface>Catalog API</interface>
+            <interface>Ordering API</interface>
           </component>
           <component id="orders" title="Order Service">
             <interface>Ordering API</interface>
@@ -22,6 +23,7 @@
 
           <association src="storefront" dst="catalog" />
           <association src="storefront" dst="orders" />
+          <association src="catalog" dst="orders" />
           <association src="orders" dst="payments" />
         </component-diagram>
       </uml>
