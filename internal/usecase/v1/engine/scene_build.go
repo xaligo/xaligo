@@ -485,51 +485,19 @@ func appendUMLComponentCallerSocketsV1EngineSceneBuild(elements *[]map[string]an
 		if len(absolutePoints) < 2 {
 			continue
 		}
-		socket, direction := umlComponentCallerSocketPointV1EngineSceneBuild(absolutePoints)
-		appendUMLComponentCallerSocketV1EngineSceneBuild(elements, id+"-caller-socket", socket, direction, updated)
+		endpoint := absolutePoints[len(absolutePoints)-1]
+		appendUMLComponentCallerSocketV1EngineSceneBuild(elements, id+"-caller-socket", endpoint, updated)
 	}
 }
 
-func umlComponentCallerSocketPointV1EngineSceneBuild(points [][2]float64) ([2]float64, [2]float64) {
-	const stub = 20.0
-	remaining := stub
-	for index := 1; index < len(points); index++ {
-		start := points[index-1]
-		end := points[index]
-		dx := end[0] - start[0]
-		dy := end[1] - start[1]
-		length := math.Hypot(dx, dy)
-		if length <= 0 {
-			continue
-		}
-		if remaining <= length {
-			ratio := remaining / length
-			socket := [2]float64{start[0] + dx*ratio, start[1] + dy*ratio}
-			return socket, start
-		}
-		remaining -= length
-	}
-	return points[len(points)-2], points[len(points)-1]
-}
-
-func appendUMLComponentCallerSocketV1EngineSceneBuild(elements *[]map[string]any, id string, start, next [2]float64, updated int64) {
+func appendUMLComponentCallerSocketV1EngineSceneBuild(elements *[]map[string]any, id string, endpoint [2]float64, updated int64) {
 	const radius = 7.0
-	dx := next[0] - start[0]
-	dy := next[1] - start[1]
-	length := math.Hypot(dx, dy)
-	if length <= 0 {
-		return
-	}
-	ux, uy := dx/length, dy/length
-	px, py := -uy, ux
 	absolute := make([][2]float64, 0, 13)
 	minX, minY := math.Inf(1), math.Inf(1)
 	maxX, maxY := math.Inf(-1), math.Inf(-1)
 	for index := 0; index <= 12; index++ {
-		theta := -math.Pi/2 + math.Pi*float64(index)/12
-		back := -math.Cos(theta) * radius
-		offset := math.Sin(theta) * radius
-		point := [2]float64{start[0] + ux*back + px*offset, start[1] + uy*back + py*offset}
+		theta := -math.Pi/2 - math.Pi*float64(index)/12
+		point := [2]float64{endpoint[0] + math.Cos(theta)*radius, endpoint[1] + math.Sin(theta)*radius}
 		absolute = append(absolute, point)
 		minX = math.Min(minX, point[0])
 		minY = math.Min(minY, point[1])

@@ -16,8 +16,8 @@
 <path d="M 95.58 254.4 L 100.08 254.4" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
 <path d="M 552 235.6 L 852 235.6" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
 <path d="M 539.58 254.4 L 544.08 254.4" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
-<path d="M 433 257 L 434.812 256.761 L 436.5 256.062 L 437.95 254.95 L 439.062 253.5 L 439.761 251.812 L 440 250 L 439.761 248.188 L 439.062 246.5 L 437.95 245.05 L 436.5 243.938 L 434.812 243.239 L 433 243" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
-<path d="M 413 250 L 433 250 L 502.58 250 L 502.58 252 L 522.58 252" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<path d="M 522.58 247.4 L 520.768 247.639 L 519.08 248.338 L 517.63 249.45 L 516.518 250.9 L 515.819 252.588 L 515.58 254.4 L 515.819 256.212 L 516.518 257.9 L 517.63 259.35 L 519.08 260.462 L 520.768 261.161 L 522.58 261.4" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
+<path d="M 413 250 L 433 250 L 502.58 250 L 502.58 254.4 L 522.58 254.4" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
 <defs><clipPath id="xaligo-text-clip-fb3c444a828ecff1" clipPathUnits="userSpaceOnUse"><rect x="118" y="206" width="280" height="25.6"/></clipPath></defs>
 <text x="118" y="224.4" fill="#FFFFFF" font-family="Helvetica" font-size="14" text-anchor="start" clip-path="url(#xaligo-text-clip-fb3c444a828ecff1)"><tspan x="118" y="224.4">Checkout UI</tspan></text>
 <defs><clipPath id="xaligo-text-clip-2696a0c8922f18b8" clipPathUnits="userSpaceOnUse"><rect x="103.08" y="247.4" width="60" height="14"/></clipPath></defs>

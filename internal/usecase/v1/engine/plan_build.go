@@ -238,6 +238,12 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 		if el.CustomData != nil && boolishV1EngineSceneBuild(el.CustomData.UMLComponentInterfaceDestination) {
 			if req, ok := reqByConn[path.ID]; ok {
 				path.Points = restoreDestinationApproachV1EngineRouteBuild(path.Points, req.DstSide, rOpt.Stub)
+				if endpoint, ok := connectorSceneEndpointV1EnginePlanBuild(el); ok && len(path.Points) > 0 {
+					path.Points[len(path.Points)-1] = endpoint
+					if len(path.Points) > 1 {
+						path.Points[len(path.Points)-2].Y = endpoint.Y
+					}
+				}
 				routed[i] = path
 			}
 		}
@@ -316,4 +322,15 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 		Legend:          buildLegendV1EnginePlanLegend(scene, opt.LegendEntries),
 		ConnectorLegend: connectorLegend,
 	}
+}
+
+func connectorSceneEndpointV1EnginePlanBuild(el *entity.Element) (ptV1EngineRouteTypes, bool) {
+	if el == nil || len(el.Points) == 0 {
+		return ptV1EngineRouteTypes{}, false
+	}
+	last := el.Points[len(el.Points)-1]
+	if len(last) < 2 {
+		return ptV1EngineRouteTypes{}, false
+	}
+	return ptV1EngineRouteTypes{X: el.X + last[0], Y: el.Y + last[1]}, true
 }

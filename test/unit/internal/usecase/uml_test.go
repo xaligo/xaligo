@@ -597,6 +597,7 @@ func TestUMLConnectedComponentSampleRendersBoundaryInterfaces(t *testing.T) {
 	interfaceIDs := map[string]bool{}
 	associationStartID, associationEndID := "", ""
 	var callerSocketElement map[string]any
+	var associationElement map[string]any
 	for index, rawElement := range elements {
 		element, _ := rawElement.(map[string]any)
 		customData, _ := element["customData"].(map[string]any)
@@ -616,6 +617,7 @@ func TestUMLConnectedComponentSampleRendersBoundaryInterfaces(t *testing.T) {
 		if customData["xaligoUmlRelationKind"] == "association" {
 			associations++
 			associationIndex = index
+			associationElement = element
 			startBinding, _ := element["startBinding"].(map[string]any)
 			endBinding, _ := element["endBinding"].(map[string]any)
 			associationStartID, _ = startBinding["elementId"].(string)
@@ -634,8 +636,37 @@ func TestUMLConnectedComponentSampleRendersBoundaryInterfaces(t *testing.T) {
 	if callerSocketElement == nil {
 		t.Fatalf("caller socket element missing")
 	}
-	if callerSocketElement["height"].(float64) <= callerSocketElement["width"].(float64) {
-		t.Fatalf("caller socket size = %.1fx%.1f, want vertical semicircle for horizontal caller line", callerSocketElement["width"].(float64), callerSocketElement["height"].(float64))
+	if associationElement == nil {
+		t.Fatalf("association element missing")
+	}
+	if math.Abs(callerSocketElement["width"].(float64)-7) > 0.1 || math.Abs(callerSocketElement["height"].(float64)-14) > 0.1 {
+		t.Fatalf("caller socket size = %.1fx%.1f, want fixed left semicircle", callerSocketElement["width"].(float64), callerSocketElement["height"].(float64))
+	}
+	associationPoints, _ := associationElement["points"].([]any)
+	associationLast, _ := associationPoints[len(associationPoints)-1].([]any)
+	associationEndX := associationElement["x"].(float64) + associationLast[0].(float64)
+	associationEndY := associationElement["y"].(float64) + associationLast[1].(float64)
+	socketX := callerSocketElement["x"].(float64)
+	socketY := callerSocketElement["y"].(float64)
+	socketW := callerSocketElement["width"].(float64)
+	socketH := callerSocketElement["height"].(float64)
+	if math.Abs(socketX+socketW-associationEndX) > 0.1 || math.Abs(socketY+socketH/2-associationEndY) > 0.1 {
+		t.Fatalf("caller socket endpoint = right %.1f centerY %.1f, association end %.1f %.1f", socketX+socketW, socketY+socketH/2, associationEndX, associationEndY)
+	}
+	socketPoints, _ := callerSocketElement["points"].([]any)
+	mid, _ := socketPoints[len(socketPoints)/2].([]any)
+	if mid[0].(float64) > 0.1 || math.Abs(mid[1].(float64)-socketH/2) > 0.1 {
+		t.Fatalf("caller socket midpoint = %#v, want left-bulging semicircle", mid)
+	}
+	svg, err := newUsecase().RenderSVG(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderSVG() error = %v", err)
+	}
+	svgPaths := svgUMLComponentAssociationPathsV1UMLTest(t, string(svg))
+	svgCircles := svgUMLComponentInterfaceCircleCentersV1UMLTest(t, string(svg))
+	svgLast := svgPaths[0][len(svgPaths[0])-1]
+	if math.Abs(svgLast.y-svgCircles[1].y) > 0.1 {
+		t.Fatalf("SVG association end y = %.1f, interface circle center y = %.1f", svgLast.y, svgCircles[1].y)
 	}
 }
 
@@ -1440,6 +1471,28 @@ func svgUMLComponentAssociationPathsV1UMLTest(t *testing.T, svg string) [][]svgP
 		t.Fatalf("no SVG component association paths found")
 	}
 	return paths
+}
+
+func svgUMLComponentInterfaceCircleCentersV1UMLTest(t *testing.T, svg string) []svgPointV1UMLTest {
+	t.Helper()
+	ellipseRE := regexp.MustCompile(`<ellipse cx="(-?[0-9]+(?:\.[0-9]+)?)" cy="(-?[0-9]+(?:\.[0-9]+)?)" rx="6" ry="6"[^>]*stroke="#052D6E"`)
+	matches := ellipseRE.FindAllStringSubmatch(svg, -1)
+	centers := make([]svgPointV1UMLTest, 0, len(matches))
+	for _, match := range matches {
+		x, err := strconv.ParseFloat(match[1], 64)
+		if err != nil {
+			t.Fatalf("parse SVG ellipse cx %q: %v", match[1], err)
+		}
+		y, err := strconv.ParseFloat(match[2], 64)
+		if err != nil {
+			t.Fatalf("parse SVG ellipse cy %q: %v", match[2], err)
+		}
+		centers = append(centers, svgPointV1UMLTest{x: x, y: y})
+	}
+	if len(centers) == 0 {
+		t.Fatalf("no SVG component interface circles found")
+	}
+	return centers
 }
 
 func svgStateBodyRectsV1UMLTest(t *testing.T, svg string) []svgRectV1UMLTest {
