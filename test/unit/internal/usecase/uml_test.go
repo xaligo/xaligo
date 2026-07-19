@@ -725,7 +725,7 @@ func TestUMLComplexConnectedComponentSampleBindsInterfaces(t *testing.T) {
 }
 
 func TestUMLComponentMultipleCallersRenderSeparateInterfaceCircles(t *testing.T) {
-	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="980" height="520"><uml id="components"><component-diagram grid="3"><component id="web" title="Web"><interface>Shared API</interface></component><component id="worker" title="Worker"><interface>Shared API</interface></component><component id="api" title="API"><interface>Shared API</interface></component><association src="web" dst="api"/><association src="worker" dst="api"/></component-diagram></uml></frame></frames></xaligo>`)
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="980" height="520"><uml id="components"><component-diagram grid="3"><component id="web" title="Web"><interface>Shared API</interface></component><component id="worker" title="Worker"><interface>Shared API</interface></component><component id="api" title="API"><interface>Shared API</interface><interface>Admin API</interface></component><association src="web" dst="api"/><association src="worker" dst="api"/></component-diagram></uml></frame></frames></xaligo>`)
 	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
 		t.Fatalf("RenderExcalidraw() error = %v", err)
@@ -738,6 +738,8 @@ func TestUMLComponentMultipleCallersRenderSeparateInterfaceCircles(t *testing.T)
 	interfaceCircles := map[string]map[string]any{}
 	associationEndIDs := map[string]bool{}
 	associations := 0
+	minAPICircleX := math.Inf(1)
+	maxAPICircleX := math.Inf(-1)
 	multiTrunks := 0
 	multiPortStems := 0
 	multiCircleStems := 0
@@ -749,6 +751,11 @@ func TestUMLComponentMultipleCallersRenderSeparateInterfaceCircles(t *testing.T)
 		customData, _ := element["customData"].(map[string]any)
 		if customData["xaligoUmlComponentInterfaceCircle"] == true {
 			interfaceCircles[id] = element
+			if customData["xaligoUmlComponentOwnerLocalId"] == "api" {
+				x, _ := element["x"].(float64)
+				minAPICircleX = math.Min(minAPICircleX, x)
+				maxAPICircleX = math.Max(maxAPICircleX, x)
+			}
 		}
 		if customData["xaligoUmlComponentInterfaceStem"] == true {
 			width, _ := element["width"].(float64)
@@ -807,8 +814,11 @@ func TestUMLComponentMultipleCallersRenderSeparateInterfaceCircles(t *testing.T)
 	if associations != 2 || len(associationEndIDs) != 2 {
 		t.Fatalf("associations = %d distinct destination circles = %d, want 2 and 2", associations, len(associationEndIDs))
 	}
-	if len(interfaceCircles) != 4 {
-		t.Fatalf("interface circles = %d, want three component interfaces plus one extra destination circle", len(interfaceCircles))
+	if len(interfaceCircles) != 5 {
+		t.Fatalf("interface circles = %d, want four component interfaces plus one extra destination circle", len(interfaceCircles))
+	}
+	if math.Abs(maxAPICircleX-minAPICircleX) > 0.1 {
+		t.Fatalf("API interface circle x range = %.1f..%.1f, want single and multiple circles horizontally aligned", minAPICircleX, maxAPICircleX)
 	}
 	if multiTrunks != 1 || multiPortStems != 1 || multiCircleStems != 2 {
 		t.Fatalf("multi interface stems = trunks %d port stems %d circle stems %d, want 1, 1, and 2", multiTrunks, multiPortStems, multiCircleStems)

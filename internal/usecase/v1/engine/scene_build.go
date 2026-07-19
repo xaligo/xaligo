@@ -250,10 +250,9 @@ func expandUMLComponentInterfaceEndpointsV1EngineSceneBuild(elements *[]map[stri
 		step := math.Max(diameter+4, 16)
 		baseCenterY := rect[1] + rect[3]/2
 		startY := baseCenterY - step*float64(count-1)/2
-		branchGap := math.Max(diameter*1.4, 16)
-		portGap := math.Max(diameter*1.4, 16)
-		circleLeft := port[0] - diameter - branchGap - portGap
-		trunkX := circleLeft + diameter + branchGap
+		circleLeft := rect[0]
+		circleRight := circleLeft + diameter
+		trunkX := circleRight + math.Max(1.5, (port[0]-circleRight)/2)
 		for index := 0; index < count; index++ {
 			cy := startY + step*float64(index)
 			endpointKey := baseKey
