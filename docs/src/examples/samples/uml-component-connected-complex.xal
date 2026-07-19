@@ -6,19 +6,19 @@
       <uml id="connected-component-interfaces">
         <component-diagram direction="right" grid="2">
           <component id="storefront" title="Storefront">
-            <interface>Catalog API</interface>
-            <interface>Ordering API</interface>
+            <interface description="Browse product data">Catalog API</interface>
+            <interface description="Submit checkout requests">Ordering API</interface>
           </component>
           <component id="catalog" title="Catalog Service">
-            <interface>Catalog API</interface>
-            <interface>Ordering API</interface>
+            <interface description="Product lookup">Catalog API</interface>
+            <interface description="Inventory reservation">Ordering API</interface>
           </component>
           <component id="orders" title="Order Service">
-            <interface>Ordering API</interface>
-            <interface>Payment API</interface>
+            <interface description="Order lifecycle">Ordering API</interface>
+            <interface description="Payment authorization">Payment API</interface>
           </component>
           <component id="payments" title="Payment Service">
-            <interface>Payment API</interface>
+            <interface description="Charge processing">Payment API</interface>
           </component>
 
           <association src="storefront" dst="catalog" />

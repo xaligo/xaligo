@@ -6,14 +6,14 @@
       <uml id="service-components">
         <component-diagram direction="right" grid="3">
           <component id="web" title="Web UI">
-            <interface>Ordering API</interface>
+            <interface description="Checkout commands">Ordering API</interface>
           </component>
           <component id="orders" title="Order Service">
-            <interface>Ordering API</interface>
-            <interface>Order Store</interface>
+            <interface description="Order workflow commands">Ordering API</interface>
+            <interface description="Persistence boundary">Order Store</interface>
           </component>
           <component id="repository-adapter" title="PostgreSQL Adapter">
-            <interface>Order Store</interface>
+            <interface description="Order records">Order Store</interface>
           </component>
           <artifact id="schema" title="order-schema.sql">
             <property>version = 12</property>

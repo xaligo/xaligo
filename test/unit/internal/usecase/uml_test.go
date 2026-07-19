@@ -472,7 +472,7 @@ func TestUMLComponentRendersComponentNotation(t *testing.T) {
 }
 
 func TestUMLComponentRendersBoundaryInterfaces(t *testing.T) {
-	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="760" height="420"><uml id="components"><component-diagram><component id="service" title="Order Service"><interface>Ordering API</interface><interface>Order Store</interface></component></component-diagram></uml></frame></frames></xaligo>`)
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="760" height="420"><uml id="components"><component-diagram><component id="service" title="Order Service"><interface description="Command boundary">Ordering API</interface><interface description="Persistence contract">Order Store</interface></component></component-diagram></uml></frame></frames></xaligo>`)
 	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
 		t.Fatalf("RenderExcalidraw() error = %v", err)
@@ -482,11 +482,12 @@ func TestUMLComponentRendersBoundaryInterfaces(t *testing.T) {
 		t.Fatalf("json.Unmarshal(raw map) error = %v", err)
 	}
 	elements, _ := raw["elements"].([]any)
-	interfaceSymbols, interfacePorts, portLabels := 0, 0, 0
+	interfaceSymbols, interfacePorts, portLabels, descriptionBoxes, descriptionTexts := 0, 0, 0, 0, 0
 	var component map[string]any
 	var componentHeader map[string]any
 	var interfacePort map[string]any
 	var interfaceSymbol map[string]any
+	var interfaceDescription map[string]any
 	var interfacePortElements []map[string]any
 	for _, rawElement := range elements {
 		element, _ := rawElement.(map[string]any)
@@ -505,10 +506,15 @@ func TestUMLComponentRendersBoundaryInterfaces(t *testing.T) {
 			interfacePortElements = append(interfacePortElements, element)
 		case customData["xaligoUmlComponentInterfacePortLabel"] == true:
 			portLabels++
+		case customData["xaligoUmlComponentInterfaceDescription"] == true:
+			descriptionBoxes++
+			interfaceDescription = element
+		case customData["xaligoUmlComponentInterfaceDescriptionText"] == true:
+			descriptionTexts++
 		}
 	}
-	if interfaceSymbols != 2 || interfacePorts != 2 || portLabels != 2 {
-		t.Fatalf("boundary interface counts = symbols %d ports %d labels %d, want 2 each", interfaceSymbols, interfacePorts, portLabels)
+	if interfaceSymbols != 2 || interfacePorts != 2 || portLabels != 2 || descriptionBoxes != 2 || descriptionTexts != 2 {
+		t.Fatalf("boundary interface counts = symbols %d ports %d labels %d descriptions %d texts %d, want 2 each", interfaceSymbols, interfacePorts, portLabels, descriptionBoxes, descriptionTexts)
 	}
 	if component == nil {
 		t.Fatalf("component shape missing")
@@ -522,9 +528,17 @@ func TestUMLComponentRendersBoundaryInterfaces(t *testing.T) {
 	if interfacePort["type"] != "rectangle" || interfacePort["backgroundColor"] != "#ffffff" {
 		t.Fatalf("interface port style = type %q background %q", interfacePort["type"], interfacePort["backgroundColor"])
 	}
+	if interfaceDescription == nil || interfaceDescription["type"] != "rectangle" || interfaceDescription["backgroundColor"] != "#ffffff" {
+		t.Fatalf("interface description style = %#v, want white rectangle", interfaceDescription)
+	}
 	componentX := component["x"].(float64)
 	portX := interfacePort["x"].(float64)
+	portY := interfacePort["y"].(float64)
 	portW := interfacePort["width"].(float64)
+	portH := interfacePort["height"].(float64)
+	descriptionX := interfaceDescription["x"].(float64)
+	descriptionY := interfaceDescription["y"].(float64)
+	descriptionH := interfaceDescription["height"].(float64)
 	symbolX := interfaceSymbol["x"].(float64)
 	symbolW := interfaceSymbol["width"].(float64)
 	portProtrusion := componentX - portX
@@ -533,6 +547,9 @@ func TestUMLComponentRendersBoundaryInterfaces(t *testing.T) {
 	}
 	if gap := portX - (symbolX + symbolW); gap < 2 || gap > 6 {
 		t.Fatalf("interface symbol gap = %.1f, want circle closer to port rectangle", gap)
+	}
+	if descriptionX <= portX+portW || math.Abs(descriptionY-portY) > 0.1 || math.Abs(descriptionH-portH) > 0.1 {
+		t.Fatalf("interface description box = x %.1f y %.1f h %.1f, port = x %.1f w %.1f y %.1f h %.1f; want same-height box to the right", descriptionX, descriptionY, descriptionH, portX, portW, portY, portH)
 	}
 	headerBottom := componentHeader["y"].(float64) + componentHeader["height"].(float64)
 	for _, portElement := range interfacePortElements {

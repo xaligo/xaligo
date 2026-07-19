@@ -7,24 +7,31 @@
 <rect x="198" y="210" width="300" height="96" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
 <rect x="198" y="210" width="300" height="33.6" fill="#08B8EA" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
 <rect x="190.08" y="253.4" width="66" height="18" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
+<rect x="259.68" y="253.4" width="102" height="18" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
 <ellipse cx="179.58" cy="262.4" rx="6" ry="6" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.2" stroke-opacity="1"/>
 <rect x="190.08" y="279.4" width="66" height="18" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
+<rect x="259.68" y="279.4" width="102" height="18" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
 <ellipse cx="179.58" cy="288.4" rx="6" ry="6" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.2" stroke-opacity="1"/>
 <rect x="822" y="210" width="300" height="96" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
 <rect x="822" y="210" width="300" height="33.6" fill="#08B8EA" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
 <rect x="814.08" y="253.4" width="66" height="18" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
+<rect x="883.68" y="253.4" width="102" height="18" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
 <ellipse cx="803.58" cy="262.4" rx="6" ry="6" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.2" stroke-opacity="1"/>
 <rect x="814.08" y="279.4" width="66" height="18" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
+<rect x="883.68" y="279.4" width="102" height="18" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
 <ellipse cx="803.58" cy="288.4" rx="6" ry="6" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.2" stroke-opacity="1"/>
 <rect x="198" y="494" width="300" height="96" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
 <rect x="198" y="494" width="300" height="33.6" fill="#08B8EA" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
 <rect x="190.08" y="537.4" width="66" height="18" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
+<rect x="259.68" y="537.4" width="102" height="18" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
 <ellipse cx="179.58" cy="537.4" rx="6" ry="6" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.2" stroke-opacity="1"/>
 <rect x="190.08" y="563.4" width="66" height="18" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
+<rect x="259.68" y="563.4" width="102" height="18" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
 <ellipse cx="179.58" cy="572.4" rx="6" ry="6" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.2" stroke-opacity="1"/>
 <rect x="822" y="494" width="300" height="96" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
 <rect x="822" y="494" width="300" height="33.6" fill="#08B8EA" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
 <rect x="814.08" y="537.4" width="66" height="18" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
+<rect x="883.68" y="537.4" width="102" height="18" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
 <ellipse cx="803.58" cy="546.4" rx="6" ry="6" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.2" stroke-opacity="1"/>
 <ellipse cx="179.58" cy="555.4" rx="6" ry="6" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.2" stroke-opacity="1"/>
 <path d="M 198 243.6 L 498 243.6" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
@@ -54,24 +61,38 @@
 <text x="208" y="232.4" fill="#FFFFFF" font-family="Helvetica" font-size="14" text-anchor="start" clip-path="url(#xaligo-text-clip-fad0bad75af9a19d)"><tspan x="208" y="232.4">Storefront</tspan></text>
 <defs><clipPath id="xaligo-text-clip-ac2ad72aadf9b6fb" clipPathUnits="userSpaceOnUse"><rect x="193.08" y="255.4" width="60" height="14"/></clipPath></defs>
 <text x="223.08" y="266.9" fill="#052D6E" font-family="Helvetica" font-size="9" text-anchor="middle" clip-path="url(#xaligo-text-clip-ac2ad72aadf9b6fb)"><tspan x="223.08" y="266.9">Catalog API</tspan></text>
+<defs><clipPath id="xaligo-text-clip-99468354392688b0" clipPathUnits="userSpaceOnUse"><rect x="263.68" y="255.4" width="94" height="14"/></clipPath></defs>
+<text x="263.68" y="266.9" fill="#052D6E" font-family="Helvetica" font-size="9" text-anchor="start" clip-path="url(#xaligo-text-clip-99468354392688b0)"><tspan x="263.68" y="266.9">Browse product data</tspan></text>
 <defs><clipPath id="xaligo-text-clip-a0c45d0e7aee27b5" clipPathUnits="userSpaceOnUse"><rect x="193.08" y="281.4" width="60" height="14"/></clipPath></defs>
 <text x="223.08" y="292.9" fill="#052D6E" font-family="Helvetica" font-size="9" text-anchor="middle" clip-path="url(#xaligo-text-clip-a0c45d0e7aee27b5)"><tspan x="223.08" y="292.9">Ordering API</tspan></text>
+<defs><clipPath id="xaligo-text-clip-99459082bbda0f66" clipPathUnits="userSpaceOnUse"><rect x="263.68" y="281.4" width="94" height="14"/></clipPath></defs>
+<text x="263.68" y="288.4" fill="#052D6E" font-family="Helvetica" font-size="7" text-anchor="start" clip-path="url(#xaligo-text-clip-99459082bbda0f66)"><tspan x="263.68" y="288.4">Submit checkout</tspan><tspan x="263.68" dy="7">requests</tspan></text>
 <defs><clipPath id="xaligo-text-clip-65b8a0cea6304d81" clipPathUnits="userSpaceOnUse"><rect x="832" y="214" width="280" height="25.6"/></clipPath></defs>
 <text x="832" y="232.4" fill="#FFFFFF" font-family="Helvetica" font-size="14" text-anchor="start" clip-path="url(#xaligo-text-clip-65b8a0cea6304d81)"><tspan x="832" y="232.4">Catalog Service</tspan></text>
 <defs><clipPath id="xaligo-text-clip-34949d08538b5551" clipPathUnits="userSpaceOnUse"><rect x="817.08" y="255.4" width="60" height="14"/></clipPath></defs>
 <text x="847.08" y="266.9" fill="#052D6E" font-family="Helvetica" font-size="9" text-anchor="middle" clip-path="url(#xaligo-text-clip-34949d08538b5551)"><tspan x="847.08" y="266.9">Catalog API</tspan></text>
+<defs><clipPath id="xaligo-text-clip-e4adb76fe72d66cd" clipPathUnits="userSpaceOnUse"><rect x="887.68" y="255.4" width="94" height="14"/></clipPath></defs>
+<text x="887.68" y="266.9" fill="#052D6E" font-family="Helvetica" font-size="9" text-anchor="start" clip-path="url(#xaligo-text-clip-e4adb76fe72d66cd)"><tspan x="887.68" y="266.9">Product lookup</tspan></text>
 <defs><clipPath id="xaligo-text-clip-ee97773a433d0b97" clipPathUnits="userSpaceOnUse"><rect x="817.08" y="281.4" width="60" height="14"/></clipPath></defs>
 <text x="847.08" y="292.9" fill="#052D6E" font-family="Helvetica" font-size="9" text-anchor="middle" clip-path="url(#xaligo-text-clip-ee97773a433d0b97)"><tspan x="847.08" y="292.9">Ordering API</tspan></text>
+<defs><clipPath id="xaligo-text-clip-d5128e3bee5b1b93" clipPathUnits="userSpaceOnUse"><rect x="887.68" y="281.4" width="94" height="14"/></clipPath></defs>
+<text x="887.68" y="288.4" fill="#052D6E" font-family="Helvetica" font-size="7" text-anchor="start" clip-path="url(#xaligo-text-clip-d5128e3bee5b1b93)"><tspan x="887.68" y="288.4">Inventory</tspan><tspan x="887.68" dy="7">reservation</tspan></text>
 <defs><clipPath id="xaligo-text-clip-704c33244c8944fd" clipPathUnits="userSpaceOnUse"><rect x="208" y="498" width="280" height="25.6"/></clipPath></defs>
 <text x="208" y="516.4" fill="#FFFFFF" font-family="Helvetica" font-size="14" text-anchor="start" clip-path="url(#xaligo-text-clip-704c33244c8944fd)"><tspan x="208" y="516.4">Order Service</tspan></text>
 <defs><clipPath id="xaligo-text-clip-6f1a845fed190934" clipPathUnits="userSpaceOnUse"><rect x="193.08" y="539.4" width="60" height="14"/></clipPath></defs>
 <text x="223.08" y="550.9" fill="#052D6E" font-family="Helvetica" font-size="9" text-anchor="middle" clip-path="url(#xaligo-text-clip-6f1a845fed190934)"><tspan x="223.08" y="550.9">Ordering API</tspan></text>
+<defs><clipPath id="xaligo-text-clip-452dde5f256f4ee3" clipPathUnits="userSpaceOnUse"><rect x="263.68" y="539.4" width="94" height="14"/></clipPath></defs>
+<text x="263.68" y="550.9" fill="#052D6E" font-family="Helvetica" font-size="9" text-anchor="start" clip-path="url(#xaligo-text-clip-452dde5f256f4ee3)"><tspan x="263.68" y="550.9">Order lifecycle</tspan></text>
 <defs><clipPath id="xaligo-text-clip-f5111f1d0aff906" clipPathUnits="userSpaceOnUse"><rect x="193.08" y="565.4" width="60" height="14"/></clipPath></defs>
 <text x="223.08" y="576.9" fill="#052D6E" font-family="Helvetica" font-size="9" text-anchor="middle" clip-path="url(#xaligo-text-clip-f5111f1d0aff906)"><tspan x="223.08" y="576.9">Payment API</tspan></text>
+<defs><clipPath id="xaligo-text-clip-56b07a28218bff21" clipPathUnits="userSpaceOnUse"><rect x="263.68" y="565.4" width="94" height="14"/></clipPath></defs>
+<text x="263.68" y="572.4" fill="#052D6E" font-family="Helvetica" font-size="7" text-anchor="start" clip-path="url(#xaligo-text-clip-56b07a28218bff21)"><tspan x="263.68" y="572.4">Payment</tspan><tspan x="263.68" dy="7">authorization</tspan></text>
 <defs><clipPath id="xaligo-text-clip-1e2747972d01d955" clipPathUnits="userSpaceOnUse"><rect x="832" y="498" width="280" height="25.6"/></clipPath></defs>
 <text x="832" y="516.4" fill="#FFFFFF" font-family="Helvetica" font-size="14" text-anchor="start" clip-path="url(#xaligo-text-clip-1e2747972d01d955)"><tspan x="832" y="516.4">Payment Service</tspan></text>
 <defs><clipPath id="xaligo-text-clip-b50ba8ca2b5f6e52" clipPathUnits="userSpaceOnUse"><rect x="817.08" y="539.4" width="60" height="14"/></clipPath></defs>
 <text x="847.08" y="550.9" fill="#052D6E" font-family="Helvetica" font-size="9" text-anchor="middle" clip-path="url(#xaligo-text-clip-b50ba8ca2b5f6e52)"><tspan x="847.08" y="550.9">Payment API</tspan></text>
+<defs><clipPath id="xaligo-text-clip-fc1f73a14b4d533a" clipPathUnits="userSpaceOnUse"><rect x="887.68" y="539.4" width="94" height="14"/></clipPath></defs>
+<text x="887.68" y="550.9" fill="#052D6E" font-family="Helvetica" font-size="9" text-anchor="start" clip-path="url(#xaligo-text-clip-fc1f73a14b4d533a)"><tspan x="887.68" y="550.9">Charge processing</tspan></text>
 <rect x="772" y="4" width="56" height="19" fill="#F8FAFC" fill-opacity="1" stroke="#CBD5E1" stroke-width="0.75" stroke-opacity="1"/>
 <rect x="828" y="4" width="120" height="19" fill="none" stroke="#CBD5E1" stroke-width="0.75" stroke-opacity="1"/>
 <rect x="956" y="4" width="56" height="19" fill="#F8FAFC" fill-opacity="1" stroke="#CBD5E1" stroke-width="0.75" stroke-opacity="1"/>

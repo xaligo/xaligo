@@ -6,10 +6,10 @@
       <uml id="connected-components">
         <component-diagram direction="right" grid="2">
           <component id="checkout" title="Checkout UI">
-            <interface>Ordering API</interface>
+            <interface description="Place and track orders">Ordering API</interface>
           </component>
           <component id="orders" title="Order Service">
-            <interface>Ordering API</interface>
+            <interface description="Order commands">Ordering API</interface>
           </component>
 
           <association src="checkout" dst="orders" />

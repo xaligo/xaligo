@@ -1301,7 +1301,7 @@ func normalizeUMLElementV1EngineParseUml(source *entity.Node, scopedID, diagramK
 		label := umlCompartmentLabelV1EngineParseUml(diagramKind, source.Tag, child)
 		if label != "" {
 			if diagramKind == "component-diagram" && source.Tag == "component" && child.Tag == "interface" {
-				componentInterfaces = append(componentInterfaces, label)
+				componentInterfaces = append(componentInterfaces, label+"\t"+strings.TrimSpace(child.Attr("description")))
 				continue
 			}
 			compartments = append(compartments, label)
