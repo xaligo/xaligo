@@ -1313,13 +1313,8 @@ func normalizeUMLElementV1EngineParseUml(source *entity.Node, scopedID, diagramK
 			attrs["uml-state-compartment-values"] = strings.Join(stateCompartmentValues, "\n")
 		}
 	}
-	if diagramKind == "state-machine-diagram" && !umlShowElementNamesV1EngineParseUml(attrs) {
-		attrs["uml-element-name-hidden"] = "true"
-		if source.Tag == "state" {
-			attrs["uml-state-header-text"] = ""
-		} else {
-			attrs["title"] = ""
-		}
+	if diagramKind == "state-machine-diagram" && source.Tag == "state" && !umlShowElementNamesV1EngineParseUml(attrs) {
+		attrs["uml-state-compartment-keys-hidden"] = "true"
 	}
 	return &entity.Node{Tag: "rectangle", Attrs: attrs, Position: source.Position}
 }

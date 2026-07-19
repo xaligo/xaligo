@@ -840,11 +840,12 @@ capabilities common to xaligo outputs:
   draw a continuous time axis, waveforms, or proportional time geometry; and
 - `owner` records semantic containment without requiring spatial nesting.
 
-State-machine diagrams may set `show-element-names="false"` to hide state and
-pseudostate names without hiding state compartments, transition labels, or the
-underlying shapes. The value is inherited by state-machine elements unless an
-element sets its own `show-element-names` value. Other UML diagram families do
-not accept the diagram-level attribute.
+State-machine diagrams may set `show-element-names="false"` to hide the
+compartment element names such as `entry`, `do`, `exit`, `internal`, `note`,
+and `region` without hiding state titles, compartment values, transition
+labels, or the underlying shapes. The value is inherited by state-machine
+elements unless an element sets its own `show-element-names` value. Other UML
+diagram families do not accept the diagram-level attribute.
 
 SVG, Excalidraw, PPTX, PDF, Excel, XYFlow, and Isoflow all consume this same resolved
 geometry. Excalidraw-compatible output carries xaligo UML custom data for

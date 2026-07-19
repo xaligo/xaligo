@@ -675,7 +675,7 @@ func appendUMLStateMachineCompartmentsV1EngineSceneWalk(box *entity.Box, element
 		"customData": map[string]any{"xaligoUmlStateHeader": true},
 	})
 	headerText := strings.TrimSpace(box.Attrs["uml-state-header-text"])
-	if headerText == "" && box.Attrs["uml-element-name-hidden"] != "true" {
+	if headerText == "" {
 		headerText = strings.Split(strings.TrimSpace(box.Label), "\n")[0]
 	}
 	if headerText != "" {
@@ -694,14 +694,20 @@ func appendUMLStateMachineCompartmentsV1EngineSceneWalk(box *entity.Box, element
 	}
 	bodyH := math.Max(1, box.H-headerH)
 	rowH := bodyH / float64(rowCount)
-	keyW := math.Min(76, math.Max(66, box.W*0.4))
-	appendUMLStateMachineDividerV1EngineSceneWalk(elements, fmt.Sprintf("%s-state-column-divider", box.ID), box.X+keyW, dividerY, 0, bodyH, updated, map[string]any{"xaligoUmlStateColumnDivider": true})
+	hideKeys := box.Attrs["uml-state-compartment-keys-hidden"] == "true"
+	keyW := 0.0
+	if !hideKeys {
+		keyW = math.Min(76, math.Max(66, box.W*0.4))
+		appendUMLStateMachineDividerV1EngineSceneWalk(elements, fmt.Sprintf("%s-state-column-divider", box.ID), box.X+keyW, dividerY, 0, bodyH, updated, map[string]any{"xaligoUmlStateColumnDivider": true})
+	}
 	for index := 0; index < rowCount; index++ {
 		rowY := dividerY + float64(index)*rowH
 		if index > 0 {
 			appendUMLStateMachineDividerV1EngineSceneWalk(elements, fmt.Sprintf("%s-state-row-divider-%d", box.ID, index), box.X, rowY, box.W, 0, updated, map[string]any{"xaligoUmlStateRowDivider": true})
 		}
-		appendUMLClassTextV1EngineSceneWalk(elements, fmt.Sprintf("%s-state-key-%d", box.ID, index), box.X+4, rowY+2, math.Max(1, keyW-8), math.Max(1, rowH-4), keys[index], "#052d6e", "center", "middle", math.Min(fontSize, 12), box, updated, map[string]any{"xaligoUmlStateCompartmentKey": true})
+		if !hideKeys {
+			appendUMLClassTextV1EngineSceneWalk(elements, fmt.Sprintf("%s-state-key-%d", box.ID, index), box.X+4, rowY+2, math.Max(1, keyW-8), math.Max(1, rowH-4), keys[index], "#052d6e", "center", "middle", math.Min(fontSize, 12), box, updated, map[string]any{"xaligoUmlStateCompartmentKey": true})
+		}
 		appendUMLClassTextV1EngineSceneWalk(elements, fmt.Sprintf("%s-state-value-%d", box.ID, index), box.X+keyW+6, rowY+2, math.Max(1, box.W-keyW-12), math.Max(1, rowH-4), values[index], "#052d6e", "left", "middle", math.Min(fontSize, 12), box, updated, map[string]any{"xaligoUmlStateCompartmentValue": true})
 	}
 }

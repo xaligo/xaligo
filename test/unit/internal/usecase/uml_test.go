@@ -351,8 +351,8 @@ func TestUMLStateMachineHidesRedundantContainerBorderAndTitle(t *testing.T) {
 	}
 }
 
-func TestUMLStateMachineCanHideElementNames(t *testing.T) {
-	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="1200" height="520"><uml id="state"><state-machine-diagram direction="right" show-element-names="false"><state id="hidden" title="Hidden"><entry>prepare order</entry></state><state id="visible" title="Visible" show-element-names="true"/><choice id="choice" title="Hidden Choice"/><state id="accepted" title="Accepted"/><state id="rejected" title="Rejected"/><transition src="hidden" dst="choice"/><transition src="choice" dst="accepted" guard="yes"/><transition src="choice" dst="rejected" guard="no"/></state-machine-diagram></uml></frame></frames></xaligo>`)
+func TestUMLStateMachineCanHideCompartmentElementNames(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="1200" height="520"><uml id="state"><state-machine-diagram direction="right" show-element-names="false"><state id="hidden" title="Hidden"><entry>prepare order</entry><do>pack order</do></state><state id="visible" title="Visible" show-element-names="true"><exit>visible exit</exit></state><choice id="choice" title="Hidden Choice"/><state id="accepted" title="Accepted"/><state id="rejected" title="Rejected"/><transition src="hidden" dst="choice"/><transition src="choice" dst="accepted" guard="yes"/><transition src="choice" dst="rejected" guard="no"/></state-machine-diagram></uml></frame></frames></xaligo>`)
 	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
 		t.Fatalf("RenderExcalidraw() error = %v", err)
@@ -367,12 +367,12 @@ func TestUMLStateMachineCanHideElementNames(t *testing.T) {
 			sceneTexts[element.Text]++
 		}
 	}
-	for _, hidden := range []string{"Hidden", "Hidden Choice", "Accepted", "Rejected"} {
+	for _, hidden := range []string{"entry", "do"} {
 		if sceneTexts[hidden] != 0 {
 			t.Fatalf("scene text %q rendered despite show-element-names=false: %#v", hidden, sceneTexts)
 		}
 	}
-	for _, visible := range []string{"Visible", "entry", "prepare order"} {
+	for _, visible := range []string{"Hidden", "Hidden Choice", "Accepted", "Rejected", "Visible", "prepare order", "pack order", "exit", "visible exit"} {
 		if sceneTexts[visible] == 0 {
 			t.Fatalf("scene text %q missing: %#v", visible, sceneTexts)
 		}
@@ -391,12 +391,12 @@ func TestUMLStateMachineCanHideElementNames(t *testing.T) {
 			planTexts[operation.Text]++
 		}
 	}
-	for _, hidden := range []string{"Hidden", "Hidden Choice", "Accepted", "Rejected"} {
+	for _, hidden := range []string{"entry", "do"} {
 		if planTexts[hidden] != 0 {
 			t.Fatalf("plan text %q rendered despite show-element-names=false: %#v", hidden, planTexts)
 		}
 	}
-	for _, visible := range []string{"Visible", "entry", "prepare order"} {
+	for _, visible := range []string{"Hidden", "Hidden Choice", "Accepted", "Rejected", "Visible", "prepare order", "pack order", "exit", "visible exit"} {
 		if planTexts[visible] == 0 {
 			t.Fatalf("plan text %q missing: %#v", visible, planTexts)
 		}
