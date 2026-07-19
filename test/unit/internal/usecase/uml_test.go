@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"math"
+	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -346,7 +348,8 @@ func TestUMLClassStereotypeAndModifiersReachEditableScene(t *testing.T) {
 	}
 	foundHeader := false
 	foundHeaderText := false
-	foundBodyText := false
+	foundAttributeText := false
+	foundOperationText := false
 	foundBodyDivider := false
 	for _, rawElement := range raw["elements"].([]any) {
 		element, _ := rawElement.(map[string]any)
@@ -359,17 +362,22 @@ func TestUMLClassStereotypeAndModifiersReachEditableScene(t *testing.T) {
 				foundHeaderText = true
 			}
 		}
-		if customData["xaligoUmlClassBodyContent"] == true && element["strokeColor"] == "#052d6e" {
-			if element["text"] == "- store: Store\n+ find(id): Entity" {
-				foundBodyText = true
+		if customData["xaligoUmlClassAttributeContent"] == true && element["strokeColor"] == "#052d6e" {
+			if element["text"] == "- store: Store" {
+				foundAttributeText = true
+			}
+		}
+		if customData["xaligoUmlClassOperationContent"] == true && element["strokeColor"] == "#052d6e" {
+			if element["text"] == "+ find(id): Entity" {
+				foundOperationText = true
 			}
 		}
 		if customData["xaligoUmlClassBodyDivider"] == true {
 			foundBodyDivider = true
 		}
 	}
-	if !foundHeader || !foundHeaderText || !foundBodyText || !foundBodyDivider {
-		t.Fatalf("class compartment rendering missing header=%t headerText=%t bodyText=%t bodyDivider=%t: %s", foundHeader, foundHeaderText, foundBodyText, foundBodyDivider, rawScene)
+	if !foundHeader || !foundHeaderText || !foundAttributeText || !foundOperationText || !foundBodyDivider {
+		t.Fatalf("class compartment rendering missing header=%t headerText=%t attributeText=%t operationText=%t bodyDivider=%t: %s", foundHeader, foundHeaderText, foundAttributeText, foundOperationText, foundBodyDivider, rawScene)
 	}
 	foundDivider := false
 	for _, rawElement := range raw["elements"].([]any) {
@@ -423,6 +431,27 @@ func TestUMLClassDiagramSupportsPackageGroups(t *testing.T) {
 	}
 	if classCount != 2 || !foundPackage || !foundRelation {
 		t.Fatalf("package class diagram scene = classes %d package %t relation %t: %#v", classCount, foundPackage, foundRelation, scene.Elements)
+	}
+}
+
+func TestUMLClassPackageSVGKeepsReadableCompartmentText(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="1440" height="760"><uml id="classes"><class-diagram><package id="domain" title="Domain"><class id="order" title="Order" stereotype="aggregate-root"><attribute>- id: UUID</attribute><attribute>- status: OrderStatus</attribute><operation>+ confirm()</operation><operation>+ total(): Money</operation></class><class id="customer" title="Customer"><attribute>- id: UUID</attribute><attribute>- name: String</attribute><operation>+ placeOrder(): Order</operation></class><class id="premium" title="PremiumCustomer" abstract="true"><attribute>- discountRate: Decimal</attribute><operation>+ calculateDiscount(): Money</operation></class></package><association src="customer" dst="order" src-multiplicity="1" dst-multiplicity="0..*"/></class-diagram></uml></frame></frames></xaligo>`)
+	svg, err := newUsecase().RenderSVG(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderSVG() error = %v", err)
+	}
+	fontSizePattern := regexp.MustCompile(`font-size="([0-9]+(?:\.[0-9]+)?)"`)
+	for _, match := range fontSizePattern.FindAllStringSubmatch(string(svg), -1) {
+		fontSize, err := strconv.ParseFloat(match[1], 64)
+		if err != nil {
+			t.Fatalf("ParseFloat(%q) error = %v", match[1], err)
+		}
+		if fontSize < 12 {
+			t.Fatalf("SVG contains unreadably small font-size %.3f: %s", fontSize, svg)
+		}
+	}
+	if !strings.Contains(string(svg), "+ calculateDiscount(): Money") {
+		t.Fatalf("SVG should keep long operation on one readable line: %s", svg)
 	}
 }
 

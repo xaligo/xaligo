@@ -1107,6 +1107,8 @@ func normalizeUMLElementV1EngineParseUml(source *entity.Node, scopedID, diagramK
 	delete(attrs, "name")
 	var compartments []string
 	var compartmentKinds []string
+	var attributeCompartments []string
+	var operationCompartments []string
 	attributeLines := 0
 	operationLines := 0
 	for _, child := range source.Children {
@@ -1121,8 +1123,10 @@ func normalizeUMLElementV1EngineParseUml(source *entity.Node, scopedID, diagramK
 			compartments = append(compartments, label)
 			compartmentKinds = append(compartmentKinds, child.Tag)
 			if child.Tag == "operation" {
+				operationCompartments = append(operationCompartments, label)
 				operationLines += strings.Count(label, "\n") + 1
 			} else {
+				attributeCompartments = append(attributeCompartments, label)
 				attributeLines += strings.Count(label, "\n") + 1
 			}
 		}
@@ -1132,6 +1136,8 @@ func normalizeUMLElementV1EngineParseUml(source *entity.Node, scopedID, diagramK
 		attrs["uml-compartment-kinds"] = strings.Join(compartmentKinds, ",")
 		attrs["uml-class-attribute-lines"] = strconv.Itoa(attributeLines)
 		attrs["uml-class-operation-lines"] = strconv.Itoa(operationLines)
+		attrs["uml-class-attribute-text"] = strings.Join(attributeCompartments, "\n")
+		attrs["uml-class-operation-text"] = strings.Join(operationCompartments, "\n")
 	}
 	return &entity.Node{Tag: "rectangle", Attrs: attrs, Position: source.Position}
 }

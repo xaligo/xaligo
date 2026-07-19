@@ -524,7 +524,7 @@ func umlClassShapeBackgroundV1EngineSceneWalk(box *entity.Box) string {
 func appendUMLClassCompartmentsV1EngineSceneWalk(box *entity.Box, elements *[]map[string]any, updated int64) {
 	fontSize := attrFloatV1EngineLayoutAttributes(box.Attrs["font-size"], 14)
 	lineHeight := fontSize * 1.2
-	headerText, bodyText, attributeLines, operationLines := umlClassTextSectionsV1EngineSceneWalk(box)
+	headerText, attributeText, operationText, attributeLines, operationLines := umlClassTextSectionsV1EngineSceneWalk(box)
 	headerH := umlClassHeaderHeightV1EngineSceneWalk(box, lineHeight, headerText)
 	headerID := fmt.Sprintf("%s-class-header", box.ID)
 	headerSeed := stableSceneSeedV1EngineSceneTypes(headerID)
@@ -542,16 +542,29 @@ func appendUMLClassCompartmentsV1EngineSceneWalk(box *entity.Box, elements *[]ma
 	})
 	appendUMLClassTextV1EngineSceneWalk(elements, fmt.Sprintf("%s-class-header-text", box.ID), box.X+6, box.Y+4, math.Max(1, box.W-12), math.Max(1, headerH-8), headerText, "#ffffff", "center", "middle", fontSize, box, updated, map[string]any{"xaligoUmlClassHeaderContent": true})
 	appendUMLClassHeaderDividerV1EngineSceneWalk(box, elements, updated, box.Y+headerH)
-	if bodyText == "" {
+	if attributeText == "" && operationText == "" {
 		return
 	}
 	bodyY := box.Y + headerH + 7
-	bodyH := math.Max(1, box.Y+box.H-bodyY-6)
-	appendUMLClassTextV1EngineSceneWalk(elements, fmt.Sprintf("%s-class-body-text", box.ID), box.X+8, bodyY, math.Max(1, box.W-16), bodyH, bodyText, "#052d6e", "left", "top", fontSize, box, updated, map[string]any{"xaligoUmlClassBodyContent": true})
+	bottomY := box.Y + box.H - 6
+	textX := box.X + 10
+	textW := math.Max(1, box.W-20)
 	if attributeLines > 0 && operationLines > 0 {
-		dividerY := bodyY + float64(attributeLines)*lineHeight + 4
+		attributeH := math.Max(lineHeight, float64(attributeLines)*lineHeight+6)
+		dividerY := bodyY + attributeH
+		appendUMLClassTextV1EngineSceneWalk(elements, fmt.Sprintf("%s-class-attribute-text", box.ID), textX, bodyY, textW, math.Max(1, attributeH-3), attributeText, "#052d6e", "left", "top", fontSize, box, updated, map[string]any{"xaligoUmlClassAttributeContent": true})
 		appendUMLClassBodyDividerV1EngineSceneWalk(box, elements, updated, dividerY)
+		operationY := dividerY + 6
+		appendUMLClassTextV1EngineSceneWalk(elements, fmt.Sprintf("%s-class-operation-text", box.ID), textX, operationY, textW, math.Max(1, bottomY-operationY), operationText, "#052d6e", "left", "top", fontSize, box, updated, map[string]any{"xaligoUmlClassOperationContent": true})
+		return
 	}
+	bodyText := attributeText
+	customData := map[string]any{"xaligoUmlClassAttributeContent": true}
+	if bodyText == "" {
+		bodyText = operationText
+		customData = map[string]any{"xaligoUmlClassOperationContent": true}
+	}
+	appendUMLClassTextV1EngineSceneWalk(elements, fmt.Sprintf("%s-class-body-text", box.ID), textX, bodyY, textW, math.Max(1, bottomY-bodyY), bodyText, "#052d6e", "left", "top", fontSize, box, updated, customData)
 }
 
 func appendUMLClassHeaderDividerV1EngineSceneWalk(box *entity.Box, elements *[]map[string]any, updated int64, y float64) {
@@ -613,7 +626,7 @@ func appendUMLClassTextV1EngineSceneWalk(elements *[]map[string]any, id string, 
 	})
 }
 
-func umlClassTextSectionsV1EngineSceneWalk(box *entity.Box) (string, string, int, int) {
+func umlClassTextSectionsV1EngineSceneWalk(box *entity.Box) (string, string, string, int, int) {
 	lines := strings.Split(box.Label, "\n")
 	headerLines := int(attrFloatV1EngineLayoutAttributes(box.Attrs["uml-class-header-lines"], 1))
 	attributeLines := int(attrFloatV1EngineLayoutAttributes(box.Attrs["uml-class-attribute-lines"], 0))
@@ -623,12 +636,16 @@ func umlClassTextSectionsV1EngineSceneWalk(box *entity.Box) (string, string, int
 	}
 	headerText := strings.Join(lines[:headerLines], "\n")
 	bodyLines := lines[headerLines:]
-	bodyText := strings.Join(bodyLines, "\n")
+	attributeText := strings.TrimSpace(box.Attrs["uml-class-attribute-text"])
+	operationText := strings.TrimSpace(box.Attrs["uml-class-operation-text"])
+	if attributeText == "" && operationText == "" {
+		attributeText = strings.Join(bodyLines, "\n")
+	}
 	if attributeLines+operationLines > len(bodyLines) {
 		attributeLines = len(bodyLines)
 		operationLines = 0
 	}
-	return headerText, bodyText, attributeLines, operationLines
+	return headerText, attributeText, operationText, attributeLines, operationLines
 }
 
 func umlClassHeaderHeightV1EngineSceneWalk(box *entity.Box, lineHeight float64, headerText string) float64 {
