@@ -161,6 +161,7 @@ type umlComponentInterfaceEndpointGroupV1EngineSceneBuild struct {
 	baseKey      string
 	baseID       string
 	baseRect     [4]float64
+	ownerRect    [4]float64
 	portRect     [4]float64
 	endpointKeys []string
 }
@@ -209,7 +210,7 @@ func registerUMLComponentInterfaceEndpointsV1EngineSceneBuild(elements []map[str
 		if result.byOwner[ownerKey] == nil {
 			result.byOwner[ownerKey] = map[string]*umlComponentInterfaceEndpointGroupV1EngineSceneBuild{}
 		}
-		group := &umlComponentInterfaceEndpointGroupV1EngineSceneBuild{ownerKey: ownerKey, label: label, baseKey: endpointKey, baseID: id, baseRect: [4]float64{x, y, w, h}, portRect: portRects[endpointKey], endpointKeys: []string{endpointKey}}
+		group := &umlComponentInterfaceEndpointGroupV1EngineSceneBuild{ownerKey: ownerKey, label: label, baseKey: endpointKey, baseID: id, baseRect: [4]float64{x, y, w, h}, ownerRect: endpointRects[ownerKey], portRect: portRects[endpointKey], endpointKeys: []string{endpointKey}}
 		result.byOwner[ownerKey][label] = group
 		result.byKey[endpointKey] = group
 	}
@@ -302,6 +303,7 @@ func bindUMLComponentInterfaceConnectionsV1EngineSceneBuild(connections []*entit
 			bound = append(bound, conn)
 			continue
 		}
+		srcSide := umlComponentInterfaceSourceSideV1EngineSceneBuild(endpoints, srcKey, group.ownerRect)
 		endpointIndex := usedByBase[group.baseKey]
 		if endpointIndex >= len(group.endpointKeys) {
 			endpointIndex = len(group.endpointKeys) - 1
@@ -312,12 +314,29 @@ func bindUMLComponentInterfaceConnectionsV1EngineSceneBuild(connections []*entit
 		clone.Attrs = cloneAttrsV1EngineParseTable(conn.Attrs)
 		clone.Attrs[internalConnectionSrcKeyAttrV1EngineParseDocument] = srcKey
 		clone.Attrs[internalConnectionDstKeyAttrV1EngineParseDocument] = boundDst
+		clone.Attrs["src-side"] = srcSide
 		clone.Attrs["dst-side"] = endpoints.sideByEndpoint[boundDst]
 		clone.Attrs["uml-component-interface-dst"] = "true"
 		clone.Attrs["uml-component-caller-socket"] = "true"
 		bound = append(bound, &clone)
 	}
 	return bound
+}
+
+func umlComponentInterfaceSourceSideV1EngineSceneBuild(endpoints umlComponentInterfaceEndpointsV1EngineSceneBuild, srcOwnerKey string, dstOwnerRect [4]float64) string {
+	srcByLabel := endpoints.byOwner[srcOwnerKey]
+	for _, group := range srcByLabel {
+		if group == nil || group.ownerRect[2] <= 0 || group.ownerRect[3] <= 0 || dstOwnerRect[2] <= 0 || dstOwnerRect[3] <= 0 {
+			continue
+		}
+		srcCx := group.ownerRect[0] + group.ownerRect[2]/2
+		srcCy := group.ownerRect[1] + group.ownerRect[3]/2
+		dstCx := dstOwnerRect[0] + dstOwnerRect[2]/2
+		dstCy := dstOwnerRect[1] + dstOwnerRect[3]/2
+		srcSide, _ := connectionSideV1EngineSceneConnection(srcCx, srcCy, dstCx, dstCy)
+		return srcSide
+	}
+	return "right"
 }
 
 func umlComponentInterfaceConnectionSideV1EngineSceneBuild(symbolRect, ownerRect [4]float64) string {

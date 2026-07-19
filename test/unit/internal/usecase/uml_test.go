@@ -828,6 +828,33 @@ func TestUMLComponentMultipleCallersRenderSeparateInterfaceCircles(t *testing.T)
 	}
 }
 
+func TestUMLComponentInterfaceCallerStartUsesComponentPosition(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="980" height="420"><uml id="components"><component-diagram grid="2"><component id="api" title="API"><interface>Shared API</interface></component><component id="client" title="Client"><interface>Shared API</interface></component><association src="client" dst="api"/></component-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var raw map[string]any
+	if err := json.Unmarshal(rawScene, &raw); err != nil {
+		t.Fatalf("json.Unmarshal(raw map) error = %v", err)
+	}
+	elements, _ := raw["elements"].([]any)
+	for _, rawElement := range elements {
+		element, _ := rawElement.(map[string]any)
+		customData, _ := element["customData"].(map[string]any)
+		if customData["xaligoUmlRelationKind"] != "association" {
+			continue
+		}
+		startBinding, _ := element["startBinding"].(map[string]any)
+		startFixedPoint, _ := startBinding["fixedPoint"].([]any)
+		if len(startFixedPoint) < 2 || startFixedPoint[0] != 0.0 || startFixedPoint[1] != 0.5 {
+			t.Fatalf("association start fixed point = %#v, want left-center when caller component is right of callee component", startFixedPoint)
+		}
+		return
+	}
+	t.Fatalf("association element missing: %s", rawScene)
+}
+
 func TestUMLStateMachineFinalRendersFinalDot(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="760" height="420"><uml id="state"><state-machine-diagram><initial id="start"/><state id="open" title="Open"/><final id="done"/><transition src="start" dst="open"/><transition src="open" dst="done"/></state-machine-diagram></uml></frame></frames></xaligo>`)
 	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
