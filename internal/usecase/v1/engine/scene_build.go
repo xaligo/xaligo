@@ -198,7 +198,7 @@ func orderSceneLayersV1EngineSceneBuild(elements []map[string]any) []map[string]
 	return append(ordered, metadataContent...)
 }
 
-func avoidGroupHeaderBorderOverlapV1EngineSceneBuild(x, y, w, h float64, ownBorderID string, elements []map[string]any) float64 {
+func avoidGroupHeaderOverlapV1EngineSceneBuild(x, y, w, h float64, ownBorderID string, elements []map[string]any) float64 {
 	adjustedY := y
 	for pass := 0; pass < 4; pass++ {
 		nextY := adjustedY
@@ -207,7 +207,9 @@ func avoidGroupHeaderBorderOverlapV1EngineSceneBuild(x, y, w, h float64, ownBord
 				continue
 			}
 			custom, _ := el["customData"].(map[string]any)
-			if isBorder, _ := custom["xaligoGroupBorder"].(bool); !isBorder {
+			isBorder, _ := custom["xaligoGroupBorder"].(bool)
+			isHeader, _ := custom["xaligoGroupHeader"].(bool)
+			if !isBorder && !isHeader {
 				continue
 			}
 			bx, okX := el["x"].(float64)
@@ -215,6 +217,13 @@ func avoidGroupHeaderBorderOverlapV1EngineSceneBuild(x, y, w, h float64, ownBord
 			bw, okW := el["width"].(float64)
 			bh, okH := el["height"].(float64)
 			if !okX || !okY || !okW || !okH || horizontalOverlapV1EngineSceneBuild(x, x+w, bx, bx+bw) <= 0 {
+				continue
+			}
+			if isHeader {
+				gap := float64(groupHeaderBorderGapV1EngineSceneTypes)
+				if by < adjustedY+h+gap && by+bh > adjustedY-gap {
+					nextY = math.Max(nextY, by+bh+gap)
+				}
 				continue
 			}
 			for _, lineY := range []float64{by, by + bh} {

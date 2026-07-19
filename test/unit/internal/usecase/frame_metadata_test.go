@@ -746,6 +746,45 @@ func TestFrameMetadataReservedStripExcludesItemsGroupHeadersAndLocalRoutes(t *te
 	}
 }
 
+func TestFrameMetadataKeepsNestedGroupHeadersSeparated(t *testing.T) {
+	source := `<xaligo version="1"><frames><frame id="page" title="Page" version="1.0" width="640" height="360">
+  <aws-cloud id="cloud" title="AWS Cloud">
+    <generic-group id="edge" title="Global Edge" icon-id="104915" />
+  </aws-cloud>
+</frame></frames></xaligo>`
+	out, err := newUsecase().RenderExcalidraw(context.Background(), []byte(source), entity.RenderOptions{Theme: "light"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var scene sceneFile
+	if err := json.Unmarshal(out, &scene); err != nil {
+		t.Fatal(err)
+	}
+	headers := make([][4]float64, 0, 2)
+	for _, element := range scene.Elements {
+		custom, _ := element["customData"].(map[string]any)
+		if custom["xaligoGroupHeader"] != true {
+			continue
+		}
+		headers = append(headers, [4]float64{
+			sceneNumber(t, element["x"]),
+			sceneNumber(t, element["y"]),
+			sceneNumber(t, element["width"]),
+			sceneNumber(t, element["height"]),
+		})
+	}
+	if len(headers) != 2 {
+		t.Fatalf("group headers = %#v, want outer and nested headers", headers)
+	}
+	if headers[1][1] < headers[0][1] {
+		headers[0], headers[1] = headers[1], headers[0]
+	}
+	wantMinimumY := headers[0][1] + headers[0][3] + 4
+	if headers[1][1] < wantMinimumY {
+		t.Fatalf("nested group header y = %v, want at least %v after outer header %#v", headers[1][1], wantMinimumY, headers[0])
+	}
+}
+
 func TestFrameMetadataReservedStripExcludesPhysicalPlanLinesAndLabels(t *testing.T) {
 	source := []byte(`<xaligo version="1"><frames><frame id="page" title="Page" width="420" height="260" margin-top="72" margin-right="16" margin-bottom="16" margin-left="16">
   <metadata width="120" key-width="40"><entry key="owner" value="platform" /></metadata>

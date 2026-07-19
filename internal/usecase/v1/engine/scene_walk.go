@@ -111,7 +111,7 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 			}
 			headerTip := math.Min(groupHeaderTipMaxV1EngineSceneTypes, headerH/2)
 			headerW := textX + lblW + groupHeaderPadEndV1EngineSceneTypes + headerTip - headerX
-			headerY := avoidGroupHeaderBorderOverlapV1EngineSceneBuild(headerX, b.Y-headerH/2, headerW, headerH, rectID, *elements)
+			headerY := avoidGroupHeaderOverlapV1EngineSceneBuild(headerX, b.Y-headerH/2, headerW, headerH, rectID, *elements)
 			headerY = groupHeaderYAvoidingFrameMetadataV1EngineSceneWalk(headerY, headerH, activeFrame)
 			alignGroupBorderTopToHeaderV1EngineSceneBuild(rectID, headerY+headerH/2, b.Y+b.H, *elements)
 			headerID := fmt.Sprintf("%s-header-bg", b.ID)
