@@ -278,7 +278,8 @@ func TestRenderXYFlowPreservesUMLShapeEndpointsAndMetadata(t *testing.T) {
 			nodeIDs := make(map[string]string, len(test.nodes))
 			for label, want := range test.nodes {
 				node := xyFlowNodeByLabel(t, document.Nodes, label)
-				if node.Data["shape"] != want[0] || node.Data["umlElementKind"] != want[1] || node.Data["umlReference"] != want[2] {
+				wantReference := "activity/" + want[2]
+				if node.Data["shape"] != want[0] || node.Data["umlElementKind"] != want[1] || node.Data["umlReference"] != wantReference {
 					t.Fatalf("UML node %q data = %#v, want shape=%q kind=%q ref=%q", label, node.Data, want[0], want[1], want[2])
 				}
 				nodeIDs[label] = node.ID
@@ -296,7 +297,7 @@ func TestRenderXYFlowPreservesUMLShapeEndpointsAndMetadata(t *testing.T) {
 				if !found {
 					t.Fatalf("UML edge %q -> %q is missing: %#v", pair[0], pair[1], document.Edges)
 				}
-				if edge.Data["umlRelationKind"] != test.relationKind || edge.Data["umlSourceReference"] != test.nodes[pair[0]][2] || edge.Data["umlDestinationReference"] != test.nodes[pair[1]][2] {
+				if edge.Data["umlRelationKind"] != test.relationKind || edge.Data["umlSourceReference"] != "activity/"+test.nodes[pair[0]][2] || edge.Data["umlDestinationReference"] != "activity/"+test.nodes[pair[1]][2] {
 					t.Fatalf("UML edge %q -> %q data = %#v", pair[0], pair[1], edge.Data)
 				}
 			}

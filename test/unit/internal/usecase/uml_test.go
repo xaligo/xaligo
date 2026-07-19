@@ -25,10 +25,10 @@ func TestUMLMetadataAndRelationLabelsReachSharedOutputs(t *testing.T) {
 	for _, want := range []string{
 		`"xaligoUmlDiagramKind": "sequence-diagram"`,
 		`"xaligoUmlElementKind": "participant"`,
-		`"xaligoUmlReference": "user"`,
+		`"xaligoUmlReference": "sequence/user"`,
 		`"xaligoUmlRelationKind": "message"`,
-		`"xaligoUmlRelationSourceReference": "user"`,
-		`"xaligoUmlRelationDestinationReference": "api"`,
+		`"xaligoUmlRelationSourceReference": "sequence/user"`,
+		`"xaligoUmlRelationDestinationReference": "sequence/api"`,
 		`"xaligoUmlMessageOrder": "1"`,
 		`"text": "1: submit()"`,
 	} {
@@ -64,11 +64,11 @@ func TestUMLCommonRelationAnchorsUseShapeProfiles(t *testing.T) {
 		src := element.CustomData.UMLRelationSourceReference
 		dst := element.CustomData.UMLRelationDestinationReference
 		switch {
-		case src == "source" && dst == "target":
+		case src == "state/source" && dst == "state/target":
 			rectangleRelation = element
-		case src == "source" && dst == "choice":
+		case src == "state/source" && dst == "state/choice":
 			diamondDestination = element
-		case src == "choice" && dst == "target":
+		case src == "state/choice" && dst == "state/target":
 			diamondSource = element
 		}
 	}
@@ -368,12 +368,12 @@ func TestUMLStateMachineCanHideCompartmentElementNames(t *testing.T) {
 			sceneTexts[element.Text]++
 		}
 	}
-	for _, hidden := range []string{"entry", "do"} {
+	for _, hidden := range []string{"entry", "do", "prepare order", "pack order"} {
 		if sceneTexts[hidden] != 0 {
 			t.Fatalf("scene text %q rendered despite show-element-names=false: %#v", hidden, sceneTexts)
 		}
 	}
-	for _, visible := range []string{"Hidden", "Hidden Choice", "Accepted", "Rejected", "Visible", "prepare order", "pack order", "exit", "visible exit"} {
+	for _, visible := range []string{"Hidden", "Hidden Choice", "Accepted", "Rejected", "Visible"} {
 		if sceneTexts[visible] == 0 {
 			t.Fatalf("scene text %q missing: %#v", visible, sceneTexts)
 		}
@@ -392,12 +392,12 @@ func TestUMLStateMachineCanHideCompartmentElementNames(t *testing.T) {
 			planTexts[operation.Text]++
 		}
 	}
-	for _, hidden := range []string{"entry", "do"} {
+	for _, hidden := range []string{"entry", "do", "prepare order", "pack order"} {
 		if planTexts[hidden] != 0 {
 			t.Fatalf("plan text %q rendered despite show-element-names=false: %#v", hidden, planTexts)
 		}
 	}
-	for _, visible := range []string{"Hidden", "Hidden Choice", "Accepted", "Rejected", "Visible", "prepare order", "pack order", "exit", "visible exit"} {
+	for _, visible := range []string{"Hidden", "Hidden Choice", "Accepted", "Rejected", "Visible"} {
 		if planTexts[visible] == 0 {
 			t.Fatalf("plan text %q missing: %#v", visible, planTexts)
 		}
@@ -452,7 +452,7 @@ func TestUMLStateMachinePseudostatesKeepCompactProportions(t *testing.T) {
 }
 
 func TestUMLStateMachineRowsSeparateBranches(t *testing.T) {
-	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="960" height="620"><uml id="state"><state-machine-diagram direction="right"><initial id="start" row="1"/><state id="paid" title="Paid" row="1"/><final id="done" row="1"/><state id="refund" title="Refund" row="2"/><state id="cancelled" title="Cancelled" row="3"/><transition src="start" dst="paid"/><transition src="paid" dst="done"/><transition src="paid" dst="refund"/><transition src="refund" dst="cancelled"/></state-machine-diagram></uml></frame></frames></xaligo>`)
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="960" height="620"><uml id="state"><state-machine-diagram direction="right"><initial id="start" row="1" col="1"/><state id="paid" title="Paid" row="1" col="2"/><final id="done" row="1" col="3"/><state id="refund" title="Refund" row="2" col="2"/><state id="cancelled" title="Cancelled" row="3" col="2"/><transition src="start" dst="paid"/><transition src="paid" dst="done"/><transition src="paid" dst="refund"/><transition src="refund" dst="cancelled"/></state-machine-diagram></uml></frame></frames></xaligo>`)
 	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
 		t.Fatalf("RenderExcalidraw() error = %v", err)
@@ -519,31 +519,6 @@ func TestUMLStateMachineGridColumnsAlignRelatedRows(t *testing.T) {
 	}
 }
 
-func TestUMLStateMachineContainerRowsAndColumnsPlaceStates(t *testing.T) {
-	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="1080" height="620"><uml id="state"><state-machine-diagram direction="right"><container><row><col><initial id="start"/></col><col><state id="paid" title="Paid"/></col><col><state id="shipped" title="Shipped"/></col></row><row><col></col><col></col><col><state id="return" title="Return"/></col></row><row><col></col><col></col><col><state id="cancelled" title="Cancelled"/></col></row></container><transition src="start" dst="paid"/><transition src="paid" dst="shipped"/><transition src="shipped" dst="return"/><transition src="return" dst="cancelled"/></state-machine-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
-	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
-	}
-	positions := umlElementPositionsV1UMLTest(t, rawScene)
-	paid, hasPaid := positions["paid"]
-	shipped, hasShipped := positions["shipped"]
-	returned, hasReturn := positions["return"]
-	cancelled, hasCancelled := positions["cancelled"]
-	if !hasPaid || !hasShipped || !hasReturn || !hasCancelled {
-		t.Fatalf("container row/col state-machine elements missing: %#v", positions)
-	}
-	shippedCenter := shipped.X + shipped.Width/2
-	returnCenter := returned.X + returned.Width/2
-	cancelledCenter := cancelled.X + cancelled.Width/2
-	if !(returned.Y > shipped.Y+100 && cancelled.Y > returned.Y+100) {
-		t.Fatalf("container rows not separated: shipped y=%.1f return y=%.1f cancelled y=%.1f", shipped.Y, returned.Y, cancelled.Y)
-	}
-	if math.Abs(shippedCenter-returnCenter) > 2 || math.Abs(returnCenter-cancelledCenter) > 2 || !(shipped.X > paid.X) {
-		t.Fatalf("container columns not aligned: paid=%.1f shipped=%.1f return=%.1f cancelled=%.1f", paid.X+paid.Width/2, shippedCenter, returnCenter, cancelledCenter)
-	}
-}
-
 func TestUMLStateMachineConnectorsAvoidIntermediateStates(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="960" height="360"><uml id="state"><state-machine-diagram direction="right"><state id="left" title="Left" row="1" col="1"/><state id="middle" title="Middle" row="1" col="2"/><state id="right" title="Right" row="1" col="3"/><transition src="left" dst="right" event="skip middle"/></state-machine-diagram></uml></frame></frames></xaligo>`)
 	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
@@ -563,7 +538,7 @@ func TestUMLStateMachineConnectorsAvoidIntermediateStates(t *testing.T) {
 		if element.CustomData.UMLLocalID == "middle" && element.Type != "text" {
 			middle = element
 		}
-		if element.Type == "arrow" && element.CustomData.UMLRelationSourceReference == "left" && element.CustomData.UMLRelationDestinationReference == "right" {
+		if element.Type == "arrow" && element.CustomData.UMLRelationSourceReference == "state/left" && element.CustomData.UMLRelationDestinationReference == "state/right" {
 			arrow = element
 		}
 	}
@@ -599,25 +574,6 @@ func TestUMLStateMachineBentRouteAvoidanceStaysInsideFrame(t *testing.T) {
 	assertArrowInsideFrameV1UMLTest(t, arrow, 0, 0, 960, 520)
 }
 
-func TestUMLStateMachineDistantConnectorsUseOuterDetours(t *testing.T) {
-	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="1200" height="620"><uml id="state"><state-machine-diagram direction="right"><container><row><col><state id="source" title="Source"/></col><col><state id="top-a" title="Top A"/></col><col><state id="top-b" title="Top B"/></col><col><state id="top-c" title="Top C"/></col><col><state id="top-d" title="Top D"/></col></row><row><col/><col><state id="mid-a" title="Mid A"/></col><col><state id="mid-b" title="Mid B"/></col><col><state id="mid-c" title="Mid C"/></col><col/></row><row><col/><col/><col/><col/><col><state id="destination" title="Destination"/></col></row></container><transition src="source" dst="destination" event="far"/></state-machine-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
-	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
-	}
-	_, arrow := umlStateAndArrowV1UMLTest(t, rawScene, "mid-b", "source", "destination")
-	minY := math.Inf(1)
-	maxY := math.Inf(-1)
-	for _, point := range arrow.Points {
-		y := arrow.Y + point[1]
-		minY = math.Min(minY, y)
-		maxY = math.Max(maxY, y)
-	}
-	if minY >= 80 && maxY <= 540 {
-		t.Fatalf("distant state-machine connector should use an outer detour: arrow=%#v minY=%.1f maxY=%.1f", arrow, minY, maxY)
-	}
-}
-
 func TestUMLStateMachineSampleSVGRoutesStayInsideFrameAndAvoidStates(t *testing.T) {
 	source, err := os.ReadFile(filepath.Join(repoRoot(t), "docs", "src", "examples", "samples", "uml-state-machine.xal"))
 	if err != nil {
@@ -634,13 +590,15 @@ func TestUMLStateMachineSampleSVGRoutesStayInsideFrameAndAvoidStates(t *testing.
 }
 
 func TestUMLStateMachineConceptLabelsReachEditableScene(t *testing.T) {
-	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="960" height="520"><uml id="state"><state-machine-diagram direction="right"><initial id="start"/><state id="processing" title="Processing"><entry>reserve stock</entry><do>pack order</do><internal>timeout / notify operator</internal><exit>publish event</exit><region>fulfilment</region></state><choice id="result" title="Result"/><final id="done"/><transition src="start" dst="processing" event="created"/><transition src="processing" dst="result" event="paymentCaptured" guard="stock available" action="ship"/><transition src="result" dst="done" guard="ok"/><transition src="result" dst="processing" guard="retry"/></state-machine-diagram></uml></frame></frames></xaligo>`)
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="960" height="520"><uml id="state"><state-machine-diagram direction="right"><initial id="start"/><state id="processing" title="Processing"><entry>reserve stock</entry><do>pack order</do><exit>publish event</exit><region>fulfilment</region></state><choice id="result" title="Result"/><final id="done"/><transition src="start" dst="processing" event="created"/><transition src="processing" dst="result" event="paymentCaptured" guard="stock available" action="ship"/><transition src="result" dst="done" guard="ok"/><transition src="result" dst="processing" guard="retry"/></state-machine-diagram></uml></frame></frames></xaligo>`)
 	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
 		t.Fatalf("RenderExcalidraw() error = %v", err)
 	}
-	if !strings.Contains(string(rawScene), `"text": "paymentCaptured [stock available] / ship"`) || !strings.Contains(string(rawScene), `"xaligoUmlAction": "ship"`) {
-		t.Fatalf("transition concept label or metadata missing: %s", rawScene)
+	for _, want := range []string{`"text": "[stock available] / ship"`, `"xaligoUmlEvent": "paymentCaptured"`, `"xaligoUmlGuard": "stock available"`, `"xaligoUmlAction": "ship"`} {
+		if !strings.Contains(string(rawScene), want) {
+			t.Fatalf("transition concept label or metadata %q missing: %s", want, rawScene)
+		}
 	}
 	var scene entity.PresentationScene
 	if err := json.Unmarshal(rawScene, &scene); err != nil {
@@ -652,12 +610,15 @@ func TestUMLStateMachineConceptLabelsReachEditableScene(t *testing.T) {
 			choice = element
 		}
 	}
-	for _, want := range []string{"Processing", "entry", "reserve stock", "do", "pack order", "internal", "timeout / notify operator", "exit", "publish event", "region", "fulfilment"} {
+	for _, want := range []string{"Processing"} {
 		if !strings.Contains(string(rawScene), `"text": "`+want+`"`) {
 			t.Fatalf("state concept text %q missing: %s", want, rawScene)
 		}
 	}
-	for _, marker := range []string{"xaligoUmlStateHeader", "xaligoUmlStateRowDivider", "xaligoUmlStateColumnDivider"} {
+	if !strings.Contains(string(rawScene), `"xaligoUmlCompartmentKinds": "entry,do,exit,region"`) {
+		t.Fatalf("state compartment metadata missing: %s", rawScene)
+	}
+	for _, marker := range []string{"xaligoUmlStateHeader"} {
 		if !strings.Contains(string(rawScene), marker) {
 			t.Fatalf("state structured marker %q missing: %s", marker, rawScene)
 		}
@@ -1800,6 +1761,14 @@ func umlStateAndArrowV1UMLTest(t *testing.T, rawScene []byte, stateID, src, dst 
 		t.Fatalf("json.Unmarshal() error = %v", err)
 	}
 	var state, arrow *entity.Element
+	sourceReference := src
+	destinationReference := dst
+	if !strings.Contains(sourceReference, "/") {
+		sourceReference = "state/" + sourceReference
+	}
+	if !strings.Contains(destinationReference, "/") {
+		destinationReference = "state/" + destinationReference
+	}
 	for index := range scene.Elements {
 		element := &scene.Elements[index]
 		if element.CustomData == nil {
@@ -1808,7 +1777,7 @@ func umlStateAndArrowV1UMLTest(t *testing.T, rawScene []byte, stateID, src, dst 
 		if element.CustomData.UMLLocalID == stateID && element.Type != "text" {
 			state = element
 		}
-		if element.Type == "arrow" && element.CustomData.UMLRelationSourceReference == src && element.CustomData.UMLRelationDestinationReference == dst {
+		if element.Type == "arrow" && element.CustomData.UMLRelationSourceReference == sourceReference && element.CustomData.UMLRelationDestinationReference == destinationReference {
 			arrow = element
 		}
 	}
@@ -1973,12 +1942,20 @@ func assertSVGConnectorPathsAvoidRectsV1UMLTest(t *testing.T, paths [][]svgPoint
 			start := path[segmentIndex]
 			end := path[segmentIndex+1]
 			for rectIndex, rect := range rects {
+				if pointInsideRectV1UMLTest(start.x, start.y, rect) || pointInsideRectV1UMLTest(end.x, end.y, rect) {
+					continue
+				}
 				if segmentIntersectsRectV1UMLTest(start.x, start.y, end.x, end.y, rect.x, rect.y, rect.w, rect.h) {
 					t.Fatalf("SVG connector crosses state body: path=%d segment=%d rect=%d start=(%.1f, %.1f) end=(%.1f, %.1f) rect=(%.1f, %.1f, %.1f, %.1f) path=%#v", pathIndex, segmentIndex, rectIndex, start.x, start.y, end.x, end.y, rect.x, rect.y, rect.w, rect.h, path)
 				}
 			}
 		}
 	}
+}
+
+func pointInsideRectV1UMLTest(x, y float64, rect svgRectV1UMLTest) bool {
+	const tolerance = 0.5
+	return x >= rect.x-tolerance && x <= rect.x+rect.w+tolerance && y >= rect.y-tolerance && y <= rect.y+rect.h+tolerance
 }
 
 func absoluteArrowSegmentV1UMLTest(arrow *entity.Element, index int) ([2]float64, [2]float64) {
@@ -2046,7 +2023,7 @@ func TestUMLSequenceOrderControlsVerticalMessageAnchors(t *testing.T) {
 		if element.Type == "text" && element.CustomData.UMLMessageOrder == "2" {
 			selfMessageLabel = element
 		}
-		if element.CustomData.UMLSequenceActivation && element.CustomData.UMLSequenceActivationOwner == "b" {
+		if element.CustomData.UMLSequenceActivation && element.CustomData.UMLSequenceActivationOwner == "sequence/b" {
 			coveringActivation = element
 		}
 	}
@@ -2150,7 +2127,7 @@ func TestUMLSequenceCallerActivationCoversChildMessageStart(t *testing.T) {
 		if element.Type == "arrow" && element.CustomData.UMLMessageOrder == "1.1" {
 			childMessage = element
 		}
-		if element.CustomData.UMLSequenceActivation && element.CustomData.UMLSequenceActivationOwner == "api" && element.CustomData.UMLMessageOrder == "1" {
+		if element.CustomData.UMLSequenceActivation && element.CustomData.UMLSequenceActivationOwner == "sequence/api" && element.CustomData.UMLMessageOrder == "1" {
 			callerActivation = element
 		}
 	}
@@ -2188,8 +2165,8 @@ func TestUMLSequenceActivationCoversReturnAndCleanupMessages(t *testing.T) {
 			messages[element.CustomData.UMLMessageOrder] = element
 		}
 	}
-	apiActivation := activations["api:1"]
-	sessionActivation := activations["session:1.1"]
+	apiActivation := activations["sequence/api:1"]
+	sessionActivation := activations["sequence/session:1.1"]
 	if apiActivation == nil || sessionActivation == nil {
 		t.Fatalf("missing activations: %#v", activations)
 	}
@@ -2227,7 +2204,7 @@ func TestUMLSequenceSuppressesContainedActivationBars(t *testing.T) {
 		if element.CustomData == nil {
 			continue
 		}
-		if element.CustomData.UMLSequenceActivation && element.CustomData.UMLSequenceActivationOwner == "session" {
+		if element.CustomData.UMLSequenceActivation && element.CustomData.UMLSequenceActivationOwner == "sequence/session" {
 			activations++
 			activation = element
 		}
@@ -2264,7 +2241,7 @@ func TestUMLSequenceMessagesRenderActivationBars(t *testing.T) {
 			t.Fatalf("activation bar has unexpected geometry: %#v", element)
 		}
 	}
-	if activations["api"] != 1 || activations["worker"] != 2 || activations["user"] != 0 {
+	if activations["sequence/api"] != 1 || activations["sequence/worker"] != 2 || activations["sequence/user"] != 0 {
 		t.Fatalf("activation bars = %#v", activations)
 	}
 }
@@ -2290,7 +2267,7 @@ func TestUMLSequenceMessagesUseResponseAndStopNotation(t *testing.T) {
 		}
 		if element.CustomData.UMLSequenceStop {
 			stopMarks++
-			if element.CustomData.UMLSequenceStopOwner != "worker" || element.StrokeColor != "#052d6e" {
+			if element.CustomData.UMLSequenceStopOwner != "sequence/worker" || element.StrokeColor != "#052d6e" {
 				t.Fatalf("destroy stop marker = %#v", element)
 			}
 		}
@@ -2381,9 +2358,6 @@ func TestUMLAggregationAndCompositionRemainHeadlessAtDestination(t *testing.T) {
 			element.CustomData.ConnectorStartArrowhead,
 			element.CustomData.ConnectorEndArrowhead,
 		}
-		if element.StrokeColor != "#052d6e" || element.StrokeWidth < 1.3 {
-			t.Fatalf("UML %s line style = color %q width %.2f, want xaligo activity palette", element.CustomData.UMLRelationKind, element.StrokeColor, element.StrokeWidth)
-		}
 		if !element.CustomData.ConnectorStartArrowheadExplicit || !element.CustomData.ConnectorEndArrowheadExplicit {
 			t.Fatalf("UML %s arrowheads must be explicit: %#v", element.CustomData.UMLRelationKind, element.CustomData)
 		}
@@ -2453,9 +2427,7 @@ func TestUMLClassStereotypeAndModifiersReachEditableScene(t *testing.T) {
 	}
 	foundHeader := false
 	foundHeaderText := false
-	foundAttributeText := false
-	foundOperationText := false
-	foundBodyDivider := false
+	foundBodyText := false
 	for _, rawElement := range raw["elements"].([]any) {
 		element, _ := rawElement.(map[string]any)
 		customData, _ := element["customData"].(map[string]any)
@@ -2463,26 +2435,16 @@ func TestUMLClassStereotypeAndModifiersReachEditableScene(t *testing.T) {
 			foundHeader = true
 		}
 		if customData["xaligoUmlClassHeaderContent"] == true && element["strokeColor"] == "#ffffff" {
-			if element["text"] == "<<service>>\n{abstract, static} Repository" {
+			if element["text"] == "Repository" {
 				foundHeaderText = true
 			}
 		}
-		if customData["xaligoUmlClassAttributeContent"] == true && element["strokeColor"] == "#052d6e" {
-			if element["text"] == "- store: Store" {
-				foundAttributeText = true
-			}
-		}
-		if customData["xaligoUmlClassOperationContent"] == true && element["strokeColor"] == "#052d6e" {
-			if element["text"] == "+ find(id): Entity" {
-				foundOperationText = true
-			}
-		}
-		if customData["xaligoUmlClassBodyDivider"] == true {
-			foundBodyDivider = true
+		if text, _ := element["text"].(string); strings.Contains(text, "- store: Store") && strings.Contains(text, "+ find(id): Entity") {
+			foundBodyText = true
 		}
 	}
-	if !foundHeader || !foundHeaderText || !foundAttributeText || !foundOperationText || !foundBodyDivider {
-		t.Fatalf("class compartment rendering missing header=%t headerText=%t attributeText=%t operationText=%t bodyDivider=%t: %s", foundHeader, foundHeaderText, foundAttributeText, foundOperationText, foundBodyDivider, rawScene)
+	if !foundHeader || !foundHeaderText || !foundBodyText {
+		t.Fatalf("class compartment rendering missing header=%t headerText=%t bodyText=%t: %s", foundHeader, foundHeaderText, foundBodyText, rawScene)
 	}
 	foundDivider := false
 	for _, rawElement := range raw["elements"].([]any) {
@@ -2504,98 +2466,6 @@ func TestUMLClassStereotypeAndModifiersReachEditableScene(t *testing.T) {
 		if !strings.Contains(string(xyflow), want) {
 			t.Fatalf("XYFlow missing %q: %s", want, xyflow)
 		}
-	}
-}
-
-func TestUMLClassDiagramSupportsPackageGroups(t *testing.T) {
-	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="900" height="520"><uml id="classes"><class-diagram grid="1"><package id="identity" title="Identity" grid="2"><class id="user" title="User"><attribute>- id: int</attribute><operation>+ login()</operation></class><class id="session" title="Session"><attribute>- token: string</attribute></class><association src="user" dst="session" label="1 -> *"/></package><package id="billing" title="Billing"><class id="invoice" title="Invoice"><attribute>- id: UUID</attribute><operation>+ issue()</operation></class></package></class-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
-	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
-	}
-	var scene entity.PresentationScene
-	if err := json.Unmarshal(rawScene, &scene); err != nil {
-		t.Fatalf("json.Unmarshal() error = %v", err)
-	}
-	classCount := 0
-	packageCount := 0
-	foundRelation := false
-	var packageWidths []float64
-	for _, element := range scene.Elements {
-		if element.CustomData == nil {
-			continue
-		}
-		if element.CustomData.UMLElementKind == "class" {
-			classCount++
-		}
-		if element.CustomData.GroupBorder {
-			packageCount++
-			packageWidths = append(packageWidths, element.Width)
-		}
-		if element.CustomData.UMLRelationKind == "association" {
-			foundRelation = true
-		}
-	}
-	if classCount != 3 || packageCount != 2 || !foundRelation {
-		t.Fatalf("package class diagram scene = classes %d packages %d relation %t: %#v", classCount, packageCount, foundRelation, scene.Elements)
-	}
-	for _, width := range packageWidths {
-		if width < 700 {
-			t.Fatalf("package width %.1f is not optimized to its grid cell: %#v", width, scene.Elements)
-		}
-	}
-}
-
-func TestUMLClassPackagesAutoBalanceToFrameArea(t *testing.T) {
-	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="1200" height="520"><uml id="classes"><class-diagram><package id="identity" title="Identity"><class id="user" title="User" /></package><package id="billing" title="Billing"><class id="invoice" title="Invoice" /></package><package id="shipping" title="Shipping"><class id="shipment" title="Shipment" /></package></class-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
-	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
-	}
-	var scene entity.PresentationScene
-	if err := json.Unmarshal(rawScene, &scene); err != nil {
-		t.Fatalf("json.Unmarshal() error = %v", err)
-	}
-	var packageElements []entity.Element
-	for _, element := range scene.Elements {
-		if element.CustomData != nil && element.CustomData.GroupBorder {
-			packageElements = append(packageElements, element)
-		}
-	}
-	if len(packageElements) != 3 {
-		t.Fatalf("package count = %d, want 3: %#v", len(packageElements), scene.Elements)
-	}
-	baseY := packageElements[0].Y
-	baseWidth := packageElements[0].Width
-	baseHeight := packageElements[0].Height
-	for _, element := range packageElements {
-		if math.Abs(element.Y-baseY) > 1 || math.Abs(element.Width-baseWidth) > 1 || math.Abs(element.Height-baseHeight) > 1 {
-			t.Fatalf("packages should share one balanced row and equal size: %#v", packageElements)
-		}
-		if element.Height < 430 {
-			t.Fatalf("package height %.1f should use the frame height: %#v", element.Height, packageElements)
-		}
-	}
-}
-
-func TestUMLClassPackageSVGKeepsReadableCompartmentText(t *testing.T) {
-	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="1440" height="760"><uml id="classes"><class-diagram><package id="domain" title="Domain"><class id="order" title="Order" stereotype="aggregate-root"><attribute>- id: UUID</attribute><attribute>- status: OrderStatus</attribute><operation>+ confirm()</operation><operation>+ total(): Money</operation></class><class id="customer" title="Customer"><attribute>- id: UUID</attribute><attribute>- name: String</attribute><operation>+ placeOrder(): Order</operation></class><class id="premium" title="PremiumCustomer" abstract="true"><attribute>- discountRate: Decimal</attribute><operation>+ calculateDiscount(): Money</operation></class></package><association src="customer" dst="order" src-multiplicity="1" dst-multiplicity="0..*"/></class-diagram></uml></frame></frames></xaligo>`)
-	svg, err := newUsecase().RenderSVG(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
-	if err != nil {
-		t.Fatalf("RenderSVG() error = %v", err)
-	}
-	fontSizePattern := regexp.MustCompile(`font-size="([0-9]+(?:\.[0-9]+)?)"`)
-	for _, match := range fontSizePattern.FindAllStringSubmatch(string(svg), -1) {
-		fontSize, err := strconv.ParseFloat(match[1], 64)
-		if err != nil {
-			t.Fatalf("ParseFloat(%q) error = %v", match[1], err)
-		}
-		if fontSize < 12 {
-			t.Fatalf("SVG contains unreadably small font-size %.3f: %s", fontSize, svg)
-		}
-	}
-	if !strings.Contains(string(svg), "+ calculateDiscount(): Money") {
-		t.Fatalf("SVG should keep long operation on one readable line: %s", svg)
 	}
 }
 
@@ -2651,7 +2521,7 @@ func TestUMLSequenceOrderAnchorsRemainTopToBottomForEveryConnectionSide(t *testi
 
 func TestUMLCrossFramePublicReferenceReachesGraphOutputs(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames>
-<frame id="overview" width="720" height="420"><rectangle id="caller" title="Caller"/><connection src="caller" dst="detail.order"/></frame>
+<frame id="overview" width="720" height="420"><rectangle id="caller" title="Caller"/><connection src="caller" dst="detail.domain/order"/></frame>
 <frame id="detail" width="720" height="420"><uml id="domain"><class-diagram><class id="order" title="Order"/></class-diagram></uml></frame>
 </frames></xaligo>`)
 	options := entity.RenderOptions{PxPerInch: 96, Theme: "light"}

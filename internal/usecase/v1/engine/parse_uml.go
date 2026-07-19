@@ -755,6 +755,11 @@ func normalizeUMLElementV1EngineParseUml(source *entity.Node, scopedID, diagramK
 	attrs["uml-ref"] = attrs["ref"]
 	attrs["uml-diagram-kind"] = diagramKind
 	attrs["uml-element-kind"] = source.Tag
+	for _, attribute := range []string{"stereotype", "abstract", "static"} {
+		if value := strings.TrimSpace(source.Attr(attribute)); value != "" {
+			attrs["uml-"+attribute] = value
+		}
+	}
 	if strings.TrimSpace(attrs["font-family"]) == "" {
 		attrs["font-family"] = "helvetica"
 	}
@@ -816,10 +821,13 @@ func normalizeUMLRelationV1EngineParseUml(source *entity.Node, scopedSrc, scoped
 	attrs["uml-dst-ref"] = publicUMLRefV1EngineParseUml(umlID, source.Attr("dst"))
 	attrs["uml-src-kind"] = srcKind
 	attrs["uml-dst-kind"] = dstKind
-	for _, attribute := range []string{"order", "guard", "route", "src-multiplicity", "dst-multiplicity", "at", "from", "to"} {
+	for _, attribute := range []string{"order", "mode", "event", "guard", "action", "effect", "route", "src-multiplicity", "dst-multiplicity", "at", "from", "to"} {
 		if value := strings.TrimSpace(source.Attr(attribute)); value != "" {
 			attrs["uml-"+attribute] = value
 		}
+	}
+	if source.Tag == "message" && strings.TrimSpace(attrs["uml-mode"]) == "" {
+		attrs["uml-mode"] = "sync"
 	}
 	switch source.Tag {
 	case "dependency", "realization", "return-message":
@@ -833,7 +841,10 @@ func normalizeUMLRelationV1EngineParseUml(source *entity.Node, scopedSrc, scoped
 	case "association", "relation", "assembly":
 		attrs["end-arrowhead"] = "none"
 	}
-	return &entity.Node{Tag: "connection", Attrs: attrs, Position: source.Position}
+	if source.Tag == "message" && strings.TrimSpace(attrs["uml-mode"]) == "async" {
+		attrs["end-arrowhead"] = "arrow"
+	}
+	return &entity.Node{Tag: "connection", Attrs: attrs, Children: cloneUMLChildrenV1EngineParseUml(source.Children), Position: source.Position}
 }
 
 func umlRelationLabelV1EngineParseUml(source *entity.Node) string {
@@ -846,6 +857,12 @@ func umlRelationLabelV1EngineParseUml(source *entity.Node) string {
 	}
 	if guard := strings.TrimSpace(source.Attr("guard")); guard != "" {
 		label = strings.TrimSpace(label + " [" + guard + "]")
+	}
+	if action := strings.TrimSpace(source.Attr("action")); action != "" {
+		label = strings.TrimSpace(label + " / " + action)
+	}
+	if effect := strings.TrimSpace(source.Attr("effect")); effect != "" {
+		label = strings.TrimSpace(label + " / " + effect)
 	}
 	if order := strings.TrimSpace(source.Attr("order")); order != "" {
 		label = strings.TrimSpace(order + ": " + label)
