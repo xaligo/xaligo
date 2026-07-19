@@ -116,6 +116,7 @@ type CustomData struct {
 	UMLRelationSourceReference      string      `json:"xaligoUmlRelationSourceReference,omitempty"`
 	UMLRelationDestinationReference string      `json:"xaligoUmlRelationDestinationReference,omitempty"`
 	UMLMessageOrder                 string      `json:"xaligoUmlMessageOrder,omitempty"`
+	UMLMessageMode                  string      `json:"xaligoUmlMessageMode,omitempty"`
 	UMLSequenceActivation           bool        `json:"xaligoUmlSequenceActivation,omitempty"`
 	UMLSequenceActivationOwner      string      `json:"xaligoUmlSequenceActivationOwner,omitempty"`
 	UMLSequenceStop                 bool        `json:"xaligoUmlSequenceStop,omitempty"`

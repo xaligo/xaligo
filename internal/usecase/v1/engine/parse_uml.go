@@ -801,6 +801,12 @@ func validateUMLRelationAttributesV1EngineParseUml(relation *entity.Node) error 
 	if _, exists := relation.Attrs["order"]; exists && !message {
 		return fmt.Errorf("UML <%s> does not allow order", relation.Tag)
 	}
+	if mode := strings.ToLower(strings.TrimSpace(relation.Attr("mode"))); mode != "" {
+		if relation.Tag != "message" || (mode != "sync" && mode != "async") {
+			return fmt.Errorf("UML <%s mode=%q> must be sync or async on <message>", relation.Tag, relation.Attr("mode"))
+		}
+		relation.Attrs["mode"] = mode
+	}
 	if _, exists := relation.Attrs["guard"]; exists {
 		switch relation.Tag {
 		case "control-flow", "object-flow", "transition":
@@ -1185,10 +1191,13 @@ func normalizeUMLRelationV1EngineParseUml(source *entity.Node, scopedSrc, scoped
 	attrs["uml-relation-label"] = umlRelationLabelV1EngineParseUml(source)
 	attrs["uml-src-ref"] = publicUMLRefV1EngineParseUml(umlID, source.Attr("src"))
 	attrs["uml-dst-ref"] = publicUMLRefV1EngineParseUml(umlID, source.Attr("dst"))
-	for _, attribute := range []string{"order", "guard", "route", "src-multiplicity", "dst-multiplicity", "at", "from", "to"} {
+	for _, attribute := range []string{"order", "mode", "guard", "route", "src-multiplicity", "dst-multiplicity", "at", "from", "to"} {
 		if value := strings.TrimSpace(source.Attr(attribute)); value != "" {
 			attrs["uml-"+attribute] = value
 		}
+	}
+	if diagramKind == "sequence-diagram" && source.Tag == "message" && strings.TrimSpace(attrs["uml-mode"]) == "" {
+		attrs["uml-mode"] = "sync"
 	}
 	if diagramKind == "activity-diagram" && strings.TrimSpace(attrs["color"]) == "" {
 		attrs["color"] = "#052d6e"
@@ -1213,6 +1222,9 @@ func normalizeUMLRelationV1EngineParseUml(source *entity.Node, scopedSrc, scoped
 		attrs["end-arrowhead"] = "none"
 	case "association", "relation", "link", "occurrence", "duration", "communication-path", "assembly", "connector":
 		attrs["end-arrowhead"] = "none"
+	}
+	if diagramKind == "sequence-diagram" && source.Tag == "message" && strings.TrimSpace(attrs["uml-mode"]) == "async" {
+		attrs["end-arrowhead"] = "arrow"
 	}
 	return &entity.Node{Tag: "connection", Attrs: attrs, Position: source.Position}
 }

@@ -116,6 +116,8 @@ func TestUMLDiagramSpecificValidationV1EngineParseUML(t *testing.T) {
 		{"realization targets interface", `<class-diagram><class id="a"/><class id="b"/><realization src="a" dst="b"/></class-diagram>`, "does not allow class -> class"},
 		{"deployment targets node", `<deployment-diagram><node id="node"/><artifact id="a"/><artifact id="b"/><deployment src="a" dst="b"/></deployment-diagram>`, "does not allow artifact -> artifact"},
 		{"message requires order", `<sequence-diagram><participant id="a"/><lifeline id="b"/><message src="a" dst="b"/></sequence-diagram>`, "requires order"},
+		{"message mode syntax", `<sequence-diagram><participant id="a"/><lifeline id="b"/><message src="a" dst="b" order="1" mode="later"/></sequence-diagram>`, "must be sync or async"},
+		{"return message rejects mode", `<sequence-diagram><participant id="a"/><lifeline id="b"/><return-message src="b" dst="a" order="1" mode="async"/></sequence-diagram>`, "must be sync or async on <message>"},
 		{"message order syntax", `<communication-diagram><object id="a"/><object id="b"/><message src="a" dst="b" order="1.a"/></communication-diagram>`, "dot-separated integers"},
 		{"message order leading zero", `<sequence-diagram><participant id="a"/><lifeline id="b"/><message src="a" dst="b" order="01"/></sequence-diagram>`, "without leading zeroes"},
 		{"state rejects attribute", `<state-machine-diagram><state id="a"><attribute>x</attribute></state></state-machine-diagram>`, "does not allow compartment"},

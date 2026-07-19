@@ -358,6 +358,30 @@ func TestUMLSequenceMessagesUseResponseAndStopNotation(t *testing.T) {
 	}
 }
 
+func TestUMLSequenceMessagesDistinguishSyncAndAsyncNotation(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="sequence"><sequence-diagram><participant id="client" title="Client"/><lifeline id="filterChain" title="FilterChain"/><lifeline id="filter" title="Filter"/><message src="client" dst="filterChain" order="1" title="request"/><message src="filterChain" dst="filter" order="2" title="doFilter" mode="async"/></sequence-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var scene entity.PresentationScene
+	if err := json.Unmarshal(rawScene, &scene); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	modes := map[string]string{}
+	heads := map[string]string{}
+	for _, element := range scene.Elements {
+		if element.Type != "arrow" || element.CustomData == nil || element.CustomData.UMLMessageOrder == "" {
+			continue
+		}
+		modes[element.CustomData.UMLMessageOrder] = element.CustomData.UMLMessageMode
+		heads[element.CustomData.UMLMessageOrder] = element.CustomData.ConnectorEndArrowhead
+	}
+	if modes["1"] != "sync" || heads["1"] != "triangle" || modes["2"] != "async" || heads["2"] != "arrow" {
+		t.Fatalf("sequence message notation modes = %#v heads = %#v", modes, heads)
+	}
+}
+
 func TestUMLAggregationAndCompositionRemainHeadlessAtDestination(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="classes"><class-diagram><class id="whole"/><class id="aggregate"/><class id="composite"/><aggregation src="whole" dst="aggregate"/><composition src="whole" dst="composite"/></class-diagram></uml></frame></frames></xaligo>`)
 	options := entity.RenderOptions{PxPerInch: 96}
