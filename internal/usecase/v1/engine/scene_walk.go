@@ -692,7 +692,7 @@ func appendUMLStateMachineCompartmentsV1EngineSceneWalk(box *entity.Box, element
 	}
 	bodyH := math.Max(1, box.H-headerH)
 	rowH := bodyH / float64(rowCount)
-	keyW := math.Min(68, math.Max(46, box.W*0.34))
+	keyW := math.Min(76, math.Max(66, box.W*0.4))
 	appendUMLStateMachineDividerV1EngineSceneWalk(elements, fmt.Sprintf("%s-state-column-divider", box.ID), box.X+keyW, dividerY, 0, bodyH, updated, map[string]any{"xaligoUmlStateColumnDivider": true})
 	for index := 0; index < rowCount; index++ {
 		rowY := dividerY + float64(index)*rowH

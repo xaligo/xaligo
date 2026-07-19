@@ -5,61 +5,61 @@
       <metadata align="right" width="156" key-width="56" font-size="12" />
       <uml id="order-state">
         <state-machine-diagram direction="right">
-          <initial id="start" row="1" />
-          <state id="created" title="注文作成" row="1">
+          <initial id="start" row="1" col="1" />
+          <state id="created" title="注文作成" row="1" col="2">
             <entry>注文番号を採番</entry>
             <do>支払い待機</do>
             <internal>期限切れ / 通知</internal>
             <exit>結果を記録</exit>
           </state>
-          <state id="awaiting-shipment" title="出荷待ち" row="1">
+          <state id="awaiting-shipment" title="出荷待ち" row="1" col="3">
             <entry>在庫を引当</entry>
             <do>出荷依頼</do>
           </state>
-          <choice id="stock-check" title="在庫確認" row="1" />
-          <state id="shipped" title="出荷済み" row="1">
+          <choice id="stock-check" title="在庫確認" row="1" col="4" />
+          <state id="shipped" title="出荷済み" row="1" col="5">
             <entry>送り状番号を登録</entry>
             <do>配送状況を追跡</do>
           </state>
-          <state id="delivering" title="配送中" row="1">
-            <do>配送イベントを監視</do>
+          <state id="delivering" title="配送中" row="1" col="6">
+            <note>配送イベントを監視</note>
           </state>
-          <state id="completed" title="完了" row="1">
-            <entry>売上を確定</entry>
+          <state id="completed" title="完了" row="1" col="7">
+            <note>売上確定済み</note>
           </state>
-          <final id="closed" row="1" />
+          <final id="closed" row="1" col="8" />
 
-          <state id="refund-requested" title="返金申請" row="2">
+          <state id="refund-requested" title="返金申請" row="2" col="3">
             <entry>返金チケット作成</entry>
             <do>返金要求</do>
             <exit>返金結果を保存</exit>
           </state>
-          <choice id="refund-result" title="返金結果" row="2" />
-          <state id="refund-failed" title="返金失敗" row="2">
+          <choice id="refund-result" title="返金結果" row="2" col="4" />
+          <state id="refund-failed" title="返金失敗" row="2" col="5">
             <note>運用者が再処理または連絡</note>
           </state>
-          <state id="return-requested" title="返品申請" row="2">
+          <state id="return-requested" title="返品申請" row="2" col="6">
             <entry>返品受付番号を採番</entry>
             <do>返送品の到着を待機</do>
             <internal>返品キャンセル / 受付終了</internal>
           </state>
-          <choice id="return-result" title="返品結果" row="2" />
-          <state id="return-failed" title="返品失敗" row="2">
+          <choice id="return-result" title="返品結果" row="2" col="7" />
+          <state id="return-failed" title="返品失敗" row="2" col="8">
             <note>検品NGまたは期限切れ</note>
           </state>
 
-          <state id="buyer-cancelled" title="購入者キャンセル" row="3">
-            <entry>注文を取消済みに変更</entry>
+          <state id="buyer-cancelled" title="購入者キャンセル" row="3" col="2">
+            <note>購入者都合で取消済み</note>
           </state>
-          <state id="refund-succeeded" title="返金成功" row="3">
-            <entry>返金済みイベントを発行</entry>
+          <state id="refund-succeeded" title="返金成功" row="3" col="4">
+            <note>返金済みイベント発行済み</note>
           </state>
-          <history id="order-history" title="H" row="3" />
-          <state id="return-succeeded" title="返品成功" row="3">
+          <history id="order-history" title="H" row="3" col="5" />
+          <state id="return-succeeded" title="返品成功" row="3" col="7">
             <entry>在庫へ戻し入れ</entry>
             <exit>注文を取消済みに変更</exit>
           </state>
-          <state id="system-cancelled" title="システムキャンセル" row="3">
+          <state id="system-cancelled" title="システムキャンセル" row="3" col="8">
             <region>例外終了</region>
             <note>在庫なし・返品成功</note>
           </state>

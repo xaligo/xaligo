@@ -4,283 +4,282 @@
 <defs><clipPath id="xaligo-slide-clip" clipPathUnits="userSpaceOnUse"><rect x="0" y="0" width="1680" height="900"/></clipPath></defs>
 <rect x="0" y="0" width="1680" height="900" fill="#FFFFFF"/>
 <g transform="translate(0 0)" clip-path="url(#xaligo-slide-clip)">
-<ellipse cx="63.5" cy="240.667" rx="17" ry="17" fill="#052D6E" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
-<rect x="247.5" y="184.667" width="180" height="112" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
-<rect x="247.5" y="184.667" width="180" height="33.6" fill="#08B8EA" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
-<rect x="448.5" y="184.667" width="180" height="112" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
-<rect x="448.5" y="184.667" width="180" height="33.6" fill="#08B8EA" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
-<polygon points="688.5,201.667 727.5,240.667 688.5,279.667 649.5,240.667" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
-<rect x="850.5" y="184.667" width="180" height="112" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
-<rect x="850.5" y="184.667" width="180" height="33.6" fill="#08B8EA" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
-<rect x="1051.5" y="184.667" width="180" height="112" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
-<rect x="1051.5" y="184.667" width="180" height="33.6" fill="#08B8EA" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
-<rect x="1252.5" y="184.667" width="180" height="112" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
-<rect x="1252.5" y="184.667" width="180" height="33.6" fill="#08B8EA" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
-<ellipse cx="1470.5" cy="240.667" rx="17" ry="17" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
-<ellipse cx="1470.5" cy="240.667" rx="7.82" ry="7.82" fill="#052D6E" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
-<rect x="200" y="434" width="180" height="112" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
-<rect x="200" y="434" width="180" height="33.6" fill="#08B8EA" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
-<polygon points="459,451 498,490 459,529 420,490" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
-<rect x="640" y="434" width="180" height="112" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
-<rect x="640" y="434" width="180" height="33.6" fill="#08B8EA" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
-<rect x="860" y="434" width="180" height="112" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
-<rect x="860" y="434" width="180" height="33.6" fill="#08B8EA" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
-<polygon points="1119,451 1158,490 1119,529 1080,490" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
-<rect x="1300" y="434" width="180" height="112" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
-<rect x="1300" y="434" width="180" height="33.6" fill="#08B8EA" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
-<rect x="310" y="683.333" width="180" height="112" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
-<rect x="310" y="683.333" width="180" height="33.6" fill="#08B8EA" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
-<rect x="530" y="683.333" width="180" height="112" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
-<rect x="530" y="683.333" width="180" height="33.6" fill="#08B8EA" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
-<polygon points="789,700.333 828,739.333 789,778.333 750,739.333" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
-<rect x="970" y="683.333" width="180" height="112" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
-<rect x="970" y="683.333" width="180" height="33.6" fill="#08B8EA" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
-<rect x="1190" y="683.333" width="180" height="112" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
-<rect x="1190" y="683.333" width="180" height="33.6" fill="#08B8EA" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
-<path d="M 247.5 218.267 L 427.5 218.267" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 308.7 218.267 L 308.7 296.667" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 247.5 237.867 L 427.5 237.867" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 247.5 257.467 L 427.5 257.467" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 247.5 277.067 L 427.5 277.067" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 448.5 218.267 L 628.5 218.267" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 509.7 218.267 L 509.7 296.667" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 448.5 257.467 L 628.5 257.467" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 850.5 218.267 L 1030.5 218.267" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 911.7 218.267 L 911.7 296.667" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 850.5 257.467 L 1030.5 257.467" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 1051.5 218.267 L 1231.5 218.267" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 1112.7 218.267 L 1112.7 296.667" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 1252.5 218.267 L 1432.5 218.267" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 1313.7 218.267 L 1313.7 296.667" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 200 467.6 L 380 467.6" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 261.2 467.6 L 261.2 546" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 200 493.733 L 380 493.733" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 200 519.867 L 380 519.867" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 640 467.6 L 820 467.6" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 701.2 467.6 L 701.2 546" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 860 467.6 L 1040 467.6" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 921.2 467.6 L 921.2 546" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 860 493.733 L 1040 493.733" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 860 519.867 L 1040 519.867" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 1300 467.6 L 1480 467.6" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 1361.2 467.6 L 1361.2 546" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 310 716.933 L 490 716.933" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 371.2 716.933 L 371.2 795.333" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 530 716.933 L 710 716.933" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 591.2 716.933 L 591.2 795.333" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 970 716.933 L 1150 716.933" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 1031.2 716.933 L 1031.2 795.333" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 970 756.133 L 1150 756.133" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 1190 716.933 L 1370 716.933" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 1251.2 716.933 L 1251.2 795.333" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 1190 756.133 L 1370 756.133" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
-<path d="M 385 490 L 415 490" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<path d="M 503 490 L 635 490" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<path d="M 490.2 534 L 490.2 650.333 L 548 650.333 L 548 678.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<path d="M 1045 490 L 1075 490" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<path d="M 878 551 L 878 695.333 L 820.2 695.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<path d="M 1163 490 L 1295 490" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<path d="M 1087.8 534 L 1087.8 554 L 1096 554 L 1096 658.333 L 1096 678.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<rect x="492" y="647.333" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
-<path d="M 495 716.933 L 495 328 L 1448.5 328 L 1448.5 254.267" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<path d="M 525 739.333 L 495 739.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<rect x="875" y="676.333" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
-<rect x="1141" y="325" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
-<path d="M 804.6 695.333 L 804.6 679.333 L 1144 679.333 L 1144 301.667 L 904.5 301.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<path d="M 1155 739.333 L 1185 739.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<path d="M 85.5 240.667 L 105.5 240.667 L 105.5 232 L 222.5 232 L 222.5 240.667 L 242.5 240.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<path d="M 1352 678.333 L 1352 658.333 L 1480 658.333 L 1480 282.667 L 1456.9 282.667 L 1456.9 262.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<path d="M 373.5 301.667 L 373.5 321.667 L 128 321.667 L 128 658.333 L 364 658.333 L 364 678.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<path d="M 432.5 240.667 L 443.5 240.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<path d="M 466.5 301.667 L 458.5 301.667 L 458.5 368 L 362 368 L 362 429" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<path d="M 633.5 240.667 L 644.5 240.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<rect x="1141" y="309" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
-<rect x="1182" y="487" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
-<rect x="1182" y="325" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
-<path d="M 732.5 271.867 L 732.5 312 L 1185 312 L 1185 716.933" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<path d="M 732.5 256.267 L 748.5 256.267 L 748.5 240.267 L 825.5 240.267 L 825.5 240.667 L 845.5 240.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<rect x="937.5" y="309" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
-<rect x="957" y="325" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
-<path d="M 940.5 301.667 L 940.5 325.667 L 960 325.667 L 960 409 L 950 409 L 950 429" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<path d="M 1035.5 240.667 L 1046.5 240.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<path d="M 1236.5 240.667 L 1247.5 240.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<path d="M 1437.5 240.667 L 1433.5 240.667 L 1433.5 288 L 1448.5 288 L 1448.5 247.467" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<defs><clipPath id="xaligo-text-clip-87c02b6aa66bc07c" clipPathUnits="userSpaceOnUse"><rect x="253.5" y="188.667" width="168" height="25.6"/></clipPath></defs>
-<text x="337.5" y="207.067" fill="#FFFFFF" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-87c02b6aa66bc07c)"><tspan x="337.5" y="207.067">注文作成</tspan></text>
-<defs><clipPath id="xaligo-text-clip-7627ae1f8d669f02" clipPathUnits="userSpaceOnUse"><rect x="251.5" y="220.267" width="53.2" height="15.6"/></clipPath></defs>
-<text x="278.1" y="232.867" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-7627ae1f8d669f02)"><tspan x="278.1" y="232.867">entry</tspan></text>
-<defs><clipPath id="xaligo-text-clip-52ddbc6bfd0ce4f3" clipPathUnits="userSpaceOnUse"><rect x="314.7" y="220.267" width="106.8" height="15.6"/></clipPath></defs>
-<text x="314.7" y="232.867" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-52ddbc6bfd0ce4f3)"><tspan x="314.7" y="232.867">注文番号を採番</tspan></text>
-<defs><clipPath id="xaligo-text-clip-c079cfb50cdaca65" clipPathUnits="userSpaceOnUse"><rect x="251.5" y="239.867" width="53.2" height="15.6"/></clipPath></defs>
-<text x="278.1" y="252.467" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-c079cfb50cdaca65)"><tspan x="278.1" y="252.467">do</tspan></text>
-<defs><clipPath id="xaligo-text-clip-b08ed994303a7952" clipPathUnits="userSpaceOnUse"><rect x="314.7" y="239.867" width="106.8" height="15.6"/></clipPath></defs>
-<text x="314.7" y="252.467" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-b08ed994303a7952)"><tspan x="314.7" y="252.467">支払い待機</tspan></text>
-<defs><clipPath id="xaligo-text-clip-ae51071cc508f692" clipPathUnits="userSpaceOnUse"><rect x="251.5" y="259.467" width="53.2" height="15.6"/></clipPath></defs>
-<text x="278.1" y="272.067" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-ae51071cc508f692)"><tspan x="278.1" y="272.067">internal</tspan></text>
-<defs><clipPath id="xaligo-text-clip-51fd80862a7b1fbb" clipPathUnits="userSpaceOnUse"><rect x="314.7" y="259.467" width="106.8" height="15.6"/></clipPath></defs>
-<text x="314.7" y="272.067" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-51fd80862a7b1fbb)"><tspan x="314.7" y="272.067">期限切れ / 通知</tspan></text>
-<defs><clipPath id="xaligo-text-clip-d76593a897b73393" clipPathUnits="userSpaceOnUse"><rect x="251.5" y="279.067" width="53.2" height="15.6"/></clipPath></defs>
-<text x="278.1" y="291.667" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-d76593a897b73393)"><tspan x="278.1" y="291.667">exit</tspan></text>
-<defs><clipPath id="xaligo-text-clip-8bb277a9f7bfedb8" clipPathUnits="userSpaceOnUse"><rect x="314.7" y="279.067" width="106.8" height="15.6"/></clipPath></defs>
-<text x="314.7" y="291.667" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-8bb277a9f7bfedb8)"><tspan x="314.7" y="291.667">結果を記録</tspan></text>
-<defs><clipPath id="xaligo-text-clip-31f075b8700165d2" clipPathUnits="userSpaceOnUse"><rect x="454.5" y="188.667" width="168" height="25.6"/></clipPath></defs>
-<text x="538.5" y="207.067" fill="#FFFFFF" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-31f075b8700165d2)"><tspan x="538.5" y="207.067">出荷待ち</tspan></text>
-<defs><clipPath id="xaligo-text-clip-d42e6a0d99256d42" clipPathUnits="userSpaceOnUse"><rect x="452.5" y="220.267" width="53.2" height="35.2"/></clipPath></defs>
-<text x="479.1" y="242.667" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-d42e6a0d99256d42)"><tspan x="479.1" y="242.667">entry</tspan></text>
-<defs><clipPath id="xaligo-text-clip-d0225386d9602b21" clipPathUnits="userSpaceOnUse"><rect x="515.7" y="220.267" width="106.8" height="35.2"/></clipPath></defs>
-<text x="515.7" y="242.667" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-d0225386d9602b21)"><tspan x="515.7" y="242.667">在庫を引当</tspan></text>
-<defs><clipPath id="xaligo-text-clip-d81741dd14ba6157" clipPathUnits="userSpaceOnUse"><rect x="452.5" y="259.467" width="53.2" height="35.2"/></clipPath></defs>
-<text x="479.1" y="281.867" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-d81741dd14ba6157)"><tspan x="479.1" y="281.867">do</tspan></text>
-<defs><clipPath id="xaligo-text-clip-b76f34cf5a962db6" clipPathUnits="userSpaceOnUse"><rect x="515.7" y="259.467" width="106.8" height="35.2"/></clipPath></defs>
-<text x="515.7" y="281.867" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-b76f34cf5a962db6)"><tspan x="515.7" y="281.867">出荷依頼</tspan></text>
-<defs><clipPath id="xaligo-text-clip-1baeea542b1659c0" clipPathUnits="userSpaceOnUse"><rect x="657.5" y="207.667" width="62" height="66"/></clipPath></defs>
-<text x="688.5" y="246.267" fill="#052D6E" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-1baeea542b1659c0)"><tspan x="688.5" y="246.267">在庫確認</tspan></text>
-<defs><clipPath id="xaligo-text-clip-971524cd07e2cbda" clipPathUnits="userSpaceOnUse"><rect x="856.5" y="188.667" width="168" height="25.6"/></clipPath></defs>
-<text x="940.5" y="207.067" fill="#FFFFFF" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-971524cd07e2cbda)"><tspan x="940.5" y="207.067">出荷済み</tspan></text>
-<defs><clipPath id="xaligo-text-clip-81529d66e85ed28a" clipPathUnits="userSpaceOnUse"><rect x="854.5" y="220.267" width="53.2" height="35.2"/></clipPath></defs>
-<text x="881.1" y="242.667" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-81529d66e85ed28a)"><tspan x="881.1" y="242.667">entry</tspan></text>
-<defs><clipPath id="xaligo-text-clip-60c6e6a481425dd9" clipPathUnits="userSpaceOnUse"><rect x="917.7" y="220.267" width="106.8" height="35.2"/></clipPath></defs>
-<text x="917.7" y="242.667" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-60c6e6a481425dd9)"><tspan x="917.7" y="242.667">送り状番号を登録</tspan></text>
-<defs><clipPath id="xaligo-text-clip-8675a5e2f6fc9007" clipPathUnits="userSpaceOnUse"><rect x="854.5" y="259.467" width="53.2" height="35.2"/></clipPath></defs>
-<text x="881.1" y="281.867" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-8675a5e2f6fc9007)"><tspan x="881.1" y="281.867">do</tspan></text>
-<defs><clipPath id="xaligo-text-clip-ec1cc058d3a4ad26" clipPathUnits="userSpaceOnUse"><rect x="917.7" y="259.467" width="106.8" height="35.2"/></clipPath></defs>
-<text x="917.7" y="281.867" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-ec1cc058d3a4ad26)"><tspan x="917.7" y="281.867">配送状況を追跡</tspan></text>
-<defs><clipPath id="xaligo-text-clip-874d2d55db4012b" clipPathUnits="userSpaceOnUse"><rect x="1057.5" y="188.667" width="168" height="25.6"/></clipPath></defs>
-<text x="1141.5" y="207.067" fill="#FFFFFF" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-874d2d55db4012b)"><tspan x="1141.5" y="207.067">配送中</tspan></text>
-<defs><clipPath id="xaligo-text-clip-52b6fecf254714c4" clipPathUnits="userSpaceOnUse"><rect x="1055.5" y="220.267" width="53.2" height="74.4"/></clipPath></defs>
-<text x="1082.1" y="262.267" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-52b6fecf254714c4)"><tspan x="1082.1" y="262.267">do</tspan></text>
-<defs><clipPath id="xaligo-text-clip-93850afe5459b31f" clipPathUnits="userSpaceOnUse"><rect x="1118.7" y="220.267" width="106.8" height="74.4"/></clipPath></defs>
-<text x="1118.7" y="255.067" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-93850afe5459b31f)"><tspan x="1118.7" y="255.067">配送イベントを監</tspan><tspan x="1118.7" dy="14.4">視</tspan></text>
-<defs><clipPath id="xaligo-text-clip-476143a547870b5f" clipPathUnits="userSpaceOnUse"><rect x="1258.5" y="188.667" width="168" height="25.6"/></clipPath></defs>
-<text x="1342.5" y="207.067" fill="#FFFFFF" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-476143a547870b5f)"><tspan x="1342.5" y="207.067">完了</tspan></text>
-<defs><clipPath id="xaligo-text-clip-1a7be80dc1b9c510" clipPathUnits="userSpaceOnUse"><rect x="1256.5" y="220.267" width="53.2" height="74.4"/></clipPath></defs>
-<text x="1283.1" y="262.267" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-1a7be80dc1b9c510)"><tspan x="1283.1" y="262.267">entry</tspan></text>
-<defs><clipPath id="xaligo-text-clip-5f47b116f20ba181" clipPathUnits="userSpaceOnUse"><rect x="1319.7" y="220.267" width="106.8" height="74.4"/></clipPath></defs>
-<text x="1319.7" y="262.267" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-5f47b116f20ba181)"><tspan x="1319.7" y="262.267">売上を確定</tspan></text>
-<defs><clipPath id="xaligo-text-clip-d30c77153f5276b" clipPathUnits="userSpaceOnUse"><rect x="206" y="438" width="168" height="25.6"/></clipPath></defs>
-<text x="290" y="456.4" fill="#FFFFFF" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-d30c77153f5276b)"><tspan x="290" y="456.4">返金申請</tspan></text>
-<defs><clipPath id="xaligo-text-clip-131bfa9e78f0ed96" clipPathUnits="userSpaceOnUse"><rect x="204" y="469.6" width="53.2" height="22.133"/></clipPath></defs>
-<text x="230.6" y="485.467" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-131bfa9e78f0ed96)"><tspan x="230.6" y="485.467">entry</tspan></text>
-<defs><clipPath id="xaligo-text-clip-e9167fb024c51d9e" clipPathUnits="userSpaceOnUse"><rect x="267.2" y="469.6" width="106.8" height="22.133"/></clipPath></defs>
-<text x="267.2" y="485.467" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-e9167fb024c51d9e)"><tspan x="267.2" y="485.467">返金チケット作成</tspan></text>
-<defs><clipPath id="xaligo-text-clip-5e529b2ae3f8aad8" clipPathUnits="userSpaceOnUse"><rect x="204" y="495.733" width="53.2" height="22.133"/></clipPath></defs>
-<text x="230.6" y="511.6" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-5e529b2ae3f8aad8)"><tspan x="230.6" y="511.6">do</tspan></text>
-<defs><clipPath id="xaligo-text-clip-841731091d99dec8" clipPathUnits="userSpaceOnUse"><rect x="267.2" y="495.733" width="106.8" height="22.133"/></clipPath></defs>
-<text x="267.2" y="511.6" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-841731091d99dec8)"><tspan x="267.2" y="511.6">返金要求</tspan></text>
-<defs><clipPath id="xaligo-text-clip-2a644ccf0bb38d22" clipPathUnits="userSpaceOnUse"><rect x="204" y="521.867" width="53.2" height="22.133"/></clipPath></defs>
-<text x="230.6" y="537.733" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-2a644ccf0bb38d22)"><tspan x="230.6" y="537.733">exit</tspan></text>
-<defs><clipPath id="xaligo-text-clip-c321dc870f0c42da" clipPathUnits="userSpaceOnUse"><rect x="267.2" y="521.867" width="106.8" height="22.133"/></clipPath></defs>
-<text x="267.2" y="537.733" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-c321dc870f0c42da)"><tspan x="267.2" y="537.733">返金結果を保存</tspan></text>
-<defs><clipPath id="xaligo-text-clip-fd5ea863524f23cb" clipPathUnits="userSpaceOnUse"><rect x="428" y="457" width="62" height="66"/></clipPath></defs>
-<text x="459" y="495.6" fill="#052D6E" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-fd5ea863524f23cb)"><tspan x="459" y="495.6">返金結果</tspan></text>
-<defs><clipPath id="xaligo-text-clip-c5eb2059fb955880" clipPathUnits="userSpaceOnUse"><rect x="646" y="438" width="168" height="25.6"/></clipPath></defs>
-<text x="730" y="456.4" fill="#FFFFFF" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-c5eb2059fb955880)"><tspan x="730" y="456.4">返金失敗</tspan></text>
-<defs><clipPath id="xaligo-text-clip-9ffe981b38b0ae2e" clipPathUnits="userSpaceOnUse"><rect x="644" y="469.6" width="53.2" height="74.4"/></clipPath></defs>
-<text x="670.6" y="511.6" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-9ffe981b38b0ae2e)"><tspan x="670.6" y="511.6">note</tspan></text>
-<defs><clipPath id="xaligo-text-clip-7edcd1ec99d4ed63" clipPathUnits="userSpaceOnUse"><rect x="707.2" y="469.6" width="106.8" height="74.4"/></clipPath></defs>
-<text x="707.2" y="504.4" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-7edcd1ec99d4ed63)"><tspan x="707.2" y="504.4">運用者が再処理ま</tspan><tspan x="707.2" dy="14.4">たは連絡</tspan></text>
-<defs><clipPath id="xaligo-text-clip-dc7c7e102833be75" clipPathUnits="userSpaceOnUse"><rect x="866" y="438" width="168" height="25.6"/></clipPath></defs>
-<text x="950" y="456.4" fill="#FFFFFF" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-dc7c7e102833be75)"><tspan x="950" y="456.4">返品申請</tspan></text>
-<defs><clipPath id="xaligo-text-clip-d27808e14f94598" clipPathUnits="userSpaceOnUse"><rect x="864" y="469.6" width="53.2" height="22.133"/></clipPath></defs>
-<text x="890.6" y="485.467" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-d27808e14f94598)"><tspan x="890.6" y="485.467">entry</tspan></text>
-<defs><clipPath id="xaligo-text-clip-faa27f511ee7ff3b" clipPathUnits="userSpaceOnUse"><rect x="927.2" y="469.6" width="106.8" height="22.133"/></clipPath></defs>
-<text x="927.2" y="478.822" fill="#052D6E" font-family="Helvetica" font-size="9.222" text-anchor="start" clip-path="url(#xaligo-text-clip-faa27f511ee7ff3b)"><tspan x="927.2" y="478.822">返品受付番号を採</tspan><tspan x="927.2" dy="11.067">番</tspan></text>
-<defs><clipPath id="xaligo-text-clip-3123d34889e4c1be" clipPathUnits="userSpaceOnUse"><rect x="864" y="495.733" width="53.2" height="22.133"/></clipPath></defs>
-<text x="890.6" y="511.6" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-3123d34889e4c1be)"><tspan x="890.6" y="511.6">do</tspan></text>
-<defs><clipPath id="xaligo-text-clip-1c7b1ef44ca92499" clipPathUnits="userSpaceOnUse"><rect x="927.2" y="495.733" width="106.8" height="22.133"/></clipPath></defs>
-<text x="927.2" y="504.956" fill="#052D6E" font-family="Helvetica" font-size="9.222" text-anchor="start" clip-path="url(#xaligo-text-clip-1c7b1ef44ca92499)"><tspan x="927.2" y="504.956">返送品の到着を待</tspan><tspan x="927.2" dy="11.067">機</tspan></text>
-<defs><clipPath id="xaligo-text-clip-1b779d9c12dc27e8" clipPathUnits="userSpaceOnUse"><rect x="864" y="521.867" width="53.2" height="22.133"/></clipPath></defs>
-<text x="890.6" y="537.733" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-1b779d9c12dc27e8)"><tspan x="890.6" y="537.733">internal</tspan></text>
-<defs><clipPath id="xaligo-text-clip-11f7534a3747fa47" clipPathUnits="userSpaceOnUse"><rect x="927.2" y="521.867" width="106.8" height="22.133"/></clipPath></defs>
-<text x="927.2" y="531.089" fill="#052D6E" font-family="Helvetica" font-size="9.222" text-anchor="start" clip-path="url(#xaligo-text-clip-11f7534a3747fa47)"><tspan x="927.2" y="531.089">返品キャンセル /</tspan><tspan x="927.2" dy="11.067">受付終了</tspan></text>
-<defs><clipPath id="xaligo-text-clip-db7d74d2143222b6" clipPathUnits="userSpaceOnUse"><rect x="1088" y="457" width="62" height="66"/></clipPath></defs>
-<text x="1119" y="495.6" fill="#052D6E" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-db7d74d2143222b6)"><tspan x="1119" y="495.6">返品結果</tspan></text>
-<defs><clipPath id="xaligo-text-clip-1f002c5606f9d9d9" clipPathUnits="userSpaceOnUse"><rect x="1306" y="438" width="168" height="25.6"/></clipPath></defs>
-<text x="1390" y="456.4" fill="#FFFFFF" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-1f002c5606f9d9d9)"><tspan x="1390" y="456.4">返品失敗</tspan></text>
-<defs><clipPath id="xaligo-text-clip-2b2e3140c8035f93" clipPathUnits="userSpaceOnUse"><rect x="1304" y="469.6" width="53.2" height="74.4"/></clipPath></defs>
-<text x="1330.6" y="511.6" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-2b2e3140c8035f93)"><tspan x="1330.6" y="511.6">note</tspan></text>
-<defs><clipPath id="xaligo-text-clip-c3116650b510e93f" clipPathUnits="userSpaceOnUse"><rect x="1367.2" y="469.6" width="106.8" height="74.4"/></clipPath></defs>
-<text x="1367.2" y="504.4" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-c3116650b510e93f)"><tspan x="1367.2" y="504.4">検品NGまたは期限</tspan><tspan x="1367.2" dy="14.4">切れ</tspan></text>
-<defs><clipPath id="xaligo-text-clip-c61fb8125da6d8bc" clipPathUnits="userSpaceOnUse"><rect x="316" y="687.333" width="168" height="25.6"/></clipPath></defs>
-<text x="400" y="705.733" fill="#FFFFFF" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-c61fb8125da6d8bc)"><tspan x="400" y="705.733">購入者キャンセル</tspan></text>
-<defs><clipPath id="xaligo-text-clip-29522c8fa7dd39e5" clipPathUnits="userSpaceOnUse"><rect x="314" y="718.933" width="53.2" height="74.4"/></clipPath></defs>
-<text x="340.6" y="760.933" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-29522c8fa7dd39e5)"><tspan x="340.6" y="760.933">entry</tspan></text>
-<defs><clipPath id="xaligo-text-clip-fe9a094cd1fe6919" clipPathUnits="userSpaceOnUse"><rect x="377.2" y="718.933" width="106.8" height="74.4"/></clipPath></defs>
-<text x="377.2" y="753.733" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-fe9a094cd1fe6919)"><tspan x="377.2" y="753.733">注文を取消済みに</tspan><tspan x="377.2" dy="14.4">変更</tspan></text>
-<defs><clipPath id="xaligo-text-clip-a7c89b7564706a4d" clipPathUnits="userSpaceOnUse"><rect x="536" y="687.333" width="168" height="25.6"/></clipPath></defs>
-<text x="620" y="705.733" fill="#FFFFFF" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-a7c89b7564706a4d)"><tspan x="620" y="705.733">返金成功</tspan></text>
-<defs><clipPath id="xaligo-text-clip-6269febdb465772a" clipPathUnits="userSpaceOnUse"><rect x="534" y="718.933" width="53.2" height="74.4"/></clipPath></defs>
-<text x="560.6" y="760.933" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-6269febdb465772a)"><tspan x="560.6" y="760.933">entry</tspan></text>
-<defs><clipPath id="xaligo-text-clip-5aed1c5d7d400f58" clipPathUnits="userSpaceOnUse"><rect x="597.2" y="718.933" width="106.8" height="74.4"/></clipPath></defs>
-<text x="597.2" y="753.733" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-5aed1c5d7d400f58)"><tspan x="597.2" y="753.733">返金済みイベント</tspan><tspan x="597.2" dy="14.4">を発行</tspan></text>
-<defs><clipPath id="xaligo-text-clip-ff81669119f1c4b6" clipPathUnits="userSpaceOnUse"><rect x="758" y="706.333" width="62" height="66"/></clipPath></defs>
-<text x="789" y="744.933" fill="#052D6E" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-ff81669119f1c4b6)"><tspan x="789" y="744.933">H</tspan></text>
-<defs><clipPath id="xaligo-text-clip-837674b17595d84f" clipPathUnits="userSpaceOnUse"><rect x="976" y="687.333" width="168" height="25.6"/></clipPath></defs>
-<text x="1060" y="705.733" fill="#FFFFFF" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-837674b17595d84f)"><tspan x="1060" y="705.733">返品成功</tspan></text>
-<defs><clipPath id="xaligo-text-clip-6475caf506801b7b" clipPathUnits="userSpaceOnUse"><rect x="974" y="718.933" width="53.2" height="35.2"/></clipPath></defs>
-<text x="1000.6" y="741.333" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-6475caf506801b7b)"><tspan x="1000.6" y="741.333">entry</tspan></text>
-<defs><clipPath id="xaligo-text-clip-23be02b7bfc044e7" clipPathUnits="userSpaceOnUse"><rect x="1037.2" y="718.933" width="106.8" height="35.2"/></clipPath></defs>
-<text x="1037.2" y="741.333" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-23be02b7bfc044e7)"><tspan x="1037.2" y="741.333">在庫へ戻し入れ</tspan></text>
-<defs><clipPath id="xaligo-text-clip-84e3fa2db3af7908" clipPathUnits="userSpaceOnUse"><rect x="974" y="758.133" width="53.2" height="35.2"/></clipPath></defs>
-<text x="1000.6" y="780.533" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-84e3fa2db3af7908)"><tspan x="1000.6" y="780.533">exit</tspan></text>
-<defs><clipPath id="xaligo-text-clip-5a15f368be511984" clipPathUnits="userSpaceOnUse"><rect x="1037.2" y="758.133" width="106.8" height="35.2"/></clipPath></defs>
-<text x="1037.2" y="773.333" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-5a15f368be511984)"><tspan x="1037.2" y="773.333">注文を取消済みに</tspan><tspan x="1037.2" dy="14.4">変更</tspan></text>
-<defs><clipPath id="xaligo-text-clip-f7715c61742cefd3" clipPathUnits="userSpaceOnUse"><rect x="1196" y="687.333" width="168" height="25.6"/></clipPath></defs>
-<text x="1280" y="705.733" fill="#FFFFFF" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-f7715c61742cefd3)"><tspan x="1280" y="705.733">システムキャンセル</tspan></text>
-<defs><clipPath id="xaligo-text-clip-84bd3e351c3bca9" clipPathUnits="userSpaceOnUse"><rect x="1194" y="718.933" width="53.2" height="35.2"/></clipPath></defs>
-<text x="1220.6" y="741.333" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-84bd3e351c3bca9)"><tspan x="1220.6" y="741.333">region</tspan></text>
-<defs><clipPath id="xaligo-text-clip-73dc72815c5b00ba" clipPathUnits="userSpaceOnUse"><rect x="1257.2" y="718.933" width="106.8" height="35.2"/></clipPath></defs>
-<text x="1257.2" y="741.333" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-73dc72815c5b00ba)"><tspan x="1257.2" y="741.333">例外終了</tspan></text>
-<defs><clipPath id="xaligo-text-clip-b3e32c6bb87a9bdc" clipPathUnits="userSpaceOnUse"><rect x="1194" y="758.133" width="53.2" height="35.2"/></clipPath></defs>
-<text x="1220.6" y="780.533" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-b3e32c6bb87a9bdc)"><tspan x="1220.6" y="780.533">note</tspan></text>
-<defs><clipPath id="xaligo-text-clip-91ac0b70478df831" clipPathUnits="userSpaceOnUse"><rect x="1257.2" y="758.133" width="106.8" height="35.2"/></clipPath></defs>
-<text x="1257.2" y="773.333" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-91ac0b70478df831)"><tspan x="1257.2" y="773.333">在庫なし・返品成</tspan><tspan x="1257.2" dy="14.4">功</tspan></text>
-<defs><clipPath id="xaligo-text-clip-2f7362b099da4bc5" clipPathUnits="userSpaceOnUse"><rect x="124" y="248.667" width="80" height="20"/></clipPath></defs>
-<text x="164" y="263.467" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-2f7362b099da4bc5)"><tspan x="164" y="263.467">注文作成</tspan></text>
+<ellipse cx="136.5" cy="240.667" rx="17" ry="17" fill="#052D6E" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
+<rect x="251" y="184.667" width="173" height="112" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
+<rect x="251" y="184.667" width="173" height="33.6" fill="#08B8EA" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
+<rect x="452" y="184.667" width="173" height="112" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
+<rect x="452" y="184.667" width="173" height="33.6" fill="#08B8EA" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
+<polygon points="739.5,201.667 778.5,240.667 739.5,279.667 700.5,240.667" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
+<rect x="854" y="184.667" width="173" height="112" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
+<rect x="854" y="184.667" width="173" height="33.6" fill="#08B8EA" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
+<rect x="1055" y="184.667" width="173" height="112" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
+<rect x="1055" y="184.667" width="173" height="33.6" fill="#08B8EA" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
+<rect x="1256" y="184.667" width="173" height="112" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
+<rect x="1256" y="184.667" width="173" height="33.6" fill="#08B8EA" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
+<ellipse cx="1543.5" cy="240.667" rx="17" ry="17" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
+<ellipse cx="1543.5" cy="240.667" rx="7.82" ry="7.82" fill="#052D6E" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
+<rect x="452" y="434" width="173" height="112" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
+<rect x="452" y="434" width="173" height="33.6" fill="#08B8EA" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
+<polygon points="739.5,451 778.5,490 739.5,529 700.5,490" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
+<rect x="854" y="434" width="173" height="112" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
+<rect x="854" y="434" width="173" height="33.6" fill="#08B8EA" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
+<rect x="1055" y="434" width="173" height="112" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
+<rect x="1055" y="434" width="173" height="33.6" fill="#08B8EA" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
+<polygon points="1342.5,451 1381.5,490 1342.5,529 1303.5,490" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
+<rect x="1457" y="434" width="173" height="112" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
+<rect x="1457" y="434" width="173" height="33.6" fill="#08B8EA" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
+<rect x="251" y="683.333" width="173" height="112" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
+<rect x="251" y="683.333" width="173" height="33.6" fill="#08B8EA" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
+<rect x="653" y="683.333" width="173" height="112" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
+<rect x="653" y="683.333" width="173" height="33.6" fill="#08B8EA" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
+<polygon points="940.5,700.333 979.5,739.333 940.5,778.333 901.5,739.333" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
+<rect x="1256" y="683.333" width="173" height="112" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
+<rect x="1256" y="683.333" width="173" height="33.6" fill="#08B8EA" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
+<rect x="1457" y="683.333" width="173" height="112" fill="#FFFFFF" fill-opacity="1" stroke="#052D6E" stroke-width="1.35" stroke-opacity="1"/>
+<rect x="1457" y="683.333" width="173" height="33.6" fill="#08B8EA" fill-opacity="1" stroke="#052D6E" stroke-width="1" stroke-opacity="1"/>
+<path d="M 251 218.267 L 424 218.267" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 320.2 218.267 L 320.2 296.667" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 251 237.867 L 424 237.867" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 251 257.467 L 424 257.467" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 251 277.067 L 424 277.067" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 452 218.267 L 625 218.267" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 521.2 218.267 L 521.2 296.667" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 452 257.467 L 625 257.467" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 854 218.267 L 1027 218.267" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 923.2 218.267 L 923.2 296.667" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 854 257.467 L 1027 257.467" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 1055 218.267 L 1228 218.267" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 1124.2 218.267 L 1124.2 296.667" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 1256 218.267 L 1429 218.267" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 1325.2 218.267 L 1325.2 296.667" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 452 467.6 L 625 467.6" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 521.2 467.6 L 521.2 546" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 452 493.733 L 625 493.733" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 452 519.867 L 625 519.867" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 854 467.6 L 1027 467.6" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 923.2 467.6 L 923.2 546" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 1055 467.6 L 1228 467.6" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 1124.2 467.6 L 1124.2 546" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 1055 493.733 L 1228 493.733" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 1055 519.867 L 1228 519.867" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 1457 467.6 L 1630 467.6" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 1526.2 467.6 L 1526.2 546" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 251 716.933 L 424 716.933" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 320.2 716.933 L 320.2 795.333" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 653 716.933 L 826 716.933" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 722.2 716.933 L 722.2 795.333" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 1256 716.933 L 1429 716.933" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 1325.2 716.933 L 1325.2 795.333" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 1256 756.133 L 1429 756.133" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 1457 716.933 L 1630 716.933" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 1526.2 716.933 L 1526.2 795.333" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 1457 756.133 L 1630 756.133" fill="none" stroke="#052D6E" stroke-width="1" stroke-opacity="0.7"/>
+<path d="M 630 490 L 695.5 490" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<path d="M 783.5 490 L 849 490" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<path d="M 739.5 534 L 739.5 554 L 744 554 L 744 658.333 L 739.5 658.333 L 739.5 678.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<path d="M 1233 490 L 1298.5 490" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<path d="M 1072.3 551 L 1072.3 695.333 L 971.7 695.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<path d="M 1386.5 490 L 1452 490" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<path d="M 1342.5 534 L 1342.5 554 L 1352 554 L 1352 658.333 L 1342.5 658.333 L 1342.5 678.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<path d="M 429 716.933 L 429 408 L 1521.5 408 L 1521.5 254.267" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<path d="M 648 739.333 L 628 739.333 L 628 728 L 453 728 L 453 739.333 L 429 739.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<rect x="837" y="487" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
+<rect x="837" y="405" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
+<path d="M 956.1 695.333 L 840 695.333 L 840 301.667 L 975.1 301.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<path d="M 1434 739.333 L 1452 739.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<path d="M 158.5 240.667 L 246 240.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<path d="M 1543.5 678.333 L 1543.5 658.333 L 1640 658.333 L 1640 282.667 L 1543.5 282.667 L 1543.5 262.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<path d="M 337.5 301.667 L 337.5 321.667 L 96 321.667 L 96 658.333 L 337.5 658.333 L 337.5 678.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<path d="M 429 240.667 L 447 240.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<rect x="541" y="405" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
+<path d="M 538.5 301.667 L 538.5 321.667 L 544 321.667 L 544 409 L 538.5 409 L 538.5 429" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<path d="M 630 240.667 L 695.5 240.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<rect x="837" y="309" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
+<rect x="1449" y="405" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
+<path d="M 783.5 271.867 L 783.5 312 L 1452 312 L 1452 716.933" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<path d="M 783.5 256.267 L 799.5 256.267 L 799.5 240.267 L 829 240.267 L 829 240.667 L 849 240.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<rect x="1014.7" y="309" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
+<rect x="1069.3" y="405" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
+<path d="M 1009.7 301.667 L 1017.7 301.667 L 1017.7 368 L 1072.3 368 L 1072.3 429" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<path d="M 1032 240.667 L 1050 240.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<path d="M 1233 240.667 L 1251 240.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<path d="M 1434 240.667 L 1521.5 240.667 L 1521.5 247.467" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<defs><clipPath id="xaligo-text-clip-59eeb9c417f3f240" clipPathUnits="userSpaceOnUse"><rect x="257" y="188.667" width="161" height="25.6"/></clipPath></defs>
+<text x="337.5" y="207.067" fill="#FFFFFF" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-59eeb9c417f3f240)"><tspan x="337.5" y="207.067">注文作成</tspan></text>
+<defs><clipPath id="xaligo-text-clip-480e652178ed985a" clipPathUnits="userSpaceOnUse"><rect x="255" y="220.267" width="61.2" height="15.6"/></clipPath></defs>
+<text x="285.6" y="232.867" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-480e652178ed985a)"><tspan x="285.6" y="232.867">entry</tspan></text>
+<defs><clipPath id="xaligo-text-clip-e65163db38793e18" clipPathUnits="userSpaceOnUse"><rect x="326.2" y="220.267" width="91.8" height="15.6"/></clipPath></defs>
+<text x="326.2" y="232.867" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-e65163db38793e18)"><tspan x="326.2" y="232.867">注文番号を採番</tspan></text>
+<defs><clipPath id="xaligo-text-clip-cdf9b1cfbfc45931" clipPathUnits="userSpaceOnUse"><rect x="255" y="239.867" width="61.2" height="15.6"/></clipPath></defs>
+<text x="285.6" y="252.467" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-cdf9b1cfbfc45931)"><tspan x="285.6" y="252.467">do</tspan></text>
+<defs><clipPath id="xaligo-text-clip-8de9f2384ad0c287" clipPathUnits="userSpaceOnUse"><rect x="326.2" y="239.867" width="91.8" height="15.6"/></clipPath></defs>
+<text x="326.2" y="252.467" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-8de9f2384ad0c287)"><tspan x="326.2" y="252.467">支払い待機</tspan></text>
+<defs><clipPath id="xaligo-text-clip-824b57071c2f96da" clipPathUnits="userSpaceOnUse"><rect x="255" y="259.467" width="61.2" height="15.6"/></clipPath></defs>
+<text x="285.6" y="272.067" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-824b57071c2f96da)"><tspan x="285.6" y="272.067">internal</tspan></text>
+<defs><clipPath id="xaligo-text-clip-94d3d31a184f2070" clipPathUnits="userSpaceOnUse"><rect x="326.2" y="259.467" width="91.8" height="15.6"/></clipPath></defs>
+<text x="326.2" y="272.067" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-94d3d31a184f2070)"><tspan x="326.2" y="272.067">期限切れ / 通知</tspan></text>
+<defs><clipPath id="xaligo-text-clip-d7dc9d4300af610f" clipPathUnits="userSpaceOnUse"><rect x="255" y="279.067" width="61.2" height="15.6"/></clipPath></defs>
+<text x="285.6" y="291.667" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-d7dc9d4300af610f)"><tspan x="285.6" y="291.667">exit</tspan></text>
+<defs><clipPath id="xaligo-text-clip-4e6e410703f9c4c5" clipPathUnits="userSpaceOnUse"><rect x="326.2" y="279.067" width="91.8" height="15.6"/></clipPath></defs>
+<text x="326.2" y="291.667" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-4e6e410703f9c4c5)"><tspan x="326.2" y="291.667">結果を記録</tspan></text>
+<defs><clipPath id="xaligo-text-clip-2e2d527fb28db7e6" clipPathUnits="userSpaceOnUse"><rect x="458" y="188.667" width="161" height="25.6"/></clipPath></defs>
+<text x="538.5" y="207.067" fill="#FFFFFF" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-2e2d527fb28db7e6)"><tspan x="538.5" y="207.067">出荷待ち</tspan></text>
+<defs><clipPath id="xaligo-text-clip-a9acfd7522049552" clipPathUnits="userSpaceOnUse"><rect x="456" y="220.267" width="61.2" height="35.2"/></clipPath></defs>
+<text x="486.6" y="242.667" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-a9acfd7522049552)"><tspan x="486.6" y="242.667">entry</tspan></text>
+<defs><clipPath id="xaligo-text-clip-a271eb81a9e9c0de" clipPathUnits="userSpaceOnUse"><rect x="527.2" y="220.267" width="91.8" height="35.2"/></clipPath></defs>
+<text x="527.2" y="242.667" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-a271eb81a9e9c0de)"><tspan x="527.2" y="242.667">在庫を引当</tspan></text>
+<defs><clipPath id="xaligo-text-clip-763ae80782e0ed53" clipPathUnits="userSpaceOnUse"><rect x="456" y="259.467" width="61.2" height="35.2"/></clipPath></defs>
+<text x="486.6" y="281.867" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-763ae80782e0ed53)"><tspan x="486.6" y="281.867">do</tspan></text>
+<defs><clipPath id="xaligo-text-clip-e152e7873d79edeb" clipPathUnits="userSpaceOnUse"><rect x="527.2" y="259.467" width="91.8" height="35.2"/></clipPath></defs>
+<text x="527.2" y="281.867" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-e152e7873d79edeb)"><tspan x="527.2" y="281.867">出荷依頼</tspan></text>
+<defs><clipPath id="xaligo-text-clip-bcbb35e35a5eeda7" clipPathUnits="userSpaceOnUse"><rect x="708.5" y="207.667" width="62" height="66"/></clipPath></defs>
+<text x="739.5" y="246.267" fill="#052D6E" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-bcbb35e35a5eeda7)"><tspan x="739.5" y="246.267">在庫確認</tspan></text>
+<defs><clipPath id="xaligo-text-clip-c90132ab8fbb212d" clipPathUnits="userSpaceOnUse"><rect x="860" y="188.667" width="161" height="25.6"/></clipPath></defs>
+<text x="940.5" y="207.067" fill="#FFFFFF" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-c90132ab8fbb212d)"><tspan x="940.5" y="207.067">出荷済み</tspan></text>
+<defs><clipPath id="xaligo-text-clip-8e4847e5c21d0e32" clipPathUnits="userSpaceOnUse"><rect x="858" y="220.267" width="61.2" height="35.2"/></clipPath></defs>
+<text x="888.6" y="242.667" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-8e4847e5c21d0e32)"><tspan x="888.6" y="242.667">entry</tspan></text>
+<defs><clipPath id="xaligo-text-clip-6d970d3c28efa90e" clipPathUnits="userSpaceOnUse"><rect x="929.2" y="220.267" width="91.8" height="35.2"/></clipPath></defs>
+<text x="929.2" y="235.467" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-6d970d3c28efa90e)"><tspan x="929.2" y="235.467">送り状番号を登</tspan><tspan x="929.2" dy="14.4">録</tspan></text>
+<defs><clipPath id="xaligo-text-clip-643fa04ba217626b" clipPathUnits="userSpaceOnUse"><rect x="858" y="259.467" width="61.2" height="35.2"/></clipPath></defs>
+<text x="888.6" y="281.867" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-643fa04ba217626b)"><tspan x="888.6" y="281.867">do</tspan></text>
+<defs><clipPath id="xaligo-text-clip-9ca70ace93c93f33" clipPathUnits="userSpaceOnUse"><rect x="929.2" y="259.467" width="91.8" height="35.2"/></clipPath></defs>
+<text x="929.2" y="281.867" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-9ca70ace93c93f33)"><tspan x="929.2" y="281.867">配送状況を追跡</tspan></text>
+<defs><clipPath id="xaligo-text-clip-2a5109c782926684" clipPathUnits="userSpaceOnUse"><rect x="1061" y="188.667" width="161" height="25.6"/></clipPath></defs>
+<text x="1141.5" y="207.067" fill="#FFFFFF" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-2a5109c782926684)"><tspan x="1141.5" y="207.067">配送中</tspan></text>
+<defs><clipPath id="xaligo-text-clip-c42502d0767a4e8" clipPathUnits="userSpaceOnUse"><rect x="1059" y="220.267" width="61.2" height="74.4"/></clipPath></defs>
+<text x="1089.6" y="262.267" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-c42502d0767a4e8)"><tspan x="1089.6" y="262.267">note</tspan></text>
+<defs><clipPath id="xaligo-text-clip-4d8d1362bf3c1211" clipPathUnits="userSpaceOnUse"><rect x="1130.2" y="220.267" width="91.8" height="74.4"/></clipPath></defs>
+<text x="1130.2" y="255.067" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-4d8d1362bf3c1211)"><tspan x="1130.2" y="255.067">配送イベントを</tspan><tspan x="1130.2" dy="14.4">監視</tspan></text>
+<defs><clipPath id="xaligo-text-clip-bd695e554fa0ba40" clipPathUnits="userSpaceOnUse"><rect x="1262" y="188.667" width="161" height="25.6"/></clipPath></defs>
+<text x="1342.5" y="207.067" fill="#FFFFFF" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-bd695e554fa0ba40)"><tspan x="1342.5" y="207.067">完了</tspan></text>
+<defs><clipPath id="xaligo-text-clip-ebb2c52cebc0c59" clipPathUnits="userSpaceOnUse"><rect x="1260" y="220.267" width="61.2" height="74.4"/></clipPath></defs>
+<text x="1290.6" y="262.267" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-ebb2c52cebc0c59)"><tspan x="1290.6" y="262.267">note</tspan></text>
+<defs><clipPath id="xaligo-text-clip-689f3dc11c51463b" clipPathUnits="userSpaceOnUse"><rect x="1331.2" y="220.267" width="91.8" height="74.4"/></clipPath></defs>
+<text x="1331.2" y="262.267" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-689f3dc11c51463b)"><tspan x="1331.2" y="262.267">売上確定済み</tspan></text>
+<defs><clipPath id="xaligo-text-clip-1f153620a8e25f61" clipPathUnits="userSpaceOnUse"><rect x="458" y="438" width="161" height="25.6"/></clipPath></defs>
+<text x="538.5" y="456.4" fill="#FFFFFF" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-1f153620a8e25f61)"><tspan x="538.5" y="456.4">返金申請</tspan></text>
+<defs><clipPath id="xaligo-text-clip-370c415b66c905cc" clipPathUnits="userSpaceOnUse"><rect x="456" y="469.6" width="61.2" height="22.133"/></clipPath></defs>
+<text x="486.6" y="485.467" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-370c415b66c905cc)"><tspan x="486.6" y="485.467">entry</tspan></text>
+<defs><clipPath id="xaligo-text-clip-804b3aeac08cece8" clipPathUnits="userSpaceOnUse"><rect x="527.2" y="469.6" width="91.8" height="22.133"/></clipPath></defs>
+<text x="527.2" y="478.822" fill="#052D6E" font-family="Helvetica" font-size="9.222" text-anchor="start" clip-path="url(#xaligo-text-clip-804b3aeac08cece8)"><tspan x="527.2" y="478.822">返金チケット作</tspan><tspan x="527.2" dy="11.067">成</tspan></text>
+<defs><clipPath id="xaligo-text-clip-1293776fb359795e" clipPathUnits="userSpaceOnUse"><rect x="456" y="495.733" width="61.2" height="22.133"/></clipPath></defs>
+<text x="486.6" y="511.6" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-1293776fb359795e)"><tspan x="486.6" y="511.6">do</tspan></text>
+<defs><clipPath id="xaligo-text-clip-42cf7f48b3a12f2e" clipPathUnits="userSpaceOnUse"><rect x="527.2" y="495.733" width="91.8" height="22.133"/></clipPath></defs>
+<text x="527.2" y="511.6" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-42cf7f48b3a12f2e)"><tspan x="527.2" y="511.6">返金要求</tspan></text>
+<defs><clipPath id="xaligo-text-clip-533eb4fbbefaec00" clipPathUnits="userSpaceOnUse"><rect x="456" y="521.867" width="61.2" height="22.133"/></clipPath></defs>
+<text x="486.6" y="537.733" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-533eb4fbbefaec00)"><tspan x="486.6" y="537.733">exit</tspan></text>
+<defs><clipPath id="xaligo-text-clip-f593ba40434287f8" clipPathUnits="userSpaceOnUse"><rect x="527.2" y="521.867" width="91.8" height="22.133"/></clipPath></defs>
+<text x="527.2" y="537.733" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-f593ba40434287f8)"><tspan x="527.2" y="537.733">返金結果を保存</tspan></text>
+<defs><clipPath id="xaligo-text-clip-1d8dc7858418d323" clipPathUnits="userSpaceOnUse"><rect x="708.5" y="457" width="62" height="66"/></clipPath></defs>
+<text x="739.5" y="495.6" fill="#052D6E" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-1d8dc7858418d323)"><tspan x="739.5" y="495.6">返金結果</tspan></text>
+<defs><clipPath id="xaligo-text-clip-2140faf568e34787" clipPathUnits="userSpaceOnUse"><rect x="860" y="438" width="161" height="25.6"/></clipPath></defs>
+<text x="940.5" y="456.4" fill="#FFFFFF" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-2140faf568e34787)"><tspan x="940.5" y="456.4">返金失敗</tspan></text>
+<defs><clipPath id="xaligo-text-clip-e67b0f8f882499ca" clipPathUnits="userSpaceOnUse"><rect x="858" y="469.6" width="61.2" height="74.4"/></clipPath></defs>
+<text x="888.6" y="511.6" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-e67b0f8f882499ca)"><tspan x="888.6" y="511.6">note</tspan></text>
+<defs><clipPath id="xaligo-text-clip-d8b1b19ce94daaae" clipPathUnits="userSpaceOnUse"><rect x="929.2" y="469.6" width="91.8" height="74.4"/></clipPath></defs>
+<text x="929.2" y="504.4" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-d8b1b19ce94daaae)"><tspan x="929.2" y="504.4">運用者が再処理</tspan><tspan x="929.2" dy="14.4">または連絡</tspan></text>
+<defs><clipPath id="xaligo-text-clip-56d8adc1930012a0" clipPathUnits="userSpaceOnUse"><rect x="1061" y="438" width="161" height="25.6"/></clipPath></defs>
+<text x="1141.5" y="456.4" fill="#FFFFFF" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-56d8adc1930012a0)"><tspan x="1141.5" y="456.4">返品申請</tspan></text>
+<defs><clipPath id="xaligo-text-clip-2bb2d9fd889e6038" clipPathUnits="userSpaceOnUse"><rect x="1059" y="469.6" width="61.2" height="22.133"/></clipPath></defs>
+<text x="1089.6" y="485.467" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-2bb2d9fd889e6038)"><tspan x="1089.6" y="485.467">entry</tspan></text>
+<defs><clipPath id="xaligo-text-clip-6e0801da970e28e5" clipPathUnits="userSpaceOnUse"><rect x="1130.2" y="469.6" width="91.8" height="22.133"/></clipPath></defs>
+<text x="1130.2" y="478.822" fill="#052D6E" font-family="Helvetica" font-size="9.222" text-anchor="start" clip-path="url(#xaligo-text-clip-6e0801da970e28e5)"><tspan x="1130.2" y="478.822">返品受付番号を</tspan><tspan x="1130.2" dy="11.067">採番</tspan></text>
+<defs><clipPath id="xaligo-text-clip-4222c8df19a4628c" clipPathUnits="userSpaceOnUse"><rect x="1059" y="495.733" width="61.2" height="22.133"/></clipPath></defs>
+<text x="1089.6" y="511.6" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-4222c8df19a4628c)"><tspan x="1089.6" y="511.6">do</tspan></text>
+<defs><clipPath id="xaligo-text-clip-314110cd3b03ae25" clipPathUnits="userSpaceOnUse"><rect x="1130.2" y="495.733" width="91.8" height="22.133"/></clipPath></defs>
+<text x="1130.2" y="504.956" fill="#052D6E" font-family="Helvetica" font-size="9.222" text-anchor="start" clip-path="url(#xaligo-text-clip-314110cd3b03ae25)"><tspan x="1130.2" y="504.956">返送品の到着を</tspan><tspan x="1130.2" dy="11.067">待機</tspan></text>
+<defs><clipPath id="xaligo-text-clip-475febd775bf1f08" clipPathUnits="userSpaceOnUse"><rect x="1059" y="521.867" width="61.2" height="22.133"/></clipPath></defs>
+<text x="1089.6" y="537.733" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-475febd775bf1f08)"><tspan x="1089.6" y="537.733">internal</tspan></text>
+<defs><clipPath id="xaligo-text-clip-b8fc03766428dcc9" clipPathUnits="userSpaceOnUse"><rect x="1130.2" y="521.867" width="91.8" height="22.133"/></clipPath></defs>
+<text x="1130.2" y="531.089" fill="#052D6E" font-family="Helvetica" font-size="9.222" text-anchor="start" clip-path="url(#xaligo-text-clip-b8fc03766428dcc9)"><tspan x="1130.2" y="531.089">返品キャンセル</tspan><tspan x="1130.2" dy="11.067">/ 受付終了</tspan></text>
+<defs><clipPath id="xaligo-text-clip-7cf4e93ff94f755a" clipPathUnits="userSpaceOnUse"><rect x="1311.5" y="457" width="62" height="66"/></clipPath></defs>
+<text x="1342.5" y="495.6" fill="#052D6E" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-7cf4e93ff94f755a)"><tspan x="1342.5" y="495.6">返品結果</tspan></text>
+<defs><clipPath id="xaligo-text-clip-ecc04f0718f25a0" clipPathUnits="userSpaceOnUse"><rect x="1463" y="438" width="161" height="25.6"/></clipPath></defs>
+<text x="1543.5" y="456.4" fill="#FFFFFF" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-ecc04f0718f25a0)"><tspan x="1543.5" y="456.4">返品失敗</tspan></text>
+<defs><clipPath id="xaligo-text-clip-950c714026c78048" clipPathUnits="userSpaceOnUse"><rect x="1461" y="469.6" width="61.2" height="74.4"/></clipPath></defs>
+<text x="1491.6" y="511.6" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-950c714026c78048)"><tspan x="1491.6" y="511.6">note</tspan></text>
+<defs><clipPath id="xaligo-text-clip-d9abe1369e17984" clipPathUnits="userSpaceOnUse"><rect x="1532.2" y="469.6" width="91.8" height="74.4"/></clipPath></defs>
+<text x="1532.2" y="504.4" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-d9abe1369e17984)"><tspan x="1532.2" y="504.4">検品NGまたは期</tspan><tspan x="1532.2" dy="14.4">限切れ</tspan></text>
+<defs><clipPath id="xaligo-text-clip-7419a26ecd02acb1" clipPathUnits="userSpaceOnUse"><rect x="257" y="687.333" width="161" height="25.6"/></clipPath></defs>
+<text x="337.5" y="705.733" fill="#FFFFFF" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-7419a26ecd02acb1)"><tspan x="337.5" y="705.733">購入者キャンセル</tspan></text>
+<defs><clipPath id="xaligo-text-clip-d197d542b796dfaa" clipPathUnits="userSpaceOnUse"><rect x="255" y="718.933" width="61.2" height="74.4"/></clipPath></defs>
+<text x="285.6" y="760.933" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-d197d542b796dfaa)"><tspan x="285.6" y="760.933">note</tspan></text>
+<defs><clipPath id="xaligo-text-clip-e82fcff3f3734a7c" clipPathUnits="userSpaceOnUse"><rect x="326.2" y="718.933" width="91.8" height="74.4"/></clipPath></defs>
+<text x="326.2" y="753.733" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-e82fcff3f3734a7c)"><tspan x="326.2" y="753.733">購入者都合で取</tspan><tspan x="326.2" dy="14.4">消済み</tspan></text>
+<defs><clipPath id="xaligo-text-clip-a66f6cc6d21bc02e" clipPathUnits="userSpaceOnUse"><rect x="659" y="687.333" width="161" height="25.6"/></clipPath></defs>
+<text x="739.5" y="705.733" fill="#FFFFFF" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-a66f6cc6d21bc02e)"><tspan x="739.5" y="705.733">返金成功</tspan></text>
+<defs><clipPath id="xaligo-text-clip-5444830ce0b721b3" clipPathUnits="userSpaceOnUse"><rect x="657" y="718.933" width="61.2" height="74.4"/></clipPath></defs>
+<text x="687.6" y="760.933" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-5444830ce0b721b3)"><tspan x="687.6" y="760.933">note</tspan></text>
+<defs><clipPath id="xaligo-text-clip-43d7d201d661652d" clipPathUnits="userSpaceOnUse"><rect x="728.2" y="718.933" width="91.8" height="74.4"/></clipPath></defs>
+<text x="728.2" y="753.733" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-43d7d201d661652d)"><tspan x="728.2" y="753.733">返金済みイベン</tspan><tspan x="728.2" dy="14.4">ト発行済み</tspan></text>
+<defs><clipPath id="xaligo-text-clip-cc8eed2a48e734d9" clipPathUnits="userSpaceOnUse"><rect x="909.5" y="706.333" width="62" height="66"/></clipPath></defs>
+<text x="940.5" y="744.933" fill="#052D6E" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-cc8eed2a48e734d9)"><tspan x="940.5" y="744.933">H</tspan></text>
+<defs><clipPath id="xaligo-text-clip-97384b4374a7b771" clipPathUnits="userSpaceOnUse"><rect x="1262" y="687.333" width="161" height="25.6"/></clipPath></defs>
+<text x="1342.5" y="705.733" fill="#FFFFFF" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-97384b4374a7b771)"><tspan x="1342.5" y="705.733">返品成功</tspan></text>
+<defs><clipPath id="xaligo-text-clip-59128694daaf3957" clipPathUnits="userSpaceOnUse"><rect x="1260" y="718.933" width="61.2" height="35.2"/></clipPath></defs>
+<text x="1290.6" y="741.333" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-59128694daaf3957)"><tspan x="1290.6" y="741.333">entry</tspan></text>
+<defs><clipPath id="xaligo-text-clip-b9a52f9690caea41" clipPathUnits="userSpaceOnUse"><rect x="1331.2" y="718.933" width="91.8" height="35.2"/></clipPath></defs>
+<text x="1331.2" y="741.333" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-b9a52f9690caea41)"><tspan x="1331.2" y="741.333">在庫へ戻し入れ</tspan></text>
+<defs><clipPath id="xaligo-text-clip-d7fe36f34f238bba" clipPathUnits="userSpaceOnUse"><rect x="1260" y="758.133" width="61.2" height="35.2"/></clipPath></defs>
+<text x="1290.6" y="780.533" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-d7fe36f34f238bba)"><tspan x="1290.6" y="780.533">exit</tspan></text>
+<defs><clipPath id="xaligo-text-clip-871301289de8ae18" clipPathUnits="userSpaceOnUse"><rect x="1331.2" y="758.133" width="91.8" height="35.2"/></clipPath></defs>
+<text x="1331.2" y="773.333" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-871301289de8ae18)"><tspan x="1331.2" y="773.333">注文を取消済み</tspan><tspan x="1331.2" dy="14.4">に変更</tspan></text>
+<defs><clipPath id="xaligo-text-clip-60c4807454cc2a73" clipPathUnits="userSpaceOnUse"><rect x="1463" y="687.333" width="161" height="25.6"/></clipPath></defs>
+<text x="1543.5" y="705.733" fill="#FFFFFF" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-60c4807454cc2a73)"><tspan x="1543.5" y="705.733">システムキャンセル</tspan></text>
+<defs><clipPath id="xaligo-text-clip-b01e6ff03e7a7409" clipPathUnits="userSpaceOnUse"><rect x="1461" y="718.933" width="61.2" height="35.2"/></clipPath></defs>
+<text x="1491.6" y="741.333" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-b01e6ff03e7a7409)"><tspan x="1491.6" y="741.333">region</tspan></text>
+<defs><clipPath id="xaligo-text-clip-e004fe93b95fc889" clipPathUnits="userSpaceOnUse"><rect x="1532.2" y="718.933" width="91.8" height="35.2"/></clipPath></defs>
+<text x="1532.2" y="741.333" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-e004fe93b95fc889)"><tspan x="1532.2" y="741.333">例外終了</tspan></text>
+<defs><clipPath id="xaligo-text-clip-a253d97a7e6f974" clipPathUnits="userSpaceOnUse"><rect x="1461" y="758.133" width="61.2" height="35.2"/></clipPath></defs>
+<text x="1491.6" y="780.533" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-a253d97a7e6f974)"><tspan x="1491.6" y="780.533">note</tspan></text>
+<defs><clipPath id="xaligo-text-clip-32c4f8c8a67cfa74" clipPathUnits="userSpaceOnUse"><rect x="1532.2" y="758.133" width="91.8" height="35.2"/></clipPath></defs>
+<text x="1532.2" y="773.333" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="start" clip-path="url(#xaligo-text-clip-32c4f8c8a67cfa74)"><tspan x="1532.2" y="773.333">在庫なし・返品</tspan><tspan x="1532.2" dy="14.4">成功</tspan></text>
+<defs><clipPath id="xaligo-text-clip-bfd68ce5db45e990" clipPathUnits="userSpaceOnUse"><rect x="162.25" y="248.667" width="80" height="20"/></clipPath></defs>
+<text x="202.25" y="263.467" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-bfd68ce5db45e990)"><tspan x="202.25" y="263.467">注文作成</tspan></text>
 <defs><clipPath id="xaligo-text-clip-6c4a9195a9abf0a" clipPathUnits="userSpaceOnUse"><rect x="328" y="248.667" width="220" height="20"/></clipPath></defs>
 <text x="438" y="263.467" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-6c4a9195a9abf0a)"><tspan x="438" y="263.467">支払い成功 [決済承認済み] / 在庫を引当</tspan></text>
-<defs><clipPath id="xaligo-text-clip-af749d19fdc75912" clipPathUnits="userSpaceOnUse"><rect x="599" y="212.667" width="80" height="20"/></clipPath></defs>
-<text x="639" y="227.467" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-af749d19fdc75912)"><tspan x="639" y="227.467">出荷準備</tspan></text>
-<defs><clipPath id="xaligo-text-clip-8eae98e4944208fb" clipPathUnits="userSpaceOnUse"><rect x="714" y="248.667" width="150" height="20"/></clipPath></defs>
-<text x="789" y="263.467" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-8eae98e4944208fb)"><tspan x="789" y="263.467">[在庫あり] / 出荷指示</tspan></text>
+<defs><clipPath id="xaligo-text-clip-83b9b177c270be9" clipPathUnits="userSpaceOnUse"><rect x="622.75" y="212.667" width="80" height="20"/></clipPath></defs>
+<text x="662.75" y="227.467" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-83b9b177c270be9)"><tspan x="662.75" y="227.467">出荷準備</tspan></text>
+<defs><clipPath id="xaligo-text-clip-9a276f5c6030f97c" clipPathUnits="userSpaceOnUse"><rect x="741.25" y="248.667" width="150" height="20"/></clipPath></defs>
+<text x="816.25" y="263.467" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-9a276f5c6030f97c)"><tspan x="816.25" y="263.467">[在庫あり] / 出荷指示</tspan></text>
 <defs><clipPath id="xaligo-text-clip-ef63000554813419" clipPathUnits="userSpaceOnUse"><rect x="1001" y="212.667" width="80" height="20"/></clipPath></defs>
 <text x="1041" y="227.467" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-ef63000554813419)"><tspan x="1041" y="227.467">配送開始</tspan></text>
 <defs><clipPath id="xaligo-text-clip-96756a088216c0f2" clipPathUnits="userSpaceOnUse"><rect x="1167" y="248.667" width="150" height="20"/></clipPath></defs>
 <text x="1242" y="263.467" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-96756a088216c0f2)"><tspan x="1242" y="263.467">配達完了 / 売上を確定</tspan></text>
-<defs><clipPath id="xaligo-text-clip-32bebb288d5bda5c" clipPathUnits="userSpaceOnUse"><rect x="1403" y="248.667" width="80" height="20"/></clipPath></defs>
-<text x="1443" y="263.467" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-32bebb288d5bda5c)"><tspan x="1443" y="263.467">クローズ</tspan></text>
-<defs><clipPath id="xaligo-text-clip-7febc0560e936cd5" clipPathUnits="userSpaceOnUse"><rect x="172" y="480" width="220" height="20"/></clipPath></defs>
-<text x="282" y="494.8" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-7febc0560e936cd5)"><tspan x="282" y="494.8">購入者キャンセル [未出荷] / 注文を取消</tspan></text>
-<defs><clipPath id="xaligo-text-clip-ca3ccc733c403c81" clipPathUnits="userSpaceOnUse"><rect x="304.25" y="417" width="220" height="20"/></clipPath></defs>
-<text x="414.25" y="431.8" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-ca3ccc733c403c81)"><tspan x="414.25" y="431.8">返金申請 [決済済み] / 返金処理を開始</tspan></text>
-<defs><clipPath id="xaligo-text-clip-7485ef35ca2df376" clipPathUnits="userSpaceOnUse"><rect x="360" y="498" width="80" height="20"/></clipPath></defs>
-<text x="400" y="512.8" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-7485ef35ca2df376)"><tspan x="400" y="512.8">返金結果</tspan></text>
-<defs><clipPath id="xaligo-text-clip-68000879a2ea4a3e" clipPathUnits="userSpaceOnUse"><rect x="500" y="498" width="138" height="20"/></clipPath></defs>
-<text x="569" y="512.8" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-68000879a2ea4a3e)"><tspan x="569" y="512.8">[NG] / 再処理を依頼</tspan></text>
-<defs><clipPath id="xaligo-text-clip-10566082e0a59b72" clipPathUnits="userSpaceOnUse"><rect x="464.5" y="562" width="150" height="20"/></clipPath></defs>
-<text x="539.5" y="576.8" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-10566082e0a59b72)"><tspan x="539.5" y="576.8">[OK] / 返金済みにする</tspan></text>
-<defs><clipPath id="xaligo-text-clip-41d0d2a045b6c2bb" clipPathUnits="userSpaceOnUse"><rect x="470" y="747.333" width="80" height="20"/></clipPath></defs>
-<text x="510" y="762.133" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-41d0d2a045b6c2bb)"><tspan x="510" y="762.133">返金完了</tspan></text>
-<defs><clipPath id="xaligo-text-clip-1cebded6a91d2bf" clipPathUnits="userSpaceOnUse"><rect x="726" y="355.333" width="216" height="20"/></clipPath></defs>
-<text x="834" y="370.133" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-1cebded6a91d2bf)"><tspan x="834" y="370.133">返品申請 [返品期間内] / 返品受付</tspan></text>
-<defs><clipPath id="xaligo-text-clip-c6756ce01b482d0a" clipPathUnits="userSpaceOnUse"><rect x="1020" y="498" width="80" height="20"/></clipPath></defs>
-<text x="1060" y="512.8" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-c6756ce01b482d0a)"><tspan x="1060" y="512.8">検品完了</tspan></text>
-<defs><clipPath id="xaligo-text-clip-9f18b6317417039" clipPathUnits="userSpaceOnUse"><rect x="1160" y="462" width="138" height="20"/></clipPath></defs>
-<text x="1229" y="476.8" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-9f18b6317417039)"><tspan x="1229" y="476.8">[NG] / 購入者へ連絡</tspan></text>
-<defs><clipPath id="xaligo-text-clip-56d09851952b5189" clipPathUnits="userSpaceOnUse"><rect x="902" y="596.167" width="150" height="20"/></clipPath></defs>
-<text x="977" y="610.967" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-56d09851952b5189)"><tspan x="977" y="610.967">[OK] / 返金と在庫戻し</tspan></text>
-<defs><clipPath id="xaligo-text-clip-48c191a1aa0088fe" clipPathUnits="userSpaceOnUse"><rect x="1130" y="711.333" width="80" height="20"/></clipPath></defs>
-<text x="1170" y="726.133" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-48c191a1aa0088fe)"><tspan x="1170" y="726.133">返品完了</tspan></text>
-<defs><clipPath id="xaligo-text-clip-810df9b5d5be3560" clipPathUnits="userSpaceOnUse"><rect x="764.5" y="579" width="210" height="20"/></clipPath></defs>
-<text x="869.5" y="593.8" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-810df9b5d5be3560)"><tspan x="869.5" y="593.8">返品キャンセル / 直前状態へ復帰</tspan></text>
-<defs><clipPath id="xaligo-text-clip-cb121ca85bcc18b9" clipPathUnits="userSpaceOnUse"><rect x="784" y="488.5" width="80" height="20"/></clipPath></defs>
-<text x="824" y="503.3" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-cb121ca85bcc18b9)"><tspan x="824" y="503.3">復帰</tspan></text>
-<defs><clipPath id="xaligo-text-clip-96182b114131464" clipPathUnits="userSpaceOnUse"><rect x="736.5" y="474.333" width="162" height="20"/></clipPath></defs>
-<text x="817.5" y="489.133" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-96182b114131464)"><tspan x="817.5" y="489.133">[在庫なし] / 注文を終了</tspan></text>
-<defs><clipPath id="xaligo-text-clip-b9bb7eadfd33ff00" clipPathUnits="userSpaceOnUse"><rect x="931.75" y="776" width="80" height="20"/></clipPath></defs>
-<text x="971.75" y="790.8" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-b9bb7eadfd33ff00)"><tspan x="971.75" y="790.8">クローズ</tspan></text>
-<defs><clipPath id="xaligo-text-clip-f12a4bdc6d9048a1" clipPathUnits="userSpaceOnUse"><rect x="1382.5" y="460.5" width="80" height="20"/></clipPath></defs>
-<text x="1422.5" y="475.3" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-f12a4bdc6d9048a1)"><tspan x="1422.5" y="475.3">クローズ</tspan></text>
+<defs><clipPath id="xaligo-text-clip-d528a3f67412eaf7" clipPathUnits="userSpaceOnUse"><rect x="1437.75" y="248.667" width="80" height="20"/></clipPath></defs>
+<text x="1477.75" y="263.467" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-d528a3f67412eaf7)"><tspan x="1477.75" y="263.467">クローズ</tspan></text>
+<defs><clipPath id="xaligo-text-clip-7e6f253ed8505a2e" clipPathUnits="userSpaceOnUse"><rect x="109.5" y="480" width="220" height="20"/></clipPath></defs>
+<text x="219.5" y="494.8" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-7e6f253ed8505a2e)"><tspan x="219.5" y="494.8">購入者キャンセル [未出荷] / 注文を取消</tspan></text>
+<defs><clipPath id="xaligo-text-clip-9b38cd0ab7f13d8b" clipPathUnits="userSpaceOnUse"><rect x="310.5" y="355.333" width="220" height="20"/></clipPath></defs>
+<text x="420.5" y="370.133" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-9b38cd0ab7f13d8b)"><tspan x="420.5" y="370.133">返金申請 [決済済み] / 返金処理を開始</tspan></text>
+<defs><clipPath id="xaligo-text-clip-a8edfc7f14490e6b" clipPathUnits="userSpaceOnUse"><rect x="622.75" y="498" width="80" height="20"/></clipPath></defs>
+<text x="662.75" y="512.8" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-a8edfc7f14490e6b)"><tspan x="662.75" y="512.8">返金結果</tspan></text>
+<defs><clipPath id="xaligo-text-clip-2ca883e0a824536e" clipPathUnits="userSpaceOnUse"><rect x="747.25" y="498" width="138" height="20"/></clipPath></defs>
+<text x="816.25" y="512.8" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-2ca883e0a824536e)"><tspan x="816.25" y="512.8">[NG] / 再処理を依頼</tspan></text>
+<defs><clipPath id="xaligo-text-clip-926993dd8bd79eb3" clipPathUnits="userSpaceOnUse"><rect x="581.5" y="596.167" width="150" height="20"/></clipPath></defs>
+<text x="656.5" y="610.967" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-926993dd8bd79eb3)"><tspan x="656.5" y="610.967">[OK] / 返金済みにする</tspan></text>
+<defs><clipPath id="xaligo-text-clip-14847dda2becbff2" clipPathUnits="userSpaceOnUse"><rect x="498.5" y="747.333" width="80" height="20"/></clipPath></defs>
+<text x="538.5" y="762.133" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-14847dda2becbff2)"><tspan x="538.5" y="762.133">返金完了</tspan></text>
+<defs><clipPath id="xaligo-text-clip-12ee1d6200c08c6b" clipPathUnits="userSpaceOnUse"><rect x="933" y="329.667" width="216" height="20"/></clipPath></defs>
+<text x="1041" y="344.467" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-12ee1d6200c08c6b)"><tspan x="1041" y="344.467">返品申請 [返品期間内] / 返品受付</tspan></text>
+<defs><clipPath id="xaligo-text-clip-dba422d38688e077" clipPathUnits="userSpaceOnUse"><rect x="1225.75" y="498" width="80" height="20"/></clipPath></defs>
+<text x="1265.75" y="512.8" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-dba422d38688e077)"><tspan x="1265.75" y="512.8">検品完了</tspan></text>
+<defs><clipPath id="xaligo-text-clip-d73849eaaac366bf" clipPathUnits="userSpaceOnUse"><rect x="1350.25" y="462" width="138" height="20"/></clipPath></defs>
+<text x="1419.25" y="476.8" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-d73849eaaac366bf)"><tspan x="1419.25" y="476.8">[NG] / 購入者へ連絡</tspan></text>
+<defs><clipPath id="xaligo-text-clip-f80efafc861f51f5" clipPathUnits="userSpaceOnUse"><rect x="1184.5" y="596.167" width="150" height="20"/></clipPath></defs>
+<text x="1259.5" y="610.967" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-f80efafc861f51f5)"><tspan x="1259.5" y="610.967">[OK] / 返金と在庫戻し</tspan></text>
+<defs><clipPath id="xaligo-text-clip-2059e6633a1e493b" clipPathUnits="userSpaceOnUse"><rect x="1403" y="711.333" width="80" height="20"/></clipPath></defs>
+<text x="1443" y="726.133" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-2059e6633a1e493b)"><tspan x="1443" y="726.133">返品完了</tspan></text>
+<defs><clipPath id="xaligo-text-clip-47c277a084154826" clipPathUnits="userSpaceOnUse"><rect x="936" y="579" width="210" height="20"/></clipPath></defs>
+<text x="1041" y="593.8" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-47c277a084154826)"><tspan x="1041" y="593.8">返品キャンセル / 直前状態へ復帰</tspan></text>
+<defs><clipPath id="xaligo-text-clip-708f9105f5bb24c2" clipPathUnits="userSpaceOnUse"><rect x="936" y="488.5" width="80" height="20"/></clipPath></defs>
+<text x="976" y="503.3" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-708f9105f5bb24c2)"><tspan x="976" y="503.3">復帰</tspan></text>
+<defs><clipPath id="xaligo-text-clip-bf0b7882cddb948e" clipPathUnits="userSpaceOnUse"><rect x="1042.75" y="719.333" width="162" height="20"/></clipPath></defs>
+<text x="1123.75" y="734.133" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-bf0b7882cddb948e)"><tspan x="1123.75" y="734.133">[在庫なし] / 注文を終了</tspan></text>
+<defs><clipPath id="xaligo-text-clip-736ffe1b8b47d1c8" clipPathUnits="userSpaceOnUse"><rect x="935.25" y="256" width="80" height="20"/></clipPath></defs>
+<text x="975.25" y="270.8" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-736ffe1b8b47d1c8)"><tspan x="975.25" y="270.8">クローズ</tspan></text>
+<defs><clipPath id="xaligo-text-clip-667a04c07542bb90" clipPathUnits="userSpaceOnUse"><rect x="1455.5" y="460.5" width="80" height="20"/></clipPath></defs>
+<text x="1495.5" y="475.3" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-667a04c07542bb90)"><tspan x="1495.5" y="475.3">クローズ</tspan></text>
 <rect x="1192" y="4" width="56" height="19" fill="#F8FAFC" fill-opacity="1" stroke="#CBD5E1" stroke-width="0.75" stroke-opacity="1"/>
 <rect x="1248" y="4" width="100" height="19" fill="none" stroke="#CBD5E1" stroke-width="0.75" stroke-opacity="1"/>
 <rect x="1356" y="4" width="56" height="19" fill="#F8FAFC" fill-opacity="1" stroke="#CBD5E1" stroke-width="0.75" stroke-opacity="1"/>

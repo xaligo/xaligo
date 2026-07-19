@@ -3,6 +3,7 @@ package engine
 import (
 	"math"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/xaligo/xaligo/internal/entity"
@@ -16,6 +17,11 @@ type umlActivityLaneV1EngineLayoutUmlActivity struct {
 type umlStateMachineRowV1EngineLayoutUmlActivity struct {
 	row   int
 	nodes []*entity.Node
+}
+
+type umlStateMachineRelationV1EngineLayoutUmlActivity struct {
+	src string
+	dst string
 }
 
 func hasUMLActivityPartitionsV1EngineLayoutUmlActivity(node *entity.Node) bool {
@@ -105,7 +111,7 @@ func layoutUMLStateMachineDiagramV1EngineLayoutUmlActivity(node *entity.Node, ta
 		return nil
 	}
 	if rows, ok := umlStateMachineRowsV1EngineLayoutUmlActivity(children); ok {
-		return layoutUMLStateMachineRowsV1EngineLayoutUmlActivity(target, x, y, w, h, rows)
+		return layoutUMLStateMachineRowsV1EngineLayoutUmlActivity(node, target, x, y, w, h, rows)
 	}
 	if strings.TrimSpace(node.Attr("direction")) == "down" {
 		return layoutUMLStateMachineDiagramDownV1EngineLayoutUmlActivity(node, target, x, y, w, h, children)
@@ -161,23 +167,22 @@ func umlStateMachineRowsV1EngineLayoutUmlActivity(children []*entity.Node) ([]um
 	return rows, true
 }
 
-func layoutUMLStateMachineRowsV1EngineLayoutUmlActivity(target *entity.Box, x, y, w, h float64, rows []umlStateMachineRowV1EngineLayoutUmlActivity) error {
+func layoutUMLStateMachineRowsV1EngineLayoutUmlActivity(node *entity.Node, target *entity.Box, x, y, w, h float64, rows []umlStateMachineRowV1EngineLayoutUmlActivity) error {
 	rowH := math.Max(MinBoxHeightV1EngineLayoutFlow, h/float64(len(rows)))
+	columns := umlStateMachineGridColumnsV1EngineLayoutUmlActivity(node, rows)
+	if columns < 1 {
+		columns = 1
+	}
+	cellW := w / float64(columns)
 	for rowIndex, row := range rows {
 		centerY := y + float64(rowIndex)*rowH + rowH/2
-		count := len(row.nodes)
-		if count == 0 {
-			continue
-		}
-		step := umlActivityNodeStepHorizontalV1EngineLayoutUmlActivity(count, w)
-		usedW := step*float64(count-1) + 180
-		startX := x
-		if usedW < w {
-			startX = x + (w-usedW)/2
-		}
 		for nodeIndex, child := range row.nodes {
-			nodeW, nodeH := umlActivityNodeSizeV1EngineLayoutUmlActivity(child, 180)
-			nodeX := startX + float64(nodeIndex)*step
+			col := umlStateMachineNodeColumnV1EngineLayoutUmlActivity(child)
+			if col < 1 || col > columns {
+				col = nodeIndex + 1
+			}
+			nodeW, nodeH := umlActivityNodeSizeV1EngineLayoutUmlActivity(child, math.Max(40, cellW-28))
+			nodeX := x + (float64(col)-0.5)*cellW - nodeW/2
 			nodeY := centerY - nodeH/2
 			box := &entity.Box{ID: childIDV1EngineLayoutAttributes(target.ID, len(target.Children)), Tag: child.Tag, Label: labelOfV1EngineLayoutAttributes(child), Position: child.Position}
 			if err := layoutNodeV1EngineLayoutNode(child, box, nodeX, nodeY, nodeW, nodeH); err != nil {
@@ -187,6 +192,152 @@ func layoutUMLStateMachineRowsV1EngineLayoutUmlActivity(target *entity.Box, x, y
 		}
 	}
 	return nil
+}
+
+func umlStateMachineGridColumnsV1EngineLayoutUmlActivity(node *entity.Node, rows []umlStateMachineRowV1EngineLayoutUmlActivity) int {
+	columns := 0
+	assignments := map[string]int{}
+	for _, row := range rows {
+		if len(row.nodes) > columns {
+			columns = len(row.nodes)
+		}
+		for _, child := range row.nodes {
+			if col := umlStateMachineExplicitNodeColumnV1EngineLayoutUmlActivity(child); col > 0 {
+				assignments[umlStateMachineNodeReferenceV1EngineLayoutUmlActivity(child)] = col
+				if col > columns {
+					columns = col
+				}
+			}
+		}
+	}
+	relations := umlStateMachineRelationsV1EngineLayoutUmlActivity(node)
+	for changed := true; changed; {
+		changed = false
+		for _, relation := range relations {
+			if relation.src == "" || relation.dst == "" {
+				continue
+			}
+			srcCol, hasSrc := assignments[relation.src]
+			dstCol, hasDst := assignments[relation.dst]
+			switch {
+			case hasSrc && !hasDst:
+				assignments[relation.dst] = srcCol
+				changed = true
+			case hasDst && !hasSrc:
+				assignments[relation.src] = dstCol
+				changed = true
+			}
+		}
+	}
+	for _, row := range rows {
+		used := map[int]bool{}
+		for _, child := range row.nodes {
+			ref := umlStateMachineNodeReferenceV1EngineLayoutUmlActivity(child)
+			if col := assignments[ref]; col > 0 && !used[col] {
+				child.Attrs["col"] = strconv.Itoa(col)
+				used[col] = true
+				continue
+			}
+			col := umlStateMachinePreferredColumnV1EngineLayoutUmlActivity(ref, assignments, relations)
+			if col < 1 || used[col] {
+				col = 1
+			}
+			for used[col] {
+				col++
+			}
+			child.Attrs["col"] = strconv.Itoa(col)
+			assignments[ref] = col
+			used[col] = true
+			if col > columns {
+				columns = col
+			}
+		}
+	}
+	return columns
+}
+
+func umlStateMachinePreferredColumnV1EngineLayoutUmlActivity(ref string, assignments map[string]int, relations []umlStateMachineRelationV1EngineLayoutUmlActivity) int {
+	if ref == "" {
+		return 0
+	}
+	columns := 0
+	count := 0
+	for _, relation := range relations {
+		switch ref {
+		case relation.src:
+			if col := assignments[relation.dst]; col > 0 {
+				columns += col
+				count++
+			}
+		case relation.dst:
+			if col := assignments[relation.src]; col > 0 {
+				columns += col
+				count++
+			}
+		}
+	}
+	if count == 0 {
+		return 0
+	}
+	return int(math.Round(float64(columns) / float64(count)))
+}
+
+func umlStateMachineNodeColumnV1EngineLayoutUmlActivity(node *entity.Node) int {
+	if col := umlStateMachineExplicitNodeColumnV1EngineLayoutUmlActivity(node); col > 0 {
+		return col
+	}
+	return int(attrFloatV1EngineLayoutAttributes(node.Attr("col"), 0))
+}
+
+func umlStateMachineExplicitNodeColumnV1EngineLayoutUmlActivity(node *entity.Node) int {
+	if strings.TrimSpace(node.Attr("col")) == "" {
+		return 0
+	}
+	col := int(attrFloatV1EngineLayoutAttributes(node.Attr("col"), 0))
+	if col < 1 {
+		return 0
+	}
+	return col
+}
+
+func umlStateMachineNodeReferenceV1EngineLayoutUmlActivity(node *entity.Node) string {
+	if ref := strings.TrimSpace(node.Attr("ref")); ref != "" {
+		return ref
+	}
+	return strings.TrimSpace(node.Attr("id"))
+}
+
+func umlStateMachineRelationsV1EngineLayoutUmlActivity(node *entity.Node) []umlStateMachineRelationV1EngineLayoutUmlActivity {
+	if node == nil {
+		return nil
+	}
+	var relations []umlStateMachineRelationV1EngineLayoutUmlActivity
+	for _, child := range node.Children {
+		if child.Tag != "connection" || strings.TrimSpace(child.Attr("uml-diagram-kind")) != "state-machine-diagram" {
+			continue
+		}
+		relations = append(relations, umlStateMachineRelationV1EngineLayoutUmlActivity{
+			src: strings.TrimSpace(child.Attr("uml-src-ref")),
+			dst: strings.TrimSpace(child.Attr("uml-dst-ref")),
+		})
+	}
+	for _, child := range layoutKidsV1EngineLayoutNode(node) {
+		src := umlStateMachineNodeReferenceV1EngineLayoutUmlActivity(child)
+		for _, dst := range splitCSVV1EngineLayoutUmlActivity(child.Attr("uml-related-refs")) {
+			relations = append(relations, umlStateMachineRelationV1EngineLayoutUmlActivity{src: src, dst: dst})
+		}
+	}
+	return relations
+}
+
+func splitCSVV1EngineLayoutUmlActivity(value string) []string {
+	var result []string
+	for _, part := range strings.Split(value, ",") {
+		if part = strings.TrimSpace(part); part != "" {
+			result = append(result, part)
+		}
+	}
+	return result
 }
 
 func layoutUMLStateMachineDiagramDownV1EngineLayoutUmlActivity(node *entity.Node, target *entity.Box, x, y, w, h float64, children []*entity.Node) error {

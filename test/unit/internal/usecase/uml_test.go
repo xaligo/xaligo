@@ -247,8 +247,45 @@ func TestUMLStateMachineRowsSeparateBranches(t *testing.T) {
 	if !(refund.Y > paid.Y+100 && cancelled.Y > refund.Y+100) {
 		t.Fatalf("state-machine rows not separated: paid y=%.1f refund y=%.1f cancelled y=%.1f", paid.Y, refund.Y, cancelled.Y)
 	}
+	paidCenter := paid.X + paid.Width/2
+	refundCenter := refund.X + refund.Width/2
+	cancelledCenter := cancelled.X + cancelled.Width/2
+	if math.Abs(paidCenter-refundCenter) > 2 || math.Abs(refundCenter-cancelledCenter) > 2 {
+		t.Fatalf("related state-machine rows not kept near: paid=%.1f refund=%.1f cancelled=%.1f", paidCenter, refundCenter, cancelledCenter)
+	}
 	if paid.StrokeColor != "#052d6e" || paid.BackgroundColor != "#ffffff" || refund.StrokeColor != "#052d6e" || refund.BackgroundColor != "#ffffff" {
 		t.Fatalf("state-machine palette does not match UML class theme: paid=%q/%q refund=%q/%q", paid.StrokeColor, paid.BackgroundColor, refund.StrokeColor, refund.BackgroundColor)
+	}
+}
+
+func TestUMLStateMachineGridColumnsAlignRelatedRows(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="1080" height="620"><uml id="state"><state-machine-diagram direction="right"><initial id="start" row="1" col="1"/><state id="paid" title="Paid" row="1" col="2"/><state id="shipped" title="Shipped" row="1" col="4"/><final id="done" row="1" col="5"/><state id="return" title="Return" row="2" col="4"/><state id="cancelled" title="Cancelled" row="3" col="4"/><transition src="start" dst="paid"/><transition src="paid" dst="shipped"/><transition src="shipped" dst="done"/><transition src="shipped" dst="return"/><transition src="return" dst="cancelled"/></state-machine-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var scene entity.PresentationScene
+	if err := json.Unmarshal(rawScene, &scene); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	positions := map[string]entity.Element{}
+	for _, element := range scene.Elements {
+		if element.CustomData == nil || element.CustomData.UMLLocalID == "" || element.CustomData.UMLElementKind == "" {
+			continue
+		}
+		positions[element.CustomData.UMLLocalID] = element
+	}
+	shipped, hasShipped := positions["shipped"]
+	returned, hasReturn := positions["return"]
+	cancelled, hasCancelled := positions["cancelled"]
+	if !hasShipped || !hasReturn || !hasCancelled {
+		t.Fatalf("state-machine grid elements missing: %#v", positions)
+	}
+	shippedCenter := shipped.X + shipped.Width/2
+	returnCenter := returned.X + returned.Width/2
+	cancelledCenter := cancelled.X + cancelled.Width/2
+	if math.Abs(shippedCenter-returnCenter) > 2 || math.Abs(returnCenter-cancelledCenter) > 2 {
+		t.Fatalf("related state-machine columns not aligned: shipped=%.1f return=%.1f cancelled=%.1f", shippedCenter, returnCenter, cancelledCenter)
 	}
 }
 

@@ -91,16 +91,19 @@ a stop marker and its label must clearly describe destruction, deletion,
 disposal, removal, or termination.
 
 State-machine diagrams can use `row="N"` on elements to separate primary and
-exception branches while preserving source order inside each row. State
-compartments render UML state behavior rows for `entry`, `do`, `exit`,
-`internal`, `region`, and `note`; `note` is useful for simple descriptive
-states that do not need actions. Each state has a cyan name header with white
-text, a white body, horizontal row dividers, and a vertical key/value divider.
-Transition labels use `event [guard] / action-or-effect`. By default, state
-machines use the same xaligo palette as class and sequence diagrams:
-deep-blue borders/text/relations, white bodies, cyan state-name headers, and a
-deep-blue initial dot. Presentation attributes such as `background-color`,
-`border-color`, and `color` can still override individual shapes.
+exception branches, and `col="N"` to place related states on a shared grid
+across rows. When `col` is omitted, the row layout reuses nearby connected
+columns where possible before assigning the next free column, so branch states
+stay close to the state that leads to them. State compartments render UML state
+behavior rows for `entry`, `do`, `exit`, `internal`, `region`, and `note`;
+`note` is useful for simple descriptive states that do not need actions. Each
+state has a cyan name header with white text, a white body, horizontal row
+dividers, and a vertical key/value divider. Transition labels use
+`event [guard] / action-or-effect`. By default, state machines use the same
+xaligo palette as class and sequence diagrams: deep-blue borders/text/relations,
+white bodies, cyan state-name headers, and a deep-blue initial dot.
+Presentation attributes such as `background-color`, `border-color`, and `color`
+can still override individual shapes.
 
 ## Ownership
 

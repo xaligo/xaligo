@@ -319,6 +319,10 @@ func normalizeUMLComponentV1EngineParseUml(uml, frame *entity.Node, models map[s
 	}
 	for _, relation := range relations {
 		src, dst := strings.TrimSpace(relation.Attr("src")), strings.TrimSpace(relation.Attr("dst"))
+		if diagram.Tag == "state-machine-diagram" {
+			appendUMLRelatedRefV1EngineParseUml(normalizedElements[src], dst)
+			appendUMLRelatedRefV1EngineParseUml(normalizedElements[dst], src)
+		}
 		connection := normalizeUMLRelationV1EngineParseUml(relation, scopedIDs[src], scopedIDs[dst], diagram.Tag, umlID)
 		if err := validateConnectionNodeV1EngineParseConnection(connection); err != nil {
 			return &entity.ParseError{Position: relation.Position, Err: fmt.Errorf("invalid UML <%s>: %w", relation.Tag, err)}
@@ -450,6 +454,30 @@ func validateUMLIdentifierV1EngineParseUml(description, value string) error {
 		return fmt.Errorf("%s=%q must not contain whitespace", description, value)
 	}
 	return nil
+}
+
+func appendUMLRelatedRefV1EngineParseUml(node *entity.Node, ref string) {
+	if node == nil || strings.TrimSpace(ref) == "" {
+		return
+	}
+	refs := splitCSVV1EngineParseUml(node.Attr("uml-related-refs"))
+	for _, existing := range refs {
+		if existing == ref {
+			return
+		}
+	}
+	refs = append(refs, ref)
+	node.Attrs["uml-related-refs"] = strings.Join(refs, ",")
+}
+
+func splitCSVV1EngineParseUml(value string) []string {
+	var result []string
+	for _, part := range strings.Split(value, ",") {
+		if part = strings.TrimSpace(part); part != "" {
+			result = append(result, part)
+		}
+	}
+	return result
 }
 
 func validateUMLRequiredElementsV1EngineParseUml(diagramKind string, spec umlDiagramSpecV1EngineParseUml, counts map[string]int) error {
