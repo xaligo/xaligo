@@ -96,12 +96,10 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 24
-          cache: npm
-          cache-dependency-path: external/package-lock.json
 
       - name: Install dependencies
         working-directory: external
-        run: npm ci
+        run: npm install --package-lock=false
 
       - name: Run tests
         working-directory: external
