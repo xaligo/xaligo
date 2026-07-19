@@ -223,19 +223,20 @@ func TestRenderXYFlowPreservesUMLShapeEndpointsAndMetadata(t *testing.T) {
 		relationKind   string
 	}{
 		{
-			name: "use-case ellipse",
+			name: "activity final ellipse",
 			source: `<xaligo version="1"><data></data><frames><frame id="main" width="640" height="360">
-  <uml id="use-cases"><use-case-diagram direction="right">
-    <actor id="user" title="User"/><use-case id="sign-in" title="Sign in"/>
-    <association src="user" dst="sign-in"/>
-  </use-case-diagram></uml>
+  <uml id="activity"><activity-diagram direction="right">
+    <initial id="start" title="Start"/><action id="active" title="Active"/><final id="done" title="Done"/>
+    <control-flow src="start" dst="active"/><control-flow src="active" dst="done"/>
+  </activity-diagram></uml>
 </frame></frames></xaligo>`,
 			nodes: map[string][3]string{
-				"User":    {"rectangle", "actor", "user"},
-				"Sign in": {"ellipse", "use-case", "sign-in"},
+				"Start":  {"ellipse", "initial", "start"},
+				"Active": {"rectangle", "action", "active"},
+				"Done":   {"ellipse", "final", "done"},
 			},
-			connectorPairs: [][2]string{{"User", "Sign in"}},
-			relationKind:   "association",
+			connectorPairs: [][2]string{{"Start", "Active"}, {"Active", "Done"}},
+			relationKind:   "control-flow",
 		},
 		{
 			name: "activity decision diamond",

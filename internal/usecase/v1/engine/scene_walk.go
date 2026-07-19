@@ -1225,7 +1225,7 @@ func umlShapeTypeV1EngineSceneWalk(box *entity.Box) string {
 		return "rectangle"
 	}
 	switch strings.TrimSpace(box.Attrs["uml-element-kind"]) {
-	case "use-case", "initial", "final":
+	case "initial", "final":
 		return "ellipse"
 	case "decision", "merge", "choice", "history":
 		return "diamond"

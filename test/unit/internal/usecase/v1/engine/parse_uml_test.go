@@ -15,13 +15,10 @@ func TestAllUMLDiagramKindsNormalizeAndBuildV1EngineParseUML(t *testing.T) {
 		topLevelCount int
 	}{
 		{"class-diagram", `<class id="one"/><class id="two"/><association src="one" dst="two"/>`, 1, 2},
-		{"object-diagram", `<object id="one"/><object id="two"/><link src="one" dst="two"/>`, 1, 2},
 		{"component-diagram", `<component id="one"/><interface id="two"/><realization src="one" dst="two"/>`, 1, 2},
 		{"deployment-diagram", `<artifact id="one"/><node id="two"/><deployment src="one" dst="two"/>`, 1, 2},
 		{"package-diagram", `<package id="one"/><package id="two"/><package-import src="one" dst="two"/>`, 1, 2},
 		{"composite-structure-diagram", `<structure id="one"/><part id="two" owner="one"/><port id="three" owner="one"/><connector src="two" dst="three"/>`, 1, 1},
-		{"profile-diagram", `<profile id="one"/><stereotype id="two"/><metaclass id="three"/><extension src="two" dst="three"/>`, 1, 3},
-		{"use-case-diagram", `<actor id="one"/><use-case id="two"/><association src="one" dst="two"/>`, 1, 2},
 		{"activity-diagram", `<action id="one"/><action id="two"/><control-flow src="one" dst="two"/>`, 1, 2},
 		{"state-machine-diagram", `<state id="one"/><state id="two"/><transition src="one" dst="two"/>`, 1, 2},
 		{"sequence-diagram", `<participant id="one"/><lifeline id="two"/><message src="one" dst="two" order="1"/>`, 1, 2},
@@ -95,6 +92,9 @@ func TestUMLRejectsInvalidStructureV1EngineParseUML(t *testing.T) {
 		{"multiple kinds", `<uml id="view"><class-diagram><class id="a"/></class-diagram><sequence-diagram><participant id="b"/></sequence-diagram></uml>`, "exactly one"},
 		{"unknown kind", `<uml id="view"><flowchart><element id="a"/></flowchart></uml>`, "unsupported UML diagram kind"},
 		{"interaction overview removed", `<uml id="view"><interaction-overview-diagram><interaction id="a"/></interaction-overview-diagram></uml>`, "unsupported UML diagram kind"},
+		{"object diagram removed", `<uml id="view"><object-diagram><object id="a"/></object-diagram></uml>`, "unsupported UML diagram kind"},
+		{"profile diagram removed", `<uml id="view"><profile-diagram><profile id="a"/></profile-diagram></uml>`, "unsupported UML diagram kind"},
+		{"use case diagram removed", `<uml id="view"><use-case-diagram><use-case id="a"/></use-case-diagram></uml>`, "unsupported UML diagram kind"},
 		{"empty diagram", `<uml id="view"><class-diagram/></uml>`, "must contain UML elements"},
 		{"missing element id", `<uml id="view"><class-diagram><class/></class-diagram></uml>`, "requires id"},
 		{"bad reference", `<uml id="view"><class-diagram><class id="a"/><association src="a" dst="missing"/></class-diagram></uml>`, "existing src and dst"},
@@ -114,9 +114,7 @@ func TestUMLDiagramSpecificValidationV1EngineParseUML(t *testing.T) {
 	tests := []struct {
 		name, diagram, want string
 	}{
-		{"class rejects actor", `<class-diagram><actor id="a"/></class-diagram>`, "does not allow UML element"},
-		{"object rejects association", `<object-diagram><object id="a"/><object id="b"/><association src="a" dst="b"/></object-diagram>`, "does not allow UML relation"},
-		{"include requires use cases", `<use-case-diagram><actor id="a"/><use-case id="b"/><include src="a" dst="b"/></use-case-diagram>`, "does not allow actor -> use-case"},
+		{"class rejects removed actor", `<class-diagram><actor id="a"/></class-diagram>`, "does not support UML child"},
 		{"realization targets interface", `<class-diagram><class id="a"/><class id="b"/><realization src="a" dst="b"/></class-diagram>`, "does not allow class -> class"},
 		{"deployment targets node", `<deployment-diagram><node id="node"/><artifact id="a"/><artifact id="b"/><deployment src="a" dst="b"/></deployment-diagram>`, "does not allow artifact -> artifact"},
 		{"message requires order", `<sequence-diagram><participant id="a"/><lifeline id="b"/><message src="a" dst="b"/></sequence-diagram>`, "requires order"},
@@ -140,7 +138,7 @@ func TestUMLDiagramSpecificValidationV1EngineParseUML(t *testing.T) {
 }
 
 func TestUMLInternalIDsRemainScopedByComponentV1EngineParseUML(t *testing.T) {
-	source := `<xaligo version="1"><data></data><frames><frame id="main"><uml id="left"><object-diagram><object id="left-same" name="Shared display name"/></object-diagram></uml><uml id="right"><object-diagram><object id="right-same" name="Shared display name"/></object-diagram></uml></frame></frames></xaligo>`
+	source := `<xaligo version="1"><data></data><frames><frame id="main"><uml id="left"><class-diagram><class id="left-same" name="Shared display name"/></class-diagram></uml><uml id="right"><class-diagram><class id="right-same" name="Shared display name"/></class-diagram></uml></frame></frames></xaligo>`
 	document, err := v1engine.ParseV1EngineParseDocument(strings.NewReader(source))
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
@@ -163,7 +161,7 @@ func TestUMLStrictProfileValidationV1EngineParseUML(t *testing.T) {
 		name, diagram, want string
 	}{
 		{"neutral element rejected", `<class-diagram><element id="a"/></class-diagram>`, "does not allow UML element <element>"},
-		{"neutral relation rejected", `<object-diagram><object id="a"/><object id="b"/><relation src="a" dst="b"/></object-diagram>`, "does not allow UML relation <relation>"},
+		{"neutral relation rejected", `<class-diagram><class id="a"/><class id="b"/><relation src="a" dst="b"/></class-diagram>`, "does not allow UML relation <relation>"},
 		{"required component", `<component-diagram><interface id="api"/></component-diagram>`, "requires at least 1 component"},
 		{"default deny compartment", `<sequence-diagram><participant id="a"><note>not allowed</note></participant></sequence-diagram>`, "does not allow compartment <note>"},
 		{"nested compartment content rejected", `<class-diagram><class id="a"><attribute title="name"><operation>hidden</operation></attribute></class></class-diagram>`, "must not contain child elements"},
@@ -192,7 +190,6 @@ func TestUMLOwnerValidationV1EngineParseUML(t *testing.T) {
 		{"component port owner kind", `<component-diagram><component id="c"/><interface id="i"/><port id="p" owner="i"/></component-diagram>`, "does not allow owner kind <interface>"},
 		{"composite part owner required", `<composite-structure-diagram><structure id="s"/><part id="p"/></composite-structure-diagram>`, "requires owner"},
 		{"time state owner kind", `<timing-diagram><lifeline id="l"/><time-state id="a" owner="a" from="0" to="1"/></timing-diagram>`, "does not allow owner kind <time-state>"},
-		{"use case boundary owner", `<use-case-diagram><actor id="a"/><use-case id="u" owner="a"/></use-case-diagram>`, "does not allow owner kind <actor>"},
 		{"owner forbidden elsewhere", `<class-diagram><class id="a" owner="a"/></class-diagram>`, "does not allow owner"},
 	}
 	for _, test := range tests {
@@ -288,7 +285,7 @@ func TestUMLPublicReferencesAreUniqueWithinFrameV1EngineParseUML(t *testing.T) {
 	}{
 		{
 			name:   "two UML components expose same element ID",
-			source: `<xaligo version="1"><data></data><frames><frame id="main"><uml id="domain"><class-diagram><class id="order"/></class-diagram></uml><uml id="runtime"><object-diagram><object id="order"/></object-diagram></uml></frame></frames></xaligo>`,
+			source: `<xaligo version="1"><data></data><frames><frame id="main"><uml id="domain"><class-diagram><class id="order"/></class-diagram></uml><uml id="runtime"><component-diagram><component id="order"/></component-diagram></uml></frame></frames></xaligo>`,
 		},
 		{
 			name:   "UML element conflicts with rectangle ID",
@@ -306,7 +303,7 @@ func TestUMLPublicReferencesAreUniqueWithinFrameV1EngineParseUML(t *testing.T) {
 }
 
 func TestUMLIDsAreUniqueWithinFrameV1EngineParseUML(t *testing.T) {
-	source := `<xaligo version="1"><data></data><frames><frame id="main"><uml id="same"><class-diagram><class id="a"/></class-diagram></uml><uml id="same"><object-diagram><object id="b"/></object-diagram></uml></frame></frames></xaligo>`
+	source := `<xaligo version="1"><data></data><frames><frame id="main"><uml id="same"><class-diagram><class id="a"/></class-diagram></uml><uml id="same"><component-diagram><component id="b"/></component-diagram></uml></frame></frames></xaligo>`
 	_, err := v1engine.ParseV1EngineParseDocument(strings.NewReader(source))
 	if err == nil || !strings.Contains(err.Error(), `duplicate <uml id="same">`) {
 		t.Fatalf("Parse() error = %v", err)

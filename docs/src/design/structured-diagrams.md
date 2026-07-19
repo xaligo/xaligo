@@ -384,13 +384,10 @@ child, which selects the semantic processor:
 ```text
 uml
 ├─ class-diagram
-├─ object-diagram
 ├─ component-diagram
 ├─ deployment-diagram
 ├─ package-diagram
 ├─ composite-structure-diagram
-├─ profile-diagram
-├─ use-case-diagram
 ├─ activity-diagram
 ├─ state-machine-diagram
 ├─ sequence-diagram
@@ -413,9 +410,9 @@ accepts `direction="right|down"` and either inline children or one `data`
 reference, never both. Every element has a diagram-local ID, and relations use
 those local IDs for `src` and `dst`.
 
-V1 implements all fourteen diagram-kind selectors through closed per-family
+V1 implements all ten diagram-kind selectors through closed per-family
 element and relation vocabularies. It validates ownership for ports, composite
-parts, use cases, and timing states; message order for sequence and
+parts, and timing states; message order for sequence and
 communication diagrams; structural links for communication messages; and
 numeric intervals/events for timing diagrams. Neutral `element` and `relation`
 escape hatches are not part of the strict profile. The authoritative matrix,
@@ -431,7 +428,7 @@ provide edge style, anchors, bends, routing, and line jumps, while UML
 relationships keep their own semantic kinds.
 
 The current V1 renderer is deliberately a common-capability projection. It
-uses ellipses for use cases and initial/final nodes, diamonds for decision-like
+uses ellipses for initial/final nodes, diamonds for decision-like
 nodes, rectangles with flattened text compartments for the other elements,
 and orthogonal semantic connectors for relations. Sequence order sets
 top-to-bottom connector anchors but does not draw separate lifeline/activation

@@ -56,13 +56,10 @@ XYFlow, or Isoflow output instead.
 | Diagram kind | Elements | Relations | Required and constrained semantics | Sample |
 |---|---|---|---|---|
 | `class-diagram` | `package`, `class`, `interface`, `enumeration` | `association`, `aggregation`, `composition`, `generalization`, `realization`, `dependency` | At least one classifier. Packages group classifiers and package-local relations. Aggregation/composition are class to class; generalization joins equal classifier kinds; realization is class to interface. | [uml-class.xal](../examples/samples/uml-class.xal) |
-| `object-diagram` | `object` | `link`, `dependency` | At least one object; every relation joins objects. | [uml-object.xal](../examples/samples/uml-object.xal) |
 | `component-diagram` | `component`, `interface`, `port`, `artifact` | `dependency`, `realization`, `association`, `assembly`, `delegation` | At least one component. Component boxes render with a cyan header, white body, left-aligned white component name, and no two-rectangle adornment. A component may contain only child `interface` entries; each child interface renders as a small white boundary port box with the interface text inside and outside circle symbols, clears the component header, and sits mostly inside the component with only a small outside protrusion. Child interfaces may set `description`, which renders in a same-height white rectangle immediately to the right of the interface text box. Matching component associations keep the interface user endpoint on the source component's nearest non-interface-side anchor, selected from 15 top/right/bottom component anchors, add a left-bulging caller-side semicircle as a forked connection endpoint, bind the destination endpoint to a same-named interface circle, and approach the circle horizontally from the outside-left side of left-side interface circles at the circle center height; the line ends at the semicircle's left bend, and the semicircle radius is 2px larger than and center-aligned with the interface circle. When multiple associations target the same component interface, the destination renders one circle per incoming association with enough vertical spacing to prevent caller-side semicircle overlap and groups them back to the interface box with a bracket-style stem. Realization is component to interface. Assembly uses port/interface endpoints and includes a port. Delegation starts at a port. | [uml-component.xal](../examples/samples/uml-component.xal), [uml-component-connected.xal](../examples/samples/uml-component-connected.xal), [uml-component-connected-complex.xal](../examples/samples/uml-component-connected-complex.xal) |
 | `deployment-diagram` | `node`, `artifact`, `component` | `deployment`, `communication-path`, `dependency` | At least one node. Deployment is artifact/component to node; communication-path is node to node. | [uml-deployment.xal](../examples/samples/uml-deployment.xal) |
 | `package-diagram` | `package`, `class`, `interface`, `component` | `dependency`, `package-import`, `package-merge` | At least one package. Import and merge join packages. | [uml-package.xal](../examples/samples/uml-package.xal) |
 | `composite-structure-diagram` | `structure`, `collaboration`, `part`, `port`, `component` | `connector`, `assembly`, `delegation`, `dependency` | At least one part/port. Connector joins parts/ports; assembly joins ports; delegation starts at a port. | [uml-composite-structure.xal](../examples/samples/uml-composite-structure.xal) |
-| `profile-diagram` | `profile`, `stereotype`, `metaclass` | `extension`, `reference`, `generalization` | At least one profile and stereotype. Extension is stereotype to metaclass; generalization joins stereotypes. | [uml-profile.xal](../examples/samples/uml-profile.xal) |
-| `use-case-diagram` | `actor`, `use-case`, `system-boundary` | `association`, `include`, `extend`, `generalization` | At least one use case. Association joins actor and use-case; include/extend join use-cases; generalization joins equal actor/use-case kinds. | [uml-use-case.xal](../examples/samples/uml-use-case.xal) |
 | `activity-diagram` | `initial`, `final`, `activity`, `action`, `decision`, `merge`, `fork`, `join`, `object-node`; optional `partition` containers | `control-flow`, `object-flow` | At least one activity/action. Control-flow excludes object-node; object-flow includes one. Control-node degrees are validated. | [uml-activity.xal](../examples/samples/uml-activity.xal) |
 | `state-machine-diagram` | `initial`, `final`, `state`, `history`, `choice`, `fork`, `join`; optional layout-only `container`/`row`/`col` | `transition` | At least one state. Initial/final direction and pseudostate degrees are validated. State entry/do/exit/internal/region compartments and transition event/guard/action labels render visibly. Initial/final/choice/history pseudostates keep compact proportions, and final states render the standard inner dot. `show-element-names="false"` hides compartment element names such as `entry` and `do` while retaining state titles, compartment values, and transition labels; an element can override it with `show-element-names="true"`. A layout-only `container` can group elements into `row` and `col` child tags. | [uml-state-machine.xal](../examples/samples/uml-state-machine.xal) |
 | `sequence-diagram` | `participant`, `lifeline` | `message`, `return-message`, `create-message`, `destroy-message` | At least one participant/lifeline. Every message has a unique `order`; non-participant sources must already be active; create/destroy cannot target themselves. | [uml-sequence.xal](../examples/samples/uml-sequence.xal) |
@@ -144,7 +141,6 @@ closed:
 | Component-diagram `port` | required | `component` |
 | Composite `part` | required | `structure`, `component`, `collaboration` |
 | Composite `port` | required | `structure`, `part`, `component`, `collaboration` |
-| Use-case `use-case` | optional | `system-boundary` |
 | Timing `time-state` | required | `lifeline` |
 
 Every other `owner` is an error. Component and composite owned ports are placed
@@ -168,11 +164,7 @@ needs text, `title`, or `name` and cannot contain child elements.
 | `package` | `responsibility`, `note` |
 | `structure` | `property`, `provided-interface`, `required-interface`, `note` |
 | `part` | `property`, `responsibility`, `note` |
-| `profile` | `constraint`, `note` |
-| `stereotype` | `property`, `constraint`, `note` |
-| `metaclass` | `property`, `note` |
-| `actor` | `responsibility`, `note` |
-| `use-case`, `activity`, `action` | `responsibility`, `constraint`, `note` |
+| `activity`, `action` | `responsibility`, `constraint`, `note` |
 | `state` | `entry`, `do`, `exit`, `internal`, `region`, `note` |
 | `time-state` | `region`, `constraint`, `note` |
 
@@ -189,10 +181,10 @@ association, aggregation, composition, and link.
 
 The UML relation kind fixes its stroke and arrowhead. `kind`, `stroke-style`,
 `arrowhead`, `start-arrowhead`, and `end-arrowhead` cannot override it.
-Include/extend/import/merge/dependency-like relations are dashed; directed flows
+Import/merge/dependency-like relations are dashed; directed flows
 use destination triangles; aggregation/composition use source diamonds;
 structural links have no destination marker. When their label is omitted,
-include, extend, import, merge, deployment, extension, and occurrence receive a
+import, merge, deployment, and occurrence receive a
 semantic default label.
 
 Activity and state-machine graphs enforce flat V1 rules:
@@ -247,7 +239,7 @@ validates the model.
 
 V1 intentionally uses the capability shared by every xaligo output:
 
-- use cases and initial/final nodes are ellipses, with activity and
+- initial/final nodes are ellipses, with activity and
   state-machine final nodes rendered as UML final states with an inner dot;
 - decision, merge, choice, and history nodes are diamonds;
 - other elements are editable rectangles with flattened visible compartments;

@@ -143,7 +143,7 @@ func umlEndpointAnchorProfileV1EngineSceneConnection(kind string) string {
 	switch strings.TrimSpace(kind) {
 	case "choice", "decision", "merge", "history":
 		return "diamond"
-	case "state", "class", "interface", "enumeration", "object", "component", "artifact", "node", "package", "structure", "collaboration", "part", "profile", "stereotype", "metaclass", "use-case", "activity", "action", "object-node", "interaction", "time-state":
+	case "state", "class", "interface", "enumeration", "object", "component", "artifact", "node", "package", "structure", "collaboration", "part", "activity", "action", "object-node", "interaction", "time-state":
 		return "rectangle"
 	default:
 		return ""

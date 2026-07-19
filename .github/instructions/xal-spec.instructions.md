@@ -624,13 +624,10 @@ public connection form.
 | Diagram kind | Allowed elements | Allowed relations | Additional V1 semantic checks |
 |---|---|---|---|
 | `class-diagram` | `package`, `class`, `interface`, `enumeration` | `association`, `aggregation`, `composition`, `generalization`, `realization`, `dependency` | Requires one classifier. `package` groups classifiers and package-local relations using the general-group visual language. `grid="N"` on `<class-diagram>` or package selects the package/classifier column count. When the class diagram contains only packages and omits `grid`, the package grid is computed from frame aspect ratio and empty-cell count. Packages expand to their assigned grid cell. Classifiers accept `stereotype`, `abstract="true|false"`, and `static="true|false"`; stereotypes and enabled modifiers are visible classifier-header metadata. Classifiers use compact multi-row placement, a cyan header with white text, separate attribute/operation body regions, white bodies, and deep-blue relation lines by default. Aggregation/composition are class to class; generalization joins equal classifier kinds; realization is class to interface. |
-| `object-diagram` | `object` | `link`, `dependency` | Requires one object. Every relation endpoint is an object. |
 | `component-diagram` | `component`, `interface`, `port`, `artifact` | `dependency`, `realization`, `association`, `assembly`, `delegation` | Requires one component. Component boxes render with a cyan header, white body, left-aligned white component name, and no two-rectangle adornment. A component may contain only child `interface` entries; each child interface renders as a small white boundary port box with the interface text inside and outside circle symbols, clears the component header, and sits mostly inside the component with only a small outside protrusion. Child interfaces may set `description`, which renders in a same-height white rectangle immediately to the right of the interface text box. Matching component associations keep the interface user endpoint on the source component's nearest non-interface-side anchor, selected from 15 top/right/bottom component anchors, add a left-bulging caller-side semicircle as a forked connection endpoint, bind the destination endpoint to a same-named interface circle, and approach the circle horizontally from the outside-left side of left-side interface circles at the circle center height; the line ends at the semicircle's left bend, and the semicircle radius is 2px larger than and center-aligned with the interface circle. When multiple associations target the same component interface, the destination renders one circle per incoming association with enough vertical spacing to prevent caller-side semicircle overlap and groups them back to the interface box with a bracket-style stem. Component diagrams use compact grid placement by default. Realization is component to interface. Assembly uses port/interface endpoints and includes a port. A port requires a component owner and renders on that owner boundary. Delegation is port to component/port. |
 | `deployment-diagram` | `node`, `artifact`, `component` | `deployment`, `communication-path`, `dependency` | Requires one node. Deployment is artifact/component to node; communication-path is node to node. |
 | `package-diagram` | `package`, `class`, `interface`, `component` | `dependency`, `package-import`, `package-merge` | Requires one package. Import/merge are package to package. |
 | `composite-structure-diagram` | `structure`, `collaboration`, `part`, `port`, `component` | `connector`, `assembly`, `delegation`, `dependency` | Requires a part or port. Parts/ports require typed owners. Connector endpoints are parts/ports, assembly is port to port, and delegation starts at a port. |
-| `profile-diagram` | `profile`, `stereotype`, `metaclass` | `extension`, `reference`, `generalization` | Requires a profile and stereotype. Extension is stereotype to metaclass; generalization is stereotype to stereotype. |
-| `use-case-diagram` | `actor`, `use-case`, `system-boundary` | `association`, `include`, `extend`, `generalization` | Requires a use case. Association joins actor and use-case; include/extend join use-cases; generalization joins equal actor/use-case kinds. |
 | `activity-diagram` | `initial`, `final`, `activity`, `action`, `decision`, `merge`, `fork`, `join`, `object-node`; optional `partition` containers | `control-flow`, `object-flow` | Requires an activity/action. Control-flow excludes object-node. Object-flow requires an object-node endpoint. Initial/final direction and control-node degrees are validated. `lanes="vertical|horizontal"`, `theme="xaligo"`, partition swimlanes, and loop flow metadata are supported. |
 | `state-machine-diagram` | `initial`, `final`, `state`, `history`, `choice`, `fork`, `join`; optional layout-only `container` with `row` and `col` children | `transition` | Requires a state. Initial/final direction and pseudostate degrees are validated. `state` compartments render state actions and activities: `entry`, `do`, `exit`, `internal`, `region`, and `note`. The state name renders in a cyan header with white text; the white body is split into rows, and each row has a key/value column divider. Transitions render `event [guard] / action-or-effect` labels. Initial/final/choice/history pseudostates keep compact proportions; final states render the standard inner dot. A state-machine `<container>` may group elements by child `<row>` and `<col>` tags; these layout-only tags assign grid rows and columns without becoming UML elements. When no container column is supplied, the row layout reuses nearby connected columns where possible before assigning the next free column. State-machine shapes use the class-diagram xaligo palette by default: deep-blue borders/text/relations, white bodies, cyan state-name headers, and a deep-blue initial dot. Relation child `<bend x="..." y="..." />` tags are supported on class, activity, and state-machine relation tags and are used to steer orthogonal connector routes. State-machine transition routing treats intermediate state and pseudostate bodies as obstacles where possible, keeps same-frame route points inside the frame bounds, and may choose larger outside detours for distant states or bent routes that would otherwise cross a state body. UML relation labels are shifted away from endpoint items when a default label position would overlap them. |
 | `sequence-diagram` | `participant`, `lifeline` | `message`, `return-message`, `create-message`, `destroy-message` | Requires a participant/lifeline. Participants and lifelines render as top headers with dashed vertical lifeline axes, not full container boxes. Every message has a diagram-unique order that controls top-to-bottom anchoring. `message` is synchronous by default; `message mode="async"` renders an asynchronous open-arrow call. `message`, `create-message`, and `destroy-message` draw destination-lifeline activation bars; `return-message` is a dashed response connector and does not start a new activation. Non-participant sources must already be active before sending a non-return message or return. Activation bars extend through the related messages up to the matching return from that lifeline; a fully contained activation is merged into its covering bar. `destroy-message` also draws a stop marker at the destination lifeline and its label must clearly describe destruction, deletion, disposal, removal, or termination. Create/destroy cannot be self messages. |
@@ -697,7 +694,6 @@ the referenced element must exist and have an allowed kind.
 | `component-diagram/port` | required | `component` |
 | `composite-structure-diagram/part` | required | `structure`, `component`, `collaboration` |
 | `composite-structure-diagram/port` | required | `structure`, `part`, `component`, `collaboration` |
-| `use-case-diagram/use-case` | optional | `system-boundary` |
 | `timing-diagram/time-state` | required | `lifeline` |
 
 Every other use of `owner` is invalid. Ownership is retained as semantic
@@ -722,11 +718,7 @@ typed compartment vocabulary is:
 | `package` | `responsibility`, `note` |
 | `structure` | `property`, `provided-interface`, `required-interface`, `note` |
 | `part` | `property`, `responsibility`, `note` |
-| `profile` | `constraint`, `note` |
-| `stereotype` | `property`, `constraint`, `note` |
-| `metaclass` | `property`, `note` |
-| `actor` | `responsibility`, `note` |
-| `use-case`, `activity`, `action` | `responsibility`, `constraint`, `note` |
+| `activity`, `action` | `responsibility`, `constraint`, `note` |
 | `state` | `entry`, `do`, `exit`, `internal`, `region`, `note` |
 | `time-state` | `region`, `constraint`, `note` |
 
@@ -782,8 +774,8 @@ following fixed semantic defaults:
 
 | Projection | Relation kinds |
 |---|---|
-| Dashed line with destination triangle | `dependency`, `realization`, `package-import`, `package-merge`, `reference`, `include`, `extend`, `return-message`, `deployment` |
-| Solid line with destination triangle | `generalization`, `control-flow`, `object-flow`, `transition`, `message`, `create-message`, `destroy-message`, `delegation`, `extension` |
+| Dashed line with destination triangle | `dependency`, `realization`, `package-import`, `package-merge`, `return-message`, `deployment` |
+| Solid line with destination triangle | `generalization`, `control-flow`, `object-flow`, `transition`, `message`, `create-message`, `destroy-message`, `delegation` |
 | Source diamond | `aggregation`, `composition` |
 | No destination arrowhead | `association`, `link`, `occurrence`, `duration`, `communication-path`, `assembly`, `connector` |
 
@@ -798,19 +790,19 @@ Reusable definitions use `<uml-model id="...">` directly below document
 
 ```xml
 <data>
-  <uml-model id="order-objects">
-    <object id="customer" title="customer: Customer">
-      <slot>name = Alice</slot>
-    </object>
-    <object id="order" title="order42: Order">
-      <slot>status = Confirmed</slot>
-    </object>
-    <link src="customer" dst="order" title="placed" />
+  <uml-model id="domain-model">
+    <class id="customer" title="Customer">
+      <attribute>name: String</attribute>
+    </class>
+    <class id="order" title="Order">
+      <attribute>status: OrderStatus</attribute>
+    </class>
+    <association src="customer" dst="order" title="places" />
   </uml-model>
 </data>
 <frames>
   <frame id="snapshot">
-    <uml id="runtime"><object-diagram data="order-objects" direction="right" /></uml>
+    <uml id="domain"><class-diagram data="domain-model" direction="right" /></uml>
   </frame>
 </frames>
 ```
@@ -829,7 +821,7 @@ V1 preserves the selected UML family, element kind, relation kind, owner, and
 relation label in the shared semantic scene, then projects them into the
 capabilities common to xaligo outputs:
 
-- `use-case`, `initial`, and `final` become ellipses;
+- `initial` and `final` become ellipses;
 - `decision`, `merge`, `choice`, and `history` become diamonds;
 - every other element becomes an editable rectangle whose ordered
   compartments are flattened into its visible text;

@@ -33,8 +33,6 @@ type umlSourceElementV1EngineParseUml struct {
 var umlDiagramSpecsV1EngineParseUml = map[string]umlDiagramSpecV1EngineParseUml{
 	"class-diagram": umlSpecV1EngineParseUml("package,class,interface,enumeration", "association,aggregation,composition,generalization,realization,dependency",
 		umlRequiredElementsV1EngineParseUml{"classifier", umlTagSetV1EngineParseUml("class,interface,enumeration"), 1}),
-	"object-diagram": umlSpecV1EngineParseUml("object", "link,dependency",
-		umlRequiredElementsV1EngineParseUml{"object", umlTagSetV1EngineParseUml("object"), 1}),
 	"component-diagram": umlSpecV1EngineParseUml("component,interface,port,artifact", "dependency,realization,association,assembly,delegation",
 		umlRequiredElementsV1EngineParseUml{"component", umlTagSetV1EngineParseUml("component"), 1}),
 	"deployment-diagram": umlSpecV1EngineParseUml("node,artifact,component", "deployment,communication-path,dependency",
@@ -43,11 +41,6 @@ var umlDiagramSpecsV1EngineParseUml = map[string]umlDiagramSpecV1EngineParseUml{
 		umlRequiredElementsV1EngineParseUml{"package", umlTagSetV1EngineParseUml("package"), 1}),
 	"composite-structure-diagram": umlSpecV1EngineParseUml("structure,collaboration,part,port,component", "connector,assembly,delegation,dependency",
 		umlRequiredElementsV1EngineParseUml{"part or port", umlTagSetV1EngineParseUml("part,port"), 1}),
-	"profile-diagram": umlSpecV1EngineParseUml("profile,stereotype,metaclass", "extension,reference,generalization",
-		umlRequiredElementsV1EngineParseUml{"profile", umlTagSetV1EngineParseUml("profile"), 1},
-		umlRequiredElementsV1EngineParseUml{"stereotype", umlTagSetV1EngineParseUml("stereotype"), 1}),
-	"use-case-diagram": umlSpecV1EngineParseUml("actor,use-case,system-boundary", "association,include,extend,generalization",
-		umlRequiredElementsV1EngineParseUml{"use-case", umlTagSetV1EngineParseUml("use-case"), 1}),
 	"activity-diagram": umlSpecV1EngineParseUml("initial,final,activity,action,decision,merge,fork,join,object-node", "control-flow,object-flow",
 		umlRequiredElementsV1EngineParseUml{"activity or action", umlTagSetV1EngineParseUml("activity,action"), 1}),
 	"state-machine-diagram": umlSpecV1EngineParseUml("initial,final,state,history,choice,fork,join", "transition",
@@ -64,21 +57,20 @@ var umlDiagramSpecsV1EngineParseUml = map[string]umlDiagramSpecV1EngineParseUml{
 var umlElementTagsV1EngineParseUml = map[string]bool{
 	"element": true, "class": true, "interface": true, "enumeration": true, "object": true,
 	"component": true, "node": true, "artifact": true, "package": true, "part": true, "port": true,
-	"profile": true, "stereotype": true, "metaclass": true, "actor": true, "use-case": true,
 	"activity": true, "action": true, "decision": true, "merge": true, "fork": true, "join": true,
 	"state": true, "initial": true, "final": true, "history": true, "choice": true,
 	"participant": true, "lifeline": true, "interaction": true, "time-state": true,
-	"structure": true, "collaboration": true, "system-boundary": true, "object-node": true,
+	"structure": true, "collaboration": true, "object-node": true,
 }
 
 var umlRelationTagsV1EngineParseUml = map[string]bool{
 	"relation": true, "association": true, "aggregation": true, "composition": true,
-	"generalization": true, "realization": true, "dependency": true, "include": true,
-	"extend": true, "control-flow": true, "object-flow": true, "transition": true,
+	"generalization": true, "realization": true, "dependency": true,
+	"control-flow": true, "object-flow": true, "transition": true,
 	"message": true, "return-message": true, "create-message": true, "destroy-message": true,
 	"link": true, "occurrence": true, "duration": true, "deployment": true,
 	"communication-path": true, "package-import": true, "package-merge": true,
-	"assembly": true, "delegation": true, "connector": true, "extension": true, "reference": true,
+	"assembly": true, "delegation": true, "connector": true,
 }
 
 var umlCompartmentTagsV1EngineParseUml = map[string]bool{
@@ -99,11 +91,6 @@ var umlElementCompartmentSpecsV1EngineParseUml = map[string]map[string]bool{
 	"package":     umlTagSetV1EngineParseUml("responsibility,note"),
 	"structure":   umlTagSetV1EngineParseUml("property,note"),
 	"part":        umlTagSetV1EngineParseUml("property,responsibility,note"),
-	"profile":     umlTagSetV1EngineParseUml("constraint,note"),
-	"stereotype":  umlTagSetV1EngineParseUml("property,constraint,note"),
-	"metaclass":   umlTagSetV1EngineParseUml("property,note"),
-	"actor":       umlTagSetV1EngineParseUml("responsibility,note"),
-	"use-case":    umlTagSetV1EngineParseUml("responsibility,constraint,note"),
 	"activity":    umlTagSetV1EngineParseUml("responsibility,constraint,note"),
 	"action":      umlTagSetV1EngineParseUml("responsibility,constraint,note"),
 	"state":       umlTagSetV1EngineParseUml("entry,do,exit,internal,region,note"),
@@ -577,8 +564,6 @@ func validateUMLOwnerV1EngineParseUml(diagramKind string, element *entity.Node, 
 	case diagramKind == "composite-structure-diagram" && element.Tag == "port":
 		required = true
 		allowed = umlTagSetV1EngineParseUml("structure,part,component,collaboration")
-	case diagramKind == "use-case-diagram" && element.Tag == "use-case":
-		allowed = umlTagSetV1EngineParseUml("system-boundary")
 	case diagramKind == "timing-diagram" && element.Tag == "time-state":
 		required = true
 		allowed = umlTagSetV1EngineParseUml("lifeline")
@@ -734,12 +719,6 @@ func validateUMLRelationEndpointsV1EngineParseUml(diagramKind string, relation *
 		}
 		return nil
 	}
-	requireEitherDirection := func(left, right map[string]bool) error {
-		if (left[srcKind] && right[dstKind]) || (right[srcKind] && left[dstKind]) {
-			return nil
-		}
-		return fmt.Errorf("UML <%s> does not allow %s -> %s endpoints", relationKind, srcKind, dstKind)
-	}
 
 	switch diagramKind {
 	case "class-diagram":
@@ -754,8 +733,6 @@ func validateUMLRelationEndpointsV1EngineParseUml(diagramKind string, relation *
 		case "realization":
 			return require(umlTagSetV1EngineParseUml("class"), umlTagSetV1EngineParseUml("interface"))
 		}
-	case "object-diagram":
-		return require(umlTagSetV1EngineParseUml("object"), umlTagSetV1EngineParseUml("object"))
 	case "component-diagram":
 		componentKinds := umlTagSetV1EngineParseUml("component,interface,port,artifact")
 		switch relationKind {
@@ -804,25 +781,6 @@ func validateUMLRelationEndpointsV1EngineParseUml(diagramKind string, relation *
 		case "dependency":
 			all := umlTagSetV1EngineParseUml("structure,collaboration,part,port,component")
 			return require(all, all)
-		}
-	case "profile-diagram":
-		switch relationKind {
-		case "extension":
-			return require(umlTagSetV1EngineParseUml("stereotype"), umlTagSetV1EngineParseUml("metaclass"))
-		case "generalization":
-			return require(umlTagSetV1EngineParseUml("stereotype"), umlTagSetV1EngineParseUml("stereotype"))
-		case "reference":
-			all := umlTagSetV1EngineParseUml("profile,stereotype,metaclass")
-			return require(all, all)
-		}
-	case "use-case-diagram":
-		switch relationKind {
-		case "association":
-			return requireEitherDirection(umlTagSetV1EngineParseUml("actor"), umlTagSetV1EngineParseUml("use-case"))
-		case "include", "extend":
-			return require(umlTagSetV1EngineParseUml("use-case"), umlTagSetV1EngineParseUml("use-case"))
-		case "generalization":
-			return requireSameKind(umlTagSetV1EngineParseUml("actor,use-case"))
 		}
 	case "activity-diagram":
 		switch relationKind {

@@ -9,14 +9,6 @@
         <realization src="order" dst="repository" />
       </class-diagram></uml>
     </frame>
-    <frame id="object" title="Object" version="2026.07" width="480" height="280" margin-top="36">
-      <metadata align="right" width="96" key-width="42" font-size="10" />
-      <uml id="object-view"><object-diagram direction="right">
-        <object id="customer" title="customer: Customer" />
-        <object id="order" title="order: Order" />
-        <link src="customer" dst="order" />
-      </object-diagram></uml>
-    </frame>
     <frame id="component" title="Component" version="2026.07" width="480" height="280" margin-top="36">
       <metadata align="right" width="96" key-width="42" font-size="10" />
       <uml id="component-view"><component-diagram direction="right">
@@ -49,23 +41,6 @@
         <port id="api" owner="checkout" title="api" />
         <connector src="cart" dst="api" />
       </composite-structure-diagram></uml>
-    </frame>
-    <frame id="profile" title="Profile" version="2026.07" width="480" height="280" margin-top="36">
-      <metadata align="right" width="96" key-width="42" font-size="10" />
-      <uml id="profile-view"><profile-diagram direction="right">
-        <profile id="cloud" title="Cloud" />
-        <stereotype id="service" title="Service" />
-        <metaclass id="component" title="Component" />
-        <extension src="service" dst="component" />
-      </profile-diagram></uml>
-    </frame>
-    <frame id="use-case" title="Use Case" version="2026.07" width="480" height="280" margin-top="36">
-      <metadata align="right" width="96" key-width="42" font-size="10" />
-      <uml id="use-case-view"><use-case-diagram direction="right">
-        <actor id="customer" title="Customer" />
-        <use-case id="checkout" title="Checkout" />
-        <association src="customer" dst="checkout" />
-      </use-case-diagram></uml>
     </frame>
     <frame id="activity" title="Activity" version="2026.07" width="480" height="280" margin-top="36">
       <metadata align="right" width="96" key-width="42" font-size="10" />
