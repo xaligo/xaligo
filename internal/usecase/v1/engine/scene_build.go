@@ -127,7 +127,10 @@ func BuildJSONV1EngineSceneBuild(root *entity.Box, svgGroupDir string, catalogCS
 	}
 	frameMetadata := appendFrameMetadataV1EngineSceneFrameMetadata(root, &elements)
 	applySemanticElementMetadataV1EngineSceneWalk(elements, collectSemanticElementMetadataV1EngineSceneWalk(root))
-	renderConnectionsV1EngineSceneConnectionRender(connections, itemImgRects, itemLblRects, itemImgIDs, itemLblIDs, frameRects, frameElementIDs, frameMetadata, &elements)
+	componentInterfaces := registerUMLComponentInterfaceEndpointsV1EngineSceneBuild(elements, itemImgRects, itemImgIDs)
+	connectionsForRender := bindUMLComponentInterfaceConnectionsV1EngineSceneBuild(connections, componentInterfaces)
+	renderConnectionsV1EngineSceneConnectionRender(connectionsForRender, itemImgRects, itemLblRects, itemImgIDs, itemLblIDs, frameRects, frameElementIDs, frameMetadata, &elements)
+	appendUMLComponentCallerSocketsV1EngineSceneBuild(&elements)
 	appendDiffBoxHighlightsV1EngineSceneDiffHighlight(root, &elements)
 	elements = orderSceneLayersV1EngineSceneBuild(elements)
 
@@ -143,6 +146,233 @@ func BuildJSONV1EngineSceneBuild(root *entity.Box, svgGroupDir string, catalogCS
 		Files: files,
 	}
 	return json.MarshalIndent(out, "", "  ")
+}
+
+type umlComponentInterfaceEndpointsV1EngineSceneBuild struct {
+	byOwner        map[string]map[string]string
+	sideByEndpoint map[string]string
+}
+
+func registerUMLComponentInterfaceEndpointsV1EngineSceneBuild(elements []map[string]any, endpointRects map[string][4]float64, endpointIDs map[string]string) umlComponentInterfaceEndpointsV1EngineSceneBuild {
+	result := umlComponentInterfaceEndpointsV1EngineSceneBuild{byOwner: map[string]map[string]string{}, sideByEndpoint: map[string]string{}}
+	for _, element := range elements {
+		customData, _ := element["customData"].(map[string]any)
+		if customData["xaligoUmlComponentInterfaceSymbol"] != true {
+			continue
+		}
+		ownerKey, _ := customData["xaligoUmlComponentOwnerConnectionKey"].(string)
+		label, _ := customData["xaligoUmlComponentInterfaceLabel"].(string)
+		id, _ := element["id"].(string)
+		if ownerKey == "" || label == "" || id == "" {
+			continue
+		}
+		x, okX := element["x"].(float64)
+		y, okY := element["y"].(float64)
+		w, okW := element["width"].(float64)
+		h, okH := element["height"].(float64)
+		if !okX || !okY || !okW || !okH || w <= 0 || h <= 0 {
+			continue
+		}
+		endpointKey := umlComponentInterfaceEndpointKeyV1EngineSceneBuild(ownerKey, label)
+		endpointRects[endpointKey] = [4]float64{x, y, w, h}
+		endpointIDs[endpointKey] = id
+		result.sideByEndpoint[endpointKey] = umlComponentInterfaceConnectionSideV1EngineSceneBuild([4]float64{x, y, w, h}, endpointRects[ownerKey])
+		if result.byOwner[ownerKey] == nil {
+			result.byOwner[ownerKey] = map[string]string{}
+		}
+		result.byOwner[ownerKey][label] = endpointKey
+	}
+	return result
+}
+
+func bindUMLComponentInterfaceConnectionsV1EngineSceneBuild(connections []*entity.Node, endpoints umlComponentInterfaceEndpointsV1EngineSceneBuild) []*entity.Node {
+	if len(connections) == 0 || len(endpoints.byOwner) == 0 {
+		return connections
+	}
+	bound := make([]*entity.Node, 0, len(connections))
+	for _, conn := range connections {
+		if conn == nil || conn.Attr("uml-diagram-kind") != "component-diagram" || conn.Attr("uml-relation-kind") != "association" || conn.Attr("uml-src-kind") != "component" || conn.Attr("uml-dst-kind") != "component" {
+			bound = append(bound, conn)
+			continue
+		}
+		srcKey := strings.TrimSpace(conn.Attrs[internalConnectionSrcKeyAttrV1EngineParseDocument])
+		dstKey := strings.TrimSpace(conn.Attrs[internalConnectionDstKeyAttrV1EngineParseDocument])
+		boundDst, ok := matchingUMLComponentInterfaceEndpointKeyV1EngineSceneBuild(endpoints, srcKey, dstKey)
+		if !ok {
+			bound = append(bound, conn)
+			continue
+		}
+		clone := *conn
+		clone.Attrs = cloneAttrsV1EngineParseTable(conn.Attrs)
+		clone.Attrs[internalConnectionSrcKeyAttrV1EngineParseDocument] = srcKey
+		clone.Attrs[internalConnectionDstKeyAttrV1EngineParseDocument] = boundDst
+		clone.Attrs["dst-side"] = endpoints.sideByEndpoint[boundDst]
+		clone.Attrs["uml-component-interface-dst"] = "true"
+		clone.Attrs["uml-component-caller-socket"] = "true"
+		bound = append(bound, &clone)
+	}
+	return bound
+}
+
+func umlComponentInterfaceConnectionSideV1EngineSceneBuild(symbolRect, ownerRect [4]float64) string {
+	if ownerRect[2] <= 0 || ownerRect[3] <= 0 {
+		return "right"
+	}
+	symbolCenterX := symbolRect[0] + symbolRect[2]/2
+	symbolCenterY := symbolRect[1] + symbolRect[3]/2
+	ownerLeft := ownerRect[0]
+	ownerRight := ownerRect[0] + ownerRect[2]
+	ownerTop := ownerRect[1]
+	ownerBottom := ownerRect[1] + ownerRect[3]
+	if symbolCenterX < ownerLeft {
+		return "left"
+	}
+	if symbolCenterX > ownerRight {
+		return "right"
+	}
+	if symbolCenterY < ownerTop {
+		return "bottom"
+	}
+	if symbolCenterY > ownerBottom {
+		return "top"
+	}
+	if symbolCenterX < ownerLeft+ownerRect[2]/2 {
+		return "left"
+	}
+	return "right"
+}
+
+func matchingUMLComponentInterfaceEndpointKeyV1EngineSceneBuild(endpoints umlComponentInterfaceEndpointsV1EngineSceneBuild, srcOwnerKey, dstOwnerKey string) (string, bool) {
+	srcByLabel := endpoints.byOwner[srcOwnerKey]
+	dstByLabel := endpoints.byOwner[dstOwnerKey]
+	if len(srcByLabel) == 0 || len(dstByLabel) == 0 {
+		return "", false
+	}
+	labels := make([]string, 0, len(srcByLabel))
+	for label := range srcByLabel {
+		if _, ok := dstByLabel[label]; ok {
+			labels = append(labels, label)
+		}
+	}
+	if len(labels) == 0 {
+		return "", false
+	}
+	sort.Strings(labels)
+	label := labels[0]
+	return dstByLabel[label], true
+}
+
+func umlComponentInterfaceEndpointKeyV1EngineSceneBuild(ownerKey, label string) string {
+	return ownerKey + "|uml-component-interface|" + label
+}
+
+func appendUMLComponentCallerSocketsV1EngineSceneBuild(elements *[]map[string]any) {
+	if elements == nil {
+		return
+	}
+	updated := excalidrawUpdatedV1EngineSceneTypes
+	for _, element := range *elements {
+		customData, _ := element["customData"].(map[string]any)
+		if !boolishV1EngineSceneBuild(customData["xaligoUmlComponentCallerSocket"]) {
+			continue
+		}
+		id, _ := element["id"].(string)
+		x, okX := element["x"].(float64)
+		y, okY := element["y"].(float64)
+		points, ok := element["points"].([][]float64)
+		if !ok || len(points) < 2 || id == "" || !okX || !okY {
+			continue
+		}
+		absolutePoints := make([][2]float64, 0, len(points))
+		for _, point := range points {
+			if len(point) < 2 {
+				continue
+			}
+			absolutePoints = append(absolutePoints, [2]float64{x + point[0], y + point[1]})
+		}
+		if len(absolutePoints) < 2 {
+			continue
+		}
+		socket, direction := umlComponentCallerSocketPointV1EngineSceneBuild(absolutePoints)
+		appendUMLComponentCallerSocketV1EngineSceneBuild(elements, id+"-caller-socket", socket, direction, updated)
+	}
+}
+
+func umlComponentCallerSocketPointV1EngineSceneBuild(points [][2]float64) ([2]float64, [2]float64) {
+	const stub = 20.0
+	remaining := stub
+	for index := 1; index < len(points); index++ {
+		start := points[index-1]
+		end := points[index]
+		dx := end[0] - start[0]
+		dy := end[1] - start[1]
+		length := math.Hypot(dx, dy)
+		if length <= 0 {
+			continue
+		}
+		if remaining <= length {
+			ratio := remaining / length
+			socket := [2]float64{start[0] + dx*ratio, start[1] + dy*ratio}
+			return socket, start
+		}
+		remaining -= length
+	}
+	return points[len(points)-2], points[len(points)-1]
+}
+
+func appendUMLComponentCallerSocketV1EngineSceneBuild(elements *[]map[string]any, id string, start, next [2]float64, updated int64) {
+	const radius = 7.0
+	dx := next[0] - start[0]
+	dy := next[1] - start[1]
+	length := math.Hypot(dx, dy)
+	if length <= 0 {
+		return
+	}
+	ux, uy := dx/length, dy/length
+	px, py := -uy, ux
+	absolute := make([][2]float64, 0, 13)
+	minX, minY := math.Inf(1), math.Inf(1)
+	maxX, maxY := math.Inf(-1), math.Inf(-1)
+	for index := 0; index <= 12; index++ {
+		theta := -math.Pi/2 + math.Pi*float64(index)/12
+		back := -math.Cos(theta) * radius
+		offset := math.Sin(theta) * radius
+		point := [2]float64{start[0] + ux*back + px*offset, start[1] + uy*back + py*offset}
+		absolute = append(absolute, point)
+		minX = math.Min(minX, point[0])
+		minY = math.Min(minY, point[1])
+		maxX = math.Max(maxX, point[0])
+		maxY = math.Max(maxY, point[1])
+	}
+	points := make([][]float64, 0, len(absolute))
+	for _, point := range absolute {
+		points = append(points, []float64{point[0] - minX, point[1] - minY})
+	}
+	seed := stableSceneSeedV1EngineSceneTypes(id)
+	*elements = append(*elements, map[string]any{
+		"id": id, "type": "line",
+		"x": minX, "y": minY, "width": maxX - minX, "height": maxY - minY,
+		"angle": 0, "strokeColor": "#052d6e", "backgroundColor": "transparent",
+		"fillStyle": "solid", "strokeWidth": 1.35, "strokeStyle": "solid",
+		"roughness": 0, "opacity": 100,
+		"groupIds": []string{}, "roundness": nil,
+		"seed": seed, "version": 1, "versionNonce": seed,
+		"isDeleted": false, "boundElements": nil,
+		"updated": updated, "link": nil, "locked": false,
+		"points":     points,
+		"customData": map[string]any{"xaligoUmlComponentCallerSocket": true},
+	})
+}
+
+func boolishV1EngineSceneBuild(value any) bool {
+	switch typed := value.(type) {
+	case bool:
+		return typed
+	case string:
+		return strings.EqualFold(strings.TrimSpace(typed), "true")
+	default:
+		return false
+	}
 }
 
 // orderSceneLayers keeps connectors below readable content while preserving

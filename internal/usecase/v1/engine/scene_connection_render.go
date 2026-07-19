@@ -236,6 +236,9 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 		if fp, ok := umlSequenceFixedPointV1EngineSceneConnectionRoute(conn, "dst", dstSide); ok {
 			dstFP = fp
 		}
+		if boolishV1EngineSceneBuild(conn.Attr("uml-component-interface-dst")) {
+			dstFP = fixedPointForSideV1EngineSceneConnection(dstSide)
+		}
 		style := resolveConnectionStyleV1EngineSceneConnectionRoute(conn)
 		if crossFrame {
 			seed := stableConnectionSeedV1EngineSceneConnectionRoute(srcKey, dstKey, i)
@@ -681,26 +684,28 @@ func applyUMLConnectionMetadataV1EngineSceneConnectionRender(customData map[stri
 		return
 	}
 	for source, target := range map[string]string{
-		"uml-id":               "xaligoUmlId",
-		"uml-diagram-kind":     "xaligoUmlDiagramKind",
-		"uml-relation-kind":    "xaligoUmlRelationKind",
-		"uml-relation-label":   "xaligoUmlRelationLabel",
-		"uml-src-ref":          "xaligoUmlRelationSourceReference",
-		"uml-dst-ref":          "xaligoUmlRelationDestinationReference",
-		"uml-src-kind":         "xaligoUmlRelationSourceKind",
-		"uml-dst-kind":         "xaligoUmlRelationDestinationKind",
-		"uml-order":            "xaligoUmlMessageOrder",
-		"uml-mode":             "xaligoUmlMessageMode",
-		"uml-event":            "xaligoUmlEvent",
-		"uml-guard":            "xaligoUmlGuard",
-		"uml-action":           "xaligoUmlAction",
-		"uml-effect":           "xaligoUmlEffect",
-		"uml-route":            "xaligoUmlRoute",
-		"uml-src-multiplicity": "xaligoUmlSourceMultiplicity",
-		"uml-dst-multiplicity": "xaligoUmlDestinationMultiplicity",
-		"uml-at":               "xaligoUmlOccurrenceAt",
-		"uml-from":             "xaligoUmlDurationFrom",
-		"uml-to":               "xaligoUmlDurationTo",
+		"uml-id":                      "xaligoUmlId",
+		"uml-diagram-kind":            "xaligoUmlDiagramKind",
+		"uml-relation-kind":           "xaligoUmlRelationKind",
+		"uml-relation-label":          "xaligoUmlRelationLabel",
+		"uml-src-ref":                 "xaligoUmlRelationSourceReference",
+		"uml-dst-ref":                 "xaligoUmlRelationDestinationReference",
+		"uml-src-kind":                "xaligoUmlRelationSourceKind",
+		"uml-dst-kind":                "xaligoUmlRelationDestinationKind",
+		"uml-order":                   "xaligoUmlMessageOrder",
+		"uml-mode":                    "xaligoUmlMessageMode",
+		"uml-event":                   "xaligoUmlEvent",
+		"uml-guard":                   "xaligoUmlGuard",
+		"uml-action":                  "xaligoUmlAction",
+		"uml-effect":                  "xaligoUmlEffect",
+		"uml-route":                   "xaligoUmlRoute",
+		"uml-src-multiplicity":        "xaligoUmlSourceMultiplicity",
+		"uml-dst-multiplicity":        "xaligoUmlDestinationMultiplicity",
+		"uml-component-interface-dst": "xaligoUmlComponentInterfaceDestination",
+		"uml-component-caller-socket": "xaligoUmlComponentCallerSocket",
+		"uml-at":                      "xaligoUmlOccurrenceAt",
+		"uml-from":                    "xaligoUmlDurationFrom",
+		"uml-to":                      "xaligoUmlDurationTo",
 	} {
 		if value := strings.TrimSpace(conn.Attr(source)); value != "" {
 			customData[target] = value

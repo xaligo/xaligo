@@ -1,0 +1,30 @@
+<xaligo version="1">
+  <data></data>
+  <frames>
+    <frame id="component-connected-complex" title="Connected Component Interfaces" version="2026.07" width="1320" height="720" class="pa-3" margin-top="48">
+      <metadata align="right" width="176" key-width="56" font-size="12" />
+      <uml id="connected-component-interfaces">
+        <component-diagram direction="right" grid="2">
+          <component id="storefront" title="Storefront">
+            <interface>Catalog API</interface>
+            <interface>Ordering API</interface>
+          </component>
+          <component id="catalog" title="Catalog Service">
+            <interface>Catalog API</interface>
+          </component>
+          <component id="orders" title="Order Service">
+            <interface>Ordering API</interface>
+            <interface>Payment API</interface>
+          </component>
+          <component id="payments" title="Payment Service">
+            <interface>Payment API</interface>
+          </component>
+
+          <association src="storefront" dst="catalog" />
+          <association src="storefront" dst="orders" />
+          <association src="orders" dst="payments" />
+        </component-diagram>
+      </uml>
+    </frame>
+  </frames>
+</xaligo>

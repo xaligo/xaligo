@@ -86,7 +86,7 @@ var umlRelationTagsV1EngineParseUml = map[string]bool{
 var umlCompartmentTagsV1EngineParseUml = map[string]bool{
 	"compartment": true,
 	"attribute":   true, "operation": true, "literal": true, "slot": true, "responsibility": true,
-	"provided-interface": true, "required-interface": true, "property": true, "constraint": true,
+	"interface": true, "property": true, "constraint": true,
 	"entry": true, "do": true, "exit": true, "internal": true, "region": true, "note": true,
 }
 
@@ -95,11 +95,11 @@ var umlElementCompartmentSpecsV1EngineParseUml = map[string]map[string]bool{
 	"interface":   umlTagSetV1EngineParseUml("operation,constraint,note"),
 	"enumeration": umlTagSetV1EngineParseUml("literal,operation,note"),
 	"object":      umlTagSetV1EngineParseUml("slot,note"),
-	"component":   umlTagSetV1EngineParseUml("provided-interface,required-interface,responsibility,note"),
+	"component":   umlTagSetV1EngineParseUml("interface"),
 	"node":        umlTagSetV1EngineParseUml("property,responsibility,note"),
 	"artifact":    umlTagSetV1EngineParseUml("property,responsibility,note"),
 	"package":     umlTagSetV1EngineParseUml("responsibility,note"),
-	"structure":   umlTagSetV1EngineParseUml("property,provided-interface,required-interface,note"),
+	"structure":   umlTagSetV1EngineParseUml("property,note"),
 	"part":        umlTagSetV1EngineParseUml("property,responsibility,note"),
 	"profile":     umlTagSetV1EngineParseUml("constraint,note"),
 	"stereotype":  umlTagSetV1EngineParseUml("property,constraint,note"),
@@ -216,7 +216,7 @@ func normalizeUMLComponentV1EngineParseUml(uml, frame *entity.Node, models map[s
 		return &entity.ParseError{Position: diagram.Position, Err: fmt.Errorf("<%s> must contain UML elements", diagram.Tag)}
 	}
 	uml.Attrs["uml-kind"] = diagram.Tag
-	if diagram.Tag == "class-diagram" && strings.TrimSpace(uml.Attr("grid")) == "" && strings.TrimSpace(diagram.Attr("grid")) != "" {
+	if (diagram.Tag == "class-diagram" || diagram.Tag == "component-diagram") && strings.TrimSpace(uml.Attr("grid")) == "" && strings.TrimSpace(diagram.Attr("grid")) != "" {
 		uml.Attrs["grid"] = strings.TrimSpace(diagram.Attr("grid"))
 	}
 	if uml.Attr("layout") == "" {
@@ -1294,22 +1294,15 @@ func normalizeUMLElementV1EngineParseUml(source *entity.Node, scopedID, diagramK
 	var stateCompartmentValues []string
 	var attributeCompartments []string
 	var operationCompartments []string
-	var providedInterfaces []string
-	var requiredInterfaces []string
+	var componentInterfaces []string
 	attributeLines := 0
 	operationLines := 0
 	for _, child := range source.Children {
 		label := umlCompartmentLabelV1EngineParseUml(diagramKind, source.Tag, child)
 		if label != "" {
-			if diagramKind == "component-diagram" && source.Tag == "component" {
-				switch child.Tag {
-				case "provided-interface":
-					providedInterfaces = append(providedInterfaces, label)
-					continue
-				case "required-interface":
-					requiredInterfaces = append(requiredInterfaces, label)
-					continue
-				}
+			if diagramKind == "component-diagram" && source.Tag == "component" && child.Tag == "interface" {
+				componentInterfaces = append(componentInterfaces, label)
+				continue
 			}
 			compartments = append(compartments, label)
 			compartmentKinds = append(compartmentKinds, child.Tag)
@@ -1335,11 +1328,8 @@ func normalizeUMLElementV1EngineParseUml(source *entity.Node, scopedID, diagramK
 		attrs["uml-class-attribute-text"] = strings.Join(attributeCompartments, "\n")
 		attrs["uml-class-operation-text"] = strings.Join(operationCompartments, "\n")
 	}
-	if len(providedInterfaces) > 0 {
-		attrs["uml-component-provided-interfaces"] = strings.Join(providedInterfaces, "\n")
-	}
-	if len(requiredInterfaces) > 0 {
-		attrs["uml-component-required-interfaces"] = strings.Join(requiredInterfaces, "\n")
+	if len(componentInterfaces) > 0 {
+		attrs["uml-component-interfaces"] = strings.Join(componentInterfaces, "\n")
 	}
 	if diagramKind == "state-machine-diagram" && source.Tag == "state" {
 		attrs["uml-state-header-text"] = strings.TrimSpace(attrs["title"])

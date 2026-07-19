@@ -448,24 +448,30 @@ func TestUMLComponentRendersComponentNotation(t *testing.T) {
 		t.Fatalf("json.Unmarshal(raw map) error = %v", err)
 	}
 	elements, _ := raw["elements"].([]any)
-	adornmentCount := 0
+	headerCount, headerTextCount := 0, 0
 	for _, rawElement := range elements {
 		element, _ := rawElement.(map[string]any)
 		customData, _ := element["customData"].(map[string]any)
-		if customData["xaligoUmlComponentAdornment"] == true {
-			adornmentCount++
-			if element["strokeColor"] != "#052d6e" || element["backgroundColor"] != "#ffffff" {
-				t.Fatalf("component adornment style = stroke %q background %q", element["strokeColor"], element["backgroundColor"])
+		if customData["xaligoUmlComponentHeader"] == true {
+			headerCount++
+			if element["backgroundColor"] != "#08b8ea" {
+				t.Fatalf("component header background = %q, want #08b8ea", element["backgroundColor"])
+			}
+		}
+		if customData["xaligoUmlComponentHeaderContent"] == true {
+			headerTextCount++
+			if element["textAlign"] != "left" || element["strokeColor"] != "#ffffff" {
+				t.Fatalf("component header text style = align %q color %q", element["textAlign"], element["strokeColor"])
 			}
 		}
 	}
-	if adornmentCount != 2 {
-		t.Fatalf("component adornment count = %d, want 2", adornmentCount)
+	if headerCount != 1 || headerTextCount != 1 {
+		t.Fatalf("component notation counts = header %d header text %d, want 1, 1", headerCount, headerTextCount)
 	}
 }
 
 func TestUMLComponentRendersBoundaryInterfaces(t *testing.T) {
-	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="760" height="420"><uml id="components"><component-diagram><component id="service" title="Order Service"><provided-interface>Ordering API</provided-interface><required-interface>Order Store</required-interface></component></component-diagram></uml></frame></frames></xaligo>`)
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="760" height="420"><uml id="components"><component-diagram><component id="service" title="Order Service"><interface>Ordering API</interface><interface>Order Store</interface></component></component-diagram></uml></frame></frames></xaligo>`)
 	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
 		t.Fatalf("RenderExcalidraw() error = %v", err)
@@ -475,48 +481,64 @@ func TestUMLComponentRendersBoundaryInterfaces(t *testing.T) {
 		t.Fatalf("json.Unmarshal(raw map) error = %v", err)
 	}
 	elements, _ := raw["elements"].([]any)
-	provided, required := 0, 0
+	interfaceSymbols, interfacePorts, portLabels := 0, 0, 0
 	var component map[string]any
-	var requiredSocket map[string]any
+	var componentHeader map[string]any
+	var interfacePort map[string]any
+	var interfaceSymbol map[string]any
+	var interfacePortElements []map[string]any
 	for _, rawElement := range elements {
 		element, _ := rawElement.(map[string]any)
 		customData, _ := element["customData"].(map[string]any)
 		switch {
 		case customData["xaligoUmlElementKind"] == "component":
 			component = element
-		case customData["xaligoUmlComponentInterfaceSymbol"] == true && customData["xaligoUmlComponentInterfaceKind"] == "provided":
-			provided++
-		case customData["xaligoUmlComponentInterfaceSymbol"] == true && customData["xaligoUmlComponentInterfaceKind"] == "required":
-			required++
-			requiredSocket = element
+		case customData["xaligoUmlComponentHeader"] == true:
+			componentHeader = element
+		case customData["xaligoUmlComponentInterfaceSymbol"] == true:
+			interfaceSymbols++
+			interfaceSymbol = element
+		case customData["xaligoUmlComponentInterfacePort"] == true:
+			interfacePorts++
+			interfacePort = element
+			interfacePortElements = append(interfacePortElements, element)
+		case customData["xaligoUmlComponentInterfacePortLabel"] == true:
+			portLabels++
 		}
 	}
-	if provided != 1 || required != 1 {
-		t.Fatalf("boundary interface counts = provided %d required %d, want 1 each", provided, required)
+	if interfaceSymbols != 2 || interfacePorts != 2 || portLabels != 2 {
+		t.Fatalf("boundary interface counts = symbols %d ports %d labels %d, want 2 each", interfaceSymbols, interfacePorts, portLabels)
 	}
 	if component == nil {
 		t.Fatalf("component shape missing")
 	}
-	if requiredSocket["type"] != "line" {
-		t.Fatalf("required interface socket type = %q, want line", requiredSocket["type"])
+	if componentHeader == nil {
+		t.Fatalf("component header missing")
 	}
-	points, _ := requiredSocket["points"].([]any)
-	if len(points) < 9 {
-		t.Fatalf("required interface socket points = %#v", points)
+	if component["backgroundColor"] != "#ffffff" {
+		t.Fatalf("component background = %q, want #ffffff", component["backgroundColor"])
 	}
-	start, _ := points[0].([]any)
-	middle, _ := points[len(points)/2].([]any)
-	if len(start) < 1 || len(middle) < 1 {
-		t.Fatalf("required interface socket malformed points = %#v", points)
+	if interfacePort["type"] != "rectangle" || interfacePort["backgroundColor"] != "#ffffff" {
+		t.Fatalf("interface port style = type %q background %q", interfacePort["type"], interfacePort["backgroundColor"])
 	}
-	startX, _ := start[0].(float64)
-	middleX, _ := middle[0].(float64)
-	if middleX >= startX {
-		t.Fatalf("required interface socket opens the wrong way: start x %.1f middle x %.1f", startX, middleX)
+	componentX := component["x"].(float64)
+	portX := interfacePort["x"].(float64)
+	portW := interfacePort["width"].(float64)
+	symbolX := interfaceSymbol["x"].(float64)
+	symbolW := interfaceSymbol["width"].(float64)
+	portProtrusion := componentX - portX
+	if !(portProtrusion > 0 && portProtrusion < portW*0.25) {
+		t.Fatalf("interface port protrusion = %.1f of width %.1f, want a small overlap outside component", portProtrusion, portW)
 	}
-	customData, _ := requiredSocket["customData"].(map[string]any)
-	if customData["xaligoUmlComponentInterfaceSemicircle"] != true {
-		t.Fatalf("required interface socket should be a direct semicircle, customData = %#v", customData)
+	if gap := portX - (symbolX + symbolW); gap < 2 || gap > 6 {
+		t.Fatalf("interface symbol gap = %.1f, want circle closer to port rectangle", gap)
+	}
+	headerBottom := componentHeader["y"].(float64) + componentHeader["height"].(float64)
+	for _, portElement := range interfacePortElements {
+		portY := portElement["y"].(float64)
+		if portY < headerBottom+6 {
+			t.Fatalf("interface port y = %.1f overlaps header bottom %.1f", portY, headerBottom)
+		}
 	}
 }
 
@@ -537,22 +559,22 @@ func TestUMLComponentSampleUsesBoundaryInterfacesWithoutPorts(t *testing.T) {
 		t.Fatalf("json.Unmarshal(raw map) error = %v", err)
 	}
 	elements, _ := raw["elements"].([]any)
-	ports, provided, required := 0, 0, 0
+	umlPorts, interfaceSymbols, interfacePorts := 0, 0, 0
 	for _, rawElement := range elements {
 		element, _ := rawElement.(map[string]any)
 		customData, _ := element["customData"].(map[string]any)
 		if customData["xaligoUmlElementKind"] == "port" {
-			ports++
+			umlPorts++
 		}
-		if customData["xaligoUmlComponentInterfaceSymbol"] == true && customData["xaligoUmlComponentInterfaceKind"] == "provided" {
-			provided++
+		if customData["xaligoUmlComponentInterfaceSymbol"] == true {
+			interfaceSymbols++
 		}
-		if customData["xaligoUmlComponentInterfaceSymbol"] == true && customData["xaligoUmlComponentInterfaceKind"] == "required" {
-			required++
+		if customData["xaligoUmlComponentInterfacePort"] == true {
+			interfacePorts++
 		}
 	}
-	if ports != 0 || provided != 2 || required != 2 {
-		t.Fatalf("sample symbols = ports %d provided %d required %d, want ports 0 provided 2 required 2", ports, provided, required)
+	if umlPorts != 0 || interfaceSymbols != 4 || interfacePorts != 4 {
+		t.Fatalf("sample symbols = UML ports %d interface symbols %d interface ports %d, want 0, 4, 4", umlPorts, interfaceSymbols, interfacePorts)
 	}
 }
 
@@ -570,28 +592,135 @@ func TestUMLConnectedComponentSampleRendersBoundaryInterfaces(t *testing.T) {
 		t.Fatalf("json.Unmarshal(raw map) error = %v", err)
 	}
 	elements, _ := raw["elements"].([]any)
-	provided, required, associations := 0, 0, 0
-	requiredIndex, associationIndex := -1, -1
+	interfaceSymbols, circles, callerSockets, associations := 0, 0, 0, 0
+	lastInterfaceIndex, associationIndex := -1, -1
+	interfaceIDs := map[string]bool{}
+	associationStartID, associationEndID := "", ""
+	var callerSocketElement map[string]any
 	for index, rawElement := range elements {
 		element, _ := rawElement.(map[string]any)
 		customData, _ := element["customData"].(map[string]any)
-		if customData["xaligoUmlComponentInterfaceSymbol"] == true && customData["xaligoUmlComponentInterfaceKind"] == "provided" {
-			provided++
+		if customData["xaligoUmlComponentInterfaceSymbol"] == true {
+			interfaceSymbols++
+			lastInterfaceIndex = index
+			id, _ := element["id"].(string)
+			interfaceIDs[id] = true
+			if customData["xaligoUmlComponentInterfaceCircle"] == true {
+				circles++
+			}
 		}
-		if customData["xaligoUmlComponentInterfaceSymbol"] == true && customData["xaligoUmlComponentInterfaceKind"] == "required" {
-			required++
-			requiredIndex = index
+		if customData["xaligoUmlComponentCallerSocket"] == true {
+			callerSockets++
+			callerSocketElement = element
 		}
 		if customData["xaligoUmlRelationKind"] == "association" {
 			associations++
 			associationIndex = index
+			startBinding, _ := element["startBinding"].(map[string]any)
+			endBinding, _ := element["endBinding"].(map[string]any)
+			associationStartID, _ = startBinding["elementId"].(string)
+			associationEndID, _ = endBinding["elementId"].(string)
 		}
 	}
-	if provided != 1 || required != 1 || associations != 1 {
-		t.Fatalf("connected sample counts = provided %d required %d associations %d, want 1 each", provided, required, associations)
+	if interfaceSymbols != 2 || circles != 2 || callerSockets != 1 || associations != 1 {
+		t.Fatalf("connected sample counts = interface symbols %d circles %d caller sockets %d associations %d, want 2, 2, 1, and 1", interfaceSymbols, circles, callerSockets, associations)
 	}
-	if associationIndex <= requiredIndex {
-		t.Fatalf("association connector index = %d, required socket index = %d; connector should render in front", associationIndex, requiredIndex)
+	if associationIndex <= lastInterfaceIndex {
+		t.Fatalf("association connector index = %d, last interface index = %d; connector should render in front", associationIndex, lastInterfaceIndex)
+	}
+	if interfaceIDs[associationStartID] || !interfaceIDs[associationEndID] {
+		t.Fatalf("association binding = %q -> %q, want component anchor -> interface circle IDs %#v", associationStartID, associationEndID, interfaceIDs)
+	}
+	if callerSocketElement == nil {
+		t.Fatalf("caller socket element missing")
+	}
+	if callerSocketElement["height"].(float64) <= callerSocketElement["width"].(float64) {
+		t.Fatalf("caller socket size = %.1fx%.1f, want vertical semicircle for horizontal caller line", callerSocketElement["width"].(float64), callerSocketElement["height"].(float64))
+	}
+}
+
+func TestUMLComplexConnectedComponentSampleBindsInterfaces(t *testing.T) {
+	source, err := os.ReadFile("../../../../docs/src/examples/samples/uml-component-connected-complex.xal")
+	if err != nil {
+		t.Fatalf("os.ReadFile() error = %v", err)
+	}
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var raw map[string]any
+	if err := json.Unmarshal(rawScene, &raw); err != nil {
+		t.Fatalf("json.Unmarshal(raw map) error = %v", err)
+	}
+	elements, _ := raw["elements"].([]any)
+	interfaceIDs := map[string]bool{}
+	callerSockets := 0
+	associationBindings := 0
+	for _, rawElement := range elements {
+		element, _ := rawElement.(map[string]any)
+		id, _ := element["id"].(string)
+		customData, _ := element["customData"].(map[string]any)
+		if customData["xaligoUmlComponentInterfaceSymbol"] == true {
+			interfaceIDs[id] = true
+		}
+		if customData["xaligoUmlComponentCallerSocket"] == true {
+			callerSockets++
+		}
+		if customData["xaligoUmlRelationKind"] != "association" {
+			continue
+		}
+		startBinding, _ := element["startBinding"].(map[string]any)
+		endBinding, _ := element["endBinding"].(map[string]any)
+		startID, _ := startBinding["elementId"].(string)
+		endID, _ := endBinding["elementId"].(string)
+		endFixedPoint, _ := endBinding["fixedPoint"].([]any)
+		if interfaceIDs[startID] || !interfaceIDs[endID] {
+			t.Fatalf("association binds %q -> %q, want component anchor -> interface circle", startID, endID)
+		}
+		if len(endFixedPoint) < 2 || endFixedPoint[0] != 0.0 || endFixedPoint[1] != 0.5 {
+			t.Fatalf("association end fixed point = %#v, want left-center of interface circle", endFixedPoint)
+		}
+		points, _ := element["points"].([]any)
+		if len(points) < 2 {
+			t.Fatalf("association points = %#v, want at least two points", points)
+		}
+		prev, _ := points[len(points)-2].([]any)
+		last, _ := points[len(points)-1].([]any)
+		if len(prev) < 2 || len(last) < 2 {
+			t.Fatalf("association final points = %#v -> %#v, want coordinate pairs", prev, last)
+		}
+		prevY, _ := prev[1].(float64)
+		lastY, _ := last[1].(float64)
+		if math.Abs(prevY-lastY) > 0.1 {
+			t.Fatalf("association final segment = %#v -> %#v, want horizontal approach into interface circle", prev, last)
+		}
+		prevX, _ := prev[0].(float64)
+		lastX, _ := last[0].(float64)
+		if prevX >= lastX {
+			t.Fatalf("association final segment = %#v -> %#v, want approach from left of interface circle", prev, last)
+		}
+		associationBindings++
+	}
+	if len(interfaceIDs) != 6 || callerSockets != 3 || associationBindings != 3 {
+		t.Fatalf("complex sample counts = interface symbols %d caller sockets %d associations %d, want 6, 3, and 3", len(interfaceIDs), callerSockets, associationBindings)
+	}
+	svg, err := newUsecase().RenderSVG(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderSVG() error = %v", err)
+	}
+	paths := svgUMLComponentAssociationPathsV1UMLTest(t, string(svg))
+	if len(paths) != 3 {
+		t.Fatalf("SVG association paths = %d, want 3", len(paths))
+	}
+	for _, path := range paths {
+		prev := path[len(path)-2]
+		last := path[len(path)-1]
+		if math.Abs(prev.y-last.y) > 0.1 {
+			t.Fatalf("SVG association final segment = %#v -> %#v, want horizontal approach into interface circle", prev, last)
+		}
+		if prev.x >= last.x {
+			t.Fatalf("SVG association final segment = %#v -> %#v, want approach from left of interface circle", prev, last)
+		}
 	}
 }
 
@@ -1145,6 +1274,36 @@ func svgConnectorPathsV1UMLTest(t *testing.T, svg string) [][]svgPointV1UMLTest 
 	}
 	if len(paths) == 0 {
 		t.Fatalf("no SVG connector paths found")
+	}
+	return paths
+}
+
+func svgUMLComponentAssociationPathsV1UMLTest(t *testing.T, svg string) [][]svgPointV1UMLTest {
+	t.Helper()
+	pathRE := regexp.MustCompile(`<path d="([^"]+)"[^>]*stroke="#1E1E1E"`)
+	pointRE := regexp.MustCompile(`[ML] (-?[0-9]+(?:\.[0-9]+)?) (-?[0-9]+(?:\.[0-9]+)?)`)
+	matches := pathRE.FindAllStringSubmatch(svg, -1)
+	paths := make([][]svgPointV1UMLTest, 0, len(matches))
+	for _, match := range matches {
+		pointMatches := pointRE.FindAllStringSubmatch(match[1], -1)
+		points := make([]svgPointV1UMLTest, 0, len(pointMatches))
+		for _, pointMatch := range pointMatches {
+			x, err := strconv.ParseFloat(pointMatch[1], 64)
+			if err != nil {
+				t.Fatalf("parse SVG component path x %q: %v", pointMatch[1], err)
+			}
+			y, err := strconv.ParseFloat(pointMatch[2], 64)
+			if err != nil {
+				t.Fatalf("parse SVG component path y %q: %v", pointMatch[2], err)
+			}
+			points = append(points, svgPointV1UMLTest{x: x, y: y})
+		}
+		if len(points) >= 2 {
+			paths = append(paths, points)
+		}
+	}
+	if len(paths) == 0 {
+		t.Fatalf("no SVG component association paths found")
 	}
 	return paths
 }

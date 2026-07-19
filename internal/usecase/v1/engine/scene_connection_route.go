@@ -84,6 +84,9 @@ func excalidrawConnectionPointsV1EngineSceneConnectionRoute(conn *entity.Node, s
 		path.Points = restoreDestinationApproachV1EngineRouteBuild(path.Points, req.DstSide, opt.Stub)
 	}
 	path.Points = enforceOrthogonalPolylineV1EngineRoutePath(path.Points)
+	if boolishV1EngineSceneBuild(conn.Attr("uml-component-interface-dst")) {
+		path.Points = restoreDestinationApproachV1EngineRouteBuild(path.Points, req.DstSide, opt.Stub)
+	}
 	return enforceHardObstacleExclusionV1EngineRouteBuild(req, path.Points, local, placed, opt)
 }
 
@@ -226,6 +229,10 @@ func excalidrawRouteRequestV1EngineSceneConnectionRoute(conn *entity.Node, srcRe
 		req.SrcAnchor = &ptV1EngineRouteTypes{X: src.X + src.W*fp[0], Y: src.Y + src.H*fp[1]}
 	}
 	if fp, ok := umlSequenceFixedPointV1EngineSceneConnectionRoute(conn, "dst", dstSide); ok {
+		req.DstAnchor = &ptV1EngineRouteTypes{X: dst.X + dst.W*fp[0], Y: dst.Y + dst.H*fp[1]}
+	}
+	if boolishV1EngineSceneBuild(conn.Attr("uml-component-interface-dst")) {
+		fp := fixedPointForSideV1EngineSceneConnection(dstSide)
 		req.DstAnchor = &ptV1EngineRouteTypes{X: dst.X + dst.W*fp[0], Y: dst.Y + dst.H*fp[1]}
 	}
 	if scale, ok := positiveFloatAttrV1EngineSceneConnectionRoute(conn, "coordinate-scale", "scale"); ok {

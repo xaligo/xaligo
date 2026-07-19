@@ -222,8 +222,10 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 	groupBorders := collectGroupBorderPathsV1EnginePlanObstacle(elements)
 	routed := routeConnectionsV1EngineRouteBuild(reqs, obstacles, rOpt)
 	elByConn := map[string]*entity.Element{}
+	reqByConn := map[string]routeRequestV1EngineRouteTypes{}
 	for _, pc := range ordered {
 		elByConn[pc.req.ID] = pc.el
+		reqByConn[pc.req.ID] = pc.req
 	}
 	connectorLabels := []entity.DrawOp{}
 	connectorLabelRects := []rectV1EngineRouteTypes{}
@@ -232,6 +234,12 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 		el := elByConn[path.ID]
 		if el == nil {
 			continue
+		}
+		if el.CustomData != nil && boolishV1EngineSceneBuild(el.CustomData.UMLComponentInterfaceDestination) {
+			if req, ok := reqByConn[path.ID]; ok {
+				path.Points = restoreDestinationApproachV1EngineRouteBuild(path.Points, req.DstSide, rOpt.Stub)
+				routed[i] = path
+			}
 		}
 		connectorID := fmt.Sprintf("L%02d", i+1)
 		for maskIndex, crossing := range pathBorderCrossingsV1EnginePlanObstacle(path, groupBorders) {
