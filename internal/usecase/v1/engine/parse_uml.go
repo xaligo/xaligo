@@ -343,10 +343,28 @@ func normalizeUMLComponentV1EngineParseUml(uml, frame *entity.Node, models map[s
 				continue
 			}
 		}
+		if owner := ownerIDs[id]; canNestUMLOwnedElementV1EngineParseUml(diagram.Tag, entry.node.Tag) {
+			parent := normalizedElements[owner]
+			if parent != nil {
+				parent.Children = append(parent.Children, normalized)
+				continue
+			}
+		}
 		elements = append(elements, normalized)
 	}
 	uml.Children = elements
 	return nil
+}
+
+func canNestUMLOwnedElementV1EngineParseUml(diagramKind, elementKind string) bool {
+	switch diagramKind {
+	case "component-diagram":
+		return elementKind == "port"
+	case "composite-structure-diagram":
+		return elementKind == "part" || elementKind == "port"
+	default:
+		return false
+	}
 }
 
 func flattenUMLDiagramChildrenV1EngineParseUml(diagram *entity.Node, spec umlDiagramSpecV1EngineParseUml, partitions map[string]string) ([]umlSourceElementV1EngineParseUml, error) {

@@ -8,7 +8,7 @@
           <component id="web" title="Web UI">
             <required-interface>Ordering API</required-interface>
           </component>
-          <port id="web-api" owner="web" title="orders: required" />
+          <port id="web-api" owner="web" side="right" title="orders: required" />
           <interface id="ordering-api" title="Ordering API">
             <operation>+ submitOrder(command)</operation>
             <operation>+ getOrder(id)</operation>
@@ -18,8 +18,8 @@
             <required-interface>Order Store</required-interface>
             <responsibility>Ordering use cases</responsibility>
           </component>
-          <port id="orders-http" owner="orders" title="http: provided" />
-          <port id="orders-store" owner="orders" title="store: required" />
+          <port id="orders-http" owner="orders" side="left" title="http: provided" />
+          <port id="orders-store" owner="orders" side="right" title="store: required" />
           <interface id="store-api" title="Order Store">
             <operation>+ save(order)</operation>
             <operation>+ find(id)</operation>
@@ -27,7 +27,7 @@
           <component id="repository-adapter" title="PostgreSQL Adapter">
             <provided-interface>Order Store</provided-interface>
           </component>
-          <port id="adapter-store" owner="repository-adapter" title="store: provided" />
+          <port id="adapter-store" owner="repository-adapter" side="left" title="store: provided" />
           <artifact id="schema" title="order-schema.sql">
             <property>version = 12</property>
           </artifact>

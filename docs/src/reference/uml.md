@@ -144,8 +144,10 @@ closed:
 | Use-case `use-case` | optional | `system-boundary` |
 | Timing `time-state` | required | `lifeline` |
 
-Every other `owner` is an error. V1 retains ownership as metadata, but common
-layout does not spatially nest an owned shape inside its owner.
+Every other `owner` is an error. Component and composite owned ports are placed
+on their owner's boundary using the normal `side`, `x`, and `y` port placement
+attributes. Other ownership relationships are retained as metadata and are not
+spatially nested in V1.
 
 ## Compartments
 

@@ -403,6 +403,40 @@ func TestUMLStateMachineCanHideCompartmentElementNames(t *testing.T) {
 	}
 }
 
+func TestUMLComponentPortsAttachToOwners(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="760" height="420"><uml id="components"><component-diagram direction="right"><component id="service" title="Order Service"/><port id="api" owner="service" side="right" title="api"/><component id="client" title="Client"/><port id="client-api" owner="client" side="left" title="api"/><assembly src="api" dst="client-api" title="uses"/></component-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var scene entity.PresentationScene
+	if err := json.Unmarshal(rawScene, &scene); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	var service, port *entity.Element
+	for index := range scene.Elements {
+		element := &scene.Elements[index]
+		if element.CustomData == nil || element.Type == "text" {
+			continue
+		}
+		switch {
+		case element.CustomData.UMLLocalID == "service" && element.CustomData.UMLElementKind == "component":
+			service = element
+		case element.CustomData.UMLLocalID == "api" && element.CustomData.UMLElementKind == "port":
+			port = element
+		}
+	}
+	if service == nil || port == nil {
+		t.Fatalf("component or port missing: service=%#v port=%#v", service, port)
+	}
+	if math.Abs((port.X+port.Width)-(service.X+service.Width)) > 0.1 {
+		t.Fatalf("owned port is not attached to component right edge: component=%#v port=%#v", service, port)
+	}
+	if port.Y < service.Y-0.1 || port.Y+port.Height > service.Y+service.Height+0.1 {
+		t.Fatalf("owned port is outside component vertical bounds: component=%#v port=%#v", service, port)
+	}
+}
+
 func TestUMLStateMachineFinalRendersFinalDot(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="760" height="420"><uml id="state"><state-machine-diagram><initial id="start"/><state id="open" title="Open"/><final id="done"/><transition src="start" dst="open"/><transition src="open" dst="done"/></state-machine-diagram></uml></frame></frames></xaligo>`)
 	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})

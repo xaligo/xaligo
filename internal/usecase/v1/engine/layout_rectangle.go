@@ -18,7 +18,7 @@ func layoutRectangleV1EngineLayoutRectangle(node *entity.Node, target *entity.Bo
 	layoutLeafV1EngineLayoutRectangle(node, target, x, y, w, h)
 	portsBySide := map[string][]*entity.Node{}
 	for _, child := range node.Children {
-		if child.Tag != "port" {
+		if !isPortNodeV1EngineLayoutRectangle(child) {
 			continue
 		}
 		side := strings.ToLower(strings.TrimSpace(child.Attr("side")))
@@ -59,4 +59,8 @@ func layoutRectangleV1EngineLayoutRectangle(node *entity.Node, target *entity.Bo
 		}
 	}
 	return nil
+}
+
+func isPortNodeV1EngineLayoutRectangle(node *entity.Node) bool {
+	return node != nil && (node.Tag == "port" || node.Attr("uml-element-kind") == "port")
 }

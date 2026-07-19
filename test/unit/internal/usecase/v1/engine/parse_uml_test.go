@@ -12,21 +12,22 @@ func TestAllUMLDiagramKindsNormalizeAndBuildV1EngineParseUML(t *testing.T) {
 		kind          string
 		body          string
 		relationCount int
+		topLevelCount int
 	}{
-		{"class-diagram", `<class id="one"/><class id="two"/><association src="one" dst="two"/>`, 1},
-		{"object-diagram", `<object id="one"/><object id="two"/><link src="one" dst="two"/>`, 1},
-		{"component-diagram", `<component id="one"/><interface id="two"/><realization src="one" dst="two"/>`, 1},
-		{"deployment-diagram", `<artifact id="one"/><node id="two"/><deployment src="one" dst="two"/>`, 1},
-		{"package-diagram", `<package id="one"/><package id="two"/><package-import src="one" dst="two"/>`, 1},
-		{"composite-structure-diagram", `<structure id="one"/><part id="two" owner="one"/><port id="three" owner="one"/><connector src="two" dst="three"/>`, 1},
-		{"profile-diagram", `<profile id="one"/><stereotype id="two"/><metaclass id="three"/><extension src="two" dst="three"/>`, 1},
-		{"use-case-diagram", `<actor id="one"/><use-case id="two"/><association src="one" dst="two"/>`, 1},
-		{"activity-diagram", `<action id="one"/><action id="two"/><control-flow src="one" dst="two"/>`, 1},
-		{"state-machine-diagram", `<state id="one"/><state id="two"/><transition src="one" dst="two"/>`, 1},
-		{"sequence-diagram", `<participant id="one"/><lifeline id="two"/><message src="one" dst="two" order="1"/>`, 1},
-		{"communication-diagram", `<object id="one"/><object id="two"/><link src="one" dst="two"/><message src="one" dst="two" order="1"/>`, 2},
-		{"interaction-overview-diagram", `<interaction id="one"/><interaction id="two"/><control-flow src="one" dst="two"/>`, 1},
-		{"timing-diagram", `<lifeline id="one"/><time-state id="two" owner="one" from="0" to="1"/><time-state id="three" owner="one" from="1" to="2"/><transition src="two" dst="three"/>`, 1},
+		{"class-diagram", `<class id="one"/><class id="two"/><association src="one" dst="two"/>`, 1, 2},
+		{"object-diagram", `<object id="one"/><object id="two"/><link src="one" dst="two"/>`, 1, 2},
+		{"component-diagram", `<component id="one"/><interface id="two"/><realization src="one" dst="two"/>`, 1, 2},
+		{"deployment-diagram", `<artifact id="one"/><node id="two"/><deployment src="one" dst="two"/>`, 1, 2},
+		{"package-diagram", `<package id="one"/><package id="two"/><package-import src="one" dst="two"/>`, 1, 2},
+		{"composite-structure-diagram", `<structure id="one"/><part id="two" owner="one"/><port id="three" owner="one"/><connector src="two" dst="three"/>`, 1, 1},
+		{"profile-diagram", `<profile id="one"/><stereotype id="two"/><metaclass id="three"/><extension src="two" dst="three"/>`, 1, 3},
+		{"use-case-diagram", `<actor id="one"/><use-case id="two"/><association src="one" dst="two"/>`, 1, 2},
+		{"activity-diagram", `<action id="one"/><action id="two"/><control-flow src="one" dst="two"/>`, 1, 2},
+		{"state-machine-diagram", `<state id="one"/><state id="two"/><transition src="one" dst="two"/>`, 1, 2},
+		{"sequence-diagram", `<participant id="one"/><lifeline id="two"/><message src="one" dst="two" order="1"/>`, 1, 2},
+		{"communication-diagram", `<object id="one"/><object id="two"/><link src="one" dst="two"/><message src="one" dst="two" order="1"/>`, 2, 2},
+		{"interaction-overview-diagram", `<interaction id="one"/><interaction id="two"/><control-flow src="one" dst="two"/>`, 1, 2},
+		{"timing-diagram", `<lifeline id="one"/><time-state id="two" owner="one" from="0" to="1"/><time-state id="three" owner="one" from="1" to="2"/><transition src="two" dst="three"/>`, 1, 3},
 	}
 	for _, test := range tests {
 		t.Run(test.kind, func(t *testing.T) {
@@ -37,8 +38,11 @@ func TestAllUMLDiagramKindsNormalizeAndBuildV1EngineParseUML(t *testing.T) {
 			}
 			frame := document.Root.Children[0]
 			uml := frame.Children[0]
-			if uml.Attr("uml-kind") != test.kind || len(uml.Children) < 2 || uml.Children[0].Tag != "rectangle" {
+			if uml.Attr("uml-kind") != test.kind || len(uml.Children) != test.topLevelCount || uml.Children[0].Tag != "rectangle" {
 				t.Fatalf("normalized UML = %#v", uml)
+			}
+			if test.kind == "composite-structure-diagram" && len(uml.Children[0].Children) != 2 {
+				t.Fatalf("normalized composite owned children = %#v", uml.Children[0].Children)
 			}
 			if len(frame.Children) != 1+test.relationCount || frame.Children[1].Tag != "connection" {
 				t.Fatalf("normalized relation = %#v", frame.Children)
