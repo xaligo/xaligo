@@ -1641,6 +1641,51 @@ func TestUMLTimingAndOwnerMetadataReachEditableScene(t *testing.T) {
 	}
 }
 
+func TestUMLInteractionOverviewRendersInteractionReferences(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="900" height="420"><uml id="overview"><interaction-overview-diagram direction="right"><initial id="start"/><interaction id="browse" notation="sd" title="Browse products"><note>Customer adds products to the cart</note></interaction><interaction id="pay" notation="ref" title="Authorize payment"/><merge id="merge"/><final id="done"/><control-flow src="start" dst="browse"/><control-flow src="browse" dst="merge"/><control-flow src="pay" dst="merge"/><control-flow src="merge" dst="done"/></interaction-overview-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var raw map[string]any
+	if err := json.Unmarshal(rawScene, &raw); err != nil {
+		t.Fatalf("json.Unmarshal(raw map) error = %v", err)
+	}
+	elements, _ := raw["elements"].([]any)
+	refHeaders, titleTexts, noteTexts, mergeDiamonds := 0, 0, 0, 0
+	for _, rawElement := range elements {
+		element, _ := rawElement.(map[string]any)
+		customData, _ := element["customData"].(map[string]any)
+		switch {
+		case customData["xaligoUmlInteractionReferenceHeader"] == true:
+			refHeaders++
+			if element["backgroundColor"] != "#08b8ea" {
+				t.Fatalf("interaction reference header background = %q, want #08b8ea", element["backgroundColor"])
+			}
+		case customData["xaligoUmlInteractionReferenceTitle"] == true:
+			titleTexts++
+			if element["text"] != "sd Browse products" && element["text"] != "ref Authorize payment" {
+				t.Fatalf("interaction reference title text = %q", element["text"])
+			}
+			if element["strokeColor"] != "#ffffff" {
+				t.Fatalf("interaction reference title = text %q color %q", element["text"], element["strokeColor"])
+			}
+		case customData["xaligoUmlInteractionReferenceNote"] == true:
+			noteTexts++
+			if element["text"] != "Customer adds products to the cart" || element["strokeColor"] != "#052d6e" {
+				t.Fatalf("interaction reference note = text %q color %q", element["text"], element["strokeColor"])
+			}
+		case customData["xaligoUmlElementKind"] == "merge":
+			if element["type"] == "diamond" {
+				mergeDiamonds++
+			}
+		}
+	}
+	if refHeaders != 2 || titleTexts != 2 || noteTexts != 1 || mergeDiamonds != 1 {
+		t.Fatalf("interaction reference elements = headers %d titles %d notes %d merge diamonds %d, want 2, 2, 1, 1", refHeaders, titleTexts, noteTexts, mergeDiamonds)
+	}
+}
+
 func TestUMLSequenceOrderControlsVerticalMessageAnchors(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="sequence"><sequence-diagram><participant id="a"/><lifeline id="b"/><message src="a" dst="b" order="1"/><message src="b" dst="b" order="2"/><return-message src="b" dst="a" order="3"/></sequence-diagram></uml></frame></frames></xaligo>`)
 	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})

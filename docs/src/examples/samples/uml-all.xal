@@ -103,8 +103,8 @@
     <frame id="interaction-overview" title="Interaction Overview" version="2026.07" width="480" height="280" margin-top="36">
       <metadata align="right" width="96" key-width="42" font-size="10" />
       <uml id="interaction-overview-view"><interaction-overview-diagram direction="right">
-        <interaction id="browse" title="ref Browse" />
-        <interaction id="checkout" title="ref Checkout" />
+        <interaction id="browse" notation="sd" title="Browse" />
+        <interaction id="checkout" notation="ref" title="Checkout" />
         <control-flow src="browse" dst="checkout" />
       </interaction-overview-diagram></uml>
     </frame>

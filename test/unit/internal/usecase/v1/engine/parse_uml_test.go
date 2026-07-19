@@ -26,7 +26,7 @@ func TestAllUMLDiagramKindsNormalizeAndBuildV1EngineParseUML(t *testing.T) {
 		{"state-machine-diagram", `<state id="one"/><state id="two"/><transition src="one" dst="two"/>`, 1, 2},
 		{"sequence-diagram", `<participant id="one"/><lifeline id="two"/><message src="one" dst="two" order="1"/>`, 1, 2},
 		{"communication-diagram", `<object id="one"/><object id="two"/><link src="one" dst="two"/><message src="one" dst="two" order="1"/>`, 2, 2},
-		{"interaction-overview-diagram", `<interaction id="one"/><interaction id="two"/><control-flow src="one" dst="two"/>`, 1, 2},
+		{"interaction-overview-diagram", `<interaction id="one" notation="sd"/><interaction id="two" notation="ref"/><merge id="three"/><control-flow src="one" dst="three"/><control-flow src="two" dst="three"/><control-flow src="three" dst="two"/>`, 3, 3},
 		{"timing-diagram", `<lifeline id="one"/><time-state id="two" owner="one" from="0" to="1"/><time-state id="three" owner="one" from="1" to="2"/><transition src="two" dst="three"/>`, 1, 3},
 	}
 	for _, test := range tests {
@@ -127,6 +127,7 @@ func TestUMLDiagramSpecificValidationV1EngineParseUML(t *testing.T) {
 		{"message order syntax", `<communication-diagram><object id="a"/><object id="b"/><message src="a" dst="b" order="1.a"/></communication-diagram>`, "dot-separated integers"},
 		{"message order leading zero", `<sequence-diagram><participant id="a"/><lifeline id="b"/><message src="a" dst="b" order="01"/></sequence-diagram>`, "without leading zeroes"},
 		{"state rejects attribute", `<state-machine-diagram><state id="a"><attribute>x</attribute></state></state-machine-diagram>`, "does not allow compartment"},
+		{"interaction notation syntax", `<interaction-overview-diagram><interaction id="a" notation="inline"/></interaction-overview-diagram>`, "must be ref or sd"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

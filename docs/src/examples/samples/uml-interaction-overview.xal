@@ -6,19 +6,20 @@
       <uml id="checkout-overview">
         <interaction-overview-diagram direction="right">
           <initial id="start" title="Start" />
-          <interaction id="browse" title="ref Browse products">
+          <interaction id="browse" notation="sd" title="Browse products">
             <note>Customer adds products to the cart</note>
           </interaction>
           <decision id="cart" title="Cart has items?" />
-          <interaction id="abandon" title="ref Abandon cart" />
+          <interaction id="abandon" notation="ref" title="Abandon cart" />
           <fork id="checkout-fork" title="Fork" />
-          <interaction id="reserve" title="ref Reserve inventory" />
-          <interaction id="authorize" title="ref Authorize payment" />
+          <interaction id="reserve" notation="ref" title="Reserve inventory" />
+          <interaction id="authorize" notation="ref" title="Authorize payment" />
           <join id="checkout-join" title="Join" />
           <decision id="authorized" title="Payment authorized?" />
-          <interaction id="confirm" title="ref Confirm order" />
-          <interaction id="compensate" title="ref Release inventory" />
-          <interaction id="finalize" title="ref Finish checkout" />
+          <interaction id="confirm" notation="ref" title="Confirm order" />
+          <interaction id="compensate" notation="ref" title="Release inventory" />
+          <merge id="completion-merge" title="Merge" />
+          <interaction id="finalize" notation="ref" title="Finish checkout" />
           <final id="done" title="Done" />
 
           <control-flow src="start" dst="browse" />
@@ -32,9 +33,10 @@
           <control-flow src="checkout-join" dst="authorized" />
           <control-flow src="authorized" dst="confirm" guard="yes" />
           <control-flow src="authorized" dst="compensate" guard="no" />
-          <control-flow src="abandon" dst="finalize" />
-          <control-flow src="confirm" dst="finalize" />
-          <control-flow src="compensate" dst="finalize" />
+          <control-flow src="abandon" dst="completion-merge" />
+          <control-flow src="confirm" dst="completion-merge" />
+          <control-flow src="compensate" dst="completion-merge" />
+          <control-flow src="completion-merge" dst="finalize" />
           <control-flow src="finalize" dst="done" />
         </interaction-overview-diagram>
       </uml>

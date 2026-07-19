@@ -56,7 +56,7 @@ var umlDiagramSpecsV1EngineParseUml = map[string]umlDiagramSpecV1EngineParseUml{
 		umlRequiredElementsV1EngineParseUml{"participant or lifeline", umlTagSetV1EngineParseUml("participant,lifeline"), 1}),
 	"communication-diagram": umlSpecV1EngineParseUml("object,participant", "link,message",
 		umlRequiredElementsV1EngineParseUml{"object or participant", umlTagSetV1EngineParseUml("object,participant"), 2}),
-	"interaction-overview-diagram": umlSpecV1EngineParseUml("initial,final,interaction,decision,fork,join", "control-flow",
+	"interaction-overview-diagram": umlSpecV1EngineParseUml("initial,final,interaction,decision,merge,fork,join", "control-flow",
 		umlRequiredElementsV1EngineParseUml{"interaction", umlTagSetV1EngineParseUml("interaction"), 1}),
 	"timing-diagram": umlSpecV1EngineParseUml("lifeline,time-state", "transition,occurrence,duration",
 		umlRequiredElementsV1EngineParseUml{"lifeline", umlTagSetV1EngineParseUml("lifeline"), 1},
@@ -701,6 +701,12 @@ func validateUMLElementInDiagramV1EngineParseUml(diagramKind string, element *en
 	if diagramKind != "state-machine-diagram" && strings.TrimSpace(element.Attr("show-element-names")) != "" {
 		return fmt.Errorf("<%s> does not allow show-element-names on UML <%s>", diagramKind, element.Tag)
 	}
+	if diagramKind == "interaction-overview-diagram" && element.Tag == "interaction" {
+		notation := strings.ToLower(strings.TrimSpace(element.Attr("notation")))
+		if notation != "" && notation != "ref" && notation != "sd" {
+			return fmt.Errorf("UML <interaction notation=%q> must be ref or sd", element.Attr("notation"))
+		}
+	}
 	if diagramKind == "class-diagram" && element.Tag == "package" {
 		return nil
 	}
@@ -868,7 +874,7 @@ func validateUMLRelationEndpointsV1EngineParseUml(diagramKind string, relation *
 		}
 		return require(participants, participants)
 	case "interaction-overview-diagram":
-		nodes := umlTagSetV1EngineParseUml("initial,final,interaction,decision,fork,join")
+		nodes := umlTagSetV1EngineParseUml("initial,final,interaction,decision,merge,fork,join")
 		return validateUMLFlowEndpointsV1EngineParseUml(relation, srcKind, dstKind, nodes)
 	case "timing-diagram":
 		switch relationKind {
@@ -1284,6 +1290,13 @@ func normalizeUMLElementV1EngineParseUml(source *entity.Node, scopedID, diagramK
 	if (diagramKind == "activity-diagram" || diagramKind == "state-machine-diagram") && (source.Tag == "initial" || source.Tag == "final") && !hasExplicitLabel {
 		attrs["title"] = ""
 	}
+	if diagramKind == "interaction-overview-diagram" && source.Tag == "interaction" {
+		notation := strings.ToLower(strings.TrimSpace(attrs["notation"]))
+		if notation == "" {
+			notation = "ref"
+		}
+		attrs["uml-interaction-notation"] = notation
+	}
 	// UML names are display text, not frame-level connection aliases. Public
 	// endpoint references use the frame-unique local ID, so retaining name on the
 	// normalized rectangle would create false collisions between diagrams.
@@ -1295,11 +1308,16 @@ func normalizeUMLElementV1EngineParseUml(source *entity.Node, scopedID, diagramK
 	var attributeCompartments []string
 	var operationCompartments []string
 	var componentInterfaces []string
+	var interactionNotes []string
 	attributeLines := 0
 	operationLines := 0
 	for _, child := range source.Children {
 		label := umlCompartmentLabelV1EngineParseUml(diagramKind, source.Tag, child)
 		if label != "" {
+			if diagramKind == "interaction-overview-diagram" && source.Tag == "interaction" && child.Tag == "note" {
+				interactionNotes = append(interactionNotes, label)
+				continue
+			}
 			if diagramKind == "component-diagram" && source.Tag == "component" && child.Tag == "interface" {
 				componentInterfaces = append(componentInterfaces, label+"\t"+strings.TrimSpace(child.Attr("description")))
 				continue
@@ -1330,6 +1348,9 @@ func normalizeUMLElementV1EngineParseUml(source *entity.Node, scopedID, diagramK
 	}
 	if len(componentInterfaces) > 0 {
 		attrs["uml-component-interfaces"] = strings.Join(componentInterfaces, "\n")
+	}
+	if len(interactionNotes) > 0 {
+		attrs["uml-interaction-note-text"] = strings.Join(interactionNotes, "\n")
 	}
 	if diagramKind == "state-machine-diagram" && source.Tag == "state" {
 		attrs["uml-state-header-text"] = strings.TrimSpace(attrs["title"])
