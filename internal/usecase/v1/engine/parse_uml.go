@@ -942,6 +942,9 @@ func validateUMLRelationSetV1EngineParseUml(diagramKind string, relations []*ent
 			position := float64(index+1) / float64(len(orderedMessages)+1)
 			relation.Attrs["uml-sequence-position"] = strconv.FormatFloat(position, 'f', 6, 64)
 		}
+		if err := validateUMLSequenceActivationLifecycleV1EngineParseUml(orderedMessages, elementKinds); err != nil {
+			return err
+		}
 	}
 	if diagramKind == "activity-diagram" || diagramKind == "state-machine-diagram" || diagramKind == "interaction-overview-diagram" {
 		for id, kind := range elementKinds {
@@ -1020,6 +1023,31 @@ type umlTimeIntervalV1EngineParseUml struct {
 	id   string
 	from float64
 	to   float64
+}
+
+func validateUMLSequenceActivationLifecycleV1EngineParseUml(orderedMessages []*entity.Node, elementKinds map[string]string) error {
+	active := map[string]bool{}
+	for _, relation := range orderedMessages {
+		src, dst := strings.TrimSpace(relation.Attr("src")), strings.TrimSpace(relation.Attr("dst"))
+		order := strings.TrimSpace(relation.Attr("order"))
+		switch relation.Tag {
+		case "return-message":
+			if elementKinds[src] != "participant" && !active[src] {
+				return fmt.Errorf("UML <return-message order=%q> leaves inactive lifeline %q", order, src)
+			}
+			active[src] = false
+		default:
+			if elementKinds[src] != "participant" && !active[src] {
+				return fmt.Errorf("UML <%s order=%q> leaves inactive lifeline %q; add an earlier call or move the message before the matching return", relation.Tag, order, src)
+			}
+			if relation.Tag == "destroy-message" {
+				active[dst] = false
+			} else {
+				active[dst] = true
+			}
+		}
+	}
+	return nil
 }
 
 func validateUMLTimingSetV1EngineParseUml(relations []*entity.Node, elements map[string]*entity.Node, elementKinds, ownerIDs map[string]string) error {

@@ -93,10 +93,13 @@ Sequence diagrams render each `participant` or `lifeline` as a top header with a
 dashed vertical lifeline axis. Messages are placed by numeric `order` from top to
 bottom and draw activation bars on the destination lifeline for `message`,
 `create-message`, and `destroy-message`. `return-message` remains a response
-connector and does not start a new activation bar. Plain `message` is synchronous
-by default and uses a filled triangle arrowhead; `message mode="async"` uses an
-open arrowhead for an asynchronous call. Response connectors render dashed, and
-`destroy-message` adds the standard stop marker at the destination lifeline.
+connector and does not start a new activation bar. Non-participant sources must
+already be active before sending a non-return message or return; activation bars
+extend through related calls, returns, and cleanup messages until the lifeline
+returns. Plain `message` is synchronous by default and uses a filled triangle
+arrowhead; `message mode="async"` uses an open arrowhead for an asynchronous
+call. Response connectors render dashed, and `destroy-message` adds the standard
+stop marker at the destination lifeline.
 To avoid accidental stop markers, `destroy-message` labels must clearly describe
 destruction, deletion, disposal, removal, or termination.
 Activation, lifeline, and stop metadata are retained in editable scene output so

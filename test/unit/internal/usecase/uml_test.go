@@ -343,7 +343,7 @@ func TestUMLSequenceOrderControlsVerticalMessageAnchors(t *testing.T) {
 }
 
 func TestUMLSequenceSelfMessageSVGAlignsWithActivationBar(t *testing.T) {
-	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="sequence"><sequence-diagram><lifeline id="session" title="Session"/><message src="session" dst="session" order="1" title="validateCart()"/></sequence-diagram></uml></frame></frames></xaligo>`)
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="sequence"><sequence-diagram><participant id="customer"/><lifeline id="session" title="Session"/><message src="customer" dst="session" order="1" title="checkout"/><message src="session" dst="session" order="1.1" title="validateCart()"/></sequence-diagram></uml></frame></frames></xaligo>`)
 	svg, err := newUsecase().RenderSVG(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
 		t.Fatalf("RenderSVG() error = %v", err)
@@ -385,7 +385,7 @@ func TestUMLSequenceSelfMessageSVGAlignsWithActivationBar(t *testing.T) {
 }
 
 func TestUMLSequenceCallerActivationCoversChildMessageStart(t *testing.T) {
-	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="sequence"><sequence-diagram><participant id="customer"/><lifeline id="api"/><lifeline id="session"/><message src="customer" dst="api" order="1" title="checkout"/><create-message src="api" dst="session" order="1.1" title="create"/></sequence-diagram></uml></frame></frames></xaligo>`)
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="sequence"><sequence-diagram><participant id="customer"/><lifeline id="api"/><lifeline id="session"/><message src="customer" dst="api" order="1" title="checkout"/><create-message src="api" dst="session" order="1.1" title="create"/><return-message src="session" dst="api" order="1.2" title="created"/><return-message src="api" dst="customer" order="2" title="ok"/></sequence-diagram></uml></frame></frames></xaligo>`)
 	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
 		t.Fatalf("RenderExcalidraw() error = %v", err)
@@ -415,6 +415,52 @@ func TestUMLSequenceCallerActivationCoversChildMessageStart(t *testing.T) {
 	if startY < callerActivation.Y || startY > callerActivation.Y+callerActivation.Height {
 		t.Fatalf("child message start should stay within caller activation range: startY=%v activation=%#v", startY, callerActivation)
 	}
+}
+
+func TestUMLSequenceActivationCoversReturnAndCleanupMessages(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="960" height="520"><uml id="sequence"><sequence-diagram><participant id="customer"/><lifeline id="api"/><lifeline id="session"/><message src="customer" dst="api" order="1" title="checkout"/><create-message src="api" dst="session" order="1.1" title="create"/><message src="session" dst="session" order="1.2" title="validate"/><return-message src="session" dst="api" order="1.3" title="receipt"/><message src="api" dst="session" order="1.4" title="release"/><return-message src="api" dst="customer" order="2" title="ok"/></sequence-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var scene entity.PresentationScene
+	if err := json.Unmarshal(rawScene, &scene); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	activations := map[string]*entity.Element{}
+	messages := map[string]*entity.Element{}
+	for index := range scene.Elements {
+		element := &scene.Elements[index]
+		if element.CustomData == nil {
+			continue
+		}
+		if element.CustomData.UMLSequenceActivation {
+			key := element.CustomData.UMLSequenceActivationOwner + ":" + element.CustomData.UMLMessageOrder
+			activations[key] = element
+		}
+		if element.Type == "arrow" && element.CustomData.UMLMessageOrder != "" {
+			messages[element.CustomData.UMLMessageOrder] = element
+		}
+	}
+	apiActivation := activations["api:1"]
+	sessionActivation := activations["session:1.1"]
+	if apiActivation == nil || sessionActivation == nil {
+		t.Fatalf("missing activations: %#v", activations)
+	}
+	assertMessageEndpointWithinActivation := func(order string, pointIndex int, activation *entity.Element) {
+		t.Helper()
+		message := messages[order]
+		if message == nil || len(message.Points) <= pointIndex {
+			t.Fatalf("missing message %s: %#v", order, messages)
+		}
+		y := message.Y + message.Points[pointIndex][1]
+		if y < activation.Y || y > activation.Y+activation.Height {
+			t.Fatalf("message %s point %d should be within activation: y=%v activation=%#v", order, pointIndex, y, activation)
+		}
+	}
+	assertMessageEndpointWithinActivation("1.4", 0, apiActivation)
+	assertMessageEndpointWithinActivation("2", 0, apiActivation)
+	assertMessageEndpointWithinActivation("1.3", 0, sessionActivation)
 }
 
 func TestUMLSequenceMessagesRenderActivationBars(t *testing.T) {

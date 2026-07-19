@@ -16,8 +16,8 @@
           <message src="session" dst="payment" order="1.3" title="authorize(total)" mode="async" />
           <return-message src="payment" dst="session" order="1.4" title="authorization" />
           <return-message src="session" dst="api" order="1.5" title="receipt" />
+          <message src="api" dst="session" order="1.6" title="release()" />
           <return-message src="api" dst="customer" order="2" title="orderConfirmed" />
-          <message src="api" dst="session" order="3" title="release()" />
         </sequence-diagram>
       </uml>
     </frame>

@@ -119,6 +119,7 @@ func TestUMLDiagramSpecificValidationV1EngineParseUML(t *testing.T) {
 		{"destroy message requires destructive label", `<sequence-diagram><participant id="a"/><lifeline id="b"/><destroy-message src="a" dst="b" order="1" title="release()"/></sequence-diagram>`, "title must clearly describe destruction"},
 		{"message mode syntax", `<sequence-diagram><participant id="a"/><lifeline id="b"/><message src="a" dst="b" order="1" mode="later"/></sequence-diagram>`, "must be sync or async"},
 		{"return message rejects mode", `<sequence-diagram><participant id="a"/><lifeline id="b"/><return-message src="b" dst="a" order="1" mode="async"/></sequence-diagram>`, "must be sync or async on <message>"},
+		{"message rejects inactive lifeline source", `<sequence-diagram><participant id="customer"/><lifeline id="api"/><lifeline id="session"/><message src="customer" dst="api" order="1"/><return-message src="api" dst="customer" order="2"/><message src="api" dst="session" order="3" title="release()"/></sequence-diagram>`, "leaves inactive lifeline"},
 		{"message order syntax", `<communication-diagram><object id="a"/><object id="b"/><message src="a" dst="b" order="1.a"/></communication-diagram>`, "dot-separated integers"},
 		{"message order leading zero", `<sequence-diagram><participant id="a"/><lifeline id="b"/><message src="a" dst="b" order="01"/></sequence-diagram>`, "without leading zeroes"},
 		{"state rejects attribute", `<state-machine-diagram><state id="a"><attribute>x</attribute></state></state-machine-diagram>`, "does not allow compartment"},

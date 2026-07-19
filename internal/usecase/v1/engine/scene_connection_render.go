@@ -442,35 +442,48 @@ type umlSequenceActivationRangeV1EngineSceneConnectionRender struct {
 
 func umlSequenceActivationRangesV1EngineSceneConnectionRender(connections []*entity.Node) map[*entity.Node]umlSequenceActivationRangeV1EngineSceneConnectionRender {
 	ranges := map[*entity.Node]umlSequenceActivationRangeV1EngineSceneConnectionRender{}
-	for _, conn := range connections {
+	messages := umlSequenceOrderedMessagesV1EngineSceneConnectionRender(connections)
+	for index, conn := range messages {
 		if !isUMLSequenceActivationRelationV1EngineSceneConnectionRender(conn) {
 			continue
 		}
 		owner := umlSequenceEndpointReferenceV1EngineSceneConnectionRender(conn, "dst")
-		baseOrder := strings.TrimSpace(conn.Attr("uml-order"))
-		if owner == "" || baseOrder == "" {
+		if owner == "" {
 			continue
 		}
 		top, bottom, ok := umlSequenceMessagePositionRangeV1EngineSceneConnectionRender(conn, owner)
 		if !ok {
 			continue
 		}
-		for _, other := range connections {
-			if other == nil || other.Attr("uml-diagram-kind") != "sequence-diagram" || other == conn {
-				continue
-			}
-			otherOrder := strings.TrimSpace(other.Attr("uml-order"))
-			if otherOrder == "" || !umlSequenceSameTopLevelOrderV1EngineSceneConnectionRender(baseOrder, otherOrder) || compareUMLMessageOrderV1EngineParseUml(otherOrder, baseOrder) < 0 {
-				continue
-			}
+		for _, other := range messages[index+1:] {
 			if otherTop, otherBottom, ok := umlSequenceMessagePositionRangeV1EngineSceneConnectionRender(other, owner); ok {
 				top = math.Min(top, otherTop)
 				bottom = math.Max(bottom, otherBottom)
+			}
+			if strings.TrimSpace(other.Attr("uml-relation-kind")) == "return-message" && umlSequenceEndpointReferenceV1EngineSceneConnectionRender(other, "src") == owner {
+				break
 			}
 		}
 		ranges[conn] = umlSequenceActivationRangeV1EngineSceneConnectionRender{Top: top, Bottom: bottom}
 	}
 	return ranges
+}
+
+func umlSequenceOrderedMessagesV1EngineSceneConnectionRender(connections []*entity.Node) []*entity.Node {
+	messages := make([]*entity.Node, 0, len(connections))
+	for _, conn := range connections {
+		if conn == nil || conn.Attr("uml-diagram-kind") != "sequence-diagram" {
+			continue
+		}
+		switch strings.TrimSpace(conn.Attr("uml-relation-kind")) {
+		case "message", "return-message", "create-message", "destroy-message":
+			messages = append(messages, conn)
+		}
+	}
+	sort.SliceStable(messages, func(i, j int) bool {
+		return compareUMLMessageOrderV1EngineParseUml(messages[i].Attr("uml-order"), messages[j].Attr("uml-order")) < 0
+	})
+	return messages
 }
 
 func isUMLSequenceActivationRelationV1EngineSceneConnectionRender(conn *entity.Node) bool {
@@ -503,12 +516,6 @@ func umlSequenceMessagePositionRangeV1EngineSceneConnectionRender(conn *entity.N
 
 func umlSequenceEndpointReferenceV1EngineSceneConnectionRender(conn *entity.Node, endpoint string) string {
 	return firstNonEmptyAttrV1EngineSceneConnectionRoute(conn, "uml-"+endpoint+"-ref", endpoint)
-}
-
-func umlSequenceSameTopLevelOrderV1EngineSceneConnectionRender(left, right string) bool {
-	leftRoot, _, _ := strings.Cut(left, ".")
-	rightRoot, _, _ := strings.Cut(right, ".")
-	return leftRoot == rightRoot
 }
 
 func appendUMLSequenceActivationV1EngineSceneConnectionRender(elements *[]map[string]any, conn *entity.Node, connID string, dstRect [4]float64, messageY float64, activationRange umlSequenceActivationRangeV1EngineSceneConnectionRender, srcFrameID, dstFrameID string, updated int64, seed int) {
