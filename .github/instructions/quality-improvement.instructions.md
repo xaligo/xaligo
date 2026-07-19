@@ -20,6 +20,9 @@ Evaluate every feature slice against these gates before considering it done:
 6. Regression tests.
 7. Samples and documentation.
 8. CI, security, and release readiness.
+9. Determinism, performance, and resource safety.
+10. Accessibility and theme readability.
+11. API, CLI, and preview compatibility.
 
 ## Feature Quality Workflow
 
@@ -69,6 +72,13 @@ sample paths, and rendered artifact paths over prose-only status notes.
 | 9 | Page-oriented outputs | not-started | SVG/PPTX/PDF/Excel pagination commits exist | Audit default artifacts, `--combine-frames`, safe IDs, and crops. |
 | 10 | Renderer matrix | not-started | SVG, Excalidraw, PPTX, PDF, Excel, XYFlow, Isoflow encoders | Define representative cross-format checks for changed shared contracts. |
 | 11 | CI, release, and tooling | not-started | `VERSION`, workflows, RTK and security instructions | Audit CI gates, version policy, npm lockfile policy, and vendored dependency handling. |
+| 12 | Diagnostics and error UX | not-started | `internal/usecase/diagnostics.go`, diagnostics tests | Audit severity, source positions, aggregation, cancellation, and actionable messages. |
+| 13 | Determinism, concurrency, and performance | not-started | render determinism and concurrency tests | Audit repeatability, ordering, cancellation, limits, and representative performance. |
+| 14 | CLI, API, and preview contracts | not-started | controllers, use-case API tests, preview tests | Audit option parity, exit behavior, live preview, and backward compatibility. |
+| 15 | Themes and accessibility | not-started | theme application and renderer theme tests | Audit contrast, semantic distinction, text alternatives, and light/dark parity. |
+| 16 | Structural diff | not-started | diff engine and highlight tests | Audit matching, moved/modified classification, highlights, and pagination interaction. |
+| 17 | Reproducibility and artifact integrity | not-started | deterministic render and generated docs assets | Audit byte stability, clean regeneration, package contents, and stale artifacts. |
+| 18 | Configuration, logging, and observability | not-started | config, options, and shared logging code | Audit defaults, precedence, redaction, error context, and noisy-output behavior. |
 
 When a row reaches `done`, its evidence should include the commit that closed
 the slice and the highest-signal verification commands that passed. If a row
@@ -191,6 +201,76 @@ when the new task can be verified and committed independently.
 | Q11.4 | not-started | Verify RTK and security-check preconditions are current and actionable. | `make security-check` and instruction review |
 | Q11.5 | not-started | Confirm generated artifacts, vendored dependencies, binaries, caches, and docs images follow repository policy. | `git status`, ignore rules, and release/package review |
 
+### Q12 Diagnostics and Error UX
+
+| Task | Status | Scope | Verification target |
+|---|---|---|---|
+| Q12.1 | not-started | Audit diagnostic severity, line/column positions, element context, and stable wording. | diagnostics unit tests |
+| Q12.2 | not-started | Confirm multiple independent input errors are reported without hiding the first actionable cause. | aggregate-diagnostics tests |
+| Q12.3 | not-started | Confirm warnings are non-blocking while errors consistently fail validate and render. | validate/diagnose agreement tests |
+| Q12.4 | not-started | Verify canceled contexts stop diagnostics and rendering with wrapped context errors. | cancellation tests |
+| Q12.5 | not-started | Review CLI and preview presentation of diagnostics for concise, user-correctable output. | controller/preview tests and manual command check |
+
+### Q13 Determinism, Concurrency, and Performance
+
+| Task | Status | Scope | Verification target |
+|---|---|---|---|
+| Q13.1 | not-started | Confirm identical source, options, assets, and environment produce byte-stable output where the format allows it. | render determinism tests |
+| Q13.2 | not-started | Confirm parallel jobs preserve document/page/artifact order and do not share mutable render state. | concurrency and race-enabled tests |
+| Q13.3 | not-started | Verify cancellation propagates through I/O and orchestration without goroutine or temporary-file leaks. | cancellation/leak tests |
+| Q13.4 | not-started | Establish representative render benchmarks for complex architecture, tables, database, UML, and multi-frame documents. | Go benchmarks with recorded baseline |
+| Q13.5 | not-started | Define and test safe behavior for extreme node counts, text lengths, dimensions, ratios, and import sizes. | bounded stress tests and finite-geometry assertions |
+
+### Q14 CLI, API, and Preview Contracts
+
+| Task | Status | Scope | Verification target |
+|---|---|---|---|
+| Q14.1 | not-started | Audit CLI flags, defaults, aliases, validation, exit codes, stdout/stderr, and output path behavior. | controller/command integration tests |
+| Q14.2 | not-started | Confirm constructor-injected use-case APIs and convenience methods return equivalent contracts. | use-case API tests |
+| Q14.3 | not-started | Verify native and embedded asset sources produce equivalent output at matching settings. | native/embedded parity tests |
+| Q14.4 | not-started | Audit live preview initial render, reload events, diagnostics, browser refresh, and file-change recovery. | preview tests and local serve check |
+| Q14.5 | not-started | Confirm legacy mode/format aliases and public option defaults remain backward compatible. | compatibility tests and docs review |
+
+### Q15 Themes and Accessibility
+
+| Task | Status | Scope | Verification target |
+|---|---|---|---|
+| Q15.1 | not-started | Audit light/dark theme contrast for text, borders, fills, connectors, metadata, and diff highlights. | contrast calculation plus theme renders |
+| Q15.2 | not-started | Confirm semantic distinctions do not depend on color alone when line style, marker, label, or shape can carry meaning. | renderer structural assertions and design review |
+| Q15.3 | not-started | Verify text remains readable at documented output sizes and under zoom/scaling across formats. | SVG/PPTX/PDF visual checks |
+| Q15.4 | not-started | Audit SVG titles/descriptions, meaningful identifiers, and document structure available to assistive tooling where supported. | SVG structure tests |
+| Q15.5 | not-started | Verify full-width, combining, RTL, and uncommon glyph fallback behavior is documented or safely handled. | typography tests with representative strings |
+
+### Q16 Structural Diff
+
+| Task | Status | Scope | Verification target |
+|---|---|---|---|
+| Q16.1 | not-started | Audit added, removed, modified, moved, and unchanged classification independent of source ordering. | diff classification tests |
+| Q16.2 | not-started | Confirm matching uses semantic identity rather than generated scene IDs or source lines. | fingerprint/matching tests |
+| Q16.3 | not-started | Verify highlights remain behind labels, outside routing obstacles, and readable in light/dark themes. | diff scene/SVG tests |
+| Q16.4 | not-started | Confirm multi-frame diff pagination and output pairing remain stable. | document-plan integration tests |
+| Q16.5 | not-started | Review diff samples and docs for realistic change cases and visual clarity. | sample render and docs build |
+
+### Q17 Reproducibility and Artifact Integrity
+
+| Task | Status | Scope | Verification target |
+|---|---|---|---|
+| Q17.1 | not-started | Confirm checked-in documentation SVGs reproduce byte-for-byte or through a documented normalization step. | regenerate-and-compare command |
+| Q17.2 | not-started | Detect stale generated images, missing source `.xal` files, and orphaned documentation assets. | source/asset inventory script or test |
+| Q17.3 | not-started | Audit npm, release, and documentation package contents for required and forbidden files. | package dry run and archive listing |
+| Q17.4 | not-started | Confirm generators are idempotent and do not reorder or rewrite unrelated files. | double-run clean-worktree check |
+| Q17.5 | not-started | Verify timestamps, random IDs, map iteration, and platform paths do not make supported outputs unstable. | cross-run and cross-platform determinism checks |
+
+### Q18 Configuration, Logging, and Observability
+
+| Task | Status | Scope | Verification target |
+|---|---|---|---|
+| Q18.1 | not-started | Audit configuration defaults, file/environment/flag precedence, and invalid-value diagnostics. | config/controller tests |
+| Q18.2 | not-started | Confirm logs and wrapped errors identify the failed stage without duplicating or obscuring the root cause. | error-chain assertions and command checks |
+| Q18.3 | not-started | Verify normal commands keep stdout machine-usable and send diagnostics/progress to the intended stream. | CLI output tests |
+| Q18.4 | not-started | Confirm logs and diagnostics do not expose imported source contents, credentials, tokens, or sensitive paths unnecessarily. | redaction/security tests |
+| Q18.5 | not-started | Define optional timing/count observability for parser, layout, routing, scene, and encoder stages without changing default output. | design decision and focused tests if implemented |
+
 ## Design Quality Gate
 
 Treat design quality as a first-class feature requirement, not a cosmetic
@@ -249,6 +329,20 @@ smaller local detour:
 11. CI, release, and tooling: Go, TypeScript, docs, security, version gates,
     RTK operation, npm lockfile policy, vendored dependencies, and generated
     artifact policy.
+12. Diagnostics and error UX: severity, aggregation, source positions,
+    cancellation, and presentation in CLI/preview adapters.
+13. Determinism, concurrency, and performance: stable ordering and bytes,
+    race safety, cancellation, benchmarks, and bounded extreme inputs.
+14. CLI, API, and preview contracts: options, defaults, output behavior,
+    native/embedded parity, reload behavior, and backward compatibility.
+15. Themes and accessibility: contrast, non-color semantics, typography,
+    assistive SVG structure, and international text behavior.
+16. Structural diff: semantic matching, classification, highlights,
+    multi-frame pairing, and sample quality.
+17. Reproducibility and artifact integrity: generated asset freshness,
+    package contents, generator idempotence, and platform stability.
+18. Configuration, logging, and observability: precedence, wrapped errors,
+    output streams, redaction, and optional stage telemetry.
 
 ## First Quality Slice
 
@@ -279,5 +373,7 @@ A feature-quality slice is done only when:
   language, connector readability, and contrast.
 - Cross-format checks have been run when the feature affects shared scene,
   routing, plan, pagination, or renderer contracts.
+- Determinism, cancellation, resource limits, compatibility, accessibility,
+  and artifact reproducibility have been considered and tested where relevant.
 - Required security and repository checks have passed.
 - The slice is committed without unrelated working-tree changes.
