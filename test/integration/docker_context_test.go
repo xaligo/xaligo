@@ -1,12 +1,16 @@
 package integration
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"testing"
 )
+
+var versionNumberPattern = regexp.MustCompile(`[0-9]+(?:\.[0-9]+)*`)
 
 func TestRockyWASMBuilderCopiesTypeScriptEntrypoints(t *testing.T) {
 	repositoryRoot := integrationRepositoryRoot(t)
@@ -29,6 +33,42 @@ func TestRockyWASMBuilderCopiesTypeScriptEntrypoints(t *testing.T) {
 	}
 }
 
+func TestRockyWASMBuilderCopySourcesExist(t *testing.T) {
+	repositoryRoot := integrationRepositoryRoot(t)
+	dockerfile := readIntegrationFile(t, filepath.Join(repositoryRoot, "docker", "rocky.Dockerfile"))
+
+	buildStart := strings.Index(dockerfile, "npm run build:pptx-exporter-wasm")
+	if buildStart < 0 {
+		t.Fatal("Rocky Dockerfile does not invoke build:pptx-exporter-wasm")
+	}
+	for source := range rockyWASMBuilderCopySources(dockerfile[:buildStart]) {
+		if _, err := os.Stat(filepath.Join(repositoryRoot, filepath.FromSlash(source))); err != nil {
+			t.Errorf("Rocky wasm-builder COPY source %q: %v", source, err)
+		}
+	}
+}
+
+func TestDockerToolchainsMatchRepositoryRequirements(t *testing.T) {
+	repositoryRoot := integrationRepositoryRoot(t)
+	goMod := readIntegrationFile(t, filepath.Join(repositoryRoot, "go.mod"))
+	packageJSON := readIntegrationFile(t, filepath.Join(repositoryRoot, "external", "package.json"))
+	dockerfiles := []string{
+		readIntegrationFile(t, filepath.Join(repositoryRoot, "docker", "rocky.Dockerfile")),
+		readIntegrationFile(t, filepath.Join(repositoryRoot, "docker", "ubuntu.Dockerfile")),
+	}
+
+	goVersion := requiredVersion(t, goMod, `(?m)^toolchain go([0-9.]+)$`, "Go toolchain")
+	nodeVersion := requiredNodeMajor(t, packageJSON)
+	for index, dockerfile := range dockerfiles {
+		if !strings.Contains(dockerfile, "ARG GO_VERSION="+goVersion) {
+			t.Errorf("Dockerfile %d does not pin required Go version %s", index, goVersion)
+		}
+		if !strings.Contains(dockerfile, "FROM node:"+nodeVersion+"-") {
+			t.Errorf("Dockerfile %d does not use required Node major %s", index, nodeVersion)
+		}
+	}
+}
+
 func integrationRepositoryRoot(t *testing.T) string {
 	t.Helper()
 	_, testFile, _, ok := runtime.Caller(0)
@@ -45,6 +85,32 @@ func readIntegrationFile(t *testing.T, path string) string {
 		t.Fatal(err)
 	}
 	return string(data)
+}
+
+func requiredVersion(t *testing.T, source, pattern, requirement string) string {
+	t.Helper()
+	matches := regexp.MustCompile(pattern).FindStringSubmatch(source)
+	if len(matches) != 2 {
+		t.Fatalf("resolve %s", requirement)
+	}
+	return matches[1]
+}
+
+func requiredNodeMajor(t *testing.T, packageJSON string) string {
+	t.Helper()
+	var manifest struct {
+		Engines struct {
+			Node string `json:"node"`
+		} `json:"engines"`
+	}
+	if err := json.Unmarshal([]byte(packageJSON), &manifest); err != nil {
+		t.Fatalf("parse external/package.json: %v", err)
+	}
+	version := versionNumberPattern.FindString(manifest.Engines.Node)
+	if version == "" {
+		t.Fatal("resolve required Node version")
+	}
+	return strings.SplitN(version, ".", 2)[0]
 }
 
 func rockyWASMBuilderCopySources(dockerfile string) map[string]bool {

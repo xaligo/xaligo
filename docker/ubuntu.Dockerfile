@@ -1,6 +1,8 @@
+FROM node:24-bookworm-slim AS node-runtime
+
 FROM ubuntu:24.04
 
-ARG GO_VERSION=1.22.12
+ARG GO_VERSION=1.26.5
 ARG JAVY_VERSION=9.0.0
 ARG TARGETARCH
 
@@ -15,10 +17,10 @@ RUN apt-get update \
     git \
     gzip \
     make \
-    nodejs \
-    npm \
     tar \
   && rm -rf /var/lib/apt/lists/*
+
+COPY --from=node-runtime /usr/local/ /usr/local/
 
 RUN case "${TARGETARCH}" in \
     amd64) go_arch="amd64" ;; \

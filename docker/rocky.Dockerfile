@@ -1,4 +1,4 @@
-FROM ubuntu:24.04 AS wasm-builder
+FROM node:24-bookworm-slim AS wasm-builder
 
 ARG JAVY_VERSION=9.0.0
 ARG TARGETARCH
@@ -10,8 +10,6 @@ RUN apt-get update \
     ca-certificates \
     curl \
     gzip \
-    nodejs \
-    npm \
   && rm -rf /var/lib/apt/lists/*
 
 RUN case "${TARGETARCH}" in \
@@ -30,7 +28,7 @@ RUN case "${TARGETARCH}" in \
 
 WORKDIR /build/external
 
-COPY external/package.json external/tsconfig.json external/tsup.config.ts external/command.ts external/index.ts ./
+COPY external/package.json external/tsconfig.json external/command.ts external/index.ts ./
 COPY external/controller ./controller
 COPY external/entity ./entity
 COPY external/repository ./repository
@@ -44,7 +42,7 @@ RUN mkdir -p wasm \
 
 FROM rockylinux:9
 
-ARG GO_VERSION=1.22.12
+ARG GO_VERSION=1.26.5
 ARG TARGETARCH
 
 ENV PATH=/usr/local/go/bin:/root/go/bin:${PATH}
