@@ -93,6 +93,59 @@ func layoutUMLActivityHorizontalPartitionsV1EngineLayoutUmlActivity(node *entity
 	return nil
 }
 
+func layoutUMLStateMachineDiagramV1EngineLayoutUmlActivity(node *entity.Node, target *entity.Box, x, y, w, h float64) error {
+	children := layoutKidsV1EngineLayoutNode(node)
+	if len(children) == 0 {
+		return nil
+	}
+	if strings.TrimSpace(node.Attr("direction")) == "down" {
+		return layoutUMLStateMachineDiagramDownV1EngineLayoutUmlActivity(node, target, x, y, w, h, children)
+	}
+	step := umlActivityNodeStepHorizontalV1EngineLayoutUmlActivity(len(children), w)
+	startX := x
+	if len(children) > 1 {
+		usedW := step*float64(len(children)-1) + 180
+		if usedW < w {
+			startX = x + (w-usedW)/2
+		}
+	}
+	centerY := y + h/2
+	for childIndex, child := range children {
+		nodeW, nodeH := umlActivityNodeSizeV1EngineLayoutUmlActivity(child, 180)
+		nodeX := startX + float64(childIndex)*step
+		nodeY := centerY - nodeH/2
+		box := &entity.Box{ID: childIDV1EngineLayoutAttributes(target.ID, len(target.Children)), Tag: child.Tag, Label: labelOfV1EngineLayoutAttributes(child), Position: child.Position}
+		if err := layoutNodeV1EngineLayoutNode(child, box, nodeX, nodeY, nodeW, nodeH); err != nil {
+			return err
+		}
+		target.Children = append(target.Children, box)
+	}
+	return nil
+}
+
+func layoutUMLStateMachineDiagramDownV1EngineLayoutUmlActivity(node *entity.Node, target *entity.Box, x, y, w, h float64, children []*entity.Node) error {
+	step := umlActivityNodeStepV1EngineLayoutUmlActivity(len(children), h)
+	startY := y
+	if len(children) > 1 {
+		usedH := step*float64(len(children)-1) + 58
+		if usedH < h {
+			startY = y + (h-usedH)/2
+		}
+	}
+	centerX := x + w/2
+	for childIndex, child := range children {
+		nodeW, nodeH := umlActivityNodeSizeV1EngineLayoutUmlActivity(child, math.Min(w, 180))
+		nodeX := centerX - nodeW/2
+		nodeY := startY + float64(childIndex)*step
+		box := &entity.Box{ID: childIDV1EngineLayoutAttributes(target.ID, len(target.Children)), Tag: child.Tag, Label: labelOfV1EngineLayoutAttributes(child), Position: child.Position}
+		if err := layoutNodeV1EngineLayoutNode(child, box, nodeX, nodeY, nodeW, nodeH); err != nil {
+			return err
+		}
+		target.Children = append(target.Children, box)
+	}
+	return nil
+}
+
 func umlActivityHorizontalLanesV1EngineLayoutUmlActivity(node *entity.Node) bool {
 	return strings.TrimSpace(node.Attr("layout")) == "horizontal" || strings.TrimSpace(node.Attr("lanes")) == "horizontal"
 }
@@ -120,7 +173,7 @@ func umlActivityNodeSizeV1EngineLayoutUmlActivity(node *entity.Node, maxW float6
 	switch strings.TrimSpace(node.Attr("uml-element-kind")) {
 	case "initial", "final":
 		return 34, 34
-	case "decision", "merge":
+	case "decision", "merge", "choice", "history":
 		return 78, 78
 	case "fork", "join":
 		return math.Min(maxW, 120), 24

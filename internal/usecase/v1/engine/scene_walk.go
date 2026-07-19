@@ -261,8 +261,8 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 					"updated":       updated, "link": nil, "locked": false,
 					"customData": shapeCustomData,
 				})
-				if isXaligoActivityFinalV1EngineSceneWalk(b) {
-					appendUMLActivityFinalDotV1EngineSceneWalk(b, elements, updated)
+				if isXaligoFinalWithDotV1EngineSceneWalk(b) {
+					appendUMLFinalDotV1EngineSceneWalk(b, elements, updated)
 				}
 				if classShape {
 					appendUMLClassCompartmentsV1EngineSceneWalk(b, elements, updated)
@@ -751,11 +751,19 @@ func umlClassHeaderHeightV1EngineSceneWalk(box *entity.Box, lineHeight float64, 
 	return math.Min(math.Max(34, 10+float64(lines)*lineHeight), math.Max(34, box.H*0.48))
 }
 
-func isXaligoActivityFinalV1EngineSceneWalk(box *entity.Box) bool {
-	return isXaligoActivityShapeV1EngineSceneWalk(box) && strings.TrimSpace(box.Attrs["uml-element-kind"]) == "final"
+func isXaligoFinalWithDotV1EngineSceneWalk(box *entity.Box) bool {
+	if strings.TrimSpace(box.Attrs["uml-element-kind"]) != "final" {
+		return false
+	}
+	switch strings.TrimSpace(box.Attrs["uml-diagram-kind"]) {
+	case "activity-diagram", "state-machine-diagram":
+		return true
+	default:
+		return false
+	}
 }
 
-func appendUMLActivityFinalDotV1EngineSceneWalk(box *entity.Box, elements *[]map[string]any, updated int64) {
+func appendUMLFinalDotV1EngineSceneWalk(box *entity.Box, elements *[]map[string]any, updated int64) {
 	diameter := math.Max(8, math.Min(box.W, box.H)*0.46)
 	x := box.X + (box.W-diameter)/2
 	y := box.Y + (box.H-diameter)/2

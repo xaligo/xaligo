@@ -151,6 +151,76 @@ func TestUMLSequenceHidesRedundantContainerBorderAndTitle(t *testing.T) {
 	}
 }
 
+func TestUMLStateMachineHidesRedundantContainerBorderAndTitle(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" title="State Machine" width="760" height="420"><uml id="state" title="Order State"><state-machine-diagram><initial id="start"/><state id="open" title="Open"/><final id="done"/><transition src="start" dst="open"/><transition src="open" dst="done"/></state-machine-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var scene map[string]any
+	if err := json.Unmarshal(rawScene, &scene); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	elements, _ := scene["elements"].([]any)
+	for _, rawElement := range elements {
+		element, _ := rawElement.(map[string]any)
+		customData, _ := element["customData"].(map[string]any)
+		if element["type"] == "rectangle" && customData["xaligoUmlDiagramKind"] == "state-machine-diagram" && customData["xaligoUmlElementKind"] == nil {
+			t.Fatalf("state-machine container border should not render: %#v", element)
+		}
+		if element["type"] == "text" && element["text"] == "Order State" {
+			t.Fatalf("state-machine container title should not render when frame metadata can carry the title: %#v", element)
+		}
+	}
+}
+
+func TestUMLStateMachineFinalRendersFinalDot(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="760" height="420"><uml id="state"><state-machine-diagram><initial id="start"/><state id="open" title="Open"/><final id="done"/><transition src="start" dst="open"/><transition src="open" dst="done"/></state-machine-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var scene map[string]any
+	if err := json.Unmarshal(rawScene, &scene); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	elements, _ := scene["elements"].([]any)
+	for _, rawElement := range elements {
+		element, _ := rawElement.(map[string]any)
+		customData, _ := element["customData"].(map[string]any)
+		if customData["xaligoUmlFinalDot"] == true {
+			return
+		}
+	}
+	t.Fatalf("state-machine final dot missing: %s", rawScene)
+}
+
+func TestUMLStateMachinePseudostatesKeepCompactProportions(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="960" height="520"><uml id="state"><state-machine-diagram direction="right"><initial id="start"/><state id="open" title="Open"/><choice id="choice" title="Choice"/><state id="done-state" title="Done"/><final id="done"/><transition src="start" dst="open"/><transition src="open" dst="choice"/><transition src="choice" dst="done-state" guard="ok"/><transition src="choice" dst="open" guard="retry"/><transition src="done-state" dst="done"/></state-machine-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var scene entity.PresentationScene
+	if err := json.Unmarshal(rawScene, &scene); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	for _, element := range scene.Elements {
+		if element.CustomData == nil || element.CustomData.UMLElementKind == "" {
+			continue
+		}
+		switch element.CustomData.UMLElementKind {
+		case "initial", "final", "choice":
+			if math.Abs(element.Width-element.Height) > 0.01 {
+				t.Fatalf("%s shape is not square: width %.1f height %.1f", element.CustomData.UMLElementKind, element.Width, element.Height)
+			}
+			if element.Width > 90 || element.Height > 90 {
+				t.Fatalf("%s shape is too large: width %.1f height %.1f", element.CustomData.UMLElementKind, element.Width, element.Height)
+			}
+		}
+	}
+}
+
 func TestUMLActivityHorizontalSwimlanesReachEditableScene(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="760" height="420"><uml id="activity"><activity-diagram direction="right" lanes="horizontal" theme="xaligo"><partition id="customer" title="Customer"><initial id="start"/><action id="choose" title="Choose amount" tone="primary"/></partition><partition id="atm" title="ATM"><action id="read" title="Read card"/><final id="done"/></partition><control-flow src="start" dst="choose"/><control-flow src="choose" dst="read"/><control-flow src="read" dst="done"/></activity-diagram></uml></frame></frames></xaligo>`)
 	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
