@@ -287,7 +287,7 @@ func TestUMLSequenceOrderControlsVerticalMessageAnchors(t *testing.T) {
 	anchors := map[string][2]float64{}
 	var selfMessage *entity.Element
 	var selfMessageLabel *entity.Element
-	var selfMessageActivation *entity.Element
+	var coveringActivation *entity.Element
 	selfMessagePoints := [][]float64{}
 	for index := range scene.Elements {
 		element := &scene.Elements[index]
@@ -304,8 +304,8 @@ func TestUMLSequenceOrderControlsVerticalMessageAnchors(t *testing.T) {
 		if element.Type == "text" && element.CustomData.UMLMessageOrder == "2" {
 			selfMessageLabel = element
 		}
-		if element.CustomData.UMLSequenceActivation && element.CustomData.UMLMessageOrder == "2" {
-			selfMessageActivation = element
+		if element.CustomData.UMLSequenceActivation && element.CustomData.UMLSequenceActivationOwner == "b" {
+			coveringActivation = element
 		}
 	}
 	if len(anchors) != 3 {
@@ -320,21 +320,21 @@ func TestUMLSequenceOrderControlsVerticalMessageAnchors(t *testing.T) {
 	if len(selfMessagePoints) < 4 || selfMessagePoints[0][0] <= 0 || selfMessagePoints[1][0] < 96 || math.Abs(selfMessagePoints[len(selfMessagePoints)-1][0]-selfMessagePoints[0][0]) > 0.01 {
 		t.Fatalf("self-message should route as a right-side loop, got %#v", selfMessagePoints)
 	}
-	if selfMessage == nil || selfMessageLabel == nil || selfMessageActivation == nil {
-		t.Fatalf("self-message, label, or activation missing: arrow=%#v label=%#v activation=%#v", selfMessage, selfMessageLabel, selfMessageActivation)
+	if selfMessage == nil || selfMessageLabel == nil || coveringActivation == nil {
+		t.Fatalf("self-message, label, or activation missing: arrow=%#v label=%#v activation=%#v", selfMessage, selfMessageLabel, coveringActivation)
 	}
 	startX := selfMessage.X + selfMessagePoints[0][0]
 	endX := selfMessage.X + selfMessagePoints[len(selfMessagePoints)-1][0]
-	activationRight := selfMessageActivation.X + selfMessageActivation.Width
+	activationRight := coveringActivation.X + coveringActivation.Width
 	if math.Abs(startX-activationRight) > 0.01 || math.Abs(endX-activationRight) > 0.01 {
-		t.Fatalf("self-message endpoints should align with activation right edge: start=%v end=%v activation=%#v", startX, endX, selfMessageActivation)
+		t.Fatalf("self-message endpoints should align with activation right edge: start=%v end=%v activation=%#v", startX, endX, coveringActivation)
 	}
 	startY := selfMessage.Y + selfMessagePoints[0][1]
 	endY := selfMessage.Y + selfMessagePoints[len(selfMessagePoints)-1][1]
-	activationTop := selfMessageActivation.Y
-	activationBottom := selfMessageActivation.Y + selfMessageActivation.Height
+	activationTop := coveringActivation.Y
+	activationBottom := coveringActivation.Y + coveringActivation.Height
 	if startY < activationTop || startY > activationBottom || endY < activationTop || endY > activationBottom {
-		t.Fatalf("self-message endpoints should stay within activation vertical range: startY=%v endY=%v activation=%#v", startY, endY, selfMessageActivation)
+		t.Fatalf("self-message endpoints should stay within activation vertical range: startY=%v endY=%v activation=%#v", startY, endY, coveringActivation)
 	}
 	loopTopY := selfMessage.Y + selfMessagePoints[0][1]
 	if selfMessageLabel.Y+selfMessageLabel.Height > loopTopY-4 {
@@ -350,21 +350,9 @@ func TestUMLSequenceSelfMessageSVGAlignsWithActivationBar(t *testing.T) {
 	}
 	output := string(svg)
 	lifelineIndex := strings.Index(output, `stroke-dasharray="8 6"`)
-	activationIndex := strings.Index(output, `width="16" height="48"`)
+	activationIndex := strings.Index(output, `width="16"`)
 	if lifelineIndex < 0 || activationIndex < 0 || lifelineIndex > activationIndex {
 		t.Fatalf("activation bar should render in front of dashed lifeline: %s", output)
-	}
-	activationMatch := regexp.MustCompile(`<rect x="([0-9.]+)" y="[0-9.]+" width="([0-9.]+)" height="48"`).FindStringSubmatch(output)
-	if activationMatch == nil {
-		t.Fatalf("SVG missing activation bar: %s", output)
-	}
-	activationX, err := strconv.ParseFloat(activationMatch[1], 64)
-	if err != nil {
-		t.Fatalf("ParseFloat(activation x) error = %v", err)
-	}
-	activationWidth, err := strconv.ParseFloat(activationMatch[2], 64)
-	if err != nil {
-		t.Fatalf("ParseFloat(activation width) error = %v", err)
 	}
 	pathMatch := regexp.MustCompile(`<path d="M ([0-9.]+) [0-9.]+ L [0-9.]+ [0-9.]+ L [0-9.]+ [0-9.]+ L ([0-9.]+) [0-9.]+"[^>]*marker-end="url\(#xaligo-triangle\)"`).FindStringSubmatch(output)
 	if pathMatch == nil {
@@ -378,9 +366,25 @@ func TestUMLSequenceSelfMessageSVGAlignsWithActivationBar(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ParseFloat(end x) error = %v", err)
 	}
-	activationRight := activationX + activationWidth
-	if math.Abs(startX-activationRight) > 0.01 || math.Abs(endX-activationRight) > 0.01 {
-		t.Fatalf("self-message endpoints should align with activation right edge: start=%v end=%v activationRight=%v", startX, endX, activationRight)
+	activationMatches := regexp.MustCompile(`<rect x="([0-9.]+)" y="[0-9.]+" width="([0-9.]+)" height="[0-9.]+"`).FindAllStringSubmatch(output, -1)
+	foundActivation := false
+	for _, match := range activationMatches {
+		activationX, err := strconv.ParseFloat(match[1], 64)
+		if err != nil {
+			t.Fatalf("ParseFloat(activation x) error = %v", err)
+		}
+		activationWidth, err := strconv.ParseFloat(match[2], 64)
+		if err != nil {
+			t.Fatalf("ParseFloat(activation width) error = %v", err)
+		}
+		activationRight := activationX + activationWidth
+		if math.Abs(startX-activationRight) <= 0.01 && math.Abs(endX-activationRight) <= 0.01 {
+			foundActivation = true
+			break
+		}
+	}
+	if !foundActivation {
+		t.Fatalf("self-message endpoints should align with an activation right edge: start=%v end=%v activations=%#v", startX, endX, activationMatches)
 	}
 }
 
@@ -461,6 +465,41 @@ func TestUMLSequenceActivationCoversReturnAndCleanupMessages(t *testing.T) {
 	assertMessageEndpointWithinActivation("1.4", 0, apiActivation)
 	assertMessageEndpointWithinActivation("2", 0, apiActivation)
 	assertMessageEndpointWithinActivation("1.3", 0, sessionActivation)
+}
+
+func TestUMLSequenceSuppressesContainedActivationBars(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="960" height="520"><uml id="sequence"><sequence-diagram><participant id="customer"/><lifeline id="session"/><message src="customer" dst="session" order="1" title="checkout"/><message src="session" dst="session" order="1.1" title="validate"/><return-message src="session" dst="customer" order="2" title="ok"/></sequence-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var scene entity.PresentationScene
+	if err := json.Unmarshal(rawScene, &scene); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	activations := 0
+	var activation *entity.Element
+	var selfMessage *entity.Element
+	for index := range scene.Elements {
+		element := &scene.Elements[index]
+		if element.CustomData == nil {
+			continue
+		}
+		if element.CustomData.UMLSequenceActivation && element.CustomData.UMLSequenceActivationOwner == "session" {
+			activations++
+			activation = element
+		}
+		if element.Type == "arrow" && element.CustomData.UMLMessageOrder == "1.1" {
+			selfMessage = element
+		}
+	}
+	if activations != 1 || activation == nil || selfMessage == nil || len(selfMessage.Points) == 0 {
+		t.Fatalf("expected one covering activation and self-message, activations=%d activation=%#v message=%#v", activations, activation, selfMessage)
+	}
+	y := selfMessage.Y + selfMessage.Points[0][1]
+	if y < activation.Y || y > activation.Y+activation.Height {
+		t.Fatalf("self-message should stay inside covering activation: y=%v activation=%#v", y, activation)
+	}
 }
 
 func TestUMLSequenceMessagesRenderActivationBars(t *testing.T) {

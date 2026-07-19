@@ -438,11 +438,13 @@ func localConnectionSideAvoidingFrameMetadataV1EngineSceneConnectionRender(side 
 type umlSequenceActivationRangeV1EngineSceneConnectionRender struct {
 	Top    float64
 	Bottom float64
+	Hidden bool
 }
 
 func umlSequenceActivationRangesV1EngineSceneConnectionRender(connections []*entity.Node) map[*entity.Node]umlSequenceActivationRangeV1EngineSceneConnectionRender {
 	ranges := map[*entity.Node]umlSequenceActivationRangeV1EngineSceneConnectionRender{}
 	messages := umlSequenceOrderedMessagesV1EngineSceneConnectionRender(connections)
+	visibleByOwner := map[string][]umlSequenceActivationRangeV1EngineSceneConnectionRender{}
 	for index, conn := range messages {
 		if !isUMLSequenceActivationRelationV1EngineSceneConnectionRender(conn) {
 			continue
@@ -464,7 +466,17 @@ func umlSequenceActivationRangesV1EngineSceneConnectionRender(connections []*ent
 				break
 			}
 		}
-		ranges[conn] = umlSequenceActivationRangeV1EngineSceneConnectionRender{Top: top, Bottom: bottom}
+		rangeValue := umlSequenceActivationRangeV1EngineSceneConnectionRender{Top: top, Bottom: bottom}
+		for _, previous := range visibleByOwner[owner] {
+			if top >= previous.Top && bottom <= previous.Bottom {
+				rangeValue.Hidden = true
+				break
+			}
+		}
+		ranges[conn] = rangeValue
+		if !rangeValue.Hidden {
+			visibleByOwner[owner] = append(visibleByOwner[owner], rangeValue)
+		}
 	}
 	return ranges
 }
@@ -534,6 +546,9 @@ func appendUMLSequenceActivationV1EngineSceneConnectionRender(elements *[]map[st
 		owner = strings.TrimSpace(conn.Attr("dst"))
 	}
 	if owner == "" {
+		return
+	}
+	if activationRange.Hidden {
 		return
 	}
 	barWidth := 16.0
