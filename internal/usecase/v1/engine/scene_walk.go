@@ -675,10 +675,12 @@ func appendUMLStateMachineCompartmentsV1EngineSceneWalk(box *entity.Box, element
 		"customData": map[string]any{"xaligoUmlStateHeader": true},
 	})
 	headerText := strings.TrimSpace(box.Attrs["uml-state-header-text"])
-	if headerText == "" {
+	if headerText == "" && box.Attrs["uml-element-name-hidden"] != "true" {
 		headerText = strings.Split(strings.TrimSpace(box.Label), "\n")[0]
 	}
-	appendUMLClassTextV1EngineSceneWalk(elements, fmt.Sprintf("%s-state-header-text", box.ID), box.X+6, box.Y+4, math.Max(1, box.W-12), math.Max(1, headerH-8), headerText, "#ffffff", "center", "middle", fontSize, box, updated, map[string]any{"xaligoUmlStateHeaderContent": true})
+	if headerText != "" {
+		appendUMLClassTextV1EngineSceneWalk(elements, fmt.Sprintf("%s-state-header-text", box.ID), box.X+6, box.Y+4, math.Max(1, box.W-12), math.Max(1, headerH-8), headerText, "#ffffff", "center", "middle", fontSize, box, updated, map[string]any{"xaligoUmlStateHeaderContent": true})
+	}
 	dividerY := box.Y + headerH
 	appendUMLStateMachineDividerV1EngineSceneWalk(elements, fmt.Sprintf("%s-state-header-divider", box.ID), box.X, dividerY, box.W, 0, updated, map[string]any{"xaligoUmlStateHeaderDivider": true})
 	keys := splitNonEmptyLinesV1EngineSceneWalk(box.Attrs["uml-state-compartment-keys"])

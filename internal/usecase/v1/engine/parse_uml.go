@@ -245,6 +245,9 @@ func normalizeUMLComponentV1EngineParseUml(uml, frame *entity.Node, models map[s
 		child := entry.node
 		switch {
 		case umlElementTagsV1EngineParseUml[child.Tag]:
+			if diagram.Tag == "state-machine-diagram" && strings.TrimSpace(child.Attr("show-element-names")) == "" && strings.TrimSpace(diagram.Attr("show-element-names")) != "" {
+				child.Attrs["show-element-names"] = diagram.Attr("show-element-names")
+			}
 			rawID := child.Attr("id")
 			id := strings.TrimSpace(rawID)
 			if id == "" {
@@ -609,6 +612,16 @@ func validateUMLDiagramAttributesV1EngineParseUml(diagram *entity.Node) error {
 		}
 		diagram.Attrs["theme"] = theme
 	}
+	if showElementNames := strings.TrimSpace(diagram.Attr("show-element-names")); showElementNames != "" {
+		if diagram.Tag != "state-machine-diagram" {
+			return fmt.Errorf("<%s> does not allow show-element-names", diagram.Tag)
+		}
+		normalized, ok := normalizeUMLBoolAttributeV1EngineParseUml(showElementNames)
+		if !ok {
+			return fmt.Errorf("<%s show-element-names=%q> must be true or false", diagram.Tag, showElementNames)
+		}
+		diagram.Attrs["show-element-names"] = normalized
+	}
 	return nil
 }
 
@@ -622,6 +635,13 @@ func validateUMLElementV1EngineParseUml(element *entity.Node) error {
 			}
 			element.Attrs[attribute] = normalized
 		}
+	}
+	if value := strings.TrimSpace(element.Attr("show-element-names")); value != "" {
+		normalized, ok := normalizeUMLBoolAttributeV1EngineParseUml(value)
+		if !ok {
+			return fmt.Errorf("UML <%s show-element-names=%q> must be true or false", element.Tag, value)
+		}
+		element.Attrs["show-element-names"] = normalized
 	}
 	for _, compartment := range element.Children {
 		if !umlCompartmentTagsV1EngineParseUml[compartment.Tag] {
@@ -660,6 +680,9 @@ func validateUMLElementV1EngineParseUml(element *entity.Node) error {
 }
 
 func validateUMLElementInDiagramV1EngineParseUml(diagramKind string, element *entity.Node) error {
+	if diagramKind != "state-machine-diagram" && strings.TrimSpace(element.Attr("show-element-names")) != "" {
+		return fmt.Errorf("<%s> does not allow show-element-names on UML <%s>", diagramKind, element.Tag)
+	}
 	if diagramKind == "class-diagram" && element.Tag == "package" {
 		return nil
 	}
@@ -1290,7 +1313,19 @@ func normalizeUMLElementV1EngineParseUml(source *entity.Node, scopedID, diagramK
 			attrs["uml-state-compartment-values"] = strings.Join(stateCompartmentValues, "\n")
 		}
 	}
+	if diagramKind == "state-machine-diagram" && !umlShowElementNamesV1EngineParseUml(attrs) {
+		attrs["uml-element-name-hidden"] = "true"
+		if source.Tag == "state" {
+			attrs["uml-state-header-text"] = ""
+		} else {
+			attrs["title"] = ""
+		}
+	}
 	return &entity.Node{Tag: "rectangle", Attrs: attrs, Position: source.Position}
+}
+
+func umlShowElementNamesV1EngineParseUml(attrs map[string]string) bool {
+	return strings.ToLower(strings.TrimSpace(attrs["show-element-names"])) != "false"
 }
 
 func umlStateCompartmentPartsV1EngineParseUml(child *entity.Node) (string, string) {
