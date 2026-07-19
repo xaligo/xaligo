@@ -9,10 +9,12 @@ preconditions before changing code:
 
 1. `development-flow.instructions.md` — task slicing, verification, and local
    commit workflow.
-2. `roadmap.instructions.md` — product and pipeline direction.
-3. `xal-spec.instructions.md` — authoritative `.xal` behavior.
-4. `architecture.instructions.md` — package boundaries and dependency rules.
-5. `coding.instructions.md` — mandatory file and identifier conventions.
+2. `quality-improvement.instructions.md` — feature hardening, design quality,
+  and completion gates.
+3. `roadmap.instructions.md` — product and pipeline direction.
+4. `xal-spec.instructions.md` — authoritative `.xal` behavior.
+5. `architecture.instructions.md` — package boundaries and dependency rules.
+6. `coding.instructions.md` — mandatory file and identifier conventions.
 
 ## Project summary
 
