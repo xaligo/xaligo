@@ -87,7 +87,7 @@ var umlCompartmentTagsV1EngineParseUml = map[string]bool{
 	"compartment": true,
 	"attribute":   true, "operation": true, "literal": true, "slot": true, "responsibility": true,
 	"provided-interface": true, "required-interface": true, "property": true, "constraint": true,
-	"entry": true, "do": true, "exit": true, "region": true, "note": true,
+	"entry": true, "do": true, "exit": true, "internal": true, "region": true, "note": true,
 }
 
 var umlElementCompartmentSpecsV1EngineParseUml = map[string]map[string]bool{
@@ -108,7 +108,7 @@ var umlElementCompartmentSpecsV1EngineParseUml = map[string]map[string]bool{
 	"use-case":    umlTagSetV1EngineParseUml("responsibility,constraint,note"),
 	"activity":    umlTagSetV1EngineParseUml("responsibility,constraint,note"),
 	"action":      umlTagSetV1EngineParseUml("responsibility,constraint,note"),
-	"state":       umlTagSetV1EngineParseUml("entry,do,exit,region,note"),
+	"state":       umlTagSetV1EngineParseUml("entry,do,exit,internal,region,note"),
 	"interaction": umlTagSetV1EngineParseUml("note"),
 	"time-state":  umlTagSetV1EngineParseUml("region,constraint,note"),
 }
@@ -1157,21 +1157,22 @@ func normalizeUMLElementV1EngineParseUml(source *entity.Node, scopedID, diagramK
 	delete(attrs, "name")
 	var compartments []string
 	var compartmentKinds []string
+	var stateCompartmentKeys []string
+	var stateCompartmentValues []string
 	var attributeCompartments []string
 	var operationCompartments []string
 	attributeLines := 0
 	operationLines := 0
 	for _, child := range source.Children {
-		label := strings.TrimSpace(child.Attr("title"))
-		if label == "" {
-			label = strings.TrimSpace(child.Attr("name"))
-		}
-		if label == "" {
-			label = strings.TrimSpace(child.Text)
-		}
+		label := umlCompartmentLabelV1EngineParseUml(diagramKind, source.Tag, child)
 		if label != "" {
 			compartments = append(compartments, label)
 			compartmentKinds = append(compartmentKinds, child.Tag)
+			if diagramKind == "state-machine-diagram" && source.Tag == "state" {
+				key, value := umlStateCompartmentPartsV1EngineParseUml(child)
+				stateCompartmentKeys = append(stateCompartmentKeys, key)
+				stateCompartmentValues = append(stateCompartmentValues, value)
+			}
 			if child.Tag == "operation" {
 				operationCompartments = append(operationCompartments, label)
 				operationLines += strings.Count(label, "\n") + 1
@@ -1189,7 +1190,55 @@ func normalizeUMLElementV1EngineParseUml(source *entity.Node, scopedID, diagramK
 		attrs["uml-class-attribute-text"] = strings.Join(attributeCompartments, "\n")
 		attrs["uml-class-operation-text"] = strings.Join(operationCompartments, "\n")
 	}
+	if diagramKind == "state-machine-diagram" && source.Tag == "state" {
+		attrs["uml-state-header-text"] = strings.TrimSpace(attrs["title"])
+		if len(compartments) > 0 {
+			attrs["uml-state-header-text"] = strings.TrimSpace(strings.Split(attrs["title"], "\n")[0])
+			attrs["uml-state-compartment-keys"] = strings.Join(stateCompartmentKeys, "\n")
+			attrs["uml-state-compartment-values"] = strings.Join(stateCompartmentValues, "\n")
+		}
+	}
 	return &entity.Node{Tag: "rectangle", Attrs: attrs, Position: source.Position}
+}
+
+func umlStateCompartmentPartsV1EngineParseUml(child *entity.Node) (string, string) {
+	value := strings.TrimSpace(child.Attr("title"))
+	if value == "" {
+		value = strings.TrimSpace(child.Attr("name"))
+	}
+	if value == "" {
+		value = strings.TrimSpace(child.Text)
+	}
+	switch child.Tag {
+	case "entry", "do", "exit", "internal", "region", "note":
+		return child.Tag, value
+	default:
+		return "note", value
+	}
+}
+
+func umlCompartmentLabelV1EngineParseUml(diagramKind, elementKind string, child *entity.Node) string {
+	label := strings.TrimSpace(child.Attr("title"))
+	if label == "" {
+		label = strings.TrimSpace(child.Attr("name"))
+	}
+	if label == "" {
+		label = strings.TrimSpace(child.Text)
+	}
+	if label == "" {
+		return ""
+	}
+	if diagramKind != "state-machine-diagram" || elementKind != "state" {
+		return label
+	}
+	switch child.Tag {
+	case "entry", "do", "exit", "internal":
+		return child.Tag + " / " + label
+	case "region":
+		return "region: " + label
+	default:
+		return label
+	}
 }
 
 func normalizeUMLBoolAttributeV1EngineParseUml(value string) (string, bool) {
@@ -1235,7 +1284,7 @@ func normalizeUMLRelationV1EngineParseUml(source *entity.Node, scopedSrc, scoped
 	attrs["uml-relation-label"] = umlRelationLabelV1EngineParseUml(source)
 	attrs["uml-src-ref"] = publicUMLRefV1EngineParseUml(umlID, source.Attr("src"))
 	attrs["uml-dst-ref"] = publicUMLRefV1EngineParseUml(umlID, source.Attr("dst"))
-	for _, attribute := range []string{"order", "mode", "guard", "route", "src-multiplicity", "dst-multiplicity", "at", "from", "to"} {
+	for _, attribute := range []string{"order", "mode", "event", "guard", "action", "effect", "route", "src-multiplicity", "dst-multiplicity", "at", "from", "to"} {
 		if value := strings.TrimSpace(source.Attr(attribute)); value != "" {
 			attrs["uml-"+attribute] = value
 		}
@@ -1253,6 +1302,12 @@ func normalizeUMLRelationV1EngineParseUml(source *entity.Node, scopedSrc, scoped
 		attrs["color"] = "#052d6e"
 	}
 	if diagramKind == "class-diagram" && strings.TrimSpace(attrs["stroke-width"]) == "" {
+		attrs["stroke-width"] = "1.4"
+	}
+	if diagramKind == "state-machine-diagram" && strings.TrimSpace(attrs["color"]) == "" {
+		attrs["color"] = "#052d6e"
+	}
+	if diagramKind == "state-machine-diagram" && strings.TrimSpace(attrs["stroke-width"]) == "" {
 		attrs["stroke-width"] = "1.4"
 	}
 	switch source.Tag {
@@ -1279,6 +1334,9 @@ func umlRelationLabelV1EngineParseUml(source *entity.Node) string {
 		label = strings.TrimSpace(source.Attr("title"))
 	}
 	if label == "" {
+		label = strings.TrimSpace(source.Attr("event"))
+	}
+	if label == "" {
 		switch source.Tag {
 		case "include":
 			label = "«include»"
@@ -1298,6 +1356,11 @@ func umlRelationLabelV1EngineParseUml(source *entity.Node) string {
 	}
 	if guard := strings.TrimSpace(source.Attr("guard")); guard != "" {
 		label = strings.TrimSpace(label + " [" + guard + "]")
+	}
+	if effect := strings.TrimSpace(source.Attr("effect")); effect != "" {
+		label = strings.TrimSpace(label + " / " + effect)
+	} else if action := strings.TrimSpace(source.Attr("action")); action != "" {
+		label = strings.TrimSpace(label + " / " + action)
 	}
 	if order := strings.TrimSpace(source.Attr("order")); order != "" {
 		label = strings.TrimSpace(order + ": " + label)

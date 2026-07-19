@@ -222,7 +222,7 @@ func TestUMLStateMachinePseudostatesKeepCompactProportions(t *testing.T) {
 }
 
 func TestUMLStateMachineRowsSeparateBranches(t *testing.T) {
-	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="960" height="620"><uml id="state"><state-machine-diagram direction="right"><initial id="start" row="1"/><state id="paid" title="Paid" row="1" background-color="#6F7BE8" color="#ffffff"/><final id="done" row="1"/><state id="refund" title="Refund" row="2" background-color="#F47C24" color="#ffffff"/><state id="cancelled" title="Cancelled" row="3" background-color="#6F7BE8" color="#ffffff"/><transition src="start" dst="paid"/><transition src="paid" dst="done"/><transition src="paid" dst="refund"/><transition src="refund" dst="cancelled"/></state-machine-diagram></uml></frame></frames></xaligo>`)
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="960" height="620"><uml id="state"><state-machine-diagram direction="right"><initial id="start" row="1"/><state id="paid" title="Paid" row="1"/><final id="done" row="1"/><state id="refund" title="Refund" row="2"/><state id="cancelled" title="Cancelled" row="3"/><transition src="start" dst="paid"/><transition src="paid" dst="done"/><transition src="paid" dst="refund"/><transition src="refund" dst="cancelled"/></state-machine-diagram></uml></frame></frames></xaligo>`)
 	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
 		t.Fatalf("RenderExcalidraw() error = %v", err)
@@ -247,8 +247,42 @@ func TestUMLStateMachineRowsSeparateBranches(t *testing.T) {
 	if !(refund.Y > paid.Y+100 && cancelled.Y > refund.Y+100) {
 		t.Fatalf("state-machine rows not separated: paid y=%.1f refund y=%.1f cancelled y=%.1f", paid.Y, refund.Y, cancelled.Y)
 	}
-	if paid.BackgroundColor != "#6F7BE8" || refund.BackgroundColor != "#F47C24" {
-		t.Fatalf("state-machine row colors not retained: paid=%q refund=%q", paid.BackgroundColor, refund.BackgroundColor)
+	if paid.StrokeColor != "#052d6e" || paid.BackgroundColor != "#ffffff" || refund.StrokeColor != "#052d6e" || refund.BackgroundColor != "#ffffff" {
+		t.Fatalf("state-machine palette does not match UML class theme: paid=%q/%q refund=%q/%q", paid.StrokeColor, paid.BackgroundColor, refund.StrokeColor, refund.BackgroundColor)
+	}
+}
+
+func TestUMLStateMachineConceptLabelsReachEditableScene(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="960" height="520"><uml id="state"><state-machine-diagram direction="right"><initial id="start"/><state id="processing" title="Processing"><entry>reserve stock</entry><do>pack order</do><internal>timeout / notify operator</internal><exit>publish event</exit><region>fulfilment</region></state><choice id="result" title="Result"/><final id="done"/><transition src="start" dst="processing" event="created"/><transition src="processing" dst="result" event="paymentCaptured" guard="stock available" action="ship"/><transition src="result" dst="done" guard="ok"/><transition src="result" dst="processing" guard="retry"/></state-machine-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	if !strings.Contains(string(rawScene), `"text": "paymentCaptured [stock available] / ship"`) || !strings.Contains(string(rawScene), `"xaligoUmlAction": "ship"`) {
+		t.Fatalf("transition concept label or metadata missing: %s", rawScene)
+	}
+	var scene entity.PresentationScene
+	if err := json.Unmarshal(rawScene, &scene); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	var choice entity.Element
+	for _, element := range scene.Elements {
+		if element.CustomData != nil && element.CustomData.UMLLocalID == "result" && element.CustomData.UMLElementKind == "choice" {
+			choice = element
+		}
+	}
+	for _, want := range []string{"Processing", "entry", "reserve stock", "do", "pack order", "internal", "timeout / notify operator", "exit", "publish event", "region", "fulfilment"} {
+		if !strings.Contains(string(rawScene), `"text": "`+want+`"`) {
+			t.Fatalf("state concept text %q missing: %s", want, rawScene)
+		}
+	}
+	for _, marker := range []string{"xaligoUmlStateHeader", "xaligoUmlStateRowDivider", "xaligoUmlStateColumnDivider"} {
+		if !strings.Contains(string(rawScene), marker) {
+			t.Fatalf("state structured marker %q missing: %s", marker, rawScene)
+		}
+	}
+	if choice.BackgroundColor != "#ffffff" || choice.StrokeColor != "#052d6e" {
+		t.Fatalf("choice palette = %q/%q, want white body with class-theme stroke", choice.StrokeColor, choice.BackgroundColor)
 	}
 }
 

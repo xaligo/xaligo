@@ -234,6 +234,13 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 				backgroundColor = umlClassShapeBackgroundV1EngineSceneWalk(b)
 				fillStyle = "solid"
 			}
+			stateMachineShape := isXaligoStateMachineShapeV1EngineSceneWalk(b)
+			if stateMachineShape {
+				genStroke = "#052d6e"
+				strokeWidth = 1.35
+				backgroundColor = umlStateMachineShapeBackgroundV1EngineSceneWalk(b)
+				fillStyle = "solid"
+			}
 			sequenceLifeline := isXaligoSequenceLifelineV1EngineSceneWalk(b)
 			if sequenceLifeline {
 				appendUMLSequenceLifelineV1EngineSceneWalk(b, elements, itemImgRects, itemImgIDs, updated)
@@ -267,6 +274,9 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 				if classShape {
 					appendUMLClassCompartmentsV1EngineSceneWalk(b, elements, updated)
 				}
+				if isXaligoStateMachineStateShapeV1EngineSceneWalk(b) {
+					appendUMLStateMachineCompartmentsV1EngineSceneWalk(b, elements, updated)
+				}
 				if b.Tag == "entity" {
 					registerConnectionEndpointV1EngineSceneWalk(b, rectID, [4]float64{b.X, b.Y, b.W, b.H}, itemImgRects, itemImgIDs)
 				}
@@ -274,7 +284,7 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 					registerConnectionEndpointV1EngineSceneWalk(b, rectID, [4]float64{b.X, b.Y, b.W, b.H}, itemImgRects, itemImgIDs)
 				}
 			}
-			if !hiddenUMLContainer && !sequenceLifeline && b.Label != "" && !isXaligoClassShapeV1EngineSceneWalk(b) {
+			if !hiddenUMLContainer && !sequenceLifeline && b.Label != "" && !isXaligoClassShapeV1EngineSceneWalk(b) && !isXaligoStateMachineStateShapeV1EngineSceneWalk(b) {
 				fontSize := attrFloatV1EngineLayoutAttributes(b.Attrs["font-size"], 20)
 				textX, textY := b.X+4, b.Y+2
 				textW, textH := math.Max(1, b.W-8), math.Max(1, math.Min(math.Ceil(fontSize*1.2), b.H-4))
@@ -299,6 +309,14 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 				if b.Tag == "port" {
 					role = entity.TextRolePortLabel
 					textCustomData["xaligoPortLabel"] = true
+				}
+				if isXaligoStateMachineShapeV1EngineSceneWalk(b) {
+					textX, textY = b.X+8, b.Y+6
+					textW, textH = math.Max(1, b.W-16), math.Max(1, b.H-12)
+					textAlign, verticalAlign = "center", "middle"
+					if strings.Contains(b.Label, "\n") {
+						textAlign, verticalAlign = "left", "top"
+					}
 				}
 				textCustomData["xaligoTextLayout"] = sceneTextLayoutV1EngineSceneBuild(role, true, 1.2)
 				*elements = append(*elements, map[string]any{
@@ -501,6 +519,14 @@ func isXaligoClassShapeV1EngineSceneWalk(box *entity.Box) bool {
 	return box != nil && box.Tag == "rectangle" && box.Attrs["uml-diagram-kind"] == "class-diagram"
 }
 
+func isXaligoStateMachineShapeV1EngineSceneWalk(box *entity.Box) bool {
+	return box != nil && box.Tag == "rectangle" && box.Attrs["uml-diagram-kind"] == "state-machine-diagram"
+}
+
+func isXaligoStateMachineStateShapeV1EngineSceneWalk(box *entity.Box) bool {
+	return isXaligoStateMachineShapeV1EngineSceneWalk(box) && strings.TrimSpace(box.Attrs["uml-element-kind"]) == "state"
+}
+
 func isXaligoSequenceLifelineV1EngineSceneWalk(box *entity.Box) bool {
 	if box == nil || box.Tag != "rectangle" || box.Attrs["uml-diagram-kind"] != "sequence-diagram" {
 		return false
@@ -617,6 +643,92 @@ func umlActivityShapeBackgroundV1EngineSceneWalk(box *entity.Box) string {
 
 func umlClassShapeBackgroundV1EngineSceneWalk(box *entity.Box) string {
 	return "#ffffff"
+}
+
+func umlStateMachineShapeBackgroundV1EngineSceneWalk(box *entity.Box) string {
+	if configured := strings.TrimSpace(box.Attrs["background-color"]); configured != "" {
+		return configured
+	}
+	switch strings.TrimSpace(box.Attrs["uml-element-kind"]) {
+	case "initial":
+		return "#052d6e"
+	default:
+		return "#ffffff"
+	}
+}
+
+func appendUMLStateMachineCompartmentsV1EngineSceneWalk(box *entity.Box, elements *[]map[string]any, updated int64) {
+	fontSize := attrFloatV1EngineLayoutAttributes(box.Attrs["font-size"], 14)
+	headerH := math.Min(math.Max(30, fontSize*2.4), math.Max(30, box.H*0.38))
+	headerID := fmt.Sprintf("%s-state-header", box.ID)
+	headerSeed := stableSceneSeedV1EngineSceneTypes(headerID)
+	*elements = append(*elements, map[string]any{
+		"id": headerID, "type": "rectangle",
+		"x": box.X, "y": box.Y, "width": box.W, "height": headerH,
+		"angle": 0, "strokeColor": "#052d6e", "backgroundColor": "#08b8ea",
+		"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
+		"roughness": 0, "opacity": 100,
+		"groupIds": []string{}, "roundness": nil,
+		"seed": headerSeed, "version": 1, "versionNonce": headerSeed,
+		"isDeleted": false, "boundElements": nil,
+		"updated": updated, "link": nil, "locked": false,
+		"customData": map[string]any{"xaligoUmlStateHeader": true},
+	})
+	headerText := strings.TrimSpace(box.Attrs["uml-state-header-text"])
+	if headerText == "" {
+		headerText = strings.Split(strings.TrimSpace(box.Label), "\n")[0]
+	}
+	appendUMLClassTextV1EngineSceneWalk(elements, fmt.Sprintf("%s-state-header-text", box.ID), box.X+6, box.Y+4, math.Max(1, box.W-12), math.Max(1, headerH-8), headerText, "#ffffff", "center", "middle", fontSize, box, updated, map[string]any{"xaligoUmlStateHeaderContent": true})
+	dividerY := box.Y + headerH
+	appendUMLStateMachineDividerV1EngineSceneWalk(elements, fmt.Sprintf("%s-state-header-divider", box.ID), box.X, dividerY, box.W, 0, updated, map[string]any{"xaligoUmlStateHeaderDivider": true})
+	keys := splitNonEmptyLinesV1EngineSceneWalk(box.Attrs["uml-state-compartment-keys"])
+	values := splitNonEmptyLinesV1EngineSceneWalk(box.Attrs["uml-state-compartment-values"])
+	if len(keys) == 0 || len(values) == 0 {
+		return
+	}
+	rowCount := len(keys)
+	if len(values) < rowCount {
+		rowCount = len(values)
+	}
+	bodyH := math.Max(1, box.H-headerH)
+	rowH := bodyH / float64(rowCount)
+	keyW := math.Min(68, math.Max(46, box.W*0.34))
+	appendUMLStateMachineDividerV1EngineSceneWalk(elements, fmt.Sprintf("%s-state-column-divider", box.ID), box.X+keyW, dividerY, 0, bodyH, updated, map[string]any{"xaligoUmlStateColumnDivider": true})
+	for index := 0; index < rowCount; index++ {
+		rowY := dividerY + float64(index)*rowH
+		if index > 0 {
+			appendUMLStateMachineDividerV1EngineSceneWalk(elements, fmt.Sprintf("%s-state-row-divider-%d", box.ID, index), box.X, rowY, box.W, 0, updated, map[string]any{"xaligoUmlStateRowDivider": true})
+		}
+		appendUMLClassTextV1EngineSceneWalk(elements, fmt.Sprintf("%s-state-key-%d", box.ID, index), box.X+4, rowY+2, math.Max(1, keyW-8), math.Max(1, rowH-4), keys[index], "#052d6e", "center", "middle", math.Min(fontSize, 12), box, updated, map[string]any{"xaligoUmlStateCompartmentKey": true})
+		appendUMLClassTextV1EngineSceneWalk(elements, fmt.Sprintf("%s-state-value-%d", box.ID, index), box.X+keyW+6, rowY+2, math.Max(1, box.W-keyW-12), math.Max(1, rowH-4), values[index], "#052d6e", "left", "middle", math.Min(fontSize, 12), box, updated, map[string]any{"xaligoUmlStateCompartmentValue": true})
+	}
+}
+
+func appendUMLStateMachineDividerV1EngineSceneWalk(elements *[]map[string]any, id string, x, y, w, h float64, updated int64, customData map[string]any) {
+	seed := stableSceneSeedV1EngineSceneTypes(id)
+	*elements = append(*elements, map[string]any{
+		"id": id, "type": "line",
+		"x": x, "y": y, "width": w, "height": h,
+		"angle": 0, "strokeColor": "#052d6e", "backgroundColor": "transparent",
+		"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
+		"roughness": 0, "opacity": 70,
+		"groupIds": []string{}, "roundness": nil,
+		"seed": seed, "version": 1, "versionNonce": seed,
+		"isDeleted": false, "boundElements": nil,
+		"updated": updated, "link": nil, "locked": false,
+		"points":     [][]float64{{0, 0}, {w, h}},
+		"customData": customData,
+	})
+}
+
+func splitNonEmptyLinesV1EngineSceneWalk(value string) []string {
+	var result []string
+	for _, line := range strings.Split(value, "\n") {
+		if line = strings.TrimSpace(line); line != "" {
+			result = append(result, line)
+		}
+	}
+	return result
 }
 
 func appendUMLClassCompartmentsV1EngineSceneWalk(box *entity.Box, elements *[]map[string]any, updated int64) {
@@ -794,6 +906,9 @@ func umlShapeTextColorV1EngineSceneWalk(box *entity.Box) string {
 		return "#052d6e"
 	}
 	if isXaligoClassShapeV1EngineSceneWalk(box) {
+		return "#052d6e"
+	}
+	if isXaligoStateMachineShapeV1EngineSceneWalk(box) {
 		return "#052d6e"
 	}
 	return tableTextColorV1EngineSceneWalk(box)

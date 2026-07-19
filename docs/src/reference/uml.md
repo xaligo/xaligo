@@ -60,7 +60,7 @@ profile. Use the typed element and relation tags listed below.
 | `profile-diagram` | `profile`, `stereotype`, `metaclass` | `extension`, `reference`, `generalization` | At least one profile and stereotype. Extension is stereotype to metaclass; generalization joins stereotypes. | [uml-profile.xal](../examples/samples/uml-profile.xal) |
 | `use-case-diagram` | `actor`, `use-case`, `system-boundary` | `association`, `include`, `extend`, `generalization` | At least one use case. Association joins actor and use-case; include/extend join use-cases; generalization joins equal actor/use-case kinds. | [uml-use-case.xal](../examples/samples/uml-use-case.xal) |
 | `activity-diagram` | `initial`, `final`, `activity`, `action`, `decision`, `merge`, `fork`, `join`, `object-node`; optional `partition` containers | `control-flow`, `object-flow` | At least one activity/action. Control-flow excludes object-node; object-flow includes one. Control-node degrees are validated. | [uml-activity.xal](../examples/samples/uml-activity.xal) |
-| `state-machine-diagram` | `initial`, `final`, `state`, `history`, `choice`, `fork`, `join` | `transition` | At least one state. Initial/final direction and pseudostate degrees are validated. Initial/final/choice/history pseudostates keep compact proportions, and final states render the standard inner dot. Optional positive `row` separates branch rows. | [uml-state-machine.xal](../examples/samples/uml-state-machine.xal) |
+| `state-machine-diagram` | `initial`, `final`, `state`, `history`, `choice`, `fork`, `join` | `transition` | At least one state. Initial/final direction and pseudostate degrees are validated. State entry/do/exit/internal/region compartments and transition event/guard/action labels render visibly. Initial/final/choice/history pseudostates keep compact proportions, and final states render the standard inner dot. Optional positive `row` separates branch rows. | [uml-state-machine.xal](../examples/samples/uml-state-machine.xal) |
 | `sequence-diagram` | `participant`, `lifeline` | `message`, `return-message`, `create-message`, `destroy-message` | At least one participant/lifeline. Every message has a unique `order`; non-participant sources must already be active; create/destroy cannot target themselves. | [uml-sequence.xal](../examples/samples/uml-sequence.xal) |
 | `communication-diagram` | `object`, `participant` | `link`, `message` | At least two participants, one link, and one message. Each ordered message needs a link between the same unordered pair. | [uml-communication.xal](../examples/samples/uml-communication.xal) |
 | `interaction-overview-diagram` | `initial`, `final`, `interaction`, `decision`, `fork`, `join` | `control-flow` | At least one interaction. Initial/final direction and control-node degrees are validated. | [uml-interaction-overview.xal](../examples/samples/uml-interaction-overview.xal) |
@@ -91,9 +91,16 @@ a stop marker and its label must clearly describe destruction, deletion,
 disposal, removal, or termination.
 
 State-machine diagrams can use `row="N"` on elements to separate primary and
-exception branches while preserving source order inside each row. Presentation
-attributes such as `background-color`, `border-color`, and `color` apply to
-state and pseudostate shapes, which is useful for status-family color coding.
+exception branches while preserving source order inside each row. State
+compartments render UML state behavior rows for `entry`, `do`, `exit`,
+`internal`, `region`, and `note`; `note` is useful for simple descriptive
+states that do not need actions. Each state has a cyan name header with white
+text, a white body, horizontal row dividers, and a vertical key/value divider.
+Transition labels use `event [guard] / action-or-effect`. By default, state
+machines use the same xaligo palette as class and sequence diagrams:
+deep-blue borders/text/relations, white bodies, cyan state-name headers, and a
+deep-blue initial dot. Presentation attributes such as `background-color`,
+`border-color`, and `color` can still override individual shapes.
 
 ## Ownership
 
@@ -132,7 +139,7 @@ needs text, `title`, or `name` and cannot contain child elements.
 | `metaclass` | `property`, `note` |
 | `actor` | `responsibility`, `note` |
 | `use-case`, `activity`, `action` | `responsibility`, `constraint`, `note` |
-| `state` | `entry`, `do`, `exit`, `region`, `note` |
+| `state` | `entry`, `do`, `exit`, `internal`, `region`, `note` |
 | `interaction` | `note` |
 | `time-state` | `region`, `constraint`, `note` |
 
@@ -142,9 +149,10 @@ accepted only where a typed compartment is allowed, for compatibility.
 ## Relations and Control Flow
 
 All relations require existing local `src` and `dst`. `title` or `label`
-supplies visible text. `guard` is valid only on control-flow, object-flow, and
-transition. Multiplicity attributes are valid only on association, aggregation,
-composition, and link.
+supplies visible text; `event` supplies the visible text when both are omitted.
+`guard` is valid only on control-flow, object-flow, and transition. `effect` or
+`action` appends `/ ...` to the label. Multiplicity attributes are valid only on
+association, aggregation, composition, and link.
 
 The UML relation kind fixes its stroke and arrowhead. `kind`, `stroke-style`,
 `arrowhead`, `start-arrowhead`, and `end-arrowhead` cannot override it.

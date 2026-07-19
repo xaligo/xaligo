@@ -628,7 +628,7 @@ public connection form.
 | `profile-diagram` | `profile`, `stereotype`, `metaclass` | `extension`, `reference`, `generalization` | Requires a profile and stereotype. Extension is stereotype to metaclass; generalization is stereotype to stereotype. |
 | `use-case-diagram` | `actor`, `use-case`, `system-boundary` | `association`, `include`, `extend`, `generalization` | Requires a use case. Association joins actor and use-case; include/extend join use-cases; generalization joins equal actor/use-case kinds. |
 | `activity-diagram` | `initial`, `final`, `activity`, `action`, `decision`, `merge`, `fork`, `join`, `object-node`; optional `partition` containers | `control-flow`, `object-flow` | Requires an activity/action. Control-flow excludes object-node. Object-flow requires an object-node endpoint. Initial/final direction and control-node degrees are validated. `lanes="vertical|horizontal"`, `theme="xaligo"`, partition swimlanes, and loop flow metadata are supported. |
-| `state-machine-diagram` | `initial`, `final`, `state`, `history`, `choice`, `fork`, `join` | `transition` | Requires a state. Initial/final direction and pseudostate degrees are validated. Initial/final/choice/history pseudostates keep compact proportions; final states render the standard inner dot. Optional positive `row` on elements separates branch rows while preserving source order inside each row. |
+| `state-machine-diagram` | `initial`, `final`, `state`, `history`, `choice`, `fork`, `join` | `transition` | Requires a state. Initial/final direction and pseudostate degrees are validated. `state` compartments render state actions and activities: `entry`, `do`, `exit`, `internal`, `region`, and `note`. The state name renders in a cyan header with white text; the white body is split into rows, and each row has a key/value column divider. Transitions render `event [guard] / action-or-effect` labels. Initial/final/choice/history pseudostates keep compact proportions; final states render the standard inner dot. Optional positive `row` on elements separates branch rows while preserving source order inside each row. State-machine shapes use the class-diagram xaligo palette by default: deep-blue borders/text/relations, white bodies, cyan state-name headers, and a deep-blue initial dot. |
 | `sequence-diagram` | `participant`, `lifeline` | `message`, `return-message`, `create-message`, `destroy-message` | Requires a participant/lifeline. Participants and lifelines render as top headers with dashed vertical lifeline axes, not full container boxes. Every message has a diagram-unique order that controls top-to-bottom anchoring. `message` is synchronous by default; `message mode="async"` renders an asynchronous open-arrow call. `message`, `create-message`, and `destroy-message` draw destination-lifeline activation bars; `return-message` is a dashed response connector and does not start a new activation. Non-participant sources must already be active before sending a non-return message or return. Activation bars extend through the related messages up to the matching return from that lifeline; a fully contained activation is merged into its covering bar. `destroy-message` also draws a stop marker at the destination lifeline and its label must clearly describe destruction, deletion, disposal, removal, or termination. Create/destroy cannot be self messages. |
 | `communication-diagram` | `object`, `participant` | `link`, `message` | Requires two participants, one link, and one message. Every message has a unique order and matching unordered link pair. |
 | `interaction-overview-diagram` | `initial`, `final`, `interaction`, `decision`, `fork`, `join` | `control-flow` | Requires an interaction. Initial/final direction and control-node degrees are validated. |
@@ -724,7 +724,7 @@ typed compartment vocabulary is:
 | `metaclass` | `property`, `note` |
 | `actor` | `responsibility`, `note` |
 | `use-case`, `activity`, `action` | `responsibility`, `constraint`, `note` |
-| `state` | `entry`, `do`, `exit`, `region`, `note` |
+| `state` | `entry`, `do`, `exit`, `internal`, `region`, `note` |
 | `interaction` | `note` |
 | `time-state` | `region`, `constraint`, `note` |
 
@@ -737,8 +737,10 @@ but compartments are not independent connection endpoints.
 ### Relation attributes, order, and time
 
 Every relation requires `src` and `dst`. `title` or `label` supplies its
-visible text. `guard` is allowed only on flows/transitions and is appended as
-`[guard]`. `src-multiplicity` and `dst-multiplicity` are allowed only on
+visible text. When omitted, `event` supplies the label. `guard` is allowed only
+on flows/transitions and is appended as `[guard]`. `effect` or `action` is
+appended as `/ effect-or-action`, with `effect` taking priority when both are
+present. `src-multiplicity` and `dst-multiplicity` are allowed only on
 association, aggregation, composition, and link and are appended in
 source-to-destination order. Relation color and normal connector side, anchor,
 stroke-width, bend, scale, and grid attributes use the `<connection>` rules.

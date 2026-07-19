@@ -244,6 +244,9 @@ func umlActivityNodeSizeV1EngineLayoutUmlActivity(node *entity.Node, maxW float6
 	case "fork", "join":
 		return math.Min(maxW, 120), 24
 	default:
+		if strings.TrimSpace(node.Attr("uml-diagram-kind")) == "state-machine-diagram" && strings.TrimSpace(node.Attr("uml-element-kind")) == "state" {
+			return math.Min(maxW, 190), 112
+		}
 		return math.Min(maxW, 180), 58
 	}
 }
