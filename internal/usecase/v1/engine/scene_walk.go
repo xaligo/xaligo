@@ -226,6 +226,12 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 				backgroundColor = umlActivityShapeBackgroundV1EngineSceneWalk(b)
 				fillStyle = "solid"
 			}
+			if isXaligoClassShapeV1EngineSceneWalk(b) {
+				genStroke = "#052d6e"
+				strokeWidth = 1.35
+				backgroundColor = umlClassShapeBackgroundV1EngineSceneWalk(b)
+				fillStyle = "solid"
+			}
 			if !activityContainer {
 				boundElements := any(nil)
 				shapeCustomData := umlShapeCustomDataV1EngineSceneWalk(b)
@@ -249,6 +255,9 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 				})
 				if isXaligoActivityFinalV1EngineSceneWalk(b) {
 					appendUMLActivityFinalDotV1EngineSceneWalk(b, elements, updated)
+				}
+				if isXaligoClassShapeV1EngineSceneWalk(b) {
+					appendUMLClassHeaderDividerV1EngineSceneWalk(b, elements, updated)
 				}
 				if b.Tag == "entity" {
 					registerConnectionEndpointV1EngineSceneWalk(b, rectID, [4]float64{b.X, b.Y, b.W, b.H}, itemImgRects, itemImgIDs)
@@ -480,6 +489,10 @@ func isXaligoActivityShapeV1EngineSceneWalk(box *entity.Box) bool {
 	return box != nil && box.Tag == "rectangle" && box.Attrs["uml-diagram-kind"] == "activity-diagram"
 }
 
+func isXaligoClassShapeV1EngineSceneWalk(box *entity.Box) bool {
+	return box != nil && box.Tag == "rectangle" && box.Attrs["uml-diagram-kind"] == "class-diagram"
+}
+
 func isUMLActivityContainerV1EngineSceneWalk(box *entity.Box) bool {
 	return box != nil && box.Tag == "uml" && box.Attrs["uml-kind"] == "activity-diagram"
 }
@@ -498,6 +511,39 @@ func umlActivityShapeBackgroundV1EngineSceneWalk(box *entity.Box) string {
 	default:
 		return "#e8f7fd"
 	}
+}
+
+func umlClassShapeBackgroundV1EngineSceneWalk(box *entity.Box) string {
+	if strings.TrimSpace(box.Attrs["tone"]) == "primary" {
+		return "#08b8ea"
+	}
+	switch strings.TrimSpace(box.Attrs["uml-element-kind"]) {
+	case "interface":
+		return "#e6fbf7"
+	case "enumeration":
+		return "#ffffff"
+	default:
+		return "#e8f7fd"
+	}
+}
+
+func appendUMLClassHeaderDividerV1EngineSceneWalk(box *entity.Box, elements *[]map[string]any, updated int64) {
+	y := box.Y + math.Min(44, math.Max(28, box.H*0.28))
+	id := fmt.Sprintf("%s-class-divider", box.ID)
+	seed := stableSceneSeedV1EngineSceneTypes(id)
+	*elements = append(*elements, map[string]any{
+		"id": id, "type": "line",
+		"x": box.X, "y": y, "width": box.W, "height": 0,
+		"angle": 0, "strokeColor": "#052d6e", "backgroundColor": "transparent",
+		"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
+		"roughness": 0, "opacity": 70,
+		"groupIds": []string{}, "roundness": nil,
+		"seed": seed, "version": 1, "versionNonce": seed,
+		"isDeleted": false, "boundElements": nil,
+		"updated": updated, "link": nil, "locked": false,
+		"points":     [][]float64{{0, 0}, {box.W, 0}},
+		"customData": map[string]any{"xaligoUmlClassHeaderDivider": true},
+	})
 }
 
 func isXaligoActivityFinalV1EngineSceneWalk(box *entity.Box) bool {
@@ -528,7 +574,13 @@ func umlShapeTextColorV1EngineSceneWalk(box *entity.Box) string {
 	if isXaligoActivityShapeV1EngineSceneWalk(box) && strings.TrimSpace(box.Attrs["tone"]) == "primary" {
 		return "#ffffff"
 	}
+	if isXaligoClassShapeV1EngineSceneWalk(box) && strings.TrimSpace(box.Attrs["tone"]) == "primary" {
+		return "#ffffff"
+	}
 	if isXaligoActivityShapeV1EngineSceneWalk(box) {
+		return "#052d6e"
+	}
+	if isXaligoClassShapeV1EngineSceneWalk(box) {
 		return "#052d6e"
 	}
 	return tableTextColorV1EngineSceneWalk(box)

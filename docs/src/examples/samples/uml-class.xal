@@ -22,7 +22,7 @@
             <attribute>- discountRate: Decimal</attribute>
             <operation>+ calculateDiscount(): Money</operation>
           </class>
-          <class id="order" title="Order" stereotype="aggregate-root">
+          <class id="order" title="Order" stereotype="aggregate-root" tone="primary">
             <attribute>- id: UUID</attribute>
             <attribute>- status: OrderStatus</attribute>
             <operation>+ confirm()</operation>

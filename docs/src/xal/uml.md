@@ -64,6 +64,14 @@ and `static="true|false"`. Stereotypes render above the classifier name as
 Attributes, operations, literals, constraints, and notes remain classifier
 compartments.
 
+Class diagrams use compact multi-row classifier placement by default so boxes
+read as independent UML classifiers instead of full-width layout panels. Each
+classifier has a real header divider line, and the default theme follows the
+xaligo activity-diagram palette: deep blue borders/text, pale cyan classifier
+fills, green-tinted interfaces, white enumerations, and deep blue relation
+lines. Set `tone="primary"` on an important classifier to use the bright xaligo
+blue fill with white text.
+
 The generic `<element>` and `<relation>` spellings are not valid in the strict
 profile. Use the typed tags in the following table.
 

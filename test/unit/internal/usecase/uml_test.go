@@ -274,6 +274,9 @@ func TestUMLAggregationAndCompositionRemainHeadlessAtDestination(t *testing.T) {
 			element.CustomData.ConnectorStartArrowhead,
 			element.CustomData.ConnectorEndArrowhead,
 		}
+		if element.StrokeColor != "#052d6e" || element.StrokeWidth < 1.3 {
+			t.Fatalf("UML %s line style = color %q width %.2f, want xaligo activity palette", element.CustomData.UMLRelationKind, element.StrokeColor, element.StrokeWidth)
+		}
 		if !element.CustomData.ConnectorStartArrowheadExplicit || !element.CustomData.ConnectorEndArrowheadExplicit {
 			t.Fatalf("UML %s arrowheads must be explicit: %#v", element.CustomData.UMLRelationKind, element.CustomData)
 		}
@@ -295,6 +298,9 @@ func TestUMLAggregationAndCompositionRemainHeadlessAtDestination(t *testing.T) {
 	lineCount := 0
 	for _, operation := range plan.Ops {
 		if operation.Kind != "line" || operation.Line == nil {
+			continue
+		}
+		if operation.Line.BeginArrowType == "none" && operation.Line.EndArrowType == "none" {
 			continue
 		}
 		lineCount++
@@ -328,21 +334,44 @@ func TestUMLClassStereotypeAndModifiersReachEditableScene(t *testing.T) {
 	if classElement == nil || classElement.CustomData.UMLAbstract != "true" || classElement.CustomData.UMLStatic != "true" || classElement.CustomData.UMLCompartmentKinds != "attribute,operation" {
 		t.Fatalf("class UML metadata missing: %#v", scene.Elements)
 	}
+	if classElement.StrokeColor != "#052d6e" || classElement.BackgroundColor != "#e8f7fd" || classElement.StrokeWidth < 1.3 {
+		t.Fatalf("class style = stroke %q background %q width %.2f, want xaligo activity palette", classElement.StrokeColor, classElement.BackgroundColor, classElement.StrokeWidth)
+	}
+	if classElement.Width > 260 || classElement.Height > 180 {
+		t.Fatalf("class box size = %.1fx%.1f, want compact Lucid-like classifier", classElement.Width, classElement.Height)
+	}
 	var raw map[string]any
 	if err := json.Unmarshal(rawScene, &raw); err != nil {
 		t.Fatalf("json.Unmarshal(raw map) error = %v", err)
 	}
 	text := ""
+	var textElement map[string]any
 	for _, rawElement := range raw["elements"].([]any) {
 		element, _ := rawElement.(map[string]any)
 		if element["containerId"] == classElement.ID && element["type"] == "text" {
 			text, _ = element["text"].(string)
+			textElement = element
 			break
 		}
 	}
-	wantText := "<<service>>\n{abstract, static} Repository\n────────\n- store: Store\n+ find(id): Entity"
+	wantText := "<<service>>\n{abstract, static} Repository\n- store: Store\n+ find(id): Entity"
 	if text != wantText {
 		t.Fatalf("class label = %q, want %q", text, wantText)
+	}
+	if textElement["strokeColor"] != "#052d6e" {
+		t.Fatalf("class text color = %q, want xaligo text color", textElement["strokeColor"])
+	}
+	foundDivider := false
+	for _, rawElement := range raw["elements"].([]any) {
+		element, _ := rawElement.(map[string]any)
+		customData, _ := element["customData"].(map[string]any)
+		if customData["xaligoUmlClassHeaderDivider"] == true {
+			foundDivider = true
+			break
+		}
+	}
+	if !foundDivider {
+		t.Fatalf("class header divider missing: %s", rawScene)
 	}
 	xyflow, err := newUsecase().RenderXYFlow(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {

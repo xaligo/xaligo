@@ -1058,7 +1058,7 @@ func normalizeUMLElementV1EngineParseUml(source *entity.Node, scopedID, diagramK
 		}
 	}
 	if len(compartments) > 0 {
-		attrs["title"] += "\n────────\n" + strings.Join(compartments, "\n")
+		attrs["title"] += "\n" + strings.Join(compartments, "\n")
 		attrs["uml-compartment-kinds"] = strings.Join(compartmentKinds, ",")
 	}
 	return &entity.Node{Tag: "rectangle", Attrs: attrs, Position: source.Position}
@@ -1116,6 +1116,12 @@ func normalizeUMLRelationV1EngineParseUml(source *entity.Node, scopedSrc, scoped
 		attrs["color"] = "#052d6e"
 	}
 	if diagramKind == "activity-diagram" && strings.TrimSpace(attrs["stroke-width"]) == "" {
+		attrs["stroke-width"] = "1.4"
+	}
+	if diagramKind == "class-diagram" && strings.TrimSpace(attrs["color"]) == "" {
+		attrs["color"] = "#052d6e"
+	}
+	if diagramKind == "class-diagram" && strings.TrimSpace(attrs["stroke-width"]) == "" {
 		attrs["stroke-width"] = "1.4"
 	}
 	switch source.Tag {
