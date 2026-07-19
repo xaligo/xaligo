@@ -136,8 +136,8 @@ when the new task can be verified and committed independently.
 |---|---|---|---|
 | Q05.1 | not-started | Freeze the supported UML sample matrix and map each sample to its owning syntax, parser, scene, layout, routing, and renderer responsibilities. | inventory of `docs/src/examples/samples/uml-*.xal`; owner map recorded in this file or docs |
 | Q05.2 | not-started | Establish a per-UML visual baseline before edits: validate and render every `uml-*.xal` sample to SVG, then identify overlap, spacing, typography, connector, and semantic-notation gaps. | `go run ./cmd validate docs/src/examples/samples/uml-all.xal`; SVG render set under `output/uml-quality/` |
-| Q05.3 | not-started | Improve activity-diagram semantic accuracy: initial/final nodes, actions, object nodes, decisions, forks, joins, merges, responsibilities, constraints, guards, `control-flow`, and `object-flow`. | `uml-activity.xal` parser/scene assertions plus SVG geometry checks |
-| Q05.4 | not-started | Improve activity-diagram design quality: left-to-right reading flow, diamond/bar/final-node proportions, lane spacing, label placement, and control-vs-object-flow distinction. | regenerated activity SVG visual review plus focused coordinate assertions |
+| Q05.3 | not-started | Improve activity-diagram semantic accuracy: activity partitions/swimlanes, initial/final nodes, actions, object nodes, decisions, forks, joins, merges, responsibilities, constraints, guards, `control-flow`, `object-flow`, and backward loop edges. | `uml-activity.xal` plus an ATM-style swimlane sample with parser/scene assertions and SVG geometry checks |
+| Q05.4 | not-started | Improve activity-diagram design quality: xaligo-logo color theme, vertical lane headers, left-to-right/top-to-bottom reading flow, diamond/bar/final-node proportions, lane spacing, label placement, and control-vs-object-flow distinction. | regenerated activity SVG visual review plus focused coordinate assertions |
 | Q05.5 | not-started | Improve class-diagram semantic accuracy: class boxes, attributes, operations, visibility, stereotypes, abstract/static markers, inheritance, realization, association, aggregation, composition, dependency, and multiplicity. | `uml-class.xal` structural tests and relation routing assertions |
 | Q05.6 | not-started | Improve class-diagram design quality: compartment rhythm, long member wrapping, stereotype readability, relation label spacing, crow-foot/diamond marker clarity, and dense-layout crossing reduction. | class SVG/PPTX review and text-fit tests |
 | Q05.7 | not-started | Improve sequence-diagram semantic accuracy: lifelines, participants, activation bars, sync/async messages, returns, self messages, create/delete, ordering, and message labels. | `uml-sequence.xal` layout tests and route ordering assertions |
@@ -374,6 +374,75 @@ verify:
   labels avoiding collisions.
 - SVG output quality sufficient for documentation, with additional format
   checks added when shared contracts or encoder behavior changes.
+
+## Target Activity Diagram Capability
+
+This section is a planning target, not a statement of currently implemented
+behavior. Use it to drive the first UML activity-diagram implementation slice.
+
+The reference capability is an ATM withdrawal activity diagram with three
+vertical swimlanes for actor/system responsibility, a visible lane-header row,
+start and final nodes, rounded action nodes, object-processing nodes, decision
+diamonds, guard labels, repeated PIN and amount loops, and orthogonal arrows
+that cross lane boundaries without obscuring labels. The resulting xaligo
+sample should be able to express the same diagram structure while using xaligo
+brand colors rather than the reference image's yellow/orange palette.
+
+Proposed syntax additions should preserve existing `<activity-diagram>` inputs:
+
+```xml
+<activity-diagram direction="right" theme="xaligo" lanes="vertical">
+  <partition id="customer" title="Customer">
+    <initial id="start" />
+    <action id="start-session" title="Start session" tone="primary" />
+  </partition>
+  <partition id="atm" title="ATM">
+    <action id="request-pin" title="Request PIN" tone="primary" />
+    <decision id="pin-valid" />
+    <action id="process-pin" title="Process PIN" />
+  </partition>
+  <partition id="bank" title="Bank">
+    <action id="approve-card" title="Approve card" />
+  </partition>
+
+  <control-flow src="start" dst="start-session" />
+  <control-flow src="request-pin" dst="pin-valid" guard="PIN entered" />
+  <control-flow src="pin-valid" dst="request-pin" guard="invalid PIN" />
+</activity-diagram>
+```
+
+The parser should accept either nested nodes inside `<partition>` or a
+node-level `lane="partition-id"` reference, but not both for the same node.
+Every partition requires a stable `id` and non-empty `title`. A node may belong
+to at most one partition. Flow endpoints remain normal activity node IDs, and
+cross-partition flow is allowed.
+
+The activity layout should reserve the top header band for lane titles, divide
+the content area into equal or explicitly weighted vertical lanes, keep each
+node inside its owning lane, and route cross-lane flows orthogonally. Backward
+or retry flows, such as invalid PIN and invalid amount loops, should route on a
+separate lane outside the forward path and keep guard labels readable. Decision
+diamonds must preserve square proportions, fork/join bars must remain thin and
+visually distinct, and final nodes must render as UML bullseye finals.
+
+Use the xaligo readme logo as the activity theme source:
+
+| Token | Color | Usage |
+|---|---|---|
+| `xaligo-cyan` | `#08b8ea` | primary lane headers, primary action fills, selected emphasis |
+| `xaligo-navy` | `#052d6e` | text, borders, arrows, decision outlines, fork/join bars |
+| `xaligo-teal` | `#04b79f` | success/object-flow accent and secondary emphasis |
+
+Recommended derived fills are `#e8f7fd` for normal activity nodes,
+`#e6fbf7` for object-flow or data-processing nodes, and `#f8fbff` for lane
+backgrounds. Do not use the reference image's yellow/orange palette as the
+default xaligo activity theme.
+
+The first implementation slice should add a small ATM-style `.xal` sample,
+focused parser/layout tests for partitions and loop routing, SVG geometry
+assertions for lane headers and label clearance, and a visual render check for
+the generated sample. Cross-format checks become mandatory when the shared
+scene or draw plan changes.
 
 ## Definition of Done
 
