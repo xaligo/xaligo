@@ -1294,11 +1294,23 @@ func normalizeUMLElementV1EngineParseUml(source *entity.Node, scopedID, diagramK
 	var stateCompartmentValues []string
 	var attributeCompartments []string
 	var operationCompartments []string
+	var providedInterfaces []string
+	var requiredInterfaces []string
 	attributeLines := 0
 	operationLines := 0
 	for _, child := range source.Children {
 		label := umlCompartmentLabelV1EngineParseUml(diagramKind, source.Tag, child)
 		if label != "" {
+			if diagramKind == "component-diagram" && source.Tag == "component" {
+				switch child.Tag {
+				case "provided-interface":
+					providedInterfaces = append(providedInterfaces, label)
+					continue
+				case "required-interface":
+					requiredInterfaces = append(requiredInterfaces, label)
+					continue
+				}
+			}
 			compartments = append(compartments, label)
 			compartmentKinds = append(compartmentKinds, child.Tag)
 			if diagramKind == "state-machine-diagram" && source.Tag == "state" {
@@ -1322,6 +1334,12 @@ func normalizeUMLElementV1EngineParseUml(source *entity.Node, scopedID, diagramK
 		attrs["uml-class-operation-lines"] = strconv.Itoa(operationLines)
 		attrs["uml-class-attribute-text"] = strings.Join(attributeCompartments, "\n")
 		attrs["uml-class-operation-text"] = strings.Join(operationCompartments, "\n")
+	}
+	if len(providedInterfaces) > 0 {
+		attrs["uml-component-provided-interfaces"] = strings.Join(providedInterfaces, "\n")
+	}
+	if len(requiredInterfaces) > 0 {
+		attrs["uml-component-required-interfaces"] = strings.Join(requiredInterfaces, "\n")
 	}
 	if diagramKind == "state-machine-diagram" && source.Tag == "state" {
 		attrs["uml-state-header-text"] = strings.TrimSpace(attrs["title"])

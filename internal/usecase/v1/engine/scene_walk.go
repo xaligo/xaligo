@@ -286,6 +286,7 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 				}
 				if isXaligoComponentShapeV1EngineSceneWalk(b) {
 					appendUMLComponentAdornmentV1EngineSceneWalk(b, elements, updated)
+					appendUMLComponentBoundaryInterfacesV1EngineSceneWalk(b, elements, updated)
 				}
 				if b.Tag == "entity" {
 					registerConnectionEndpointV1EngineSceneWalk(b, rectID, [4]float64{b.X, b.Y, b.W, b.H}, itemImgRects, itemImgIDs)
@@ -965,6 +966,128 @@ func appendUMLComponentAdornmentV1EngineSceneWalk(box *entity.Box, elements *[]m
 			"customData": map[string]any{"xaligoUmlComponentAdornment": true},
 		})
 	}
+}
+
+func appendUMLComponentBoundaryInterfacesV1EngineSceneWalk(box *entity.Box, elements *[]map[string]any, updated int64) {
+	provided := splitUMLComponentInterfaceLabelsV1EngineSceneWalk(box.Attrs["uml-component-provided-interfaces"])
+	required := splitUMLComponentInterfaceLabelsV1EngineSceneWalk(box.Attrs["uml-component-required-interfaces"])
+	appendUMLComponentProvidedInterfacesV1EngineSceneWalk(box, elements, updated, provided)
+	appendUMLComponentRequiredInterfacesV1EngineSceneWalk(box, elements, updated, required)
+}
+
+func splitUMLComponentInterfaceLabelsV1EngineSceneWalk(value string) []string {
+	var labels []string
+	for _, line := range strings.Split(value, "\n") {
+		if label := strings.TrimSpace(line); label != "" {
+			labels = append(labels, label)
+		}
+	}
+	return labels
+}
+
+func appendUMLComponentProvidedInterfacesV1EngineSceneWalk(box *entity.Box, elements *[]map[string]any, updated int64, labels []string) {
+	if len(labels) == 0 {
+		return
+	}
+	diameter := math.Min(18, math.Max(12, box.H*0.12))
+	stem := math.Min(18, math.Max(10, box.W*0.06))
+	for index, label := range labels {
+		cy := umlComponentInterfaceYV1EngineSceneWalk(box, len(labels), index, 0.36)
+		circleX := box.X - stem - diameter
+		circleY := cy - diameter/2
+		circleID := fmt.Sprintf("%s-provided-interface-%d", box.ID, index)
+		circleSeed := stableSceneSeedV1EngineSceneTypes(circleID)
+		*elements = append(*elements, map[string]any{
+			"id": circleID, "type": "ellipse",
+			"x": circleX, "y": circleY, "width": diameter, "height": diameter,
+			"angle": 0, "strokeColor": "#052d6e", "backgroundColor": "#d8f4ff",
+			"fillStyle": "solid", "strokeWidth": 1.2, "strokeStyle": "solid",
+			"roughness": 0, "opacity": 100,
+			"groupIds": []string{}, "roundness": nil,
+			"seed": circleSeed, "version": 1, "versionNonce": circleSeed,
+			"isDeleted": false, "boundElements": nil,
+			"updated": updated, "link": nil, "locked": false,
+			"customData": map[string]any{"xaligoUmlComponentInterfaceSymbol": true, "xaligoUmlComponentInterfaceKind": "provided", "xaligoUmlComponentInterfaceLabel": label},
+		})
+		appendUMLComponentInterfaceLineV1EngineSceneWalk(elements, fmt.Sprintf("%s-provided-interface-%d-stem", box.ID, index), box.X-stem, cy, box.X, cy, updated, map[string]any{"xaligoUmlComponentInterfaceStem": true, "xaligoUmlComponentInterfaceKind": "provided"})
+		appendUMLComponentInterfaceLabelV1EngineSceneWalk(elements, fmt.Sprintf("%s-provided-interface-%d-label", box.ID, index), circleX-diameter*1.3, cy+diameter*0.55, math.Max(60, box.W*0.35), label, "right", box, updated, map[string]any{"xaligoUmlComponentInterfaceLabelText": true, "xaligoUmlComponentInterfaceKind": "provided"})
+	}
+}
+
+func appendUMLComponentRequiredInterfacesV1EngineSceneWalk(box *entity.Box, elements *[]map[string]any, updated int64, labels []string) {
+	if len(labels) == 0 {
+		return
+	}
+	radius := math.Min(10, math.Max(7, box.H*0.065))
+	stem := math.Min(18, math.Max(10, box.W*0.06))
+	for index, label := range labels {
+		cy := umlComponentInterfaceYV1EngineSceneWalk(box, len(labels), index, 0.48)
+		socketX := box.X + box.W + stem
+		socketID := fmt.Sprintf("%s-required-interface-%d", box.ID, index)
+		socketSeed := stableSceneSeedV1EngineSceneTypes(socketID)
+		*elements = append(*elements, map[string]any{
+			"id": socketID, "type": "line",
+			"x": socketX, "y": cy - radius, "width": radius, "height": radius * 2,
+			"angle": 0, "strokeColor": "#052d6e", "backgroundColor": "transparent",
+			"fillStyle": "solid", "strokeWidth": 1.35, "strokeStyle": "solid",
+			"roughness": 0, "opacity": 100,
+			"groupIds": []string{}, "roundness": nil,
+			"seed": socketSeed, "version": 1, "versionNonce": socketSeed,
+			"isDeleted": false, "boundElements": nil,
+			"updated": updated, "link": nil, "locked": false,
+			"points":     [][]float64{{0, 0}, {radius * 0.55, radius * 0.15}, {radius, radius}, {radius * 0.55, radius * 1.85}, {0, radius * 2}},
+			"customData": map[string]any{"xaligoUmlComponentInterfaceSymbol": true, "xaligoUmlComponentInterfaceKind": "required", "xaligoUmlComponentInterfaceLabel": label},
+		})
+		appendUMLComponentInterfaceLineV1EngineSceneWalk(elements, fmt.Sprintf("%s-required-interface-%d-stem", box.ID, index), box.X+box.W, cy, socketX, cy, updated, map[string]any{"xaligoUmlComponentInterfaceStem": true, "xaligoUmlComponentInterfaceKind": "required"})
+		appendUMLComponentInterfaceLabelV1EngineSceneWalk(elements, fmt.Sprintf("%s-required-interface-%d-label", box.ID, index), socketX+radius+4, cy+radius*0.55, math.Max(60, box.W*0.35), label, "left", box, updated, map[string]any{"xaligoUmlComponentInterfaceLabelText": true, "xaligoUmlComponentInterfaceKind": "required"})
+	}
+}
+
+func umlComponentInterfaceYV1EngineSceneWalk(box *entity.Box, count, index int, base float64) float64 {
+	if count < 1 {
+		count = 1
+	}
+	available := math.Max(1, box.H*0.46)
+	step := available / float64(count+1)
+	return box.Y + box.H*base + step*float64(index+1)
+}
+
+func appendUMLComponentInterfaceLineV1EngineSceneWalk(elements *[]map[string]any, id string, x1, y1, x2, y2 float64, updated int64, customData map[string]any) {
+	seed := stableSceneSeedV1EngineSceneTypes(id)
+	*elements = append(*elements, map[string]any{
+		"id": id, "type": "line",
+		"x": x1, "y": y1, "width": x2 - x1, "height": y2 - y1,
+		"angle": 0, "strokeColor": "#052d6e", "backgroundColor": "transparent",
+		"fillStyle": "solid", "strokeWidth": 1.2, "strokeStyle": "solid",
+		"roughness": 0, "opacity": 100,
+		"groupIds": []string{}, "roundness": nil,
+		"seed": seed, "version": 1, "versionNonce": seed,
+		"isDeleted": false, "boundElements": nil,
+		"updated": updated, "link": nil, "locked": false,
+		"points":     [][]float64{{0, 0}, {x2 - x1, y2 - y1}},
+		"customData": customData,
+	})
+}
+
+func appendUMLComponentInterfaceLabelV1EngineSceneWalk(elements *[]map[string]any, id string, x, y, width float64, label, align string, box *entity.Box, updated int64, customData map[string]any) {
+	fontSize := math.Max(11, attrFloatV1EngineLayoutAttributes(box.Attrs["font-size"], 14)-2)
+	customData["xaligoTextLayout"] = sceneTextLayoutV1EngineSceneBuild(entity.TextRoleLabel, true, 1.2)
+	seed := stableSceneSeedV1EngineSceneTypes(id)
+	*elements = append(*elements, map[string]any{
+		"id": id, "type": "text",
+		"x": x, "y": y, "width": width, "height": math.Max(14, fontSize*1.4),
+		"angle": 0, "strokeColor": "#052d6e", "backgroundColor": "transparent",
+		"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
+		"roughness": 0, "opacity": 100,
+		"groupIds": []string{}, "roundness": nil,
+		"seed": seed, "version": 1, "versionNonce": seed,
+		"isDeleted": false, "boundElements": nil,
+		"updated": updated, "link": nil, "locked": false,
+		"text": label, "fontSize": fontSize, "fontFamily": fontFamilyV1EngineSceneWalk(box.Attrs["font-family"]),
+		"textAlign": align, "verticalAlign": "middle",
+		"containerId": nil, "originalText": label, "lineHeight": 1.2,
+		"customData": customData,
+	})
 }
 
 func groupHeaderYAvoidingFrameMetadataV1EngineSceneWalk(y, height float64, frame *entity.Box) float64 {

@@ -208,6 +208,9 @@ func layoutNodeV1EngineLayoutNode(node *entity.Node, target *entity.Box, x, y, w
 			if node.Tag == "uml" && node.Attr("uml-kind") == "class-diagram" {
 				return layoutUMLClassDiagramV1EngineLayoutUmlClass(node, target, gInnerX, gInnerY, gInnerW, gInnerH)
 			}
+			if node.Tag == "uml" && node.Attr("uml-kind") == "component-diagram" {
+				return layoutUMLClassDiagramV1EngineLayoutUmlClass(node, target, gInnerX, gInnerY, gInnerW, gInnerH)
+			}
 			if node.Tag == "uml" && node.Attr("uml-kind") == "state-machine-diagram" {
 				return layoutUMLStateMachineDiagramV1EngineLayoutUmlActivity(node, target, gInnerX, gInnerY, gInnerW, gInnerH)
 			}

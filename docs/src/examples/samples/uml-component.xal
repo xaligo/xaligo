@@ -4,15 +4,11 @@
     <frame id="component" title="Ordering Service Components" version="2026.07" width="1560" height="820" class="pa-3" margin-top="48">
       <metadata align="right" width="156" key-width="56" font-size="12" />
       <uml id="service-components">
-        <component-diagram direction="right">
+        <component-diagram direction="right" grid="3">
           <component id="web" title="Web UI">
             <required-interface>Ordering API</required-interface>
           </component>
           <port id="web-api" owner="web" side="right" title="orders: required" />
-          <interface id="ordering-api" title="Ordering API">
-            <operation>+ submitOrder(command)</operation>
-            <operation>+ getOrder(id)</operation>
-          </interface>
           <component id="orders" title="Order Service">
             <provided-interface>Ordering API</provided-interface>
             <required-interface>Order Store</required-interface>
@@ -20,10 +16,6 @@
           </component>
           <port id="orders-http" owner="orders" side="left" title="http: provided" />
           <port id="orders-store" owner="orders" side="right" title="store: required" />
-          <interface id="store-api" title="Order Store">
-            <operation>+ save(order)</operation>
-            <operation>+ find(id)</operation>
-          </interface>
           <component id="repository-adapter" title="PostgreSQL Adapter">
             <provided-interface>Order Store</provided-interface>
           </component>
@@ -33,9 +25,7 @@
           </artifact>
 
           <assembly src="web-api" dst="orders-http" title="HTTP assembly" />
-          <realization src="orders" dst="ordering-api" title="provides" />
           <assembly src="orders-store" dst="adapter-store" title="persistence assembly" />
-          <realization src="repository-adapter" dst="store-api" title="provides" />
           <dependency src="repository-adapter" dst="schema" title="uses schema" />
         </component-diagram>
       </uml>

@@ -464,6 +464,39 @@ func TestUMLComponentRendersComponentNotation(t *testing.T) {
 	}
 }
 
+func TestUMLComponentRendersBoundaryInterfaces(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="760" height="420"><uml id="components"><component-diagram><component id="service" title="Order Service"><provided-interface>Ordering API</provided-interface><required-interface>Order Store</required-interface></component></component-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var raw map[string]any
+	if err := json.Unmarshal(rawScene, &raw); err != nil {
+		t.Fatalf("json.Unmarshal(raw map) error = %v", err)
+	}
+	elements, _ := raw["elements"].([]any)
+	provided, required := 0, 0
+	var component map[string]any
+	for _, rawElement := range elements {
+		element, _ := rawElement.(map[string]any)
+		customData, _ := element["customData"].(map[string]any)
+		switch {
+		case customData["xaligoUmlElementKind"] == "component":
+			component = element
+		case customData["xaligoUmlComponentInterfaceSymbol"] == true && customData["xaligoUmlComponentInterfaceKind"] == "provided":
+			provided++
+		case customData["xaligoUmlComponentInterfaceSymbol"] == true && customData["xaligoUmlComponentInterfaceKind"] == "required":
+			required++
+		}
+	}
+	if provided != 1 || required != 1 {
+		t.Fatalf("boundary interface counts = provided %d required %d, want 1 each", provided, required)
+	}
+	if component == nil {
+		t.Fatalf("component shape missing")
+	}
+}
+
 func TestUMLStateMachineFinalRendersFinalDot(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="760" height="420"><uml id="state"><state-machine-diagram><initial id="start"/><state id="open" title="Open"/><final id="done"/><transition src="start" dst="open"/><transition src="open" dst="done"/></state-machine-diagram></uml></frame></frames></xaligo>`)
 	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
