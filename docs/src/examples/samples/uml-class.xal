@@ -1,0 +1,52 @@
+<xaligo version="1">
+  <data></data>
+  <frames>
+    <frame id="class" width="1440" height="760" class="pa-3">
+      <uml id="domain-model" title="Ordering Domain">
+        <class-diagram direction="right">
+          <interface id="repository" title="OrderRepository">
+            <operation>+ save(order: Order)</operation>
+            <operation>+ find(id: UUID): Order</operation>
+          </interface>
+          <class id="sql-repository" title="SqlOrderRepository">
+            <attribute>- dataSource: DataSource</attribute>
+            <operation>+ save(order: Order)</operation>
+            <operation>+ find(id: UUID): Order</operation>
+          </class>
+          <class id="customer" title="Customer">
+            <attribute>- id: UUID</attribute>
+            <attribute>- name: String</attribute>
+            <operation>+ placeOrder(): Order</operation>
+          </class>
+          <class id="premium-customer" title="PremiumCustomer">
+            <attribute>- discountRate: Decimal</attribute>
+            <operation>+ calculateDiscount(): Money</operation>
+          </class>
+          <class id="order" title="Order">
+            <attribute>- id: UUID</attribute>
+            <attribute>- status: OrderStatus</attribute>
+            <operation>+ confirm()</operation>
+            <operation>+ total(): Money</operation>
+          </class>
+          <class id="order-line" title="OrderLine">
+            <attribute>- productId: UUID</attribute>
+            <attribute>- quantity: Integer</attribute>
+            <operation>+ subtotal(): Money</operation>
+          </class>
+          <enumeration id="status" title="OrderStatus">
+            <literal>Draft</literal>
+            <literal>Confirmed</literal>
+            <literal>Cancelled</literal>
+          </enumeration>
+
+          <realization src="sql-repository" dst="repository" title="implements" />
+          <generalization src="premium-customer" dst="customer" title="specializes" />
+          <association src="customer" dst="order" title="places" src-multiplicity="1" dst-multiplicity="0..*" />
+          <composition src="order" dst="order-line" title="contains" src-multiplicity="1" dst-multiplicity="1..*" />
+          <dependency src="order" dst="status" title="uses type" />
+          <dependency src="order" dst="repository" title="persists through" />
+        </class-diagram>
+      </uml>
+    </frame>
+  </frames>
+</xaligo>

@@ -1,8 +1,8 @@
 # xaligo
 
 xaligo is a diagram-as-code engine for architecture and network diagrams. It
-renders the Vue-style `.xal` XML DSL to Excalidraw, SVG, PPTX, XYFlow, and
-Isoflow-compatible output.
+renders the Vue-style `.xal` XML DSL to Excalidraw, SVG, PPTX, PDF, Excel,
+XYFlow, and Isoflow-compatible output.
 
 ![Hybrid enterprise architecture](images/complex-hybrid-architecture.svg)
 
@@ -14,7 +14,7 @@ The renderer is designed around a single shared pipeline:
   -> layout
   -> shared scene and routing
   -> output encoder
-  -> Excalidraw | SVG | PPTX | XYFlow | Isoflow
+  -> Excalidraw | SVG | PPTX | PDF | Excel | XYFlow | Isoflow
 ```
 
 Core features:
@@ -26,6 +26,8 @@ Core features:
 - Manual bend points in frame coordinates.
 - Group, rectangle, port, and item endpoints.
 - Excalidraw-friendly editable output.
+- Frame-oriented SVG, PPTX, PDF, and Excel output, with one frame mapped to one
+  file, slide, page, or worksheet by default.
 - SVG and PPTX output with line jumps, legends, and export-focused routing.
 
 Use this documentation when authoring `.xal` files, rendering output, or

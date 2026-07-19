@@ -9,6 +9,7 @@ import (
 	"unicode"
 
 	"github.com/xaligo/xaligo/internal/entity"
+	"github.com/xaligo/xaligo/internal/share"
 )
 
 const svgDefaultPxPerInch = 96.0
@@ -32,25 +33,36 @@ func (rcvr *svgRepository) Render(plan entity.Plan, pxPerInch float64, legendPos
 
 	w := plan.Slide.W * pxPerInch
 	h := plan.Slide.H * pxPerInch
-	bounds := svgOpsBounds(plan.Ops, pxPerInch, w, h)
-	const diagramPad = 24.0
-	pad := 0.0
-	if bounds.hasPath || bounds.minX < 0 || bounds.minY < 0 || bounds.maxX > w || bounds.maxY > h {
-		pad = diagramPad
+	diagramOffsetX, diagramOffsetY := 0.0, 0.0
+	diagramW, diagramH := w, h
+	if !plan.Slide.CropToSlide {
+		bounds := svgOpsBounds(plan.Ops, pxPerInch, w, h)
+		const diagramPad = 24.0
+		pad := 0.0
+		if bounds.hasPath || bounds.minX < 0 || bounds.minY < 0 || bounds.maxX > w || bounds.maxY > h {
+			pad = diagramPad
+		}
+		diagramOffsetX = pad - bounds.minX
+		diagramOffsetY = pad - bounds.minY
+		diagramW = bounds.maxX - bounds.minX + pad*2
+		diagramH = bounds.maxY - bounds.minY + pad*2
 	}
-	diagramOffsetX := pad - bounds.minX
-	diagramOffsetY := pad - bounds.minY
-	diagramW := bounds.maxX - bounds.minX + pad*2
-	diagramH := bounds.maxY - bounds.minY + pad*2
 	layout := svgLegendLayout(diagramW, diagramH, plan.Legend, legendPosition)
 
 	var b bytes.Buffer
 	b.WriteString(`<?xml version="1.0" encoding="UTF-8"?>` + "\n")
 	fmt.Fprintf(&b, `<svg xmlns="http://www.w3.org/2000/svg" width="%s" height="%s" viewBox="0 0 %s %s">`+"\n", num(layout.canvasW), num(layout.canvasH), num(layout.canvasW), num(layout.canvasH))
 	writeMarkerDefinitions(&b)
+	if plan.Slide.CropToSlide {
+		fmt.Fprintf(&b, `<defs><clipPath id="xaligo-slide-clip" clipPathUnits="userSpaceOnUse"><rect x="0" y="0" width="%s" height="%s"/></clipPath></defs>`+"\n", num(w), num(h))
+	}
 	fmt.Fprintf(&b, `<rect x="0" y="0" width="%s" height="%s" fill="#%s"/>`+"\n", num(layout.canvasW), num(layout.canvasH), color(plan.Slide.Background, "FFFFFF"))
 
-	fmt.Fprintf(&b, `<g transform="translate(%s %s)">`+"\n", num(layout.diagramX+diagramOffsetX), num(layout.diagramY+diagramOffsetY))
+	clip := ""
+	if plan.Slide.CropToSlide {
+		clip = ` clip-path="url(#xaligo-slide-clip)"`
+	}
+	fmt.Fprintf(&b, `<g transform="translate(%s %s)"%s>`+"\n", num(layout.diagramX+diagramOffsetX), num(layout.diagramY+diagramOffsetY), clip)
 	for _, op := range plan.Ops {
 		writeOp(&b, op, pxPerInch)
 	}
@@ -550,28 +562,7 @@ func svgBreakTextToken(value string, maxWidth, fontSize float64, bold bool) []st
 }
 
 func svgTextWidth(value string, fontSize float64, bold bool) float64 {
-	factor := 1.0
-	if bold {
-		factor = 1.05
-	}
-	units := 0.0
-	for _, r := range value {
-		switch {
-		case unicode.Is(unicode.Mn, r), unicode.Is(unicode.Me, r):
-			continue
-		case unicode.IsSpace(r):
-			units += 0.33
-		case r >= 0x1100:
-			units += 1.0
-		case unicode.IsPunct(r):
-			units += 0.42
-		case unicode.IsUpper(r):
-			units += 0.62
-		default:
-			units += 0.55
-		}
-	}
-	return units * fontSize * factor
+	return share.PresentationTextWidth(value, fontSize, bold)
 }
 
 func svgTextClipID(op entity.DrawOp, x, y, w, h float64) string {

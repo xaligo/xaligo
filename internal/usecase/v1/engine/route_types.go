@@ -53,6 +53,9 @@ type routerOptionsV1EngineRouteTypes struct {
 	// scoring, but are not solid obstacles. Container borders use this so a
 	// connector may cross a frame while avoiding running along its stroke.
 	Reserved [][]segmentV1EngineRouteTypes
+	// HardObstacles are exclusion zones that the final polyline may never
+	// enter. Frame metadata reserve strips use this stricter postcondition.
+	HardObstacles []rectV1EngineRouteTypes
 }
 
 func defaultRouterOptionsV1EngineRouteTypes() routerOptionsV1EngineRouteTypes {

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1644" height="904" viewBox="0 0 1644 904">
+<defs><marker id="xaligo-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker><marker id="xaligo-triangle" markerWidth="8" markerHeight="10" refX="7" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 8 5 L 0 10 z" fill="context-stroke"/></marker><marker id="xaligo-stealth" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 10 5 L 0 10 L 3 5 z" fill="context-stroke"/></marker><marker id="xaligo-diamond" markerWidth="12" markerHeight="8" refX="11" refY="4" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 4 L 5.5 0 L 11 4 L 5.5 8 z" fill="context-stroke"/></marker><marker id="xaligo-oval" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto" markerUnits="strokeWidth"><circle cx="3.5" cy="3.5" r="2.5" fill="context-stroke"/></marker></defs>
+<rect x="0" y="0" width="1644" height="904" fill="#FFFFFF"/>
+<g transform="translate(42 42)">
+<rect x="0" y="0" width="1560" height="820" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="24" y="24" width="1512" height="772" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="36" y="68" width="134.4" height="716" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="186.4" y="68" width="134.4" height="716" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="336.8" y="68" width="134.4" height="716" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="487.2" y="68" width="134.4" height="716" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="637.6" y="68" width="134.4" height="716" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="788" y="68" width="134.4" height="716" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="938.4" y="68" width="134.4" height="716" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="1088.8" y="68" width="134.4" height="716" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="1239.2" y="68" width="134.4" height="716" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="1389.6" y="68" width="134.4" height="716" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<path d="M 325.8 426 L 632.6 426" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<path d="M 482.2 426 L 476.2 426" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1" stroke-dasharray="8 6" marker-end="url(#xaligo-triangle)"/>
+<path d="M 927.4 426 L 1234.2 426" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<path d="M 1228.2 426 L 1384.6 426" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1" stroke-dasharray="8 6" marker-end="url(#xaligo-triangle)"/>
+<path d="M 1083.8 426 L 1077.8 426" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1" stroke-dasharray="8 6" marker-end="url(#xaligo-triangle)"/>
+<defs><clipPath id="xaligo-text-clip-f6f920a9e5a7c52" clipPathUnits="userSpaceOnUse"><rect x="36" y="36" width="278" height="24"/></clipPath></defs>
+<text x="36" y="46" fill="#1E1E1E" font-family="Virgil" font-size="10" text-anchor="start" clip-path="url(#xaligo-text-clip-f6f920a9e5a7c52)"><tspan x="36" y="46">Ordering Service</tspan><tspan x="36" dy="12">Components</tspan></text>
+<defs><clipPath id="xaligo-text-clip-75f499e976c1756" clipPathUnits="userSpaceOnUse"><rect x="40" y="70" width="126.4" height="712"/></clipPath></defs>
+<text x="103.2" y="414.8" fill="#1E1E1E" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-75f499e976c1756)"><tspan x="103.2" y="414.8">Web UI</tspan><tspan x="103.2" dy="16.8">────────</tspan><tspan x="103.2" dy="16.8">Ordering API</tspan></text>
+<defs><clipPath id="xaligo-text-clip-1d06a76766cc3d8f" clipPathUnits="userSpaceOnUse"><rect x="190.4" y="70" width="126.4" height="712"/></clipPath></defs>
+<text x="253.6" y="431.6" fill="#1E1E1E" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-1d06a76766cc3d8f)"><tspan x="253.6" y="431.6">orders: required</tspan></text>
+<defs><clipPath id="xaligo-text-clip-d4503c319b43d61f" clipPathUnits="userSpaceOnUse"><rect x="340.8" y="70" width="126.4" height="712"/></clipPath></defs>
+<text x="404" y="389.6" fill="#1E1E1E" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-d4503c319b43d61f)"><tspan x="404" y="389.6">Ordering API</tspan><tspan x="404" dy="16.8">────────</tspan><tspan x="404" dy="16.8">+</tspan><tspan x="404" dy="16.8">submitOrder(comm</tspan><tspan x="404" dy="16.8">and)</tspan><tspan x="404" dy="16.8">+ getOrder(id)</tspan></text>
+<defs><clipPath id="xaligo-text-clip-87e7720135280717" clipPathUnits="userSpaceOnUse"><rect x="491.2" y="70" width="126.4" height="712"/></clipPath></defs>
+<text x="554.4" y="389.6" fill="#1E1E1E" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-87e7720135280717)"><tspan x="554.4" y="389.6">Order Service</tspan><tspan x="554.4" dy="16.8">────────</tspan><tspan x="554.4" dy="16.8">Ordering API</tspan><tspan x="554.4" dy="16.8">Order Store</tspan><tspan x="554.4" dy="16.8">Ordering use</tspan><tspan x="554.4" dy="16.8">cases</tspan></text>
+<defs><clipPath id="xaligo-text-clip-beadc985ba637ab7" clipPathUnits="userSpaceOnUse"><rect x="641.6" y="70" width="126.4" height="712"/></clipPath></defs>
+<text x="704.8" y="431.6" fill="#1E1E1E" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-beadc985ba637ab7)"><tspan x="704.8" y="431.6">http: provided</tspan></text>
+<defs><clipPath id="xaligo-text-clip-f5b145f243ce003f" clipPathUnits="userSpaceOnUse"><rect x="792" y="70" width="126.4" height="712"/></clipPath></defs>
+<text x="855.2" y="431.6" fill="#1E1E1E" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-f5b145f243ce003f)"><tspan x="855.2" y="431.6">store: required</tspan></text>
+<defs><clipPath id="xaligo-text-clip-ec6b2bd1ac01ce87" clipPathUnits="userSpaceOnUse"><rect x="942.4" y="70" width="126.4" height="712"/></clipPath></defs>
+<text x="1005.6" y="406.4" fill="#1E1E1E" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-ec6b2bd1ac01ce87)"><tspan x="1005.6" y="406.4">Order Store</tspan><tspan x="1005.6" dy="16.8">────────</tspan><tspan x="1005.6" dy="16.8">+ save(order)</tspan><tspan x="1005.6" dy="16.8">+ find(id)</tspan></text>
+<defs><clipPath id="xaligo-text-clip-3fca2af59bcafaf7" clipPathUnits="userSpaceOnUse"><rect x="1092.8" y="70" width="126.4" height="712"/></clipPath></defs>
+<text x="1156" y="406.4" fill="#1E1E1E" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-3fca2af59bcafaf7)"><tspan x="1156" y="406.4">PostgreSQL</tspan><tspan x="1156" dy="16.8">Adapter</tspan><tspan x="1156" dy="16.8">────────</tspan><tspan x="1156" dy="16.8">Order Store</tspan></text>
+<defs><clipPath id="xaligo-text-clip-3bc6528fe72d35f2" clipPathUnits="userSpaceOnUse"><rect x="1243.2" y="70" width="126.4" height="712"/></clipPath></defs>
+<text x="1306.4" y="431.6" fill="#1E1E1E" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-3bc6528fe72d35f2)"><tspan x="1306.4" y="431.6">store: provided</tspan></text>
+<defs><clipPath id="xaligo-text-clip-65c48c7c92196e59" clipPathUnits="userSpaceOnUse"><rect x="1393.6" y="70" width="126.4" height="712"/></clipPath></defs>
+<text x="1456.8" y="414.8" fill="#1E1E1E" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-65c48c7c92196e59)"><tspan x="1456.8" y="414.8">order-schema.sql</tspan><tspan x="1456.8" dy="16.8">────────</tspan><tspan x="1456.8" dy="16.8">version = 12</tspan></text>
+<defs><clipPath id="xaligo-text-clip-9a4262f92177bd16" clipPathUnits="userSpaceOnUse"><rect x="428.2" y="428" width="102" height="20"/></clipPath></defs>
+<text x="479.2" y="442.8" fill="#1E1E1E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-9a4262f92177bd16)"><tspan x="479.2" y="442.8">HTTP assembly</tspan></text>
+<defs><clipPath id="xaligo-text-clip-fde6df0637913f6e" clipPathUnits="userSpaceOnUse"><rect x="439.2" y="392" width="80" height="20"/></clipPath></defs>
+<text x="479.2" y="406.8" fill="#1E1E1E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-fde6df0637913f6e)"><tspan x="479.2" y="406.8">provides</tspan></text>
+<defs><clipPath id="xaligo-text-clip-c3d45da0ef87e73d" clipPathUnits="userSpaceOnUse"><rect x="1008.8" y="434" width="144" height="20"/></clipPath></defs>
+<text x="1080.8" y="448.8" fill="#1E1E1E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-c3d45da0ef87e73d)"><tspan x="1080.8" y="448.8">persistence assembly</tspan></text>
+<defs><clipPath id="xaligo-text-clip-7a6ceb6aebf465dd" clipPathUnits="userSpaceOnUse"><rect x="1040.8" y="440" width="80" height="20"/></clipPath></defs>
+<text x="1080.8" y="454.8" fill="#1E1E1E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-7a6ceb6aebf465dd)"><tspan x="1080.8" y="454.8">provides</tspan></text>
+<defs><clipPath id="xaligo-text-clip-dc39e3a2a31c76ca" clipPathUnits="userSpaceOnUse"><rect x="1261.4" y="392" width="90" height="20"/></clipPath></defs>
+<text x="1306.4" y="406.8" fill="#1E1E1E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-dc39e3a2a31c76ca)"><tspan x="1306.4" y="406.8">uses schema</tspan></text>
+</g>
+</svg>

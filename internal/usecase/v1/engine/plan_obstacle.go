@@ -13,8 +13,13 @@ func collectObstaclesV1EnginePlanObstacle(elements []*entity.Element) []rectV1En
 		if el.ID == "paper-frame" {
 			continue
 		}
+		if el.CustomData != nil && el.CustomData.DiffHighlight {
+			continue
+		}
 		isHeader := el.CustomData != nil && el.CustomData.GroupHeader
-		if el.Type != "image" && el.Type != "text" && !isHeader {
+		isFrameMetadata := el.CustomData != nil && el.CustomData.FrameMetadata
+		isFrameMetadataReserved := el.CustomData != nil && el.CustomData.FrameMetadataReserved
+		if el.Type != "image" && el.Type != "text" && !isHeader && !isFrameMetadata && !isFrameMetadataReserved {
 			continue
 		}
 		r, ok := rectOfV1EnginePlanGeometry(el)
@@ -26,6 +31,19 @@ func collectObstaclesV1EnginePlanObstacle(elements []*entity.Element) []rectV1En
 	return rects
 }
 
+func collectFrameMetadataReservedZonesV1EnginePlanObstacle(elements []*entity.Element) []rectV1EngineRouteTypes {
+	reserved := make([]rectV1EngineRouteTypes, 0)
+	for _, element := range elements {
+		if element.CustomData == nil || !element.CustomData.FrameMetadataReserved {
+			continue
+		}
+		if rect, ok := rectOfV1EnginePlanGeometry(element); ok {
+			reserved = append(reserved, rect)
+		}
+	}
+	return reserved
+}
+
 // collectContainerBorderPaths reserves a clear lane beside visible container
 // strokes. Borders are routing guides rather than solid obstacles: connectors
 // can cross them to move between nested groups, but parallel overlap and paths
@@ -33,7 +51,7 @@ func collectObstaclesV1EnginePlanObstacle(elements []*entity.Element) []rectV1En
 func collectContainerBorderPathsV1EnginePlanObstacle(elements []*entity.Element) [][]segmentV1EngineRouteTypes {
 	paths := make([][]segmentV1EngineRouteTypes, 0)
 	for _, el := range elements {
-		if el.ID == "paper-frame" || (el.CustomData != nil && el.CustomData.DiffHighlight) || (el.Type != "frame" && el.Type != "rectangle") {
+		if el.ID == "paper-frame" || (el.CustomData != nil && (el.CustomData.PageFrame || el.CustomData.DiffHighlight || el.CustomData.FrameMetadata || el.CustomData.FrameMetadataReserved)) || (el.Type != "frame" && el.Type != "rectangle") {
 			continue
 		}
 		stroke := strings.ToLower(strings.TrimSpace(el.StrokeColor))

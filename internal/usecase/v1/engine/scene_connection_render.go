@@ -17,7 +17,7 @@ import (
 // must already be populated in itemImgRects/itemLblRects/itemImgIDs/itemLblIDs by renderIconAt.
 // Arrows start/end at the actual element edge; when the connection exits/enters from the
 // bottom the label text element is used instead of the image element.
-func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, itemImgRects map[string][4]float64, itemLblRects map[string][4]float64, itemImgIDs map[string]string, itemLblIDs map[string]string, frameRects map[string][4]float64, elements *[]map[string]any) {
+func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, itemImgRects map[string][4]float64, itemLblRects map[string][4]float64, itemImgIDs map[string]string, itemLblIDs map[string]string, frameRects map[string][4]float64, frameElementIDs map[string]string, frameMetadata map[string]frameMetadataSceneGeometryV1EngineSceneFrameMetadata, elements *[]map[string]any) {
 	if len(connections) == 0 {
 		return
 	}
@@ -41,6 +41,7 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 		return connectionKindPriorityV1EngineSceneConnectionRoute(connectionKindV1EngineSceneConnectionRoute(orderedConnections[i])) < connectionKindPriorityV1EngineSceneConnectionRoute(connectionKindV1EngineSceneConnectionRoute(orderedConnections[j]))
 	})
 	obstacles := excalidrawRouteObstaclesV1EngineSceneConnectionRoute(*elements)
+	hardObstacles := frameMetadataReservedObstaclesV1EngineSceneConnectionRender(frameMetadata)
 	placed := [][]segmentV1EngineRouteTypes{}
 	routePaths := map[string][]ptV1EngineRouteTypes{}
 
@@ -70,13 +71,19 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 		dstCx := dstImgRect[0] + dstImgRect[2]/2
 		dstCy := dstImgRect[1] + dstImgRect[3]/2
 		srcSide, dstSide := connectionSideV1EngineSceneConnection(srcCx, srcCy, dstCx, dstCy)
+		if conn.Attr("uml-diagram-kind") == "sequence-diagram" && srcIDStr == dstIDStr {
+			srcSide, dstSide = "right", "right"
+		}
 		bends := connectionBendPointsV1EngineSceneConnection(conn)
 		srcAnchor, hasSrcAnchor := connectionEndpointAnchorV1EngineSceneConnectionRoute(conn, "src")
 		dstAnchor, hasDstAnchor := connectionEndpointAnchorV1EngineSceneConnectionRoute(conn, "dst")
+		srcSideExplicit := hasSrcAnchor
+		dstSideExplicit := hasDstAnchor
 		if hasSrcAnchor {
 			srcSide = string(srcAnchor.side)
 		} else if explicit, ok := connectionEndpointSideV1EngineSceneConnectionRoute(conn, "src"); ok {
 			srcSide = string(explicit)
+			srcSideExplicit = true
 		} else if len(bends) > 0 {
 			srcSide = sideTowardPointV1EngineSceneConnection(srcImgRect, bends[0])
 		}
@@ -84,8 +91,91 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 			dstSide = string(dstAnchor.side)
 		} else if explicit, ok := connectionEndpointSideV1EngineSceneConnectionRoute(conn, "dst"); ok {
 			dstSide = string(explicit)
+			dstSideExplicit = true
 		} else if len(bends) > 0 {
 			dstSide = sideTowardPointV1EngineSceneConnection(dstImgRect, bends[len(bends)-1])
+		}
+		if _, ok := umlSequencePositionV1EngineSceneConnectionRoute(conn, "src"); ok {
+			srcSide = umlSequenceVerticalSideV1EngineSceneConnectionRoute(srcSide)
+			dstSide = umlSequenceVerticalSideV1EngineSceneConnectionRoute(dstSide)
+		}
+		srcFrameSide, dstFrameSide := srcSide, dstSide
+
+		crossFrame := conn.Attrs[internalConnectionCrossFrameAttrV1EngineParseDocument] == "true"
+		srcFrameID := strings.TrimSpace(conn.Attrs[internalConnectionSrcFrameAttrV1EngineParseDocument])
+		dstFrameID := strings.TrimSpace(conn.Attrs[internalConnectionDstFrameAttrV1EngineParseDocument])
+		var srcFrameRect, dstFrameRect [4]float64
+		var srcVisualRect, dstVisualRect [4]float64
+		if crossFrame {
+			var srcFrameOK, dstFrameOK bool
+			srcFrameRect, srcFrameOK = frameRects[srcFrameID]
+			dstFrameRect, dstFrameOK = frameRects[dstFrameID]
+			if !srcFrameOK || !dstFrameOK {
+				loggerV1EngineSharedLogging.WARN(IUESRC004V1EngineSceneTypes, "cross-frame connection frame not found or not rendered", map[string]any{"srcFrame": srcFrameID, "dstFrame": dstFrameID, "srcFrameRendered": srcFrameOK, "dstFrameRendered": dstFrameOK})
+				continue
+			}
+			// Page-link stubs select their endpoint and page side from the local
+			// endpoint geometry. Manual bends remain logical metadata for graph
+			// adapters and do not steer either page-local stub.
+			srcVisualRect = endpointVisualRectV1EngineSceneConnectionPage(srcImgRect, itemLblRects[srcKey])
+			dstVisualRect = endpointVisualRectV1EngineSceneConnectionPage(dstImgRect, itemLblRects[dstKey])
+			srcFrameAnchor, srcFrameSideExplicit := connectionFrameAnchorV1EngineSceneConnectionRoute(conn, "src")
+			dstFrameAnchor, dstFrameSideExplicit := connectionFrameAnchorV1EngineSceneConnectionRoute(conn, "dst")
+			if !srcSideExplicit {
+				srcSide = nearestFrameSideV1EngineSceneConnectionPage(srcFrameRect, srcVisualRect, dstFrameRect)
+			}
+			if !dstSideExplicit {
+				dstSide = nearestFrameSideV1EngineSceneConnectionPage(dstFrameRect, dstVisualRect, srcFrameRect)
+			}
+			if srcFrameSideExplicit {
+				srcFrameSide = string(srcFrameAnchor.side)
+			} else {
+				srcFrameSide = srcSide
+			}
+			if dstFrameSideExplicit {
+				dstFrameSide = string(dstFrameAnchor.side)
+			} else {
+				dstFrameSide = dstSide
+			}
+			if adjustedEndpointSide := pageLinkSideAvoidingFrameMetadataV1EngineSceneConnectionPage(srcSide, srcFrameRect, srcVisualRect, dstFrameRect, frameMetadata[srcFrameID]); adjustedEndpointSide != srcSide {
+				srcSide = adjustedEndpointSide
+				hasSrcAnchor = false
+			}
+			if adjustedEndpointSide := pageLinkSideAvoidingFrameMetadataV1EngineSceneConnectionPage(dstSide, dstFrameRect, dstVisualRect, srcFrameRect, frameMetadata[dstFrameID]); adjustedEndpointSide != dstSide {
+				dstSide = adjustedEndpointSide
+				hasDstAnchor = false
+			}
+			if adjustedFrameSide := pageLinkSideAvoidingFrameMetadataV1EngineSceneConnectionPage(srcFrameSide, srcFrameRect, srcVisualRect, dstFrameRect, frameMetadata[srcFrameID]); adjustedFrameSide != srcFrameSide {
+				srcFrameSide = adjustedFrameSide
+				if !srcFrameSideExplicit {
+					srcSide = adjustedFrameSide
+					hasSrcAnchor = false
+				}
+			}
+			if adjustedFrameSide := pageLinkSideAvoidingFrameMetadataV1EngineSceneConnectionPage(dstFrameSide, dstFrameRect, dstVisualRect, srcFrameRect, frameMetadata[dstFrameID]); adjustedFrameSide != dstFrameSide {
+				dstFrameSide = adjustedFrameSide
+				if !dstFrameSideExplicit {
+					dstSide = adjustedFrameSide
+					hasDstAnchor = false
+				}
+			}
+			if !srcFrameSideExplicit {
+				srcFrameSide = pageLinkSideAvoidingUnsafeInsetV1EngineSceneConnectionPage(srcFrameSide, srcFrameRect, srcVisualRect, dstFrameRect, frameMetadata[srcFrameID])
+			}
+			if !dstFrameSideExplicit {
+				dstFrameSide = pageLinkSideAvoidingUnsafeInsetV1EngineSceneConnectionPage(dstFrameSide, dstFrameRect, dstVisualRect, srcFrameRect, frameMetadata[dstFrameID])
+			}
+		} else {
+			srcLocalVisualRect := endpointVisualRectV1EngineSceneConnectionPage(srcImgRect, itemLblRects[srcKey])
+			dstLocalVisualRect := endpointVisualRectV1EngineSceneConnectionPage(dstImgRect, itemLblRects[dstKey])
+			if adjusted := localConnectionSideAvoidingFrameMetadataV1EngineSceneConnectionRender(srcSide, srcLocalVisualRect, dstLocalVisualRect, frameRects[srcFrameID], frameMetadata[srcFrameID]); adjusted != srcSide {
+				srcSide = adjusted
+				hasSrcAnchor = false
+			}
+			if adjusted := localConnectionSideAvoidingFrameMetadataV1EngineSceneConnectionRender(dstSide, dstLocalVisualRect, srcLocalVisualRect, frameRects[dstFrameID], frameMetadata[dstFrameID]); adjusted != dstSide {
+				dstSide = adjusted
+				hasDstAnchor = false
+			}
 		}
 
 		// Choose element: bottom edge → label text box; other edges → image element.
@@ -127,23 +217,26 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 		if hasDstAnchor {
 			dstFP = fixedPointForAnchorV1EngineSceneConnection(dstAnchor)
 		}
+		if fp, ok := umlSequenceFixedPointV1EngineSceneConnectionRoute(conn, "src", srcSide); ok {
+			srcFP = fp
+		}
+		if fp, ok := umlSequenceFixedPointV1EngineSceneConnectionRoute(conn, "dst", dstSide); ok {
+			dstFP = fp
+		}
+		style := resolveConnectionStyleV1EngineSceneConnectionRoute(conn)
+		if crossFrame {
+			seed := stableConnectionSeedV1EngineSceneConnectionRoute(srcKey, dstKey, i)
+			renderCrossFrameConnectionV1EngineSceneConnectionPage(conn, srcKey, dstKey, srcElemID, dstElemID, srcRect, dstRect, srcVisualRect, dstVisualRect, srcFP, dstFP, srcSide, dstSide, srcFrameSide, dstFrameSide, srcFrameID, dstFrameID, srcFrameRect, dstFrameRect, srcElemID == frameElementIDs[srcFrameID], dstElemID == frameElementIDs[dstFrameID], frameMetadata[srcFrameID], frameMetadata[dstFrameID], style, seed, i, updated, elements, boundMap)
+			continue
+		}
 		srcEdge := rectFixedPointV1EngineSceneConnection(srcRect, srcFP)
 		dstEdge := rectFixedPointV1EngineSceneConnection(dstRect, dstFP)
 		dx := dstEdge[0] - srcEdge[0]
 		dy := dstEdge[1] - srcEdge[1]
-		style := resolveConnectionStyleV1EngineSceneConnectionRoute(conn)
-		if conn.Attrs[internalConnectionCrossFrameAttrV1EngineParseDocument] == "true" {
-			srcFrameID := strings.TrimSpace(conn.Attrs[internalConnectionSrcFrameAttrV1EngineParseDocument])
-			dstFrameID := strings.TrimSpace(conn.Attrs[internalConnectionDstFrameAttrV1EngineParseDocument])
-			srcFrameRect, srcFrameOK := frameRects[srcFrameID]
-			dstFrameRect, dstFrameOK := frameRects[dstFrameID]
-			if srcFrameOK && dstFrameOK {
-				seed := stableConnectionSeedV1EngineSceneConnectionRoute(srcKey, dstKey, i)
-				renderCrossFrameConnectionV1EngineSceneConnectionPage(conn, srcKey, dstKey, srcElemID, dstElemID, srcRect, dstRect, srcFP, dstFP, srcFrameID, dstFrameID, srcFrameRect, dstFrameRect, style, seed, i, updated, elements, boundMap)
-				continue
-			}
+		routePoints := excalidrawConnectionPointsV1EngineSceneConnectionRoute(conn, srcRect, dstRect, srcSide, dstSide, style.Kind, obstacles, hardObstacles, placed, routePaths)
+		if len(routePoints) < 2 {
+			continue
 		}
-		routePoints := excalidrawConnectionPointsV1EngineSceneConnectionRoute(conn, srcRect, dstRect, srcSide, dstSide, style.Kind, obstacles, placed, routePaths)
 		if style.Kind == "route" {
 			routePaths[routePairKeyV1EngineRouteBuild(excalidrawRouteRequestV1EngineSceneConnectionRoute(conn, srcRect, dstRect, srcSide, dstSide, style.Kind), false)] = append([]ptV1EngineRouteTypes(nil), routePoints...)
 		}
@@ -184,6 +277,9 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 			"xaligoConnectorEndArrowhead":     style.EndArrowhead,
 			"xaligoConnectorStyleSourceKnown": true,
 		}
+		if srcFrameID != "" && srcFrameID == dstFrameID {
+			customData["xaligoFrameID"] = srcFrameID
+		}
 		if style.StartArrowheadExplicit {
 			customData["xaligoConnectorStartArrowheadExplicit"] = true
 		}
@@ -214,6 +310,8 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 		if hasDstAnchor {
 			customData["xaligoConnectorEndAnchor"] = true
 		}
+		applyDatabaseConnectionMetadataV1EngineSceneConnectionRender(customData, conn)
+		applyUMLConnectionMetadataV1EngineSceneConnectionRender(customData, conn)
 		applyConnectionDiffStatusV1EngineSceneDiffHighlight(customData, conn)
 
 		*elements = append(*elements, map[string]any{
@@ -249,6 +347,7 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 			"elbowed":            true,
 			"customData":         customData,
 		})
+		appendUMLRelationLabelV1EngineSceneConnectionRender(elements, conn, connID, routePoints, style.Color, updated, seed, frameRects[srcFrameID], frameMetadata[srcFrameID])
 
 		// Register this arrow in boundMap for both endpoints.
 		entry := map[string]any{"type": "arrow", "id": connID}
@@ -294,6 +393,163 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 			existing, _ := elem["boundElements"].([]map[string]any)
 			elem["boundElements"] = append(existing, entries...)
 			(*elements)[idx] = elem
+		}
+	}
+}
+
+func frameMetadataReservedObstaclesV1EngineSceneConnectionRender(metadata map[string]frameMetadataSceneGeometryV1EngineSceneFrameMetadata) []rectV1EngineRouteTypes {
+	keys := make([]string, 0, len(metadata))
+	for key := range metadata {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	obstacles := make([]rectV1EngineRouteTypes, 0, len(keys))
+	for _, key := range keys {
+		reserved := metadata[key].Reserved
+		if reserved[2] > 0 && reserved[3] > 0 {
+			obstacles = append(obstacles, rectV1EngineRouteTypes{X: reserved[0], Y: reserved[1], W: reserved[2], H: reserved[3]})
+		}
+	}
+	return obstacles
+}
+
+func localConnectionSideAvoidingFrameMetadataV1EngineSceneConnectionRender(side string, endpointRect, otherRect, frameRect [4]float64, metadata frameMetadataSceneGeometryV1EngineSceneFrameMetadata) string {
+	reserved := metadata.Reserved
+	if reserved[2] <= 0 || reserved[3] <= 0 || side != metadata.Position || frameRect[2] <= 0 || frameRect[3] <= 0 {
+		return side
+	}
+	options := defaultRouterOptionsV1EngineRouteTypes()
+	minimumClearance := 5.0 + math.Max(options.Stub, options.LaneGap) + 1.0
+	clearance := math.Inf(1)
+	if side == "top" {
+		clearance = endpointRect[1] - (reserved[1] + reserved[3])
+	} else if side == "bottom" {
+		clearance = reserved[1] - (endpointRect[1] + endpointRect[3])
+	}
+	if clearance >= minimumClearance {
+		return side
+	}
+	return nearestFrameSideExcludingV1EngineSceneConnectionPage(frameRect, endpointRect, otherRect, metadata.Position)
+}
+
+func applyUMLConnectionMetadataV1EngineSceneConnectionRender(customData map[string]any, conn *entity.Node) {
+	if customData == nil || conn == nil {
+		return
+	}
+	for source, target := range map[string]string{
+		"uml-id":               "xaligoUmlId",
+		"uml-diagram-kind":     "xaligoUmlDiagramKind",
+		"uml-relation-kind":    "xaligoUmlRelationKind",
+		"uml-relation-label":   "xaligoUmlRelationLabel",
+		"uml-src-ref":          "xaligoUmlRelationSourceReference",
+		"uml-dst-ref":          "xaligoUmlRelationDestinationReference",
+		"uml-order":            "xaligoUmlMessageOrder",
+		"uml-guard":            "xaligoUmlGuard",
+		"uml-src-multiplicity": "xaligoUmlSourceMultiplicity",
+		"uml-dst-multiplicity": "xaligoUmlDestinationMultiplicity",
+		"uml-at":               "xaligoUmlOccurrenceAt",
+		"uml-from":             "xaligoUmlDurationFrom",
+		"uml-to":               "xaligoUmlDurationTo",
+	} {
+		if value := strings.TrimSpace(conn.Attr(source)); value != "" {
+			customData[target] = value
+		}
+	}
+}
+
+func appendUMLRelationLabelV1EngineSceneConnectionRender(elements *[]map[string]any, conn *entity.Node, connID string, routePoints []ptV1EngineRouteTypes, color string, updated int64, seed int, frameRect [4]float64, metadata frameMetadataSceneGeometryV1EngineSceneFrameMetadata) {
+	label := strings.TrimSpace(conn.Attr("uml-relation-label"))
+	if label == "" || len(routePoints) == 0 {
+		return
+	}
+	point := umlRelationLabelPointV1EngineSceneConnectionRender(routePoints, seed)
+	fontSize := 12.0
+	height := 20.0
+	if safeTop, safeBottom, ok := frameMetadataSafeVerticalIntervalV1EngineSceneConnectionPage(frameRect, frameMetadataReservedRectsV1EngineSceneConnectionPage(metadata)); ok {
+		height = math.Min(height, safeBottom-safeTop)
+		fontSize = math.Min(fontSize, height/1.2)
+	}
+	width := math.Max(80, math.Min(220, textWidthV1EngineSceneItem(label, fontSize*0.5)+16))
+	if frameRect[2] > 0 {
+		width = math.Min(width, frameRect[2])
+	}
+	x, y := point.X-width/2, point.Y-height/2
+	x, y = frameMetadataLabelPositionV1EngineSceneConnectionRender(x, y, width, height, frameRect, metadata)
+	labelID := connID + "-uml-label"
+	customData := map[string]any{}
+	applyUMLConnectionMetadataV1EngineSceneConnectionRender(customData, conn)
+	customData["xaligoTextLayout"] = sceneTextLayoutV1EngineSceneBuild(entity.TextRoleConnectorLabel, true, 1.2)
+	*elements = append(*elements, map[string]any{
+		"id": labelID, "type": "text", "x": x, "y": y,
+		"width": width, "height": height, "angle": 0,
+		"strokeColor": color, "backgroundColor": "#ffffff",
+		"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
+		"roughness": 0, "opacity": 100, "groupIds": []string{}, "roundness": nil,
+		"seed": seed + 1000, "version": 1, "versionNonce": seed + 1000,
+		"isDeleted": false, "boundElements": nil, "updated": updated, "link": nil, "locked": false,
+		"text": label, "fontSize": fontSize, "fontFamily": 2,
+		"textAlign": "center", "verticalAlign": "middle", "containerId": nil,
+		"originalText": label, "lineHeight": 1.2,
+		"customData": customData,
+	})
+}
+
+func frameMetadataLabelPositionV1EngineSceneConnectionRender(x, y, width, height float64, frameRect [4]float64, metadata frameMetadataSceneGeometryV1EngineSceneFrameMetadata) (float64, float64) {
+	reserved := metadata.Reserved
+	if reserved[2] <= 0 || reserved[3] <= 0 {
+		return x, y
+	}
+	const gap = 6.0
+	if frameRect[2] <= 0 || frameRect[3] <= 0 {
+		return x, y
+	}
+	horizontalInset := math.Min(gap, math.Max(0, (frameRect[2]-width)/2))
+	x = clampFloatV1EngineLayoutPort(x, frameRect[0]+horizontalInset, math.Max(frameRect[0]+horizontalInset, frameRect[0]+frameRect[2]-width-horizontalInset))
+	if safeTop, safeBottom, ok := frameMetadataSafeVerticalIntervalV1EngineSceneConnectionPage(frameRect, [][4]float64{reserved}); ok {
+		verticalInset := math.Min(gap, math.Max(0, (safeBottom-safeTop-height)/2))
+		y = clampFloatV1EngineLayoutPort(y, safeTop+verticalInset, math.Max(safeTop+verticalInset, safeBottom-height-verticalInset))
+	}
+	return x, y
+}
+
+func umlRelationLabelPointV1EngineSceneConnectionRender(routePoints []ptV1EngineRouteTypes, seed int) ptV1EngineRouteTypes {
+	if len(routePoints) < 2 {
+		return routePoints[0]
+	}
+	bestStart, bestEnd := routePoints[0], routePoints[1]
+	bestLength := math.Hypot(bestEnd.X-bestStart.X, bestEnd.Y-bestStart.Y)
+	for index := 1; index < len(routePoints)-1; index++ {
+		start, end := routePoints[index], routePoints[index+1]
+		length := math.Hypot(end.X-start.X, end.Y-start.Y)
+		if length > bestLength {
+			bestStart, bestEnd, bestLength = start, end, length
+		}
+	}
+	point := ptV1EngineRouteTypes{X: (bestStart.X + bestEnd.X) / 2, Y: (bestStart.Y + bestEnd.Y) / 2}
+	offset := 12.0 + float64(seed%3)*6
+	if seed%2 != 0 {
+		offset = -offset
+	}
+	if math.Abs(bestEnd.X-bestStart.X) >= math.Abs(bestEnd.Y-bestStart.Y) {
+		point.Y += offset
+	} else {
+		point.X += offset
+	}
+	return point
+}
+
+func applyDatabaseConnectionMetadataV1EngineSceneConnectionRender(customData map[string]any, conn *entity.Node) {
+	if customData == nil || conn == nil {
+		return
+	}
+	for source, target := range map[string]string{
+		"_xaligoDatabaseForeignKey": "xaligoDatabaseForeignKey",
+		"_xaligoDatabaseReferences": "xaligoDatabaseReferences",
+		"_xaligoDatabaseOnDelete":   "xaligoDatabaseOnDelete",
+		"_xaligoDatabaseOnUpdate":   "xaligoDatabaseOnUpdate",
+	} {
+		if value := strings.TrimSpace(conn.Attr(source)); value != "" {
+			customData[target] = value
 		}
 	}
 }

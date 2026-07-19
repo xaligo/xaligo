@@ -9,13 +9,15 @@ import type {
   PptxExportOptions,
   PptxExportResult,
   PptxPlan,
+  PptxPlanInput,
+  PptxPlanPage,
 } from '../entity/pptx';
-import { planObjectName, planTextOverflow } from '../entity/pptx';
+import { planObjectName, planTextOverflow, pptxPlanOpCount, pptxPlanPages } from '../entity/pptx';
 import { NewEnvLogger } from '../share/logger';
 import { NewMCode } from '../share/mcode';
 import { imageDataForPptx } from './pptx_image';
 import { drawConnectorLegendSlide, drawLegendSlides } from './pptx_legend';
-import { convertPptxOutput, finalizePptxPackage } from './pptx_package';
+import { convertPptxOutput, finalizePptxPackage, type PptxPackageSlidePlan } from './pptx_package';
 
 const logger = NewEnvLogger('external/repository', 'pptx');
 const ERPCPFP001 = NewMCode('ERPCPFP-001', 'Create PPTX from plan start');
@@ -36,28 +38,39 @@ const ERPFOP001 = NewMCode('ERPFOP-001', 'Fill options default branch');
 const CUST_GEOM = 'custGeom' as Parameters<pptxgen.Slide['addShape']>[0];
 
 export async function createPptxFromPlan(
-  parsed: PptxPlan,
+  parsed: PptxPlanInput,
   options: PptxExportOptions = {},
 ): Promise<PptxExportResult> {
-  logger.DEBUG(ERPCPFP001, 'start', { ops: parsed.ops.length, outputType: options.outputType ?? 'uint8array' });
+  const pages = pptxPlanPages(parsed);
+  const firstPage = pages[0];
+  if (!firstPage) throw new Error('PPTX plan must contain at least one page');
+  validatePageSlides(pages);
+  logger.DEBUG(ERPCPFP001, 'start', { pages: pages.length, ops: pptxPlanOpCount(parsed), outputType: options.outputType ?? 'uint8array' });
   const pptx = new pptxgen();
   const layoutName = 'XALIGO_EXPORT';
 
-  pptx.defineLayout({ name: layoutName, width: parsed.slide.w, height: parsed.slide.h });
+  pptx.defineLayout({ name: layoutName, width: firstPage.slide.w, height: firstPage.slide.h });
   pptx.layout = layoutName;
   pptx.author = options.author ?? 'xaligo';
   pptx.company = options.company ?? '';
   pptx.subject = options.subject ?? 'xaligo PPTX export';
   pptx.title = options.title ?? 'xaligo export';
 
-  const slide = pptx.addSlide();
-  slide.background = { color: parsed.slide.background || 'FFFFFF' };
-
-  for (const op of parsed.ops) {
-    await drawOp(slide, pptx, op);
+  for (const page of pages) {
+    const slide = pptx.addSlide();
+    slide.background = { color: page.slide.background || 'FFFFFF' };
+    for (const op of page.ops) {
+      await drawOp(slide, pptx, op);
+    }
   }
-  drawConnectorLegendSlide(pptx, parsed);
-  await drawLegendSlides(pptx, parsed);
+  const legendPlan: PptxPlan = {
+    slide: firstPage.slide,
+    ops: [],
+    ...(parsed.legend !== undefined ? { legend: parsed.legend } : {}),
+    ...(parsed.connectorLegend !== undefined ? { connectorLegend: parsed.connectorLegend } : {}),
+  };
+  const connectorLegendSlides = drawConnectorLegendSlide(pptx, legendPlan);
+  const serviceLegendSlides = await drawLegendSlides(pptx, legendPlan);
 
   const outputType = options.outputType ?? 'uint8array';
   const bytes = await pptx.write({
@@ -65,11 +78,38 @@ export async function createPptxFromPlan(
     compression: options.compression ?? true,
   }) as Uint8Array;
   logger.DEBUG(ERPCPFP002, 'write completed', { bytes: bytes.length });
-  const finalized = await finalizePptxPackage(bytes, parsed.ops, options.compression ?? true);
+  const packageSlides: PptxPackageSlidePlan[] = pages.map((page, index) => ({ slideNumber: index + 1, ops: page.ops }));
+  for (let index = 0; index < connectorLegendSlides + serviceLegendSlides; index++) {
+    packageSlides.push({
+      slideNumber: pages.length + index + 1,
+      ops: [],
+      normalizeStealthArrowheads: true,
+    });
+  }
+  const finalized = await finalizePptxPackage(bytes, packageSlides, options.compression ?? true);
   logger.DEBUG(ERPCPFP003, 'package finalization completed', { bytes: finalized.length });
   const result = convertPptxOutput(finalized, outputType);
   logger.DEBUG(ERPCPFP004, 'completed', { outputType });
   return result;
+}
+
+function validatePageSlides(pages: PptxPlanPage[]): void {
+  const first = pages[0];
+  if (!first || !validSlideSize(first.slide.w, first.slide.h)) {
+    throw new Error('PPTX page slide size must be positive and finite');
+  }
+  for (const page of pages.slice(1)) {
+    if (!validSlideSize(page.slide.w, page.slide.h)) {
+      throw new Error(`PPTX page ${page.id} slide size must be positive and finite`);
+    }
+    if (page.slide.w !== first.slide.w || page.slide.h !== first.slide.h) {
+      throw new Error(`PPTX pages must use one slide size; page ${page.id} is ${page.slide.w}x${page.slide.h}, expected ${first.slide.w}x${first.slide.h}`);
+    }
+  }
+}
+
+function validSlideSize(width: number, height: number): boolean {
+  return Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -81,6 +121,7 @@ async function drawOp(slide: pptxgen.Slide, pptx: pptxgen, op: PlanOp): Promise<
   switch (op.kind) {
     case 'rect':
     case 'ellipse':
+    case 'diamond':
       drawShape(slide, pptx, op);
       break;
     case 'polygon':
@@ -121,7 +162,11 @@ function drawPolygon(slide: pptxgen.Slide, op: PlanOp): void {
 }
 
 function drawShape(slide: pptxgen.Slide, pptx: pptxgen, op: PlanOp): void {
-  const shapeType = op.kind === 'ellipse' ? pptx.ShapeType.ellipse : pptx.ShapeType.rect;
+  const shapeType = op.kind === 'ellipse'
+    ? pptx.ShapeType.ellipse
+    : op.kind === 'diamond'
+      ? pptx.ShapeType.diamond
+      : pptx.ShapeType.rect;
   slide.addShape(shapeType, {
     x: op.x,
     y: op.y,
@@ -282,15 +327,15 @@ function fallbackLineGeometryForPptx(op: PlanOp): { x: number; y: number; w: num
   const points = [start, end];
   extendEndpoint(points, 0, 1, op.line?.beginArrowExtendIn);
   extendEndpoint(points, 1, 0, op.line?.endArrowExtendIn);
-  const x = Math.min(points[0].x, points[1].x);
-  const y = Math.min(points[0].y, points[1].y);
+  const x = Math.min(start.x, end.x);
+  const y = Math.min(start.y, end.y);
   return {
     x,
     y,
-    w: Math.abs(points[1].x - points[0].x),
-    h: Math.abs(points[1].y - points[0].y),
-    flipH: points[1].x < points[0].x,
-    flipV: points[1].y < points[0].y,
+    w: Math.abs(end.x - start.x),
+    h: Math.abs(end.y - start.y),
+    flipH: end.x < start.x,
+    flipV: end.y < start.y,
   };
 }
 

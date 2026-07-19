@@ -3,6 +3,7 @@ package usecase_test
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 
 	awsassets "github.com/xaligo/xaligo/etc/resources/aws"
@@ -25,7 +26,10 @@ func TestRenderXYFlowPreservesV1EndpointKinds(t *testing.T) {
       </connection>
       <connection src="port" dst="service" />
       <connection src="overview" dst="box" />
-      <connection src="box" dst="remote" kind="route" src-anchor="right-5" dst-anchor="left-1" scale="2" grid="10">
+      <connection src="box" dst="detail.remote" kind="route"
+                  src-anchor="right-5" src-frame-anchor="bottom-4"
+                  dst-anchor="left-1" dst-frame-anchor="top-2"
+                  scale="2" grid="10">
         <bend x="330" y="140" />
       </connection>
     </connections>
@@ -108,6 +112,9 @@ func TestRenderXYFlowPreservesV1EndpointKinds(t *testing.T) {
 	}
 	if crossFrameEdge.Data["bends"] != "330.000,140.000" || crossFrameEdge.Data["scale"] != float64(2) || crossFrameEdge.Data["grid"] != float64(10) || crossFrameEdge.Data["sourceAnchorExplicit"] != true || crossFrameEdge.Data["targetAnchorExplicit"] != true {
 		t.Fatalf("cross-frame routing metadata = %#v", crossFrameEdge.Data)
+	}
+	if crossFrameEdge.Data["sourceFrameSide"] != "bottom" || crossFrameEdge.Data["targetFrameSide"] != "top" || crossFrameEdge.Data["sourceFrameAnchor"] != "bottom-4" || crossFrameEdge.Data["targetFrameAnchor"] != "top-2" {
+		t.Fatalf("cross-frame boundary anchors = %#v", crossFrameEdge.Data)
 	}
 	if crossFrameEdge.SourceHandle != "right" || crossFrameEdge.TargetHandle != "left" || !equalXYFlowFixedPoint(crossFrameEdge.Data["sourceFixedPoint"], []float64{1, 0.9}) || !equalXYFlowFixedPoint(crossFrameEdge.Data["targetFixedPoint"], []float64{0, 0.1}) {
 		t.Fatalf("cross-frame bindings were not reassembled: %#v", crossFrameEdge)
@@ -207,6 +214,95 @@ func TestRenderXYFlowUsesBoxTreeParentsThroughPureLayoutAndVisibleOverflow(t *te
 	}
 }
 
+func TestRenderXYFlowPreservesUMLShapeEndpointsAndMetadata(t *testing.T) {
+	tests := []struct {
+		name           string
+		source         string
+		nodes          map[string][3]string
+		connectorPairs [][2]string
+		relationKind   string
+	}{
+		{
+			name: "use-case ellipse",
+			source: `<xaligo version="1"><data></data><frames><frame id="main" width="640" height="360">
+  <uml id="use-cases"><use-case-diagram direction="right">
+    <actor id="user" title="User"/><use-case id="sign-in" title="Sign in"/>
+    <association src="user" dst="sign-in"/>
+  </use-case-diagram></uml>
+</frame></frames></xaligo>`,
+			nodes: map[string][3]string{
+				"User":    {"rectangle", "actor", "use-cases/user"},
+				"Sign in": {"ellipse", "use-case", "use-cases/sign-in"},
+			},
+			connectorPairs: [][2]string{{"User", "Sign in"}},
+			relationKind:   "association",
+		},
+		{
+			name: "activity decision diamond",
+			source: `<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420">
+  <uml id="activity"><activity-diagram direction="right">
+    <action id="validate" title="Validate"/><decision id="decision" title="Valid?"/>
+    <action id="accept" title="Accept"/><action id="reject" title="Reject"/>
+    <control-flow src="validate" dst="decision"/>
+    <control-flow src="decision" dst="accept" guard="yes"/>
+    <control-flow src="decision" dst="reject" guard="no"/>
+  </activity-diagram></uml>
+</frame></frames></xaligo>`,
+			nodes: map[string][3]string{
+				"Validate": {"rectangle", "action", "activity/validate"},
+				"Valid?":   {"diamond", "decision", "activity/decision"},
+				"Accept":   {"rectangle", "action", "activity/accept"},
+				"Reject":   {"rectangle", "action", "activity/reject"},
+			},
+			connectorPairs: [][2]string{
+				{"Validate", "Valid?"}, {"Valid?", "Accept"}, {"Valid?", "Reject"},
+			},
+			relationKind: "control-flow",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			out, err := newUsecase().RenderXYFlow(context.Background(), []byte(test.source), entity.RenderOptions{
+				Format: usecase.FormatXYFlow,
+				Theme:  "light",
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			var document entity.XYFlowDocument
+			if err := json.Unmarshal(out, &document); err != nil {
+				t.Fatal(err)
+			}
+			nodeIDs := make(map[string]string, len(test.nodes))
+			for label, want := range test.nodes {
+				node := xyFlowNodeByLabel(t, document.Nodes, label)
+				if node.Data["shape"] != want[0] || node.Data["umlElementKind"] != want[1] || node.Data["umlReference"] != want[2] {
+					t.Fatalf("UML node %q data = %#v, want shape=%q kind=%q ref=%q", label, node.Data, want[0], want[1], want[2])
+				}
+				nodeIDs[label] = node.ID
+			}
+			if len(document.Edges) != len(test.connectorPairs) {
+				t.Fatalf("edges = %#v, want %d: %s", document.Edges, len(test.connectorPairs), out)
+			}
+			for _, node := range document.Nodes {
+				if strings.HasPrefix(node.ID, "junction-") {
+					t.Fatalf("automatic junction marker was projected as an XYFlow node: %#v", node)
+				}
+			}
+			for _, pair := range test.connectorPairs {
+				edge, found := xyFlowEdgeBetween(document.Edges, nodeIDs[pair[0]], nodeIDs[pair[1]])
+				if !found {
+					t.Fatalf("UML edge %q -> %q is missing: %#v", pair[0], pair[1], document.Edges)
+				}
+				if edge.Data["umlRelationKind"] != test.relationKind || edge.Data["umlSourceReference"] != test.nodes[pair[0]][2] || edge.Data["umlDestinationReference"] != test.nodes[pair[1]][2] {
+					t.Fatalf("UML edge %q -> %q data = %#v", pair[0], pair[1], edge.Data)
+				}
+			}
+		})
+	}
+}
+
 func xyFlowNodeByID(t *testing.T, nodes []entity.XYFlowNode, id string) entity.XYFlowNode {
 	t.Helper()
 	for _, node := range nodes {
@@ -227,6 +323,26 @@ func xyFlowNodeBySize(t *testing.T, nodes []entity.XYFlowNode, nodeType string, 
 	}
 	t.Fatalf("XYFlow %s node %.0fx%.0f is missing", nodeType, width, height)
 	return entity.XYFlowNode{}
+}
+
+func xyFlowNodeByLabel(t *testing.T, nodes []entity.XYFlowNode, label string) entity.XYFlowNode {
+	t.Helper()
+	for _, node := range nodes {
+		if node.Data["label"] == label {
+			return node
+		}
+	}
+	t.Fatalf("XYFlow node with label %q is missing", label)
+	return entity.XYFlowNode{}
+}
+
+func xyFlowEdgeBetween(edges []entity.XYFlowEdge, source, target string) (entity.XYFlowEdge, bool) {
+	for _, edge := range edges {
+		if edge.Source == source && edge.Target == target {
+			return edge, true
+		}
+	}
+	return entity.XYFlowEdge{}, false
 }
 
 func equalXYFlowFixedPoint(value any, want []float64) bool {

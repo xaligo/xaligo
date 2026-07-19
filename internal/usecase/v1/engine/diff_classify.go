@@ -28,7 +28,9 @@ func (state *diffDocumentStateV1EngineDiffDocument) classifyV1EngineDiffClassify
 			continue
 		}
 		afterDescriptor := state.afterByNode[afterNode]
-		if diffOwnFingerprintV1EngineDiffFingerprint(beforeDescriptor.node) == diffOwnFingerprintV1EngineDiffFingerprint(afterNode) && !state.nodeMovedV1EngineDiffClassify(beforeDescriptor, afterDescriptor) {
+		beforeIsRoot := beforeDescriptor.parent == nil
+		afterIsRoot := afterDescriptor.parent == nil
+		if diffOwnFingerprintV1EngineDiffFingerprint(beforeDescriptor.node, beforeIsRoot) == diffOwnFingerprintV1EngineDiffFingerprint(afterNode, afterIsRoot) && !state.nodeMovedV1EngineDiffClassify(beforeDescriptor, afterDescriptor) {
 			continue
 		}
 		result.Before = append(result.Before, structuralChangeV1EngineDiffClassify(entity.StructuralChangeModified, beforeDescriptor))

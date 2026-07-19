@@ -143,14 +143,14 @@ func TestBuildPPTXPlanPreservesExplicitCrossFrameConnectorStrokeWidth(t *testing
 	source := []byte(`<frames gap="48">
   <frame id="overview" width="320" height="180">
     <rectangle id="web" title="Web" width="120" height="80" />
-    <connection src="web" dst="db" stroke-width="3" />
+    <connection src="web" dst="detail.db" stroke-width="3" />
   </frame>
   <frame id="detail" width="320" height="180">
     <rectangle id="db" title="DB" width="120" height="80" />
   </frame>
 </frames>`)
 	planJSON, err := newUsecase().BuildPPTXPlan(context.Background(), source, entity.RenderOptions{
-		Format: usecase.FormatPPTX, PxPerInch: 96, ArrowStyle: "thin",
+		Format: usecase.FormatPPTX, PxPerInch: 96, ArrowStyle: "thin", CombineFrames: true,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -160,9 +160,16 @@ func TestBuildPPTXPlanPreservesExplicitCrossFrameConnectorStrokeWidth(t *testing
 		t.Fatal(err)
 	}
 	lines := []entity.DrawOp{}
+	labels := map[string]bool{}
 	for _, op := range plan.Ops {
 		if op.Kind == "line" {
 			lines = append(lines, op)
+		}
+		if op.Kind == "text" && (op.Text == "to <detail>" || op.Text == "from <overview>") {
+			if op.TextLayout == nil || op.TextLayout.Role != entity.TextRoleConnectorLabel {
+				t.Fatalf("cross-frame label %q layout = %#v", op.Text, op.TextLayout)
+			}
+			labels[op.Text] = true
 		}
 	}
 	if len(lines) != 2 {
@@ -172,6 +179,56 @@ func TestBuildPPTXPlanPreservesExplicitCrossFrameConnectorStrokeWidth(t *testing
 		if op.Line == nil || math.Abs(op.Line.Width-2.25) > 1e-9 {
 			t.Fatalf("cross-frame line %q = %#v, want 2.25pt", op.ID, op.Line)
 		}
+		if op.W <= 0 && op.H <= 0 {
+			t.Fatalf("cross-frame line %q has zero length: %#v", op.ID, op)
+		}
+		for index := 1; index < len(op.Points); index++ {
+			dx := math.Abs(op.Points[index].X - op.Points[index-1].X)
+			dy := math.Abs(op.Points[index].Y - op.Points[index-1].Y)
+			if dx > 1e-9 && dy > 1e-9 {
+				t.Fatalf("cross-frame line %q has a diagonal segment: %#v", op.ID, op.Points)
+			}
+		}
+	}
+	if !labels["to <detail>"] || !labels["from <overview>"] {
+		t.Fatalf("cross-frame labels = %#v, want exact to/from frame IDs", labels)
+	}
+}
+
+func TestBuildPPTXPlanPreservesCrossFrameCornerElbow(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames gap="48">
+  <frame id="source" width="100" height="100" class="pl-2 pt-1">
+    <rectangle id="node" title="Source" width="10" height="10" />
+    <connection src="node" dst="destination.node" />
+  </frame>
+  <frame id="destination" width="100" height="100">
+    <rectangle id="node" title="Destination" width="10" height="10" />
+  </frame>
+</frames></xaligo>`)
+	planJSON, err := newUsecase().BuildPPTXPlan(context.Background(), source, entity.RenderOptions{Format: usecase.FormatPPTX, PxPerInch: 96, CombineFrames: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var plan entity.Plan
+	if err := json.Unmarshal(planJSON, &plan); err != nil {
+		t.Fatal(err)
+	}
+	foundElbow := false
+	for _, op := range plan.Ops {
+		if op.Kind != "line" || len(op.Points) < 3 {
+			continue
+		}
+		foundElbow = true
+		for index := 1; index < len(op.Points); index++ {
+			dx := math.Abs(op.Points[index].X - op.Points[index-1].X)
+			dy := math.Abs(op.Points[index].Y - op.Points[index-1].Y)
+			if dx > 1e-9 && dy > 1e-9 {
+				t.Fatalf("PPTX page-link elbow %q has diagonal segment: %#v", op.ID, op.Points)
+			}
+		}
+	}
+	if !foundElbow {
+		t.Fatalf("PPTX plan has no cross-frame corner elbow: %#v", plan.Ops)
 	}
 }
 

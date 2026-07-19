@@ -11,10 +11,37 @@ Supported formats:
 | Format | Output |
 |---|---|
 | `excalidraw` | Editable Excalidraw JSON |
-| `svg` | Standalone SVG |
-| `pptx` | PowerPoint presentation |
+| `svg` | Standalone SVG; one file per frame by default |
+| `pptx` | PowerPoint presentation; one slide per frame by default |
+| `pdf` | PDF document; one page per frame by default |
+| `excel` | Excel workbook; one frame SVG per worksheet by default |
+| `xlsx` | Alias for `excel` |
 | `xyflow` | React Flow / XYFlow JSON |
 | `isoflow` | Isoflow-compatible model JSON |
+
+### Frames and physical pages
+
+Identified child frames are physical pages for SVG, PPTX, PDF, and Excel. They
+are emitted in source order.
+
+| Format | Multiple-frame default | `--combine-frames` |
+|---|---|---|
+| SVG | Separate `<output-stem>-<safe-frame-id>.svg` files | One SVG canvas |
+| PPTX | One slide per frame in one presentation | One diagram slide |
+| PDF | One page per frame in one document | One PDF page |
+| Excel | One worksheet per frame in one workbook | One worksheet |
+
+Excalidraw, XYFlow, and Isoflow always remain one logical document, so
+`--combine-frames` does not change them. Live SVG preview also uses the combined
+canvas so every frame remains visible in one browser view.
+
+For a one-frame SVG document, `-o` is the exact output filename. For several
+frames, `-o output/diagram.svg` produces names such as
+`output/diagram-overview.svg` and `output/diagram-detail.svg`. Safe frame IDs
+retain ASCII letters, digits, `_`, and `-`; other character runs become `-`.
+Leading and trailing `-` are removed, an empty result falls back to the frame's
+source order, and a filename collision is an error. SVG output is not wrapped
+in an implicit ZIP archive.
 
 Common render flags:
 
@@ -24,28 +51,33 @@ Common render flags:
 | `--theme light|dark` | Output theme |
 | `--services <csv>` | Service metadata and label overrides |
 | `--svg-legend-position top|right|bottom|left` | SVG legend placement |
-| `--arrow-style thin|standard|triangle|stealth|arrow|diamond|oval|none` | SVG/PPTX Plan default used when a connection omits its arrowhead. Explicit DSL arrowheads on normal/traffic connections and explicit stroke widths take precedence; routes require effective arrowheads to be `none` |
+| `--arrow-style thin|standard|triangle|stealth|arrow|diamond|oval|none` | SVG/PPTX/PDF/Excel Plan default used when a connection omits its arrowhead. Explicit DSL arrowheads on normal/traffic connections and explicit stroke widths take precedence; routes require effective arrowheads to be `none` |
+| `--combine-frames` | Preserve the compatibility single-canvas/page form for SVG, PPTX, PDF, and Excel |
 
 `aws-2.5d` and `topology` are recognized roadmap modes but currently return a
 not-implemented error. Any other mode, format, theme, orientation, paper size,
 arrow-style option, or SVG legend-position value outside its documented enum
 returns an error.
 
-`--arrow-style` belongs to the shared physical Plan used by SVG and PPTX. The
-editable Excalidraw, XYFlow, and Isoflow V1 outputs consume the resolved DSL
-scene directly and therefore use the DSL connection defaults instead.
+`--arrow-style` belongs to the shared physical Plan used by SVG, PPTX, PDF, and
+Excel. The editable Excalidraw, XYFlow, and Isoflow V1 outputs consume the
+resolved DSL scene directly and therefore use the DSL connection defaults
+instead.
 
-PPTX-specific flags:
+Physical-page and PPTX flags:
 
 | Flag | Description |
 |---|---|
-| `--paper A5|A4|A3|A2|A1|Letter|Legal|Tabloid` | Slide paper size |
-| `--orientation portrait|landscape` | Slide orientation |
+| `--paper A5|A4|A3|A2|A1|Letter|Legal|Tabloid` | Physical page/slide paper size |
+| `--orientation portrait|landscape` | Physical page/slide orientation |
 | `--paper-margin <inches>` | Margin applied before fitting |
 | `--paper-margin-top/right/bottom/left <inches>` | Per-side margin override |
 | `--px-per-inch <number>` | Layout scaling base |
-| `--title`, `--author`, `--company`, `--subject` | Presentation metadata |
+| `--title`, `--author`, `--company`, `--subject` | PPTX presentation metadata |
 | `--compression true|false` | PPTX compression |
+
+`--title` sets package-level PPTX metadata. It is unrelated to the visible
+`title` attribute on a page `<frame>` and never creates a frame tag.
 
 ## Structural Diff
 
@@ -63,7 +95,9 @@ writes two SVG images:
 
 XML formatting, comments, attribute order, parser-private attributes, and the
 equivalent V1 forms with an omitted version or `version="1"` do not create a
-diff. Matching prefers unique `name`, `ref`, and `id` values, then exact
+diff when that version is on the document root. A `version` on an identified
+child frame is visible page content and is compared normally, including the
+literal value `1`. Matching prefers unique `name`, `ref`, and `id` values, then exact
 subtrees, followed by deterministic order-aware structural matching. Give
 elements an explicit `id`, `name`, or `ref` when moves must remain identifiable
 across different parents.

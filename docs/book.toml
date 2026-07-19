@@ -3,7 +3,6 @@ title = "xaligo Documentation"
 authors = ["xaligo contributors"]
 description = "Official documentation for the xaligo diagram-as-code engine"
 language = "en"
-multilingual = false
 src = "src"
 
 [build]

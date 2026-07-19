@@ -18,7 +18,7 @@ more useful than a large rewrite.
 Good contribution areas include:
 
 - `.xal` examples for real architecture patterns.
-- Rendering bugs in Excalidraw, SVG, PPTX, XYFlow, or Isoflow output.
+- Rendering bugs in Excalidraw, SVG, PPTX, PDF, Excel, XYFlow, or Isoflow output.
 - Connector routing improvements.
 - AWS, Tabler, or Yamaha catalog corrections.
 - Documentation improvements.
@@ -39,14 +39,18 @@ When reporting rendering issues, include:
 Before opening a pull request:
 
 ```bash
+make security-setup # first run, or after scanner version updates
+make security-check # required before every commit
 go test ./...
+GOOS=js GOARCH=wasm go build -o /tmp/xaligo-browser.wasm ./cmd/wasm
+npm --prefix external test
 git diff --check
-cargo install mdbook-tabs --version 0.2.3 --locked
+cargo install mdbook-tabs --version 1.0.4 --locked
 mdbook build docs
 ```
 
-For documentation-only changes, `mdbook build docs` and `git diff --check` are
-usually enough.
+For documentation-only changes, the security check is still required;
+`mdbook build docs` and `git diff --check` cover the remaining verification.
 
 Keep changes focused. Prefer a small fix with a regression test over a broad
 refactor. When changing output behavior, update the relevant docs and examples

@@ -10,38 +10,59 @@ or under consideration and may change as the core renderer evolves.
 
 - Performance improvements for large diagrams.
 - Rendering support for larger architecture maps.
-- Page splitting for diagrams that do not fit on a single page.
+- Tiling one oversized frame across several physical pages.
 
-### Phase 1 Implementation Plan
+### Frame pagination status
 
-1. Add shared page-splitting analysis for the resolved draw plan.
-   This creates page tiles and records which drawing operations intersect each
-   tile without changing SVG or PPTX output yet.
-2. Connect the page metadata to SVG export so large diagrams can be emitted as
-   page-sized SVG files or page groups.
-3. Connect the same metadata to PPTX export so oversized diagrams can become
-   multiple slides while reusing the existing plan geometry.
-4. Add large-diagram regression samples and performance benchmarks around
-   parser, layout, scene construction, routing, plan building, and output
-   encoding.
-5. Optimize the slowest measured stages, with preference for shared caches and
-   data structures that benefit every renderer.
+Identified child frames are now physical page boundaries. The full scene is
+resolved first and then projected in source order:
 
-Initial implementation status:
+| Output | Default frame mapping |
+|---|---|
+| SVG | One file per frame |
+| PPTX | One slide per frame |
+| PDF | One page per frame |
+| Excel | One worksheet containing the frame SVG |
 
-- Shared page-splitting analysis has started in the Go usecase layer.
-- `SplitPlanPagesChecked` rejects non-finite slide, operation, point, page, and
-  overlap geometry and assigns stable unique IDs to anonymous operations.
-- Rendering output is unchanged until SVG and PPTX are wired to the page
-  metadata.
+`--combine-frames` retains the former single-canvas/page form. Excalidraw,
+XYFlow, and Isoflow remain one logical document. Default SVG uses the exact
+frame rectangle as its canvas and clip boundary; PDF and Excel inherit that
+strict page/image crop, while combined SVG keeps marker-safe bounds.
+
+Page frames can also add a top/bottom metadata band for built-in `id`, `title`,
+content `version`, and arbitrary key/value tags. The resolved `row-gap`
+(4 pixels by default) supplies both the inter-row spacing and the metadata
+page-edge inset at the selected vertical edge and both horizontal edges; rows
+use `frame width - 2 * row-gap`. A full-width reservation strip still starts
+at the outer logical frame edge, extends to the final content-box boundary,
+remains at least
+`row-gap + complete band height + 8` pixels deep, and excludes normal items,
+text, connector geometry and labels, and page links. Auto/fixed widths,
+typography, colors, ordered greedy row wrapping, explicit row breaks, per-row
+alignment, page ownership, and safe page-link edge selection are resolved
+before the physical formats project one frame per page. Cross-frame links can
+select item and logical page-edge anchors independently, preserve the frame
+anchor's tangent coordinate, and place the drawable terminal on a parallel
+inward line. That inset is the resolved metadata `row-gap`, or 4 pixels when
+metadata is absent; zero retains the outer edge and the value is never clamped.
+Links reject unsafe explicit geometry. Without an explicit frame terminal,
+unsafe candidates are filtered and rendering chooses the nearest safe side
+from actual visual geometry; only an empty candidate set is an error. Labels
+remain 4 layout pixels from the final inset terminal. XYFlow and Isoflow omit
+this page decoration.
+
+This frame pagination is separate from generic tiling. Remaining scale work is
+to split one oversized frame into multiple tiles, add large-diagram regression
+samples and benchmarks, and optimize the slowest measured shared stages.
 
 ## Rendering Correctness Foundation
 
 The shared renderer now rejects non-finite and invalid layout numbers, resolves
 fixed children before flex ratios, records content boxes and explicit overflow,
-detects parent and port overlap violations, and gives SVG/PPTX a common text
-layout and PPI transform. CLI format dispatch also goes through one use-case
-entry point. See [Internal Architecture and Algorithms](internal-architecture.md).
+detects parent and port overlap violations, and gives SVG/PPTX and the
+SVG-derived PDF/Excel output a common text layout and PPI transform. CLI format
+dispatch also goes through one use-case entry point. See
+[Internal Architecture and Algorithms](internal-architecture.md).
 
 The next structural steps are:
 
@@ -60,8 +81,8 @@ The next structural steps are:
 
 ## V1 Compatibility and V2
 
-Explicitly versioned `<frame version="1">` and `<frames version="1">` are the
-recommended frozen V1 profile. Unversioned roots remain compatible but emit a warning. V2 will use
+`<xaligo version="1">` is the canonical V1 envelope. Historical root `<frame>`
+and `<frames>` documents remain compatible but emit a migration warning. V2 will use
 the distinct `<scene version="2">` root, allowing an existing V1 reader to
 reject V2 safely without understanding it.
 
@@ -78,9 +99,18 @@ geometry across native and embedded targets.
 
 ## Input and Output Formats
 
-- Excel export and Excel-friendly workflows.
+- Excel-friendly data workflows beyond the implemented frame-image workbook
+  export.
 - Import from existing diagram formats and conversion into `.xal`.
 - Better round-tripping between generated output and `.xal` source.
+
+The V1 structured-diagram profile includes a document-wide data registry,
+general tables, relational schema/ER views, and all fourteen UML diagram-kind
+components. It deliberately
+keeps their semantic processors separate while reusing neutral drawing and
+encoding contracts. See [Structured Diagrams: Tables, Databases, and
+UML](design/structured-diagrams.md). Its `<xaligo version="1">` envelope is the
+canonical V1 syntax; legacy root documents continue to render with warnings.
 
 ## Editing and Automation
 

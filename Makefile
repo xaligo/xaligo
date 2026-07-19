@@ -1,7 +1,10 @@
-.PHONY: help build build-wasm test fmt tidy run init clean
+.PHONY: help build build-wasm test security-setup security-check fmt tidy run init clean
 
 BIN_DIR  := .bin
 BINARY   := $(BIN_DIR)/xaligo
+TOOLS_BIN_DIR := $(BIN_DIR)/tools
+GOVULNCHECK   := $(TOOLS_BIN_DIR)/govulncheck
+GOVULNCHECK_VERSION := v1.6.0
 WASM_OUT      := external/wasm
 VERSION  := $(shell sed -n '1{s/^v//;p;q;}' VERSION)
 LDFLAGS  := -X github.com/xaligo/xaligo/internal/controller.version=$(VERSION)
@@ -22,6 +25,16 @@ build-wasm: ## Build TS/WASI PPTX exporter into external/wasm/
 
 test: ## Run tests
 	go test ./...
+
+security-setup: ## Install security scanners and prepare npm audit metadata
+	@mkdir -p $(TOOLS_BIN_DIR)
+	GOBIN=$(CURDIR)/$(TOOLS_BIN_DIR) go install golang.org/x/vuln/cmd/govulncheck@$(GOVULNCHECK_VERSION)
+	npm install --package-lock-only --ignore-scripts
+
+security-check: ## Scan Go and npm dependencies for known vulnerabilities
+	@test -x $(GOVULNCHECK) || { echo "Run 'make security-setup' first." >&2; exit 1; }
+	$(GOVULNCHECK) ./...
+	npm audit --audit-level=low
 
 fmt: ## Format Go files
 	gofmt -w $$(find . -name '*.go' -not -path './vendor/*')

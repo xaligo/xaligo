@@ -62,7 +62,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version: '1.22'
+          go-version: '1.26.x'
           cache: true
 
       - name: Download Go dependencies
@@ -70,3 +70,41 @@ jobs:
 
       - name: Run tests
         run: go test ./...
+
+      - name: Build browser WebAssembly adapter
+        run: GOOS=js GOARCH=wasm go build -o /tmp/xaligo-browser.wasm ./cmd/wasm
+
+      - name: Verify native document encoders stay out of browser WebAssembly
+        shell: bash
+        run: |
+          set -euo pipefail
+          dependencies="$(GOOS=js GOARCH=wasm go list -deps ./cmd/wasm)"
+          if grep -Eq '^(github.com/tdewolff/canvas($|/)|github.com/xuri/excelize/v2($|/))' <<< "$dependencies"; then
+            echo "Native PDF/Excel dependencies entered the browser WebAssembly graph." >&2
+            exit 1
+          fi
+
+  external:
+    name: TypeScript test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        working-directory: external
+        run: npm install --package-lock=false
+
+      - name: Run tests
+        working-directory: external
+        run: npm test
+
+      - name: Build exporters
+        working-directory: external
+        run: npm run build

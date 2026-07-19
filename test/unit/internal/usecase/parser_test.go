@@ -22,6 +22,115 @@ func TestParseStoresNodePositions(t *testing.T) {
 	}
 }
 
+func TestParseCanonicalXaligoEnvelope(t *testing.T) {
+	doc, err := usecase.Parse(strings.NewReader(`<xaligo version="1"><data><table-data id="services" /></data><frames><frame id="main"><blank /></frame></frames></xaligo>`))
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+	if doc.Root == nil || doc.Root.Tag != "frames" || doc.Data == nil || doc.Data.Tag != "data" {
+		t.Fatalf("document = %#v, want normalized frames root and data registry", doc)
+	}
+	if doc.Envelope == nil || doc.Envelope.Tag != "xaligo" || doc.LegacyRoot {
+		t.Fatalf("envelope = %#v legacy=%v", doc.Envelope, doc.LegacyRoot)
+	}
+}
+
+func TestParseRejectsInvalidXaligoEnvelope(t *testing.T) {
+	_, err := usecase.Parse(strings.NewReader(`<xaligo version="1"><frame id="main" /></xaligo>`))
+	var parseErr *entity.ParseError
+	if !errors.As(err, &parseErr) || !strings.Contains(parseErr.Error(), "may only contain") {
+		t.Fatalf("error = %T %v, want envelope hierarchy error", err, err)
+	}
+}
+
+func TestParseNormalizesPipeAndTaggedTableRows(t *testing.T) {
+	doc, err := usecase.Parse(strings.NewReader(`<xaligo version="1"><frames><frame id="main"><table title="Services">
+| Name | Port |
+|:-----|-----:|
+| API  | 8080 |
+<row><cell>DB</cell><cell align="right">5432</cell></row>
+</table></frame></frames></xaligo>`))
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+	table := doc.Root.Children[0].Children[0]
+	if table.Tag != "table" || len(table.Children) != 3 {
+		t.Fatalf("table = %#v", table)
+	}
+	if table.Children[0].Tag != "table-header" || table.Children[1].Children[1].Text != "8080" || table.Children[2].Children[0].Text != "DB" {
+		t.Fatalf("normalized rows = %#v", table.Children)
+	}
+	if table.Children[0].Children[1].Attr("align") != "middle-right" || table.Children[2].Children[1].Attr("align") != "middle-right" {
+		t.Fatalf("normalized alignments = header %q tagged %q", table.Children[0].Children[1].Attr("align"), table.Children[2].Children[1].Attr("align"))
+	}
+}
+
+func TestParseRejectsTableColumnMismatch(t *testing.T) {
+	_, err := usecase.Parse(strings.NewReader(`<xaligo version="1"><frames><frame id="main"><table>
+| Name | Port |
+|:-----|-----:|
+| API |
+</table></frame></frames></xaligo>`))
+	var parseErr *entity.ParseError
+	if !errors.As(err, &parseErr) || !strings.Contains(err.Error(), "has 1 cells, want 2") {
+		t.Fatalf("error = %T %v", err, err)
+	}
+}
+
+func TestParseNormalizesDatabaseSchemaAndForeignKey(t *testing.T) {
+	doc, err := usecase.Parse(strings.NewReader(`<xaligo version="1"><data><database-schema id="app"><entity id="roles"><column name="id" type="bigint" primary-key="true" /></entity><entity id="users"><column name="id" type="bigint" primary-key="true" /><column name="role_id" type="bigint" /><foreign-key columns="role_id" references="roles.id" /></entity></database-schema></data><frames><frame id="erd"><database data="app" /></frame></frames></xaligo>`))
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+	frame := doc.Root.Children[0]
+	database := frame.Children[0]
+	if database.Tag != "database" || len(database.Children) != 2 || database.Children[1].Tag != "entity" {
+		t.Fatalf("database = %#v", database)
+	}
+	if got := frame.Children[len(frame.Children)-1]; got.Tag != "connection" || got.Attr("src") != "users" || got.Attr("dst") != "roles" {
+		t.Fatalf("generated relation = %#v", got)
+	}
+}
+
+func TestParseNormalizesCompositeDatabaseKeys(t *testing.T) {
+	doc, err := usecase.Parse(strings.NewReader(`<xaligo version="1"><data><database-schema id="app">
+  <entity id="roles"><column name="tenant_id" type="bigint" /><column name="id" type="bigint" /><primary-key columns="tenant_id,id" /></entity>
+  <entity id="users"><column name="tenant_id" type="bigint" /><column name="role_id" type="bigint" /><foreign-key columns="tenant_id,role_id" references="roles.tenant_id,roles.id" on-delete="cascade" /></entity>
+</database-schema></data><frames><frame id="erd"><database data="app" /></frame></frames></xaligo>`))
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+	database := doc.Root.Children[0].Children[0]
+	roles := database.Children[0]
+	if roles.Children[1].Children[2].Text != "PK" || roles.Children[2].Children[2].Text != "PK" {
+		t.Fatalf("composite primary key rows = %#v", roles.Children)
+	}
+	connection := doc.Root.Children[0].Children[len(doc.Root.Children[0].Children)-1]
+	if connection.Attr("_xaligoDatabaseForeignKey") != "tenant_id,role_id" || connection.Attr("_xaligoDatabaseOnDelete") != "cascade" {
+		t.Fatalf("composite foreign key connection = %#v", connection.Attrs)
+	}
+}
+
+func TestParseRejectsCompositeForeignKeyArityMismatch(t *testing.T) {
+	_, err := usecase.Parse(strings.NewReader(`<xaligo version="1"><data><database-schema id="app">
+  <entity id="roles"><column name="tenant_id" /><column name="id" /></entity>
+  <entity id="users"><column name="tenant_id" /><foreign-key columns="tenant_id" references="roles.tenant_id,roles.id" /></entity>
+</database-schema></data><frames><frame id="erd"><database data="app" /></frame></frames></xaligo>`))
+	if err == nil || !strings.Contains(err.Error(), "equally sized") {
+		t.Fatalf("Parse() error = %v, want arity error", err)
+	}
+}
+
+func TestParseRejectsInvalidForeignKeyAction(t *testing.T) {
+	_, err := usecase.Parse(strings.NewReader(`<xaligo version="1"><data><database-schema id="app">
+  <entity id="roles"><column name="id" /></entity>
+  <entity id="users"><column name="role_id" /><foreign-key columns="role_id" references="roles.id" on-delete="destroy" /></entity>
+</database-schema></data><frames><frame id="erd"><database data="app" /></frame></frames></xaligo>`))
+	if err == nil || !strings.Contains(err.Error(), "on-delete") {
+		t.Fatalf("Parse() error = %v, want referential-action error", err)
+	}
+}
+
 func TestParseValidationErrorHasPosition(t *testing.T) {
 	_, err := usecase.Parse(strings.NewReader("<frame>\n  <item id=\"bad\" />\n</frame>"))
 	var parseErr *entity.ParseError
@@ -99,7 +208,7 @@ func TestParseFramesResolvesCrossFrameConnection(t *testing.T) {
 	doc, err := usecase.Parse(strings.NewReader(`<frames>
   <frame id="page-a" width="320" height="180">
     <rectangle id="web" title="Web" />
-    <connection src="web" dst="db" />
+    <connection src="web" dst="page-b.db" />
   </frame>
   <frame id="page-b" width="320" height="180">
     <rectangle id="db" title="DB" />
@@ -178,8 +287,46 @@ func TestParseShorthandReportsUnknownReference(t *testing.T) {
 	if !errors.As(err, &parseErr) {
 		t.Fatalf("error = %T %v", err, err)
 	}
-	if parseErr.Position.Line != 3 || parseErr.Position.Column != 3 || !strings.Contains(err.Error(), `destination "missing"`) {
+	if parseErr.Position.Line != 3 || parseErr.Position.Column != 3 || !strings.Contains(err.Error(), `dst="missing"`) {
 		t.Fatalf("error = %v at %#v", err, parseErr.Position)
+	}
+}
+
+func TestParseScopesConnectionIDsByFrame(t *testing.T) {
+	doc, err := usecase.Parse(strings.NewReader(`<frames>
+  <frame id="left"><rectangle id="service" /><connection src="service" dst="right.service" /></frame>
+  <frame id="right"><rectangle id="service" /></frame>
+</frames>`))
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+	connection := doc.Root.Children[0].Children[1]
+	if connection.Attr("_xaligoConnectionSrcFrame") != "left" || connection.Attr("_xaligoConnectionDstFrame") != "right" {
+		t.Fatalf("qualified endpoint frames = %#v", connection.Attrs)
+	}
+}
+
+func TestParseRejectsUnqualifiedCrossFrameConnectionID(t *testing.T) {
+	_, err := usecase.Parse(strings.NewReader(`<frames>
+  <frame id="left"><rectangle id="source" /><connection src="source" dst="target" /></frame>
+  <frame id="right"><rectangle id="target" /></frame>
+</frames>`))
+	if err == nil || !strings.Contains(err.Error(), "use frameId.id") {
+		t.Fatalf("Parse() error = %v, want qualified-reference error", err)
+	}
+}
+
+func TestParseResolvesQualifiedTableIDAcrossFrames(t *testing.T) {
+	doc, err := usecase.Parse(strings.NewReader(`<frames>
+  <frame id="source"><table id="inventory"><header><cell>Name</cell></header><row><cell>API</cell></row></table></frame>
+  <frame id="consumer"><rectangle id="report" /><connection src="report" dst="source.inventory" /></frame>
+</frames>`))
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+	connection := doc.Root.Children[1].Children[1]
+	if connection.Attr("_xaligoConnectionDstFrame") != "source" {
+		t.Fatalf("qualified table endpoint = %#v", connection.Attrs)
 	}
 }
 

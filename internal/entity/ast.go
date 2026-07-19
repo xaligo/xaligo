@@ -2,7 +2,10 @@ package entity
 
 // Document is the root of xaligo DSL.
 type Document struct {
-	Root *Node
+	Root       *Node
+	Data       *Node
+	Envelope   *Node
+	LegacyRoot bool
 }
 
 type Position struct {

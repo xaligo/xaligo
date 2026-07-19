@@ -4,8 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
+	"io"
+	"math"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/xaligo/xaligo/internal/config"
@@ -19,9 +23,12 @@ import (
 type RenderUsecase interface {
 	ValidateRenderOptions(entity.RenderOptions) error
 	Render(context.Context, []byte, entity.RenderOptions) ([]byte, error)
+	RenderArtifacts(context.Context, []byte, entity.RenderOptions) ([]entity.RenderArtifact, error)
 	RenderExcalidraw(context.Context, []byte, entity.RenderOptions) ([]byte, error)
 	RenderSVG(context.Context, []byte, entity.RenderOptions) ([]byte, error)
 	RenderPPTX(context.Context, []byte, entity.RenderOptions) ([]byte, error)
+	RenderPDF(context.Context, []byte, entity.RenderOptions) ([]byte, error)
+	RenderExcel(context.Context, []byte, entity.RenderOptions) ([]byte, error)
 	RenderXYFlow(context.Context, []byte, entity.RenderOptions) ([]byte, error)
 	RenderIsoflow(context.Context, []byte, entity.RenderOptions) ([]byte, error)
 	BuildPPTXPlan(context.Context, []byte, entity.RenderOptions) ([]byte, error)
@@ -29,12 +36,14 @@ type RenderUsecase interface {
 }
 
 type renderUsecase struct {
-	excalidrawRepository repository.ExcalidrawRepository
-	xaligoRepository     repository.XaligoRepository
-	powerpointRepository repository.PowerpointRepository
-	isoflowRepository    repository.IsoflowRepository
-	svgRepository        repository.SVGRepository
-	xyFlowRepository     repository.XYFlowRepository
+	excalidrawRepository  repository.ExcalidrawRepository
+	xaligoRepository      repository.XaligoRepository
+	powerpointRepository  repository.PowerpointRepository
+	isoflowRepository     repository.IsoflowRepository
+	svgRepository         repository.SVGRepository
+	xyFlowRepository      repository.XYFlowRepository
+	pdfRepository         repository.PDFRepository
+	spreadsheetRepository repository.SpreadsheetRepository
 }
 
 func NewRenderUsecase(
@@ -44,14 +53,18 @@ func NewRenderUsecase(
 	isoflowRepository repository.IsoflowRepository,
 	svgRepository repository.SVGRepository,
 	xyFlowRepository repository.XYFlowRepository,
+	pdfRepository repository.PDFRepository,
+	spreadsheetRepository repository.SpreadsheetRepository,
 ) RenderUsecase {
 	return &renderUsecase{
-		excalidrawRepository: excalidrawRepository,
-		xaligoRepository:     xaligoRepository,
-		powerpointRepository: powerpointRepository,
-		isoflowRepository:    isoflowRepository,
-		svgRepository:        svgRepository,
-		xyFlowRepository:     xyFlowRepository,
+		excalidrawRepository:  excalidrawRepository,
+		xaligoRepository:      xaligoRepository,
+		powerpointRepository:  powerpointRepository,
+		isoflowRepository:     isoflowRepository,
+		svgRepository:         svgRepository,
+		xyFlowRepository:      xyFlowRepository,
+		pdfRepository:         pdfRepository,
+		spreadsheetRepository: spreadsheetRepository,
 	}
 }
 
@@ -63,6 +76,8 @@ const (
 	FormatExcalidraw = v1engine.FormatExcalidrawV1EngineOptionRender
 	FormatSVG        = v1engine.FormatSVGV1EngineOptionRender
 	FormatPPTX       = v1engine.FormatPPTXV1EngineOptionRender
+	FormatPDF        = v1engine.FormatPDFV1EngineOptionRender
+	FormatExcel      = v1engine.FormatExcelV1EngineOptionRender
 	FormatXYFlow     = v1engine.FormatXYFlowV1EngineOptionRender
 	FormatIsoflow    = v1engine.FormatIsoflowV1EngineOptionRender
 
@@ -128,6 +143,10 @@ func (rcvr *renderUsecase) Render(ctx context.Context, input []byte, opts entity
 	case FormatPPTX:
 		logger.DEBUG(IURR006, "branch pptx")
 		return rcvr.RenderPPTX(ctx, input, opts)
+	case FormatPDF:
+		return rcvr.RenderPDF(ctx, input, opts)
+	case FormatExcel:
+		return rcvr.RenderExcel(ctx, input, opts)
 	case FormatXYFlow:
 		logger.DEBUG(IURR007, "branch xyflow")
 		return rcvr.RenderXYFlow(ctx, input, opts)
@@ -152,21 +171,46 @@ func (rcvr *renderUsecase) RenderExcalidraw(ctx context.Context, input []byte, o
 
 var (
 	IURRS001 = share.NewMCode("IURRS-001", "Render SVG build plan failed")
-	IURRS002 = share.NewMCode("IURRS-002", "Render SVG decode plan failed")
 )
 
 func (rcvr *renderUsecase) RenderSVG(ctx context.Context, input []byte, opts entity.RenderOptions) ([]byte, error) {
-	planJSON, err := rcvr.buildPlan(ctx, input, opts)
+	artifacts, err := rcvr.RenderArtifacts(ctx, input, opts)
 	if err != nil {
-		logger.ERROR(IURRS001, "build plan failed", map[string]any{"error": err})
-		return nil, fmt.Errorf("build SVG plan: %w", err)
+		return nil, err
 	}
-	var plan entity.Plan
-	if err := json.Unmarshal(planJSON, &plan); err != nil {
-		logger.ERROR(IURRS002, "decode plan failed", map[string]any{"error": err})
-		return nil, fmt.Errorf("decode SVG plan: %w", err)
+	if len(artifacts) != 1 {
+		return nil, fmt.Errorf("SVG render produced %d frame files; use RenderArtifacts or set CombineFrames", len(artifacts))
 	}
-	return rcvr.svgRepository.Render(plan, opts.PxPerInch, opts.SVGLegendPosition)
+	return artifacts[0].Data, nil
+}
+
+// RenderArtifacts renders one SVG artifact per XAL frame. Formats represented
+// by one container file continue to use Render.
+func (rcvr *renderUsecase) RenderArtifacts(ctx context.Context, input []byte, opts entity.RenderOptions) ([]entity.RenderArtifact, error) {
+	format := entity.Format(strings.ToLower(strings.TrimSpace(string(opts.Format))))
+	if format == "" {
+		format = FormatSVG
+	}
+	if format != FormatSVG {
+		return nil, fmt.Errorf("render artifacts is only available for SVG, got %q", format)
+	}
+	opts.Format = FormatSVG
+	document, err := rcvr.buildDocumentPlan(ctx, input, opts, false)
+	if err != nil {
+		logger.ERROR(IURRS001, "build document plan failed", map[string]any{"error": err})
+		return nil, fmt.Errorf("build SVG document plan: %w", err)
+	}
+	artifacts := make([]entity.RenderArtifact, 0, len(document.Pages))
+	for _, page := range document.Pages {
+		data, renderErr := rcvr.svgRepository.Render(entity.Plan{
+			Slide: page.Slide, Ops: page.Ops, Legend: document.Legend,
+		}, opts.PxPerInch, opts.SVGLegendPosition)
+		if renderErr != nil {
+			return nil, fmt.Errorf("render SVG frame %q: %w", page.ID, renderErr)
+		}
+		artifacts = append(artifacts, entity.RenderArtifact{ID: page.ID, Data: data})
+	}
+	return artifacts, nil
 }
 
 var (
@@ -177,30 +221,56 @@ var (
 	IURRP004  = share.NewMCode("IURRP-004", "Render PPTX context check failed")
 )
 
-func (rcvr *renderUsecase) buildPlan(ctx context.Context, input []byte, opts entity.RenderOptions) ([]byte, error) {
+func (rcvr *renderUsecase) buildDocumentPlan(ctx context.Context, input []byte, opts entity.RenderOptions, uniformPages bool) (entity.DocumentPlan, error) {
 	scene, entries, err := rcvr.buildScene(ctx, input, opts)
 	if err != nil {
 		logger.ERROR(IURBPP001, "build scene failed", map[string]any{"error": err})
-		return nil, err
+		return entity.DocumentPlan{}, err
 	}
-	planJSON, err := v1engine.BuildPlanJSONV1EnginePlanBuild(string(scene), v1engine.ResolvePlanOptionsV1EngineOptionPlan(opts, entries))
+	planJSON, err := v1engine.BuildDocumentPlanJSONV1EnginePlanDocument(
+		string(scene), v1engine.ResolvePlanOptionsV1EngineOptionPlan(opts, entries), opts.CombineFrames,
+	)
 	if err != nil {
-		logger.ERROR(IURBPP002, "build plan failed", map[string]any{"error": err})
-		return nil, fmt.Errorf("build draw plan: %w", err)
+		logger.ERROR(IURBPP002, "build document plan failed", map[string]any{"error": err})
+		return entity.DocumentPlan{}, fmt.Errorf("build document draw plan: %w", err)
 	}
-	return planJSON, nil
+	var document entity.DocumentPlan
+	if err := json.Unmarshal(planJSON, &document); err != nil {
+		return entity.DocumentPlan{}, fmt.Errorf("decode document draw plan: %w", err)
+	}
+	if uniformPages {
+		v1engine.NormalizeDocumentPageSizesV1EnginePlanDocument(&document)
+	}
+	return document, nil
 }
 
 // BuildPPTXPlan remains as the format-specific compatibility boundary for WASM.
 func (rcvr *renderUsecase) BuildPPTXPlan(ctx context.Context, input []byte, opts entity.RenderOptions) ([]byte, error) {
-	return rcvr.buildPlan(ctx, input, opts)
+	document, err := rcvr.buildDocumentPlan(ctx, input, opts, true)
+	if err != nil {
+		return nil, err
+	}
+	// Preserve the established single-page JSON boundary for callers that do
+	// not need a document wrapper. Multi-frame output uses schemaVersion 2.
+	if len(document.Pages) == 1 {
+		page := document.Pages[0]
+		return json.Marshal(entity.Plan{
+			Slide: page.Slide, Ops: page.Ops,
+			Legend: document.Legend, ConnectorLegend: document.ConnectorLegend,
+		})
+	}
+	return json.Marshal(document)
 }
 
 func (rcvr *renderUsecase) NewPreviewRepository(path string, opts entity.PreviewOptions) (repository.PreviewRepository, error) {
+	renderPreview := func(ctx context.Context, input []byte, renderOpts entity.RenderOptions) ([]byte, error) {
+		renderOpts.CombineFrames = true
+		return rcvr.RenderSVG(ctx, input, renderOpts)
+	}
 	return repository.NewPreviewRepository(
 		path,
 		opts,
-		rcvr.RenderSVG,
+		renderPreview,
 		rcvr.ValidateRenderOptions,
 		rcvr.diagnose,
 		rcvr.xaligoRepository.ReadSource,
@@ -219,7 +289,7 @@ func (rcvr *renderUsecase) diagnose(ctx context.Context, input []byte) ([]entity
 }
 
 func (rcvr *renderUsecase) RenderPPTX(ctx context.Context, input []byte, opts entity.RenderOptions) ([]byte, error) {
-	planJSON, err := rcvr.buildPlan(ctx, input, opts)
+	planJSON, err := rcvr.BuildPPTXPlan(ctx, input, opts)
 	if err != nil {
 		logger.ERROR(IURRP001, "build plan failed", map[string]any{"error": err})
 		return nil, err
@@ -238,6 +308,117 @@ func (rcvr *renderUsecase) RenderPPTX(ctx context.Context, input []byte, opts en
 		return nil, err
 	}
 	return data, nil
+}
+
+// RenderPDF maps each document page to one PDF page.
+func (rcvr *renderUsecase) RenderPDF(ctx context.Context, input []byte, opts entity.RenderOptions) ([]byte, error) {
+	if rcvr.pdfRepository == nil {
+		return nil, fmt.Errorf("PDF repository is not available in this runtime")
+	}
+	document, err := rcvr.buildDocumentPlan(ctx, input, opts, false)
+	if err != nil {
+		return nil, err
+	}
+	pages, err := rcvr.renderDocumentPages(document, opts)
+	if err != nil {
+		return nil, err
+	}
+	return rcvr.pdfRepository.Export(ctx, pages)
+}
+
+// RenderExcel maps each document page to one worksheet with the page SVG
+// embedded as a vector image.
+func (rcvr *renderUsecase) RenderExcel(ctx context.Context, input []byte, opts entity.RenderOptions) ([]byte, error) {
+	if rcvr.spreadsheetRepository == nil {
+		return nil, fmt.Errorf("Excel repository is not available in this runtime")
+	}
+	document, err := rcvr.buildDocumentPlan(ctx, input, opts, false)
+	if err != nil {
+		return nil, err
+	}
+	pages, err := rcvr.renderDocumentPages(document, opts)
+	if err != nil {
+		return nil, err
+	}
+	return rcvr.spreadsheetRepository.Export(ctx, pages)
+}
+
+func (rcvr *renderUsecase) renderDocumentPages(document entity.DocumentPlan, opts entity.RenderOptions) ([]entity.RenderPage, error) {
+	pxPerInch := opts.PxPerInch
+	if pxPerInch <= 0 {
+		pxPerInch = 96
+	}
+	pages := make([]entity.RenderPage, 0, len(document.Pages))
+	for _, page := range document.Pages {
+		svg, err := rcvr.svgRepository.Render(entity.Plan{
+			Slide: page.Slide, Ops: page.Ops, Legend: document.Legend,
+		}, pxPerInch, opts.SVGLegendPosition)
+		if err != nil {
+			return nil, fmt.Errorf("render document page %q as SVG: %w", page.ID, err)
+		}
+		widthPx, heightPx, err := intrinsicSVGDimensionsRenderDocument(svg)
+		if err != nil {
+			return nil, fmt.Errorf("resolve document page %q SVG dimensions: %w", page.ID, err)
+		}
+		pages = append(pages, entity.RenderPage{
+			ID: page.ID, SVG: svg,
+			WidthPx: widthPx, HeightPx: heightPx,
+		})
+	}
+	return pages, nil
+}
+
+func intrinsicSVGDimensionsRenderDocument(data []byte) (float64, float64, error) {
+	decoder := xml.NewDecoder(bytes.NewReader(data))
+	for {
+		token, err := decoder.Token()
+		if err == io.EOF {
+			return 0, 0, fmt.Errorf("SVG root element is missing")
+		}
+		if err != nil {
+			return 0, 0, fmt.Errorf("parse SVG root: %w", err)
+		}
+		start, ok := token.(xml.StartElement)
+		if !ok {
+			continue
+		}
+		if start.Name.Local != "svg" {
+			return 0, 0, fmt.Errorf("root element is <%s>, expected <svg>", start.Name.Local)
+		}
+		width, height := "", ""
+		for _, attribute := range start.Attr {
+			switch attribute.Name.Local {
+			case "width":
+				width = attribute.Value
+			case "height":
+				height = attribute.Value
+			}
+		}
+		parsedWidth, err := parseSVGPixelDimensionRenderDocument(width)
+		if err != nil {
+			return 0, 0, fmt.Errorf("width: %w", err)
+		}
+		parsedHeight, err := parseSVGPixelDimensionRenderDocument(height)
+		if err != nil {
+			return 0, 0, fmt.Errorf("height: %w", err)
+		}
+		return parsedWidth, parsedHeight, nil
+	}
+}
+
+func parseSVGPixelDimensionRenderDocument(value string) (float64, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return 0, fmt.Errorf("dimension is missing")
+	}
+	parsed, err := strconv.ParseFloat(value, 64)
+	if err != nil {
+		return 0, fmt.Errorf("dimension %q must be a unitless pixel number: %w", value, err)
+	}
+	if parsed <= 0 || math.IsNaN(parsed) || math.IsInf(parsed, 0) {
+		return 0, fmt.Errorf("dimension %q must be positive and finite", value)
+	}
+	return parsed, nil
 }
 
 var (
@@ -323,7 +504,7 @@ func (rcvr *renderUsecase) buildScene(ctx context.Context, input []byte, opts en
 		return nil, nil, err
 	}
 
-	doc, err := v1engine.ParseV1EngineParseDocument(bytes.NewReader(input))
+	doc, err := v1engine.ParseWithImportsV1EngineParseDocument(bytes.NewReader(input), opts.Imports)
 	if err != nil {
 		logger.ERROR(IURBS007, "parse DSL failed", map[string]any{"error": err})
 		return nil, nil, fmt.Errorf("parse DSL: %w", err)

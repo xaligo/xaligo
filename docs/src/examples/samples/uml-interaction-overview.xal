@@ -1,0 +1,42 @@
+<xaligo version="1">
+  <data></data>
+  <frames>
+    <frame id="interaction-overview" width="1800" height="900" class="pa-3">
+      <uml id="checkout-overview" title="Checkout Interaction Overview">
+        <interaction-overview-diagram direction="right">
+          <initial id="start" title="Start" />
+          <interaction id="browse" title="ref Browse products">
+            <note>Customer adds products to the cart</note>
+          </interaction>
+          <decision id="cart" title="Cart has items?" />
+          <interaction id="abandon" title="ref Abandon cart" />
+          <fork id="checkout-fork" title="Fork" />
+          <interaction id="reserve" title="ref Reserve inventory" />
+          <interaction id="authorize" title="ref Authorize payment" />
+          <join id="checkout-join" title="Join" />
+          <decision id="authorized" title="Payment authorized?" />
+          <interaction id="confirm" title="ref Confirm order" />
+          <interaction id="compensate" title="ref Release inventory" />
+          <interaction id="finalize" title="ref Finish checkout" />
+          <final id="done" title="Done" />
+
+          <control-flow src="start" dst="browse" />
+          <control-flow src="browse" dst="cart" />
+          <control-flow src="cart" dst="abandon" guard="no" />
+          <control-flow src="cart" dst="checkout-fork" guard="yes" />
+          <control-flow src="checkout-fork" dst="reserve" />
+          <control-flow src="checkout-fork" dst="authorize" />
+          <control-flow src="reserve" dst="checkout-join" />
+          <control-flow src="authorize" dst="checkout-join" />
+          <control-flow src="checkout-join" dst="authorized" />
+          <control-flow src="authorized" dst="confirm" guard="yes" />
+          <control-flow src="authorized" dst="compensate" guard="no" />
+          <control-flow src="abandon" dst="finalize" />
+          <control-flow src="confirm" dst="finalize" />
+          <control-flow src="compensate" dst="finalize" />
+          <control-flow src="finalize" dst="done" />
+        </interaction-overview-diagram>
+      </uml>
+    </frame>
+  </frames>
+</xaligo>

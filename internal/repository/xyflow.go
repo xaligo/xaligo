@@ -37,12 +37,9 @@ func (rcvr *xyFlowRepository) Render(sceneJSON []byte) ([]byte, error) {
 	if err := json.Unmarshal(sceneJSON, &scene); err != nil {
 		return nil, fmt.Errorf("decode resolved scene for XYFlow: %w", err)
 	}
-	labels := map[string]string{}
+	labels := xyFlowNodeLabels(scene.Elements)
 	groupIcons := map[string]string{}
 	for _, element := range scene.Elements {
-		if element.Type == "text" && strings.HasSuffix(element.ID, "-item-lbl") {
-			labels[strings.TrimSuffix(element.ID, "-lbl")] = element.Text
-		}
 		if element.Type == "image" && strings.HasSuffix(element.ID, "-icon") {
 			if file, ok := scene.Files[element.FileID]; ok && file.DataURL != "" {
 				groupIcons[strings.TrimSuffix(element.ID, "-icon")+"-rect"] = file.DataURL
@@ -63,9 +60,13 @@ func (rcvr *xyFlowRepository) Render(sceneJSON []byte) ([]byte, error) {
 			}
 		}
 		data := map[string]any{"kind": "xyFlowGroup"}
+		if label := labels[element.ID]; label != "" {
+			data["label"] = label
+		}
 		if semanticKind := xyFlowSemanticElementKind(element); semanticKind != "" {
 			data["semanticKind"] = semanticKind
 		}
+		addXYFlowUMLNodeData(data, element)
 		if icon := groupIcons[element.ID]; icon != "" {
 			data["icon"] = icon
 		}
@@ -178,7 +179,7 @@ func (rcvr *xyFlowRepository) Render(sceneJSON []byte) ([]byte, error) {
 func collectGroups(elements []entity.Element) []xyFlowGroup {
 	groups := []xyFlowGroup{}
 	for _, element := range elements {
-		if element.IsDeleted || element.ID == "paper-frame" || strings.HasSuffix(element.ID, "-header-bg") || element.Width <= 0 || element.Height <= 0 {
+		if element.IsDeleted || element.ID == "paper-frame" || strings.HasSuffix(element.ID, "-header-bg") || element.Width <= 0 || element.Height <= 0 || xyFlowPageDecoration(element) {
 			continue
 		}
 		semanticKind := xyFlowSemanticElementKind(element)
@@ -189,7 +190,7 @@ func collectGroups(elements []entity.Element) []xyFlowGroup {
 			groups = append(groups, xyFlowGroup{element: element, parent: strings.TrimSpace(element.CustomData.SemanticParentElementID)})
 			continue
 		}
-		if (element.Type != "rectangle" && element.Type != "frame") || (element.CustomData != nil && element.CustomData.AnchorBackground) {
+		if !xyFlowGenericNodeElement(element) || (element.CustomData != nil && element.CustomData.AnchorBackground) {
 			continue
 		}
 		groups = append(groups, xyFlowGroup{element: element})
@@ -206,6 +207,63 @@ func collectGroups(elements []entity.Element) []xyFlowGroup {
 		}
 	}
 	return groups
+}
+
+func xyFlowPageDecoration(element entity.Element) bool {
+	return element.CustomData != nil && (element.CustomData.FrameMetadata || element.CustomData.FrameMetadataReserved)
+}
+
+func xyFlowGenericNodeElement(element entity.Element) bool {
+	switch element.Type {
+	case "rectangle", "frame":
+		return true
+	case "ellipse", "diamond":
+		return element.CustomData != nil && strings.TrimSpace(element.CustomData.UMLElementKind) != ""
+	default:
+		return false
+	}
+}
+
+func xyFlowNodeLabels(elements []entity.Element) map[string]string {
+	labels := map[string]string{}
+	for _, element := range elements {
+		if element.IsDeleted || element.Type != "text" || strings.TrimSpace(element.Text) == "" {
+			continue
+		}
+		label := strings.TrimSpace(element.Text)
+		switch {
+		case strings.HasSuffix(element.ID, "-item-lbl"):
+			labels[strings.TrimSuffix(element.ID, "-lbl")] = label
+		case strings.HasSuffix(element.ID, "-label"):
+			labels[strings.TrimSuffix(element.ID, "-label")+"-rect"] = label
+		case strings.HasSuffix(element.ID, "-text"):
+			labels[strings.TrimSuffix(element.ID, "-text")+"-rect"] = label
+		}
+	}
+	return labels
+}
+
+func addXYFlowUMLNodeData(data map[string]any, element entity.Element) {
+	if element.CustomData == nil || strings.TrimSpace(element.CustomData.UMLElementKind) == "" {
+		return
+	}
+	data["shape"] = element.Type
+	for key, value := range map[string]string{
+		"umlId":               element.CustomData.UMLID,
+		"umlLocalId":          element.CustomData.UMLLocalID,
+		"umlReference":        element.CustomData.UMLReference,
+		"umlDiagramKind":      element.CustomData.UMLDiagramKind,
+		"umlElementKind":      element.CustomData.UMLElementKind,
+		"umlOwnerId":          element.CustomData.UMLOwnerID,
+		"umlOwnerReference":   element.CustomData.UMLOwnerReference,
+		"umlCompartmentKinds": element.CustomData.UMLCompartmentKinds,
+		"umlTimeFrom":         element.CustomData.UMLTimeFrom,
+		"umlTimeTo":           element.CustomData.UMLTimeTo,
+	} {
+		if value = strings.TrimSpace(value); value != "" {
+			data[key] = value
+		}
+	}
 }
 
 func xyFlowSemanticElementKind(element entity.Element) string {
@@ -295,7 +353,18 @@ func buildXYFlowEdge(element entity.Element, id, source, target string, sourceBi
 			data["crossFrame"] = true
 			data["sourceFrame"] = element.CustomData.ConnectorSourceFrame
 			data["targetFrame"] = element.CustomData.ConnectorDestinationFrame
+			for key, value := range map[string]string{
+				"sourceFrameSide":   element.CustomData.ConnectorSourceFrameSide,
+				"targetFrameSide":   element.CustomData.ConnectorDestinationFrameSide,
+				"sourceFrameAnchor": element.CustomData.ConnectorSourceFrameAnchor,
+				"targetFrameAnchor": element.CustomData.ConnectorDestinationFrameAnchor,
+			} {
+				if value = strings.TrimSpace(value); value != "" {
+					data[key] = value
+				}
+			}
 		}
+		addXYFlowUMLEdgeData(data, element.CustomData)
 	}
 	if sourceBinding != nil && len(sourceBinding.FixedPoint) >= 2 {
 		data["sourceFixedPoint"] = append([]float64(nil), sourceBinding.FixedPoint...)
@@ -310,6 +379,29 @@ func buildXYFlowEdge(element entity.Element, id, source, target string, sourceBi
 		Data:        data,
 		Style:       map[string]any{"stroke": color, "strokeWidth": share.PositiveWidth(element.StrokeWidth), "strokeDasharray": cssStrokeDash(element.StrokeStyle)},
 		MarkerStart: marker(startHead, color), MarkerEnd: marker(endHead, color),
+	}
+}
+
+func addXYFlowUMLEdgeData(data map[string]any, customData *entity.CustomData) {
+	if customData == nil || strings.TrimSpace(customData.UMLRelationKind) == "" {
+		return
+	}
+	for key, value := range map[string]string{
+		"umlRelationKind":            customData.UMLRelationKind,
+		"umlRelationLabel":           customData.UMLRelationLabel,
+		"umlSourceReference":         customData.UMLRelationSourceReference,
+		"umlDestinationReference":    customData.UMLRelationDestinationReference,
+		"umlMessageOrder":            customData.UMLMessageOrder,
+		"umlGuard":                   customData.UMLGuard,
+		"umlSourceMultiplicity":      customData.UMLSourceMultiplicity,
+		"umlDestinationMultiplicity": customData.UMLDestinationMultiplicity,
+		"umlOccurrenceAt":            customData.UMLOccurrenceAt,
+		"umlDurationFrom":            customData.UMLDurationFrom,
+		"umlDurationTo":              customData.UMLDurationTo,
+	} {
+		if value = strings.TrimSpace(value); value != "" {
+			data[key] = value
+		}
 	}
 }
 

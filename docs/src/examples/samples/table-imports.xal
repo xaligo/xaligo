@@ -1,0 +1,11 @@
+<xaligo version="1">
+  <data>
+    <table-data id="services" src="table-imports.csv" />
+  </data>
+
+  <frames>
+    <frame id="imported-services" width="720" height="420" class="pa-3">
+      <table data="services" title="Imported Service Inventory" />
+    </frame>
+  </frames>
+</xaligo>

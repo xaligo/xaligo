@@ -1,0 +1,61 @@
+<xaligo version="1">
+  <data>
+    <!-- Frame metadata is presentation data, so it stays with each frame. -->
+  </data>
+
+  <frames gap="56">
+    <frame id="aws-architecture"
+           title="AWS Architecture"
+           version="1.0.0"
+           width="850" height="420"
+           class="pa-2"
+           margin-top="52" margin-right="12"
+           margin-bottom="52" margin-left="12">
+      <!-- Top, auto widths, 12px text, and restrained colors are defaults. -->
+      <!-- Right alignment is applied independently to each completed row. -->
+      <!-- Default row-gap=4 sets row spacing, metadata edges, and page-link terminal inset. -->
+      <!-- Padding and margins do not replace or add to that metadata inset. -->
+      <metadata align="right" font-family="helvetica">
+        <entry key="owner" value="Platform Engineering" />
+        <!-- Force a second row; this entry also overrides auto sizing. -->
+        <entry key="status" value="approved" break-before="true"
+               width="180" key-width="56" />
+      </metadata>
+
+      <rectangle id="service" title="Public Application" width="750" height="190">
+        <port id="service-out" side="top" title="Release" />
+      </rectangle>
+
+      <connections>
+        <!-- Omitted sides select safe page sides; terminals inherit each frame's row-gap inset. -->
+        <connection src="service-out" dst="release-notes.service-in"
+                    color="#2563eb" />
+      </connections>
+    </frame>
+
+    <frame id="release-notes"
+           title="Release Notes"
+           version="2026.07"
+           width="850" height="420"
+           class="pa-2"
+           margin-top="52" margin-right="12"
+           margin-bottom="52" margin-left="12">
+      <!-- One centered bottom row with fixed tag/key widths. -->
+      <!-- row-gap=6 also insets this frame's incoming page-link terminal by 6px. -->
+      <metadata position="bottom" align="center" row-gap="6"
+                width="138" key-width="56"
+                font-family="nunito" font-size="12"
+                color="#475569" key-color="#334155"
+                background-color="transparent"
+                key-background-color="#f1f5f9"
+                border-color="#94a3b8">
+        <entry key="owner" value="Release Eng." />
+        <entry key="status" value="ready" width="144" key-width="56" />
+      </metadata>
+
+      <rectangle id="release" title="Production Release" width="750" height="180">
+        <port id="service-in" side="bottom" title="Release" />
+      </rectangle>
+    </frame>
+  </frames>
+</xaligo>

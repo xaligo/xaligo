@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1364" height="784" viewBox="0 0 1364 784">
+<defs><marker id="xaligo-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker><marker id="xaligo-triangle" markerWidth="8" markerHeight="10" refX="7" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 8 5 L 0 10 z" fill="context-stroke"/></marker><marker id="xaligo-stealth" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 10 5 L 0 10 L 3 5 z" fill="context-stroke"/></marker><marker id="xaligo-diamond" markerWidth="12" markerHeight="8" refX="11" refY="4" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 4 L 5.5 0 L 11 4 L 5.5 8 z" fill="context-stroke"/></marker><marker id="xaligo-oval" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto" markerUnits="strokeWidth"><circle cx="3.5" cy="3.5" r="2.5" fill="context-stroke"/></marker></defs>
+<rect x="0" y="0" width="1364" height="784" fill="#FFFFFF"/>
+<g transform="translate(42 42)">
+<rect x="0" y="0" width="1280" height="700" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="24" y="24" width="1232" height="652" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="36" y="68" width="228.8" height="596" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="280.8" y="68" width="228.8" height="596" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="525.6" y="68" width="228.8" height="596" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="770.4" y="68" width="228.8" height="596" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<rect x="1015.2" y="68" width="228.8" height="596" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1"/>
+<path d="M 269.8 366 L 275.8 366" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1" stroke-dasharray="8 6" marker-end="url(#xaligo-triangle)"/>
+<path d="M 269.8 485.2 L 293.8 485.2 L 293.8 477.2 L 520.6 477.2 L 520.6 366" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1" stroke-dasharray="8 6" marker-end="url(#xaligo-triangle)"/>
+<path d="M 514.6 485.2 L 514.6 688 L 1006.2 688 L 1006.2 366 L 1010.2 366" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<rect x="511.6" y="474.2" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
+<path d="M 520.6 485.2 L 520.6 680 L 514.6 680 L 514.6 366" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<path d="M 759.4 366 L 765.4 366" fill="none" stroke="#1E1E1E" stroke-width="1" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<defs><clipPath id="xaligo-text-clip-8c126a1aad02fa5b" clipPathUnits="userSpaceOnUse"><rect x="36" y="36" width="228" height="24"/></clipPath></defs>
+<text x="36" y="46" fill="#1E1E1E" font-family="Virgil" font-size="10" text-anchor="start" clip-path="url(#xaligo-text-clip-8c126a1aad02fa5b)"><tspan x="36" y="46">Cloud Modeling</tspan><tspan x="36" dy="12">Profile</tspan></text>
+<defs><clipPath id="xaligo-text-clip-7ac4d15aac5d9bd5" clipPathUnits="userSpaceOnUse"><rect x="40" y="70" width="220.8" height="592"/></clipPath></defs>
+<text x="150.4" y="346.4" fill="#1E1E1E" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-7ac4d15aac5d9bd5)"><tspan x="150.4" y="346.4">CloudProfile</tspan><tspan x="150.4" dy="16.8">────────</tspan><tspan x="150.4" dy="16.8">provider must be specified</tspan><tspan x="150.4" dy="16.8">region must match the provider</tspan></text>
+<defs><clipPath id="xaligo-text-clip-4a704d3cf9fd6a70" clipPathUnits="userSpaceOnUse"><rect x="284.8" y="70" width="220.8" height="592"/></clipPath></defs>
+<text x="395.2" y="346.4" fill="#1E1E1E" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-4a704d3cf9fd6a70)"><tspan x="395.2" y="346.4">regional-resource</tspan><tspan x="395.2" dy="16.8">────────</tspan><tspan x="395.2" dy="16.8">region: String</tspan><tspan x="395.2" dy="16.8">region is not empty</tspan></text>
+<defs><clipPath id="xaligo-text-clip-2114cdc018747187" clipPathUnits="userSpaceOnUse"><rect x="529.6" y="70" width="220.8" height="592"/></clipPath></defs>
+<text x="640" y="346.4" fill="#1E1E1E" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-2114cdc018747187)"><tspan x="640" y="346.4">managed-service</tspan><tspan x="640" dy="16.8">────────</tspan><tspan x="640" dy="16.8">provider: String</tspan><tspan x="640" dy="16.8">serviceLevel: String</tspan></text>
+<defs><clipPath id="xaligo-text-clip-7ae076b810477da" clipPathUnits="userSpaceOnUse"><rect x="774.4" y="70" width="220.8" height="592"/></clipPath></defs>
+<text x="884.8" y="346.4" fill="#1E1E1E" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-7ae076b810477da)"><tspan x="884.8" y="346.4">Component</tspan><tspan x="884.8" dy="16.8">────────</tspan><tspan x="884.8" dy="16.8">isIndirectlyInstantiated:</tspan><tspan x="884.8" dy="16.8">Boolean</tspan></text>
+<defs><clipPath id="xaligo-text-clip-3fc22cf1546efd52" clipPathUnits="userSpaceOnUse"><rect x="1019.2" y="70" width="220.8" height="592"/></clipPath></defs>
+<text x="1129.6" y="354.8" fill="#1E1E1E" font-family="Helvetica" font-size="14" text-anchor="middle" clip-path="url(#xaligo-text-clip-3fc22cf1546efd52)"><tspan x="1129.6" y="354.8">Node</tspan><tspan x="1129.6" dy="16.8">────────</tspan><tspan x="1129.6" dy="16.8">isLeaf: Boolean</tspan></text>
+<defs><clipPath id="xaligo-text-clip-b9049a2a32846d38" clipPathUnits="userSpaceOnUse"><rect x="232.8" y="338" width="80" height="20"/></clipPath></defs>
+<text x="272.8" y="352.8" fill="#1E1E1E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-b9049a2a32846d38)"><tspan x="272.8" y="352.8">defines</tspan></text>
+<defs><clipPath id="xaligo-text-clip-50f4c700a9b492b4" clipPathUnits="userSpaceOnUse"><rect x="355.2" y="338" width="80" height="20"/></clipPath></defs>
+<text x="395.2" y="352.8" fill="#1E1E1E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-50f4c700a9b492b4)"><tspan x="395.2" y="352.8">defines</tspan></text>
+<defs><clipPath id="xaligo-text-clip-af80e0869bedd6fa" clipPathUnits="userSpaceOnUse"><rect x="472.6" y="344" width="90" height="20"/></clipPath></defs>
+<text x="517.6" y="358.8" fill="#1E1E1E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-af80e0869bedd6fa)"><tspan x="517.6" y="358.8">specializes</tspan></text>
+<defs><clipPath id="xaligo-text-clip-ec7d0c7a74e301a2" clipPathUnits="userSpaceOnUse"><rect x="722.4" y="344" width="80" height="20"/></clipPath></defs>
+<text x="762.4" y="358.8" fill="#1E1E1E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-ec7d0c7a74e301a2)"><tspan x="762.4" y="358.8">extends</tspan></text>
+<defs><clipPath id="xaligo-text-clip-408c53931a491b6a" clipPathUnits="userSpaceOnUse"><rect x="722.4" y="338" width="80" height="20"/></clipPath></defs>
+<text x="762.4" y="352.8" fill="#1E1E1E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-408c53931a491b6a)"><tspan x="762.4" y="352.8">extends</tspan></text>
+</g>
+</svg>

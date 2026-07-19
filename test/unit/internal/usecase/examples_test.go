@@ -48,6 +48,10 @@ func TestRenderExamplesThroughPublicUseCases(t *testing.T) {
 		{"onprem access", "onprem-access.xal", onpremServicesCSV, `"type": "excalidraw"`, `<svg`, `"nodes"`, `"version": "3.3.0"`},
 		{"tabler", "tabler.xal", nil, `"type": "excalidraw"`, `<svg`, `"nodes"`, `"version": "3.3.0"`},
 		{"yamaha", "yamaha-icons.xal", nil, `"type": "excalidraw"`, `<svg`, `"nodes"`, `"version": "3.3.0"`},
+		{"all UML", "uml-all.xal", nil, `"type": "excalidraw"`, `<svg`, `"nodes"`, `"version": "3.3.0"`},
+		{"canonical V1 envelope", "canonical-v1-envelope.xal", nil, `to \u003cdatabase-detail\u003e`, `from &lt;overview&gt;`, `"crossFrame": true`, `"connectors"`},
+		{"cross-frame page links", "page-links.xal", nil, `to \u003cservice-detail\u003e`, `from &lt;overview&gt;`, `"crossFrame": true`, `"connectors"`},
+		{"frame metadata", "frame-metadata.xal", nil, `"xaligoFrameMetadata": true`, `AWS Architecture`, `"crossFrame": true`, `"connectors"`},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -63,7 +67,9 @@ func TestRenderExamplesThroughPublicUseCases(t *testing.T) {
 			if !strings.Contains(string(scene), tc.wantScene) {
 				t.Fatalf("scene output missing %q", tc.wantScene)
 			}
-			svg, err := newUsecase().RenderSVG(context.Background(), source, opts)
+			svgOpts := opts
+			svgOpts.CombineFrames = true
+			svg, err := newUsecase().RenderSVG(context.Background(), source, svgOpts)
 			if err != nil {
 				t.Fatal(err)
 			}

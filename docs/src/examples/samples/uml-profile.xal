@@ -1,0 +1,35 @@
+<xaligo version="1">
+  <data></data>
+  <frames>
+    <frame id="profile" width="1280" height="700" class="pa-3">
+      <uml id="cloud-profile" title="Cloud Modeling Profile">
+        <profile-diagram direction="right">
+          <profile id="cloud" title="CloudProfile">
+            <constraint>provider must be specified</constraint>
+            <constraint>region must match the provider</constraint>
+          </profile>
+          <stereotype id="regional" title="regional-resource">
+            <property>region: String</property>
+            <constraint>region is not empty</constraint>
+          </stereotype>
+          <stereotype id="managed" title="managed-service">
+            <property>provider: String</property>
+            <property>serviceLevel: String</property>
+          </stereotype>
+          <metaclass id="component" title="Component">
+            <property>isIndirectlyInstantiated: Boolean</property>
+          </metaclass>
+          <metaclass id="node" title="Node">
+            <property>isLeaf: Boolean</property>
+          </metaclass>
+
+          <reference src="cloud" dst="regional" title="defines" />
+          <reference src="cloud" dst="managed" title="defines" />
+          <generalization src="managed" dst="regional" title="specializes" />
+          <extension src="managed" dst="component" title="extends" />
+          <extension src="regional" dst="node" title="extends" />
+        </profile-diagram>
+      </uml>
+    </frame>
+  </frames>
+</xaligo>

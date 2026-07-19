@@ -41,7 +41,7 @@ var (
 func layoutKidsV1EngineLayoutNode(node *entity.Node) []*entity.Node {
 	var kids []*entity.Node
 	for _, c := range node.Children {
-		if c.Tag == "connection" || c.Tag == "connections" {
+		if c.Tag == "connection" || c.Tag == "connections" || c.Tag == "metadata" {
 			loggerV1EngineSharedLogging.DEBUG(IULLK001V1EngineLayoutNode, "branch skip connection")
 			continue
 		}
@@ -110,10 +110,14 @@ func layoutNodeV1EngineLayoutNode(node *entity.Node, target *entity.Box, x, y, w
 	}
 
 	// padding は box 内側の余白 (子要素の配置開始点)
-	innerX := boxX + pad.Left
-	innerY := boxY + pad.Top
-	innerW := boxW - pad.Left - pad.Right
-	innerH := boxH - pad.Top - pad.Bottom
+	zoneX := boxX + pad.Left
+	zoneY := boxY + pad.Top
+	zoneW := boxW - pad.Left - pad.Right
+	zoneH := boxH - pad.Top - pad.Bottom
+	innerX := zoneX
+	innerY := zoneY
+	innerW := zoneW
+	innerH := zoneH
 	if node.Tag == "frame" {
 		loggerV1EngineSharedLogging.DEBUG(IULN004V1EngineLayoutNode, "branch frame inner margin")
 		innerX += mar.Left
@@ -122,9 +126,18 @@ func layoutNodeV1EngineLayoutNode(node *entity.Node, target *entity.Box, x, y, w
 		innerH -= mar.Top + mar.Bottom
 	}
 	var err error
+	if node.Tag == "frame" {
+		innerX, innerY, innerW, innerH, err = layoutFrameMetadataV1EngineLayoutFrameMetadata(node, target, innerX, innerY, innerW, innerH)
+		if err != nil {
+			return err
+		}
+	}
 	innerX, innerY, innerW, innerH, err = alignContentAreaV1EngineLayoutAttributes(node, innerX, innerY, innerW, innerH)
 	if err != nil {
 		return err
+	}
+	if node.Tag == "frame" {
+		finalizeFrameMetadataReservedStripV1EngineLayoutFrameMetadata(target, innerY, innerH)
 	}
 	setContentBoxV1EngineLayoutConstraints(target, innerX, innerY, innerW, innerH)
 
@@ -140,6 +153,15 @@ func layoutNodeV1EngineLayoutNode(node *entity.Node, target *entity.Box, x, y, w
 	case "row":
 		loggerV1EngineSharedLogging.DEBUG(IULN007V1EngineLayoutNode, "branch row")
 		return layoutRowV1EngineLayoutFlow(node, target, innerX, innerY, innerW, innerH)
+	case "table", "entity":
+		gInnerX := boxX + defaultGroupSideInsetV1EngineLayoutNode + pad.Left
+		gInnerY := boxY + defaultGroupTopInsetV1EngineLayoutNode + pad.Top
+		gInnerW := boxW - defaultGroupSideInsetV1EngineLayoutNode*2 - pad.Left - pad.Right
+		gInnerH := boxH - defaultGroupTopInsetV1EngineLayoutNode - defaultGroupSideInsetV1EngineLayoutNode - pad.Top - pad.Bottom
+		setContentBoxV1EngineLayoutConstraints(target, gInnerX, gInnerY, gInnerW, gInnerH)
+		return layoutStackV1EngineLayoutFlow(node, target, gInnerX, gInnerY, gInnerW, gInnerH)
+	case "table-header", "table-row":
+		return layoutFlexHV1EngineLayoutFlow(node, target, innerX, innerY, innerW, innerH)
 	case "col":
 		if node.Attr("layout") == "horizontal" {
 			loggerV1EngineSharedLogging.DEBUG(IULN008V1EngineLayoutNode, "branch col horizontal")

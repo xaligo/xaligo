@@ -38,15 +38,16 @@ This keeps input adapters independent from parsing, layout, and rendering.
    order. Synchronous scene calculation runs in
    [`v1/engine`](https://github.com/xaligo/xaligo/tree/main/internal/usecase/v1/engine)
    and emits the Excalidraw-compatible scene shared by downstream formats.
-4. **Dispatch and encode.** [`Render`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/render.go)
-   is the single format switch. Excalidraw returns the scene directly; XYFlow
-   and Isoflow translate it. SVG and PPTX first convert it into the same
-   shared SVG/PPTX draw plan and then call their repositories.
+4. **Project, dispatch, and encode.** [`Render`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/render.go)
+   owns format dispatch. Excalidraw returns the scene directly; XYFlow and
+   Isoflow translate the complete logical scene. SVG, PPTX, PDF, and Excel
+   build an ordered `DocumentPlan` after full-scene routing, with one identified
+   frame projection per physical page by default, then call their repositories.
 
 The key invariant is therefore `.xal -> validated node tree -> resolved box
-tree -> canonical scene -> plan or encoder`. `validate` and `render` execute the
-same layout checks, and formats do not have independent parsers or layout
-engines.
+tree -> canonical scene -> document plan or logical-document encoder`.
+`validate` and `render` execute the same layout checks, and formats do not have
+independent parsers or layout engines.
 
 ## Structural diff algorithm
 
@@ -94,8 +95,11 @@ therefore occurs before either final output is written.
 
 The current
 [`ParseV1EngineParseDocument`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/v1/engine/parse_document.go)
-accepts only `<frame>` and `<frames>` roots. Explicit `version="1"` defines the
-recommended frozen V1 profile; omission defaults to V1 with a warning. Native V2 will
+accepts the canonical `<xaligo version="1"><frames>...</frames></xaligo>`
+envelope and historical `<frame>` / `<frames>` roots. Explicit root
+`version="1"` defines the recommended frozen V1 profile; omission defaults to
+V1 with a warning. A direct child frame may independently use `version` as its
+visible page-content revision. Native V2 will
 use `<scene version="2">`; the distinct root is intentional so the V1 parser
 rejects V2 before interpreting any nested tag as a permissive V1 custom group.
 
@@ -126,7 +130,7 @@ those semantics.
 | `cmd`, `internal/controller` | Process entry points, CLI flags, and file I/O | [`internal/command.go`](https://github.com/xaligo/xaligo/blob/main/internal/command.go) |
 | `internal/usecase` | Context checks, repository adaptation, stage ordering, render/diff orchestration, format dispatch, and future parallel scheduling | [`render.go`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/render.go), [`diff.go`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/diff.go), [`diagnostics.go`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/diagnostics.go) |
 | `internal/usecase/v1/engine` | Synchronous V1 parser, validation, layout, scene, routing, pagination, theme, and draw-plan calculations | [`v1/engine`](https://github.com/xaligo/xaligo/tree/main/internal/usecase/v1/engine) |
-| `internal/entity` | Data exchanged across layers, including resolved content boxes, `PresentationScene`, `Plan`, and `TextLayout`; no orchestration | [`internal/entity`](https://github.com/xaligo/xaligo/tree/main/internal/entity) |
+| `internal/entity` | Data exchanged across layers, including resolved content boxes, `PresentationScene`, `DocumentPlan`, `Plan`, and `TextLayout`; no orchestration | [`internal/entity`](https://github.com/xaligo/xaligo/tree/main/internal/entity) |
 | `internal/repository` | Catalog/filesystem access and output encoders | [`internal/repository`](https://github.com/xaligo/xaligo/tree/main/internal/repository) |
 | `external` | TypeScript API and the PptxGenJS/WASM adapter | [`external`](https://github.com/xaligo/xaligo/tree/main/external) |
 
@@ -166,8 +170,9 @@ names and form the compatibility boundary. The mandatory rule is defined in
 `.github/instructions/coding.instructions.md` and enforced by a source-structure
 regression test.
 
-`RenderController.RunFormat` reads each input once and calls the generic
-`RenderUsecase.Render` path for every format
+`RenderController.RunFormat` reads each input once. Container formats call the
+generic `RenderUsecase.Render` path; SVG calls `RenderArtifacts` so a
+multi-frame document can persist several files
 ([`internal/controller/render.go`](https://github.com/xaligo/xaligo/blob/main/internal/controller/render.go)).
 `RenderPPTX` and `BuildPPTXPlan` remain compatibility APIs, but the CLI no
 longer assembles a second PPTX-only pipeline. The legacy Excalidraw outside-frame
@@ -264,12 +269,70 @@ Removing the underlying Excalidraw field vocabulary is a separate compatibility
 migration; the neutral name does not pretend that migration is already complete.
 
 For a connection whose endpoints belong to different frames, V1 deliberately
-keeps two local editable stubs in `PresentationScene`. The stubs share a stable
-logical connector ID plus the original source/destination element and frame
-IDs. XYFlow and Isoflow use those fields to reconstruct one logical edge;
-Excalidraw, SVG, and PPTX keep the page-local representation. Routing metadata
-such as bends, scale, grid, and explicit anchors is stored on both stubs so a
-capable adapter does not have to infer it from generated geometry.
+keeps two page-local editable stubs in `PresentationScene`, never one line
+across the inter-frame canvas. The source stub runs from its endpoint to the
+source frame's page-terminal inset line and is labeled
+`to <destination frame ID>`; the destination stub runs from the destination
+frame's page-terminal inset line to its endpoint and is labeled
+`from <source frame ID>`. The angle brackets are
+literal punctuation, so an `overview` to `detail` link displays `to <detail>`
+and `from <overview>`.
+
+The outer logical page edge is not a rendered frame outline in SVG, PPTX, PDF,
+or Excel. It remains available for sizing, projection, side selection, and the
+tangent-anchor basis; the drawable page terminal may be on a parallel inward
+inset line.
+
+Shared scene construction resolves endpoint binding and frame-terminal geometry
+independently. `src/dst-anchor` and `src/dst-side` own the endpoint;
+cross-frame-only `src/dst-frame-anchor` and `src/dst-frame-side` own the
+logical page terminal. Frame-terminal precedence is frame anchor, frame side,
+legacy endpoint anchor, endpoint side, then automatic selection. The first two
+are fixed; the rest supply a preferred side when no frame terminal is explicit.
+Every frame edge has fixed tangent anchors at 10/30/50/70/90 percent of the
+outer extent. Shared scene construction keeps a safe preference or minimizes
+distance from the actual endpoint visual envelope over only safe candidates;
+equal minima prefer the remote-facing candidate and then `top`, `right`,
+`bottom`, `left`. Layout validation checks that a safe candidate exists but
+does not infer the automatic side from `Box` positions. The endpoint and
+frame-terminal segments are perpendicular to their respective selected sides
+even when those sides differ.
+
+Without an explicit frame anchor, the unconstrained terminal parallel
+coordinate comes from the endpoint binding. A coordinate inside the
+24-layout-px corner gutter is clamped and bridged by a two-bend orthogonal
+dogleg. Borders shorter than 96 layout pixels use an adaptive quarter-length
+gutter. The final normal coordinate is shifted inward from the outer logical
+edge by the resolved metadata `row-gap`, or by 4 layout pixels when metadata is
+absent. The same value applies to all four sides, and zero keeps the outer edge.
+An explicit side must fit that side's normal frame dimension and avoid the
+metadata reservation. Without an explicit frame terminal, the same constraints
+filter candidate sides; an unsafe preference is remapped and only an empty set
+is a connection-positioned validation error. The resolved inset is not
+clamped.
+An unconstrained coincident inset terminal shifts by up to 24 layout pixels
+along the parallel axis within the available range to retain a visible stub.
+An explicit frame anchor retains its exact tangent coordinate and uses an
+orthogonal local stub for visible separation.
+
+Frame metadata adds a final safety pass after normal side precedence. Without
+explicit frame-terminal geometry, unsafe sides are removed before the visual
+nearest-side choice and left/right terminals are clamped beyond the full-width
+reservation strip. An explicit frame side/anchor that conflicts with the
+reservation is a validation error. A safe explicit left/right side remains
+valid even if an unused top/bottom inset line would be unsafe. The path and
+label remain outside the strip. Page-link
+labels keep a 4-layout-pixel inward gap and at least a 4-layout-pixel tangent
+gap from the final inset terminal. The closest tangent position that avoids
+endpoint geometry is selected.
+
+The stubs share a stable logical connector ID plus the original
+source/destination element and frame IDs. XYFlow and Isoflow use those fields
+to reconstruct one logical edge; Excalidraw, SVG, PPTX, PDF, and Excel keep the
+page-local representation. Routing metadata such as bends, scale, grid,
+endpoint anchors, and frame-terminal anchors is stored on both stubs so a
+capable adapter does not have to infer it from generated geometry. Manual bends
+do not steer the two page-local paths.
 
 Rendered V1 nodes also carry `xaligoSemanticElementKind` and
 `xaligoSemanticParentElementId`, projected from the resolved Box tree. Pure
@@ -295,6 +358,52 @@ The plan is renderer-shared rather than fully format-neutral today: it uses
 physical inch/point units and presentation-style surface metadata. A neutral
 schema that can serve every future encoder without those assumptions remains a
 roadmap migration.
+
+[`BuildDocumentPlanV1EnginePlanDocument`](https://github.com/xaligo/xaligo/blob/main/internal/usecase/v1/engine/plan_document.go)
+projects that already-resolved scene into ordered `DocumentPage` values. Each
+identified child frame becomes one page unless `CombineFrames` requests the
+compatibility canvas. Projection is intentionally downstream of scene
+construction so cross-frame endpoint lookup and its two page-link stubs are
+resolved once, not independently on cropped pages.
+
+Default frame pages carry a strict-crop policy. SVG uses the logical frame
+rectangle as the exact canvas and clip boundary, and PDF/Excel inherit that
+page SVG. Combined compatibility output keeps marker-safe bounds expansion.
+
+The physical encoders map the same page order as follows:
+
+- SVG returns `RenderArtifact` values. One frame uses the exact requested path;
+  multiple frames append a sanitized frame ID to the output stem and reject
+  collisions.
+- PPTX writes one diagram slide per page. Its document plan normalizes all
+  slides to the largest page dimensions and centers smaller pages because a
+  PowerPoint deck has one common slide size.
+- PDF parses each page SVG as vector drawing content and writes one PDF page
+  with the corresponding physical dimensions.
+- Excel places each page SVG image on one worksheet; it does not translate
+  diagram shapes into spreadsheet cells.
+
+The preview adapter explicitly requests `CombineFrames` so the browser still
+shows all frames on one SVG canvas. Excalidraw, XYFlow, and Isoflow never enter
+the physical-page split and remain one logical document.
+
+Frame metadata follows the same downstream ownership model. The parser
+normalizes a direct frame `<metadata>` block and distinguishes a child-frame
+content revision from the root DSL version. Shared layout resolves the
+top/bottom band against the logical frame border box, font-sized tag height,
+auto/fixed widths, greedy wrapping, explicit row breaks, and per-row alignment
+on `Box.FrameMetadata`. The resolved `row-gap` is both the inter-row spacing
+and the inset at the selected vertical edge and both horizontal page edges;
+row wrapping and alignment use `frame width - 2 * row-gap`. The full-width
+reservation strip still starts at the outer logical frame edge, reaches the
+final content-box boundary, and is at least
+`row-gap + complete band height + 8` pixels deep. Scene construction emits
+stable page-owned key/value shapes and text once and excludes normal items/text,
+local and UML connector paths and labels, and page links from that strip. The
+result is projected with its owning `DocumentPage`; the SVG, PPTX, PDF, Excel,
+and Excalidraw repositories do not recompute the band or reservation. XYFlow
+and Isoflow discard the decoration
+through their normal semantic projection instead of exposing synthetic nodes.
 
 Every text operation now carries a renderer-neutral
 [`TextLayout`](https://github.com/xaligo/xaligo/blob/main/internal/entity/presentation.go)

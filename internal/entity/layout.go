@@ -36,12 +36,56 @@ type Box struct {
 	// set when visible overflow was actually required by resolved geometry.
 	Overflow   OverflowPolicy
 	Overflowed bool
+	// FrameMetadata contains the resolved page-margin key/value tags for a
+	// frame. Nil means that the frame did not opt into metadata presentation.
+	FrameMetadata *FrameMetadata
 
 	Children []*Box
 
 	StaggerDepth int
 	IsStaggerBg  bool
 	InStagger    bool
+}
+
+// FrameMetadata is the renderer-neutral presentation and resolved geometry of
+// one frame's page-margin metadata band.
+type FrameMetadata struct {
+	Position   string
+	Align      string
+	FontFamily string
+	FontSize   float64
+
+	// RowGap is the space between wrapped metadata rows and the V1 page-edge
+	// inset shared by metadata tags and cross-frame page-link terminals.
+	RowGap float64
+
+	Color              string
+	KeyColor           string
+	BackgroundColor    string
+	KeyBackgroundColor string
+	BorderColor        string
+	// ReservedX/Y/W/H describe the full-width no-draw strip between the
+	// selected outer frame edge and the final content box. The strip includes
+	// the metadata band, its fixed content gap, and any larger author-supplied
+	// padding/margin on that edge.
+	ReservedX float64
+	ReservedY float64
+	ReservedW float64
+	ReservedH float64
+	Tags      []FrameMetadataTag
+}
+
+// FrameMetadataTag is one resolved two-cell key/value tag in a frame metadata
+// band. KeyW is the width of the key cell; W includes both cells.
+type FrameMetadataTag struct {
+	Key        string
+	Value      string
+	X          float64
+	Y          float64
+	W          float64
+	H          float64
+	KeyW       float64
+	DiffStatus string
 }
 
 // Spacing stores resolved edge spacing in pixels.

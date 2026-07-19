@@ -117,6 +117,7 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 	}
 
 	obstacles := collectObstaclesV1EnginePlanObstacle(elements)
+	frameMetadataReserved := collectFrameMetadataReservedZonesV1EnginePlanObstacle(elements)
 
 	connectors := []*entity.Element{}
 	for _, el := range elements {
@@ -128,6 +129,8 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 
 	ops := []entity.DrawOp{}
 	diffAreaHighlights := []entity.DrawOp{}
+	frameMetadataShapes := []entity.DrawOp{}
+	frameMetadataTexts := []entity.DrawOp{}
 
 	// 1) Anchor grids first → behind the icons drawn on top.
 	gridIDs := make([]string, 0, len(prepared.gridRects))
@@ -144,7 +147,10 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 	// after every group border so a nested child border cannot cover a parent tag.
 	headerShapes := []*entity.Element{}
 	for _, el := range elements {
-		if el.ID == "paper-frame" {
+		if el.ID == "paper-frame" || (el.CustomData != nil && el.CustomData.PageFrame) {
+			continue
+		}
+		if el.CustomData != nil && el.CustomData.FrameMetadataReserved {
 			continue
 		}
 		if el.CustomData != nil && el.CustomData.Junction {
@@ -155,9 +161,11 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 			continue
 		}
 		switch el.Type {
-		case "frame", "rectangle", "ellipse":
+		case "frame", "rectangle", "ellipse", "diamond":
 			if op, ok := shapeOpV1EnginePlanShape(el, frame, ppi); ok {
-				if el.CustomData != nil && el.CustomData.DiffHighlight {
+				if el.CustomData != nil && el.CustomData.FrameMetadata {
+					frameMetadataShapes = append(frameMetadataShapes, op)
+				} else if el.CustomData != nil && el.CustomData.DiffHighlight {
 					diffAreaHighlights = append(diffAreaHighlights, op)
 				} else {
 					ops = append(ops, op)
@@ -194,6 +202,7 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 	rOpt.Stub = stubPx
 	rOpt.LineMargin = marginPx
 	rOpt.Reserved = collectContainerBorderPathsV1EnginePlanObstacle(elements)
+	rOpt.HardObstacles = frameMetadataReserved
 	groupBorders := collectGroupBorderPathsV1EnginePlanObstacle(elements)
 	routed := routeConnectionsV1EngineRouteBuild(reqs, obstacles, rOpt)
 	elByConn := map[string]*entity.Element{}
@@ -223,9 +232,11 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 			ops = append(ops, op)
 		}
 		line := connectorLineV1EnginePlanConnectorDraw(el, style, ppi)
-		if op, labelRect, ok := connectorIDLabelOpV1EnginePlanConnectorLabel(connectorID, path, routed, obstacles, connectorLabelRects, frame, ppi, line); ok {
-			connectorLabels = append(connectorLabels, op)
-			connectorLabelRects = append(connectorLabelRects, labelRect)
+		if el.CustomData == nil || el.CustomData.UMLRelationKind == "" {
+			if op, labelRect, ok := connectorIDLabelOpV1EnginePlanConnectorLabel(connectorID, path, routed, obstacles, frameMetadataReserved, connectorLabelRects, frame, ppi, line); ok {
+				connectorLabels = append(connectorLabels, op)
+				connectorLabelRects = append(connectorLabelRects, labelRect)
+			}
 		}
 		connectorLegend = append(connectorLegend, connectorLegendEntryV1EnginePlanLegend(connectorID, el, line))
 	}
@@ -253,7 +264,11 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 		case "text":
 			if op, ok := textOpV1EnginePlanText(el, frame, ppi); ok {
 				applyAnchorGroupV1EnginePlanAnchor(&op, el.ID, anchorGroupIDs)
-				ops = append(ops, op)
+				if el.CustomData != nil && el.CustomData.FrameMetadata {
+					frameMetadataTexts = append(frameMetadataTexts, op)
+				} else {
+					ops = append(ops, op)
+				}
 			}
 		case "image":
 			if op, ok := imageOpV1EnginePlanImage(el, scene.Files, frame, ppi); ok {
@@ -264,6 +279,8 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 	}
 	ops = append(ops, diffAreaHighlights...)
 	ops = append(ops, connectorLabels...)
+	ops = append(ops, frameMetadataShapes...)
+	ops = append(ops, frameMetadataTexts...)
 
 	return entity.Plan{
 		Slide: entity.PlanSlide{

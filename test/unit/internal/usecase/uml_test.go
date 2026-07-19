@@ -1,0 +1,249 @@
+package usecase_test
+
+import (
+	"context"
+	"encoding/json"
+	"math"
+	"strings"
+	"testing"
+
+	"github.com/xaligo/xaligo/internal/entity"
+)
+
+func TestUMLMetadataAndRelationLabelsReachSharedOutputs(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="640" height="360"><uml id="sequence"><sequence-diagram><participant id="user" title="User"/><lifeline id="api" title="API"/><message src="user" dst="api" order="1" title="submit()"/></sequence-diagram></uml></frame></frames></xaligo>`)
+	options := entity.RenderOptions{PxPerInch: 96}
+	scene, err := newUsecase().RenderExcalidraw(context.Background(), source, options)
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	for _, want := range []string{
+		`"xaligoUmlDiagramKind": "sequence-diagram"`,
+		`"xaligoUmlElementKind": "participant"`,
+		`"xaligoUmlReference": "sequence/user"`,
+		`"xaligoUmlRelationKind": "message"`,
+		`"xaligoUmlRelationSourceReference": "sequence/user"`,
+		`"xaligoUmlRelationDestinationReference": "sequence/api"`,
+		`"xaligoUmlMessageOrder": "1"`,
+		`"text": "1: submit()"`,
+	} {
+		if !strings.Contains(string(scene), want) {
+			t.Fatalf("scene missing %q: %s", want, scene)
+		}
+	}
+	svg, err := newUsecase().RenderSVG(context.Background(), source, options)
+	if err != nil {
+		t.Fatalf("RenderSVG() error = %v", err)
+	}
+	if !strings.Contains(string(svg), "1: submit()") {
+		t.Fatalf("SVG missing UML relation label: %s", svg)
+	}
+}
+
+func TestUMLShapeKindsReachEditableSceneAndSharedPlan(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="activity"><activity-diagram direction="right"><action id="before"/><decision id="choice"/><action id="yes"/><action id="no"/><control-flow src="before" dst="choice"/><control-flow src="choice" dst="yes" guard="yes"/><control-flow src="choice" dst="no" guard="no"/></activity-diagram></uml></frame></frames></xaligo>`)
+	options := entity.RenderOptions{PxPerInch: 96}
+	scene, err := newUsecase().RenderExcalidraw(context.Background(), source, options)
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	if !strings.Contains(string(scene), `"type": "diamond"`) {
+		t.Fatalf("scene missing UML diamond: %s", scene)
+	}
+	plan, err := newUsecase().BuildPPTXPlan(context.Background(), source, options)
+	if err != nil {
+		t.Fatalf("BuildPPTXPlan() error = %v", err)
+	}
+	if !strings.Contains(string(plan), `"kind":"diamond"`) {
+		t.Fatalf("plan missing UML diamond: %s", plan)
+	}
+}
+
+func TestUMLTimingAndOwnerMetadataReachEditableScene(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="timing"><timing-diagram><lifeline id="api"/><time-state id="busy" owner="api" from="10" to="20"><region>work</region></time-state><occurrence src="api" dst="busy" at="15" title="dispatch"/></timing-diagram></uml></frame></frames></xaligo>`)
+	scene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	for _, want := range []string{
+		`"xaligoUmlOwnerReference": "timing/api"`,
+		`"xaligoUmlCompartmentKinds": "region"`,
+		`"xaligoUmlTimeFrom": "10"`,
+		`"xaligoUmlTimeTo": "20"`,
+		`"xaligoUmlOccurrenceAt": "15"`,
+	} {
+		if !strings.Contains(string(scene), want) {
+			t.Fatalf("scene missing %q: %s", want, scene)
+		}
+	}
+}
+
+func TestUMLSequenceOrderControlsVerticalMessageAnchors(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="sequence"><sequence-diagram><participant id="a"/><lifeline id="b"/><message src="a" dst="b" order="1"/><message src="b" dst="b" order="2"/><return-message src="b" dst="a" order="3"/></sequence-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var scene entity.PresentationScene
+	if err := json.Unmarshal(rawScene, &scene); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	anchors := map[string][2]float64{}
+	for _, element := range scene.Elements {
+		if element.Type != "arrow" || element.CustomData == nil || element.CustomData.UMLMessageOrder == "" || element.StartBinding == nil || element.EndBinding == nil {
+			continue
+		}
+		anchors[element.CustomData.UMLMessageOrder] = [2]float64{element.StartBinding.FixedPoint[1], element.EndBinding.FixedPoint[1]}
+	}
+	if len(anchors) != 3 {
+		t.Fatalf("sequence anchors = %#v", anchors)
+	}
+	if !(anchors["1"][0] < anchors["2"][0] && anchors["2"][0] < anchors["3"][0]) {
+		t.Fatalf("message anchors are not ordered top-to-bottom: %#v", anchors)
+	}
+	if math.Abs(anchors["2"][0]-anchors["2"][1]) < 0.01 {
+		t.Fatalf("self-message endpoints should form a loop: %#v", anchors["2"])
+	}
+}
+
+func TestUMLAggregationAndCompositionRemainHeadlessAtDestination(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="classes"><class-diagram><class id="whole"/><class id="aggregate"/><class id="composite"/><aggregation src="whole" dst="aggregate"/><composition src="whole" dst="composite"/></class-diagram></uml></frame></frames></xaligo>`)
+	options := entity.RenderOptions{PxPerInch: 96}
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, options)
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var scene entity.PresentationScene
+	if err := json.Unmarshal(rawScene, &scene); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	relationStyles := map[string][2]string{}
+	for _, element := range scene.Elements {
+		if element.Type != "arrow" || element.CustomData == nil || element.CustomData.UMLRelationKind == "" {
+			continue
+		}
+		relationStyles[element.CustomData.UMLRelationKind] = [2]string{
+			element.CustomData.ConnectorStartArrowhead,
+			element.CustomData.ConnectorEndArrowhead,
+		}
+		if !element.CustomData.ConnectorStartArrowheadExplicit || !element.CustomData.ConnectorEndArrowheadExplicit {
+			t.Fatalf("UML %s arrowheads must be explicit: %#v", element.CustomData.UMLRelationKind, element.CustomData)
+		}
+	}
+	for _, kind := range []string{"aggregation", "composition"} {
+		if got := relationStyles[kind]; got != [2]string{"diamond", "none"} {
+			t.Fatalf("UML %s arrowheads = %#v, want diamond/none", kind, got)
+		}
+	}
+
+	rawPlan, err := newUsecase().BuildPPTXPlan(context.Background(), source, options)
+	if err != nil {
+		t.Fatalf("BuildPPTXPlan() error = %v", err)
+	}
+	var plan entity.Plan
+	if err := json.Unmarshal(rawPlan, &plan); err != nil {
+		t.Fatalf("json.Unmarshal(plan) error = %v", err)
+	}
+	lineCount := 0
+	for _, operation := range plan.Ops {
+		if operation.Kind != "line" || operation.Line == nil {
+			continue
+		}
+		lineCount++
+		if operation.Line.BeginArrowType != "diamond" || operation.Line.EndArrowType != "none" {
+			t.Fatalf("plan UML arrowheads = %q/%q, want diamond/none", operation.Line.BeginArrowType, operation.Line.EndArrowType)
+		}
+	}
+	if lineCount != 2 {
+		t.Fatalf("plan UML line count = %d, want 2", lineCount)
+	}
+}
+
+func TestUMLSequenceOrderAnchorsRemainTopToBottomForEveryConnectionSide(t *testing.T) {
+	tests := []struct {
+		name  string
+		sides string
+	}{
+		{name: "left and right", sides: `src-side="left" dst-side="right"`},
+		{name: "top and bottom", sides: `src-side="top" dst-side="bottom"`},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="sequence"><sequence-diagram><participant id="a"/><lifeline id="b"/><message src="a" dst="b" order="1" ` + test.sides + `/><message src="a" dst="b" order="2" ` + test.sides + `/><message src="a" dst="b" order="3" ` + test.sides + `/></sequence-diagram></uml></frame></frames></xaligo>`)
+			rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+			if err != nil {
+				t.Fatalf("RenderExcalidraw() error = %v", err)
+			}
+			var scene entity.PresentationScene
+			if err := json.Unmarshal(rawScene, &scene); err != nil {
+				t.Fatalf("json.Unmarshal() error = %v", err)
+			}
+			anchors := map[string][2][]float64{}
+			for _, element := range scene.Elements {
+				if element.Type != "arrow" || element.CustomData == nil || element.CustomData.UMLMessageOrder == "" || element.StartBinding == nil || element.EndBinding == nil {
+					continue
+				}
+				anchors[element.CustomData.UMLMessageOrder] = [2][]float64{
+					element.StartBinding.FixedPoint,
+					element.EndBinding.FixedPoint,
+				}
+			}
+			if len(anchors) != 3 {
+				t.Fatalf("sequence anchors = %#v", anchors)
+			}
+			for endpoint := 0; endpoint < 2; endpoint++ {
+				first, middle, last := anchors["1"][endpoint], anchors["2"][endpoint], anchors["3"][endpoint]
+				if len(first) != 2 || len(middle) != 2 || len(last) != 2 {
+					t.Fatalf("sequence fixed points = %#v", anchors)
+				}
+				if !(first[1] < middle[1] && middle[1] < last[1]) {
+					t.Fatalf("endpoint %d anchors are not ordered top-to-bottom: %#v", endpoint, anchors)
+				}
+				for _, point := range [][]float64{first, middle, last} {
+					if point[0] != 0 && point[0] != 1 {
+						t.Fatalf("endpoint %d anchor is not on a vertical edge: %#v", endpoint, point)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestUMLCrossFramePublicReferenceReachesGraphOutputs(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames>
+<frame id="overview" width="720" height="420"><rectangle id="caller" title="Caller"/><connection src="caller" dst="detail.domain/order"/></frame>
+<frame id="detail" width="720" height="420"><uml id="domain"><class-diagram><class id="order" title="Order"/></class-diagram></uml></frame>
+</frames></xaligo>`)
+	options := entity.RenderOptions{PxPerInch: 96, Theme: "light"}
+
+	rawXYFlow, err := newUsecase().RenderXYFlow(context.Background(), source, options)
+	if err != nil {
+		t.Fatalf("RenderXYFlow() error = %v", err)
+	}
+	var xyflow entity.XYFlowDocument
+	if err := json.Unmarshal(rawXYFlow, &xyflow); err != nil {
+		t.Fatalf("json.Unmarshal(XYFlow) error = %v", err)
+	}
+	if len(xyflow.Edges) != 1 || xyflow.Edges[0].Source == "" || xyflow.Edges[0].Target == "" || xyflow.Edges[0].Source == xyflow.Edges[0].Target {
+		t.Fatalf("XYFlow cross-frame UML edge = %#v", xyflow.Edges)
+	}
+	if crossFrame, _ := xyflow.Edges[0].Data["crossFrame"].(bool); !crossFrame {
+		t.Fatalf("XYFlow edge missing cross-frame metadata: %#v", xyflow.Edges[0])
+	}
+
+	rawIsoflow, err := newUsecase().RenderIsoflow(context.Background(), source, options)
+	if err != nil {
+		t.Fatalf("RenderIsoflow() error = %v", err)
+	}
+	var isoflow entity.IsoflowDocument
+	if err := json.Unmarshal(rawIsoflow, &isoflow); err != nil {
+		t.Fatalf("json.Unmarshal(Isoflow) error = %v", err)
+	}
+	if len(isoflow.Views) != 1 || len(isoflow.Views[0].Connectors) != 1 {
+		t.Fatalf("Isoflow cross-frame UML connectors = %#v", isoflow.Views)
+	}
+	anchors := isoflow.Views[0].Connectors[0].Anchors
+	if len(anchors) < 2 || anchors[0].Ref.Item == "" || anchors[len(anchors)-1].Ref.Item == "" || anchors[0].Ref.Item == anchors[len(anchors)-1].Ref.Item {
+		t.Fatalf("Isoflow cross-frame UML anchors = %#v", anchors)
+	}
+}

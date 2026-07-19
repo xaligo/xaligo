@@ -78,7 +78,7 @@ func TestRenderKeepsEdgesForEveryEmittedNodeKind(t *testing.T) {
       "endBinding":{"elementId":"group-rect","fixedPoint":[0,0.5]}},
     {"id":"cross-source-stub","type":"arrow","strokeColor":"#64748b","strokeWidth":1,
       "startBinding":{"elementId":"box-rect","fixedPoint":[1,0.4]},
-      "customData":{"xaligoConnectorKind":"route","xaligoCrossFrame":true,"xaligoSourceFrame":"a","xaligoDestinationFrame":"b","xaligoConnectorLogicalId":"logical-cross","xaligoConnectorSourceElementId":"box-rect","xaligoConnectorDestinationElementId":"service-item-lbl"}},
+      "customData":{"xaligoConnectorKind":"route","xaligoCrossFrame":true,"xaligoSourceFrame":"a","xaligoDestinationFrame":"b","xaligoConnectorSourceFrameSide":"right","xaligoConnectorDestinationFrameSide":"left","xaligoConnectorSourceFrameAnchor":"bottom-4","xaligoConnectorDestinationFrameAnchor":"top-2","xaligoConnectorLogicalId":"logical-cross","xaligoConnectorSourceElementId":"box-rect","xaligoConnectorDestinationElementId":"service-item-lbl"}},
     {"id":"cross-target-stub","type":"arrow","strokeColor":"#64748b","strokeWidth":1,
       "endBinding":{"elementId":"service-item-lbl","fixedPoint":[0,0.6]},
       "customData":{"xaligoConnectorKind":"route","xaligoCrossFrame":true,"xaligoSourceFrame":"a","xaligoDestinationFrame":"b","xaligoConnectorLogicalId":"logical-cross","xaligoConnectorSourceElementId":"box-rect","xaligoConnectorDestinationElementId":"service-item-lbl"}}
@@ -130,6 +130,9 @@ func TestRenderKeepsEdgesForEveryEmittedNodeKind(t *testing.T) {
 	logical := edges["logical-cross"]
 	if logical.Source != "box-rect" || logical.Target != "service-item" || logical.SourceHandle != "right" || logical.TargetHandle != "left" || logical.Data["crossFrame"] != true {
 		t.Fatalf("logical cross-frame edge = %#v", logical)
+	}
+	if logical.Data["sourceFrameSide"] != "right" || logical.Data["targetFrameSide"] != "left" || logical.Data["sourceFrameAnchor"] != "bottom-4" || logical.Data["targetFrameAnchor"] != "top-2" {
+		t.Fatalf("logical cross-frame boundary metadata = %#v", logical.Data)
 	}
 	if _, exists := edges["cross-source-stub"]; exists {
 		t.Fatalf("source stub was not deduplicated: %s", out)

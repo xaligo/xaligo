@@ -29,6 +29,8 @@ var renderUsecase = usecase.NewRenderUsecase(
 	repository.NewIsoflowRepository(),
 	repository.NewSVGRepository(),
 	repository.NewXYFlowRepository(),
+	nil,
+	nil,
 )
 
 var diagnosticsUsecase = usecase.NewDiagnosticsUsecase()

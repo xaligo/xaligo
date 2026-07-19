@@ -109,6 +109,8 @@ func TestV1ParseRejectsNonV1RootVersion(t *testing.T) {
 		`<frame><blank /></frame>`,
 		`<frame version="1"><blank /></frame>`,
 		`<frames version="1"><frame id="one"><blank /></frame></frames>`,
+		`<frames version="1"><frame id="one" version="1.0.0"><blank /></frame></frames>`,
+		`<xaligo version="1"><frames><frame id="one" version="2026.07"><blank /></frame></frames></xaligo>`,
 	}
 	for _, source := range valid {
 		if _, err := v1engine.ParseV1EngineParseDocument(strings.NewReader(source)); err != nil {
@@ -124,15 +126,106 @@ func TestV1ParseRejectsNonV1RootVersion(t *testing.T) {
 		{name: "V2 frame", source: `<frame version="2"><blank /></frame>`, want: `version="2"`},
 		{name: "empty version", source: `<frame version=""><blank /></frame>`, want: `version="1"`},
 		{name: "noncanonical V1 version", source: `<frame version="1.0"><blank /></frame>`, want: `version="1"`},
-		{name: "V2 scene root", source: `<scene version="2" />`, want: "root tag must be <frame> or <frames>"},
-		{name: "versioned child frame", source: `<frames><frame id="one" version="1"><blank /></frame></frames>`, want: "only allowed on the V1 document root"},
+		{name: "V2 scene root", source: `<scene version="2" />`, want: "root tag must be <xaligo>"},
 		{name: "versioned nested tag", source: `<frame><custom version="2" /></frame>`, want: "only allowed on the V1 document root"},
+		{name: "versioned nested frame", source: `<frame><frame id="nested" version="2" /></frame>`, want: "only allowed on the V1 document root"},
+		{name: "versioned frame below nested frames", source: `<frame><frames><frame id="nested" version="2" /></frames></frame>`, want: "directly under the document-root <frames>"},
+		{name: "empty child frame content version", source: `<xaligo version="1"><frames><frame id="page" version="" /></frames></xaligo>`, want: "must be non-empty"},
 	}
 	for _, test := range invalid {
 		t.Run(test.name, func(t *testing.T) {
 			_, err := v1engine.ParseV1EngineParseDocument(strings.NewReader(test.source))
 			if err == nil || !strings.Contains(err.Error(), test.want) {
 				t.Fatalf("Parse() error = %v, want %q", err, test.want)
+			}
+		})
+	}
+}
+
+func TestV1ParseRejectsFrameContentVersionOutsideSelectedPageFrames(t *testing.T) {
+	tests := []struct {
+		name   string
+		hidden string
+	}{
+		{name: "data", hidden: `<data><frames><frame id="hidden" version="2" /></frames></data>`},
+		{name: "document metadata", hidden: `<metadata><frames><frame id="hidden" version="2" /></frames></metadata>`},
+		{name: "styles", hidden: `<styles><frames><frame id="hidden" version="2" /></frames></styles>`},
+		{name: "imports", hidden: `<imports><frames><frame id="hidden" version="2" /></frames></imports>`},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			source := `<xaligo version="1">` + test.hidden + `<frames><frame id="page" version="1.0" /></frames></xaligo>`
+			_, err := v1engine.ParseV1EngineParseDocument(strings.NewReader(source))
+			if err == nil || !strings.Contains(err.Error(), "directly under the document-root <frames>") {
+				t.Fatalf("Parse() error = %v, want selected page-frame version placement error", err)
+			}
+		})
+	}
+}
+
+func TestV1ParseNormalizesFrameMetadataFlowControls(t *testing.T) {
+	document, err := v1engine.ParseV1EngineParseDocument(strings.NewReader(`<xaligo version="1"><frames>
+  <frame id="page"><metadata align=" CENTER ">
+    <entry key="owner" value="platform" break-before=" TRUE " />
+    <entry key="status" value="approved" break-before=" false " />
+  </metadata></frame>
+</frames></xaligo>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	metadata := document.Root.Children[0].Children[0]
+	if got := metadata.Attr("align"); got != "center" {
+		t.Fatalf("metadata align = %q, want center", got)
+	}
+	if got := metadata.Children[0].Attr("break-before"); got != "true" {
+		t.Fatalf("entry break-before = %q, want true", got)
+	}
+	if got := metadata.Children[1].Attr("break-before"); got != "false" {
+		t.Fatalf("entry break-before = %q, want false", got)
+	}
+}
+
+func TestV1ParseRejectsInvalidFrameMetadataFlowControls(t *testing.T) {
+	tests := []struct {
+		name   string
+		body   string
+		needle string
+	}{
+		{name: "align", body: `<metadata align="spread" />`, needle: "left, center, or right"},
+		{name: "break before", body: `<metadata><entry key="owner" value="platform" break-before="yes" /></metadata>`, needle: "true or false"},
+		{name: "empty break before", body: `<metadata><entry key="owner" value="platform" break-before="" /></metadata>`, needle: "true or false"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			source := `<xaligo version="1"><frames><frame id="page">` + test.body + `</frame></frames></xaligo>`
+			_, err := v1engine.ParseV1EngineParseDocument(strings.NewReader(source))
+			if err == nil || !strings.Contains(err.Error(), test.needle) {
+				t.Fatalf("Parse() error = %v, want %q", err, test.needle)
+			}
+		})
+	}
+}
+
+func TestV1ParseKeepsFrameMetadataEntryContextSpecific(t *testing.T) {
+	document, err := v1engine.ParseV1EngineParseDocument(strings.NewReader(`<xaligo version="1"><frames>
+  <frame id="page"><metadata><entry key="owner" value="platform" /></metadata></frame>
+</frames></xaligo>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	metadata := document.Root.Children[0].Children[0]
+	if len(metadata.Children) != 1 || metadata.Children[0].Tag != "entry" || metadata.Children[0].Attr("key") != "owner" || metadata.Children[0].Attr("value") != "platform" {
+		t.Fatalf("frame metadata entry was not preserved: %#v", metadata.Children)
+	}
+
+	tests := []struct{ name, source string }{
+		{name: "generic frame child", source: `<frame><entry key="owner" value="platform" /></frame>`},
+		{name: "generic nested layout", source: `<frame><container><entry key="owner" value="platform" /></container></frame>`},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if _, err := v1engine.ParseV1EngineParseDocument(strings.NewReader(test.source)); err != nil {
+				t.Fatalf("Parse() generic <entry> error = %v", err)
 			}
 		})
 	}
@@ -168,6 +261,56 @@ func TestV1ParseRejectsAnchorPositionZero(t *testing.T) {
 	_, err := v1engine.ParseV1EngineParseDocument(strings.NewReader(source))
 	if err == nil || !strings.Contains(err.Error(), "position must be 1, 2, 3, 4, 5") {
 		t.Fatalf("Parse() error = %v, want anchor position error", err)
+	}
+}
+
+func TestV1ParseNormalizesCrossFrameBoundaryAnchors(t *testing.T) {
+	source := `<xaligo version="1"><frames>
+  <frame id="overview"><rectangle id="web"/><connection src="web" dst="detail.db" src-frame-side="bottom" src-frame-anchor="far"><dst frame-side="top" frame-anchor="near" ref="detail.db"/></connection></frame>
+  <frame id="detail"><rectangle id="db"/></frame>
+</frames></xaligo>`
+	document, err := v1engine.ParseV1EngineParseDocument(strings.NewReader(source))
+	if err != nil {
+		t.Fatal(err)
+	}
+	connection := document.Root.Children[0].Children[1]
+	if connection.Attr("src-frame-side") != "bottom" || connection.Attr("src-frame-anchor") != "bottom-4" {
+		t.Fatalf("source frame anchor = %#v", connection.Attrs)
+	}
+	if connection.Attr("dst-frame-side") != "top" || connection.Attr("dst-frame-anchor") != "top-2" {
+		t.Fatalf("destination frame anchor = %#v", connection.Attrs)
+	}
+}
+
+func TestV1ParseRejectsInvalidOrLocalFrameBoundaryAnchors(t *testing.T) {
+	tests := []struct {
+		name   string
+		source string
+		want   string
+	}{
+		{
+			name:   "invalid slot",
+			source: `<xaligo version="1"><frames><frame id="a"><rectangle id="one"/><connection src="one" dst="b.two" src-frame-side="right" src-frame-anchor="6"/></frame><frame id="b"><rectangle id="two"/></frame></frames></xaligo>`,
+			want:   "position must be 1, 2, 3, 4, 5",
+		},
+		{
+			name:   "conflicting side",
+			source: `<xaligo version="1"><frames><frame id="a"><rectangle id="one"/><connection src="one" dst="b.two" src-frame-side="right" src-frame-anchor="top-2"/></frame><frame id="b"><rectangle id="two"/></frame></frames></xaligo>`,
+			want:   "conflicts with side",
+		},
+		{
+			name:   "same frame",
+			source: `<frame><rectangle id="one"/><rectangle id="two"/><connection src="one" dst="two" src-frame-anchor="right-3"/></frame>`,
+			want:   "only valid for a cross-frame connection",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			_, err := v1engine.ParseV1EngineParseDocument(strings.NewReader(test.source))
+			if err == nil || !strings.Contains(err.Error(), test.want) {
+				t.Fatalf("Parse() error = %v, want %q", err, test.want)
+			}
+		})
 	}
 }
 

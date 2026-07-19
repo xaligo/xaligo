@@ -1,5 +1,6 @@
 import { NewEnvLogger } from '../share/logger';
 import { NewMCode } from '../share/mcode';
+import { pptxPlanOpCount, pptxPlanPages } from '../entity/pptx';
 import { exportPptxFromRequest } from '../usecase/pptx_exporter';
 import { parsePptxExporterRequest } from '../usecase/pptx_exporter_request';
 
@@ -14,7 +15,7 @@ const ECPE003 = NewMCode('ECPE-003', 'Run PPTX exporter export completed');
 export async function runPptxExporter(input: string): Promise<Uint8Array> {
   logger.DEBUG(ECPE001, 'start', { bytes: input.length });
   const request = parsePptxExporterRequest(input);
-  logger.DEBUG(ECPE002, 'parse completed', { ops: request.plan.ops.length });
+  logger.DEBUG(ECPE002, 'parse completed', { pages: pptxPlanPages(request.plan).length, ops: pptxPlanOpCount(request.plan) });
   const pptx = await exportPptxFromRequest(request);
   logger.DEBUG(ECPE003, 'export completed', { bytes: pptx.length });
   return pptx;

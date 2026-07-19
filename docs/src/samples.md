@@ -1,8 +1,40 @@
 # Samples
 
+## Canonical V1 Envelope
+
+The [canonical V1 envelope example](examples/canonical-v1-envelope.md) uses
+`<xaligo version="1">`, the document-wide `<data>` registry, identified frames,
+ports, and a cross-frame connection without producing a legacy-root warning.
+It also shows the default per-frame SVG filenames and the combined
+compatibility view.
+
+## Cross-Frame Page Links
+
+The [cross-frame page-link example](examples/page-links.md) demonstrates both
+automatic nearest-border selection and independent endpoint/page-border
+side/anchor selection. It also shows the default 4-pixel terminal inset, fixed
+tangent coordinates on explicit frame anchors, and the exact `to <frame ID>`
+and `from <frame ID>` labels generated next to each final inset terminal, plus
+PPTX, PDF, and Excel multi-page render commands.
+
+## Frame Metadata Tags
+
+The [frame metadata example](examples/frame-metadata.md) shows built-in
+`id`/`title`/content-`version` tags and arbitrary key/value entries. Its two
+pages cover top/right-aligned and bottom/center-aligned placement, automatic
+and fixed widths, an explicit row break, per-entry overrides, font/color
+settings, default and explicit `row-gap` page insets, full-width metadata
+reservation, and automatic safe-edge selection for page links.
+
 ## Hybrid Enterprise Architecture
 
 ![Hybrid enterprise architecture sample](images/complex-hybrid-architecture.svg)
+
+This sample combines the larger network-routing showcase with canonical V1
+page metadata. Its frame declares a stable `id`, visible `title`, and content
+`version`, so the built-in metadata band reserves its edge strip while the
+existing route/traffic lanes, line jumps, junctions, and manual bends continue
+to use the shared routing pipeline.
 
 Source: [`docs/src/examples/samples/complex-hybrid-architecture.xal`](examples/samples/complex-hybrid-architecture.xal)
 

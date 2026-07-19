@@ -15,6 +15,11 @@ type AssetSource struct {
 	ItemIconSize     float64
 }
 
+// ImportSource describes files referenced relative to the input document.
+type ImportSource struct {
+	FS fs.FS
+}
+
 // RenderOptions contains renderer-independent presentation and output options.
 type RenderOptions struct {
 	Mode          Mode           `json:"mode,omitempty"`
@@ -23,6 +28,8 @@ type RenderOptions struct {
 	ServicesCSV   []byte         `json:"-"`
 	Abbreviations map[int]string `json:"-"`
 	Assets        *AssetSource   `json:"-"`
+	Imports       *ImportSource  `json:"-"`
+	CombineFrames bool           `json:"combineFrames,omitempty"`
 
 	PxPerInch           float64 `json:"pxPerInch,omitempty"`
 	ArrowStyle          string  `json:"arrowStyle,omitempty"`

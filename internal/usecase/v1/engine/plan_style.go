@@ -66,10 +66,29 @@ func normalizeValignV1EnginePlanStyle(align string) string {
 }
 
 func fontFaceV1EnginePlanStyle(fontFamily *int) string {
-	if fontFamily != nil && *fontFamily == 1 {
-		return "Virgil"
+	if fontFamily == nil {
+		return "Helvetica"
 	}
-	return "Helvetica"
+	switch *fontFamily {
+	case 1:
+		return "Virgil"
+	case 3:
+		return "Cascadia Code"
+	case 4:
+		return "Assistant"
+	case 5:
+		return "Excalifont"
+	case 6:
+		return "Nunito"
+	case 7:
+		return "Lilita One"
+	case 8:
+		return "Comic Shanns"
+	case 9:
+		return "Liberation Sans"
+	default:
+		return "Helvetica"
+	}
 }
 
 func opacityToTransparencyV1EnginePlanStyle(opacity *float64) float64 {

@@ -1,4 +1,4 @@
-import type { PptxExportOptions, PptxExportResult } from './entity/pptx';
+import { pptxPlanOpCount, pptxPlanPages, type PptxExportOptions, type PptxExportResult } from './entity/pptx';
 import type { PptxExporterRequest } from './entity/pptx_exporter';
 import { NewEnvLogger } from './share/logger';
 import { NewMCode } from './share/mcode';
@@ -18,9 +18,13 @@ export type {
   ArrowStyle,
   PaperOrientation,
   PaperSize,
+  PptxDocumentPlan,
   PptxExportOptions,
   PptxExportResult,
   PptxOutputType,
+  PptxPlan,
+  PptxPlanInput,
+  PptxPlanPage,
 } from './entity/pptx';
 export type { PptxExporterOptions, PptxExporterRequest } from './entity/pptx_exporter';
 export {
@@ -46,7 +50,7 @@ export async function renderPptxPlan(
 }
 
 export async function renderPptxExporterRequest(request: PptxExporterRequest): Promise<Uint8Array> {
-  logger.DEBUG(EUA002, 'start', { ops: request.plan.ops.length });
+  logger.DEBUG(EUA002, 'start', { pages: pptxPlanPages(request.plan).length, ops: pptxPlanOpCount(request.plan) });
   return exportPptxFromRequest(request);
 }
 

@@ -1,0 +1,4 @@
+Service,Role,Port
+API,Backend,8080
+Worker,Background jobs,9000
+Database,PostgreSQL,5432

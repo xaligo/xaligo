@@ -1,0 +1,519 @@
+# Structured Diagrams: Tables, Databases, and UML
+
+> Status: V1 implementation design. Canonical V1 uses
+> `<xaligo version="1">`. Historical root `<frame>` and `<frames>` documents
+> remain accepted and produce a migration warning. V2 remains reserved for
+> `<scene version="2">`.
+
+This design turns the table, relational-database, and UML discussions into one
+coherent target while keeping their semantic processing independent. It
+defines the document envelope, shared data boundary, component syntax,
+normalization rules, validation ownership, and phased delivery. Rendering and
+layout details may evolve without changing these boundaries.
+
+## Design goals
+
+- Keep one `.xal` source document capable of containing architecture, table,
+  database, and UML views.
+- Reuse data definitions across frames without coupling a definition to one
+  visual notation.
+- Offer concise pipe syntax and lossless explicit tag syntax where both are
+  appropriate.
+- Import common data and schema files through deterministic, safe adapters.
+- Preserve the existing concepts of frames, item/grid placement, explicit
+  geometry, ports, and routed lines without making every diagram use one
+  semantic processor.
+- Lower every frontend into typed, renderer-neutral models before layout and
+  encoding.
+
+## Document envelope
+
+The target hierarchy is:
+
+```text
+xaligo
+├─ metadata
+├─ imports
+├─ data                 reusable document-wide definitions
+├─ styles
+└─ frames
+   └─ frame             page/layout boundary
+      ├─ metadata       visible page tag-band configuration
+      ├─ existing layout and architecture components
+      ├─ table
+      ├─ database
+      └─ uml
+         └─ exactly one UML diagram-kind child
+```
+
+Example:
+
+```xml
+<xaligo version="1">
+  <data>
+    <table-data id="service-inventory" src="services.csv" />
+    <database-schema id="application-schema" src="schema.sql"
+                     format="sql" dialect="postgresql" />
+    <uml-model id="domain-model">
+      <!-- typed UML definitions -->
+    </uml-model>
+  </data>
+
+  <frames>
+    <frame id="inventory">
+      <table data="service-inventory" />
+    </frame>
+    <frame id="erd">
+      <database data="application-schema" notation="crow-foot" />
+    </frame>
+    <frame id="domain">
+      <uml id="domain-view">
+        <class-diagram data="domain-model" />
+      </uml>
+    </frame>
+  </frames>
+</xaligo>
+```
+
+`<data>` owns reusable meaning; `<frame>` owns presentation and page layout.
+A data definition may be projected into several views, such as a database
+schema rendered as an ER diagram, a general table, or a UML class diagram.
+Such projections are explicit mappings, not implicit reinterpretation.
+
+Every frame has a stable, document-unique `id`. A frame may contain several
+components arranged with the normal row, column, container, and grid controls.
+The component selects its semantic processor; `frame` never carries values
+such as `type="uml-class"`.
+
+## Integrated-format decisions
+
+The integrated-format discussion fixes these document-level decisions for the
+structured diagram work:
+
+- The canonical document root is `<xaligo version="1">`, with reusable
+  document data outside the renderable `<frames>` collection.
+- `<frames>` contains the independent page or component boundaries, and each
+  direct child `<frame>` owns presentation layout, page metadata, and the
+  components rendered on that page.
+- Tables, relational databases, UML, and existing architecture diagrams may
+  use separate semantic parsers, validators, layout engines, and renderers.
+  They are not forced through one generic Item/Grid/Line semantic processor.
+- The shared boundary between those processors is limited to document
+  structure, stable IDs, data references, imports, style references, frame
+  bounds, exposed anchors, and renderer-neutral draw operations.
+- Cross-frame data reuse is allowed through `<data>` references; cross-frame
+  visual state is not shared. Page-crossing relationships should become
+  references or page-link projections instead of one physical line spanning
+  multiple frames.
+
+UML uses a parent `<uml>` component. The UML diagram family is selected only by
+the single diagram-kind child under `<uml>`, such as `<class-diagram>` or
+`<sequence-diagram>`. The frame does not carry UML kind metadata, and one frame
+may place multiple independent UML components or mix UML with tables,
+databases, and existing architecture components.
+
+## Frame-to-page projection
+
+An identified child frame is one physical page by default. The complete scene
+is resolved once, then each frame is projected in source order.
+
+| Output | Frame mapping |
+|---|---|
+| SVG | One file per frame |
+| PPTX | One slide per frame |
+| PDF | One page per frame |
+| Excel | One worksheet per frame containing its SVG image |
+| Excalidraw, XYFlow, Isoflow | One logical document containing every frame |
+
+`--combine-frames` preserves the historical single canvas, slide, PDF page, or
+Excel worksheet. It is an output projection option, not a change to frame
+identity, layout, or connection resolution. A one-frame SVG document writes the
+exact requested filename; multiple frames append a filename-safe frame ID to
+the requested stem.
+
+For SVG, PPTX, PDF, and Excel, a page frame is not a visible rectangle. Its
+outline is omitted in both default and combined compatibility output; its
+geometry remains the page/crop boundary and the logical terminal for
+cross-frame page-link stubs. Excalidraw retains frame structure for editing
+with a transparent page-frame outline.
+
+A default page-local SVG uses the exact logical frame rectangle as its canvas
+and clip boundary. PDF pages and the SVG images placed into Excel worksheets
+inherit that strict crop, so a top/bottom metadata band's `row-gap` gutter
+reaches the physical page/image edge while its tag cells remain inset by that
+value. The combined SVG compatibility canvas retains marker-safe bounds
+expansion. PPTX uses one common slide size; when frame sizes differ, smaller
+frame pages are centered on the largest slide without changing their logical
+frame edge. The metadata inset is measured from that logical frame edge, not
+from the common slide edge.
+
+## Frame metadata tag-band projection
+
+A page frame can place a top or bottom band of visible key/value tags near the
+selected edge of its outer border box. Its resolved `row-gap`, 4 pixels by
+default, is both the inter-row spacing and the metadata page-edge inset on
+the selected vertical edge and both horizontal edges. Padding, content
+margins, and content-box coordinates do not replace or add to that inset. A
+non-empty frame `title`, direct-child content `version`, or direct `<metadata>`
+child enables it. When enabled, non-empty `id`, `title`, and `version` values
+are emitted in that order, followed by arbitrary
+`<entry key="..." value="..." />` children in source order. An ID-only frame
+keeps the historical layout and does not acquire a band.
+
+The normalized layout resolves font-dependent height, auto or fixed tag
+widths, greedy source-order wrapping, optional entry row breaks, and
+left/center/right alignment for each row within
+`frame width - 2 * row-gap`. The full-width reservation strip still extends
+from the outer logical frame edge to the final content-box boundary and is at
+least `row-gap + complete band height + 8` pixels deep. The canonical scene
+then represents every key and value cell as page-owned decoration with stable
+ownership metadata. SVG, PPTX, PDF, Excel, and Excalidraw consume that same
+geometry. Per-frame projection retains only the owning page's tags, while
+combined compatibility output retains all bands. XYFlow and Isoflow omit them
+because page decoration is neither a graph node nor an endpoint.
+
+The entire reservation strip is a hard exclusion zone for normal items and
+text, local and UML connector paths and labels, and page-link paths and labels.
+The logical frame edge and page size are unchanged, and no visible frame
+outline is reintroduced.
+
+## Cross-frame page-link projection
+
+A qualified endpoint such as `detail.database` is a logical connection across
+frame/page boundaries. Page-oriented output does not draw one line through the
+space between frames. It projects the connection as two local page-link stubs:
+the source endpoint connects to its owning frame's page-terminal inset line and
+is labeled `to <destination frame ID>`; the destination frame's
+page-terminal inset line connects to the destination endpoint and is labeled
+`from <source frame ID>`. For example, an `overview` to `detail` connection
+shows `to <detail>` on the source page and `from <overview>` on the destination
+page. The angle brackets are rendered as literal punctuation.
+
+Endpoint binding and logical page termination are independent. Endpoint
+`src/dst-anchor` takes precedence over endpoint `src/dst-side`. For the page
+terminal, `src/dst-frame-anchor` takes precedence over
+`src/dst-frame-side`, which takes precedence over the legacy endpoint
+anchor, then the endpoint side, then the automatic nearest-border preference.
+The first two choices are explicit and fixed. Otherwise rendering retains a
+safe preference or chooses the nearest safe side using the actual endpoint
+visual envelope; validation checks only that the safe candidate set is
+non-empty. Frame anchors provide five fixed tangent positions at
+10/30/50/70/90 percent along each outer frame extent. The endpoint- and
+page-terminal-adjacent route segments remain perpendicular to their respective
+sides, even when those sides differ. Equal automatic distances prefer the side
+facing the other frame, then the stable order top, right, bottom, left.
+Frame-terminal attributes are cross-frame-only; same-frame use is an error.
+Manual bends remain logical
+connection metadata and do not steer the two local stubs.
+Excalidraw, SVG, PPTX, PDF, and Excel preserve the two page-local projections;
+graph adapters combine their shared logical connection ID into one XYFlow or
+Isoflow edge.
+
+Metadata reservation is applied after that normal precedence. Without explicit
+frame-terminal geometry, unsafe candidates are excluded before the visual
+nearest-side choice. An explicit frame side/anchor that selects the metadata
+edge, has an inset that does not fit its normal frame dimension, or places its
+actual terminal in the strip is a validation error rather than a silent move.
+A safe explicit left/right terminal is allowed regardless of an unused
+top/bottom inset line. Automatic selection fails only when no safe side exists;
+the resolved inset is never clamped.
+
+The outer logical page edge remains the side and tangent-coordinate reference
+even though no frame outline is drawn. The drawable terminal lies on a parallel
+inward inset line: it uses the resolved metadata `row-gap`, or 4 layout pixels
+when metadata is absent. That value applies to all four sides regardless of
+metadata position, and zero retains the outer edge. Applying it changes only
+the normal coordinate, so an explicit frame anchor keeps its exact
+10/30/50/70/90-percent tangent slot. Otherwise the unconstrained parallel
+coordinate follows the endpoint binding; a coordinate inside the
+24-layout-pixel corner gutter is clamped and connected with a two-bend
+orthogonal dogleg so both the endpoint and terminal segments remain
+perpendicular to the selected side. Borders shorter than 96 layout pixels use
+an adaptive quarter-length gutter. An unconstrained coincident inset terminal
+shifts along the parallel axis within the available gutter range to keep the
+page-link stub visible. An explicit frame anchor retains its tangent slot.
+On a left or right edge, the terminal is additionally clamped outside the
+metadata reservation strip. The path and label remain outside the strip, and
+any coordinate difference is bridged while preserving orthogonal routing.
+The `to <...>` / `from <...>` label stays just inside the page at a
+4-layout-pixel inward gap and a minimum 4-layout-pixel tangent gap from the
+final inset terminal. It uses the closest tangent position that avoids endpoint
+and metadata geometry.
+
+## Processing boundaries
+
+General tables, relational schemas, and UML are separate frontends:
+
+```text
+source document
+  -> envelope parser and root/version dispatch
+  -> include/import resolution
+  -> data registry and reference resolution
+  -> component dispatch
+       table    -> table parser/validator/layout
+       database -> RDB parser/validator/ER layout
+       uml      -> UML-kind parser/validator/layout
+  -> renderer-neutral draw operations
+  -> shared format encoders
+```
+
+They may share primitives such as boxes, compartments, text policy, ports,
+orthogonal edges, themes, and output encoders. They do not share a catch-all
+semantic AST or force UML/RDB behavior through the existing architecture
+layout engine. The common boundary is a typed document registry plus neutral
+resolved drawing contracts.
+
+The envelope parser selects exactly one versioned frontend from the root and
+version pair. It must not retry parsers after an error. `<xaligo version="1">`
+selects V1; `<scene version="2">` remains the reject-safe V2 boundary.
+
+## General tables
+
+`<table>` represents data, not a visual placement grid. Simple tables use a
+GFM-like pipe form:
+
+```xml
+<table id="services" title="Services" grid="all" striped="true">
+  | Service | Role     | Port |
+  |:--------|:---------|-----:|
+  | Nginx   | Proxy    |  443 |
+  | API     | Backend  | 8080 |
+</table>
+```
+
+Alignment comes from the separator row. The initial profile supports plain
+text cells and escaped pipes; it does not treat arbitrary Markdown or HTML as
+cell content.
+
+Explicit tags provide stable IDs, rich content, spans, and cell styling:
+
+```xml
+<table id="services" title="Services" grid="all">
+  <header>
+    <cell id="service-heading">Service</cell>
+    <cell>Role</cell>
+    <cell align="right">Port</cell>
+  </header>
+  <row id="api-row">
+    <cell id="api"><item id="27" />API</cell>
+    <cell>Backend</cell>
+    <cell align="right">8080</cell>
+  </row>
+</table>
+```
+
+Pipe rows and explicit rows may coexist. Source order is preserved. Both forms
+must declare the same effective column count; conflicting header definitions,
+duplicate row/cell IDs, and invalid spans are errors. Both lower into the same
+typed table model before layout.
+
+Presentation properties include `title`, `grid`, `striped`, `compact`, column
+widths, horizontal/vertical alignment, overflow policy, six-digit text/fill/
+border colors, font family, and font size. Table styles inherit through rows to
+cells; explicit row/cell values override them, while `header-*` table
+attributes style pipe headers. `rowspan`, `colspan`, rich cell children, and
+cell endpoints belong to the explicit form.
+
+`<grid>` remains a layout primitive for arranging diagram components. A grid
+must not be inferred to be a data table merely because it looks tabular.
+
+## Relational database design
+
+`<database>` is the displayed schema component; `<database-schema>` is the
+reusable data definition. `<entity>` represents an RDB relation and is not an
+alias for a general table.
+
+```xml
+<data>
+  <database-schema id="application-schema">
+    <entity id="roles" name="roles">
+      <column name="id" type="bigint" primary-key="true"
+              nullable="false" />
+      <column name="name" type="varchar(100)" unique="true" />
+    </entity>
+    <entity id="users" name="users">
+      <column name="id" type="bigint" primary-key="true"
+              nullable="false" />
+      <column name="role_id" type="bigint" nullable="false" />
+      <foreign-key id="fk-users-role" columns="role_id"
+                   references="roles.id" on-delete="restrict" />
+    </entity>
+  </database-schema>
+</data>
+
+<frames>
+  <frame id="database">
+    <database data="application-schema" notation="crow-foot" />
+  </frame>
+</frames>
+```
+
+An entity may also use a schema-specific pipe form:
+
+```xml
+<entity id="users" name="users">
+  | Name    | Type         | Key | Nullable | References |
+  |:--------|:-------------|:----|:---------|:-----------|
+  | id      | bigint       | PK  | false    |            |
+  | email   | varchar(255) | UQ  | false    |            |
+  | role_id | bigint       | FK  | false    | roles.id   |
+</entity>
+```
+
+The header names are part of the profile and map to typed column fields. Tags
+remain authoritative for composite primary/foreign keys, indexes, checks,
+referential actions, comments, and dialect-specific details. Mixed syntax
+lowers once into the same RDB model and rejects contradictory declarations.
+
+Foreign keys can generate relations. An explicit relation may add visual
+meaning but cannot contradict schema constraints without an explicit
+projection mode. Endpoint references use typed paths such as
+`users.role_id`; table cell endpoints use a separate syntax so they cannot be
+mistaken for RDB columns.
+
+RDB validation includes unique entity/column IDs, referenced entity and column
+existence, compatible key arity and types, one effective primary key, valid
+index/check definitions, and consistent null/default declarations. Diagnostics
+retain the originating file and source range.
+
+## UML
+
+`<uml>` is the common UML component. It contains exactly one diagram-kind
+child, which selects the semantic processor:
+
+```text
+uml
+├─ class-diagram
+├─ object-diagram
+├─ component-diagram
+├─ deployment-diagram
+├─ package-diagram
+├─ composite-structure-diagram
+├─ profile-diagram
+├─ use-case-diagram
+├─ activity-diagram
+├─ state-machine-diagram
+├─ sequence-diagram
+├─ communication-diagram
+├─ interaction-overview-diagram
+└─ timing-diagram
+```
+
+Example:
+
+```xml
+<uml id="domain-view" title="Domain Model">
+  <class-diagram data="domain-model" direction="right" />
+</uml>
+```
+
+No child and multiple diagram-kind children are validation errors. Unknown
+kinds are rejected instead of being treated as generic groups. Every UML
+component requires a stable ID that is unique in its frame. The diagram child
+accepts `direction="right|down"` and either inline children or one `data`
+reference, never both. Every element has a diagram-local ID, and relations use
+those local IDs for `src` and `dst`.
+
+V1 implements all fourteen diagram-kind selectors through closed per-family
+element and relation vocabularies. It validates ownership for ports, composite
+parts, use cases, and timing states; message order for sequence and
+communication diagrams; structural links for communication messages; and
+numeric intervals/events for timing diagrams. Neutral `element` and `relation`
+escape hatches are not part of the strict profile. The authoritative matrix,
+compartment vocabulary, endpoint constraints, and timing domains are in the
+[UML language reference](../xal/uml.md).
+
+Existing layout ideas are reused at the component boundary: `<uml>` can sit in
+rows, columns, grids, or containers and returns resolved width, height, draw
+operations, anchors, and links. UML component and local IDs reserve `.` and
+`/`; normal connections address a UML element as `uml-id/local-id` in the same
+frame or `frame-id.uml-id/local-id` across frames. Existing line concepts
+provide edge style, anchors, bends, routing, and line jumps, while UML
+relationships keep their own semantic kinds.
+
+The current V1 renderer is deliberately a common-capability projection. It
+uses ellipses for use cases and initial/final nodes, diamonds for decision-like
+nodes, rectangles with flattened text compartments for the other elements,
+and orthogonal semantic connectors for relations. Sequence order sets
+top-to-bottom connector anchors but does not draw separate lifeline/activation
+axes; timing diagrams do not draw proportional waveforms, and semantic owners
+do not imply spatial nesting. This keeps the resolved geometry shared by SVG,
+Excalidraw, PPTX, PDF, Excel, XYFlow, and Isoflow; target formats may omit UML metadata or
+marker details they cannot represent without private schema extensions.
+
+## Imports and overrides
+
+Imports are declared in `<data>` or the document-level `<imports>` registry:
+
+```xml
+<data>
+  <table-data id="services" src="services.csv" format="csv" />
+  <table-data id="endpoints" src="endpoints.yaml" format="yaml"
+              path="services" />
+  <database-schema id="schema" src="schema.sql" format="sql"
+                   dialect="postgresql" />
+</data>
+```
+
+V1 implements CSV/TSV, JSON, and YAML table adapters with an injected
+filesystem and paths relative to the input document. SQL DDL and DBML remain
+planned. OpenAPI may later project schemas into tables or UML components. Spreadsheet import is deferred
+until its type, formula, merged-cell, and formatting loss policy is specified.
+
+Resolution order is:
+
+1. parse the envelope and declarations;
+2. expand includes while detecting cycles;
+3. load imports under the caller's asset/file policy;
+4. parse each import into its typed source model;
+5. apply explicit inline overrides;
+6. resolve references and projections;
+7. perform component-specific semantic validation;
+8. lay out and render frames.
+
+Overrides address stable semantic IDs. They never depend on imported row
+position. The initial profile uses the deterministic precedence `explicit tag
+override > pipe declaration > imported value > default`. A conflicting value
+at the same precedence is an error.
+
+Import resolution records source URI/path, format, dialect, and source ranges
+so diagnostics and round trips can preserve provenance. A bundled/normalized
+form may embed resolved data, but normal editing retains external references.
+
+Arbitrary command execution is outside the import contract. Network and
+filesystem access are capability-injected, disabled unless supplied by the
+caller, and subject to path/scheme policies. Credentials are references to
+environment or secret providers and are never embedded in rendered output.
+
+## Typed models and renderer contract
+
+The document model contains metadata, imports, data definitions, styles, and
+frames. It does not flatten all meanings into generic `Node` and `Edge` maps.
+Table, RDB, and each UML family retain typed semantic models until their own
+layout stage.
+
+After layout, processors emit shared renderer-neutral operations for shapes,
+text, compartments, icons, ports, and semantic edges. Operations retain stable
+source IDs, semantic kind, parentage, text policy, geometry, style, and
+optional endpoint metadata. Output encoders project these operations into SVG,
+PPTX, PDF, Excel, Excalidraw, XYFlow, or another supported capability set without becoming
+alternate semantic models.
+
+## Delivery sequence
+
+1. Add the `<xaligo version="1">` envelope, legacy-root warning, data registry,
+   frames, imports, and typed
+   component dispatch without changing current V1/V2 behavior.
+2. Deliver general tables with pipe/tag normalization and SVG output.
+3. Add CSV, JSON, and YAML table imports. (Implemented in V1.)
+4. Deliver RDB entities, keys, relations, Crow's Foot rendering, and SQL DDL
+   import for PostgreSQL, MySQL, and SQLite. (Entities, keys, relations, and
+   common SQL DDL import are implemented in V1; Crow's Foot remains.)
+5. Deliver all fourteen UML diagram families through common typed primitives
+   and diagram-kind validation. (Implemented in V1.)
+6. Add DBML/OpenAPI projections, richer table cells, and additional encoders.
+7. Add explicit normalized/bundled output and GUI round-trip contracts.
+
+Every phase requires parser/validation tests, model golden tests, resolved
+geometry tests, cross-format capability tests, source-positioned import
+diagnostics, and V1/V2 root rejection regression tests.

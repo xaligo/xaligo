@@ -25,75 +25,66 @@ const ERPLFCI002 = NewMCode('ERPLFCI-002', 'Format connector legend IDs range br
 const ERPLFCI003 = NewMCode('ERPLFCI-003', 'Format connector legend IDs single branch');
 const ERPLLO001 = NewMCode('ERPLLO-001', 'Legend line options default branch');
 
-export function drawConnectorLegendSlide(pptx: pptxgen, plan: PptxPlan): void {
+export function drawConnectorLegendSlide(pptx: pptxgen, plan: PptxPlan): number {
   const rows = groupConnectorLegendEntries(plan.connectorLegend ?? []);
   if (rows.length === 0) {
     logger.DEBUG(ERPLDCLS001, 'branch empty');
-    return;
+    return 0;
   }
 
   const slideW = plan.slide.w;
   const slideH = plan.slide.h;
-  const marginX = 0.55;
-  const marginTop = 0.42;
-  const marginBottom = 0.35;
-  const titleH = 0.35;
-  const headerH = 0.24;
-  const rowH = 0.31;
-  const rowsPerSlide = Math.max(1, Math.floor((slideH - marginTop - marginBottom - titleH - headerH - 0.18) / rowH));
-  const sampleW = 0.82;
-  const lineX = marginX;
-  const typeX = lineX + sampleW + 0.15;
-  const typeW = 0.92;
-  const idX = typeX + typeW + 0.15;
-  const idW = 1.45;
-  const styleX = idX + idW + 0.15;
-  const styleW = 2.15;
-  const descriptionX = styleX + styleW + 0.18;
-  const descriptionW = Math.max(1, slideW - marginX - descriptionX);
-  const rowTextH = 0.18;
+  const vertical = legendVerticalLayout(slideH, 0.31);
+  const columns = legendColumns(slideW, [0.13, 0.15, 0.14, 0.25, 0.33], 0.15);
+  const [lineColumn, typeColumn, idColumn, styleColumn, descriptionColumn] = columns;
+  if (!lineColumn || !typeColumn || !idColumn || !styleColumn || !descriptionColumn) return 0;
+  const rowTextH = Math.min(0.18, vertical.rowH * 0.72);
+  let slideCount = 0;
 
-  for (let start = 0; start < rows.length; start += rowsPerSlide) {
-    const pageRows = rows.slice(start, start + rowsPerSlide);
+  for (let start = 0; start < rows.length; start += vertical.rowsPerPage) {
+    const pageRows = rows.slice(start, start + vertical.rowsPerPage);
     logger.DEBUG(ERPLDCLS002, 'branch page', { start, rows: pageRows.length });
     const slide = pptx.addSlide();
+    slideCount++;
     slide.background = { color: plan.slide.background || 'FFFFFF' };
 
     slide.addText('Line Legend', {
-      x: marginX,
-      y: marginTop,
-      w: slideW - marginX * 2,
-      h: titleH,
+      x: lineColumn.x,
+      y: vertical.marginTop,
+      w: columnsWidth(columns),
+      h: vertical.titleH,
       fontFace: 'Helvetica',
       fontSize: 16,
       bold: true,
       color: '1E1E1E',
       margin: 0,
+      fit: 'shrink',
     });
 
-    const headerY = marginTop + titleH;
-    slide.addText('Line', { x: lineX, y: headerY, w: sampleW, h: headerH, fontSize: 7, bold: true, color: '666666', margin: 0 });
-    slide.addText('Type', { x: typeX, y: headerY, w: typeW, h: headerH, fontSize: 7, bold: true, color: '666666', margin: 0 });
-    slide.addText('ID', { x: idX, y: headerY, w: idW, h: headerH, fontSize: 7, bold: true, color: '666666', margin: 0 });
-    slide.addText('Style', { x: styleX, y: headerY, w: styleW, h: headerH, fontSize: 7, bold: true, color: '666666', margin: 0 });
-    slide.addText('Description', { x: descriptionX, y: headerY, w: descriptionW, h: headerH, fontSize: 7, bold: true, color: '666666', margin: 0 });
+    const headerY = vertical.marginTop + vertical.titleH;
+    const headerOptions = { fontSize: 7, bold: true, color: '666666', margin: 0, fit: 'shrink' as const };
+    slide.addText('Line', { x: lineColumn.x, y: headerY, w: lineColumn.w, h: vertical.headerH, ...headerOptions });
+    slide.addText('Type', { x: typeColumn.x, y: headerY, w: typeColumn.w, h: vertical.headerH, ...headerOptions });
+    slide.addText('ID', { x: idColumn.x, y: headerY, w: idColumn.w, h: vertical.headerH, ...headerOptions });
+    slide.addText('Style', { x: styleColumn.x, y: headerY, w: styleColumn.w, h: vertical.headerH, ...headerOptions });
+    slide.addText('Description', { x: descriptionColumn.x, y: headerY, w: descriptionColumn.w, h: vertical.headerH, ...headerOptions });
 
     for (const [i, entry] of pageRows.entries()) {
-      const y = marginTop + titleH + headerH + 0.06 + i * rowH;
-      const rowCenterY = y + rowH / 2;
+      const y = vertical.bodyTop + i * vertical.rowH;
+      const rowCenterY = y + vertical.rowH / 2;
       const rowTextY = rowCenterY - rowTextH / 2;
       const line: pptxgen.ShapeLineProps = lineOptions(entry.line);
       slide.addShape(pptx.ShapeType.line, {
-        x: lineX,
+        x: lineColumn.x,
         y: rowCenterY,
-        w: sampleW,
+        w: lineColumn.w,
         h: 0,
         line,
       });
       slide.addText(entry.label || entry.kind, {
-        x: typeX,
+        x: typeColumn.x,
         y: rowTextY,
-        w: typeW,
+        w: typeColumn.w,
         h: rowTextH,
         fontFace: 'Helvetica',
         fontSize: 6.5,
@@ -103,9 +94,9 @@ export function drawConnectorLegendSlide(pptx: pptxgen, plan: PptxPlan): void {
         fit: 'shrink',
       });
       slide.addText(formatConnectorLegendIDs(entry.ids), {
-        x: idX,
+        x: idColumn.x,
         y: rowTextY,
-        w: idW,
+        w: idColumn.w,
         h: rowTextH,
         fontFace: 'Helvetica',
         fontSize: 6.2,
@@ -116,9 +107,9 @@ export function drawConnectorLegendSlide(pptx: pptxgen, plan: PptxPlan): void {
         breakLine: false,
       });
       slide.addText(lineStyleSummary(entry.line), {
-        x: styleX,
+        x: styleColumn.x,
         y: rowTextY,
-        w: styleW,
+        w: styleColumn.w,
         h: rowTextH,
         fontFace: 'Helvetica',
         fontSize: 6.2,
@@ -128,9 +119,9 @@ export function drawConnectorLegendSlide(pptx: pptxgen, plan: PptxPlan): void {
         breakLine: false,
       });
       slide.addText(entry.description || '', {
-        x: descriptionX,
+        x: descriptionColumn.x,
         y: rowTextY,
-        w: descriptionW,
+        w: descriptionColumn.w,
         h: rowTextH,
         fontFace: 'Helvetica',
         fontSize: 6.2,
@@ -141,70 +132,78 @@ export function drawConnectorLegendSlide(pptx: pptxgen, plan: PptxPlan): void {
       });
     }
   }
+  return slideCount;
 }
 
-export async function drawLegendSlides(pptx: pptxgen, plan: PptxPlan): Promise<void> {
+export async function drawLegendSlides(pptx: pptxgen, plan: PptxPlan): Promise<number> {
   const entries = (plan.legend ?? []).filter((e) => e.data && e.officialName);
   if (entries.length === 0) {
     logger.DEBUG(ERPLDLS001, 'branch empty');
-    return;
+    return 0;
   }
 
   const slideW = plan.slide.w;
   const slideH = plan.slide.h;
-  const marginX = 0.55;
-  const marginTop = 0.42;
-  const marginBottom = 0.35;
-  const titleH = 0.35;
-  const headerH = 0.24;
-  const rowH = 0.32;
-  const usableH = slideH - marginTop - marginBottom - titleH - headerH;
-  const rowsPerCol = Math.max(1, Math.floor(usableH / rowH));
+  const vertical = legendVerticalLayout(slideH, 0.32);
   const colsPerSlide = 4;
-  const entriesPerSlide = rowsPerCol * colsPerSlide;
+  const columns = legendColumns(slideW, [1, 1, 1, 1], 0);
+  const entriesPerSlide = vertical.rowsPerPage * colsPerSlide;
+  let slideCount = 0;
 
   for (let start = 0; start < entries.length; start += entriesPerSlide) {
     const pageEntries = entries.slice(start, start + entriesPerSlide);
     logger.DEBUG(ERPLDLS002, 'branch page', { start, entries: pageEntries.length });
-    const cols = colsPerSlide;
-    const colW = (slideW - marginX * 2) / cols;
     const slide = pptx.addSlide();
+    slideCount++;
     slide.background = { color: plan.slide.background || 'FFFFFF' };
 
     slide.addText('Legend', {
-      x: marginX,
-      y: marginTop,
-      w: slideW - marginX * 2,
-      h: titleH,
+      x: columns[0]?.x ?? 0,
+      y: vertical.marginTop,
+      w: columnsWidth(columns),
+      h: vertical.titleH,
       fontFace: 'Helvetica',
       fontSize: 16,
       bold: true,
       color: '1E1E1E',
       margin: 0,
+      fit: 'shrink',
     });
 
-    for (let col = 0; col < cols; col++) {
-      const x = marginX + col * colW;
-      const y = marginTop + titleH;
-      slide.addText('Icon', { x, y, w: 0.38, h: headerH, fontSize: 7, bold: true, color: '666666', margin: 0 });
-      slide.addText('Abbr.', { x: x + 0.46, y, w: 0.55, h: headerH, fontSize: 7, bold: true, color: '666666', margin: 0 });
-      slide.addText('Official name', { x: x + 1.05, y, w: Math.max(0.5, colW - 1.08), h: headerH, fontSize: 7, bold: true, color: '666666', margin: 0 });
+    for (const column of columns) {
+      const fields = serviceLegendFields(column);
+      const y = vertical.marginTop + vertical.titleH;
+      const headerOptions = { h: vertical.headerH, fontSize: 7, bold: true, color: '666666', margin: 0, fit: 'shrink' as const };
+      slide.addText('Icon', { x: fields.icon.x, y, w: fields.icon.w, ...headerOptions });
+      slide.addText('Abbr.', { x: fields.abbreviation.x, y, w: fields.abbreviation.w, ...headerOptions });
+      slide.addText('Official name', { x: fields.officialName.x, y, w: fields.officialName.w, ...headerOptions });
     }
 
     for (const [i, entry] of pageEntries.entries()) {
-      const col = Math.floor(i / rowsPerCol);
-      const row = i % rowsPerCol;
-      const x = marginX + col * colW;
-      const y = marginTop + titleH + headerH + row * rowH;
+      const col = Math.floor(i / vertical.rowsPerPage);
+      const row = i % vertical.rowsPerPage;
+      const column = columns[col];
+      if (!column) continue;
+      const fields = serviceLegendFields(column);
+      const y = vertical.bodyTop + row * vertical.rowH;
+      const textH = Math.min(0.22, vertical.rowH * 0.7);
+      const textY = y + (vertical.rowH - textH) / 2;
       if (entry.data) {
         logger.DEBUG(ERPLDLS003, 'branch image', { catalogId: entry.catalogId });
-        slide.addImage({ data: await imageDataForPptx(entry.data, 0.2), x, y: y + 0.04, w: 0.2, h: 0.2 });
+        const imageSize = Math.min(0.2, fields.icon.w, vertical.rowH * 0.7);
+        slide.addImage({
+          data: await imageDataForPptx(entry.data, imageSize),
+          x: fields.icon.x + (fields.icon.w - imageSize) / 2,
+          y: y + (vertical.rowH - imageSize) / 2,
+          w: imageSize,
+          h: imageSize,
+        });
       }
       slide.addText(entry.abbreviation || String(entry.catalogId), {
-        x: x + 0.28,
-        y: y + 0.03,
-        w: 0.72,
-        h: 0.22,
+        x: fields.abbreviation.x,
+        y: textY,
+        w: fields.abbreviation.w,
+        h: textH,
         fontFace: 'Helvetica',
         fontSize: 7,
         bold: true,
@@ -213,10 +212,10 @@ export async function drawLegendSlides(pptx: pptxgen, plan: PptxPlan): Promise<v
         fit: 'shrink',
       });
       slide.addText(entry.officialName, {
-        x: x + 1.05,
-        y: y + 0.03,
-        w: Math.max(0.5, colW - 1.1),
-        h: 0.22,
+        x: fields.officialName.x,
+        y: textY,
+        w: fields.officialName.w,
+        h: textH,
         fontFace: 'Helvetica',
         fontSize: 6.5,
         color: '1E1E1E',
@@ -226,6 +225,80 @@ export async function drawLegendSlides(pptx: pptxgen, plan: PptxPlan): Promise<v
       });
     }
   }
+  return slideCount;
+}
+
+interface LegendColumn {
+  x: number;
+  w: number;
+}
+
+interface LegendVerticalLayout {
+  marginTop: number;
+  titleH: number;
+  headerH: number;
+  bodyTop: number;
+  rowH: number;
+  rowsPerPage: number;
+}
+
+function legendColumns(slideW: number, weights: number[], maximumGap: number): LegendColumn[] {
+  const marginX = Math.min(0.55, slideW * 0.08);
+  const contentW = Math.max(Number.EPSILON, slideW - marginX * 2);
+  const gap = Math.min(maximumGap, contentW * 0.015);
+  const availableW = Math.max(Number.EPSILON, contentW - gap * Math.max(0, weights.length - 1));
+  const weightTotal = weights.reduce((sum, weight) => sum + weight, 0);
+  const columns: LegendColumn[] = [];
+  let x = marginX;
+  for (const [index, weight] of weights.entries()) {
+    const isLast = index === weights.length - 1;
+    const w = isLast ? Math.max(Number.EPSILON, slideW - marginX - x) : availableW * weight / weightTotal;
+    columns.push({ x, w });
+    x += w + gap;
+  }
+  return columns;
+}
+
+function columnsWidth(columns: LegendColumn[]): number {
+  const first = columns[0];
+  const last = columns[columns.length - 1];
+  if (!first || !last) return 0;
+  return last.x + last.w - first.x;
+}
+
+function legendVerticalLayout(slideH: number, maximumRowH: number): LegendVerticalLayout {
+  const marginTop = Math.min(0.42, slideH * 0.08);
+  const marginBottom = Math.min(0.35, slideH * 0.07);
+  const titleH = Math.min(0.35, slideH * 0.12);
+  const headerH = Math.min(0.24, slideH * 0.08);
+  const bodyGap = Math.min(0.06, slideH * 0.02);
+  const usableH = Math.max(Number.EPSILON, slideH - marginTop - marginBottom - titleH - headerH - bodyGap);
+  const rowH = Math.min(maximumRowH, usableH);
+  return {
+    marginTop,
+    titleH,
+    headerH,
+    bodyTop: marginTop + titleH + headerH + bodyGap,
+    rowH,
+    rowsPerPage: Math.max(1, Math.floor(usableH / rowH)),
+  };
+}
+
+function serviceLegendFields(column: LegendColumn): {
+  icon: LegendColumn;
+  abbreviation: LegendColumn;
+  officialName: LegendColumn;
+} {
+  const gap = Math.min(0.08, column.w * 0.03);
+  const iconW = Math.min(0.38, column.w * 0.22);
+  const abbreviationW = Math.min(0.72, column.w * 0.28);
+  const abbreviationX = column.x + iconW + gap;
+  const officialNameX = abbreviationX + abbreviationW + gap;
+  return {
+    icon: { x: column.x, w: iconW },
+    abbreviation: { x: abbreviationX, w: abbreviationW },
+    officialName: { x: officialNameX, w: Math.max(Number.EPSILON, column.x + column.w - officialNameX) },
+  };
 }
 
 function groupConnectorLegendEntries(entries: PlanConnectorLegendEntry[]): ConnectorLegendRow[] {

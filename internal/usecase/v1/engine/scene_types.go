@@ -94,6 +94,7 @@ var (
 	IUESRC001V1EngineSceneTypes  = share.NewMCode("IUESRC-001", "Render connections invalid source or destination warning")
 	IUESRC002V1EngineSceneTypes  = share.NewMCode("IUESRC-002", "Render connections source item not rendered warning")
 	IUESRC003V1EngineSceneTypes  = share.NewMCode("IUESRC-003", "Render connections destination item not rendered warning")
+	IUESRC004V1EngineSceneTypes  = share.NewMCode("IUESRC-004", "Render cross-frame connection frame not rendered warning")
 )
 
 // tintSVGDataURL makes a group header icon use the same semantic colour as

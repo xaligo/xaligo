@@ -16,12 +16,16 @@ type semanticElementMetadataV1EngineSceneWalk struct {
 	Kind            string
 }
 
-func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[string]any, svgGroupDir string, catalogCSV string, projectRoot string, fsys fs.FS, visibleAncestor *entity.Box, itemGroups map[string][]*entity.Box, ancestorBoxes map[string]*entity.Box, itemImgRects map[string][4]float64, itemImgIDs map[string]string, deps SceneDependenciesV1EngineSceneTypes) {
+func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[string]any, svgGroupDir string, catalogCSV string, projectRoot string, fsys fs.FS, visibleAncestor *entity.Box, itemGroups map[string][]*entity.Box, ancestorBoxes, itemFrames map[string]*entity.Box, itemImgRects map[string][4]float64, itemImgIDs map[string]string, activeFrame *entity.Box, deps SceneDependenciesV1EngineSceneTypes) {
+	if b != nil && b.Tag == "frame" {
+		activeFrame = b
+	}
 	if IsItemLikeV1EngineLayoutAttributes(b.Tag) {
 		// 描画はしない: visibleAncestor に結び付けて収集のみ (<item> / <spacer> 共通)
 		key := visibleAncestor.ID
 		itemGroups[key] = append(itemGroups[key], b)
 		ancestorBoxes[key] = visibleAncestor
+		itemFrames[key] = activeFrame
 		return
 	}
 
@@ -107,7 +111,8 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 			}
 			headerTip := math.Min(groupHeaderTipMaxV1EngineSceneTypes, headerH/2)
 			headerW := textX + lblW + groupHeaderPadEndV1EngineSceneTypes + headerTip - headerX
-			headerY := avoidGroupHeaderBorderOverlapV1EngineSceneBuild(headerX, b.Y-headerH/2, headerW, headerH, rectID, *elements)
+			headerY := avoidGroupHeaderOverlapV1EngineSceneBuild(headerX, b.Y-headerH/2, headerW, headerH, rectID, *elements)
+			headerY = groupHeaderYAvoidingFrameMetadataV1EngineSceneWalk(headerY, headerH, activeFrame)
 			alignGroupBorderTopToHeaderV1EngineSceneBuild(rectID, headerY+headerH/2, b.Y+b.H, *elements)
 			headerID := fmt.Sprintf("%s-header-bg", b.ID)
 			headerSeed := stableSceneSeedV1EngineSceneTypes(headerID)
@@ -181,26 +186,41 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 			rectID := fmt.Sprintf("%s-rect", b.ID)
 			textID := fmt.Sprintf("%s-text", b.ID)
 			genStroke := "#1e1e1e"
+			if configured := strings.TrimSpace(b.Attrs["border-color"]); configured != "" {
+				genStroke = configured
+			}
 			if noBorder {
 				genStroke = "transparent"
 			}
 			backgroundColor := "transparent"
 			fillStyle := "hachure"
 			roundness := map[string]any{"type": 3}
-			if b.Tag == "rectangle" {
+			if b.Tag == "rectangle" || b.Tag == "table" || b.Tag == "entity" || b.Tag == "table-cell" {
 				fillStyle = "solid"
+			}
+			if b.Tag == "table" || b.Tag == "entity" || b.Tag == "table-cell" {
+				backgroundColor = "#ffffff"
+				roundness = nil
+			}
+			if b.Tag == "table-cell" && b.Attrs["_xaligoTableHeader"] == "true" {
+				backgroundColor = "#f1f5f9"
 			}
 			if b.Tag == "port" {
 				backgroundColor = "#ffffff"
 				fillStyle = "solid"
 				roundness = nil
 			}
+			if configured, exists := b.Attrs["background-color"]; exists {
+				backgroundColor = configured
+			}
 			boundElements := any(nil)
+			shapeCustomData := umlShapeCustomDataV1EngineSceneWalk(b)
 			if b.Label != "" {
 				boundElements = []map[string]any{{"type": "text", "id": textID}}
 			}
+			shapeType := umlShapeTypeV1EngineSceneWalk(b)
 			*elements = append(*elements, map[string]any{
-				"id": rectID, "type": "rectangle",
+				"id": rectID, "type": shapeType,
 				"x": b.X, "y": b.Y, "width": b.W, "height": b.H,
 				"angle": 0, "strokeColor": genStroke, "backgroundColor": backgroundColor,
 				"fillStyle": fillStyle, "strokeWidth": 1, "strokeStyle": "solid",
@@ -211,21 +231,35 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 				"isDeleted":     false,
 				"boundElements": boundElements,
 				"updated":       updated, "link": nil, "locked": false,
+				"customData": shapeCustomData,
 			})
+			if b.Tag == "entity" {
+				registerConnectionEndpointV1EngineSceneWalk(b, rectID, [4]float64{b.X, b.Y, b.W, b.H}, itemImgRects, itemImgIDs)
+			}
 			if b.Tag == "rectangle" || b.Tag == "port" {
 				registerConnectionEndpointV1EngineSceneWalk(b, rectID, [4]float64{b.X, b.Y, b.W, b.H}, itemImgRects, itemImgIDs)
 			}
 			if b.Label != "" {
 				fontSize := attrFloatV1EngineLayoutAttributes(b.Attrs["font-size"], 20)
-				textX, textY := b.X+12, b.Y+12
-				textW, textH := textWidthV1EngineSceneItem(b.Label, fontSize*0.5), math.Ceil(fontSize*1.2)
+				textX, textY := b.X+4, b.Y+2
+				textW, textH := math.Max(1, b.W-8), math.Max(1, math.Min(math.Ceil(fontSize*1.2), b.H-4))
 				textAlign, verticalAlign := "left", "top"
 				role := entity.TextRoleLabel
 				textCustomData := map[string]any{}
-				if b.Tag == "rectangle" || b.Tag == "port" {
+				if b.Tag == "rectangle" || b.Tag == "port" || b.Tag == "table-cell" {
 					textX, textY = b.X+4, b.Y+2
 					textW, textH = math.Max(1, b.W-8), math.Max(1, b.H-4)
 					textAlign, verticalAlign = "center", "middle"
+				}
+				if b.Tag == "table-cell" {
+					switch {
+					case strings.HasSuffix(b.Attrs["align"], "-right") || b.Attrs["align"] == "right":
+						textAlign = "right"
+					case strings.HasSuffix(b.Attrs["align"], "-center") || b.Attrs["align"] == "center":
+						textAlign = "center"
+					default:
+						textAlign = "left"
+					}
 				}
 				if b.Tag == "port" {
 					role = entity.TextRolePortLabel
@@ -237,7 +271,7 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 					"x": textX, "y": textY,
 					"width": textW, "height": textH,
 					"angle":       0,
-					"strokeColor": "#1e1e1e", "backgroundColor": "transparent",
+					"strokeColor": tableTextColorV1EngineSceneWalk(b), "backgroundColor": "transparent",
 					"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
 					"roughness": 0, "opacity": 100,
 					"groupIds": []string{}, "roundness": nil,
@@ -245,7 +279,7 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 					"versionNonce": stableSceneSeedV1EngineSceneTypes(textID),
 					"isDeleted":    false, "boundElements": nil,
 					"updated": updated, "link": nil, "locked": false,
-					"text": b.Label, "fontSize": fontSize, "fontFamily": 1,
+					"text": b.Label, "fontSize": fontSize, "fontFamily": fontFamilyV1EngineSceneWalk(b.Attrs["font-family"]),
 					"textAlign": textAlign, "verticalAlign": verticalAlign,
 					"containerId": rectID, "originalText": b.Label, "lineHeight": 1.2,
 					"customData": textCustomData,
@@ -264,7 +298,90 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 		nextVisible = visibleAncestor
 	}
 	for _, c := range b.Children {
-		walkV1EngineSceneWalk(c, elements, files, svgGroupDir, catalogCSV, projectRoot, fsys, nextVisible, itemGroups, ancestorBoxes, itemImgRects, itemImgIDs, deps)
+		walkV1EngineSceneWalk(c, elements, files, svgGroupDir, catalogCSV, projectRoot, fsys, nextVisible, itemGroups, ancestorBoxes, itemFrames, itemImgRects, itemImgIDs, activeFrame, deps)
+	}
+}
+
+func groupHeaderYAvoidingFrameMetadataV1EngineSceneWalk(y, height float64, frame *entity.Box) float64 {
+	if frame == nil || frame.FrameMetadata == nil || frame.FrameMetadata.ReservedW <= 0 || frame.FrameMetadata.ReservedH <= 0 {
+		return y
+	}
+	metadata := frame.FrameMetadata
+	if metadata.Position == "bottom" {
+		return math.Min(y, metadata.ReservedY-height)
+	}
+	return math.Max(y, metadata.ReservedY+metadata.ReservedH)
+}
+
+func umlShapeCustomDataV1EngineSceneWalk(box *entity.Box) map[string]any {
+	customData := map[string]any{}
+	if box == nil {
+		return customData
+	}
+	for source, target := range map[string]string{
+		"uml-id":                "xaligoUmlId",
+		"uml-local-id":          "xaligoUmlLocalId",
+		"uml-ref":               "xaligoUmlReference",
+		"uml-kind":              "xaligoUmlDiagramKind",
+		"uml-diagram-kind":      "xaligoUmlDiagramKind",
+		"uml-element-kind":      "xaligoUmlElementKind",
+		"uml-owner-id":          "xaligoUmlOwnerId",
+		"uml-owner-ref":         "xaligoUmlOwnerReference",
+		"uml-compartment-kinds": "xaligoUmlCompartmentKinds",
+		"from":                  "xaligoUmlTimeFrom",
+		"to":                    "xaligoUmlTimeTo",
+	} {
+		if value := strings.TrimSpace(box.Attrs[source]); value != "" {
+			customData[target] = value
+		}
+	}
+	if len(customData) == 0 {
+		return nil
+	}
+	return customData
+}
+
+func umlShapeTypeV1EngineSceneWalk(box *entity.Box) string {
+	if box == nil {
+		return "rectangle"
+	}
+	switch strings.TrimSpace(box.Attrs["uml-element-kind"]) {
+	case "use-case", "initial", "final":
+		return "ellipse"
+	case "decision", "merge", "choice", "history":
+		return "diamond"
+	default:
+		return "rectangle"
+	}
+}
+
+func tableTextColorV1EngineSceneWalk(box *entity.Box) string {
+	if box != nil && strings.TrimSpace(box.Attrs["color"]) != "" {
+		return box.Attrs["color"]
+	}
+	return "#1e1e1e"
+}
+
+func fontFamilyV1EngineSceneWalk(name string) int {
+	switch strings.ToLower(strings.TrimSpace(name)) {
+	case "helvetica":
+		return 2
+	case "cascadia":
+		return 3
+	case "assistant":
+		return 4
+	case "excalifont":
+		return 5
+	case "nunito":
+		return 6
+	case "lilita-one":
+		return 7
+	case "comic-shanns":
+		return 8
+	case "liberation-sans":
+		return 9
+	default:
+		return 1
 	}
 }
 
@@ -345,7 +462,11 @@ func pageFrameElementIDV1EngineSceneWalk(box *entity.Box) string {
 	if frameID == "" {
 		frameID = box.ID
 	}
-	return "paper-frame-" + sanitizeElementIDV1EngineSceneConnectionRoute(frameID)
+	// This ID is also the semantic-parent key used for page projection. It
+	// must therefore preserve the validated frame ID losslessly; a sanitized
+	// display form is not a safe identity key because distinct punctuation can
+	// collapse to the same value.
+	return "paper-frame-" + frameID
 }
 
 func semanticElementKindV1EngineSceneWalk(box *entity.Box) string {
@@ -353,6 +474,14 @@ func semanticElementKindV1EngineSceneWalk(box *entity.Box) string {
 		return ""
 	}
 	switch box.Tag {
+	case "table":
+		return "table"
+	case "database":
+		return "database"
+	case "entity":
+		return "entity"
+	case "table-cell":
+		return "table-cell"
 	case "rectangle":
 		return "rectangle"
 	case "port":
@@ -379,5 +508,5 @@ func registerConnectionEndpointV1EngineSceneWalk(b *entity.Box, elementID string
 // isLayoutTag reports whether a tag is a pure layout container
 // (<row>, <col>, <container>) that should not render any visible border or label.
 func isLayoutTagV1EngineSceneWalk(tag string) bool {
-	return tag == "frames" || tag == "row" || tag == "col" || tag == "container" || IsBlankV1EngineLayoutAttributes(tag)
+	return tag == "frames" || tag == "row" || tag == "col" || tag == "container" || tag == "table-header" || tag == "table-row" || IsBlankV1EngineLayoutAttributes(tag)
 }

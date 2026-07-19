@@ -7,62 +7,82 @@ import (
 	"github.com/xaligo/xaligo/internal/entity"
 )
 
+type endpointRefV1EngineParseReference struct {
+	key      string
+	frameID  string
+	position entity.Position
+}
+
+type connectionRefV1EngineParseReference struct {
+	node    *entity.Node
+	frameID string
+}
+
 func validateConnectionReferencesV1EngineParseReference(root *entity.Node) error {
-	type endpointRef struct {
-		key      string
-		frameID  string
-		position entity.Position
-	}
-	endpointsByID := map[string][]endpointRef{}
-	endpointsByAlias := map[string]endpointRef{}
+	qualified := map[string]endpointRefV1EngineParseReference{}
+	local := map[string]map[string]endpointRefV1EngineParseReference{}
+	ambiguous := map[string]map[string]bool{}
+	frameRefs := map[string]endpointRefV1EngineParseReference{}
 	endpointFrameByKey := map[string]string{}
-	frameIDs := map[string]endpointRef{}
-	var connections []*entity.Node
+	var connections []connectionRefV1EngineParseReference
 
 	var walk func(node, parent, grandparent *entity.Node, currentFrameID string) error
 	walk = func(node, parent, grandparent *entity.Node, currentFrameID string) error {
 		if node.Tag == "frame" {
 			currentFrameID = strings.TrimSpace(node.Attrs["id"])
+			if strings.Contains(currentFrameID, ".") {
+				return &entity.ParseError{Position: node.Position, Err: fmt.Errorf("<frame id=%q> must not contain '.' because dots delimit frameId.id references", currentFrameID)}
+			}
 		}
 		if nodeConnectableByIDV1EngineParseNode(node) {
 			id := strings.TrimSpace(node.Attrs["id"])
+			if node.Tag != "item" && strings.Contains(id, ".") {
+				return &entity.ParseError{Position: node.Position, Err: fmt.Errorf("<%s id=%q> must not contain '.' because dots delimit frameId.id references", node.Tag, id)}
+			}
 			key := strings.TrimSpace(node.Attrs[internalConnectionKeyAttrV1EngineParseDocument])
-			if id != "" {
-				refFrameID := currentFrameID
-				if node.Tag == "frame" {
-					refFrameID = id
+			refFrameID := currentFrameID
+			if node.Tag == "frame" {
+				refFrameID = id
+			}
+			ref := endpointRefV1EngineParseReference{key: key, frameID: refFrameID, position: node.Position}
+			if key != "" && refFrameID != "" {
+				endpointFrameByKey[key] = refFrameID
+			}
+			if node.Tag == "frame" {
+				if _, exists := frameRefs[id]; exists {
+					return &entity.ParseError{Position: node.Position, Err: fmt.Errorf("duplicate frame id %q", id)}
 				}
-				ref := endpointRef{key: key, frameID: refFrameID, position: node.Position}
-				if key != "" && refFrameID != "" {
-					endpointFrameByKey[key] = refFrameID
+				frameRefs[id] = ref
+			} else if id != "" {
+				if local[refFrameID] == nil {
+					local[refFrameID] = map[string]endpointRefV1EngineParseReference{}
+					ambiguous[refFrameID] = map[string]bool{}
 				}
-				if node.Tag == "frame" || isConnectableFrameTagV1EngineParseNode(node.Tag) {
-					if _, exists := frameIDs[id]; exists {
-						loggerV1EngineSharedLogging.ERROR(IUPVCN007V1EngineParseDocument, "branch duplicate frame endpoint ID", map[string]any{"id": id})
-						return &entity.ParseError{Position: node.Position, Err: fmt.Errorf("duplicate frame reference id %q", id)}
-					}
-					frameIDs[id] = ref
-				}
-				endpointsByID[id] = append(endpointsByID[id], ref)
-				for _, attr := range []string{"name", "ref"} {
-					alias := strings.TrimSpace(node.Attrs[attr])
-					if alias == "" {
+				for index, token := range []string{id, strings.TrimSpace(node.Attrs["name"]), strings.TrimSpace(node.Attrs["ref"])} {
+					if token == "" {
 						continue
 					}
-					if _, exists := endpointsByAlias[alias]; exists {
-						loggerV1EngineSharedLogging.ERROR(IUPVCN007V1EngineParseDocument, "branch duplicate endpoint alias", map[string]any{"alias": alias})
-						return &entity.ParseError{Position: node.Position, Err: fmt.Errorf("duplicate connection reference %q", alias)}
+					if _, exists := local[refFrameID][token]; exists && index != 0 {
+						return &entity.ParseError{Position: node.Position, Err: fmt.Errorf("duplicate connection reference %q in frame %q", token, refFrameID)}
 					}
-					endpointsByAlias[alias] = ref
+					if _, exists := local[refFrameID][token]; exists {
+						if node.Tag != "item" {
+							return &entity.ParseError{Position: node.Position, Err: fmt.Errorf("duplicate frame reference id %q", token)}
+						}
+						delete(local[refFrameID], token)
+						delete(qualified, refFrameID+"."+token)
+						ambiguous[refFrameID][token] = true
+						continue
+					}
+					if ambiguous[refFrameID][token] {
+						continue
+					}
+					local[refFrameID][token] = ref
+					qualified[refFrameID+"."+token] = ref
 				}
 			}
 		}
 		if node.Tag == "connections" && (parent == nil || parent.Tag != "frame") {
-			parentTag := ""
-			if parent != nil {
-				parentTag = parent.Tag
-			}
-			loggerV1EngineSharedLogging.ERROR(IUPVCN005V1EngineParseDocument, "branch nested connections", map[string]any{"tag": parentTag})
 			return &entity.ParseError{Position: node.Position, Err: fmt.Errorf("<connections> must be a direct child of <frame>")}
 		}
 		if node.Tag == "connections" {
@@ -76,14 +96,9 @@ func validateConnectionReferencesV1EngineParseReference(root *entity.Node) error
 			direct := parent != nil && parent.Tag == "frame"
 			grouped := parent != nil && parent.Tag == "connections" && grandparent != nil && grandparent.Tag == "frame"
 			if !direct && !grouped {
-				parentTag := ""
-				if parent != nil {
-					parentTag = parent.Tag
-				}
-				loggerV1EngineSharedLogging.ERROR(IUPVCN005V1EngineParseDocument, "branch nested connection", map[string]any{"tag": parentTag})
 				return &entity.ParseError{Position: node.Position, Err: fmt.Errorf("<connection> must be a direct child of <frame> or <connections>")}
 			}
-			connections = append(connections, node)
+			connections = append(connections, connectionRefV1EngineParseReference{node: node, frameID: currentFrameID})
 		}
 		for _, child := range node.Children {
 			if err := walk(child, node, parent, currentFrameID); err != nil {
@@ -96,53 +111,66 @@ func validateConnectionReferencesV1EngineParseReference(root *entity.Node) error
 		return err
 	}
 
-	for _, conn := range connections {
-		for _, endpoint := range []struct {
-			attr    string
-			keyAttr string
-		}{
-			{"src", internalConnectionSrcKeyAttrV1EngineParseDocument},
-			{"dst", internalConnectionDstKeyAttrV1EngineParseDocument},
-		} {
+	for _, connection := range connections {
+		conn := connection.node
+		for _, endpoint := range []struct{ attr, keyAttr string }{{"src", internalConnectionSrcKeyAttrV1EngineParseDocument}, {"dst", internalConnectionDstKeyAttrV1EngineParseDocument}} {
 			token := strings.TrimSpace(conn.Attrs[endpoint.attr])
 			if key := strings.TrimSpace(conn.Attrs[endpoint.keyAttr]); key != "" {
 				setConnectionEndpointFrameV1EngineParseReference(conn, endpoint.attr, endpointFrameByKey[key])
 				continue
 			}
-			if refs := endpointsByID[token]; len(refs) > 0 {
-				if len(refs) > 1 {
-					loggerV1EngineSharedLogging.ERROR(IUPVCN007V1EngineParseDocument, "branch ambiguous endpoint item", map[string]any{"attr": endpoint.attr, "id": token, "count": len(refs)})
-					return &entity.ParseError{Position: conn.Position, Err: fmt.Errorf("<connection %s=%q> is ambiguous because endpoint id=%q appears %d times; use a unique name or ref", endpoint.attr, token, token, len(refs))}
-				}
-				conn.Attrs[endpoint.keyAttr] = refs[0].key
-				setConnectionEndpointFrameV1EngineParseReference(conn, endpoint.attr, refs[0].frameID)
-				continue
+			if ambiguousEndpointV1EngineParseReference(token, connection.frameID, ambiguous) {
+				return &entity.ParseError{Position: conn.Position, Err: fmt.Errorf("<connection %s=%q> is ambiguous because endpoint id=%q appears 2 times; use a unique name or ref", endpoint.attr, token, token)}
 			}
-			if ref, ok := endpointsByAlias[token]; ok {
-				conn.Attrs[endpoint.keyAttr] = ref.key
-				setConnectionEndpointFrameV1EngineParseReference(conn, endpoint.attr, ref.frameID)
-				continue
+			ref, exists := resolveEndpointV1EngineParseReference(token, connection.frameID, local, qualified, frameRefs)
+			if !exists {
+				return &entity.ParseError{Position: conn.Position, Err: fmt.Errorf("<connection %s=%q> does not match any connection endpoint id/name/ref in frame %q; use frameId.id for a cross-frame reference", endpoint.attr, token, connection.frameID)}
 			}
-			loggerV1EngineSharedLogging.ERROR(IUPVCN006V1EngineParseDocument, "branch missing endpoint item", map[string]any{"attr": endpoint.attr, "token": token})
-			return &entity.ParseError{Position: conn.Position, Err: fmt.Errorf("<connection %s=%q> does not match any connection endpoint id/name/ref", endpoint.attr, token)}
+			conn.Attrs[endpoint.keyAttr] = ref.key
+			setConnectionEndpointFrameV1EngineParseReference(conn, endpoint.attr, ref.frameID)
 		}
-		if strings.TrimSpace(conn.Attrs[internalConnectionSrcFrameAttrV1EngineParseDocument]) != "" &&
-			strings.TrimSpace(conn.Attrs[internalConnectionDstFrameAttrV1EngineParseDocument]) != "" &&
-			conn.Attrs[internalConnectionSrcFrameAttrV1EngineParseDocument] != conn.Attrs[internalConnectionDstFrameAttrV1EngineParseDocument] {
+		if conn.Attrs[internalConnectionSrcFrameAttrV1EngineParseDocument] != conn.Attrs[internalConnectionDstFrameAttrV1EngineParseDocument] {
 			conn.Attrs[internalConnectionCrossFrameAttrV1EngineParseDocument] = "true"
+		}
+		if conn.Attrs[internalConnectionCrossFrameAttrV1EngineParseDocument] != "true" {
+			for _, attribute := range []string{"src-frame-side", "src-frame-anchor", "dst-frame-side", "dst-frame-anchor"} {
+				if strings.TrimSpace(conn.Attrs[attribute]) == "" {
+					continue
+				}
+				return &entity.ParseError{Position: conn.Position, Err: fmt.Errorf("<connection %s=%q> is only valid for a cross-frame connection", attribute, conn.Attrs[attribute])}
+			}
 		}
 	}
 	return nil
+}
+
+func ambiguousEndpointV1EngineParseReference(token, currentFrameID string, ambiguous map[string]map[string]bool) bool {
+	if strings.Contains(token, ".") {
+		parts := strings.SplitN(token, ".", 2)
+		return ambiguous[parts[0]][parts[1]]
+	}
+	return ambiguous[currentFrameID][token]
+}
+
+func resolveEndpointV1EngineParseReference(token, currentFrameID string, local map[string]map[string]endpointRefV1EngineParseReference, qualified, frames map[string]endpointRefV1EngineParseReference) (endpointRefV1EngineParseReference, bool) {
+	if strings.Contains(token, ".") {
+		ref, exists := qualified[token]
+		return ref, exists
+	}
+	if ref, exists := local[currentFrameID][token]; exists {
+		return ref, true
+	}
+	ref, exists := frames[token]
+	return ref, exists
 }
 
 func setConnectionEndpointFrameV1EngineParseReference(conn *entity.Node, endpoint, frameID string) {
 	if conn == nil || frameID == "" {
 		return
 	}
-	switch endpoint {
-	case "src":
+	if endpoint == "src" {
 		conn.Attrs[internalConnectionSrcFrameAttrV1EngineParseDocument] = frameID
-	case "dst":
+	} else if endpoint == "dst" {
 		conn.Attrs[internalConnectionDstFrameAttrV1EngineParseDocument] = frameID
 	}
 }

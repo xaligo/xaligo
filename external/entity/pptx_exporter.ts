@@ -1,7 +1,7 @@
-import type { PptxExportOptions, PptxPlan } from './pptx';
+import type { PptxExportOptions, PptxPlanInput } from './pptx';
 
 export interface PptxExporterRequest {
-  plan: PptxPlan;
+  plan: PptxPlanInput;
   options?: PptxExporterOptions;
 }
 

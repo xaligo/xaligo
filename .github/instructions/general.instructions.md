@@ -7,11 +7,12 @@ applyTo: "**"
 ## Project
 
 `xaligo` is a Go CLI and WebAssembly/TypeScript package that converts the
-`.xal` diagram DSL to Excalidraw, SVG, PPTX, XYFlow, and Isoflow outputs.
+`.xal` diagram DSL to Excalidraw, SVG, PPTX, PDF, Excel, XYFlow, and Isoflow
+outputs.
 
 ```text
 module: github.com/xaligo/xaligo
-Go:     1.22
+Go:     1.26
 ```
 
 Read `development-flow.instructions.md` for task slicing, verification, and
@@ -142,11 +143,21 @@ refreshed through the scripts declared in the root `package.json`.
 
 ## Verification
 
+Set up the repository-pinned security scanner and npm audit metadata once:
+
 ```bash
+make security-setup
+```
+
+Run the security gate before every commit, followed by the relevant tests and
+builds:
+
+```bash
+make security-check
 go test ./...
 go build ./...
 npm install
-npm run build --workspace=@ryo/xaligo-external
+npm run build --workspace=@xaligo/xaligo-external
 npm --prefix external run build:pptx-exporter-wasm
 git diff --check
 ```

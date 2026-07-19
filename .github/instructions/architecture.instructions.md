@@ -19,7 +19,7 @@ direction lives in `roadmap.instructions.md`; DSL behavior lives in
    -> resolved canonical scene
    -> internal/usecase/v1/engine plan calculations
    -> internal/repository output encoder
-   -> SVG | Excalidraw | PPTX | XYFlow | Isoflow
+   -> SVG | Excalidraw | PPTX | PDF | Excel | XYFlow | Isoflow
 ```
 
 The parent `internal/usecase` package is the shared rendering and orchestration
@@ -32,8 +32,8 @@ builders and repositories directly.
 
 ## Language-version boundary
 
-`<frame version="1">` and `<frames version="1">` select the frozen V1 profile.
-Unversioned roots remain a V1 compatibility fallback and emit a warning. Native V2
+`<xaligo version="1">` selects canonical V1. Root `<frame>` and `<frames>` are
+legacy V1 compatibility inputs and emit a migration warning. Native V2
 uses the reject-safe `<scene version="2">` root. The V1 parser is not extended
 to recognize `<scene>` and does not import or call V2 code.
 
@@ -146,6 +146,84 @@ allows V2 to render V1 while V1 remains unaware of V2.
     modified/moved nodes in pale red; the new side highlights added and current
     modified/moved nodes in pale green. Highlight overlays are added after
     layout and route resolution and must not become routing obstacles.
+26. An identified child `<frame>` is one physical page by default. SVG emits
+    one artifact per frame, PPTX maps one frame to one slide, PDF maps one
+    frame to one page, and Excel maps one frame to one worksheet containing
+    that frame's SVG image. `CombineFrames` is the explicit compatibility
+    policy that preserves the former single-canvas, single-slide, single-page,
+    or single-sheet result. Excalidraw, XYFlow, and Isoflow remain single
+    logical documents and do not split by frame. Page-oriented encoders omit
+    the page-frame outline in default and combined output; the frame remains a
+    logical crop/page-link boundary rather than a visible rectangle.
+    Excalidraw retains page-frame objects with transparent strokes.
+    A default page-local SVG uses the exact logical frame rectangle as its
+    canvas and clip boundary, without adding stroke/marker safety padding;
+    PDF pages and Excel page images inherit that strict crop. Combined SVG
+    compatibility output retains marker-safe canvas expansion.
+27. Page projection happens only after the complete document scene, connector
+    routing, and cross-frame link semantics are resolved. A per-frame encoder
+    consumes an ordered `DocumentPlan` projection; it must not parse, lay out,
+    route, or infer crop geometry independently. A one-frame SVG render returns
+    the exact requested output path, while a multi-frame SVG render uses stable
+    frame-derived artifact IDs and rejects filename collisions.
+28. Native PDF and Excel encoders remain behind `!js` build constraints. The
+    browser adapter uses lightweight `js` repository stubs because those
+    formats are not exposed there; native canvas, font, and spreadsheet
+    dependencies must not enter the browser-WASM dependency graph.
+29. A frame metadata tag band is resolved once in the V1 shared layout and
+    presentation scene as page-owned decoration. The resolved metadata
+    `row-gap`, which defaults to 4 layout pixels, is both the inter-row spacing
+    and the metadata page-edge inset. The selected top/bottom band edge and
+    both horizontal row bounds are inset by that value, and every row wraps and
+    aligns within `frame width - 2 * row-gap`; frame padding, content margins,
+    and content-box offsets do not replace or add to this inset. The full-width
+    reservation strip still runs from the outer logical frame edge to the final
+    content-box boundary and is at least
+    `row-gap + complete band height + 8` layout pixels deep.
+    The inset is measured from the logical frame edge before any common PPTX
+    slide centering; it is not an export `--paper-margin`. Normal items, text,
+    local/UML connector paths and labels, and cross-frame page links cannot
+    enter it. Legacy/automatic page-link side selection remaps a reserved edge
+    to the nearest safe edge and clamps left/right terminals outside the strip.
+    An explicit cross-frame `src-frame-side`, `dst-frame-side`,
+    `src-frame-anchor`, or
+    `dst-frame-anchor` that selects the reservation is instead a validation
+    error. When metadata is enabled, its resolved `row-gap` is also the inward
+    normal inset for page-link terminals on all four sides; without metadata,
+    the terminal inset is 4 layout pixels. A resolved zero `row-gap` retains
+    the outer logical frame edge. An explicit frame side/anchor requires the
+    inset to fit that side's normal dimension and its actual terminal to avoid
+    the reservation; failures are reported at the connection source position.
+    Without an explicit frame terminal, validation only requires a non-empty
+    set of sides satisfying those rules. Shared scene construction uses actual
+    endpoint visual geometry to retain a safe preference or choose the nearest
+    safe side; it does not use validator `Box` geometry to predict that side. A
+    safe selected `left`/`right` terminal is not rejected for an unused
+    top/bottom inset line. The inset is never implicitly clamped. Page-link
+    labels stay adjacent to the final inset terminal with a 4-layout-pixel gap
+    while avoiding metadata and endpoint geometry. These rules, text metrics,
+    layer order, and per-page ownership are
+    encoder-independent. SVG, PPTX, PDF, Excel, and Excalidraw consume that
+    shared result; XYFlow and Isoflow may omit the decoration but must not
+    reinterpret it as graph nodes or endpoints.
+30. Cross-frame connector geometry distinguishes the item endpoint from the
+    logical page terminal. `src-side`/`dst-side` and
+    `src-anchor`/`dst-anchor` bind the endpoint; `src-frame-side`/
+    `dst-frame-side` and `src-frame-anchor`/`dst-frame-anchor` select the
+    owning frame side independently. The outer logical frame edge supplies the
+    side and 10/30/50/70/90-percent tangent coordinate, but the drawable frame
+    terminal is on the parallel page-terminal inset line. Applying the inset
+    changes only the normal coordinate; an explicit frame anchor retains its
+    tangent coordinate. The endpoint- and frame-terminal-adjacent route
+    segments are perpendicular to their respective sides. Frame-terminal
+    attributes are invalid on same-frame connections. At zero inset, an owning
+    frame endpoint that coincides with an explicit frame anchor is a
+    source-positioned validation error; explicit endpoint anchors keep their
+    slot, while explicit endpoint sides and automatic endpoint sides resolve to
+    their center slot for this check. Automatic left/right coincidence
+    avoidance uses the corner gutter and metadata clearance when possible, but
+    a tiny safe range falls back to the full non-reserved interval without
+    leaving the frame.
 
 ## File organization
 
@@ -172,7 +250,7 @@ Current component prefixes are `add`, `diff`, `generate`, `init`, `render`,
 `serve`, `validate`, and `version` in `internal/controller`; `render`, `diff`, `diagnostics`,
 `scene_io`, `catalog`, `export`, `parser`, `layout`, `element`, `pagination`,
 `plan`, `scene`, and `theme` in `internal/usecase`; and `powerpoint`, `preview`,
-`isoflow`, `svg`, `xyflow`, `excalidraw`, and `xaligo` in
+`isoflow`, `svg`, `pdf`, `spreadsheet`, `xyflow`, `excalidraw`, and `xaligo` in
 `internal/repository`. Repository supporting files retain the same prefix, such
 as `powerpoint_export.go` and `isoflow_assets.go`. Every direct
 `internal/usecase/*.go` file is a complete component as specified in
@@ -220,7 +298,7 @@ must establish these postconditions before a scene or plan is constructed:
 - gaps are subtracted exactly once and cursors advance by the resolved size;
 - containment or the selected overflow policy is recorded explicitly; and
 - invalid geometry is returned as a source-positioned diagnostic, not dropped
-  later by scene construction or exposed to a JSON/SVG/PPTX encoder.
+  later by scene construction or exposed to an output encoder.
 
 With `overflow="visible"`, fixed children still consume their resolved sizes
 and advance the cursor. If they leave no positive remainder while flexible
@@ -298,7 +376,7 @@ Run after structural changes:
 go test ./...
 go build ./...
 npm install
-npm run build --workspace=@ryo/xaligo-external
+npm run build --workspace=@xaligo/xaligo-external
 npm --prefix external run build:pptx-exporter-wasm
 ```
 

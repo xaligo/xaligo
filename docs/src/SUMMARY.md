@@ -10,8 +10,19 @@
   - [Line Variants](examples/line-variants.md)
   - [Route and Traffic Separation](examples/route-traffic.md)
   - [Automatic Route Junctions](examples/junctions.md)
+  - [Canonical V1 Envelope](examples/canonical-v1-envelope.md)
+  - [Cross-Frame Page Links](examples/page-links.md)
+  - [Frame Metadata Tags](examples/frame-metadata.md)
+  - [Tables](examples/tables.md)
+  - [Imported Tables](examples/table-imports.md)
+  - [Relational Database](examples/databases.md)
+  - [UML Diagrams](examples/uml.md)
 - [AI Agent Guide](ai-agent-guide.md)
 - [Planned Work](roadmap.md)
+
+# Design Proposals
+
+- [Structured Diagrams: Tables, Databases, and UML](design/structured-diagrams.md)
 
 # .xal DSL
 
@@ -21,12 +32,17 @@
 - [Items and Spacers](xal/items.md)
 - [Rectangles and Ports](xal/rectangles-ports.md)
 - [Connections](xal/connections.md)
+- [Tables](xal/tables.md)
+- [Relational Databases](xal/databases.md)
+- [UML](xal/uml.md)
 
 # Rendering
 
 - [Excalidraw](rendering/excalidraw.md)
 - [SVG](rendering/svg.md)
 - [PowerPoint](rendering/pptx.md)
+- [PDF](rendering/pdf.md)
+- [Excel](rendering/excel.md)
 - [XYFlow and Isoflow](rendering/xyflow-isoflow.md)
 
 # Reference

@@ -8,6 +8,10 @@ xaligo render diagram.xal --format excalidraw -o diagram.excalidraw
 
 Key behavior:
 
+- All frames remain in one editable scene. `--combine-frames` has no effect on
+  Excalidraw output.
+- Page-frame objects retain their geometry and identity but use a transparent
+  outline; frames are logical page/link boundaries, not visible containers.
 - Connectors are emitted as elbowed Excalidraw arrows.
 - Bindings use fixed edge points so arrows stay attached when opened in
   Excalidraw.

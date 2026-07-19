@@ -52,6 +52,33 @@ export interface PptxPlan {
   connectorLegend?: PlanConnectorLegendEntry[];
 }
 
+// PptxDocumentPlan is the page-oriented plan emitted by current xaligo
+// renderers. PptxPlan remains the accepted legacy single-page shape so callers
+// can migrate without rewriting already persisted plans.
+export interface PptxDocumentPlan {
+  schemaVersion: 2;
+  pages: PptxPlanPage[];
+  legend?: PlanLegendEntry[];
+  connectorLegend?: PlanConnectorLegendEntry[];
+}
+
+export interface PptxPlanPage {
+  id: string;
+  slide: PptxPlan['slide'];
+  ops: PptxPlan['ops'];
+}
+
+export type PptxPlanInput = PptxPlan | PptxDocumentPlan;
+
+export function pptxPlanPages(plan: PptxPlanInput): PptxPlanPage[] {
+  if ('pages' in plan) return plan.pages;
+  return [{ id: 'main', slide: plan.slide, ops: plan.ops }];
+}
+
+export function pptxPlanOpCount(plan: PptxPlanInput): number {
+  return pptxPlanPages(plan).reduce((count, page) => count + page.ops.length, 0);
+}
+
 export interface PlanSlide {
   w: number;
   h: number;
@@ -106,7 +133,7 @@ export interface PlanPoint {
   moveTo?: boolean;
 }
 
-export type PlanOpKind = 'rect' | 'ellipse' | 'polygon' | 'text' | 'image' | 'line';
+export type PlanOpKind = 'rect' | 'ellipse' | 'diamond' | 'polygon' | 'text' | 'image' | 'line';
 
 export type PlanTextRole = 'label' | 'group-header' | 'item-label' | 'port-label' | 'connector-label';
 export type PlanTextFit = 'none' | 'shrink';

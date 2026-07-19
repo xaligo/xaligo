@@ -1,0 +1,35 @@
+<xaligo version="1">
+  <data>
+    <!-- Document-wide table, database, and UML definitions belong here. -->
+  </data>
+
+  <frames gap="48">
+    <frame id="overview" width="640" height="360" class="pa-3">
+      <container gap="16">
+        <rectangle id="client" title="Client" height="96">
+          <port id="client-api" side="right" title="API" />
+        </rectangle>
+        <rectangle id="application" title="Application" height="144">
+          <port id="application-api" side="left" title="API" />
+          <port id="application-db" side="right" title="DB" />
+        </rectangle>
+      </container>
+
+      <connections>
+        <connection src="client-api" dst="application-api" />
+        <connection src="application-db" dst="database-detail.database-in" />
+      </connections>
+    </frame>
+
+    <frame id="database-detail" width="640" height="360" class="pa-3">
+      <container>
+        <rectangle id="database" title="Database" height="180">
+          <port id="database-in" side="left" title="SQL" />
+        </rectangle>
+        <rectangle id="replica" title="Read Replica" height="96" />
+      </container>
+
+      <connection src="database-in" dst="replica" kind="traffic" />
+    </frame>
+  </frames>
+</xaligo>

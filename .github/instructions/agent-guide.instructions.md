@@ -16,7 +16,7 @@ preconditions before changing code:
 
 ## Project summary
 
-- Go 1.22 module: `github.com/xaligo/xaligo`
+- Go 1.26 module: `github.com/xaligo/xaligo`
 - CLI entry point: `cmd/main.go`
 - PPTX exporter WASM entry point: `external/command.ts`
 - TypeScript package and implementation: `external`
@@ -50,12 +50,14 @@ go test ./...
 make build
 make build-wasm
 npm install
-npm run build --workspace=@ryo/xaligo-external
+npm run build --workspace=@xaligo/xaligo-external
 
 # Render and validate
 .bin/xaligo validate docs/src/examples/samples/sample.xal
 .bin/xaligo render docs/src/examples/samples/sample.xal --format excalidraw -o output/sample.excalidraw
 .bin/xaligo render docs/src/examples/samples/sample.xal --format svg -o output/sample.svg
+.bin/xaligo render docs/src/examples/samples/sample.xal --format pdf -o output/sample.pdf
+.bin/xaligo render docs/src/examples/samples/sample.xal --format excel -o output/sample.xlsx
 .bin/xaligo render docs/src/examples/samples/sample.xal --format xyflow -o output/sample.xyflow.json
 .bin/xaligo render docs/src/examples/samples/sample.xal --format isoflow -o output/sample.isoflow.json
 .bin/xaligo serve docs/src/examples/samples/sample.xal --mode network
@@ -79,7 +81,10 @@ use-case file owns its `XxxUsecase` interface, private implementation,
 renderUsecase := NewRenderUsecase(...)
 renderUsecase.Render(ctx, source, options)
 renderUsecase.RenderSVG(ctx, source, options)
+renderUsecase.RenderArtifacts(ctx, source, options)
 renderUsecase.RenderPPTX(ctx, source, options)
+renderUsecase.RenderPDF(ctx, source, options)
+renderUsecase.RenderExcel(ctx, source, options)
 
 diagnosticsUsecase := NewDiagnosticsUsecase()
 diagnosticsUsecase.Validate(ctx, source)
@@ -118,7 +123,7 @@ renderers.
 1. Format changed Go files with `gofmt`.
 2. Run `go test ./...` and `go build ./...`.
 3. For shared render use-case or asset changes, cross-build `cmd/wasm`.
-4. For TypeScript-facing changes, build `external` via `npm run build --workspace=@ryo/xaligo-external`.
+4. For TypeScript-facing changes, build `external` via `npm run build --workspace=@xaligo/xaligo-external`.
 5. Run `git diff --check` and inspect `git status --short`.
 6. Update the DSL spec, architecture, README, or roadmap when their contract
    changed.

@@ -63,6 +63,11 @@ type Element struct {
 }
 
 type CustomData struct {
+	PageFrame                       bool        `json:"xaligoPageFrame,omitempty"`
+	FrameID                         string      `json:"xaligoFrameID,omitempty"`
+	FrameMetadata                   bool        `json:"xaligoFrameMetadata,omitempty"`
+	FrameMetadataContent            bool        `json:"xaligoFrameMetadataContent,omitempty"`
+	FrameMetadataReserved           bool        `json:"xaligoFrameMetadataReserved,omitempty"`
 	ConnectorKind                   string      `json:"xaligoConnectorKind"`
 	ConnectorStartArrowhead         string      `json:"xaligoConnectorStartArrowhead"`
 	ConnectorEndArrowhead           string      `json:"xaligoConnectorEndArrowhead"`
@@ -78,6 +83,10 @@ type CustomData struct {
 	ConnectorCrossFrame             bool        `json:"xaligoCrossFrame,omitempty"`
 	ConnectorSourceFrame            string      `json:"xaligoSourceFrame,omitempty"`
 	ConnectorDestinationFrame       string      `json:"xaligoDestinationFrame,omitempty"`
+	ConnectorSourceFrameSide        string      `json:"xaligoConnectorSourceFrameSide,omitempty"`
+	ConnectorDestinationFrameSide   string      `json:"xaligoConnectorDestinationFrameSide,omitempty"`
+	ConnectorSourceFrameAnchor      string      `json:"xaligoConnectorSourceFrameAnchor,omitempty"`
+	ConnectorDestinationFrameAnchor string      `json:"xaligoConnectorDestinationFrameAnchor,omitempty"`
 	ConnectorLogicalID              string      `json:"xaligoConnectorLogicalId,omitempty"`
 	ConnectorSourceElementID        string      `json:"xaligoConnectorSourceElementId,omitempty"`
 	ConnectorDestinationElementID   string      `json:"xaligoConnectorDestinationElementId,omitempty"`
@@ -89,6 +98,27 @@ type CustomData struct {
 	AnchorContent                   bool        `json:"xaligoAnchorContent,omitempty"`
 	SemanticParentElementID         string      `json:"xaligoSemanticParentElementId,omitempty"`
 	SemanticElementKind             string      `json:"xaligoSemanticElementKind,omitempty"`
+	UMLID                           string      `json:"xaligoUmlId,omitempty"`
+	UMLLocalID                      string      `json:"xaligoUmlLocalId,omitempty"`
+	UMLReference                    string      `json:"xaligoUmlReference,omitempty"`
+	UMLDiagramKind                  string      `json:"xaligoUmlDiagramKind,omitempty"`
+	UMLElementKind                  string      `json:"xaligoUmlElementKind,omitempty"`
+	UMLOwnerID                      string      `json:"xaligoUmlOwnerId,omitempty"`
+	UMLOwnerReference               string      `json:"xaligoUmlOwnerReference,omitempty"`
+	UMLCompartmentKinds             string      `json:"xaligoUmlCompartmentKinds,omitempty"`
+	UMLTimeFrom                     string      `json:"xaligoUmlTimeFrom,omitempty"`
+	UMLTimeTo                       string      `json:"xaligoUmlTimeTo,omitempty"`
+	UMLRelationKind                 string      `json:"xaligoUmlRelationKind,omitempty"`
+	UMLRelationLabel                string      `json:"xaligoUmlRelationLabel,omitempty"`
+	UMLRelationSourceReference      string      `json:"xaligoUmlRelationSourceReference,omitempty"`
+	UMLRelationDestinationReference string      `json:"xaligoUmlRelationDestinationReference,omitempty"`
+	UMLMessageOrder                 string      `json:"xaligoUmlMessageOrder,omitempty"`
+	UMLGuard                        string      `json:"xaligoUmlGuard,omitempty"`
+	UMLSourceMultiplicity           string      `json:"xaligoUmlSourceMultiplicity,omitempty"`
+	UMLDestinationMultiplicity      string      `json:"xaligoUmlDestinationMultiplicity,omitempty"`
+	UMLOccurrenceAt                 string      `json:"xaligoUmlOccurrenceAt,omitempty"`
+	UMLDurationFrom                 string      `json:"xaligoUmlDurationFrom,omitempty"`
+	UMLDurationTo                   string      `json:"xaligoUmlDurationTo,omitempty"`
 	PortLabel                       bool        `json:"xaligoPortLabel,omitempty"`
 	CrossFrameLabel                 bool        `json:"xaligoCrossFrameLabel,omitempty"`
 	DiffHighlight                   bool        `json:"xaligoDiffHighlight,omitempty"`
@@ -132,6 +162,30 @@ type Plan struct {
 	ConnectorLegend []ConnectorLegendEntry `json:"connectorLegend,omitempty"`
 }
 
+// DocumentPlan is an ordered, page-oriented drawing plan. Each page is derived
+// from one XAL frame unless CombineFrames was explicitly requested.
+type DocumentPlan struct {
+	SchemaVersion   int                    `json:"schemaVersion"`
+	Pages           []DocumentPage         `json:"pages"`
+	Legend          []LegendEntry          `json:"legend,omitempty"`
+	ConnectorLegend []ConnectorLegendEntry `json:"connectorLegend,omitempty"`
+}
+
+// DocumentPage is one physical output page. PPTX maps it to a slide, PDF to a
+// page, Excel to a worksheet, and SVG to a separate artifact.
+type DocumentPage struct {
+	ID    string    `json:"id"`
+	Slide PlanSlide `json:"slide"`
+	Ops   []DrawOp  `json:"ops"`
+}
+
+// RenderArtifact is a named output emitted by formats that can produce more
+// than one file, currently SVG.
+type RenderArtifact struct {
+	ID   string
+	Data []byte
+}
+
 type LegendEntry struct {
 	CatalogID    int    `json:"catalogId"`
 	Abbreviation string `json:"abbreviation"`
@@ -153,10 +207,12 @@ type PlanSlide struct {
 	W          float64 `json:"w"`
 	H          float64 `json:"h"`
 	Background string  `json:"background"`
+	// CropToSlide makes page-oriented encoders treat W and H as hard bounds.
+	CropToSlide bool `json:"cropToSlide,omitempty"`
 }
 
 // DrawOp is a single encoder drawing instruction. Kind selects the dispatch:
-// "rect" | "ellipse" | "polygon" | "text" | "image" | "line".
+// "rect" | "ellipse" | "diamond" | "polygon" | "text" | "image" | "line".
 type DrawOp struct {
 	ID         string  `json:"id,omitempty"`
 	GroupID    string  `json:"groupId,omitempty"`

@@ -26,15 +26,23 @@ smallest coherent changes that remain safe to review, test, revert, and build.
 1. Read `general.instructions.md` and every instruction whose `applyTo` matches
    the current scope. Re-evaluate matching instructions whenever the scope
    expands.
-2. Inspect `git status --short`, the unstaged diff, and the staged diff before
+2. Use RTK for repository operations when an RTK wrapper exists, especially
+  noisy commands such as `git`, `rg`, `go`, `npm`, tests, diffs, logs, and
+  dependency inspection. Prefer `rtk <tool>` or another RTK-filtered command
+  shape to reduce token-heavy output while preserving enough diagnostic
+  signal. If RTK is missing in a local environment, install it with
+  `curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh`
+  before continuing unless the task is urgent or the environment disallows
+  network installs.
+3. Inspect `git status --short`, the unstaged diff, and the staged diff before
    editing. Existing changes belong to the user unless the current task clearly
    created them.
-3. Identify the affected contracts, implementation layers, tests,
+4. Identify the affected contracts, implementation layers, tests,
    documentation, generated source-controlled assets, and verification
    commands before choosing commit boundaries.
-4. Reproduce a reported defect or establish an observable invariant before
+5. Reproduce a reported defect or establish an observable invariant before
    changing code. Prefer a regression test that fails for the diagnosed cause.
-5. Fix the earliest shared layer that owns the information. Do not hide an
+6. Fix the earliest shared layer that owns the information. Do not hide an
    engine or contract defect by changing only one sample, diagram, controller,
    or output encoder.
 
@@ -109,11 +117,15 @@ Before each commit:
    `git diff --cached` to confirm that the index contains one responsibility
    and no unrelated user changes.
 3. Run `git diff --cached --check`.
-4. Run the narrowest relevant test, build, validation, or render command.
-5. Use the existing concise subject style, normally
+4. Run `make security-check`. Security scanning is a mandatory commit
+   precondition for every change, including documentation-only changes. Run
+   `make security-setup` once after cloning or whenever the pinned scanner
+   version changes.
+5. Run the narrowest relevant test, build, validation, or render command.
+6. Use the existing concise subject style, normally
    `<type>: <imperative summary>`, and describe the outcome rather than the
    edited filenames.
-6. Re-run `git status --short` after the commit and confirm that no unintended
+7. Re-run `git status --short` after the commit and confirm that no unintended
    path remains staged.
 
 Do not create empty checkpoint or `WIP` commits. Do not amend, squash, rebase,
@@ -157,6 +169,7 @@ every hunk:
 Typical final checks are selected by scope:
 
 ```bash
+make security-check
 go test ./... -count=1
 go build ./...
 npm --prefix external test

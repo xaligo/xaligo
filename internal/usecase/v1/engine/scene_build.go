@@ -41,7 +41,7 @@ func BuildJSONV1EngineSceneBuild(root *entity.Box, svgGroupDir string, catalogCS
 		"x": root.X, "y": root.Y, "width": root.W, "height": root.H,
 		"angle":       0,
 		"name":        detectPaperNameV1EngineSceneTypes(root.W, root.H),
-		"strokeColor": "#bbb", "backgroundColor": "transparent",
+		"strokeColor": "transparent", "backgroundColor": "transparent",
 		"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
 		"roughness": 0, "opacity": 100,
 		"groupIds": []string{}, "roundness": nil,
@@ -58,6 +58,7 @@ func BuildJSONV1EngineSceneBuild(root *entity.Box, svgGroupDir string, catalogCS
 	// 2パス: 1) item を visibleAncestorID ごとに収集, 2) グリッド一括描画
 	itemGroups := map[string][]*entity.Box{}
 	ancestorBoxes := map[string]*entity.Box{}
+	itemFrames := map[string]*entity.Box{}
 	// <frame item-size="N"> overrides the global itemIconSize.
 	if v := root.Attrs["item-size"]; v != "" {
 		if f, err := strconv.ParseFloat(v, 64); err == nil && f > 0 {
@@ -73,6 +74,7 @@ func BuildJSONV1EngineSceneBuild(root *entity.Box, svgGroupDir string, catalogCS
 	itemImgIDs := map[string]string{}
 	itemLblIDs := map[string]string{}
 	frameRects := map[string][4]float64{}
+	frameElementIDs := map[string]string{}
 	if root.Tag == "frames" {
 		for _, child := range root.Children {
 			if child.Tag != "frame" {
@@ -89,7 +91,7 @@ func BuildJSONV1EngineSceneBuild(root *entity.Box, svgGroupDir string, catalogCS
 				"x": child.X, "y": child.Y, "width": child.W, "height": child.H,
 				"angle":       0,
 				"name":        frameID + " (" + detectPaperNameV1EngineSceneTypes(child.W, child.H) + ")",
-				"strokeColor": "#bbb", "backgroundColor": "transparent",
+				"strokeColor": "transparent", "backgroundColor": "transparent",
 				"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
 				"roughness": 0, "opacity": 100,
 				"groupIds": []string{}, "roundness": nil,
@@ -101,11 +103,17 @@ func BuildJSONV1EngineSceneBuild(root *entity.Box, svgGroupDir string, catalogCS
 			}
 			elements = append(elements, pageFrame)
 			frameRects[frameID] = [4]float64{child.X, child.Y, child.W, child.H}
+			frameElementIDs[frameID] = pageFrameID
 			registerConnectionEndpointV1EngineSceneWalk(child, pageFrameID, frameRects[frameID], itemImgRects, itemImgIDs)
 		}
+	} else if root.Tag == "frame" {
+		frameID := strings.TrimSpace(root.Attrs["id"])
+		frameRects[frameID] = [4]float64{root.X, root.Y, root.W, root.H}
+		frameElementIDs[frameID] = "paper-frame"
+		registerConnectionEndpointV1EngineSceneWalk(root, "paper-frame", frameRects[frameID], itemImgRects, itemImgIDs)
 	}
 
-	walkV1EngineSceneWalk(root, &elements, files, svgGroupDir, catalogCSV, projectRoot, fsys, root, itemGroups, ancestorBoxes, itemImgRects, itemImgIDs, deps)
+	walkV1EngineSceneWalk(root, &elements, files, svgGroupDir, catalogCSV, projectRoot, fsys, root, itemGroups, ancestorBoxes, itemFrames, itemImgRects, itemImgIDs, nil, deps)
 	ancestorIDs := make([]string, 0, len(itemGroups))
 	for ancID := range itemGroups {
 		ancestorIDs = append(ancestorIDs, ancID)
@@ -113,12 +121,13 @@ func BuildJSONV1EngineSceneBuild(root *entity.Box, svgGroupDir string, catalogCS
 	sort.Strings(ancestorIDs)
 	for _, ancID := range ancestorIDs {
 		items := itemGroups[ancID]
-		if err := renderItemGridV1EngineSceneItem(items, ancestorBoxes[ancID], &elements, files, catalogCSV, projectRoot, fsys, itemIconSize, itemImgRects, itemLblRects, itemImgIDs, itemLblIDs, abbrevMap, deps); err != nil {
+		if err := renderItemGridV1EngineSceneItem(items, ancestorBoxes[ancID], itemFrames[ancID], &elements, files, catalogCSV, projectRoot, fsys, itemIconSize, itemImgRects, itemLblRects, itemImgIDs, itemLblIDs, abbrevMap, deps); err != nil {
 			return nil, err
 		}
 	}
+	frameMetadata := appendFrameMetadataV1EngineSceneFrameMetadata(root, &elements)
 	applySemanticElementMetadataV1EngineSceneWalk(elements, collectSemanticElementMetadataV1EngineSceneWalk(root))
-	renderConnectionsV1EngineSceneConnectionRender(connections, itemImgRects, itemLblRects, itemImgIDs, itemLblIDs, frameRects, &elements)
+	renderConnectionsV1EngineSceneConnectionRender(connections, itemImgRects, itemLblRects, itemImgIDs, itemLblIDs, frameRects, frameElementIDs, frameMetadata, &elements)
 	appendDiffBoxHighlightsV1EngineSceneDiffHighlight(root, &elements)
 	elements = orderSceneLayersV1EngineSceneBuild(elements)
 
@@ -145,8 +154,18 @@ func orderSceneLayersV1EngineSceneBuild(elements []map[string]any) []map[string]
 	anchorBackgrounds := make([]map[string]any, 0)
 	anchorContent := make([]map[string]any, 0)
 	headContent := make([]map[string]any, 0)
+	metadataBackgrounds := make([]map[string]any, 0)
+	metadataContent := make([]map[string]any, 0)
 	for _, el := range elements {
 		custom, _ := el["customData"].(map[string]any)
+		if isMetadata, _ := custom["xaligoFrameMetadata"].(bool); isMetadata {
+			if isContent, _ := custom["xaligoFrameMetadataContent"].(bool); isContent {
+				metadataContent = append(metadataContent, el)
+			} else {
+				metadataBackgrounds = append(metadataBackgrounds, el)
+			}
+			continue
+		}
 		if isHeader, _ := custom["xaligoGroupHeader"].(bool); isHeader {
 			headShapes = append(headShapes, el)
 			continue
@@ -174,10 +193,12 @@ func orderSceneLayersV1EngineSceneBuild(elements []map[string]any) []map[string]
 	ordered = append(ordered, connectors...)
 	ordered = append(ordered, anchorBackgrounds...)
 	ordered = append(ordered, anchorContent...)
-	return append(ordered, headContent...)
+	ordered = append(ordered, headContent...)
+	ordered = append(ordered, metadataBackgrounds...)
+	return append(ordered, metadataContent...)
 }
 
-func avoidGroupHeaderBorderOverlapV1EngineSceneBuild(x, y, w, h float64, ownBorderID string, elements []map[string]any) float64 {
+func avoidGroupHeaderOverlapV1EngineSceneBuild(x, y, w, h float64, ownBorderID string, elements []map[string]any) float64 {
 	adjustedY := y
 	for pass := 0; pass < 4; pass++ {
 		nextY := adjustedY
@@ -186,7 +207,9 @@ func avoidGroupHeaderBorderOverlapV1EngineSceneBuild(x, y, w, h float64, ownBord
 				continue
 			}
 			custom, _ := el["customData"].(map[string]any)
-			if isBorder, _ := custom["xaligoGroupBorder"].(bool); !isBorder {
+			isBorder, _ := custom["xaligoGroupBorder"].(bool)
+			isHeader, _ := custom["xaligoGroupHeader"].(bool)
+			if !isBorder && !isHeader {
 				continue
 			}
 			bx, okX := el["x"].(float64)
@@ -194,6 +217,13 @@ func avoidGroupHeaderBorderOverlapV1EngineSceneBuild(x, y, w, h float64, ownBord
 			bw, okW := el["width"].(float64)
 			bh, okH := el["height"].(float64)
 			if !okX || !okY || !okW || !okH || horizontalOverlapV1EngineSceneBuild(x, x+w, bx, bx+bw) <= 0 {
+				continue
+			}
+			if isHeader {
+				gap := float64(groupHeaderBorderGapV1EngineSceneTypes)
+				if by < adjustedY+h+gap && by+bh > adjustedY-gap {
+					nextY = math.Max(nextY, by+bh+gap)
+				}
 				continue
 			}
 			for _, lineY := range []float64{by, by + bh} {

@@ -24,6 +24,21 @@ func TestValidateReturnsDiagnosticsError(t *testing.T) {
 	}
 }
 
+func TestValidateRejectsExplicitFrameAnchorInsideMetadataReservation(t *testing.T) {
+	input := []byte(`<xaligo version="1"><frames>
+  <frame id="overview" title="Overview" width="320" height="180" margin-top="56">
+    <metadata width="120" key-width="40" />
+    <rectangle id="web" width="100" height="60" />
+    <connection src="web" dst="detail.db" src-frame-anchor="top-3" />
+  </frame>
+  <frame id="detail" width="320" height="180"><rectangle id="db" width="100" height="60" /></frame>
+</frames></xaligo>`)
+	err := usecase.Validate(context.Background(), input)
+	if err == nil || !strings.Contains(err.Error(), "src-frame-anchor") || !strings.Contains(err.Error(), "metadata reservation") {
+		t.Fatalf("Validate() error = %v, want frame-anchor metadata conflict", err)
+	}
+}
+
 func TestValidateReportsItemAndConnectionBranches(t *testing.T) {
 	cases := []struct {
 		name  string
@@ -94,13 +109,33 @@ func TestImplicitV1VersionProducesNonBlockingWarning(t *testing.T) {
 	}
 }
 
-func TestExplicitV1VersionDoesNotProduceWarning(t *testing.T) {
+func TestLegacyV1RootProducesMigrationWarning(t *testing.T) {
+	diagnostics, err := usecase.Diagnose(context.Background(), []byte(`<frame version="1"><blank /></frame>`))
+	if err != nil {
+		t.Fatalf("Diagnose() error = %v", err)
+	}
+	if len(diagnostics) != 1 || diagnostics[0].Severity != usecase.SeverityWarning || !strings.Contains(diagnostics[0].Message, "legacy V1 <frame> root") {
+		t.Fatalf("diagnostics = %#v, want legacy-root warning", diagnostics)
+	}
+}
+
+func TestCanonicalV1EnvelopeHasNoWarning(t *testing.T) {
+	diagnostics, err := usecase.Diagnose(context.Background(), []byte(`<xaligo version="1"><frames><frame id="main"><blank /></frame></frames></xaligo>`))
+	if err != nil {
+		t.Fatalf("Diagnose() error = %v", err)
+	}
+	if len(diagnostics) != 0 {
+		t.Fatalf("diagnostics = %#v, want none", diagnostics)
+	}
+}
+
+func TestExplicitVersionOnLegacyRootStillProducesMigrationWarning(t *testing.T) {
 	diagnostics, err := usecase.Diagnose(context.Background(), []byte(`<frame version="1"><blank /></frame>`))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(diagnostics) != 0 {
-		t.Fatalf("diagnostics = %#v, want none", diagnostics)
+	if len(diagnostics) != 1 || !strings.Contains(diagnostics[0].Message, "legacy V1 <frame> root") {
+		t.Fatalf("diagnostics = %#v, want legacy-root warning", diagnostics)
 	}
 }
 

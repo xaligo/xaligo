@@ -6,18 +6,23 @@ applyTo: "**/*.xal"
 
 ## Overview
 
-`.xal` is a Vue-style layout DSL with XML syntax.
-The root tag is either `<frame>` for a single diagram page or `<frames>` for a
-multi-frame document.
+`.xal` is a Vue-style layout DSL with XML syntax. Canonical V1 documents use a
+`<xaligo>` envelope containing document-wide data and one `<frames>` page
+collection. Historical `<frame>` and `<frames>` roots remain readable but emit
+a migration warning.
 The parser uses `encoding/xml` and handles attributes, nested tags, and text content.
 
 ## V1 Compatibility Profile and Version Boundary
 
-This document defines the frozen V1 compatibility profile. Canonical V1 source
-explicitly sets `version="1"` on its `<frame>` or `<frames>` root. For backward
-compatibility, an unversioned V1 root still defaults to V1 but emits a warning
-recommending the explicit version. A `version` value other than `1` on a V1
-root is invalid; it must never silently select another language version.
+Canonical V1 source explicitly sets `version="1"` on `<xaligo>`. An
+unversioned `<xaligo>` defaults to V1 with a warning. A `version` value other
+than `1` is invalid. Legacy `<frame>` and `<frames>` roots accept the historical
+V1 version rules but always emit a warning recommending the canonical envelope.
+This document-root `version` selects the DSL and is not visible page metadata.
+By contrast, a non-empty `version` on an identified `<frame>` that is a direct
+child of the document-root `<frames>` is that page's visible content revision;
+it does not select a language version. Structural diff ignores only the
+document-root DSL version and compares child-frame content revisions normally.
 
 V2 uses a distinct, reject-safe root:
 
@@ -28,7 +33,7 @@ V2 uses a distinct, reject-safe root:
 ```
 
 `<scene>` requires `version="2"`; an unversioned `<scene>` is invalid. A V1
-reader is only required to understand `<frame>` and `<frames>`, so it rejects a
+reader recognizes `<xaligo>`, `<frame>`, and `<frames>`, but rejects a
 V2 document at the root instead of partially rendering V2 syntax as V1. Do not
 use `<frame version="2">` or `<frames version="2">`.
 
@@ -47,16 +52,24 @@ frontend canonicalizes the documented V1 values once at its input boundary.
 ## Root Tag
 
 ```xml
-<frame version="1" width="1440" height="900" class="pa-4">
-  ...
-</frame>
+<xaligo version="1">
+  <data>
+    <!-- reusable definitions -->
+  </data>
+  <frames gap="48">
+    <frame id="overview" width="1440" height="900" class="pa-4">
+      ...
+    </frame>
+  </frames>
+</xaligo>
 ```
 
-For multi-frame documents, wrap pages in `<frames>` and give each child
-`<frame>` a stable `id`.
+`<xaligo>` permits document-level metadata, imports, data, and styles, and
+requires exactly one `<frames>`. Give every child `<frame>` a stable `id`.
 
 ```xml
-<frames version="1" gap="48">
+<xaligo version="1">
+<frames gap="48">
   <frame id="overview" width="1440" height="900">
     ...
   </frame>
@@ -64,11 +77,13 @@ For multi-frame documents, wrap pages in `<frames>` and give each child
     ...
   </frame>
 </frames>
+</xaligo>
 ```
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
-| `version` | string | `"1"` with warning when omitted | Root only. Explicit `"1"` is recommended and is the only accepted value |
+| `version` | string | `"1"` with warning when omitted | On `<xaligo>` or a legacy root, selects V1 and only `"1"` is accepted. On an identified direct child `<frame>`, a non-empty value is the visible page revision |
+| `title` | string | — | On a page `<frame>`, enables the metadata band and supplies its built-in `title` tag |
 | `width` | float | `1280` | Frame width (px) |
 | `height` | float | `720` | Frame height (px) |
 | `class` | string | — | Spacing class |
@@ -80,9 +95,142 @@ For multi-frame documents, wrap pages in `<frames>` and give each child
 | `align` | string | — | Align usable content area (`top|middle|bottom` + `left|center|right`) |
 | `overflow` | string | `error` | Child containment policy: `error` or `visible` |
 
+Legacy input may still use root `<frame>` or `<frames>`. It remains renderable,
+but diagnostics recommend wrapping identified frames in the canonical
+`<xaligo version="1"><frames>...</frames></xaligo>` envelope.
+
 `<frames>` accepts `gap` and optional `layout="vertical"`. Without
 `layout="vertical"`, frames are arranged horizontally. A `<frame>` inside
 `<frames>` requires a non-empty `id`.
+
+### Frame and physical-page contract
+
+An identified child `<frame>` is the V1 physical page unit. Frames are emitted
+in source order after the complete document scene and all cross-frame links
+have been resolved.
+
+| Format | Default mapping |
+|---|---|
+| SVG | One `.svg` artifact per frame |
+| PPTX | One slide per frame |
+| PDF | One page per frame |
+| Excel | One worksheet per frame, containing the frame's SVG image |
+| Excalidraw, XYFlow, Isoflow | One logical document containing all frames |
+
+SVG, PPTX, PDF, and Excel omit the page-frame outline in both default and
+`--combine-frames` output. Frame geometry remains authoritative for page size,
+cropping, endpoint ownership, and the outer logical page edge used to select a
+cross-frame page-link side and tangent anchor. The drawable frame terminal may
+sit on a parallel inward inset line. A default page-local SVG uses the exact
+frame rectangle as its canvas and clip boundary; PDF pages and Excel page
+images inherit that strict crop. Combined SVG compatibility output retains
+marker-safe bounds expansion. Excalidraw retains editable frame structure with
+transparent page-frame strokes.
+
+For a document with one child frame, SVG writes exactly the requested output
+path. For multiple child frames, an output request such as `diagram.svg`
+produces `diagram-<safe-frame-id>.svg` for each frame. The safe ID retains ASCII
+letters, digits, `_`, and `-`; every run of other characters becomes one `-`,
+leading and trailing `-` are removed, and an empty result falls back to
+`frame-<source-order>`. Two IDs that resolve to the same output filename are an
+error. SVG does not create an implicit archive.
+
+`--combine-frames` is the explicit compatibility option for page-oriented
+formats. It restores the historical single canvas, single slide, single PDF
+page, or single Excel worksheet. It does not change Excalidraw, XYFlow, or
+Isoflow because those formats are already single logical documents.
+
+### Frame metadata tag band
+
+An identified page frame may expose `id`, `title`, a page-content `version`,
+and arbitrary key/value entries as a two-cell tag band. The resolved metadata
+`row-gap`, 4 layout pixels by default, is both the space between wrapped rows
+and the metadata page-edge inset at the selected vertical edge and both
+horizontal edges. Frame padding, content margins, and the content box never
+replace or add to that inset. The band is enabled when the page frame has a
+non-empty `title`, a child-frame content `version`, or a direct `<metadata>`
+child. Existing identified frames that have only an `id` remain visually
+unchanged. Once the band is enabled, non-empty built-ins are emitted in stable
+`id`, `title`, `version` order, followed by `<entry>` children in source order.
+
+```xml
+<frame id="aws-architecture" title="AWS Architecture" version="1.0.0"
+       width="720" height="400"
+       margin-top="52" margin-right="24"
+       margin-bottom="52" margin-left="24">
+  <metadata position="top" align="right" font-family="helvetica">
+    <entry key="owner" value="Platform Engineering" />
+    <entry key="status" value="Approved" break-before="true"
+           width="180" key-width="56" />
+  </metadata>
+  <rectangle id="diagram" title="Page content" />
+</frame>
+```
+
+`<metadata>` is a non-layout direct child of a page `<frame>` and may occur at
+most once. This context is distinct from document-level
+`<xaligo><metadata>`. It contains only empty `<entry>` children; every entry
+requires non-empty `key` and `value` attributes. Duplicate keys are retained.
+
+| Attribute | Target | Default | Contract |
+|---|---|---|---|
+| `position` | `metadata` | `top` | Closed enum `top|bottom` |
+| `align` | `metadata` | `left` | Closed enum `left|center|right`; applied independently to each resolved row |
+| `font-family` | `metadata` | `virgil` | `virgil|helvetica|cascadia|assistant|excalifont|nunito|lilita-one|comic-shanns|liberation-sans` |
+| `font-size` | `metadata` | `12` | Positive layout pixels; tag height is exactly `ceil(font-size * 1.2) + 4` |
+| `color` | `metadata` | `#64748b` | Value text color; also key text color unless `key-color` is set |
+| `key-color` | `metadata` | value of `color` | Key text color |
+| `background-color` | `metadata` | `transparent` | Value-cell fill |
+| `key-background-color` | `metadata` | `#f8fafc` | Key-cell fill |
+| `border-color` | `metadata` | `#cbd5e1` | Cell border color; the cell stroke is fixed at `0.75` layout pixels |
+| `width` | `metadata`, `entry` | auto | Positive total key/value tag width. An entry value overrides the metadata-level default |
+| `key-width` | `metadata`, `entry` | auto | Positive key-cell width smaller than total width. An entry value overrides the metadata-level default |
+| `gap` | `metadata` | `8` | Non-negative horizontal gap between tags |
+| `row-gap` | `metadata` | `4` | Non-negative gap between wrapped rows and the same-sized inset from the selected top/bottom edge and both horizontal page edges |
+| `break-before` | `entry` | `false` | Closed boolean `true|false`; `true` starts this entry on a new row when a preceding tag exists |
+
+Colors use `#RRGGBB` or `transparent`. Auto width measures both cells with the
+selected font and full-width-rune-aware metrics. Omit `width` or `key-width`
+to request auto sizing; the literal string `auto` is not a V1 numeric value.
+Fixed widths use no-wrap shrink-to-fit with clipping as the final overflow
+guard. Tags preserve input order and use greedy left-to-right packing against
+the usable width `frame.width - 2 * row-gap`, which produces the minimum row
+count without reordering. The usable width must remain positive.
+`break-before="true"` forces a row boundary before that custom entry. The
+metadata `align` is then applied to each row separately against that same
+usable width: left starts at `frame.x + row-gap`, right ends at
+`frame.x + frame.width - row-gap`, and center still uses the frame center.
+
+For `position="top"`, the band starts at `frame.y + row-gap`; for
+`position="bottom"`, it ends at `frame.y + frame.height - row-gap`. The
+metadata-side reservation strip spans the full frame width from the outer
+logical frame edge to the corresponding boundary of the final content box.
+Its depth is never less than `row-gap` plus the complete band height plus the
+fixed 8-pixel content gap: if the normal content boundary is closer, it is
+moved inward to that minimum; if it is already farther inward, it is retained.
+Normal items and their text, local connector paths and labels, UML connector
+paths and labels, and cross-frame page-link paths and labels cannot enter this
+strip. `overflow="visible"` never overrides this page-decoration exclusion.
+The frame's outer page size and invisible logical edge do not change.
+The inset is measured from that logical frame edge before any common PPTX slide
+centering and is unrelated to the export-only `--paper-margin*` options.
+For a cross-frame page link, the same resolved `row-gap` is also the inward
+normal inset of safe frame terminals on all four sides, independent of metadata
+`position`; zero retains the outer edge. A frame without metadata instead uses
+a 4-layout-pixel terminal inset. An explicit `src/dst-frame-side` or
+`src/dst-frame-anchor` requires the inset to be strictly smaller than its
+specified side's normal frame dimension: height for `top`/`bottom`, width for
+`left`/`right`. Without an explicit frame terminal, validation requires at
+least one side that satisfies this inset bound and the metadata reservation;
+the shared scene later selects among those safe sides from rendered visual
+geometry. The inset is never implicitly clamped.
+
+The shared layout and presentation scene own this geometry. SVG, PPTX, PDF,
+Excel, and Excalidraw render the owning frame's tags; per-frame projection
+cannot leak another page's band, and combined output retains every band. The
+entire reservation strip, rather than only the tag cells, is a hard exclusion
+zone for normal rendered geometry. XYFlow and Isoflow omit the band because it
+is page decoration rather than a graph node or endpoint.
 
 ## Numeric and Geometry Contract
 
@@ -97,10 +245,10 @@ The following domain rules apply:
 
 | Attributes | Required domain |
 |---|---|
-| `width`, `height`, `content-width`, `content-height`, `item-size`, `font-size` | greater than `0` when specified |
+| `width`, `height`, `content-width`, `content-height`, `item-size`, `font-size`, `key-width` | greater than `0` when specified |
 | `row`, `col` | greater than `0` when specified |
 | `span` | greater than `0` and at most `12`; flexible sibling spans in one `<row>` must total at most `12` |
-| `gap`, margins, spacing-class padding | greater than or equal to `0` |
+| `gap`, `row-gap`, margins, spacing-class padding | greater than or equal to `0` |
 | `scale`, `coordinate-scale`, `grid`, `stroke-width` | greater than `0` when specified |
 | `x`, `y`, `dx`, `dy`, bend coordinates | any finite value, subject to the containing geometry rule |
 
@@ -115,7 +263,7 @@ V1 intentionally distinguishes strict values from compatibility fallbacks:
 |---|---|
 | Invalid `overflow`, connection side, or connection anchor | Validation error |
 | Unknown `layout`, connection `kind`, stroke style, arrowhead, or arrowhead-size value | Validation error |
-| Unknown render mode, format, theme, paper/orientation, arrow-style option, or SVG legend position | Render-option error |
+| Unknown render mode, format, theme, paper/orientation, arrow-style option, or SVG legend position | Render-option error. The CLI normalizes `xlsx` to `excel` before validation |
 | Recognized but unavailable render mode (`aws-2.5d` or `topology`) | Not-implemented error |
 | Empty `align` | Omitted; defaults to `top-left` |
 | Malformed or unknown non-empty `align` | Warning; each unsupported component keeps its `top` or `left` default |
@@ -127,7 +275,7 @@ treated as V1 extensions.
 
 `validate` and every render format use the same normalized values and resolved
 geometry checks. Successfully validated input must not later produce `NaN`,
-`Inf`, a negative drawable size, or a JSON/SVG/PPTX serialization error caused
+`Inf`, a negative drawable size, or an output serialization error caused
 by geometry.
 
 ### Fixed and flexible child allocation
@@ -272,8 +420,9 @@ also comes from `title` or direct text content, and it supports `font-size`.
 Port boxes must remain inside their parent rectangle. Explicit positions are
 normalized before drawing, and overlapping ports on the same side are a layout
 diagnostic rather than a renderer-specific accident. Port text carries the
-shared text-layout policy: SVG and PPTX enforce it, while editable
-Excalidraw-compatible output preserves it in metadata for bound-text consumers.
+shared text-layout policy: SVG, its PDF/Excel projections, and PPTX enforce it,
+while editable Excalidraw-compatible output preserves it in metadata for
+bound-text consumers.
 
 ## Resolved Text Layout
 
@@ -302,6 +451,349 @@ bound text carries the same `xaligoTextLayout` metadata and must not become a
 separate layout authority. Encoders apply text policy in this order: resolve
 padding, wrap when enabled, shrink when requested, then clip when
 `TextLayout.overflow="clip"`.
+
+## `<table>` Tag
+
+`<table>` represents general tabular data and is distinct from the `<grid>`
+layout primitive and relational `<entity>` definitions. It accepts either a
+GFM-like pipe table or explicit `<header>`/`<row>` children containing
+`<cell>` elements. One pipe header may be followed by explicit rows; a second
+header is invalid. Both syntaxes normalize to the same typed rows before
+layout.
+
+```xml
+<table id="services" title="Services">
+  | Service | Role    | Port |
+  |:--------|:--------|-----:|
+  | API     | Backend | 8080 |
+  <row><cell>DB</cell><cell>Database</cell><cell align="right">5432</cell></row>
+</table>
+```
+
+Pipe separators require at least three hyphens per cell and use colons for
+left, center, and right alignment. A literal pipe is escaped as `\|`. Every
+header and row must have the same positive cell count. Tagged cell `align`
+accepts `left`, `center`, `right`, or the normal vertical-horizontal values.
+Unknown children, duplicate headers, malformed separators, and mismatched
+column counts are positioned errors.
+
+Table presentation attributes inherit from `<table>` to every row and cell.
+Tagged `<header>`, `<row>`, and `<cell>` attributes override inherited values.
+Pipe cells have no inline attributes, so style them with table attributes and
+the `header-*` variants:
+
+```xml
+<table color="#172033" background-color="#ffffff" border-color="#94a3b8"
+       font-family="nunito" font-size="16"
+       header-color="#ffffff" header-background-color="#2563eb"
+       header-font-family="cascadia" header-font-size="18">
+  | Service | Port |
+  |:--------|-----:|
+  | API     | 8080 |
+</table>
+```
+
+| Attribute | Values | Description |
+|---|---|---|
+| `color` | `#RRGGBB` or `transparent` | Cell text color |
+| `background-color` | `#RRGGBB` or `transparent` | Cell fill color |
+| `border-color` | `#RRGGBB` or `transparent` | Cell border color |
+| `font-family` | `virgil`, `helvetica`, `cascadia`, `assistant`, `excalifont`, `nunito`, `lilita-one`, `comic-shanns`, or `liberation-sans` | Cell font family |
+| `font-size` | positive number | Cell font size in layout pixels |
+| `header-*` | corresponding value above | Pipe/tag header override declared on `<table>` |
+
+Colors require six-digit hexadecimal notation. The style precedence is
+`cell > header/row > table > built-in default`. Font-family names are carried
+through the renderer-neutral scene and mapped to the corresponding output font
+face; an output environment may substitute a missing installed font.
+
+## Relational Database Tags
+
+Reusable `<database-schema id="...">` definitions belong under `<data>`.
+Frames render them through `<database data="schema-id">`. A schema contains
+identified `<entity>` definitions; each entity contains typed `<column>`
+definitions and optional single-column `<foreign-key>` definitions.
+
+```xml
+<database-schema id="app">
+  <entity id="roles"><column name="id" type="bigint" primary-key="true" /></entity>
+  <entity id="users">
+    <column name="role_id" type="bigint" nullable="false" />
+    <foreign-key columns="role_id" references="roles.id" />
+  </entity>
+</database-schema>
+```
+
+Columns support `name`, `type`, `primary-key`, `nullable`, `unique`, and
+`default`. A foreign key requires one local column and one
+`references="entity.column"` target and generates a relation between the
+entities. Duplicate or missing schema/entity/column references and mixed
+inline/data-backed database content are positioned errors. Composite keys,
+indexes, checks, and import dialects remain planned V1 extensions.
+
+## UML Tags
+
+`<uml>` is the common V1 component for the fourteen UML diagram families. It
+adapts their typed elements, compartments, and relations to xaligo's shared
+layout, shape, connector, and output pipeline. Supporting a family selector
+does not imply support for every UML 2.x glyph or interchange construct; the
+closed V1 vocabulary and its projection limits are defined below.
+
+### Component, identity, and layout contract
+
+```xml
+<xaligo version="1">
+  <data>
+    <uml-model id="domain-model">
+      <class id="order" title="Order">
+        <attribute>- id: UUID</attribute>
+        <operation>+ confirm()</operation>
+      </class>
+      <interface id="repository" title="OrderRepository">
+        <operation>save(order: Order)</operation>
+      </interface>
+      <realization src="order" dst="repository" title="persists" />
+    </uml-model>
+  </data>
+  <frames>
+    <frame id="domain" width="960" height="540">
+      <uml id="model" title="Domain Model">
+        <class-diagram data="domain-model" direction="right" />
+      </uml>
+    </frame>
+  </frames>
+</xaligo>
+```
+
+The following rules are normative:
+
+- `<uml>` must be inside a frame, requires a non-empty `id`, and contains
+  exactly one supported diagram-kind child. UML IDs must be unique within that
+  frame. The same UML ID may be reused in a different frame.
+- UML component IDs and diagram-local element IDs must not contain whitespace,
+  `.` or `/`. `.` is reserved for the frame boundary and `/` for the UML
+  boundary in public connection references.
+- The diagram-kind child contains a non-empty set of direct element and
+  relation children. Unknown diagram kinds and unknown children are errors;
+  arbitrary custom tags are not generic UML elements.
+- Every UML element requires a non-empty diagram-local `id`, unique within the
+  UML component. A UML relation's `src` and `dst` use those local IDs, without
+  a UML or frame prefix, and both endpoints must exist in the selected model.
+- `direction` on the diagram-kind child accepts only `right` or `down`. When
+  `<uml layout>` is omitted, `direction="right"`, sequence diagrams, and timing
+  diagrams select horizontal xaligo layout; the other cases select vertical
+  layout. This controls the V1 projection and is not a UML semantic ordering
+  rule.
+- When `<uml title>` is omitted, the selector name without `-diagram` is used.
+  Element labels resolve in the order `title`, `name`, direct text, then local
+  `id`. UML elements default to `font-family="helvetica"` and `font-size="14"`;
+  normal element font attributes override those defaults. An element `name`
+  is display text only and never becomes a frame-level connection alias; use
+  the public UML reference described below.
+- The compatibility tags `<element>` and `<relation>` are not part of the
+  strict V1 UML profile. A model must use one of the element and relation tags
+  allowed for its selected family.
+
+UML elements are also normal xaligo connection endpoints. A frame-level
+`<connection>` uses the following public references; the internal hex-scoped
+scene ID is opaque and must not be written in source:
+
+| Location | Public endpoint reference | Meaning |
+|---|---|---|
+| Same frame | `uml-id/local-id` | Element `local-id` in UML component `uml-id` |
+| Another frame | `frame-id.uml-id/local-id` | The same UML element reached across a frame boundary |
+
+For example, element `order` in `<uml id="model">` inside frame `overview` is
+`model/order` to a normal connection in that frame and
+`overview.model/order` to a normal connection in another frame. Omitting the
+`frame-id.` prefix for a cross-frame endpoint is an unresolved-reference
+error. UML-native relations continue to use `src="order"`, not either public
+connection form.
+
+### Diagram-kind vocabulary
+
+| Diagram kind | Allowed elements | Allowed relations | Additional V1 semantic checks |
+|---|---|---|---|
+| `class-diagram` | `class`, `interface`, `enumeration` | `association`, `aggregation`, `composition`, `generalization`, `realization`, `dependency` | Requires one classifier. Aggregation/composition are class to class; generalization joins equal classifier kinds; realization is class to interface. |
+| `object-diagram` | `object` | `link`, `dependency` | Requires one object. Every relation endpoint is an object. |
+| `component-diagram` | `component`, `interface`, `port`, `artifact` | `dependency`, `realization`, `association`, `assembly`, `delegation` | Requires one component. Realization is component to interface. Assembly uses port/interface endpoints and includes a port. A port requires a component owner. Delegation is port to component/port. |
+| `deployment-diagram` | `node`, `artifact`, `component` | `deployment`, `communication-path`, `dependency` | Requires one node. Deployment is artifact/component to node; communication-path is node to node. |
+| `package-diagram` | `package`, `class`, `interface`, `component` | `dependency`, `package-import`, `package-merge` | Requires one package. Import/merge are package to package. |
+| `composite-structure-diagram` | `structure`, `collaboration`, `part`, `port`, `component` | `connector`, `assembly`, `delegation`, `dependency` | Requires a part or port. Parts/ports require typed owners. Connector endpoints are parts/ports, assembly is port to port, and delegation starts at a port. |
+| `profile-diagram` | `profile`, `stereotype`, `metaclass` | `extension`, `reference`, `generalization` | Requires a profile and stereotype. Extension is stereotype to metaclass; generalization is stereotype to stereotype. |
+| `use-case-diagram` | `actor`, `use-case`, `system-boundary` | `association`, `include`, `extend`, `generalization` | Requires a use case. Association joins actor and use-case; include/extend join use-cases; generalization joins equal actor/use-case kinds. |
+| `activity-diagram` | `initial`, `final`, `activity`, `action`, `decision`, `merge`, `fork`, `join`, `object-node` | `control-flow`, `object-flow` | Requires an activity/action. Control-flow excludes object-node. Object-flow requires an object-node endpoint. Initial/final direction and control-node degrees are validated. |
+| `state-machine-diagram` | `initial`, `final`, `state`, `history`, `choice`, `fork`, `join` | `transition` | Requires a state. Initial/final direction and pseudostate degrees are validated. |
+| `sequence-diagram` | `participant`, `lifeline` | `message`, `return-message`, `create-message`, `destroy-message` | Requires a participant/lifeline. Every message has a diagram-unique order. Create/destroy cannot be self messages. |
+| `communication-diagram` | `object`, `participant` | `link`, `message` | Requires two participants, one link, and one message. Every message has a unique order and matching unordered link pair. |
+| `interaction-overview-diagram` | `initial`, `final`, `interaction`, `decision`, `fork`, `join` | `control-flow` | Requires an interaction. Initial/final direction and control-node degrees are validated. |
+| `timing-diagram` | `lifeline`, `time-state` | `transition`, `occurrence`, `duration` | Requires a lifeline and time-state. Time-state intervals do not overlap per owner. Transition joins chronological states of one owner; occurrence has `at`; duration joins time-states. |
+
+The endpoint contracts above are closed. An admitted relation with an endpoint
+pair not described by its row is a validation error.
+
+### Ownership
+
+`owner` is a same-diagram local element reference. Forward references are
+allowed because ownership is resolved after all elements are collected, but
+the referenced element must exist and have an allowed kind.
+
+| Element and diagram | `owner` | Allowed owner kinds |
+|---|---|---|
+| `component-diagram/port` | required | `component` |
+| `composite-structure-diagram/part` | required | `structure`, `component`, `collaboration` |
+| `composite-structure-diagram/port` | required | `structure`, `part`, `component`, `collaboration` |
+| `use-case-diagram/use-case` | optional | `system-boundary` |
+| `timing-diagram/time-state` | required | `lifeline` |
+
+Every other use of `owner` is invalid. Ownership is retained as semantic
+metadata and a stable reference. The V1 shared layout is flat and does not
+promise that an owned shape is spatially nested inside its owner.
+
+### Element compartments
+
+An element's direct child tags are ordered text compartments. Each compartment
+must have non-whitespace direct text, `title`, or `name` and must not contain
+child elements. Nested UML elements and relations are not compartments. The
+typed compartment vocabulary is:
+
+| Element | Allowed typed compartments |
+|---|---|
+| `class` | `attribute`, `operation`, `constraint`, `note` |
+| `interface` | `operation`, `constraint`, `note` |
+| `enumeration` | `literal`, `operation`, `note` |
+| `object` | `slot`, `note` |
+| `component` | `provided-interface`, `required-interface`, `responsibility`, `note` |
+| `node`, `artifact` | `property`, `responsibility`, `note` |
+| `package` | `responsibility`, `note` |
+| `structure` | `property`, `provided-interface`, `required-interface`, `note` |
+| `part` | `property`, `responsibility`, `note` |
+| `profile` | `constraint`, `note` |
+| `stereotype` | `property`, `constraint`, `note` |
+| `metaclass` | `property`, `note` |
+| `actor` | `responsibility`, `note` |
+| `use-case`, `activity`, `action` | `responsibility`, `constraint`, `note` |
+| `state` | `entry`, `do`, `exit`, `region`, `note` |
+| `interaction` | `note` |
+| `time-state` | `region`, `constraint`, `note` |
+
+Elements absent from this table do not accept compartments. The generic
+`<compartment>` child is a compatibility spelling accepted wherever a typed
+compartment is allowed; new source should use the typed tag because its meaning
+survives future semantic processing. Compartment source order is preserved,
+but compartments are not independent connection endpoints.
+
+### Relation attributes, order, and time
+
+Every relation requires `src` and `dst`. `title` or `label` supplies its
+visible text. `guard` is allowed only on flows/transitions and is appended as
+`[guard]`. `src-multiplicity` and `dst-multiplicity` are allowed only on
+association, aggregation, composition, and link and are appended in
+source-to-destination order. Relation color and normal connector side, anchor,
+stroke-width, bend, scale, and grid attributes use the `<connection>` rules.
+`kind`, `stroke-style`, `arrowhead`, `start-arrowhead`, and `end-arrowhead` are
+invalid because the UML relation kind owns line and marker semantics.
+
+Sequence and communication message kinds require `order`. Its canonical form
+is one or more positive decimal integers without leading zeroes, separated by
+dots, for example `1`, `2`, or `1.1`. The complete order string must be unique
+across all messages in one diagram. Numeric order is prepended to the rendered
+label and assigns top-to-bottom connector anchors on participant/lifeline
+shapes. It does not reorder declared elements or create activation boxes or a
+separate interaction axis. Sequence message anchors always use a vertical
+element edge so the ordering remains vertical: explicit `top` is normalized to
+`left`, explicit `bottom` to `right`, and an explicit anchor slot is superseded
+by the normalized order position.
+
+In a communication diagram, a message is valid only when a `<link>` connects
+the same two endpoints. Link direction is ignored for this structural check,
+so a link `a -> b` also supports a message `b -> a`.
+
+Timing attributes use finite base-10 numbers in one caller-chosen unit. Unit
+suffixes such as `20ms` are invalid; put the unit in a label instead.
+
+| Timing construct | Required attributes | Domain |
+|---|---|---|
+| `time-state` | `owner`, `from`, `to` | `owner` is a lifeline; `from >= 0`; `to > from` |
+| `occurrence` | `src`, `dst`, `at` | `at >= 0`; both endpoints are lifelines or time-states |
+| `duration` | `src`, `dst`; optional `from` and `to` pair | Both endpoints are time-states; when supplied, `from >= 0` and `to > from` |
+
+### Relation projection
+
+UML relations lower to the shared orthogonal connector model with the
+following fixed semantic defaults:
+
+| Projection | Relation kinds |
+|---|---|
+| Dashed line with destination triangle | `dependency`, `realization`, `package-import`, `package-merge`, `reference`, `include`, `extend`, `return-message`, `deployment` |
+| Solid line with destination triangle | `generalization`, `control-flow`, `object-flow`, `transition`, `message`, `create-message`, `destroy-message`, `delegation`, `extension` |
+| Source diamond | `aggregation`, `composition` |
+| No destination arrowhead | `association`, `link`, `occurrence`, `duration`, `communication-path`, `assembly`, `connector` |
+
+The visible relation label is placed near the routed connector midpoint and
+the UML diagram/relation kind is retained as semantic metadata where the target
+format can carry it.
+
+### Reusable UML models
+
+Reusable definitions use `<uml-model id="...">` directly below document
+`<data>`. A diagram-kind child selects one with `data="model-id"`:
+
+```xml
+<data>
+  <uml-model id="order-objects">
+    <object id="customer" title="customer: Customer">
+      <slot>name = Alice</slot>
+    </object>
+    <object id="order" title="order42: Order">
+      <slot>status = Confirmed</slot>
+    </object>
+    <link src="customer" dst="order" title="placed" />
+  </uml-model>
+</data>
+<frames>
+  <frame id="snapshot">
+    <uml id="runtime"><object-diagram data="order-objects" direction="right" /></uml>
+  </frame>
+</frames>
+```
+
+`<uml-model>` requires a document-unique ID. A missing model, duplicate model
+ID, or a diagram that combines `data` with inline children is an error. The
+model itself does not declare a UML family; after expansion, all of its element,
+compartment, ownership, relation, order, and endpoint rules are validated
+against the selecting diagram kind. One reusable model is therefore reusable
+across selectors only when every child belongs to each selector's closed
+vocabulary.
+
+### Deliberately lossy V1 projection
+
+V1 preserves the selected UML family, element kind, relation kind, owner, and
+relation label in the shared semantic scene, then projects them into the
+capabilities common to xaligo outputs:
+
+- `use-case`, `initial`, and `final` become ellipses;
+- `decision`, `merge`, `choice`, and `history` become diamonds;
+- every other element becomes an editable rectangle whose ordered
+  compartments are flattened into its visible text;
+- every relation becomes a shared orthogonal connector with a separate label;
+  aggregation and composition currently share the same diamond projection;
+- sequence order is retained in labels and metadata and controls top-to-bottom
+  message anchors, but V1 does not draw dashed lifelines, activations, combined
+  fragments, or a separate vertical event axis;
+- timing intervals and occurrences are validated and retained, but V1 does not
+  draw a continuous time axis, waveforms, or proportional time geometry; and
+- `owner` records semantic containment without requiring spatial nesting.
+
+SVG, Excalidraw, PPTX, PDF, Excel, XYFlow, and Isoflow all consume this same resolved
+geometry. Excalidraw-compatible output carries xaligo UML custom data for
+editing. XYFlow retains UML node and relation fields in node/edge `data` and
+records the projected node shape. Isoflow projects every connected UML shape
+to a labeled generic endpoint icon because its upstream connector schema has no
+arbitrary UML data field. Another target schema may omit marker details it
+cannot represent. An encoder must use native target constructs where available
+and must not add private schema-breaking fields. The output is not XMI and is not a
+lossless UML interchange representation.
 
 ## `<item>` Tag
 
@@ -385,9 +877,10 @@ Only these non-empty group attributes are inherited:
 `start-arrowhead`, `end-arrowhead`, `arrowhead`, `scale`,
 `coordinate-scale`, and `grid`. Endpoint identity and geometry are deliberately
 not inherited: every child must supply its own `src` and `dst`, and
-`src-side`, `dst-side`, `src-anchor`, `dst-anchor`, bends, points, and via data
-remain child-local. Defaults are applied to a connection snapshot during scene
-construction; the parsed child node is not mutated.
+`src-side`, `dst-side`, `src-anchor`, `dst-anchor`, `src-frame-side`,
+`dst-frame-side`, `src-frame-anchor`, `dst-frame-anchor`, bends, points, and
+via data remain child-local. Defaults are applied to a connection snapshot
+during scene construction; the parsed child node is not mutated.
 
 `stroke-width`/`width`, `end-arrowhead`/`arrowhead`, and
 `coordinate-scale`/`scale` are semantic alias pairs. If a child supplies either
@@ -411,6 +904,8 @@ connector.
 | `dst` | string | ✓ | Catalog ID, or `id`/`name`/`ref` of the arrow end item, AWS group, rectangle, port, or identified child frame |
 | `src-side` / `dst-side` | string | — | Optional endpoint side: `top`, `right`, `bottom`, or `left` |
 | `src-anchor` / `dst-anchor` | string | — | Optional edge anchor. Each side has five inset positions (`top-1` through `top-5`, etc.) for 20 unique perimeter anchors |
+| `src-frame-side` / `dst-frame-side` | string | — | Cross-frame-only logical page side, independent of the endpoint side; the drawable terminal uses that side's inward inset line |
+| `src-frame-anchor` / `dst-frame-anchor` | string | — | Cross-frame-only logical page side and tangent slot. Uses `top|right|bottom|left-1..5`, or a side plus numeric/named slot; inward inset does not change the slot coordinate |
 | `arrowhead-size` | string | — | V1 fixed arrowhead size: `"s"` (small). This is the default; `m` and `l` are not V1 values because V1 cannot preserve them across all render formats |
 | `kind` | string | — | `connection` for the normal connector, `route` for a structural path without arrows, or `traffic` for directional flow drawn beside a matching route |
 | `color` | `#RRGGBB` | — | Six-digit hexadecimal stroke color override. Named, short, and alpha colors are invalid in V1 so every format preserves the same color |
@@ -433,20 +928,144 @@ validation error. Explicit `none` is accepted. Explicit `stroke-width`, color,
 and stroke style are preserved for every kind; non-route arrowhead attributes
 are also preserved.
 
-For SVG and PPTX Plan output, the render option `arrow-style` supplies the
-global arrowhead (and, for `thin`/`standard`, width) only when the connection
+For SVG, PPTX, PDF, and Excel Plan output, the render option `arrow-style`
+supplies the global arrowhead (and, for `thin`/`standard`, width) only when the connection
 does not explicitly set that semantic value. Explicit DSL or inherited group
 values take precedence, and `kind="route"` remains headless. Excalidraw,
 XYFlow, and Isoflow V1 output consume the resolved DSL scene rather than this
 Plan-only option.
 
-When a connection references endpoints in different frames, xaligo renders a
-local line stub in each frame instead of drawing a single line across pages.
-The source frame stub is labeled `to <frame-id>` near the frame edge, and the
-destination frame stub is labeled `from <frame-id>`. Both scene stubs carry the
-same logical connector ID, original endpoint/frame IDs, and V1 routing metadata.
-Adapters with a single-canvas graph model, such as XYFlow and Isoflow, use
-those fields to emit one logical edge instead of two partial edges.
+When a connection references endpoints in different frames, the shared scene
+represents it as a page link instead of drawing one line across the inter-frame
+gap. SVG, PPTX, PDF, Excel, and Excalidraw derive exactly two local stubs:
+
+- the source stub runs from the source endpoint to the page-terminal inset line
+  of its owning frame and has the exact label `to <destination frame ID>`; and
+- the destination stub runs from the page-terminal inset line of its owning
+  frame to the destination endpoint and has the exact label
+  `from <source frame ID>`.
+
+Angle brackets in those forms are rendered as literal punctuation. For a
+connection from frame `overview` to frame `detail`, the visible strings are
+therefore `to <detail>` and `from <overview>`.
+
+Endpoint binding and logical frame-terminal geometry are separate. The
+endpoint uses `src-anchor`/`dst-anchor`, then `src-side`/`dst-side`, then its
+normal automatic binding. The logical page terminal uses
+`src-frame-anchor`/`dst-frame-anchor`, then
+`src-frame-side`/`dst-frame-side` as fixed choices. With neither frame-terminal
+attribute, the legacy endpoint anchor, endpoint side, or normal nearest-border
+result is only the preferred page side. The renderer keeps it when safe;
+otherwise it chooses the nearest safe side from the endpoint's rendered visual
+envelope. An item's envelope is the union of its icon and external label; other
+endpoints use their rendered shape. Distance ties prefer a tied side facing the
+remote frame, then `top`, `right`, `bottom`, `left`.
+
+A side is safe when the resolved inset fits its normal frame dimension, it is
+not the metadata edge, and an actual `top`/`bottom` terminal opposite metadata
+does not enter the reservation strip. Validation of an automatic page terminal
+checks only that this candidate set is non-empty. It must not infer the chosen
+automatic side from layout `Box` geometry; final selection belongs to shared
+scene construction after icon and label geometry is available. If the normal
+preferred side is unsafe, scene construction remaps it to the nearest safe
+candidate. No safe candidate is a source-positioned validation error at the
+connection.
+
+The endpoint- and frame-terminal-adjacent segments are perpendicular to their
+own selected sides, so an endpoint may leave on `right` while its local stub
+terminates at the page's bottom inset line. Frame-side and frame-anchor
+attributes are valid only when the resolved endpoints belong to different
+frames. Using any of them on a same-frame connection is a source-positioned
+validation error.
+
+Frame metadata reservation is a final safety constraint on that choice. For an
+automatic page terminal, the metadata edge and any other unsafe side are
+removed before the renderer's nearest-side choice. A terminal on a safe left
+or right edge is clamped along that edge so it lies outside the top/bottom
+reservation strip; any resulting coordinate difference is bridged
+orthogonally. An explicit frame side or anchor that selects the reserved edge,
+or an exact left/right anchor whose point lies inside the strip, is a
+source-positioned validation error instead of being moved. Page-link paths and
+labels remain outside the full strip.
+
+When an explicit frame side is vertically opposite the metadata edge, its
+actual terminal must remain outside the reservation strip. For bottom metadata
+with explicit side `top`, the actual top terminal may not enter below the
+strip's top boundary. For top metadata with explicit side `bottom`, the actual
+bottom terminal may not enter above the strip's bottom boundary. A violation is
+a source-positioned validation error at the connection. For an automatic page
+terminal, the same conflict makes that candidate unsafe instead of immediately
+rejecting the connection. A safe explicit `left` or `right` terminal remains
+valid even if a hypothetical top/bottom inset line would enter the strip.
+
+The parallel coordinate is resolved against the selected outer logical frame
+edge before applying the normal inset. An explicit frame anchor keeps its exact
+10/30/50/70/90-percent coordinate along the outer frame extent. An automatic
+terminal's unconstrained parallel coordinate comes from the endpoint binding.
+If it enters a 24-layout-px corner gutter, the parallel coordinate is clamped
+and a two-bend orthogonal dogleg bridges the difference; a border shorter than
+96 layout pixels uses one quarter of its length as an adaptive gutter. A
+left/right terminal is also subject to the metadata reservation clamp described
+above. Automatic left/right coincidence avoidance normally intersects that
+corner-gutter range with an 8-layout-pixel clearance from the reservation. If a
+very small non-reserved range cannot satisfy both preferences, it falls back to
+the entire non-reserved interval, may touch its boundary, and never moves a
+point outside the frame or inside the metadata strip.
+
+The drawable terminal then lies on a page-terminal inset line parallel to that
+outer edge. Let `i` be the resolved metadata `row-gap` when the frame has
+metadata, or 4 layout pixels when it does not. The same `i` applies to every
+terminal side regardless of metadata `position`; `i = 0` retains the outer
+edge. An explicit `top`/`bottom` frame side requires `i < frame.height`; an
+explicit `left`/`right` side requires `i < frame.width`. Failure is a
+source-positioned validation error at that connection. For an automatic page
+terminal, those inequalities classify candidates instead; only an empty safe
+candidate set is an error. The resolved `i` is used exactly and is not reduced
+to fit. With the resolved parallel coordinate represented by `u` for a
+horizontal side or `v` for a vertical side, the terminal is:
+
+```text
+top:    (u, frame.y + i)
+right:  (frame.x + frame.width - i, v)
+bottom: (u, frame.y + frame.height - i)
+left:   (frame.x + i, v)
+```
+
+The inset step changes only the normal coordinate. An explicit frame anchor
+therefore retains its tangent slot and uses its local orthogonal stub for
+visible separation. If an unconstrained final inset terminal would coincide
+with the endpoint binding, its parallel coordinate moves by up to 24 layout
+pixels within the available range so the stub remains visible. Manual bends do
+not alter either local stub's geometry; bends remain logical routing metadata
+for graph adapters.
+
+There is one strict zero-inset case. When metadata is enabled with resolved
+`row-gap="0"`, an endpoint resolves to its owning frame itself, and its explicit
+frame anchor coincides with the resolved endpoint point, the connection is a
+source-positioned validation error. An explicit endpoint anchor supplies that
+point directly. An explicit endpoint side uses its center (`top` is `top-3`,
+and likewise for the other sides); with neither endpoint attribute, the
+automatically resolved endpoint side also uses its center. Fixed parallel
+coordinates, perpendicular segments at both ends, and a visible local stub
+cannot all be satisfied at that coincident point. The author must select a
+different endpoint or frame anchor, or use a positive metadata `row-gap`.
+
+Each `to <...>` / `from <...>` label is placed from the final inset terminal
+with a 4-layout-pixel inward gap and a minimum 4-layout-pixel tangent gap.
+Placement chooses the closest tangent position that avoids the endpoint
+envelope and metadata reservation. Tiny pages clamp or shrink the label
+fallback instead of moving it farther inward from that terminal.
+
+Both scene stubs carry the same logical connector ID, original endpoint/frame
+IDs, and V1 routing metadata. XYFlow and Isoflow use those fields to emit one
+logical edge instead of two partial edges.
+
+Default page-oriented export projects only the local stub belonging to each
+frame: the source SVG/slide/page/worksheet contains `to <destination frame
+ID>`, and the destination one contains `from <source frame ID>`.
+`--combine-frames` places both local stubs on the compatibility canvas but
+never reconnects them across the frame gap. Excalidraw also retains both stubs
+in its one editable scene.
 
 Output formats are projections of this resolved V1 meaning. A target schema
 may not have fields for every V1 connector value; the upstream-compatible
@@ -458,10 +1077,13 @@ must never use an output format as an intermediate representation.
 When `src-side`, `dst-side`, `src-anchor`, and `dst-anchor` are omitted,
 endpoint sides and anchor positions are calculated automatically from endpoint
 geometry. Use `src-anchor` and `dst-anchor` to pin an endpoint to a specific
-perimeter anchor. Each side has five inset positions, giving 20 unique anchor
-positions around the rectangle. Corner anchors are not shared: `top-1` sits
-slightly inside the top edge near the left corner, while `left-1` sits slightly
-inside the left edge near the top corner.
+perimeter anchor. Cross-frame `src-frame-anchor` and `dst-frame-anchor` use the
+same grammar to select the logical page side and tangent slot independently.
+Each side has five positions at 10, 30, 50, 70, and 90 percent of the outer
+frame extent, giving 20 unique tangent anchors. The drawable frame terminal
+then moves only in the inward normal direction to the page-terminal inset line.
+Corner anchors are not shared: `top-1` keeps a horizontal coordinate near the
+left corner, while `left-1` keeps a vertical coordinate near the top corner.
 
 ```text
 top:    top-1    top-2    top-3    top-4    top-5
@@ -484,6 +1106,13 @@ The aliases map one-to-one as `start=1`, `near=2`, `center=3`, `far=4`, and
 <connection src="web" dst="app"
             src-side="right" src-anchor="3"
             dst-side="left" dst-anchor="3" />
+
+<!-- The item and logical page terminal may use different sides. -->
+<connection src="web" dst="detail.app"
+            src-side="right" src-anchor="near"
+            src-frame-side="bottom" src-frame-anchor="far"
+            dst-side="left" dst-anchor="far"
+            dst-frame-side="top" dst-frame-anchor="near" />
 ```
 
 `src` and `dst` can also be expressed as child tags when the endpoint reference
@@ -492,14 +1121,22 @@ one of `id`, `ref`, `name`, or `target`.
 
 ```xml
 <connection kind="traffic">
-  <src anchor="right-3">web</src>
-  <dst side="left" anchor="5" ref="app" />
+  <src anchor="right-3" frame-side="bottom" frame-anchor="far">web</src>
+  <dst side="left" anchor="5" frame-anchor="top-2" ref="detail.app" />
 </connection>
 ```
 
+On `<src>` and `<dst>`, `frame-side` and `frame-anchor` map to the corresponding
+source/destination connection attributes. A complete anchor such as
+`bottom-4` supplies its side. With a separate side, slots accept `1..5` or the
+aliases `start`, `near`, `center`, `far`, and `end`. Conflicting side and
+complete-anchor values are validation errors for both endpoint and frame
+anchors.
+
 Excalidraw output always serializes arrowhead sizes as the smallest supported
 size (`"s"`) to keep dense diagrams readable. The logical arrowhead type and
-style metadata are still stored on the connector and used by SVG/PPTX export.
+style metadata are still stored on the connector and used by SVG/PPTX export
+and the SVG-based PDF/Excel projections.
 
 Manual bend coordinates are expressed as child tags in the same Cartesian
 layout coordinate space as the frame, with the origin at the upper-left of the
@@ -567,7 +1204,8 @@ prod-vpc --- web
   lane overlaps. Group header tags, item icons, and labels are treated as
   routing obstacles where possible.
 - SVG/PPTX routing may additionally add automatic junction markers and line
-  jump masks after the Excalidraw scene is built. These are export-layer
+  jump masks after the Excalidraw scene is built. PDF and Excel inherit the SVG
+  projection. These are export-layer
   rendering features, not extra `.xal` tags.
 
 **Edge selection logic:**
@@ -813,9 +1451,10 @@ Multiple classes are space-separated: `class="pa-4 mt-2"`
 
 ## Constraints and Notes
 
-- The root tag must be `<frame>` or `<frames>`. Any other root tag causes a
-  V1 parse error; direct children of `<frames>` must be identified `<frame>`
-  tags. V2 uses `<scene version="2">`, which is intentionally rejected by V1.
+- The canonical root is `<xaligo version="1">`. Legacy `<frame>` and
+  `<frames>` roots are accepted with a warning. Direct children of `<frames>`
+  must be identified `<frame>` tags. V2 uses `<scene version="2">`, which is
+  intentionally rejected by V1.
 - Both self-closing (`<card title="..." />`) and regular (`<card title="..."></card>`) forms are supported.
 - The sum of `span` values in direct children of `<row>` must not exceed 12.
   Excess is a validation error rather than implicit overflow to the right.

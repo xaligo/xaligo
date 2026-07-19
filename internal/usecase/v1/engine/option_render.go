@@ -17,6 +17,8 @@ const (
 	FormatExcalidrawV1EngineOptionRender entity.Format = "excalidraw"
 	FormatSVGV1EngineOptionRender        entity.Format = "svg"
 	FormatPPTXV1EngineOptionRender       entity.Format = "pptx"
+	FormatPDFV1EngineOptionRender        entity.Format = "pdf"
+	FormatExcelV1EngineOptionRender      entity.Format = "excel"
 	FormatXYFlowV1EngineOptionRender     entity.Format = "xyflow"
 	FormatIsoflowV1EngineOptionRender    entity.Format = "isoflow"
 
@@ -73,7 +75,7 @@ func ValidateRenderOptionsV1EngineOptionRender(opts entity.RenderOptions) error 
 	}
 	format := entity.Format(strings.ToLower(strings.TrimSpace(string(opts.Format))))
 	switch format {
-	case "", FormatExcalidrawV1EngineOptionRender, FormatSVGV1EngineOptionRender, FormatPPTXV1EngineOptionRender, FormatXYFlowV1EngineOptionRender, FormatIsoflowV1EngineOptionRender:
+	case "", FormatExcalidrawV1EngineOptionRender, FormatSVGV1EngineOptionRender, FormatPPTXV1EngineOptionRender, FormatPDFV1EngineOptionRender, FormatExcelV1EngineOptionRender, FormatXYFlowV1EngineOptionRender, FormatIsoflowV1EngineOptionRender:
 		return nil
 	default:
 		return fmt.Errorf("unknown render format %q", format)

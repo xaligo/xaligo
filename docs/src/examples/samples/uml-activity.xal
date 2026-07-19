@@ -1,0 +1,44 @@
+<xaligo version="1">
+  <data></data>
+  <frames>
+    <frame id="activity" width="1800" height="900" class="pa-3">
+      <uml id="fulfilment-activity" title="Order Fulfilment Activity">
+        <activity-diagram direction="right">
+          <initial id="start" title="Start" />
+          <action id="receive" title="Receive order">
+            <responsibility>Accept the checkout command</responsibility>
+          </action>
+          <action id="validate" title="Validate order">
+            <constraint>At least one order line exists</constraint>
+          </action>
+          <object-node id="validated-order" title="Validated Order" />
+          <decision id="valid" title="Order valid?" />
+          <action id="reject" title="Reject order" />
+          <fork id="fulfilment-fork" title="Fork" />
+          <action id="reserve" title="Reserve inventory" />
+          <action id="authorize" title="Authorize payment" />
+          <join id="fulfilment-join" title="Join" />
+          <action id="dispatch" title="Dispatch order" />
+          <merge id="completion" title="Merge outcome" />
+          <final id="done" title="Completed" />
+
+          <control-flow src="start" dst="receive" />
+          <control-flow src="receive" dst="validate" />
+          <object-flow src="validate" dst="validated-order" title="result" />
+          <control-flow src="validate" dst="valid" />
+          <control-flow src="valid" dst="reject" guard="no" />
+          <control-flow src="reject" dst="completion" />
+          <control-flow src="valid" dst="fulfilment-fork" guard="yes" />
+          <object-flow src="validated-order" dst="reserve" title="order" />
+          <control-flow src="fulfilment-fork" dst="reserve" />
+          <control-flow src="fulfilment-fork" dst="authorize" />
+          <control-flow src="reserve" dst="fulfilment-join" />
+          <control-flow src="authorize" dst="fulfilment-join" />
+          <control-flow src="fulfilment-join" dst="dispatch" />
+          <control-flow src="dispatch" dst="completion" />
+          <control-flow src="completion" dst="done" />
+        </activity-diagram>
+      </uml>
+    </frame>
+  </frames>
+</xaligo>

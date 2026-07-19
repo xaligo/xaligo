@@ -51,6 +51,13 @@ xaligo render diagram.xal --format excalidraw -o diagram.excalidraw
 xaligo render diagram.xal --format svg -o diagram.svg
 ```
 
+PDF and Excel use the same source:
+
+```bash
+xaligo render diagram.xal --format pdf -o diagram.pdf
+xaligo render diagram.xal --format excel -o diagram.xlsx
+```
+
 PPTX export uses the bundled or configured WASM exporter:
 
 ```bash
@@ -58,6 +65,28 @@ xaligo render diagram.xal --format pptx -o diagram.pptx \
   --paper A3 --orientation landscape \
   --paper-margin-top 0.75 --paper-margin-bottom 0.75
 ```
+
+## Render Multiple Frames
+
+An identified child frame is one physical output page. A multi-frame document
+therefore creates one SVG file per frame, one PPTX slide per frame, one PDF page
+per frame, or one Excel worksheet per frame. With `overview` and `detail`
+frames, this SVG command:
+
+```bash
+xaligo render diagram.xal --format svg -o diagram.svg
+```
+
+writes `diagram-overview.svg` and `diagram-detail.svg`. A one-frame document
+still writes the exact `-o` path. Use the compatibility form when a single
+canvas is required:
+
+```bash
+xaligo render diagram.xal --format svg -o diagram.svg --combine-frames
+```
+
+See [Cross-Frame Page Links](examples/page-links.md) for a complete multi-frame
+source and the matching `to ...` / `from ...` page-link labels.
 
 ## Validate
 

@@ -1,0 +1,60 @@
+<xaligo version="1">
+  <data>
+    <!-- Document-wide reusable definitions can be declared here. -->
+  </data>
+
+  <frames gap="56">
+    <frame id="overview" width="420" height="320"
+           class="pl-1 pr-3 pt-3 pb-3">
+      <container gap="28">
+        <rectangle id="public-api" title="Overview API" height="112">
+          <port id="api-out" side="right" title="HTTP" />
+        </rectangle>
+
+        <rectangle id="batch-export" title="Batch Export"
+                   width="104" height="80">
+          <port id="batch-out" side="top" x="0" title="CSV" />
+        </rectangle>
+      </container>
+
+      <connections>
+        <!-- Auto: each endpoint selects its nearest page side; the terminal is inset 4px. -->
+        <connection src="api-out" dst="service-detail.api-in" />
+
+        <!--
+          Explicit and independent item/page anchors:
+          - source item right-2 -> overview page bottom-4
+          - database page top-2 -> destination item left-4
+        -->
+        <connection color="#7C3AED" stroke-style="dashed">
+          <src ref="batch-out"
+               side="right" anchor="near"
+               frame-side="bottom" frame-anchor="far" />
+          <dst ref="database-detail.import-in"
+               side="left" anchor="far"
+               frame-side="top" frame-anchor="near" />
+        </connection>
+      </connections>
+    </frame>
+
+    <frame id="service-detail" width="420" height="320" class="pa-3">
+      <container gap="28">
+        <rectangle id="application" title="Service API" height="160">
+          <port id="api-in" side="left" title="HTTP" />
+        </rectangle>
+        <rectangle id="worker" title="Background Worker" height="80" />
+      </container>
+    </frame>
+
+    <frame id="database-detail" width="420" height="320"
+           class="pl-1 pr-3 pt-3 pb-3">
+      <container gap="28">
+        <rectangle id="import-job" title="Database Import"
+                   width="104" height="96">
+          <port id="import-in" side="top" x="0" title="CSV" />
+        </rectangle>
+        <rectangle id="primary-db" title="Primary Database" height="120" />
+      </container>
+    </frame>
+  </frames>
+</xaligo>

@@ -10,8 +10,8 @@
 > This illustration is a derivative work inspired by the original Go Gopher design.
 
 xaligo is a Diagram-as-Code engine for architecture and network diagrams. It
-renders the Vue-style `.xal` DSL to Excalidraw, SVG, PPTX, XYFlow, and
-Isoflow-compatible output.
+renders the Vue-style `.xal` DSL to Excalidraw, SVG, PPTX, PDF, Excel, XYFlow,
+and Isoflow-compatible output.
 
 ## Quick Start
 
@@ -25,6 +25,16 @@ xaligo diff example/before.xal example/after.xal -o example/architecture-diff
 The diff command writes `architecture-diff-removed.svg` with pale-red removed
 elements and `architecture-diff-added.svg` with pale-green added elements. The
 comparison operates on parsed `.xal` structure rather than raw text lines.
+
+Identified child frames are physical pages by default: SVG creates one file per
+frame, PPTX one slide per frame, PDF one page per frame, and Excel one worksheet
+per frame containing its SVG image. For example, `-o architecture.svg` with
+frames `overview` and `detail` writes `architecture-overview.svg` and
+`architecture-detail.svg`. Use `--combine-frames` to retain the former single
+canvas/slide/page/sheet. Page-frame outlines are not drawn in these outputs;
+the frame is a page boundary, not a visible container. Excalidraw retains
+editable frame objects with transparent outlines; Excalidraw, XYFlow, and
+Isoflow remain one logical document.
 
 Build from source:
 
@@ -63,7 +73,7 @@ See [Planned Work](docs/src/roadmap.md) for upcoming and exploratory features.
 Build the documentation locally:
 
 ```bash
-cargo install mdbook-tabs --version 0.2.3 --locked
+cargo install mdbook-tabs --version 1.0.4 --locked
 mdbook build docs
 ```
 
