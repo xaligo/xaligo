@@ -2,6 +2,7 @@ package engine
 
 import (
 	"math"
+	"strings"
 
 	"github.com/xaligo/xaligo/internal/entity"
 	"github.com/xaligo/xaligo/internal/share"
@@ -120,6 +121,68 @@ func fixedPointForSideV1EngineSceneConnection(side string) [2]float64 {
 		return [2]float64{0, 0.5}
 	default: // "right"
 		return [2]float64{1, 0.5}
+	}
+}
+
+func fixedPointForUMLProfileV1EngineSceneConnection(conn *entity.Node, endpoint, side string, rect, otherRect [4]float64) ([2]float64, bool) {
+	if conn == nil || strings.TrimSpace(conn.Attr("uml-diagram-kind")) == "" || conn.Attr("uml-diagram-kind") == "sequence-diagram" {
+		return [2]float64{}, false
+	}
+	profile := umlEndpointAnchorProfileV1EngineSceneConnection(conn.Attr("uml-" + endpoint + "-kind"))
+	switch profile {
+	case "diamond":
+		return fixedPointForSideV1EngineSceneConnection(side), true
+	case "rectangle":
+		return fixedPointForSideSlotV1EngineSceneConnection(side, slotForUMLRectangleEndpointV1EngineSceneConnection(side, rect, otherRect)), true
+	default:
+		return [2]float64{}, false
+	}
+}
+
+func umlEndpointAnchorProfileV1EngineSceneConnection(kind string) string {
+	switch strings.TrimSpace(kind) {
+	case "choice", "decision", "merge", "history":
+		return "diamond"
+	case "state", "class", "interface", "enumeration", "object", "component", "artifact", "node", "package", "structure", "collaboration", "part", "profile", "stereotype", "metaclass", "use-case", "activity", "action", "object-node", "interaction", "time-state":
+		return "rectangle"
+	default:
+		return ""
+	}
+}
+
+func slotForUMLRectangleEndpointV1EngineSceneConnection(side string, rect, otherRect [4]float64) int {
+	fraction := 0.5
+	switch side {
+	case "top", "bottom":
+		if rect[2] > 0 {
+			fraction = (otherRect[0] + otherRect[2]/2 - rect[0]) / rect[2]
+		}
+	case "left", "right":
+		if rect[3] > 0 {
+			fraction = (otherRect[1] + otherRect[3]/2 - rect[1]) / rect[3]
+		}
+	}
+	fraction = math.Max(0, math.Min(1, fraction))
+	return int(math.Round(fraction * float64(anchorGridV1EnginePlanBuild-1)))
+}
+
+func fixedPointForSideSlotV1EngineSceneConnection(side string, slot int) [2]float64 {
+	if slot < 0 {
+		slot = 0
+	}
+	if slot >= anchorGridV1EnginePlanBuild {
+		slot = anchorGridV1EnginePlanBuild - 1
+	}
+	position := (float64(slot) + 0.5) / float64(anchorGridV1EnginePlanBuild)
+	switch side {
+	case "top":
+		return [2]float64{position, 0}
+	case "bottom":
+		return [2]float64{position, 1}
+	case "left":
+		return [2]float64{0, position}
+	default:
+		return [2]float64{1, position}
 	}
 }
 

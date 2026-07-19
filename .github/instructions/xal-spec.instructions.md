@@ -1016,6 +1016,14 @@ envelope. An item's envelope is the union of its icon and external label; other
 endpoints use their rendered shape. Distance ties prefer a tied side facing the
 remote frame, then `top`, `right`, `bottom`, `left`.
 
+UML relations use a shared endpoint anchor profile across Excalidraw, SVG,
+PPTX, PDF, and Excel plan geometry. Sequence-diagram messages keep their
+chronological lifeline position. Other UML rectangle-like endpoints snap to the
+five fixed inset anchors on each side (`side-1` through `side-5`), giving 20
+perimeter anchors in total. UML diamond-like endpoints such as `choice`,
+`decision`, `merge`, and `history` snap to the four shape vertices; an explicit
+anchor on a diamond chooses the side vertex rather than an inset side slot.
+
 A side is safe when the resolved inset fits its normal frame dimension, it is
 not the metadata edge, and an actual `top`/`bottom` terminal opposite metadata
 does not enter the reservation strip. Validation of an automatic page terminal

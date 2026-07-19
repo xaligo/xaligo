@@ -20,6 +20,7 @@ type endpointV1EnginePlanConnectorPrepare struct {
 	side      sideV1EngineRouteTypes
 	oppCenter ptV1EngineRouteTypes
 	isSrc     bool
+	profile   string
 }
 
 type preparedResultV1EnginePlanConnectorPrepare struct {
@@ -39,15 +40,17 @@ func prepareConnectorsV1EnginePlanConnectorPrepare(connectors []*entity.Element,
 	groupKeys := []string{}
 	groups := map[string][]endpointV1EnginePlanConnectorPrepare{}
 	type item struct {
-		el        *entity.Element
-		src       rectV1EngineRouteTypes
-		dst       rectV1EngineRouteTypes
-		srcSide   sideV1EngineRouteTypes
-		dstSide   sideV1EngineRouteTypes
-		srcGap    float64
-		dstGap    float64
-		srcAnchor *ptV1EngineRouteTypes
-		dstAnchor *ptV1EngineRouteTypes
+		el         *entity.Element
+		src        rectV1EngineRouteTypes
+		dst        rectV1EngineRouteTypes
+		srcSide    sideV1EngineRouteTypes
+		dstSide    sideV1EngineRouteTypes
+		srcGap     float64
+		dstGap     float64
+		srcAnchor  *ptV1EngineRouteTypes
+		dstAnchor  *ptV1EngineRouteTypes
+		srcProfile string
+		dstProfile string
 	}
 	itemKeys := []string{}
 	items := map[string]item{}
@@ -104,6 +107,16 @@ func prepareConnectorsV1EnginePlanConnectorPrepare(connectors []*entity.Element,
 				dstFixedAnchor = &p
 			}
 		}
+		srcProfile := umlAnchorProfileForElementV1EnginePlanConnectorPrepare(srcEl)
+		dstProfile := umlAnchorProfileForElementV1EnginePlanConnectorPrepare(dstEl)
+		if srcProfile == "diamond" {
+			p := anchorPointForDiamondV1EnginePlanConnectorPrepare(src, srcSide)
+			srcFixedAnchor = &p
+		}
+		if dstProfile == "diamond" {
+			p := anchorPointForDiamondV1EnginePlanConnectorPrepare(dst, dstSide)
+			dstFixedAnchor = &p
+		}
 		if srcSide == sideBottomV1EngineRouteTypes && strings.HasSuffix(srcIconID, "-lbl") {
 			src = inflateRectV1EnginePlanConnectorPrepare(src, anchorGridVisualPadPxV1EnginePlanBuild)
 		}
@@ -124,15 +137,15 @@ func prepareConnectorsV1EnginePlanConnectorPrepare(connectors []*entity.Element,
 		if el.EndBinding != nil {
 			dstGap = el.EndBinding.Gap
 		}
-		items[el.ID] = item{el: el, src: src, dst: dst, srcSide: srcSide, dstSide: dstSide, srcGap: srcGap, dstGap: dstGap, srcAnchor: srcFixedAnchor, dstAnchor: dstFixedAnchor}
+		items[el.ID] = item{el: el, src: src, dst: dst, srcSide: srcSide, dstSide: dstSide, srcGap: srcGap, dstGap: dstGap, srcAnchor: srcFixedAnchor, dstAnchor: dstFixedAnchor, srcProfile: srcProfile, dstProfile: dstProfile}
 		if needsAnchorGridV1EnginePlanConnectorPrepare(srcEl) {
 			gridRects[srcIconID] = srcGrid
 		}
 		if needsAnchorGridV1EnginePlanConnectorPrepare(dstEl) {
 			gridRects[dstIconID] = dstGrid
 		}
-		pushGroup(srcIconID, srcSide, endpointV1EnginePlanConnectorPrepare{connID: el.ID, rect: src, side: srcSide, oppCenter: dstCenter, isSrc: true})
-		pushGroup(dstIconID, dstSide, endpointV1EnginePlanConnectorPrepare{connID: el.ID, rect: dst, side: dstSide, oppCenter: srcCenter, isSrc: false})
+		pushGroup(srcIconID, srcSide, endpointV1EnginePlanConnectorPrepare{connID: el.ID, rect: src, side: srcSide, oppCenter: dstCenter, isSrc: true, profile: srcProfile})
+		pushGroup(dstIconID, dstSide, endpointV1EnginePlanConnectorPrepare{connID: el.ID, rect: dst, side: dstSide, oppCenter: srcCenter, isSrc: false, profile: dstProfile})
 	}
 
 	anchors := map[string]*anchorPairV1EnginePlanConnectorPrepare{}
@@ -144,14 +157,16 @@ func prepareConnectorsV1EnginePlanConnectorPrepare(connectors []*entity.Element,
 	for _, id := range itemKeys {
 		it := items[id]
 		req := routeRequestV1EngineRouteTypes{
-			ID:      id,
-			Kind:    connectorKindV1EnginePlanConnectorDraw(it.el),
-			Src:     it.src,
-			Dst:     it.dst,
-			SrcSide: it.srcSide,
-			DstSide: it.dstSide,
-			SrcGap:  it.srcGap,
-			DstGap:  it.dstGap,
+			ID:         id,
+			Kind:       connectorKindV1EnginePlanConnectorDraw(it.el),
+			Src:        it.src,
+			Dst:        it.dst,
+			SrcSide:    it.srcSide,
+			DstSide:    it.dstSide,
+			SrcGap:     it.srcGap,
+			DstGap:     it.dstGap,
+			SrcProfile: it.srcProfile,
+			DstProfile: it.dstProfile,
 		}
 		if it.el.CustomData != nil {
 			scale := it.el.CustomData.ConnectorScale
@@ -274,7 +289,7 @@ func assignGroupAnchorsV1EnginePlanConnectorPrepare(eps []endpointV1EnginePlanCo
 	meanFrac /= float64(len(eps))
 	slots := assignSlotsV1EnginePlanConnectorPrepare(len(eps), meanFrac)
 	for k, ep := range eps {
-		p := anchorPointV1EnginePlanConnectorPrepare(ep.rect, s, slots[k])
+		p := anchorPointForProfileV1EnginePlanConnectorPrepare(ep.rect, s, slots[k], ep.profile)
 		entry := anchors[ep.connID]
 		if entry == nil {
 			entry = &anchorPairV1EnginePlanConnectorPrepare{}
@@ -341,6 +356,13 @@ func assignSlotsV1EnginePlanConnectorPrepare(n int, frac float64) []int {
 }
 
 func anchorPointV1EnginePlanConnectorPrepare(r rectV1EngineRouteTypes, s sideV1EngineRouteTypes, slot int) ptV1EngineRouteTypes {
+	return anchorPointForProfileV1EnginePlanConnectorPrepare(r, s, slot, "")
+}
+
+func anchorPointForProfileV1EnginePlanConnectorPrepare(r rectV1EngineRouteTypes, s sideV1EngineRouteTypes, slot int, profile string) ptV1EngineRouteTypes {
+	if profile == "diamond" {
+		return anchorPointForDiamondV1EnginePlanConnectorPrepare(r, s)
+	}
 	colX := r.X + (float64(slot)+0.5)*(r.W/float64(anchorGridV1EnginePlanBuild))
 	rowY := r.Y + (float64(slot)+0.5)*(r.H/float64(anchorGridV1EnginePlanBuild))
 	switch s {
@@ -352,6 +374,33 @@ func anchorPointV1EnginePlanConnectorPrepare(r rectV1EngineRouteTypes, s sideV1E
 		return ptV1EngineRouteTypes{X: r.X, Y: rowY}
 	default:
 		return ptV1EngineRouteTypes{X: r.X + r.W, Y: rowY}
+	}
+}
+
+func anchorPointForDiamondV1EnginePlanConnectorPrepare(r rectV1EngineRouteTypes, s sideV1EngineRouteTypes) ptV1EngineRouteTypes {
+	switch s {
+	case sideTopV1EngineRouteTypes:
+		return ptV1EngineRouteTypes{X: r.X + r.W/2, Y: r.Y}
+	case sideBottomV1EngineRouteTypes:
+		return ptV1EngineRouteTypes{X: r.X + r.W/2, Y: r.Y + r.H}
+	case sideLeftV1EngineRouteTypes:
+		return ptV1EngineRouteTypes{X: r.X, Y: r.Y + r.H/2}
+	default:
+		return ptV1EngineRouteTypes{X: r.X + r.W, Y: r.Y + r.H/2}
+	}
+}
+
+func umlAnchorProfileForElementV1EnginePlanConnectorPrepare(el *entity.Element) string {
+	if el == nil || el.CustomData == nil || el.CustomData.UMLDiagramKind == "" || el.CustomData.UMLDiagramKind == "sequence-diagram" {
+		return ""
+	}
+	switch el.Type {
+	case "diamond":
+		return "diamond"
+	case "rectangle":
+		return "rectangle"
+	default:
+		return ""
 	}
 }
 

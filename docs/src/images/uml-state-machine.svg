@@ -78,17 +78,18 @@
 <path d="M 783.5 490 L 849 490" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <path d="M 739.5 534 L 739.5 678.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <path d="M 1233 490 L 1298.5 490" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<path d="M 1072.3 551 L 1152.3 551 L 1152.3 695.333 L 971.7 695.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<path d="M 1072.3 551 L 1120.3 551 L 1120.3 675.333 L 940.5 675.333 L 940.5 695.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <path d="M 1386.5 490 L 1452 490" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <path d="M 1342.5 534 L 1342.5 554 L 1352 554 L 1352 658.333 L 1342.5 658.333 L 1342.5 678.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <rect x="736.5" y="629" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
-<rect x="1149.3" y="629" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
+<rect x="1117.3" y="629" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
 <rect x="1349" y="629" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
 <rect x="1446.5" y="487" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
-<path d="M 429 716.933 L 429 632 L 1449.5 632 L 1449.5 254.267 L 1521.5 254.267" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<path d="M 429 694.533 L 449 694.533 L 449 632 L 1449.5 632 L 1449.5 254.267 L 1521.5 254.267" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <path d="M 648 739.333 L 628 739.333 L 628 728 L 453 728 L 453 739.333 L 429 739.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<rect x="1029" y="672.333" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
 <rect x="1029" y="629" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
-<path d="M 956.1 695.333 L 956.1 679.333 L 1032 679.333 L 1032 301.667 L 975.1 301.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<path d="M 940.5 695.333 L 940.5 699.333 L 1032 699.333 L 1032 301.667 L 975.1 301.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <path d="M 1434 739.333 L 1452 739.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <path d="M 158.5 240.667 L 246 240.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <path d="M 1543.5 678.333 L 1543.5 658.333 L 1656 658.333 L 1656 282.667 L 1543.5 282.667 L 1543.5 262.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
@@ -98,10 +99,11 @@
 <path d="M 630 240.667 L 695.5 240.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <rect x="1637" y="655.333" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
 <rect x="1637" y="279.667" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
-<path d="M 783.5 271.867 L 807.5 271.867 L 807.5 143.867 L 1640 143.867 L 1640 808 L 1474.3 808 L 1474.3 800.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<rect x="804.5" y="253.267" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
-<path d="M 783.5 256.267 L 799.5 256.267 L 829 256.267 L 829 240.667 L 849 240.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
-<path d="M 1009.7 301.667 L 1057.7 301.667 L 1057.7 409 L 1072.3 409 L 1072.3 429" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<path d="M 783.5 240.667 L 803.5 240.667 L 803.5 112.667 L 1640 112.667 L 1640 808 L 1474.3 808 L 1474.3 800.333" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<rect x="800.5" y="229.667" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
+<path d="M 783.5 240.667 L 785.5 240.667 L 785.5 232.667 L 849 232.667 L 849 240.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
+<rect x="1029" y="318.667" width="6" height="6" fill="#FFFFFF" fill-opacity="1" stroke="none"/>
+<path d="M 1009.7 301.667 L 1009.7 321.667 L 1080 321.667 L 1080 409 L 1072.3 409 L 1072.3 429" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <path d="M 1032 240.667 L 1050 240.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <path d="M 1233 240.667 L 1251 240.667" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
 <path d="M 1434 240.667 L 1521.5 240.667 L 1521.5 247.467" fill="none" stroke="#052D6E" stroke-width="1.4" stroke-opacity="1" marker-end="url(#xaligo-triangle)"/>
@@ -261,8 +263,8 @@
 <text x="656.5" y="610.967" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-926993dd8bd79eb3)"><tspan x="656.5" y="610.967">[OK] / 返金済みにする</tspan></text>
 <defs><clipPath id="xaligo-text-clip-14847dda2becbff2" clipPathUnits="userSpaceOnUse"><rect x="498.5" y="747.333" width="80" height="20"/></clipPath></defs>
 <text x="538.5" y="762.133" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-14847dda2becbff2)"><tspan x="538.5" y="762.133">返金完了</tspan></text>
-<defs><clipPath id="xaligo-text-clip-12ee1d6200c08c6b" clipPathUnits="userSpaceOnUse"><rect x="933" y="329.667" width="216" height="20"/></clipPath></defs>
-<text x="1041" y="344.467" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-12ee1d6200c08c6b)"><tspan x="1041" y="344.467">返品申請 [返品期間内] / 返品受付</tspan></text>
+<defs><clipPath id="xaligo-text-clip-459c2f59ddf43e8f" clipPathUnits="userSpaceOnUse"><rect x="848.3" y="355.333" width="216" height="20"/></clipPath></defs>
+<text x="956.3" y="370.133" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-459c2f59ddf43e8f)"><tspan x="956.3" y="370.133">返品申請 [返品期間内] / 返品受付</tspan></text>
 <defs><clipPath id="xaligo-text-clip-f2b642651cdb2cde" clipPathUnits="userSpaceOnUse"><rect x="1225.75" y="558" width="80" height="20"/></clipPath></defs>
 <text x="1265.75" y="572.8" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-f2b642651cdb2cde)"><tspan x="1265.75" y="572.8">検品完了</tspan></text>
 <defs><clipPath id="xaligo-text-clip-1d6a1b5e006915b5" clipPathUnits="userSpaceOnUse"><rect x="1350.25" y="402" width="138" height="20"/></clipPath></defs>
@@ -271,14 +273,14 @@
 <text x="1259.5" y="610.967" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-f80efafc861f51f5)"><tspan x="1259.5" y="610.967">[OK] / 返金と在庫戻し</tspan></text>
 <defs><clipPath id="xaligo-text-clip-2ee932dcf605dd12" clipPathUnits="userSpaceOnUse"><rect x="1403" y="651.333" width="80" height="20"/></clipPath></defs>
 <text x="1443" y="666.133" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-2ee932dcf605dd12)"><tspan x="1443" y="666.133">返品完了</tspan></text>
-<defs><clipPath id="xaligo-text-clip-47c277a084154826" clipPathUnits="userSpaceOnUse"><rect x="936" y="579" width="210" height="20"/></clipPath></defs>
-<text x="1041" y="593.8" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-47c277a084154826)"><tspan x="1041" y="593.8">返品キャンセル / 直前状態へ復帰</tspan></text>
+<defs><clipPath id="xaligo-text-clip-56f59bb93f4849d8" clipPathUnits="userSpaceOnUse"><rect x="901.4" y="579" width="210" height="20"/></clipPath></defs>
+<text x="1006.4" y="593.8" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-56f59bb93f4849d8)"><tspan x="1006.4" y="593.8">返品キャンセル / 直前状態へ復帰</tspan></text>
 <defs><clipPath id="xaligo-text-clip-48e8294e358dbf00" clipPathUnits="userSpaceOnUse"><rect x="848" y="488.5" width="80" height="20"/></clipPath></defs>
 <text x="888" y="503.3" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-48e8294e358dbf00)"><tspan x="888" y="503.3">復帰</tspan></text>
 <defs><clipPath id="xaligo-text-clip-2cbcb1e746730c" clipPathUnits="userSpaceOnUse"><rect x="1140.75" y="340.667" width="162" height="20"/></clipPath></defs>
 <text x="1221.75" y="355.467" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-2cbcb1e746730c)"><tspan x="1221.75" y="355.467">[在庫なし] / 注文を終了</tspan></text>
-<defs><clipPath id="xaligo-text-clip-2b209fa8d1bef9a5" clipPathUnits="userSpaceOnUse"><rect x="935.25" y="424" width="80" height="20"/></clipPath></defs>
-<text x="975.25" y="438.8" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-2b209fa8d1bef9a5)"><tspan x="975.25" y="438.8">クローズ</tspan></text>
+<defs><clipPath id="xaligo-text-clip-68fdc6dd6dbb5941" clipPathUnits="userSpaceOnUse"><rect x="943.25" y="128" width="80" height="20"/></clipPath></defs>
+<text x="983.25" y="142.8" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-68fdc6dd6dbb5941)"><tspan x="983.25" y="142.8">クローズ</tspan></text>
 <defs><clipPath id="xaligo-text-clip-81b49c24bc8b19a4" clipPathUnits="userSpaceOnUse"><rect x="1560" y="460.5" width="80" height="20"/></clipPath></defs>
 <text x="1600" y="475.3" fill="#052D6E" font-family="Helvetica" font-size="12" text-anchor="middle" clip-path="url(#xaligo-text-clip-81b49c24bc8b19a4)"><tspan x="1600" y="475.3">クローズ</tspan></text>
 <rect x="1192" y="4" width="56" height="19" fill="#F8FAFC" fill-opacity="1" stroke="#CBD5E1" stroke-width="0.75" stroke-opacity="1"/>

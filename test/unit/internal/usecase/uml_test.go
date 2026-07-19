@@ -44,6 +44,181 @@ func TestUMLMetadataAndRelationLabelsReachSharedOutputs(t *testing.T) {
 	}
 }
 
+func TestUMLCommonRelationAnchorsUseShapeProfiles(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="900" height="520"><uml id="state"><state-machine-diagram direction="right"><state id="source" title="Source"/><state id="target" title="Target"/><state id="alternate" title="Alternate"/><choice id="choice"/><transition src="source" dst="target" src-anchor="right-5" dst-anchor="left-2"/><transition src="source" dst="choice" dst-anchor="top-5"/><transition src="choice" dst="target" src-anchor="right-1"/><transition src="choice" dst="alternate" src-anchor="bottom-2"/></state-machine-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var scene entity.PresentationScene
+	if err := json.Unmarshal(rawScene, &scene); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	var rectangleRelation, diamondDestination, diamondSource *entity.Element
+	for i := range scene.Elements {
+		element := &scene.Elements[i]
+		if element.Type != "arrow" || element.CustomData == nil {
+			continue
+		}
+		src := element.CustomData.UMLRelationSourceReference
+		dst := element.CustomData.UMLRelationDestinationReference
+		switch {
+		case src == "source" && dst == "target":
+			rectangleRelation = element
+		case src == "source" && dst == "choice":
+			diamondDestination = element
+		case src == "choice" && dst == "target":
+			diamondSource = element
+		}
+	}
+	if rectangleRelation == nil || rectangleRelation.StartBinding == nil || rectangleRelation.EndBinding == nil {
+		t.Fatalf("rectangle relation bindings not found")
+	}
+	if !sameFixedPointV1UsecaseUMLTest(rectangleRelation.StartBinding.FixedPoint, []float64{1, 0.9}) {
+		t.Fatalf("rectangle src fixedPoint = %#v, want right-5", rectangleRelation.StartBinding.FixedPoint)
+	}
+	if !sameFixedPointV1UsecaseUMLTest(rectangleRelation.EndBinding.FixedPoint, []float64{0, 0.3}) {
+		t.Fatalf("rectangle dst fixedPoint = %#v, want left-2", rectangleRelation.EndBinding.FixedPoint)
+	}
+	if diamondDestination == nil || diamondDestination.EndBinding == nil {
+		t.Fatalf("diamond destination binding not found")
+	}
+	if !sameFixedPointV1UsecaseUMLTest(diamondDestination.EndBinding.FixedPoint, []float64{0.5, 0}) {
+		t.Fatalf("diamond dst fixedPoint = %#v, want top vertex", diamondDestination.EndBinding.FixedPoint)
+	}
+	if diamondSource == nil || diamondSource.StartBinding == nil {
+		t.Fatalf("diamond source binding not found")
+	}
+	if !sameFixedPointV1UsecaseUMLTest(diamondSource.StartBinding.FixedPoint, []float64{1, 0.5}) {
+		t.Fatalf("diamond src fixedPoint = %#v, want right vertex", diamondSource.StartBinding.FixedPoint)
+	}
+}
+
+func TestUMLCommonRelationAnchorsReachDrawPlanRoutes(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="900" height="520"><uml id="state"><state-machine-diagram direction="right"><state id="source" title="Source"/><state id="target" title="Target"/><state id="alternate" title="Alternate"/><choice id="choice"/><transition src="source" dst="target" src-anchor="right-5" dst-anchor="left-2"/><transition src="source" dst="choice" dst-anchor="top-5"/><transition src="choice" dst="target" src-anchor="right-1"/><transition src="choice" dst="alternate" src-anchor="bottom-2"/></state-machine-diagram></uml></frame></frames></xaligo>`)
+	rawPlan, err := newUsecase().BuildPPTXPlan(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("BuildPPTXPlan() error = %v", err)
+	}
+	var plan entity.Plan
+	if err := json.Unmarshal(rawPlan, &plan); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	shapes := map[string]entity.DrawOp{}
+	lines := []entity.DrawOp{}
+	for _, operation := range plan.Ops {
+		if strings.HasPrefix(operation.ID, "conn-") && operation.Kind == "line" {
+			lines = append(lines, operation)
+			continue
+		}
+		if !operation.FrontLayer && strings.HasSuffix(operation.ID, "-rect") && (operation.Kind == "rect" || operation.Kind == "diamond") {
+			shapes[operation.ID] = operation
+		}
+	}
+	if len(lines) != 4 {
+		t.Fatalf("connector lines = %#v, want 4", lines)
+	}
+	checkedDiamond := false
+	checkedRectangle := false
+	for _, line := range lines {
+		if len(line.Points) < 2 {
+			t.Fatalf("connector line = %#v", line)
+		}
+		points := absoluteLinePointsV1UsecaseUMLTest(line)
+		srcShape, hasSource := endpointShapeV1UsecaseUMLTest(points[0], shapes)
+		dstShape, hasDestination := endpointShapeV1UsecaseUMLTest(points[len(points)-1], shapes)
+		if !hasSource || !hasDestination {
+			t.Fatalf("connector %q endpoint shapes not found for %#v in %#v", line.ID, points, shapes)
+		}
+		if srcShape.Kind == "diamond" {
+			if !pointIsDiamondVertexV1UsecaseUMLTest(points[0], srcShape) {
+				t.Fatalf("diamond source point = %#v shape=%#v", points[0], srcShape)
+			}
+			checkedDiamond = true
+		} else {
+			if !pointIsRectangleSlotV1UsecaseUMLTest(points[0], srcShape) {
+				t.Fatalf("rectangle source point = %#v shape=%#v", points[0], srcShape)
+			}
+			checkedRectangle = true
+		}
+		last := points[len(points)-1]
+		if dstShape.Kind == "diamond" {
+			if !pointIsDiamondVertexV1UsecaseUMLTest(last, dstShape) {
+				t.Fatalf("diamond destination point = %#v shape=%#v", last, dstShape)
+			}
+			checkedDiamond = true
+		} else {
+			if !pointIsRectangleSlotV1UsecaseUMLTest(last, dstShape) {
+				t.Fatalf("rectangle destination point = %#v shape=%#v", last, dstShape)
+			}
+			checkedRectangle = true
+		}
+	}
+	if !checkedDiamond || !checkedRectangle {
+		t.Fatalf("checked diamond=%t rectangle=%t lines=%#v shapes=%#v", checkedDiamond, checkedRectangle, lines, shapes)
+	}
+}
+
+func sameFixedPointV1UsecaseUMLTest(got, want []float64) bool {
+	return len(got) == 2 && len(want) == 2 && math.Abs(got[0]-want[0]) < 0.0001 && math.Abs(got[1]-want[1]) < 0.0001
+}
+
+func samePointV1UsecaseUMLTest(got struct{ X, Y float64 }, wantX, wantY float64) bool {
+	return math.Abs(got.X-wantX) < 0.0001 && math.Abs(got.Y-wantY) < 0.0001
+}
+
+func absoluteLinePointsV1UsecaseUMLTest(operation entity.DrawOp) []struct{ X, Y float64 } {
+	points := make([]struct{ X, Y float64 }, 0, len(operation.Points))
+	for _, point := range operation.Points {
+		points = append(points, struct{ X, Y float64 }{X: operation.X + point.X, Y: operation.Y + point.Y})
+	}
+	return points
+}
+
+func pointIsDiamondVertexV1UsecaseUMLTest(point struct{ X, Y float64 }, shape entity.DrawOp) bool {
+	vertices := []struct{ X, Y float64 }{
+		{X: shape.X + shape.W/2, Y: shape.Y},
+		{X: shape.X + shape.W, Y: shape.Y + shape.H/2},
+		{X: shape.X + shape.W/2, Y: shape.Y + shape.H},
+		{X: shape.X, Y: shape.Y + shape.H/2},
+	}
+	for _, vertex := range vertices {
+		if nearPointV1UsecaseUMLTest(point, vertex.X, vertex.Y, 0.09) {
+			return true
+		}
+	}
+	return false
+}
+
+func endpointShapeV1UsecaseUMLTest(point struct{ X, Y float64 }, shapes map[string]entity.DrawOp) (entity.DrawOp, bool) {
+	for _, shape := range shapes {
+		if shape.Kind == "diamond" && pointIsDiamondVertexV1UsecaseUMLTest(point, shape) {
+			return shape, true
+		}
+		if shape.Kind != "diamond" && pointIsRectangleSlotV1UsecaseUMLTest(point, shape) {
+			return shape, true
+		}
+	}
+	return entity.DrawOp{}, false
+}
+
+func pointIsRectangleSlotV1UsecaseUMLTest(point struct{ X, Y float64 }, shape entity.DrawOp) bool {
+	slots := []float64{0.1, 0.3, 0.5, 0.7, 0.9}
+	for _, slot := range slots {
+		if nearPointV1UsecaseUMLTest(point, shape.X+shape.W*slot, shape.Y, 0.09) ||
+			nearPointV1UsecaseUMLTest(point, shape.X+shape.W, shape.Y+shape.H*slot, 0.09) ||
+			nearPointV1UsecaseUMLTest(point, shape.X+shape.W*slot, shape.Y+shape.H, 0.09) ||
+			nearPointV1UsecaseUMLTest(point, shape.X, shape.Y+shape.H*slot, 0.09) {
+			return true
+		}
+	}
+	return false
+}
+
+func nearPointV1UsecaseUMLTest(got struct{ X, Y float64 }, wantX, wantY, tolerance float64) bool {
+	return math.Hypot(got.X-wantX, got.Y-wantY) <= tolerance
+}
+
 func TestUMLShapeKindsReachEditableSceneAndSharedPlan(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="activity"><activity-diagram direction="right"><action id="before"/><decision id="choice"/><action id="yes"/><action id="no"/><control-flow src="before" dst="choice"/><control-flow src="choice" dst="yes" guard="yes"/><control-flow src="choice" dst="no" guard="no"/></activity-diagram></uml></frame></frames></xaligo>`)
 	options := entity.RenderOptions{PxPerInch: 96}

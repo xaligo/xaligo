@@ -212,11 +212,23 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 
 		srcFP := fixedPointForSideV1EngineSceneConnection(srcSide)
 		if hasSrcAnchor {
-			srcFP = fixedPointForAnchorV1EngineSceneConnection(srcAnchor)
+			if umlEndpointAnchorProfileV1EngineSceneConnection(conn.Attr("uml-src-kind")) == "diamond" {
+				srcFP = fixedPointForSideV1EngineSceneConnection(string(srcAnchor.side))
+			} else {
+				srcFP = fixedPointForAnchorV1EngineSceneConnection(srcAnchor)
+			}
+		} else if fp, ok := fixedPointForUMLProfileV1EngineSceneConnection(conn, "src", srcSide, srcRect, dstRect); ok {
+			srcFP = fp
 		}
 		dstFP := fixedPointForSideV1EngineSceneConnection(dstSide)
 		if hasDstAnchor {
-			dstFP = fixedPointForAnchorV1EngineSceneConnection(dstAnchor)
+			if umlEndpointAnchorProfileV1EngineSceneConnection(conn.Attr("uml-dst-kind")) == "diamond" {
+				dstFP = fixedPointForSideV1EngineSceneConnection(string(dstAnchor.side))
+			} else {
+				dstFP = fixedPointForAnchorV1EngineSceneConnection(dstAnchor)
+			}
+		} else if fp, ok := fixedPointForUMLProfileV1EngineSceneConnection(conn, "dst", dstSide, dstRect, srcRect); ok {
+			dstFP = fp
 		}
 		if fp, ok := umlSequenceFixedPointV1EngineSceneConnectionRoute(conn, "src", srcSide); ok {
 			srcFP = fp
@@ -675,6 +687,8 @@ func applyUMLConnectionMetadataV1EngineSceneConnectionRender(customData map[stri
 		"uml-relation-label":   "xaligoUmlRelationLabel",
 		"uml-src-ref":          "xaligoUmlRelationSourceReference",
 		"uml-dst-ref":          "xaligoUmlRelationDestinationReference",
+		"uml-src-kind":         "xaligoUmlRelationSourceKind",
+		"uml-dst-kind":         "xaligoUmlRelationDestinationKind",
 		"uml-order":            "xaligoUmlMessageOrder",
 		"uml-mode":             "xaligoUmlMessageMode",
 		"uml-event":            "xaligoUmlEvent",

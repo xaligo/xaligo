@@ -193,21 +193,33 @@ func excalidrawRouteRequestV1EngineSceneConnectionRoute(conn *entity.Node, srcRe
 	src := rectV1EngineRouteTypes{X: srcRect[0], Y: srcRect[1], W: srcRect[2], H: srcRect[3]}
 	dst := rectV1EngineRouteTypes{X: dstRect[0], Y: dstRect[1], W: dstRect[2], H: dstRect[3]}
 	req := routeRequestV1EngineRouteTypes{
-		ID:      firstNonEmptyAttrV1EngineSceneConnectionRoute(conn, "src") + "-" + firstNonEmptyAttrV1EngineSceneConnectionRoute(conn, "dst"),
-		Kind:    kind,
-		Src:     src,
-		Dst:     dst,
-		SrcSide: sideV1EngineRouteTypes(srcSide),
-		DstSide: sideV1EngineRouteTypes(dstSide),
-		SrcGap:  5,
-		DstGap:  5,
+		ID:         firstNonEmptyAttrV1EngineSceneConnectionRoute(conn, "src") + "-" + firstNonEmptyAttrV1EngineSceneConnectionRoute(conn, "dst"),
+		Kind:       kind,
+		Src:        src,
+		Dst:        dst,
+		SrcSide:    sideV1EngineRouteTypes(srcSide),
+		DstSide:    sideV1EngineRouteTypes(dstSide),
+		SrcGap:     5,
+		DstGap:     5,
+		SrcProfile: umlEndpointAnchorProfileV1EngineSceneConnection(conn.Attr("uml-src-kind")),
+		DstProfile: umlEndpointAnchorProfileV1EngineSceneConnection(conn.Attr("uml-dst-kind")),
 	}
 	if anchor, ok := connectionEndpointAnchorV1EngineSceneConnectionRoute(conn, "src"); ok {
 		fp := fixedPointForAnchorV1EngineSceneConnection(anchor)
+		if req.SrcProfile == "diamond" {
+			fp = fixedPointForSideV1EngineSceneConnection(string(anchor.side))
+		}
+		req.SrcAnchor = &ptV1EngineRouteTypes{X: src.X + src.W*fp[0], Y: src.Y + src.H*fp[1]}
+	} else if fp, ok := fixedPointForUMLProfileV1EngineSceneConnection(conn, "src", srcSide, srcRect, dstRect); ok {
 		req.SrcAnchor = &ptV1EngineRouteTypes{X: src.X + src.W*fp[0], Y: src.Y + src.H*fp[1]}
 	}
 	if anchor, ok := connectionEndpointAnchorV1EngineSceneConnectionRoute(conn, "dst"); ok {
 		fp := fixedPointForAnchorV1EngineSceneConnection(anchor)
+		if req.DstProfile == "diamond" {
+			fp = fixedPointForSideV1EngineSceneConnection(string(anchor.side))
+		}
+		req.DstAnchor = &ptV1EngineRouteTypes{X: dst.X + dst.W*fp[0], Y: dst.Y + dst.H*fp[1]}
+	} else if fp, ok := fixedPointForUMLProfileV1EngineSceneConnection(conn, "dst", dstSide, dstRect, srcRect); ok {
 		req.DstAnchor = &ptV1EngineRouteTypes{X: dst.X + dst.W*fp[0], Y: dst.Y + dst.H*fp[1]}
 	}
 	if fp, ok := umlSequenceFixedPointV1EngineSceneConnectionRoute(conn, "src", srcSide); ok {

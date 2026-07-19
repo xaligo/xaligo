@@ -74,6 +74,15 @@ Their UML defaults are Helvetica at 14 px. Relation color, width, endpoint
 side/anchor, bends, coordinate scale, and grid use the normal connection rules.
 Element `name` is display text only; use the element `id` for references.
 
+UML relation endpoints use a UML-specific default anchor profile before they
+enter the shared routing pipeline. Rectangle-like UML elements snap to five
+inset anchors on each side (`top-1` through `top-5`, and the matching right,
+bottom, and left names), giving 20 perimeter anchors. Diamond-like elements
+such as `choice`, `decision`, `merge`, and `history` use the four vertices;
+explicit diamond anchors choose the vertex for that side. Sequence messages are
+the exception: their endpoints remain ordered by message time along the
+lifeline.
+
 Class diagrams use compact classifier placement, cyan headers, white bodies,
 and deep-blue relation lines. Packages render with the general-group visual
 language. Use `grid="N"` on `<class-diagram>` or class-diagram `<package>` to

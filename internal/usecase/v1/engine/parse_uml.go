@@ -323,7 +323,7 @@ func normalizeUMLComponentV1EngineParseUml(uml, frame *entity.Node, models map[s
 			appendUMLRelatedRefV1EngineParseUml(normalizedElements[src], dst)
 			appendUMLRelatedRefV1EngineParseUml(normalizedElements[dst], src)
 		}
-		connection := normalizeUMLRelationV1EngineParseUml(relation, scopedIDs[src], scopedIDs[dst], diagram.Tag, umlID)
+		connection := normalizeUMLRelationV1EngineParseUml(relation, scopedIDs[src], scopedIDs[dst], elementKinds[src], elementKinds[dst], diagram.Tag, umlID)
 		if err := validateConnectionNodeV1EngineParseConnection(connection); err != nil {
 			return &entity.ParseError{Position: relation.Position, Err: fmt.Errorf("invalid UML <%s>: %w", relation.Tag, err)}
 		}
@@ -1366,7 +1366,7 @@ func classElementTitleV1EngineParseUml(attrs map[string]string) string {
 	return strings.Join(lines, "\n")
 }
 
-func normalizeUMLRelationV1EngineParseUml(source *entity.Node, scopedSrc, scopedDst, diagramKind, umlID string) *entity.Node {
+func normalizeUMLRelationV1EngineParseUml(source *entity.Node, scopedSrc, scopedDst, srcKind, dstKind, diagramKind, umlID string) *entity.Node {
 	attrs := cloneAttrsV1EngineParseTable(source.Attrs)
 	attrs["src"] = scopedSrc
 	attrs["dst"] = scopedDst
@@ -1376,6 +1376,8 @@ func normalizeUMLRelationV1EngineParseUml(source *entity.Node, scopedSrc, scoped
 	attrs["uml-relation-label"] = umlRelationLabelV1EngineParseUml(source)
 	attrs["uml-src-ref"] = publicUMLRefV1EngineParseUml(umlID, source.Attr("src"))
 	attrs["uml-dst-ref"] = publicUMLRefV1EngineParseUml(umlID, source.Attr("dst"))
+	attrs["uml-src-kind"] = srcKind
+	attrs["uml-dst-kind"] = dstKind
 	for _, attribute := range []string{"order", "mode", "event", "guard", "action", "effect", "route", "src-multiplicity", "dst-multiplicity", "at", "from", "to"} {
 		if value := strings.TrimSpace(source.Attr(attribute)); value != "" {
 			attrs["uml-"+attribute] = value
