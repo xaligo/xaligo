@@ -571,8 +571,8 @@ The following rules are normative:
   exactly one supported diagram-kind child. UML IDs must be unique within that
   frame. The same UML ID may be reused in a different frame.
 - UML component IDs and diagram-local element IDs must not contain whitespace,
-  `.` or `/`. `.` is reserved for the frame boundary and `/` for the UML
-  boundary in public connection references.
+  `.` or `/`. `.` is reserved for the frame boundary; `/` is rejected so V1
+  sources do not use path-like UML endpoint expressions.
 - The diagram-kind child contains a non-empty set of direct element and
   relation children. Unknown diagram kinds and unknown children are errors;
   arbitrary custom tags are not generic UML elements. The activity-diagram
@@ -601,15 +601,17 @@ scene ID is opaque and must not be written in source:
 
 | Location | Public endpoint reference | Meaning |
 |---|---|---|
-| Same frame | `uml-id/local-id` | Element `local-id` in UML component `uml-id` |
-| Another frame | `frame-id.uml-id/local-id` | The same UML element reached across a frame boundary |
+| Same frame | `local-id` | UML element `local-id`; the ID must be unique among frame-level connection references |
+| Another frame | `frame-id.local-id` | The same UML element reached across a frame boundary |
 
 For example, element `order` in `<uml id="model">` inside frame `overview` is
-`model/order` to a normal connection in that frame and
-`overview.model/order` to a normal connection in another frame. Omitting the
-`frame-id.` prefix for a cross-frame endpoint is an unresolved-reference
-error. UML-native relations continue to use `src="order"`, not either public
-connection form.
+`order` to a normal connection in that frame and `overview.order` to a normal
+connection in another frame. Omitting the `frame-id.` prefix for a cross-frame
+endpoint is an unresolved-reference error. If another UML element, rectangle,
+port, table, database, entity, group, or other connection endpoint in the same
+frame exposes the same public ID/reference, parsing fails with a duplicate frame
+reference error. UML-native relations continue to use `src="order"`, not either
+public connection form.
 
 ### Diagram-kind vocabulary
 
@@ -677,8 +679,7 @@ ID and title are retained in editable-scene custom data. The UML activity
 container border and automatic diagram-kind title are omitted because page frame
 metadata supplies the visible page title. Normal frame-level
 `<connection>` elements may target activity elements by public UML reference
-such as `activity-id/action-id`, including `frame-id.activity-id/action-id` for
-cross-frame page links.
+such as `action-id`, including `frame-id.action-id` for cross-frame page links.
 
 ### Ownership
 

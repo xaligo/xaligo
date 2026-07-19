@@ -231,8 +231,8 @@ func TestRenderXYFlowPreservesUMLShapeEndpointsAndMetadata(t *testing.T) {
   </use-case-diagram></uml>
 </frame></frames></xaligo>`,
 			nodes: map[string][3]string{
-				"User":    {"rectangle", "actor", "use-cases/user"},
-				"Sign in": {"ellipse", "use-case", "use-cases/sign-in"},
+				"User":    {"rectangle", "actor", "user"},
+				"Sign in": {"ellipse", "use-case", "sign-in"},
 			},
 			connectorPairs: [][2]string{{"User", "Sign in"}},
 			relationKind:   "association",
@@ -249,10 +249,10 @@ func TestRenderXYFlowPreservesUMLShapeEndpointsAndMetadata(t *testing.T) {
   </activity-diagram></uml>
 </frame></frames></xaligo>`,
 			nodes: map[string][3]string{
-				"Validate": {"rectangle", "action", "activity/validate"},
-				"Valid?":   {"diamond", "decision", "activity/decision"},
-				"Accept":   {"rectangle", "action", "activity/accept"},
-				"Reject":   {"rectangle", "action", "activity/reject"},
+				"Validate": {"rectangle", "action", "validate"},
+				"Valid?":   {"diamond", "decision", "decision"},
+				"Accept":   {"rectangle", "action", "accept"},
+				"Reject":   {"rectangle", "action", "reject"},
 			},
 			connectorPairs: [][2]string{
 				{"Validate", "Valid?"}, {"Valid?", "Accept"}, {"Valid?", "Reject"},

@@ -29,19 +29,21 @@ exactly one diagram-kind child.
 </uml>
 ```
 
-Element IDs are local to one UML component. UML-native relations use those
-local IDs directly. A normal frame-level `<connection>` uses the generated
-public reference instead:
+Element IDs are public frame-level connection references. UML-native relations
+use those local IDs directly. A normal frame-level `<connection>` uses the same
+ID in the owning frame, or prefixes it with `frame-id.` across frames:
 
 | Connection location | Endpoint syntax |
 |---|---|
-| Same frame | `uml-id/local-id` |
-| Another frame | `frame-id.uml-id/local-id` |
+| Same frame | `local-id` |
+| Another frame | `frame-id.local-id` |
 
-For example, use `domain/sql-repository` in the same frame and
-`detail.domain/sql-repository` from another frame. UML IDs and local IDs cannot
-contain whitespace, `.` or `/`; the separators are reserved. The opaque
-hex-scoped internal ID must not be written in source.
+For example, use `sql-repository` in the same frame and
+`detail.sql-repository` from another frame. A UML element ID must therefore be
+unique among the frame's connection endpoint IDs and public refs. UML component
+IDs and local IDs cannot contain whitespace, `.` or `/`; `.` delimits
+`frame-id.id` references and `/` is rejected to avoid path-like UML endpoint
+expressions. The opaque hex-scoped internal ID must not be written in source.
 
 `direction` accepts only `right` or `down`. `right` selects horizontal xaligo
 layout. Sequence and timing diagrams also default to horizontal; the remaining
@@ -53,7 +55,7 @@ Elements accept normal xaligo presentation attributes such as `width`,
 `font-size`. Their UML defaults are Helvetica at 14 px. Relation color, width,
 endpoint side/anchor, bends, coordinate scale, and grid use the normal
 connection rules. Element `name` is display text only; it does not become a
-frame-level connection alias. Use `uml-id/local-id` instead.
+frame-level connection alias. Use the element `id` itself instead.
 
 The generic `<element>` and `<relation>` spellings are not valid in the strict
 profile. Use the typed tags in the following table.

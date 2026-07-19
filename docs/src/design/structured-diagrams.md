@@ -426,8 +426,8 @@ compartment vocabulary, endpoint constraints, and timing domains are in the
 Existing layout ideas are reused at the component boundary: `<uml>` can sit in
 rows, columns, grids, or containers and returns resolved width, height, draw
 operations, anchors, and links. UML component and local IDs reserve `.` and
-`/`; normal connections address a UML element as `uml-id/local-id` in the same
-frame or `frame-id.uml-id/local-id` across frames. Existing line concepts
+`/`; normal connections address a UML element by its frame-unique local ID in
+the same frame or `frame-id.local-id` across frames. Existing line concepts
 provide edge style, anchors, bends, routing, and line jumps, while UML
 relationships keep their own semantic kinds.
 

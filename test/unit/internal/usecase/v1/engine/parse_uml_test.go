@@ -131,15 +131,15 @@ func TestUMLDiagramSpecificValidationV1EngineParseUML(t *testing.T) {
 	}
 }
 
-func TestUMLLocalIDsAreScopedByComponentV1EngineParseUML(t *testing.T) {
-	source := `<xaligo version="1"><data></data><frames><frame id="main"><uml id="left"><object-diagram><object id="same" name="Shared display name"/></object-diagram></uml><uml id="right"><object-diagram><object id="same" name="Shared display name"/></object-diagram></uml></frame></frames></xaligo>`
+func TestUMLInternalIDsRemainScopedByComponentV1EngineParseUML(t *testing.T) {
+	source := `<xaligo version="1"><data></data><frames><frame id="main"><uml id="left"><object-diagram><object id="left-same" name="Shared display name"/></object-diagram></uml><uml id="right"><object-diagram><object id="right-same" name="Shared display name"/></object-diagram></uml></frame></frames></xaligo>`
 	document, err := v1engine.ParseV1EngineParseDocument(strings.NewReader(source))
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
 	left := document.Root.Children[0].Children[0].Children[0].Attr("id")
 	right := document.Root.Children[0].Children[1].Children[0].Attr("id")
-	if left != "uml-6c656674-73616d65" || right != "uml-7269676874-73616d65" || left == right {
+	if left != "uml-6c656674-6c6566742d73616d65" || right != "uml-7269676874-72696768742d73616d65" || left == right {
 		t.Fatalf("scoped IDs = %q, %q", left, right)
 	}
 	for _, uml := range document.Root.Children[0].Children {
@@ -246,7 +246,7 @@ func TestUMLTimingAndControlFlowValidationV1EngineParseUML(t *testing.T) {
 
 func TestUMLPublicReferencesSupportNormalAndCrossFrameConnectionsV1EngineParseUML(t *testing.T) {
 	source := `<xaligo version="1"><data></data><frames>
-<frame id="overview"><rectangle id="caller"/><connection src="caller" dst="detail.domain/order"/></frame>
+<frame id="overview"><rectangle id="caller"/><connection src="caller" dst="detail.order"/></frame>
 <frame id="detail"><uml id="domain"><class-diagram><class id="order"/></class-diagram></uml></frame>
 </frames></xaligo>`
 	document, err := v1engine.ParseV1EngineParseDocument(strings.NewReader(source))
@@ -254,7 +254,7 @@ func TestUMLPublicReferencesSupportNormalAndCrossFrameConnectionsV1EngineParseUM
 		t.Fatalf("Parse() error = %v", err)
 	}
 	umlElement := document.Root.Children[1].Children[0].Children[0]
-	if got := umlElement.Attr("ref"); got != "domain/order" {
+	if got := umlElement.Attr("ref"); got != "order" {
 		t.Fatalf("public UML ref = %q", got)
 	}
 	connection := document.Root.Children[0].Children[1]
@@ -263,12 +263,36 @@ func TestUMLPublicReferencesSupportNormalAndCrossFrameConnectionsV1EngineParseUM
 	}
 
 	missingFrameID := `<xaligo version="1"><data></data><frames>
-<frame id="overview"><rectangle id="caller"/><connection src="caller" dst="domain/order"/></frame>
+<frame id="overview"><rectangle id="caller"/><connection src="caller" dst="order"/></frame>
 <frame id="detail"><uml id="domain"><class-diagram><class id="order"/></class-diagram></uml></frame>
 </frames></xaligo>`
 	_, err = v1engine.ParseV1EngineParseDocument(strings.NewReader(missingFrameID))
 	if err == nil || !strings.Contains(err.Error(), "use frameId.id for a cross-frame reference") {
 		t.Fatalf("missing cross-frame frame ID error = %v", err)
+	}
+}
+
+func TestUMLPublicReferencesAreUniqueWithinFrameV1EngineParseUML(t *testing.T) {
+	tests := []struct {
+		name   string
+		source string
+	}{
+		{
+			name:   "two UML components expose same element ID",
+			source: `<xaligo version="1"><data></data><frames><frame id="main"><uml id="domain"><class-diagram><class id="order"/></class-diagram></uml><uml id="runtime"><object-diagram><object id="order"/></object-diagram></uml></frame></frames></xaligo>`,
+		},
+		{
+			name:   "UML element conflicts with rectangle ID",
+			source: `<xaligo version="1"><data></data><frames><frame id="main"><rectangle id="order"/><uml id="domain"><class-diagram><class id="order"/></class-diagram></uml></frame></frames></xaligo>`,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			_, err := v1engine.ParseV1EngineParseDocument(strings.NewReader(test.source))
+			if err == nil || !strings.Contains(err.Error(), `duplicate connection reference "order" in frame "main"`) {
+				t.Fatalf("Parse() error = %v", err)
+			}
+		})
 	}
 }
 

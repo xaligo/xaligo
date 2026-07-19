@@ -72,8 +72,8 @@ func TestRenderIsoflowDeduplicatesCrossFrameConnectionAndEmitsUMLShapeEndpoint(t
 	source := []byte(`<frames gap="80">
   <frame id="left" width="400" height="300">
     <rectangle id="left-node" title="Left Node" width="160" height="100" />
-    <connection src="left" dst="left-node" />
-    <connection src="left-node" dst="right.use-cases/remote" kind="traffic" />
+	<connection src="left" dst="left-node" />
+	<connection src="left-node" dst="right.remote" kind="traffic" />
   </frame>
   <frame id="right" width="400" height="300">
     <uml id="use-cases"><use-case-diagram>

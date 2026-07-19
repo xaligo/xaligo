@@ -20,10 +20,10 @@ func TestUMLMetadataAndRelationLabelsReachSharedOutputs(t *testing.T) {
 	for _, want := range []string{
 		`"xaligoUmlDiagramKind": "sequence-diagram"`,
 		`"xaligoUmlElementKind": "participant"`,
-		`"xaligoUmlReference": "sequence/user"`,
+		`"xaligoUmlReference": "user"`,
 		`"xaligoUmlRelationKind": "message"`,
-		`"xaligoUmlRelationSourceReference": "sequence/user"`,
-		`"xaligoUmlRelationDestinationReference": "sequence/api"`,
+		`"xaligoUmlRelationSourceReference": "user"`,
+		`"xaligoUmlRelationDestinationReference": "api"`,
 		`"xaligoUmlMessageOrder": "1"`,
 		`"text": "1: submit()"`,
 	} {
@@ -135,7 +135,7 @@ func TestUMLActivityHorizontalSwimlanesReachEditableScene(t *testing.T) {
 
 func TestUMLActivityElementsSupportCrossFramePageLinks(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames>
-<frame id="overview" width="620" height="360"><uml id="start"><activity-diagram direction="right" lanes="horizontal"><partition id="actor" title="Actor"><action id="request" title="Request"/></partition></activity-diagram></uml><connection src="start/request" dst="detail.finish/done" src-frame-side="right" dst-frame-side="left"/></frame>
+<frame id="overview" width="620" height="360"><uml id="start"><activity-diagram direction="right" lanes="horizontal"><partition id="actor" title="Actor"><action id="request" title="Request"/></partition></activity-diagram></uml><connection src="request" dst="detail.done" src-frame-side="right" dst-frame-side="left"/></frame>
 <frame id="detail" width="620" height="360"><uml id="finish"><activity-diagram direction="right" lanes="horizontal"><partition id="system" title="System"><action id="done" title="Complete"/></partition></activity-diagram></uml></frame>
 </frames></xaligo>`)
 	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
@@ -214,7 +214,7 @@ func TestUMLTimingAndOwnerMetadataReachEditableScene(t *testing.T) {
 		t.Fatalf("RenderExcalidraw() error = %v", err)
 	}
 	for _, want := range []string{
-		`"xaligoUmlOwnerReference": "timing/api"`,
+		`"xaligoUmlOwnerReference": "api"`,
 		`"xaligoUmlCompartmentKinds": "region"`,
 		`"xaligoUmlTimeFrom": "10"`,
 		`"xaligoUmlTimeTo": "20"`,
@@ -359,7 +359,7 @@ func TestUMLSequenceOrderAnchorsRemainTopToBottomForEveryConnectionSide(t *testi
 
 func TestUMLCrossFramePublicReferenceReachesGraphOutputs(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames>
-<frame id="overview" width="720" height="420"><rectangle id="caller" title="Caller"/><connection src="caller" dst="detail.domain/order"/></frame>
+<frame id="overview" width="720" height="420"><rectangle id="caller" title="Caller"/><connection src="caller" dst="detail.order"/></frame>
 <frame id="detail" width="720" height="420"><uml id="domain"><class-diagram><class id="order" title="Order"/></class-diagram></uml></frame>
 </frames></xaligo>`)
 	options := entity.RenderOptions{PxPerInch: 96, Theme: "light"}

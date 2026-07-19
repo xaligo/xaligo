@@ -388,13 +388,13 @@ func scopedUMLIDV1EngineParseUml(umlID, localID string) string {
 	return "uml-" + hex.EncodeToString([]byte(umlID)) + "-" + hex.EncodeToString([]byte(localID))
 }
 
-func publicUMLRefV1EngineParseUml(umlID, localID string) string {
-	return umlID + "/" + localID
+func publicUMLRefV1EngineParseUml(_ string, localID string) string {
+	return localID
 }
 
 func validateUMLIdentifierV1EngineParseUml(description, value string) error {
 	if strings.ContainsAny(value, "./") {
-		return fmt.Errorf("%s=%q must not contain '.' or '/' because they delimit frame and UML references", description, value)
+		return fmt.Errorf("%s=%q must not contain '.' or '/' because frame-level UML element references use local IDs and dots delimit frameId.id references", description, value)
 	}
 	if strings.IndexFunc(value, unicode.IsSpace) >= 0 {
 		return fmt.Errorf("%s=%q must not contain whitespace", description, value)
@@ -1018,8 +1018,8 @@ func normalizeUMLElementV1EngineParseUml(source *entity.Node, scopedID, diagramK
 		attrs["title"] = ""
 	}
 	// UML names are display text, not frame-level connection aliases. Public
-	// endpoint references are exclusively uml-id/local-id, so retaining name on
-	// the normalized rectangle would create false collisions between diagrams.
+	// endpoint references use the frame-unique local ID, so retaining name on the
+	// normalized rectangle would create false collisions between diagrams.
 	delete(attrs, "name")
 	var compartments []string
 	var compartmentKinds []string
