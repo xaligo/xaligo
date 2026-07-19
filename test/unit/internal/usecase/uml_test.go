@@ -650,7 +650,7 @@ func TestUMLConnectedComponentSampleRendersBoundaryInterfaces(t *testing.T) {
 	interfaceRadius := endInterface["width"].(float64) / 2
 	interfaceCenterX := interfaceLeft + interfaceRadius
 	interfaceCenterY := endInterface["y"].(float64) + endInterface["height"].(float64)/2
-	socketRadius := interfaceRadius + 1
+	socketRadius := interfaceRadius + 2
 	if math.Abs(callerSocketElement["width"].(float64)-socketRadius) > 0.1 || math.Abs(callerSocketElement["height"].(float64)-socketRadius*2) > 0.1 {
 		t.Fatalf("caller socket size = %.1fx%.1f, want semicircle radius %.1f", callerSocketElement["width"].(float64), callerSocketElement["height"].(float64), socketRadius)
 	}
@@ -873,7 +873,7 @@ func TestUMLComponentMultipleCallersRenderSeparateInterfaceCircles(t *testing.T)
 	}
 	sort.Float64s(apiCircleCentersY)
 	for index := 1; index < len(apiCircleCentersY); index++ {
-		minGap := (apiCircleRadius + 1) * 2
+		minGap := (apiCircleRadius + 2) * 2
 		if apiCircleCentersY[index]-apiCircleCentersY[index-1] <= minGap {
 			t.Fatalf("API interface circle center gap = %.1f, want greater than caller socket diameter %.1f", apiCircleCentersY[index]-apiCircleCentersY[index-1], minGap)
 		}

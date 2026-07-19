@@ -458,7 +458,7 @@ func umlComponentInterfaceEndpointKeyV1EngineSceneBuild(ownerKey, label string) 
 	return ownerKey + "|uml-component-interface|" + label
 }
 
-const umlComponentCallerSocketRadiusPaddingV1EngineSceneBuild = 1.0
+const umlComponentCallerSocketRadiusPaddingV1EngineSceneBuild = 2.0
 
 func umlComponentCallerSocketRadiusForCircleV1EngineSceneBuild(circleRect [4]float64) float64 {
 	circleRadius := math.Max(circleRect[2], circleRect[3]) / 2
