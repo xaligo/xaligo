@@ -382,6 +382,43 @@ func TestUMLSequenceMessagesDistinguishSyncAndAsyncNotation(t *testing.T) {
 	}
 }
 
+func TestUMLSequenceParticipantsRenderAsLifelines(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="sequence"><sequence-diagram><participant id="client" title="Client"/><lifeline id="filterChain" title="FilterChain"/><lifeline id="filter" title="Filter"/><message src="client" dst="filterChain" order="1" title="request"/><message src="filterChain" dst="filter" order="2" title="doFilter" mode="async"/></sequence-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var scene entity.PresentationScene
+	if err := json.Unmarshal(rawScene, &scene); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	headers := 0
+	lines := 0
+	for _, element := range scene.Elements {
+		if element.CustomData == nil {
+			continue
+		}
+		if element.CustomData.UMLSequenceLifelineHeader {
+			headers++
+			if element.Height > 40 {
+				t.Fatalf("lifeline header too tall: %#v", element)
+			}
+		}
+		if element.CustomData.UMLSequenceLifeline {
+			lines++
+			if element.Type != "line" || element.StrokeStyle != "dashed" || element.Width > 1 {
+				t.Fatalf("lifeline line = %#v", element)
+			}
+		}
+		if (element.CustomData.UMLElementKind == "participant" || element.CustomData.UMLElementKind == "lifeline") && element.Height > 120 {
+			t.Fatalf("sequence participant rendered as a full box: %#v", element)
+		}
+	}
+	if headers != 3 || lines != 3 {
+		t.Fatalf("lifeline headers = %d lines = %d, want 3 each", headers, lines)
+	}
+}
+
 func TestUMLAggregationAndCompositionRemainHeadlessAtDestination(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="classes"><class-diagram><class id="whole"/><class id="aggregate"/><class id="composite"/><aggregation src="whole" dst="aggregate"/><composition src="whole" dst="composite"/></class-diagram></uml></frame></frames></xaligo>`)
 	options := entity.RenderOptions{PxPerInch: 96}

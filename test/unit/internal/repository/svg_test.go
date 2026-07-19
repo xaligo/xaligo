@@ -90,7 +90,7 @@ func TestRenderPlanMapsArrowheadTypesToDistinctMarkers(t *testing.T) {
 		definition string
 	}{
 		{arrowType: "none"},
-		{arrowType: "arrow", markerID: "xaligo-arrow", definition: `<path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/>`},
+		{arrowType: "arrow", markerID: "xaligo-arrow", definition: `<path d="M 0 0 L 10 5 L 0 10" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>`},
 		{arrowType: "triangle", markerID: "xaligo-triangle", definition: `<path d="M 0 0 L 8 5 L 0 10 z" fill="context-stroke"/>`},
 		{arrowType: "stealth", markerID: "xaligo-stealth", definition: `<path d="M 0 0 L 10 5 L 0 10 L 3 5 z" fill="context-stroke"/>`},
 		{arrowType: "diamond", markerID: "xaligo-diamond", definition: `<path d="M 0 4 L 5.5 0 L 11 4 L 5.5 8 z" fill="context-stroke"/>`},

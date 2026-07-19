@@ -234,7 +234,10 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 				backgroundColor = umlClassShapeBackgroundV1EngineSceneWalk(b)
 				fillStyle = "solid"
 			}
-			if !hiddenUMLContainer {
+			sequenceLifeline := isXaligoSequenceLifelineV1EngineSceneWalk(b)
+			if sequenceLifeline {
+				appendUMLSequenceLifelineV1EngineSceneWalk(b, elements, itemImgRects, itemImgIDs, updated)
+			} else if !hiddenUMLContainer {
 				boundElements := any(nil)
 				shapeCustomData := umlShapeCustomDataV1EngineSceneWalk(b)
 				if b.Label != "" {
@@ -271,7 +274,7 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 					registerConnectionEndpointV1EngineSceneWalk(b, rectID, [4]float64{b.X, b.Y, b.W, b.H}, itemImgRects, itemImgIDs)
 				}
 			}
-			if !hiddenUMLContainer && b.Label != "" && !isXaligoClassShapeV1EngineSceneWalk(b) {
+			if !hiddenUMLContainer && !sequenceLifeline && b.Label != "" && !isXaligoClassShapeV1EngineSceneWalk(b) {
 				fontSize := attrFloatV1EngineLayoutAttributes(b.Attrs["font-size"], 20)
 				textX, textY := b.X+4, b.Y+2
 				textW, textH := math.Max(1, b.W-8), math.Max(1, math.Min(math.Ceil(fontSize*1.2), b.H-4))
@@ -496,6 +499,96 @@ func isXaligoActivityShapeV1EngineSceneWalk(box *entity.Box) bool {
 
 func isXaligoClassShapeV1EngineSceneWalk(box *entity.Box) bool {
 	return box != nil && box.Tag == "rectangle" && box.Attrs["uml-diagram-kind"] == "class-diagram"
+}
+
+func isXaligoSequenceLifelineV1EngineSceneWalk(box *entity.Box) bool {
+	if box == nil || box.Tag != "rectangle" || box.Attrs["uml-diagram-kind"] != "sequence-diagram" {
+		return false
+	}
+	switch strings.TrimSpace(box.Attrs["uml-element-kind"]) {
+	case "participant", "lifeline":
+		return true
+	default:
+		return false
+	}
+}
+
+func appendUMLSequenceLifelineV1EngineSceneWalk(box *entity.Box, elements *[]map[string]any, endpointRects map[string][4]float64, endpointIDs map[string]string, updated int64) {
+	if box == nil || elements == nil {
+		return
+	}
+	label := strings.TrimSpace(box.Label)
+	if label == "" {
+		label = strings.TrimSpace(box.Attrs["uml-local-id"])
+	}
+	headerHeight := math.Min(30, math.Max(24, box.H*0.12))
+	headerWidth := math.Min(math.Max(92, textWidthV1EngineSceneItem(label, 7.5)+24), math.Max(1, box.W-16))
+	headerX := box.X + (box.W-headerWidth)/2
+	headerY := box.Y
+	centerX := box.X + box.W/2
+	lineY := headerY + headerHeight + 8
+	lineHeight := math.Max(1, box.Y+box.H-lineY)
+	owner := strings.TrimSpace(box.Attrs["uml-ref"])
+	if owner == "" {
+		owner = strings.TrimSpace(box.Attrs["ref"])
+	}
+	headerID := fmt.Sprintf("%s-sequence-header", box.ID)
+	headerCustomData := umlShapeCustomDataV1EngineSceneWalk(box)
+	if headerCustomData == nil {
+		headerCustomData = map[string]any{}
+	}
+	headerCustomData["xaligoUmlSequenceLifelineHeader"] = true
+	headerCustomData["xaligoUmlSequenceLifelineOwner"] = owner
+	*elements = append(*elements, map[string]any{
+		"id": headerID, "type": "rectangle",
+		"x": headerX, "y": headerY, "width": headerWidth, "height": headerHeight,
+		"angle": 0, "strokeColor": "#c45f1a", "backgroundColor": "#f5822a",
+		"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
+		"roughness": 0, "opacity": 100,
+		"groupIds": []string{}, "roundness": map[string]any{"type": 3},
+		"seed": stableSceneSeedV1EngineSceneTypes(headerID), "version": 1, "versionNonce": stableSceneSeedV1EngineSceneTypes(headerID),
+		"isDeleted": false, "boundElements": []map[string]any{{"type": "text", "id": fmt.Sprintf("%s-sequence-title", box.ID)}},
+		"updated": updated, "link": nil, "locked": false,
+		"customData": headerCustomData,
+	})
+	titleID := fmt.Sprintf("%s-sequence-title", box.ID)
+	*elements = append(*elements, map[string]any{
+		"id": titleID, "type": "text",
+		"x": headerX + 4, "y": headerY + 2, "width": math.Max(1, headerWidth-8), "height": math.Max(1, headerHeight-4),
+		"angle": 0, "strokeColor": "#ffffff", "backgroundColor": "transparent",
+		"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
+		"roughness": 0, "opacity": 100,
+		"groupIds": []string{}, "roundness": nil,
+		"seed": stableSceneSeedV1EngineSceneTypes(titleID), "version": 1, "versionNonce": stableSceneSeedV1EngineSceneTypes(titleID),
+		"isDeleted": false, "boundElements": nil,
+		"updated": updated, "link": nil, "locked": false,
+		"text": label, "fontSize": attrFloatV1EngineLayoutAttributes(box.Attrs["font-size"], 14), "fontFamily": fontFamilyV1EngineSceneWalk(box.Attrs["font-family"]),
+		"textAlign": "center", "verticalAlign": "middle",
+		"containerId": headerID, "originalText": label, "lineHeight": 1.2,
+		"customData": map[string]any{"xaligoUmlSequenceLifelineHeaderContent": true, "xaligoTextLayout": sceneTextLayoutV1EngineSceneBuild(entity.TextRoleLabel, true, 1.2)},
+	})
+	lineID := fmt.Sprintf("%s-sequence-lifeline", box.ID)
+	lineCustomData := map[string]any{
+		"xaligoUmlDiagramKind":                  "sequence-diagram",
+		"xaligoUmlElementKind":                  "lifeline-axis",
+		"xaligoUmlSequenceLifeline":             true,
+		"xaligoUmlSequenceLifelineOwner":        owner,
+		"xaligoUmlRelationDestinationReference": owner,
+	}
+	*elements = append(*elements, map[string]any{
+		"id": lineID, "type": "line",
+		"x": centerX, "y": lineY, "width": 0, "height": lineHeight,
+		"angle": 0, "strokeColor": "#f5822a", "backgroundColor": "transparent",
+		"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "dashed",
+		"roughness": 0, "opacity": 100,
+		"groupIds": []string{}, "roundness": nil,
+		"seed": stableSceneSeedV1EngineSceneTypes(lineID), "version": 1, "versionNonce": stableSceneSeedV1EngineSceneTypes(lineID),
+		"isDeleted": false, "boundElements": nil,
+		"updated": updated, "link": nil, "locked": false,
+		"points":     [][]float64{{0, 0}, {0, lineHeight}},
+		"customData": lineCustomData,
+	})
+	registerConnectionEndpointV1EngineSceneWalk(box, lineID, [4]float64{centerX - 3, lineY, 6, lineHeight}, endpointRects, endpointIDs)
 }
 
 func isUMLActivityContainerV1EngineSceneWalk(box *entity.Box) bool {

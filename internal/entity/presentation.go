@@ -117,6 +117,9 @@ type CustomData struct {
 	UMLRelationDestinationReference string      `json:"xaligoUmlRelationDestinationReference,omitempty"`
 	UMLMessageOrder                 string      `json:"xaligoUmlMessageOrder,omitempty"`
 	UMLMessageMode                  string      `json:"xaligoUmlMessageMode,omitempty"`
+	UMLSequenceLifeline             bool        `json:"xaligoUmlSequenceLifeline,omitempty"`
+	UMLSequenceLifelineHeader       bool        `json:"xaligoUmlSequenceLifelineHeader,omitempty"`
+	UMLSequenceLifelineOwner        string      `json:"xaligoUmlSequenceLifelineOwner,omitempty"`
 	UMLSequenceActivation           bool        `json:"xaligoUmlSequenceActivation,omitempty"`
 	UMLSequenceActivationOwner      string      `json:"xaligoUmlSequenceActivationOwner,omitempty"`
 	UMLSequenceStop                 bool        `json:"xaligoUmlSequenceStop,omitempty"`

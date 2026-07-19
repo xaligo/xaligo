@@ -89,15 +89,16 @@ default theme follows the xaligo activity-diagram palette: deep blue borders,
 xaligo-cyan classifier headers, white classifier bodies, and deep blue relation
 lines.
 
-Sequence diagrams place messages by numeric `order` from top to bottom and draw
-activation bars on the destination lifeline for `message`, `create-message`, and
-`destroy-message`. `return-message` remains a response connector and does not
-start a new activation bar. Plain `message` is synchronous by default and uses a
-filled triangle arrowhead; `message mode="async"` uses an open arrowhead for an
-asynchronous call. Response connectors render dashed, and `destroy-message` adds
-the standard stop marker at the destination lifeline. Activation and stop
-metadata are retained in editable scene output so sequence lifetimes remain
-inspectable after export.
+Sequence diagrams render each `participant` or `lifeline` as a top header with a
+dashed vertical lifeline axis. Messages are placed by numeric `order` from top to
+bottom and draw activation bars on the destination lifeline for `message`,
+`create-message`, and `destroy-message`. `return-message` remains a response
+connector and does not start a new activation bar. Plain `message` is synchronous
+by default and uses a filled triangle arrowhead; `message mode="async"` uses an
+open arrowhead for an asynchronous call. Response connectors render dashed, and
+`destroy-message` adds the standard stop marker at the destination lifeline.
+Activation, lifeline, and stop metadata are retained in editable scene output so
+sequence lifetimes remain inspectable after export.
 
 The generic `<element>` and `<relation>` spellings are not valid in the strict
 profile. Use the typed tags in the following table.
