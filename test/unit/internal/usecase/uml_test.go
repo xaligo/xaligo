@@ -287,6 +287,7 @@ func TestUMLSequenceOrderControlsVerticalMessageAnchors(t *testing.T) {
 	anchors := map[string][2]float64{}
 	var selfMessage *entity.Element
 	var selfMessageLabel *entity.Element
+	var selfMessageActivation *entity.Element
 	selfMessagePoints := [][]float64{}
 	for index := range scene.Elements {
 		element := &scene.Elements[index]
@@ -303,6 +304,9 @@ func TestUMLSequenceOrderControlsVerticalMessageAnchors(t *testing.T) {
 		if element.Type == "text" && element.CustomData.UMLMessageOrder == "2" {
 			selfMessageLabel = element
 		}
+		if element.CustomData.UMLSequenceActivation && element.CustomData.UMLMessageOrder == "2" {
+			selfMessageActivation = element
+		}
 	}
 	if len(anchors) != 3 {
 		t.Fatalf("sequence anchors = %#v", anchors)
@@ -316,12 +320,100 @@ func TestUMLSequenceOrderControlsVerticalMessageAnchors(t *testing.T) {
 	if len(selfMessagePoints) < 4 || selfMessagePoints[0][0] <= 0 || selfMessagePoints[1][0] < 96 || math.Abs(selfMessagePoints[len(selfMessagePoints)-1][0]-selfMessagePoints[0][0]) > 0.01 {
 		t.Fatalf("self-message should route as a right-side loop, got %#v", selfMessagePoints)
 	}
-	if selfMessage == nil || selfMessageLabel == nil {
-		t.Fatalf("self-message or label missing: arrow=%#v label=%#v", selfMessage, selfMessageLabel)
+	if selfMessage == nil || selfMessageLabel == nil || selfMessageActivation == nil {
+		t.Fatalf("self-message, label, or activation missing: arrow=%#v label=%#v activation=%#v", selfMessage, selfMessageLabel, selfMessageActivation)
+	}
+	startX := selfMessage.X + selfMessagePoints[0][0]
+	endX := selfMessage.X + selfMessagePoints[len(selfMessagePoints)-1][0]
+	activationRight := selfMessageActivation.X + selfMessageActivation.Width
+	if math.Abs(startX-activationRight) > 0.01 || math.Abs(endX-activationRight) > 0.01 {
+		t.Fatalf("self-message endpoints should align with activation right edge: start=%v end=%v activation=%#v", startX, endX, selfMessageActivation)
+	}
+	startY := selfMessage.Y + selfMessagePoints[0][1]
+	endY := selfMessage.Y + selfMessagePoints[len(selfMessagePoints)-1][1]
+	activationTop := selfMessageActivation.Y
+	activationBottom := selfMessageActivation.Y + selfMessageActivation.Height
+	if startY < activationTop || startY > activationBottom || endY < activationTop || endY > activationBottom {
+		t.Fatalf("self-message endpoints should stay within activation vertical range: startY=%v endY=%v activation=%#v", startY, endY, selfMessageActivation)
 	}
 	loopTopY := selfMessage.Y + selfMessagePoints[0][1]
 	if selfMessageLabel.Y+selfMessageLabel.Height > loopTopY-4 {
 		t.Fatalf("self-message label overlaps loop: arrow=%#v label=%#v", selfMessage, selfMessageLabel)
+	}
+}
+
+func TestUMLSequenceSelfMessageSVGAlignsWithActivationBar(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="sequence"><sequence-diagram><lifeline id="session" title="Session"/><message src="session" dst="session" order="1" title="validateCart()"/></sequence-diagram></uml></frame></frames></xaligo>`)
+	svg, err := newUsecase().RenderSVG(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderSVG() error = %v", err)
+	}
+	output := string(svg)
+	lifelineIndex := strings.Index(output, `stroke-dasharray="8 6"`)
+	activationIndex := strings.Index(output, `width="16" height="48"`)
+	if lifelineIndex < 0 || activationIndex < 0 || lifelineIndex > activationIndex {
+		t.Fatalf("activation bar should render in front of dashed lifeline: %s", output)
+	}
+	activationMatch := regexp.MustCompile(`<rect x="([0-9.]+)" y="[0-9.]+" width="([0-9.]+)" height="48"`).FindStringSubmatch(output)
+	if activationMatch == nil {
+		t.Fatalf("SVG missing activation bar: %s", output)
+	}
+	activationX, err := strconv.ParseFloat(activationMatch[1], 64)
+	if err != nil {
+		t.Fatalf("ParseFloat(activation x) error = %v", err)
+	}
+	activationWidth, err := strconv.ParseFloat(activationMatch[2], 64)
+	if err != nil {
+		t.Fatalf("ParseFloat(activation width) error = %v", err)
+	}
+	pathMatch := regexp.MustCompile(`<path d="M ([0-9.]+) [0-9.]+ L [0-9.]+ [0-9.]+ L [0-9.]+ [0-9.]+ L ([0-9.]+) [0-9.]+"[^>]*marker-end="url\(#xaligo-triangle\)"`).FindStringSubmatch(output)
+	if pathMatch == nil {
+		t.Fatalf("SVG missing self-message loop: %s", output)
+	}
+	startX, err := strconv.ParseFloat(pathMatch[1], 64)
+	if err != nil {
+		t.Fatalf("ParseFloat(start x) error = %v", err)
+	}
+	endX, err := strconv.ParseFloat(pathMatch[2], 64)
+	if err != nil {
+		t.Fatalf("ParseFloat(end x) error = %v", err)
+	}
+	activationRight := activationX + activationWidth
+	if math.Abs(startX-activationRight) > 0.01 || math.Abs(endX-activationRight) > 0.01 {
+		t.Fatalf("self-message endpoints should align with activation right edge: start=%v end=%v activationRight=%v", startX, endX, activationRight)
+	}
+}
+
+func TestUMLSequenceCallerActivationCoversChildMessageStart(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="sequence"><sequence-diagram><participant id="customer"/><lifeline id="api"/><lifeline id="session"/><message src="customer" dst="api" order="1" title="checkout"/><create-message src="api" dst="session" order="1.1" title="create"/></sequence-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var scene entity.PresentationScene
+	if err := json.Unmarshal(rawScene, &scene); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	var childMessage *entity.Element
+	var callerActivation *entity.Element
+	for index := range scene.Elements {
+		element := &scene.Elements[index]
+		if element.CustomData == nil {
+			continue
+		}
+		if element.Type == "arrow" && element.CustomData.UMLMessageOrder == "1.1" {
+			childMessage = element
+		}
+		if element.CustomData.UMLSequenceActivation && element.CustomData.UMLSequenceActivationOwner == "api" && element.CustomData.UMLMessageOrder == "1" {
+			callerActivation = element
+		}
+	}
+	if childMessage == nil || callerActivation == nil || len(childMessage.Points) == 0 {
+		t.Fatalf("child message or caller activation missing: message=%#v activation=%#v", childMessage, callerActivation)
+	}
+	startY := childMessage.Y + childMessage.Points[0][1]
+	if startY < callerActivation.Y || startY > callerActivation.Y+callerActivation.Height {
+		t.Fatalf("child message start should stay within caller activation range: startY=%v activation=%#v", startY, callerActivation)
 	}
 }
 

@@ -97,7 +97,7 @@ func umlSequenceSelfMessagePointsV1EngineSceneConnectionRoute(conn *entity.Node,
 	}
 	start := ptV1EngineRouteTypes{X: rect[0] + rect[2]*srcFP[0], Y: rect[1] + rect[3]*srcFP[1]}
 	end := ptV1EngineRouteTypes{X: rect[0] + rect[2]*dstFP[0], Y: rect[1] + rect[3]*dstFP[1]}
-	visualX := rect[0] + rect[2] + 4
+	visualX := rect[0] + rect[2]/2 + 8
 	start.X = visualX
 	end.X = visualX
 	loopWidth := math.Max(math.Max(72, rect[2]*3), umlSequenceSelfMessageLabelWidthV1EngineSceneConnectionRoute(conn)+24)

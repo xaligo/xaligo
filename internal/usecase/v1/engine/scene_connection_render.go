@@ -42,6 +42,7 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 	})
 	obstacles := excalidrawRouteObstaclesV1EngineSceneConnectionRoute(*elements)
 	hardObstacles := frameMetadataReservedObstaclesV1EngineSceneConnectionRender(frameMetadata)
+	activationRanges := umlSequenceActivationRangesV1EngineSceneConnectionRender(orderedConnections)
 	placed := [][]segmentV1EngineRouteTypes{}
 	routePaths := map[string][]ptV1EngineRouteTypes{}
 
@@ -313,7 +314,7 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 		applyDatabaseConnectionMetadataV1EngineSceneConnectionRender(customData, conn)
 		applyUMLConnectionMetadataV1EngineSceneConnectionRender(customData, conn)
 		applyConnectionDiffStatusV1EngineSceneDiffHighlight(customData, conn)
-		appendUMLSequenceActivationV1EngineSceneConnectionRender(elements, conn, connID, dstImgRect, dstEdge[1], srcFrameID, dstFrameID, updated, seed)
+		appendUMLSequenceActivationV1EngineSceneConnectionRender(elements, conn, connID, dstImgRect, dstEdge[1], activationRanges[conn], srcFrameID, dstFrameID, updated, seed)
 		appendUMLSequenceStopV1EngineSceneConnectionRender(elements, conn, connID, dstEdge, srcFrameID, dstFrameID, updated, seed)
 
 		*elements = append(*elements, map[string]any{
@@ -434,7 +435,83 @@ func localConnectionSideAvoidingFrameMetadataV1EngineSceneConnectionRender(side 
 	return nearestFrameSideExcludingV1EngineSceneConnectionPage(frameRect, endpointRect, otherRect, metadata.Position)
 }
 
-func appendUMLSequenceActivationV1EngineSceneConnectionRender(elements *[]map[string]any, conn *entity.Node, connID string, dstRect [4]float64, messageY float64, srcFrameID, dstFrameID string, updated int64, seed int) {
+type umlSequenceActivationRangeV1EngineSceneConnectionRender struct {
+	Top    float64
+	Bottom float64
+}
+
+func umlSequenceActivationRangesV1EngineSceneConnectionRender(connections []*entity.Node) map[*entity.Node]umlSequenceActivationRangeV1EngineSceneConnectionRender {
+	ranges := map[*entity.Node]umlSequenceActivationRangeV1EngineSceneConnectionRender{}
+	for _, conn := range connections {
+		if !isUMLSequenceActivationRelationV1EngineSceneConnectionRender(conn) {
+			continue
+		}
+		owner := umlSequenceEndpointReferenceV1EngineSceneConnectionRender(conn, "dst")
+		baseOrder := strings.TrimSpace(conn.Attr("uml-order"))
+		if owner == "" || baseOrder == "" {
+			continue
+		}
+		top, bottom, ok := umlSequenceMessagePositionRangeV1EngineSceneConnectionRender(conn, owner)
+		if !ok {
+			continue
+		}
+		for _, other := range connections {
+			if other == nil || other.Attr("uml-diagram-kind") != "sequence-diagram" || other == conn {
+				continue
+			}
+			otherOrder := strings.TrimSpace(other.Attr("uml-order"))
+			if otherOrder == "" || !umlSequenceSameTopLevelOrderV1EngineSceneConnectionRender(baseOrder, otherOrder) || compareUMLMessageOrderV1EngineParseUml(otherOrder, baseOrder) < 0 {
+				continue
+			}
+			if otherTop, otherBottom, ok := umlSequenceMessagePositionRangeV1EngineSceneConnectionRender(other, owner); ok {
+				top = math.Min(top, otherTop)
+				bottom = math.Max(bottom, otherBottom)
+			}
+		}
+		ranges[conn] = umlSequenceActivationRangeV1EngineSceneConnectionRender{Top: top, Bottom: bottom}
+	}
+	return ranges
+}
+
+func isUMLSequenceActivationRelationV1EngineSceneConnectionRender(conn *entity.Node) bool {
+	if conn == nil || conn.Attr("uml-diagram-kind") != "sequence-diagram" {
+		return false
+	}
+	relationKind := strings.TrimSpace(conn.Attr("uml-relation-kind"))
+	if relationKind == "" {
+		relationKind = strings.TrimSpace(conn.Tag)
+	}
+	return relationKind != "" && relationKind != "return-message"
+}
+
+func umlSequenceMessagePositionRangeV1EngineSceneConnectionRender(conn *entity.Node, owner string) (float64, float64, bool) {
+	top := math.Inf(1)
+	bottom := math.Inf(-1)
+	for _, endpoint := range []string{"src", "dst"} {
+		if umlSequenceEndpointReferenceV1EngineSceneConnectionRender(conn, endpoint) != owner {
+			continue
+		}
+		position, ok := umlSequencePositionV1EngineSceneConnectionRoute(conn, endpoint)
+		if !ok {
+			continue
+		}
+		top = math.Min(top, position)
+		bottom = math.Max(bottom, position)
+	}
+	return top, bottom, !math.IsInf(top, 0) && !math.IsInf(bottom, 0)
+}
+
+func umlSequenceEndpointReferenceV1EngineSceneConnectionRender(conn *entity.Node, endpoint string) string {
+	return firstNonEmptyAttrV1EngineSceneConnectionRoute(conn, "uml-"+endpoint+"-ref", endpoint)
+}
+
+func umlSequenceSameTopLevelOrderV1EngineSceneConnectionRender(left, right string) bool {
+	leftRoot, _, _ := strings.Cut(left, ".")
+	rightRoot, _, _ := strings.Cut(right, ".")
+	return leftRoot == rightRoot
+}
+
+func appendUMLSequenceActivationV1EngineSceneConnectionRender(elements *[]map[string]any, conn *entity.Node, connID string, dstRect [4]float64, messageY float64, activationRange umlSequenceActivationRangeV1EngineSceneConnectionRender, srcFrameID, dstFrameID string, updated int64, seed int) {
 	if elements == nil || conn == nil || conn.Attr("uml-diagram-kind") != "sequence-diagram" {
 		return
 	}
@@ -452,7 +529,7 @@ func appendUMLSequenceActivationV1EngineSceneConnectionRender(elements *[]map[st
 	if owner == "" {
 		return
 	}
-	barWidth := 12.0
+	barWidth := 16.0
 	barHeight := 48.0
 	switch relationKind {
 	case "create-message":
@@ -461,7 +538,19 @@ func appendUMLSequenceActivationV1EngineSceneConnectionRender(elements *[]map[st
 		barHeight = 38
 	}
 	x := dstRect[0] + dstRect[2]/2 - barWidth/2
-	y := math.Max(dstRect[1]+8, messageY-6)
+	activationTopY := messageY
+	activationBottomY := messageY
+	if conn.Attr("src") == conn.Attr("dst") {
+		if srcFP, ok := umlSequenceFixedPointV1EngineSceneConnectionRoute(conn, "src", "right"); ok {
+			activationTopY = math.Min(activationTopY, dstRect[1]+dstRect[3]*srcFP[1])
+		}
+	}
+	if activationRange.Bottom >= activationRange.Top && activationRange.Top > 0 {
+		activationTopY = math.Min(activationTopY, dstRect[1]+dstRect[3]*activationRange.Top)
+		activationBottomY = math.Max(activationBottomY, dstRect[1]+dstRect[3]*activationRange.Bottom)
+	}
+	y := math.Max(dstRect[1]+8, activationTopY-6)
+	barHeight = math.Max(barHeight, activationBottomY-activationTopY+12)
 	if bottom := dstRect[1] + dstRect[3] - 8; y+barHeight > bottom {
 		y = math.Max(dstRect[1]+8, bottom-barHeight)
 	}

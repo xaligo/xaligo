@@ -146,6 +146,7 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 	// 2) Containers/shapes in scene order. Group title tags are deferred until
 	// after every group border so a nested child border cannot cover a parent tag.
 	headerShapes := []*entity.Element{}
+	sequenceActivationShapes := []entity.DrawOp{}
 	for _, el := range elements {
 		if el.ID == "paper-frame" || (el.CustomData != nil && el.CustomData.PageFrame) {
 			continue
@@ -163,7 +164,9 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 		switch el.Type {
 		case "frame", "rectangle", "ellipse", "diamond":
 			if op, ok := shapeOpV1EnginePlanShape(el, frame, ppi); ok {
-				if el.CustomData != nil && el.CustomData.FrameMetadata {
+				if el.CustomData != nil && el.CustomData.UMLSequenceActivation {
+					sequenceActivationShapes = append(sequenceActivationShapes, op)
+				} else if el.CustomData != nil && el.CustomData.FrameMetadata {
 					frameMetadataShapes = append(frameMetadataShapes, op)
 				} else if el.CustomData != nil && el.CustomData.DiffHighlight {
 					diffAreaHighlights = append(diffAreaHighlights, op)
@@ -175,6 +178,18 @@ func BuildPlanV1EnginePlanBuild(scene *entity.PresentationScene, opt entity.Plan
 	}
 	// 3) Connectors above containers but below icons/labels.
 	for _, el := range prepared.raw {
+		if el.CustomData == nil || !el.CustomData.UMLSequenceLifeline {
+			continue
+		}
+		if op, ok := rawLineOpV1EnginePlanConnectorDraw(el, frame, ppi, style); ok {
+			ops = append(ops, op)
+		}
+	}
+	ops = append(ops, sequenceActivationShapes...)
+	for _, el := range prepared.raw {
+		if el.CustomData != nil && el.CustomData.UMLSequenceLifeline {
+			continue
+		}
 		if op, ok := rawLineOpV1EnginePlanConnectorDraw(el, frame, ppi, style); ok {
 			if highlight, highlighted := connectorDiffHighlightOpV1EnginePlanDiffHighlight(op, connectorDiffStatusV1EnginePlanDiffHighlight(el)); highlighted {
 				ops = append(ops, highlight)
