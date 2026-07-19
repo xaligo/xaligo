@@ -213,6 +213,17 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 			if configured, exists := b.Attrs["background-color"]; exists {
 				backgroundColor = configured
 			}
+			if b.Tag == "uml" && b.Attrs["uml-kind"] == "activity-diagram" {
+				appendUMLActivityPartitionsV1EngineSceneWalk(b, elements, updated)
+			}
+			if isXaligoActivityShapeV1EngineSceneWalk(b) {
+				genStroke = "#052d6e"
+				backgroundColor = umlActivityShapeBackgroundV1EngineSceneWalk(b)
+				fillStyle = "solid"
+				if b.Attrs["uml-element-kind"] == "final" {
+					backgroundColor = "#052d6e"
+				}
+			}
 			boundElements := any(nil)
 			shapeCustomData := umlShapeCustomDataV1EngineSceneWalk(b)
 			if b.Label != "" {
@@ -271,7 +282,7 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 					"x": textX, "y": textY,
 					"width": textW, "height": textH,
 					"angle":       0,
-					"strokeColor": tableTextColorV1EngineSceneWalk(b), "backgroundColor": "transparent",
+					"strokeColor": umlShapeTextColorV1EngineSceneWalk(b), "backgroundColor": "transparent",
 					"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
 					"roughness": 0, "opacity": 100,
 					"groupIds": []string{}, "roundness": nil,
@@ -302,6 +313,120 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 	}
 }
 
+func appendUMLActivityPartitionsV1EngineSceneWalk(box *entity.Box, elements *[]map[string]any, updated int64) {
+	partitions := umlActivityPartitionsV1EngineSceneWalk(box)
+	if len(partitions) == 0 {
+		return
+	}
+	innerX, innerY := box.X+8, box.Y+40
+	innerW, innerH := math.Max(1, box.W-16), math.Max(1, box.H-48)
+	headerH := math.Min(44, innerH*0.2)
+	laneW := innerW / float64(len(partitions))
+	for index, partition := range partitions {
+		x := innerX + float64(index)*laneW
+		width := laneW
+		if index == len(partitions)-1 {
+			width = innerX + innerW - x
+		}
+		backgroundID := fmt.Sprintf("%s-partition-%s-bg", box.ID, partition.id)
+		backgroundSeed := stableSceneSeedV1EngineSceneTypes(backgroundID)
+		backgroundColor := "#ffffff"
+		if index%2 == 1 {
+			backgroundColor = "#f8fbff"
+		}
+		*elements = append(*elements, map[string]any{
+			"id": backgroundID, "type": "rectangle",
+			"x": x, "y": innerY, "width": width, "height": innerH,
+			"angle": 0, "strokeColor": "#08b8ea", "backgroundColor": backgroundColor,
+			"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
+			"roughness": 0, "opacity": 100,
+			"groupIds": []string{}, "roundness": nil,
+			"seed": backgroundSeed, "version": 1, "versionNonce": backgroundSeed,
+			"isDeleted": false, "boundElements": nil,
+			"updated": updated, "link": nil, "locked": false,
+			"customData": map[string]any{"xaligoUmlPartition": true, "xaligoUmlPartitionId": partition.id, "xaligoUmlPartitionTitle": partition.title},
+		})
+		headerID := fmt.Sprintf("%s-partition-%s-header", box.ID, partition.id)
+		headerSeed := stableSceneSeedV1EngineSceneTypes(headerID)
+		*elements = append(*elements, map[string]any{
+			"id": headerID, "type": "rectangle",
+			"x": x, "y": innerY, "width": width, "height": headerH,
+			"angle": 0, "strokeColor": "#08b8ea", "backgroundColor": "#08b8ea",
+			"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
+			"roughness": 0, "opacity": 100,
+			"groupIds": []string{}, "roundness": nil,
+			"seed": headerSeed, "version": 1, "versionNonce": headerSeed,
+			"isDeleted": false, "boundElements": nil,
+			"updated": updated, "link": nil, "locked": false,
+			"customData": map[string]any{"xaligoUmlPartitionHeader": true, "xaligoUmlPartitionId": partition.id, "xaligoUmlPartitionTitle": partition.title},
+		})
+		textID := fmt.Sprintf("%s-partition-%s-title", box.ID, partition.id)
+		textSeed := stableSceneSeedV1EngineSceneTypes(textID)
+		*elements = append(*elements, map[string]any{
+			"id": textID, "type": "text",
+			"x": x + 4, "y": innerY + 8,
+			"width": math.Max(1, width-8), "height": math.Max(1, headerH-12),
+			"angle": 0, "strokeColor": "#ffffff", "backgroundColor": "transparent",
+			"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
+			"roughness": 0, "opacity": 100,
+			"groupIds": []string{}, "roundness": nil,
+			"seed": textSeed, "version": 1, "versionNonce": textSeed,
+			"isDeleted": false, "boundElements": nil,
+			"updated": updated, "link": nil, "locked": false,
+			"text": partition.title, "fontSize": 18, "fontFamily": 2,
+			"textAlign": "center", "verticalAlign": "middle",
+			"containerId": nil, "originalText": partition.title, "lineHeight": 1.2,
+			"customData": map[string]any{"xaligoUmlPartitionHeaderContent": true, "xaligoTextLayout": sceneTextLayoutV1EngineSceneBuild(entity.TextRoleGroupHeader, false, 1.2)},
+		})
+	}
+}
+
+type umlActivityPartitionV1EngineSceneWalk struct {
+	id    string
+	title string
+}
+
+func umlActivityPartitionsV1EngineSceneWalk(box *entity.Box) []umlActivityPartitionV1EngineSceneWalk {
+	seen := map[string]bool{}
+	var partitions []umlActivityPartitionV1EngineSceneWalk
+	for _, child := range box.Children {
+		id := strings.TrimSpace(child.Attrs["uml-partition-id"])
+		title := strings.TrimSpace(child.Attrs["uml-partition-title"])
+		if id == "" || title == "" || seen[id] {
+			continue
+		}
+		seen[id] = true
+		partitions = append(partitions, umlActivityPartitionV1EngineSceneWalk{id: id, title: title})
+	}
+	return partitions
+}
+
+func isXaligoActivityShapeV1EngineSceneWalk(box *entity.Box) bool {
+	return box != nil && box.Tag == "rectangle" && box.Attrs["uml-diagram-kind"] == "activity-diagram"
+}
+
+func umlActivityShapeBackgroundV1EngineSceneWalk(box *entity.Box) string {
+	if strings.TrimSpace(box.Attrs["tone"]) == "primary" {
+		return "#08b8ea"
+	}
+	switch strings.TrimSpace(box.Attrs["uml-element-kind"]) {
+	case "object-node":
+		return "#e6fbf7"
+	default:
+		return "#e8f7fd"
+	}
+}
+
+func umlShapeTextColorV1EngineSceneWalk(box *entity.Box) string {
+	if isXaligoActivityShapeV1EngineSceneWalk(box) && strings.TrimSpace(box.Attrs["tone"]) == "primary" {
+		return "#ffffff"
+	}
+	if isXaligoActivityShapeV1EngineSceneWalk(box) {
+		return "#052d6e"
+	}
+	return tableTextColorV1EngineSceneWalk(box)
+}
+
 func groupHeaderYAvoidingFrameMetadataV1EngineSceneWalk(y, height float64, frame *entity.Box) float64 {
 	if frame == nil || frame.FrameMetadata == nil || frame.FrameMetadata.ReservedW <= 0 || frame.FrameMetadata.ReservedH <= 0 {
 		return y
@@ -325,6 +450,8 @@ func umlShapeCustomDataV1EngineSceneWalk(box *entity.Box) map[string]any {
 		"uml-kind":              "xaligoUmlDiagramKind",
 		"uml-diagram-kind":      "xaligoUmlDiagramKind",
 		"uml-element-kind":      "xaligoUmlElementKind",
+		"uml-partition-id":      "xaligoUmlPartitionId",
+		"uml-partition-title":   "xaligoUmlPartitionTitle",
 		"uml-owner-id":          "xaligoUmlOwnerId",
 		"uml-owner-ref":         "xaligoUmlOwnerReference",
 		"uml-compartment-kinds": "xaligoUmlCompartmentKinds",

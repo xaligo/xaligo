@@ -445,6 +445,7 @@ func applyUMLConnectionMetadataV1EngineSceneConnectionRender(customData map[stri
 		"uml-dst-ref":          "xaligoUmlRelationDestinationReference",
 		"uml-order":            "xaligoUmlMessageOrder",
 		"uml-guard":            "xaligoUmlGuard",
+		"uml-route":            "xaligoUmlRoute",
 		"uml-src-multiplicity": "xaligoUmlSourceMultiplicity",
 		"uml-dst-multiplicity": "xaligoUmlDestinationMultiplicity",
 		"uml-at":               "xaligoUmlOccurrenceAt",

@@ -575,7 +575,8 @@ The following rules are normative:
   boundary in public connection references.
 - The diagram-kind child contains a non-empty set of direct element and
   relation children. Unknown diagram kinds and unknown children are errors;
-  arbitrary custom tags are not generic UML elements.
+  arbitrary custom tags are not generic UML elements. The activity-diagram
+  exception is `<partition>`, which groups activity nodes into swimlanes.
 - Every UML element requires a non-empty diagram-local `id`, unique within the
   UML component. A UML relation's `src` and `dst` use those local IDs, without
   a UML or frame prefix, and both endpoints must exist in the selected model.
@@ -622,7 +623,7 @@ connection form.
 | `composite-structure-diagram` | `structure`, `collaboration`, `part`, `port`, `component` | `connector`, `assembly`, `delegation`, `dependency` | Requires a part or port. Parts/ports require typed owners. Connector endpoints are parts/ports, assembly is port to port, and delegation starts at a port. |
 | `profile-diagram` | `profile`, `stereotype`, `metaclass` | `extension`, `reference`, `generalization` | Requires a profile and stereotype. Extension is stereotype to metaclass; generalization is stereotype to stereotype. |
 | `use-case-diagram` | `actor`, `use-case`, `system-boundary` | `association`, `include`, `extend`, `generalization` | Requires a use case. Association joins actor and use-case; include/extend join use-cases; generalization joins equal actor/use-case kinds. |
-| `activity-diagram` | `initial`, `final`, `activity`, `action`, `decision`, `merge`, `fork`, `join`, `object-node` | `control-flow`, `object-flow` | Requires an activity/action. Control-flow excludes object-node. Object-flow requires an object-node endpoint. Initial/final direction and control-node degrees are validated. |
+| `activity-diagram` | `initial`, `final`, `activity`, `action`, `decision`, `merge`, `fork`, `join`, `object-node`; optional `partition` containers | `control-flow`, `object-flow` | Requires an activity/action. Control-flow excludes object-node. Object-flow requires an object-node endpoint. Initial/final direction and control-node degrees are validated. `lanes="vertical"`, `theme="xaligo"`, partition swimlanes, and loop flow metadata are supported. |
 | `state-machine-diagram` | `initial`, `final`, `state`, `history`, `choice`, `fork`, `join` | `transition` | Requires a state. Initial/final direction and pseudostate degrees are validated. |
 | `sequence-diagram` | `participant`, `lifeline` | `message`, `return-message`, `create-message`, `destroy-message` | Requires a participant/lifeline. Every message has a diagram-unique order. Create/destroy cannot be self messages. |
 | `communication-diagram` | `object`, `participant` | `link`, `message` | Requires two participants, one link, and one message. Every message has a unique order and matching unordered link pair. |
@@ -631,6 +632,46 @@ connection form.
 
 The endpoint contracts above are closed. An admitted relation with an endpoint
 pair not described by its row is a validation error.
+
+### Activity partitions and swimlanes
+
+An `activity-diagram` may use `lanes="vertical"` to render vertical
+responsibility swimlanes. With lanes enabled, `theme="xaligo"` applies the
+xaligo logo palette: `#08b8ea` for lane headers and primary actions,
+`#052d6e` for activity text/borders, and `#04b79f` reserved for follow-up
+object-flow/success accents. The only accepted V1 values are
+`lanes="vertical"` and `theme="xaligo"`; other values are errors.
+
+Each `<partition>` must be a direct child of `<activity-diagram>` and must
+have a stable `id` and non-empty `title`. A partition contains only activity
+element children, not relations. Relations remain direct children of the
+diagram and keep using normal local element IDs:
+
+```xml
+<activity-diagram direction="down" lanes="vertical" theme="xaligo">
+  <partition id="customer" title="Customer">
+    <initial id="start" />
+    <action id="enter-pin" title="Enter PIN" tone="primary" />
+  </partition>
+  <partition id="atm" title="ATM">
+    <action id="request-pin" title="Request PIN" />
+    <decision id="pin-valid" title="PIN valid?" />
+  </partition>
+  <control-flow src="enter-pin" dst="request-pin" />
+  <control-flow src="pin-valid" dst="request-pin" guard="invalid PIN" route="loop" />
+</activity-diagram>
+```
+
+A direct activity element may instead use `lane="partition-id"` to join a
+declared partition. A nested element may omit `lane` or repeat the enclosing
+partition ID; any other `lane` value is a validation error. Partition IDs use
+the same local UML identifier restrictions as element IDs and must be unique
+within the activity diagram.
+
+Partitioned activities are laid out with equal-width vertical lanes, a top
+lane-header band, and each node centered within its owning lane. `tone="primary"`
+on `activity` or `action` uses the primary xaligo fill and white text. The
+partition ID and title are retained in editable-scene custom data.
 
 ### Ownership
 
@@ -693,6 +734,8 @@ source-to-destination order. Relation color and normal connector side, anchor,
 stroke-width, bend, scale, and grid attributes use the `<connection>` rules.
 `kind`, `stroke-style`, `arrowhead`, `start-arrowhead`, and `end-arrowhead` are
 invalid because the UML relation kind owns line and marker semantics.
+`route="loop"` is allowed only on `control-flow` and `object-flow`; it is
+retained as UML route metadata for renderers and editors.
 
 Sequence and communication message kinds require `order`. Its canonical form
 is one or more positive decimal integers without leading zeroes, separated by

@@ -59,6 +59,27 @@ func TestUMLShapeKindsReachEditableSceneAndSharedPlan(t *testing.T) {
 	}
 }
 
+func TestUMLActivitySwimlanesReachEditableScene(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="960" height="640"><uml id="activity"><activity-diagram direction="down" lanes="vertical" theme="xaligo"><partition id="customer" title="Customer"><initial id="start"/><action id="enter-pin" title="Enter PIN" tone="primary"/><final id="done"/></partition><partition id="atm" title="ATM"><action id="request-pin" title="Request PIN"/><decision id="pin-valid" title="PIN valid?"/></partition><control-flow src="start" dst="enter-pin"/><control-flow src="enter-pin" dst="request-pin"/><control-flow src="request-pin" dst="pin-valid"/><control-flow src="pin-valid" dst="request-pin" guard="invalid PIN" route="loop"/><control-flow src="pin-valid" dst="done" guard="valid"/></activity-diagram></uml></frame></frames></xaligo>`)
+	scene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	for _, want := range []string{
+		`"xaligoUmlPartition": true`,
+		`"xaligoUmlPartitionHeader": true`,
+		`"xaligoUmlPartitionId": "customer"`,
+		`"xaligoUmlPartitionTitle": "Customer"`,
+		`"xaligoUmlRoute": "loop"`,
+		`"backgroundColor": "#08b8ea"`,
+		`"strokeColor": "#052d6e"`,
+	} {
+		if !strings.Contains(string(scene), want) {
+			t.Fatalf("scene missing %q: %s", want, scene)
+		}
+	}
+}
+
 func TestUMLTimingAndOwnerMetadataReachEditableScene(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="timing"><timing-diagram><lifeline id="api"/><time-state id="busy" owner="api" from="10" to="20"><region>work</region></time-state><occurrence src="api" dst="busy" at="15" title="dispatch"/></timing-diagram></uml></frame></frames></xaligo>`)
 	scene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})

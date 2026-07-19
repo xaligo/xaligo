@@ -24,6 +24,11 @@ type umlRequiredElementsV1EngineParseUml struct {
 	minimum     int
 }
 
+type umlSourceElementV1EngineParseUml struct {
+	node      *entity.Node
+	partition string
+}
+
 var umlDiagramSpecsV1EngineParseUml = map[string]umlDiagramSpecV1EngineParseUml{
 	"class-diagram": umlSpecV1EngineParseUml("class,interface,enumeration", "association,aggregation,composition,generalization,realization,dependency",
 		umlRequiredElementsV1EngineParseUml{"classifier", umlTagSetV1EngineParseUml("class,interface,enumeration"), 1}),
@@ -230,12 +235,15 @@ func normalizeUMLComponentV1EngineParseUml(uml, frame *entity.Node, models map[s
 	normalizedElements := map[string]*entity.Node{}
 	sourceElements := map[string]*entity.Node{}
 	elementCounts := map[string]int{}
-	for _, child := range diagram.Children {
+	partitions := map[string]string{}
+	flattened, err := flattenUMLDiagramChildrenV1EngineParseUml(diagram, spec, partitions)
+	if err != nil {
+		return err
+	}
+	for _, entry := range flattened {
+		child := entry.node
 		switch {
 		case umlElementTagsV1EngineParseUml[child.Tag]:
-			if !spec.elements[child.Tag] {
-				return &entity.ParseError{Position: child.Position, Err: fmt.Errorf("<%s> does not allow UML element <%s>", diagram.Tag, child.Tag)}
-			}
 			rawID := child.Attr("id")
 			id := strings.TrimSpace(rawID)
 			if id == "" {
@@ -260,12 +268,13 @@ func normalizeUMLComponentV1EngineParseUml(uml, frame *entity.Node, models map[s
 				return &entity.ParseError{Position: child.Position, Err: err}
 			}
 			normalized := normalizeUMLElementV1EngineParseUml(child, scopedIDs[id], diagram.Tag, umlID)
+			if entry.partition != "" {
+				normalized.Attrs["uml-partition-id"] = entry.partition
+				normalized.Attrs["uml-partition-title"] = partitions[entry.partition]
+			}
 			normalizedElements[id] = normalized
 			elements = append(elements, normalized)
 		case umlRelationTagsV1EngineParseUml[child.Tag]:
-			if !spec.relations[child.Tag] {
-				return &entity.ParseError{Position: child.Position, Err: fmt.Errorf("<%s> does not allow UML relation <%s>", diagram.Tag, child.Tag)}
-			}
 			relations = append(relations, child)
 		default:
 			return &entity.ParseError{Position: child.Position, Err: fmt.Errorf("<%s> does not support UML child <%s>", diagram.Tag, child.Tag)}
@@ -275,7 +284,8 @@ func normalizeUMLComponentV1EngineParseUml(uml, frame *entity.Node, models map[s
 		return &entity.ParseError{Position: diagram.Position, Err: err}
 	}
 	ownerIDs := map[string]string{}
-	for _, child := range diagram.Children {
+	for _, entry := range flattened {
+		child := entry.node
 		if !umlElementTagsV1EngineParseUml[child.Tag] {
 			continue
 		}
@@ -316,6 +326,62 @@ func normalizeUMLComponentV1EngineParseUml(uml, frame *entity.Node, models map[s
 	}
 	uml.Children = elements
 	return nil
+}
+
+func flattenUMLDiagramChildrenV1EngineParseUml(diagram *entity.Node, spec umlDiagramSpecV1EngineParseUml, partitions map[string]string) ([]umlSourceElementV1EngineParseUml, error) {
+	var flattened []umlSourceElementV1EngineParseUml
+	for _, child := range diagram.Children {
+		switch {
+		case child.Tag == "partition":
+			if diagram.Tag != "activity-diagram" {
+				return nil, &entity.ParseError{Position: child.Position, Err: fmt.Errorf("<%s> does not support UML child <partition>", diagram.Tag)}
+			}
+			id := strings.TrimSpace(child.Attr("id"))
+			if id == "" {
+				return nil, &entity.ParseError{Position: child.Position, Err: fmt.Errorf("UML <partition> requires id")}
+			}
+			if err := validateUMLIdentifierV1EngineParseUml("UML <partition> id", child.Attr("id")); err != nil {
+				return nil, &entity.ParseError{Position: child.Position, Err: err}
+			}
+			if partitions[id] != "" {
+				return nil, &entity.ParseError{Position: child.Position, Err: fmt.Errorf("duplicate UML partition id %q", id)}
+			}
+			title := strings.TrimSpace(child.Attr("title"))
+			if title == "" {
+				return nil, &entity.ParseError{Position: child.Position, Err: fmt.Errorf("UML <partition id=%q> requires title", id)}
+			}
+			partitions[id] = title
+			for _, nested := range child.Children {
+				if !umlElementTagsV1EngineParseUml[nested.Tag] {
+					return nil, &entity.ParseError{Position: nested.Position, Err: fmt.Errorf("UML <partition> does not support child <%s>", nested.Tag)}
+				}
+				if nestedLane := strings.TrimSpace(nested.Attr("lane")); nestedLane != "" && nestedLane != id {
+					return nil, &entity.ParseError{Position: nested.Position, Err: fmt.Errorf("UML <%s lane=%q> conflicts with enclosing partition %q", nested.Tag, nestedLane, id)}
+				}
+				flattened = append(flattened, umlSourceElementV1EngineParseUml{node: nested, partition: id})
+			}
+		case umlElementTagsV1EngineParseUml[child.Tag]:
+			if !spec.elements[child.Tag] {
+				return nil, &entity.ParseError{Position: child.Position, Err: fmt.Errorf("<%s> does not allow UML element <%s>", diagram.Tag, child.Tag)}
+			}
+			partition := strings.TrimSpace(child.Attr("lane"))
+			flattened = append(flattened, umlSourceElementV1EngineParseUml{node: child, partition: partition})
+		case umlRelationTagsV1EngineParseUml[child.Tag]:
+			if !spec.relations[child.Tag] {
+				return nil, &entity.ParseError{Position: child.Position, Err: fmt.Errorf("<%s> does not allow UML relation <%s>", diagram.Tag, child.Tag)}
+			}
+			flattened = append(flattened, umlSourceElementV1EngineParseUml{node: child})
+		default:
+			return nil, &entity.ParseError{Position: child.Position, Err: fmt.Errorf("<%s> does not support UML child <%s>", diagram.Tag, child.Tag)}
+		}
+	}
+	for _, entry := range flattened {
+		if entry.partition == "" || partitions[entry.partition] != "" {
+			continue
+		}
+		return nil, &entity.ParseError{Position: entry.node.Position, Err: fmt.Errorf("UML <%s lane=%q> references an unknown partition", entry.node.Tag, entry.partition)}
+	}
+	return flattened, nil
 }
 
 func scopedUMLIDV1EngineParseUml(umlID, localID string) string {
@@ -395,6 +461,24 @@ func validateUMLDiagramAttributesV1EngineParseUml(diagram *entity.Node) error {
 			return fmt.Errorf("<%s direction=%q> must be right or down", diagram.Tag, direction)
 		}
 		diagram.Attrs["direction"] = direction
+	}
+	if lanes := strings.ToLower(strings.TrimSpace(diagram.Attr("lanes"))); lanes != "" {
+		if diagram.Tag != "activity-diagram" {
+			return fmt.Errorf("<%s> does not allow lanes", diagram.Tag)
+		}
+		if lanes != "vertical" {
+			return fmt.Errorf("<%s lanes=%q> must be vertical", diagram.Tag, lanes)
+		}
+		diagram.Attrs["lanes"] = lanes
+	}
+	if theme := strings.ToLower(strings.TrimSpace(diagram.Attr("theme"))); theme != "" {
+		if diagram.Tag != "activity-diagram" {
+			return fmt.Errorf("<%s> does not allow theme", diagram.Tag)
+		}
+		if theme != "xaligo" {
+			return fmt.Errorf("<%s theme=%q> must be xaligo", diagram.Tag, theme)
+		}
+		diagram.Attrs["theme"] = theme
 	}
 	return nil
 }
@@ -656,6 +740,17 @@ func validateUMLRelationAttributesV1EngineParseUml(relation *entity.Node) error 
 		case "control-flow", "object-flow", "transition":
 		default:
 			return fmt.Errorf("UML <%s> does not allow guard", relation.Tag)
+		}
+	}
+	if route := strings.ToLower(strings.TrimSpace(relation.Attr("route"))); route != "" {
+		switch relation.Tag {
+		case "control-flow", "object-flow":
+			if route != "loop" {
+				return fmt.Errorf("UML <%s route=%q> must be loop", relation.Tag, route)
+			}
+			relation.Attrs["route"] = route
+		default:
+			return fmt.Errorf("UML <%s> does not allow route", relation.Tag)
 		}
 	}
 	for _, attribute := range []string{"src-multiplicity", "dst-multiplicity"} {
@@ -954,7 +1049,7 @@ func normalizeUMLRelationV1EngineParseUml(source *entity.Node, scopedSrc, scoped
 	attrs["uml-relation-label"] = umlRelationLabelV1EngineParseUml(source)
 	attrs["uml-src-ref"] = publicUMLRefV1EngineParseUml(umlID, source.Attr("src"))
 	attrs["uml-dst-ref"] = publicUMLRefV1EngineParseUml(umlID, source.Attr("dst"))
-	for _, attribute := range []string{"order", "guard", "src-multiplicity", "dst-multiplicity", "at", "from", "to"} {
+	for _, attribute := range []string{"order", "guard", "route", "src-multiplicity", "dst-multiplicity", "at", "from", "to"} {
 		if value := strings.TrimSpace(source.Attr(attribute)); value != "" {
 			attrs["uml-"+attribute] = value
 		}

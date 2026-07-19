@@ -62,7 +62,7 @@ sample paths, and rendered artifact paths over prose-only status notes.
 | Order | Feature | Status | Evidence | Next action |
 |---:|---|---|---|---|
 | 1 | Canonical V1 document envelope | in-progress | `TestV1ParseValidatesCanonicalEnvelopeHierarchy`; canonical sample validates and renders two SVG artifacts | Finish migration-warning/docs-image audit, then close Q01. |
-| 2 | UML diagrams | auditing | UML sample set includes activity, class, sequence, state machine, component, deployment, object, package, composite structure, communication, interaction overview, profile, timing, use-case, and `uml-all` | Prioritize per-diagram semantic accuracy, then visual design polish, then cross-format parity. |
+| 2 | UML diagrams | in-progress | Activity swimlane slice adds parser/layout/scene support for `partition`, `lanes="vertical"`, `theme="xaligo"`, and `route="loop"`; target SVG renders from `docs/src/examples/targets/uml-activity-atm-swimlane.xal` | Finish activity visual parity and cross-format checks, then continue per-diagram semantic/design passes. |
 | 3 | Data registry and imports | not-started | table data, database schema, SQL import commits exist | Inventory import coverage and diagnostics after the UML precision/design pass starts. |
 | 4 | Tables | not-started | `docs/src/examples/samples/tables.xal` | Audit table layout, pipe styling, text fitting, and docs image quality. |
 | 5 | Relational databases | not-started | `docs/src/examples/samples/databases.xal` | Audit entity layout, key styling, relation routing, and SQL import behavior. |
@@ -136,8 +136,8 @@ when the new task can be verified and committed independently.
 |---|---|---|---|
 | Q05.1 | not-started | Freeze the supported UML sample matrix and map each sample to its owning syntax, parser, scene, layout, routing, and renderer responsibilities. | inventory of `docs/src/examples/samples/uml-*.xal`; owner map recorded in this file or docs |
 | Q05.2 | not-started | Establish a per-UML visual baseline before edits: validate and render every `uml-*.xal` sample to SVG, then identify overlap, spacing, typography, connector, and semantic-notation gaps. | `go run ./cmd validate docs/src/examples/samples/uml-all.xal`; SVG render set under `output/uml-quality/` |
-| Q05.3 | not-started | Improve activity-diagram semantic accuracy: activity partitions/swimlanes, initial/final nodes, actions, object nodes, decisions, forks, joins, merges, responsibilities, constraints, guards, `control-flow`, `object-flow`, and backward loop edges. | `uml-activity.xal` plus `docs/src/examples/targets/uml-activity-atm-swimlane.xal` with parser/scene assertions and SVG geometry checks |
-| Q05.4 | not-started | Improve activity-diagram design quality: xaligo-logo color theme, vertical lane headers, left-to-right/top-to-bottom reading flow, diamond/bar/final-node proportions, lane spacing, label placement, and control-vs-object-flow distinction. | regenerated activity SVG visual review plus focused coordinate assertions |
+| Q05.3 | in-progress | Improve activity-diagram semantic accuracy: activity partitions/swimlanes, initial/final nodes, actions, object nodes, decisions, forks, joins, merges, responsibilities, constraints, guards, `control-flow`, `object-flow`, and backward loop edges. | `TestUMLActivityPartitionsNormalizeV1EngineParseUML`; `route="loop"` retained as UML route metadata; target sample renders |
+| Q05.4 | in-progress | Improve activity-diagram design quality: xaligo-logo color theme, vertical lane headers, left-to-right/top-to-bottom reading flow, diamond/bar/final-node proportions, lane spacing, label placement, and control-vs-object-flow distinction. | `TestUMLActivitySwimlanesReachEditableScene`; regenerated `output/uml-activity-atm-swimlane-rendered.svg` visual reference |
 | Q05.5 | not-started | Improve class-diagram semantic accuracy: class boxes, attributes, operations, visibility, stereotypes, abstract/static markers, inheritance, realization, association, aggregation, composition, dependency, and multiplicity. | `uml-class.xal` structural tests and relation routing assertions |
 | Q05.6 | not-started | Improve class-diagram design quality: compartment rhythm, long member wrapping, stereotype readability, relation label spacing, crow-foot/diamond marker clarity, and dense-layout crossing reduction. | class SVG/PPTX review and text-fit tests |
 | Q05.7 | not-started | Improve sequence-diagram semantic accuracy: lifelines, participants, activation bars, sync/async messages, returns, self messages, create/delete, ordering, and message labels. | `uml-sequence.xal` layout tests and route ordering assertions |
@@ -377,8 +377,8 @@ verify:
 
 ## Target Activity Diagram Capability
 
-This section is a planning target, not a statement of currently implemented
-behavior. Use it to drive the first UML activity-diagram implementation slice.
+This section tracks the activity-diagram target and the remaining follow-up
+work beyond the initial swimlane implementation slice.
 
 The reference capability is an ATM withdrawal activity diagram with three
 vertical swimlanes for actor/system responsibility, a visible lane-header row,
@@ -388,7 +388,7 @@ that cross lane boundaries without obscuring labels. The resulting xaligo
 sample should be able to express the same diagram structure while using xaligo
 brand colors rather than the reference image's yellow/orange palette.
 
-Proposed syntax additions should preserve existing `<activity-diagram>` inputs:
+Implemented syntax additions preserve existing `<activity-diagram>` inputs:
 
 ```xml
 <activity-diagram direction="right" theme="xaligo" lanes="vertical">
@@ -411,19 +411,17 @@ Proposed syntax additions should preserve existing `<activity-diagram>` inputs:
 </activity-diagram>
 ```
 
-The parser should accept either nested nodes inside `<partition>` or a
-node-level `lane="partition-id"` reference, but not both for the same node.
+The parser accepts either nested nodes inside `<partition>` or a node-level
+`lane="partition-id"` reference, but not both for the same node.
 Every partition requires a stable `id` and non-empty `title`. A node may belong
 to at most one partition. Flow endpoints remain normal activity node IDs, and
 cross-partition flow is allowed.
 
-The activity layout should reserve the top header band for lane titles, divide
-the content area into equal or explicitly weighted vertical lanes, keep each
-node inside its owning lane, and route cross-lane flows orthogonally. Backward
-or retry flows, such as invalid PIN and invalid amount loops, should route on a
-separate lane outside the forward path and keep guard labels readable. Decision
-diamonds must preserve square proportions, fork/join bars must remain thin and
-visually distinct, and final nodes must render as UML bullseye finals.
+The activity layout reserves the top header band for lane titles, divides the
+content area into equal vertical lanes, and keeps each node inside its owning
+lane. Remaining follow-up work includes explicit lane weights, specialized
+backward-loop routing outside the forward path, object-flow accent styling,
+fork/join bar polish, and UML bullseye final-node rendering.
 
 Use the xaligo readme logo as the activity theme source:
 

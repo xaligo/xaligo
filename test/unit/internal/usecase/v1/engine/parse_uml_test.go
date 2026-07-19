@@ -61,6 +61,29 @@ func TestUMLModelDataReferenceV1EngineParseUML(t *testing.T) {
 	}
 }
 
+func TestUMLActivityPartitionsNormalizeV1EngineParseUML(t *testing.T) {
+	source := `<xaligo version="1"><data></data><frames><frame id="main"><uml id="atm"><activity-diagram direction="down" lanes="vertical" theme="xaligo"><partition id="customer" title="Customer"><initial id="start"/><action id="enter-pin" title="Enter PIN"/></partition><partition id="atm-lane" title="ATM"><action id="request-pin" title="Request PIN"/><decision id="valid"/></partition><control-flow src="start" dst="enter-pin"/><control-flow src="enter-pin" dst="request-pin"/><control-flow src="request-pin" dst="valid"/><control-flow src="valid" dst="request-pin" guard="invalid" route="loop"/><control-flow src="valid" dst="enter-pin" guard="valid"/></activity-diagram></uml></frame></frames></xaligo>`
+	document, err := v1engine.ParseV1EngineParseDocument(strings.NewReader(source))
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+	uml := document.Root.Children[0].Children[0]
+	if uml.Attr("uml-kind") != "activity-diagram" || uml.Attr("layout") != "vertical" {
+		t.Fatalf("normalized UML attrs = %#v", uml.Attrs)
+	}
+	first := uml.Children[0]
+	if first.Attr("uml-partition-id") != "customer" || first.Attr("uml-partition-title") != "Customer" {
+		t.Fatalf("partition metadata = %#v", first.Attrs)
+	}
+	frame := document.Root.Children[0]
+	if len(frame.Children) != 6 {
+		t.Fatalf("normalized frame children = %#v", frame.Children)
+	}
+	if got := frame.Children[4].Attr("uml-route"); got != "loop" {
+		t.Fatalf("loop route = %q, attrs = %#v", got, frame.Children[4].Attrs)
+	}
+}
+
 func TestUMLRejectsInvalidStructureV1EngineParseUML(t *testing.T) {
 	tests := []struct {
 		name, body, want string
