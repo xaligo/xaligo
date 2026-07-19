@@ -85,6 +85,33 @@ components arranged with the normal row, column, container, and grid controls.
 The component selects its semantic processor; `frame` never carries values
 such as `type="uml-class"`.
 
+## Integrated-format decisions
+
+The integrated-format discussion fixes these document-level decisions for the
+structured diagram work:
+
+- The canonical document root is `<xaligo version="1">`, with reusable
+  document data outside the renderable `<frames>` collection.
+- `<frames>` contains the independent page or component boundaries, and each
+  direct child `<frame>` owns presentation layout, page metadata, and the
+  components rendered on that page.
+- Tables, relational databases, UML, and existing architecture diagrams may
+  use separate semantic parsers, validators, layout engines, and renderers.
+  They are not forced through one generic Item/Grid/Line semantic processor.
+- The shared boundary between those processors is limited to document
+  structure, stable IDs, data references, imports, style references, frame
+  bounds, exposed anchors, and renderer-neutral draw operations.
+- Cross-frame data reuse is allowed through `<data>` references; cross-frame
+  visual state is not shared. Page-crossing relationships should become
+  references or page-link projections instead of one physical line spanning
+  multiple frames.
+
+UML uses a parent `<uml>` component. The UML diagram family is selected only by
+the single diagram-kind child under `<uml>`, such as `<class-diagram>` or
+`<sequence-diagram>`. The frame does not carry UML kind metadata, and one frame
+may place multiple independent UML components or mix UML with tables,
+databases, and existing architecture components.
+
 ## Frame-to-page projection
 
 An identified child frame is one physical page by default. The complete scene
