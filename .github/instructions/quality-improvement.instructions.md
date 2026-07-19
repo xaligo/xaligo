@@ -37,6 +37,43 @@ For each feature, proceed in this order:
    their visible behavior or contract changes.
 7. Commit one coherent feature-quality slice after the required checks pass.
 
+## Status Tracking
+
+Maintain the feature hardening status in this file so future agents can resume
+from the current quality pass without relying on conversation history.
+
+Use these status values:
+
+- `not-started`: the feature is in the Phase 2 scope but has not been audited.
+- `auditing`: contracts, samples, tests, and visual output are being inspected.
+- `needs-work`: a quality gap is known and has not been fixed.
+- `in-progress`: a fix or quality improvement is actively being implemented.
+- `blocked`: progress requires a decision, missing tool, or external input.
+- `done`: the feature meets the Definition of Done in this file.
+
+Update the status board when a feature-quality slice starts, when a gap is
+found, when validation changes the assessment, and when a slice is committed.
+Keep each row concise but evidence-based. Prefer commit hashes, test names,
+sample paths, and rendered artifact paths over prose-only status notes.
+
+| Order | Feature | Status | Evidence | Next action |
+|---:|---|---|---|---|
+| 1 | Canonical V1 document envelope | not-started | `docs/src/examples/samples/canonical-v1-envelope.xal` | Audit contract, validation, rendering, and migration diagnostics. |
+| 2 | Data registry and imports | not-started | table data, database schema, SQL import commits exist | Inventory import coverage and diagnostics. |
+| 3 | Tables | not-started | `docs/src/examples/samples/tables.xal` | Audit table layout, pipe styling, text fitting, and docs image quality. |
+| 4 | Relational databases | not-started | `docs/src/examples/samples/databases.xal` | Audit entity layout, key styling, relation routing, and SQL import behavior. |
+| 5 | UML diagrams | not-started | `docs/src/examples/samples/uml-activity.xal` | Start with activity diagram visual and behavioral quality. |
+| 6 | Frame-scoped references | not-started | frame-qualified endpoint support exists | Audit duplicate ID handling and user-correctable diagnostics. |
+| 7 | Cross-frame page links | not-started | `docs/src/examples/samples/page-links.xal` | Audit terminal side selection, labels, insets, and invalid edge handling. |
+| 8 | Frame metadata bands | not-started | `docs/src/examples/samples/frame-metadata.xal` | Audit metadata layout, reservation strips, wrapping, and collisions. |
+| 9 | Page-oriented outputs | not-started | SVG/PPTX/PDF/Excel pagination commits exist | Audit default artifacts, `--combine-frames`, safe IDs, and crops. |
+| 10 | Renderer matrix | not-started | SVG, Excalidraw, PPTX, PDF, Excel, XYFlow, Isoflow encoders | Define representative cross-format checks for changed shared contracts. |
+| 11 | CI, release, and tooling | not-started | `VERSION`, workflows, RTK and security instructions | Audit CI gates, version policy, npm lockfile policy, and vendored dependency handling. |
+
+When a row reaches `done`, its evidence should include the commit that closed
+the slice and the highest-signal verification commands that passed. If a row
+is `blocked`, the next action must state the specific decision or tool needed.
+
 ## Design Quality Gate
 
 Treat design quality as a first-class feature requirement, not a cosmetic
