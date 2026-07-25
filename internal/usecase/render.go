@@ -3,11 +3,15 @@ package usecase
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"html"
 	"io"
 	"math"
+	"net/url"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -17,6 +21,9 @@ import (
 	"github.com/xaligo/xaligo/internal/repository"
 	"github.com/xaligo/xaligo/internal/share"
 	v1engine "github.com/xaligo/xaligo/internal/usecase/v1/engine"
+	"github.com/yuin/goldmark"
+	goldmarkast "github.com/yuin/goldmark/ast"
+	goldmarktext "github.com/yuin/goldmark/text"
 )
 
 // RenderUsecase owns format dispatch and the shared render pipeline.
@@ -283,9 +290,9 @@ func (rcvr *renderUsecase) BuildPPTXPlan(ctx context.Context, input []byte, opts
 }
 
 func (rcvr *renderUsecase) NewPreviewRepository(path string, opts entity.PreviewOptions) (repository.PreviewRepository, error) {
-	renderPreview := func(ctx context.Context, input []byte, renderOpts entity.RenderOptions) ([]byte, error) {
-		renderOpts.CombineFrames = true
-		return rcvr.RenderSVG(ctx, input, renderOpts)
+	renderPreview := rcvr.renderSVGPreview
+	if opts.Kind == entity.PreviewKindHTML {
+		renderPreview = rcvr.renderMarkdownPreview
 	}
 	return repository.NewPreviewRepository(
 		path,
@@ -296,6 +303,220 @@ func (rcvr *renderUsecase) NewPreviewRepository(path string, opts entity.Preview
 		rcvr.xaligoRepository.ReadSource,
 	)
 }
+
+// renderSVGPreview renders a .xal source onto one combined SVG canvas for
+// the live preview server.
+func (rcvr *renderUsecase) renderSVGPreview(ctx context.Context, input []byte, renderOpts entity.RenderOptions) ([]byte, error) {
+	renderOpts.CombineFrames = true
+	return rcvr.RenderSVG(ctx, input, renderOpts)
+}
+
+// renderMarkdownPreview renders every ```xal code block in a Markdown source
+// to an isolated SVG image and converts the result to a standalone HTML
+// document for the live preview server.
+func (rcvr *renderUsecase) renderMarkdownPreview(ctx context.Context, input []byte, renderOpts entity.RenderOptions) ([]byte, error) {
+	blockIndex := 0
+	placeholderPrefix := "xaligo-diagram-placeholder"
+	for strings.Contains(string(input), placeholderPrefix) {
+		placeholderPrefix += "-safe"
+	}
+	diagrams := make([]markdownPreviewDiagram, 0)
+	embedded, err := EmbedXalCodeBlocks(string(input), func(xal string) ([]string, error) {
+		blockIndex++
+		artifacts, renderErr := rcvr.RenderArtifacts(ctx, []byte(xal), renderOpts)
+		if renderErr != nil {
+			return nil, fmt.Errorf("render xal code block %d: %w", blockIndex, renderErr)
+		}
+		lines := make([]string, 0, len(artifacts)*2)
+		for artifactIndex, artifact := range artifacts {
+			placeholder := fmt.Sprintf("%s-%d-%d", placeholderPrefix, blockIndex, artifactIndex+1)
+			alt := "xaligo diagram"
+			if strings.TrimSpace(artifact.ID) != "" {
+				alt += " " + artifact.ID
+			}
+			diagrams = append(diagrams, markdownPreviewDiagram{
+				placeholder: placeholder,
+				alt:         alt,
+				svg:         append([]byte(nil), artifact.Data...),
+			})
+			lines = append(lines, "", placeholder, "")
+		}
+		return lines, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return renderMarkdownHTMLDocument(embedded, diagrams)
+}
+
+// EmbedXalCodeBlocks scans Markdown source for fenced code blocks whose info
+// string is exactly "xal" (``` or ~~~ fences, up to 3 leading spaces of
+// indentation per CommonMark) and replaces each one with the lines returned
+// by renderBlock for that block's body. Every other line is preserved as-is.
+// Shared by the `render markdown` file-output flow and the Markdown live
+// preview flow.
+func EmbedXalCodeBlocks(source string, renderBlock func(xal string) ([]string, error)) (string, error) {
+	lines := strings.Split(source, "\n")
+	output := make([]string, 0, len(lines))
+	lineIndex := 0
+	for lineIndex < len(lines) {
+		line := lines[lineIndex]
+		fenceChar, fenceLen, info, isFence := parseMarkdownFenceOpen(line)
+		if !isFence {
+			output = append(output, line)
+			lineIndex++
+			continue
+		}
+		bodyStart := lineIndex + 1
+		closeIndex := findMarkdownFenceClose(lines, bodyStart, fenceChar, fenceLen)
+		if info != "xal" {
+			if closeIndex == -1 {
+				output = append(output, lines[lineIndex:]...)
+				break
+			}
+			output = append(output, lines[lineIndex:closeIndex+1]...)
+			lineIndex = closeIndex + 1
+			continue
+		}
+		if closeIndex == -1 {
+			return "", fmt.Errorf("unterminated ```xal code fence starting at line %d", lineIndex+1)
+		}
+		body := strings.Join(lines[bodyStart:closeIndex], "\n")
+		replacement, err := renderBlock(body)
+		if err != nil {
+			return "", err
+		}
+		output = append(output, replacement...)
+		lineIndex = closeIndex + 1
+	}
+	return strings.Join(output, "\n"), nil
+}
+
+// parseMarkdownFenceOpen reports whether line opens a fenced code block (at
+// most 3 leading spaces, 3+ backticks or tildes), returning the fence
+// character, fence length, and trimmed info string.
+func parseMarkdownFenceOpen(line string) (fenceChar byte, fenceLen int, info string, ok bool) {
+	trimmed := strings.TrimLeft(line, " ")
+	if len(line)-len(trimmed) > 3 {
+		return 0, 0, "", false
+	}
+	if len(trimmed) < 3 {
+		return 0, 0, "", false
+	}
+	fenceChar = trimmed[0]
+	if fenceChar != '`' && fenceChar != '~' {
+		return 0, 0, "", false
+	}
+	for fenceLen < len(trimmed) && trimmed[fenceLen] == fenceChar {
+		fenceLen++
+	}
+	if fenceLen < 3 {
+		return 0, 0, "", false
+	}
+	return fenceChar, fenceLen, strings.TrimSpace(trimmed[fenceLen:]), true
+}
+
+// findMarkdownFenceClose returns the index of the first line at or after
+// start that closes a fence opened with fenceChar/fenceLen, or -1 if none is
+// found.
+func findMarkdownFenceClose(lines []string, start int, fenceChar byte, fenceLen int) int {
+	for index := start; index < len(lines); index++ {
+		trimmed := strings.TrimLeft(lines[index], " ")
+		if len(lines[index])-len(trimmed) > 3 {
+			continue
+		}
+		count := 0
+		for count < len(trimmed) && trimmed[count] == fenceChar {
+			count++
+		}
+		if count >= fenceLen && strings.TrimSpace(trimmed[count:]) == "" {
+			return index
+		}
+	}
+	return -1
+}
+
+type markdownPreviewDiagram struct {
+	placeholder string
+	alt         string
+	svg         []byte
+}
+
+// renderMarkdownHTMLDocument converts Markdown source into a standalone HTML
+// document. Raw Markdown HTML remains disabled. Rendered diagrams are inserted
+// afterwards as data-URL images so every SVG has its own document scope and
+// duplicate SVG IDs cannot collide.
+func renderMarkdownHTMLDocument(source string, diagrams []markdownPreviewDiagram) ([]byte, error) {
+	converter := goldmark.New()
+	sourceBytes := []byte(source)
+	document := converter.Parser().Parse(goldmarktext.NewReader(sourceBytes))
+	if err := goldmarkast.Walk(document, func(node goldmarkast.Node, entering bool) (goldmarkast.WalkStatus, error) {
+		if !entering {
+			return goldmarkast.WalkContinue, nil
+		}
+		image, ok := node.(*goldmarkast.Image)
+		if !ok {
+			return goldmarkast.WalkContinue, nil
+		}
+		image.Destination = rewriteMarkdownImageDestination(image.Destination)
+		return goldmarkast.WalkContinue, nil
+	}); err != nil {
+		return nil, fmt.Errorf("inspect markdown images: %w", err)
+	}
+	var htmlBody bytes.Buffer
+	if err := converter.Renderer().Render(&htmlBody, sourceBytes, document); err != nil {
+		return nil, fmt.Errorf("convert markdown to HTML: %w", err)
+	}
+	body := htmlBody.String()
+	for _, diagram := range diagrams {
+		needle := "<p>" + diagram.placeholder + "</p>"
+		if !strings.Contains(body, needle) {
+			return nil, fmt.Errorf("embed rendered diagram: placeholder %q was not preserved", diagram.placeholder)
+		}
+		dataURL := "data:image/svg+xml;base64," + base64.StdEncoding.EncodeToString(diagram.svg)
+		replacement := `<figure class="xaligo-diagram"><img src="` + dataURL +
+			`" alt="` + html.EscapeString(diagram.alt) + `" loading="lazy"></figure>`
+		body = strings.Replace(body, needle, replacement, 1)
+	}
+	var doc bytes.Buffer
+	doc.WriteString(markdownPreviewHTMLHeader)
+	doc.WriteString(body)
+	doc.WriteString(markdownPreviewHTMLFooter)
+	return doc.Bytes(), nil
+}
+
+func rewriteMarkdownImageDestination(destination []byte) []byte {
+	raw := strings.TrimSpace(string(destination))
+	parsed, err := url.Parse(raw)
+	if err != nil {
+		return []byte("#xaligo-blocked-relative-image")
+	}
+	if parsed.IsAbs() || parsed.Host != "" || strings.HasPrefix(raw, "//") ||
+		parsed.Path == "" || strings.HasPrefix(parsed.Path, "/") {
+		return destination
+	}
+	slashPath := strings.ReplaceAll(parsed.Path, `\`, "/")
+	cleanPath := path.Clean(slashPath)
+	if cleanPath == "." || cleanPath == ".." || strings.HasPrefix(cleanPath, "../") {
+		return []byte("#xaligo-blocked-relative-image")
+	}
+	parsed.Path = "/assets/" + cleanPath
+	parsed.RawPath = ""
+	return []byte(parsed.String())
+}
+
+const markdownPreviewHTMLHeader = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>xaligo markdown preview</title><style>
+body{margin:0;padding:24px;background:#fff;color:#111827;font-family:system-ui,sans-serif;line-height:1.6}
+.xaligo-diagram{margin:8px 0}.xaligo-diagram img{max-width:100%;height:auto;box-shadow:0 4px 16px #0002;display:block}
+pre{background:#f3f4f6;padding:12px;border-radius:6px;overflow:auto}
+code{background:#f3f4f6;padding:2px 4px;border-radius:4px}
+</style></head><body>
+`
+
+const markdownPreviewHTMLFooter = `
+</body></html>`
 
 func (rcvr *renderUsecase) diagnose(ctx context.Context, input []byte) ([]entity.Diagnostic, error) {
 	if err := checkContext(ctx); err != nil {

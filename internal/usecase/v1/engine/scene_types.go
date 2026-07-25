@@ -65,6 +65,7 @@ var awsGroupsV1EngineSceneTypes = map[string]groupDefV1EngineSceneTypes{
 	"elastic-beanstalk-container":   {"#E7601B", "solid", 2, ""},
 	"aws-step-functions-workflow":   {"#E7008A", "solid", 2, ""},
 	"generic-group":                 {"#AAB7B8", "dashed", 1, ""},
+	"capture":                       {"#F5A623", "dashed", 1, ""},
 }
 
 const (

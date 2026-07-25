@@ -521,7 +521,7 @@ goldmark's Markdown processing is outlined in the diagram below.
                            V
             +-------- parser.Parser ---------------------------
             | 1. Parse block elements into AST
-            |   1. If a parsed block is a paragraph, apply
+            |   1. If a parsed block is a paragraph, apply 
             |      ast.ParagraphTransformer
             | 2. Traverse AST and parse blocks.
             |   1. Process delimiters(emphasis) at the end of

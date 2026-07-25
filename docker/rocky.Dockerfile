@@ -26,19 +26,20 @@ RUN case "${TARGETARCH}" in \
   && rm /tmp/javy.gz /tmp/javy.sha256 \
   && javy --version
 
-WORKDIR /build/external
+WORKDIR /build
 
-COPY external/package.json external/tsconfig.json external/command.ts external/index.ts ./
-COPY external/controller ./controller
-COPY external/entity ./entity
-COPY external/repository ./repository
-COPY external/share ./share
-COPY external/usecase ./usecase
+COPY package.json package-lock.json ./
+COPY external/package.json external/tsconfig.json external/command.ts external/index.ts ./external/
+COPY external/controller ./external/controller
+COPY external/entity ./external/entity
+COPY external/repository ./external/repository
+COPY external/share ./external/share
+COPY external/usecase ./external/usecase
 
-RUN mkdir -p wasm \
-  && npm install --no-audit --no-fund \
-  && npm run build:pptx-exporter-wasm \
-  && test -s wasm/xaligo.wasm
+RUN mkdir -p external/wasm \
+  && npm ci --ignore-scripts --no-audit --no-fund \
+  && npm run build:pptx-exporter-wasm --workspace=@xaligo/xaligo-external \
+  && test -s external/wasm/xaligo.wasm
 
 FROM rockylinux:9
 

@@ -7,12 +7,12 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to release (e.g. 1.2.3 — without leading v). Defaults to VERSION.'
+        description: 'Version to release (e.g. 1.2.3 — without leading v). When set, it must match VERSION.'
         required: false
         type: string
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   metadata:
@@ -20,7 +20,11 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       base_version: ${{ steps.meta.outputs.base_version }}
-      package_version: ${{ steps.meta.outputs.package_version }}
+      native_version: ${{ steps.meta.outputs.native_version }}
+      npm_version: ${{ steps.meta.outputs.npm_version }}
+      deb_version: ${{ steps.meta.outputs.deb_version }}
+      rpm_version: ${{ steps.meta.outputs.rpm_version }}
+      rpm_release: ${{ steps.meta.outputs.rpm_release }}
       release_tag: ${{ steps.meta.outputs.release_tag }}
       release_title: ${{ steps.meta.outputs.release_title }}
       prerelease: ${{ steps.meta.outputs.prerelease }}
@@ -35,43 +39,76 @@ jobs:
       - name: Resolve release metadata
         id: meta
         shell: bash
+        env:
+          RELEASE_EVENT_NAME: ${{ github.event_name }}
+          RELEASE_RUN_NUMBER: ${{ github.run_number }}
+          RELEASE_INPUT_VERSION: ${{ github.event.inputs.version || '' }}
         run: |
-          input_version="${{ github.event.inputs.version || '' }}"
-          source_version="$(sed -n '1{s/^v//;p;q;}' VERSION)"
-          base_version="${input_version:-$source_version}"
+          scripts/build/release-metadata.sh >> "$GITHUB_OUTPUT"
 
-          if [[ ! "$base_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Invalid version: $base_version. Must be X.Y.Z" >&2
+  quality:
+    name: Release quality gate
+    runs-on: ubuntu-latest
+    needs: metadata
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.26.x'
+          cache: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install npm dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Set up security scanner
+        run: make security-setup
+
+      - name: Run security gate
+        run: make security-check
+
+      - name: Run Go tests and build
+        run: |
+          go test ./... -count=1
+          go build ./...
+
+      - name: Build browser WebAssembly adapter
+        run: GOOS=js GOARCH=wasm go build -o /tmp/xaligo-browser.wasm ./cmd/wasm
+
+      - name: Verify native document encoders stay out of browser WebAssembly
+        shell: bash
+        run: |
+          dependencies="$(GOOS=js GOARCH=wasm go list -deps ./cmd/wasm)"
+          if grep -Eq '^(github.com/tdewolff/canvas($|/)|github.com/xuri/excelize/v2($|/))' <<< "$dependencies"; then
+            echo "Native PDF/Excel dependencies entered the browser WebAssembly graph." >&2
             exit 1
           fi
 
-          if [[ "${{ github.event_name }}" == "push" ]]; then
-            package_version="${base_version}+main.${{ github.run_number }}"
-            release_tag="main-${{ github.run_number }}"
-            release_title="xaligo ${base_version} main ${{ github.run_number }}"
-            prerelease="true"
-            npm_tag="latest"
-          else
-            package_version="$base_version"
-            release_tag="v${base_version}"
-            release_title="xaligo v${base_version}"
-            prerelease="false"
-            npm_tag="latest"
-          fi
+      - name: Test npm native installer
+        run: |
+          npm run test:npm-installer
+          npm run test:release-metadata
 
-          {
-            echo "base_version=$base_version"
-            echo "package_version=$package_version"
-            echo "release_tag=$release_tag"
-            echo "release_title=$release_title"
-            echo "prerelease=$prerelease"
-            echo "npm_tag=$npm_tag"
-          } >> "$GITHUB_OUTPUT"
+      - name: Test and build TypeScript exporters
+        run: |
+          npm --prefix external test
+          npm run build --workspace=@xaligo/xaligo-external
 
   package:
     name: Build packages (${{ matrix.goarch }})
     runs-on: ubuntu-latest
-    needs: metadata
+    needs:
+      - metadata
+      - quality
     strategy:
       fail-fast: false
       matrix:
@@ -108,7 +145,8 @@ jobs:
             --platform "${{ matrix.platform }}" \
             -v "$PWD:/workspace" \
             -w /workspace \
-            -e VERSION="${{ needs.metadata.outputs.package_version }}" \
+            -e NATIVE_VERSION="${{ needs.metadata.outputs.native_version }}" \
+            -e PACKAGE_VERSION="${{ needs.metadata.outputs.deb_version }}" \
             -e GOARCH="${{ matrix.goarch }}" \
             -e GOFLAGS="-buildvcs=false" \
             "xaligo-package-ubuntu:${{ matrix.goarch }}" \
@@ -129,7 +167,9 @@ jobs:
             --platform "${{ matrix.platform }}" \
             -v "$PWD:/workspace" \
             -w /workspace \
-            -e VERSION="${{ needs.metadata.outputs.package_version }}" \
+            -e NATIVE_VERSION="${{ needs.metadata.outputs.native_version }}" \
+            -e PACKAGE_VERSION="${{ needs.metadata.outputs.rpm_version }}" \
+            -e PACKAGE_RELEASE="${{ needs.metadata.outputs.rpm_release }}" \
             -e GOARCH="${{ matrix.goarch }}" \
             -e GOFLAGS="-buildvcs=false" \
             "xaligo-package-rocky:${{ matrix.goarch }}" \
@@ -142,14 +182,18 @@ jobs:
             --platform "${{ matrix.platform }}" \
             -v "$PWD:/workspace" \
             -w /workspace \
-            -e VERSION="${{ needs.metadata.outputs.package_version }}" \
+            -e NATIVE_VERSION="${{ needs.metadata.outputs.native_version }}" \
+            -e NPM_VERSION="${{ needs.metadata.outputs.npm_version }}" \
             -e RELEASE_TAG="${{ needs.metadata.outputs.release_tag }}" \
             -e GOFLAGS="-buildvcs=false" \
             -e NPM_PACKAGE_TARGETS="darwin/amd64 darwin/arm64 linux/amd64 linux/arm64 windows/amd64 windows/arm64" \
             "xaligo-package-ubuntu:${{ matrix.goarch }}" \
             sh -ec '
-              npm install --no-audit --no-fund
-              node -e "const fs=require(\"node:fs\"); const path=\"package.json\"; const pkg=JSON.parse(fs.readFileSync(path, \"utf8\")); pkg.version=process.env.VERSION; pkg.xaligo={...(pkg.xaligo || {}), releaseTag: process.env.RELEASE_TAG}; fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + \"\n\");"
+              npm ci --ignore-scripts --no-audit --no-fund
+              node -e "const fs=require(\"node:fs\"); const path=\"package.json\"; const pkg=JSON.parse(fs.readFileSync(path, \"utf8\")); pkg.version=process.env.NPM_VERSION; pkg.xaligo={...(pkg.xaligo || {}), releaseTag: process.env.RELEASE_TAG}; fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + \"\n\");"
+              printf "%s\n" "$NPM_VERSION" > VERSION
+              npm run test:npm-installer
+              npm run test:release-metadata
               npm run build
               npm run build:npm-binaries
               mkdir -p output/packages
@@ -171,6 +215,8 @@ jobs:
   release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     needs:
       - metadata
       - package
@@ -183,13 +229,32 @@ jobs:
           path: output/release
           merge-multiple: true
 
+      - name: Verify native binary checksums
+        shell: bash
+        run: |
+          mapfile -t checksums < <(find output/release -maxdepth 1 -type f -name 'xaligo-*.sha256' -print | sort)
+          if [[ "${#checksums[@]}" -ne 6 ]]; then
+            echo "Expected 6 native binary checksums, found ${#checksums[@]}." >&2
+            exit 1
+          fi
+          for checksum in "${checksums[@]}"; do
+            (
+              cd output/release
+              sha256sum --check "$(basename "$checksum")"
+            )
+          done
+
       - name: Create GitHub Release and upload packages
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ needs.metadata.outputs.release_tag }}
           RELEASE_TITLE: ${{ needs.metadata.outputs.release_title }}
           PRERELEASE: ${{ needs.metadata.outputs.prerelease }}
-          PACKAGE_VERSION: ${{ needs.metadata.outputs.package_version }}
+          NATIVE_VERSION: ${{ needs.metadata.outputs.native_version }}
+          NPM_VERSION: ${{ needs.metadata.outputs.npm_version }}
+          DEB_VERSION: ${{ needs.metadata.outputs.deb_version }}
+          RPM_VERSION: ${{ needs.metadata.outputs.rpm_version }}
+          RPM_RELEASE: ${{ needs.metadata.outputs.rpm_release }}
         shell: bash
         run: |
           args=(
@@ -202,7 +267,7 @@ jobs:
             output/release/xaligo-windows-*
             --target "$GITHUB_SHA"
             --title "$RELEASE_TITLE"
-            --notes "Automated package build. Package version: ${PACKAGE_VERSION}."
+            --notes "Automated package build. Native: ${NATIVE_VERSION}; npm: ${NPM_VERSION}; Debian: ${DEB_VERSION}; RPM: ${RPM_VERSION}-${RPM_RELEASE}."
             --repo "$GITHUB_REPOSITORY"
           )
 
@@ -235,5 +300,10 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_TAG: ${{ needs.metadata.outputs.npm_tag }}
+          NPM_VERSION: ${{ needs.metadata.outputs.npm_version }}
         run: |
+          if npm view "@xaligo/xaligo@${NPM_VERSION}" version >/dev/null 2>&1; then
+            echo "@xaligo/xaligo@${NPM_VERSION} is already published; skipping."
+            exit 0
+          fi
           npm publish output/release/*.tgz --access public --tag "$NPM_TAG"

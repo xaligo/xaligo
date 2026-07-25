@@ -2425,9 +2425,41 @@ func TestUMLClassStereotypeAndModifiersReachEditableScene(t *testing.T) {
 	if err := json.Unmarshal(rawScene, &raw); err != nil {
 		t.Fatalf("json.Unmarshal(raw map) error = %v", err)
 	}
+	elementIDs := map[string]bool{}
+	for _, rawElement := range raw["elements"].([]any) {
+		element, _ := rawElement.(map[string]any)
+		if id, _ := element["id"].(string); id != "" {
+			elementIDs[id] = true
+		}
+	}
+	var classBoundElementIDs []string
+	for _, rawElement := range raw["elements"].([]any) {
+		element, _ := rawElement.(map[string]any)
+		if element["id"] != classElement.ID {
+			continue
+		}
+		for _, rawBoundElement := range element["boundElements"].([]any) {
+			boundElement, _ := rawBoundElement.(map[string]any)
+			id, _ := boundElement["id"].(string)
+			if boundElement["type"] != "text" || id == "" || !elementIDs[id] {
+				t.Fatalf("class bound element does not reference an emitted text element: %#v", boundElement)
+			}
+			classBoundElementIDs = append(classBoundElementIDs, id)
+		}
+	}
+	classElementIDPrefix := strings.TrimSuffix(classElement.ID, "-rect")
+	wantClassBoundElementIDs := []string{
+		classElementIDPrefix + "-class-header-text",
+		classElementIDPrefix + "-class-attribute-text-0",
+		classElementIDPrefix + "-class-operation-text-1",
+	}
+	if strings.Join(classBoundElementIDs, ",") != strings.Join(wantClassBoundElementIDs, ",") {
+		t.Fatalf("class bound element IDs = %#v, want %#v", classBoundElementIDs, wantClassBoundElementIDs)
+	}
 	foundHeader := false
 	foundHeaderText := false
-	foundBodyText := false
+	foundAttributeText := false
+	foundOperationText := false
 	for _, rawElement := range raw["elements"].([]any) {
 		element, _ := rawElement.(map[string]any)
 		customData, _ := element["customData"].(map[string]any)
@@ -2435,28 +2467,44 @@ func TestUMLClassStereotypeAndModifiersReachEditableScene(t *testing.T) {
 			foundHeader = true
 		}
 		if customData["xaligoUmlClassHeaderContent"] == true && element["strokeColor"] == "#ffffff" {
-			if element["text"] == "Repository" {
+			if element["text"] == "«service»\nRepository {abstract} {static}" {
 				foundHeaderText = true
 			}
 		}
-		if text, _ := element["text"].(string); strings.Contains(text, "- store: Store") && strings.Contains(text, "+ find(id): Entity") {
-			foundBodyText = true
+		if customData["xaligoUmlClassAttributeContent"] == true {
+			if text, _ := element["text"].(string); text == "- store: Store" {
+				foundAttributeText = true
+			}
+		}
+		if customData["xaligoUmlClassOperationContent"] == true {
+			if text, _ := element["text"].(string); text == "+ find(id): Entity" {
+				foundOperationText = true
+			}
+		}
+		if text, _ := element["text"].(string); strings.Contains(text, "────────") {
+			t.Fatalf("class compartment text should not repeat the graphical divider as a text line: %#v", element)
 		}
 	}
-	if !foundHeader || !foundHeaderText || !foundBodyText {
-		t.Fatalf("class compartment rendering missing header=%t headerText=%t bodyText=%t: %s", foundHeader, foundHeaderText, foundBodyText, rawScene)
+	if !foundHeader || !foundHeaderText || !foundAttributeText || !foundOperationText {
+		t.Fatalf("class compartment rendering missing header=%t headerText=%t attributeText=%t operationText=%t: %s", foundHeader, foundHeaderText, foundAttributeText, foundOperationText, rawScene)
 	}
-	foundDivider := false
+	foundHeaderDivider := false
+	foundBodyDivider := false
 	for _, rawElement := range raw["elements"].([]any) {
 		element, _ := rawElement.(map[string]any)
 		customData, _ := element["customData"].(map[string]any)
 		if customData["xaligoUmlClassHeaderDivider"] == true {
-			foundDivider = true
-			break
+			foundHeaderDivider = true
+		}
+		if customData["xaligoUmlClassBodyDivider"] == true {
+			foundBodyDivider = true
 		}
 	}
-	if !foundDivider {
+	if !foundHeaderDivider {
 		t.Fatalf("class header divider missing: %s", rawScene)
+	}
+	if !foundBodyDivider {
+		t.Fatalf("class attribute/operation body divider missing: %s", rawScene)
 	}
 	xyflow, err := newUsecase().RenderXYFlow(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
@@ -2466,6 +2514,175 @@ func TestUMLClassStereotypeAndModifiersReachEditableScene(t *testing.T) {
 		if !strings.Contains(string(xyflow), want) {
 			t.Fatalf("XYFlow missing %q: %s", want, xyflow)
 		}
+	}
+}
+
+func TestUMLClassStereotypeWithoutCompartmentsStaysInHeader(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="640" height="360"><uml id="classes"><class-diagram><class id="repository" title="Repository" stereotype="service" font-size="24"/></class-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	classElement, ok := umlElementPositionsV1UMLTest(t, rawScene)["repository"]
+	if !ok {
+		t.Fatalf("repository class element missing: %s", rawScene)
+	}
+	var raw map[string]any
+	if err := json.Unmarshal(rawScene, &raw); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	var headerText string
+	var headerTextElement map[string]any
+	var bodyTexts []string
+	for _, rawElement := range raw["elements"].([]any) {
+		element, _ := rawElement.(map[string]any)
+		customData, _ := element["customData"].(map[string]any)
+		text, _ := element["text"].(string)
+		if customData["xaligoUmlClassHeaderContent"] == true {
+			headerText = text
+			headerTextElement = element
+		}
+		if customData["xaligoUmlClassAttributeContent"] == true || customData["xaligoUmlClassOperationContent"] == true {
+			bodyTexts = append(bodyTexts, text)
+		}
+	}
+	if headerText != "«service»\nRepository" {
+		t.Fatalf("class header text = %q, want stereotype and classifier name", headerText)
+	}
+	if headerTextElement == nil {
+		t.Fatalf("class header text element missing: %s", rawScene)
+	}
+	if got := headerTextElement["height"].(float64); got < 2*24*1.2 {
+		t.Fatalf("class header text height = %.1f, want at least %.1f for two lines", got, 2*24*1.2)
+	}
+	if bottom := headerTextElement["y"].(float64) + headerTextElement["height"].(float64); bottom > classElement.Y+classElement.Height {
+		t.Fatalf("class header text bottom = %.1f outside class bottom %.1f", bottom, classElement.Y+classElement.Height)
+	}
+	if len(bodyTexts) != 0 {
+		t.Fatalf("stereotype-only class body texts = %#v, want none", bodyTexts)
+	}
+}
+
+func TestUMLClassCompartmentRenderingPreservesSourceOrder(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="640" height="360"><uml id="classes"><class-diagram><class id="repository" title="Repository"><operation>+ open()</operation><attribute>- store: Store</attribute><operation>+ close()</operation></class></class-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	var raw map[string]any
+	if err := json.Unmarshal(rawScene, &raw); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	type compartmentText struct {
+		text string
+		y    float64
+	}
+	var compartments []compartmentText
+	for _, rawElement := range raw["elements"].([]any) {
+		element, _ := rawElement.(map[string]any)
+		customData, _ := element["customData"].(map[string]any)
+		if customData["xaligoUmlClassAttributeContent"] != true && customData["xaligoUmlClassOperationContent"] != true {
+			continue
+		}
+		compartments = append(compartments, compartmentText{
+			text: element["text"].(string),
+			y:    element["y"].(float64),
+		})
+	}
+	sort.Slice(compartments, func(i, j int) bool { return compartments[i].y < compartments[j].y })
+	if len(compartments) != 3 {
+		t.Fatalf("rendered class compartments = %#v, want three ordered sections", compartments)
+	}
+	for index, want := range []string{"+ open()", "- store: Store", "+ close()"} {
+		if compartments[index].text != want {
+			t.Fatalf("rendered class compartment %d = %q, want %q (all: %#v)", index, compartments[index].text, want, compartments)
+		}
+	}
+}
+
+func TestUMLClassMultilineCompartmentsContributeEveryLineToHeight(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="640" height="360"><uml id="classes"><class-diagram><class id="repository" title="Repository"><attribute>- primary: Store&#10;- replica: Store</attribute><operation>+ open()&#10;+ close()</operation></class></class-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	positions := umlElementPositionsV1UMLTest(t, rawScene)
+	classElement, ok := positions["repository"]
+	if !ok {
+		t.Fatalf("repository class element missing: %s", rawScene)
+	}
+	if classElement.Height < 130 {
+		t.Fatalf("multiline class height = %.1f, want at least 130 for four body lines", classElement.Height)
+	}
+	var raw map[string]any
+	if err := json.Unmarshal(rawScene, &raw); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	var attributeText, operationText map[string]any
+	for _, rawElement := range raw["elements"].([]any) {
+		element, _ := rawElement.(map[string]any)
+		customData, _ := element["customData"].(map[string]any)
+		switch {
+		case customData["xaligoUmlClassAttributeContent"] == true:
+			attributeText = element
+		case customData["xaligoUmlClassOperationContent"] == true:
+			operationText = element
+		}
+	}
+	if attributeText == nil || operationText == nil {
+		t.Fatalf("multiline class compartment texts missing: %s", rawScene)
+	}
+	if got := attributeText["text"]; got != "- primary: Store\n- replica: Store" {
+		t.Fatalf("attribute text = %#v, want both source lines", got)
+	}
+	if got := operationText["text"]; got != "+ open()\n+ close()" {
+		t.Fatalf("operation text = %#v, want both source lines", got)
+	}
+	if operationText["y"].(float64) <= attributeText["y"].(float64)+2*14*1.2 {
+		t.Fatalf("operation y = %.1f overlaps two-line attribute starting at %.1f", operationText["y"], attributeText["y"])
+	}
+}
+
+func TestUMLClassCompartmentsUseConfiguredFontSizeForIntrinsicHeight(t *testing.T) {
+	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="640" height="520"><uml id="classes"><class-diagram><class id="repository" title="Repository" stereotype="service" font-size="24"><attribute>- primary: Store&#10;- replica: Store&#10;- archive: Store</attribute><operation>+ open()&#10;+ close()&#10;+ archive()</operation></class></class-diagram></uml></frame></frames></xaligo>`)
+	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatalf("RenderExcalidraw() error = %v", err)
+	}
+	positions := umlElementPositionsV1UMLTest(t, rawScene)
+	classElement, ok := positions["repository"]
+	if !ok {
+		t.Fatalf("repository class element missing: %s", rawScene)
+	}
+	const wantMinimumHeight = 270.0
+	if classElement.Height < wantMinimumHeight {
+		t.Fatalf("large-font multiline class height = %.1f, want at least %.1f", classElement.Height, wantMinimumHeight)
+	}
+	var raw map[string]any
+	if err := json.Unmarshal(rawScene, &raw); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	classBottom := classElement.Y + classElement.Height
+	bodyTextCount := 0
+	for _, rawElement := range raw["elements"].([]any) {
+		element, _ := rawElement.(map[string]any)
+		customData, _ := element["customData"].(map[string]any)
+		if customData["xaligoUmlClassAttributeContent"] != true && customData["xaligoUmlClassOperationContent"] != true {
+			continue
+		}
+		bodyTextCount++
+		if got := element["fontSize"].(float64); got != 24 {
+			t.Fatalf("class body font size = %.1f, want 24", got)
+		}
+		if got := element["height"].(float64); got < 3*24*1.2 {
+			t.Fatalf("class body text height = %.1f, want at least %.1f for three lines", got, 3*24*1.2)
+		}
+		if bottom := element["y"].(float64) + element["height"].(float64); bottom > classBottom {
+			t.Fatalf("class body text bottom = %.1f outside class bottom %.1f", bottom, classBottom)
+		}
+	}
+	if bodyTextCount != 2 {
+		t.Fatalf("class body text count = %d, want 2", bodyTextCount)
 	}
 }
 

@@ -12,7 +12,7 @@ I have been working on new compression algorithms (not translated from C)
 in the matchfinder package.
 You can use them with the NewWriterV2 function.
 Currently they give better results than the old implementation
-(at least for compressing my test file, Newton’s *Opticks*)
+(at least for compressing my test file, Newton’s *Opticks*) 
 on levels 0 to 9.
 
 The new APIs are currently considered experimental,

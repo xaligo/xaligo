@@ -1,6 +1,6 @@
 # Live Preview
 
-Use `serve` for a browser-based SVG preview with automatic reload:
+Use `serve` for a browser-based preview with automatic reload:
 
 ```bash
 xaligo serve docs/src/examples/samples/junctions.xal --mode network
@@ -12,12 +12,36 @@ Open:
 http://127.0.0.1:8080
 ```
 
+A `.md`/`.markdown` source previews the full Markdown document with rendered
+`xal` code blocks embedded inline, the same as `render markdown`:
+
+```bash
+xaligo serve docs/src/examples/samples/markdown-preview.md
+```
+
+Markdown raw HTML is not executed. Rendered diagrams are isolated as SVG image
+documents, and relative Markdown images are served only when they resolve to an
+image file inside the Markdown file's directory. Parent-directory traversal,
+escaping symlinks, and remote image loading are blocked by the preview sandbox
+and Content Security Policy.
+
+Use `--paper`/`--orientation` to preview how a diagram fits a specific
+physical page size and orientation; changing the paper size or orientation
+requires restarting the server:
+
+```bash
+xaligo serve docs/src/examples/samples/markdown-preview.md \
+  --paper A4 \
+  --orientation landscape
+```
+
 Endpoints:
 
 | Endpoint | Purpose |
 |---|---|
 | `/` | Browser preview page |
-| `/diagram.svg` | Current SVG or HTTP 422 with diagnostics |
+| `/diagram.svg` | Current SVG, or HTTP 422 with diagnostics (`.xal` source) |
+| `/content.html` | Current rendered HTML document, or HTTP 422 with diagnostics (`.md`/`.markdown` source) |
 | `/api/status` | JSON version, render error, and diagnostics |
 | `/events` | Server-Sent Events for editor integrations |
 | `/healthz` | Health check |

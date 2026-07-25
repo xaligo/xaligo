@@ -1,0 +1,46 @@
+<xaligo version="1">
+  <data>
+    <!-- Document-wide reusable definitions can be declared here. -->
+  </data>
+
+  <frames gap="56">
+    <frame id="overview" width="420" height="360" class="pa-3">
+      <container gap="24">
+        <!--
+          <capture> is a structural annotation group with an annotation-style
+          border. Its children participate in the normal nested group layout,
+          but it does not carry AWS/architectural semantics like
+          <generic-group>.
+        -->
+        <capture id="hot-path" title="Hot Path">
+          <rectangle id="public-api" title="Overview API" />
+        </capture>
+
+        <rectangle id="batch-export" title="Batch Export" />
+      </container>
+
+      <!--
+        A <capture> is connectable by id exactly like any other group tag:
+        the connector below crosses from one capture's border to another
+        capture's border inside the same frame, using ordinary routed
+        connections (no special-cased "capture" arrow kind).
+      -->
+      <connection src="hot-path" dst="batch-export" />
+
+      <!--
+        Capture endpoints also support cross-frame page links exactly like
+        frame/item endpoints: dst resolves to a <capture> in another frame
+        and renders as "to <service-detail>" / "from <overview>" stubs.
+      -->
+      <connection src="hot-path" dst="service-detail.slow-path" src-frame-side="right" />
+    </frame>
+
+    <frame id="service-detail" width="420" height="360" class="pa-3">
+      <container gap="24">
+        <capture id="slow-path" title="Slow Path">
+          <rectangle id="database" title="Database" />
+        </capture>
+      </container>
+    </frame>
+  </frames>
+</xaligo>

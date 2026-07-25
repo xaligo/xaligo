@@ -12,6 +12,7 @@ border styles. Examples include:
 - `<private-subnet>`
 - `<security-group>`
 - `<generic-group>`
+- `<capture>`
 
 Every group tag requires a non-empty `id`. IDs must be unique among frame-like
 components so groups can be used as connection endpoints.
@@ -36,6 +37,29 @@ non-decimal syntax, and out-of-range values are invalid.
 <generic-group id="network-topology" title="Network Topology" icon-id="104635">
   <item id="200036" />
 </generic-group>
+```
+
+## Capture (Structural Annotation)
+
+`<capture>` is a lightweight structural annotation group. It participates in
+normal nested layout and places its children inside a border (and optional title
+band) without implying any AWS/architectural semantics, unlike
+`<generic-group>` and the AWS boundary tags above. Use it to highlight a
+diagram region such as a "hot path".
+
+`<capture>` is connectable exactly like any other group tag, including the
+`frameId.id` qualified cross-frame form, so a connection to/from a `<capture>`
+in another frame renders the same "to `<frame>`" / "from `<frame>`"
+cross-frame page-link stubs used for any other connectable endpoint.
+
+```xml
+<container gap="24">
+  <capture id="hot-path" title="Hot Path">
+    <rectangle id="public-api" title="Public API" />
+  </capture>
+  <rectangle id="batch-export" title="Batch Export" />
+</container>
+<connection src="hot-path" dst="batch-export" />
 ```
 
 ## Text Width

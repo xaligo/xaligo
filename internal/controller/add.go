@@ -58,6 +58,12 @@ func (rcvr *addController) Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "add",
 		Short: "Add elements to an existing .excalidraw file",
+		Long: `Add elements directly into an existing .excalidraw scene file, in-place.
+
+Currently provides one subcommand:
+  service   add AWS service icon(s) and legend entries to a .excalidraw file
+
+Use 'xaligo add service --help' for its flags and examples.`,
 	}
 	cmd.AddCommand(rcvr.initAddServiceCmd())
 	return cmd

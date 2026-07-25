@@ -43,6 +43,7 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 	obstacles := excalidrawRouteObstaclesV1EngineSceneConnectionRoute(*elements)
 	hardObstacles := frameMetadataReservedObstaclesV1EngineSceneConnectionRender(frameMetadata)
 	activationRanges := umlSequenceActivationRangesV1EngineSceneConnectionRender(orderedConnections)
+	frameLabelObstacles := map[string][][4]float64{}
 	placed := [][]segmentV1EngineRouteTypes{}
 	routePaths := map[string][]ptV1EngineRouteTypes{}
 
@@ -378,7 +379,12 @@ func renderConnectionsV1EngineSceneConnectionRender(connections []*entity.Node, 
 			"elbowed":            true,
 			"customData":         customData,
 		})
-		appendUMLRelationLabelV1EngineSceneConnectionRender(elements, conn, connID, routePoints, style.Color, updated, seed, frameRects[srcFrameID], frameMetadata[srcFrameID], srcImgRect, dstImgRect)
+		labelObstacles, ok := frameLabelObstacles[srcFrameID]
+		if !ok {
+			labelObstacles = umlRelationLabelObstacleRectsV1EngineSceneConnectionRender(frameRects[srcFrameID], itemImgRects)
+			frameLabelObstacles[srcFrameID] = labelObstacles
+		}
+		appendUMLRelationLabelV1EngineSceneConnectionRender(elements, conn, connID, routePoints, style.Color, updated, seed, frameRects[srcFrameID], frameMetadata[srcFrameID], srcImgRect, dstImgRect, labelObstacles)
 
 		// Register this arrow in boundMap for both endpoints.
 		entry := map[string]any{"type": "arrow", "id": connID}
@@ -725,7 +731,7 @@ func applyUMLConnectionMetadataV1EngineSceneConnectionRender(customData map[stri
 	}
 }
 
-func appendUMLRelationLabelV1EngineSceneConnectionRender(elements *[]map[string]any, conn *entity.Node, connID string, routePoints []ptV1EngineRouteTypes, color string, updated int64, seed int, frameRect [4]float64, metadata frameMetadataSceneGeometryV1EngineSceneFrameMetadata, srcRect, dstRect [4]float64) {
+func appendUMLRelationLabelV1EngineSceneConnectionRender(elements *[]map[string]any, conn *entity.Node, connID string, routePoints []ptV1EngineRouteTypes, color string, updated int64, seed int, frameRect [4]float64, metadata frameMetadataSceneGeometryV1EngineSceneFrameMetadata, srcRect, dstRect [4]float64, extraObstacles [][4]float64) {
 	label := strings.TrimSpace(conn.Attr("uml-relation-label"))
 	if label == "" || len(routePoints) == 0 {
 		return
@@ -741,7 +747,8 @@ func appendUMLRelationLabelV1EngineSceneConnectionRender(elements *[]map[string]
 		width = math.Min(width, frameRect[2])
 	}
 	x, y := umlRelationLabelPositionV1EngineSceneConnectionRender(conn, routePoints, seed, width, height)
-	x, y = avoidUMLRelationLabelEndpointOverlapV1EngineSceneConnectionRender(x, y, width, height, routePoints, frameRect, [][4]float64{srcRect, dstRect})
+	obstacles := append([][4]float64{srcRect, dstRect}, extraObstacles...)
+	x, y = avoidUMLRelationLabelEndpointOverlapV1EngineSceneConnectionRender(x, y, width, height, routePoints, frameRect, obstacles)
 	x, y = frameMetadataLabelPositionV1EngineSceneConnectionRender(x, y, width, height, frameRect, metadata)
 	labelID := connID + "-uml-label"
 	customData := map[string]any{}
@@ -809,6 +816,39 @@ func labelOverlapsAnyRectV1EngineSceneConnectionRender(x, y, width, height float
 		}
 	}
 	return false
+}
+
+// umlRelationLabelObstacleRectsV1EngineSceneConnectionRender collects the item
+// image rects that fall inside frameRect so relation-label placement can avoid
+// unrelated classifier/component boxes in the same frame, not only the label's
+// own connection endpoints. itemImgRects spans every rendered frame, so
+// containment in frameRect is used to scope the result to one frame. The frame
+// itself is also registered as a pseudo-item (for frame-level connection
+// endpoints) and is excluded here, since its rect spans the whole frame and
+// would otherwise block every candidate position.
+func umlRelationLabelObstacleRectsV1EngineSceneConnectionRender(frameRect [4]float64, itemImgRects map[string][4]float64) [][4]float64 {
+	if frameRect[2] <= 0 || frameRect[3] <= 0 {
+		return nil
+	}
+	const epsilon = 0.5
+	rects := make([][4]float64, 0, len(itemImgRects))
+	for _, rect := range itemImgRects {
+		if rect[2] <= 0 || rect[3] <= 0 {
+			continue
+		}
+		if rect[0] < frameRect[0]-epsilon || rect[1] < frameRect[1]-epsilon {
+			continue
+		}
+		if rect[0]+rect[2] > frameRect[0]+frameRect[2]+epsilon || rect[1]+rect[3] > frameRect[1]+frameRect[3]+epsilon {
+			continue
+		}
+		if math.Abs(rect[0]-frameRect[0]) < epsilon && math.Abs(rect[1]-frameRect[1]) < epsilon &&
+			math.Abs(rect[2]-frameRect[2]) < epsilon && math.Abs(rect[3]-frameRect[3]) < epsilon {
+			continue
+		}
+		rects = append(rects, rect)
+	}
+	return rects
 }
 
 func clampLabelToFrameV1EngineSceneConnectionRender(x, y, width, height float64, frameRect [4]float64) (float64, float64) {

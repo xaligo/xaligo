@@ -251,7 +251,7 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 					boundElements = []map[string]any{{"type": "text", "id": textID}}
 				}
 				if classShape {
-					boundElements = []map[string]any{{"type": "text", "id": fmt.Sprintf("%s-class-header-text", b.ID)}, {"type": "text", "id": fmt.Sprintf("%s-class-body-text", b.ID)}}
+					boundElements = umlClassBoundElementsV1EngineSceneWalk(b)
 				}
 				if isXaligoComponentShapeV1EngineSceneWalk(b) {
 					boundElements = []map[string]any{{"type": "text", "id": fmt.Sprintf("%s-component-header-text", b.ID)}}
@@ -757,8 +757,8 @@ func splitNonEmptyLinesV1EngineSceneWalk(value string) []string {
 func appendUMLClassCompartmentsV1EngineSceneWalk(box *entity.Box, elements *[]map[string]any, updated int64) {
 	fontSize := attrFloatV1EngineLayoutAttributes(box.Attrs["font-size"], 14)
 	lineHeight := fontSize * 1.2
-	headerText, attributeText, operationText, attributeLines, operationLines := umlClassTextSectionsV1EngineSceneWalk(box)
-	headerH := umlClassHeaderHeightV1EngineSceneWalk(box, lineHeight, headerText)
+	headerText, sections := umlClassTextSectionsV1EngineSceneWalk(box)
+	headerH := umlClassHeaderHeightV1EngineSceneWalk(box, lineHeight, headerText, len(sections) > 0)
 	headerID := fmt.Sprintf("%s-class-header", box.ID)
 	headerSeed := stableSceneSeedV1EngineSceneTypes(headerID)
 	*elements = append(*elements, map[string]any{
@@ -775,29 +775,47 @@ func appendUMLClassCompartmentsV1EngineSceneWalk(box *entity.Box, elements *[]ma
 	})
 	appendUMLClassTextV1EngineSceneWalk(elements, fmt.Sprintf("%s-class-header-text", box.ID), box.X+6, box.Y+4, math.Max(1, box.W-12), math.Max(1, headerH-8), headerText, "#ffffff", "center", "middle", fontSize, box, updated, map[string]any{"xaligoUmlClassHeaderContent": true})
 	appendUMLClassHeaderDividerV1EngineSceneWalk(box, elements, updated, box.Y+headerH)
-	if attributeText == "" && operationText == "" {
+	if len(sections) == 0 {
 		return
 	}
 	bodyY := box.Y + headerH + 7
 	bottomY := box.Y + box.H - 6
 	textX := box.X + 10
 	textW := math.Max(1, box.W-20)
-	if attributeLines > 0 && operationLines > 0 {
-		attributeH := math.Max(lineHeight, float64(attributeLines)*lineHeight+6)
-		dividerY := bodyY + attributeH
-		appendUMLClassTextV1EngineSceneWalk(elements, fmt.Sprintf("%s-class-attribute-text", box.ID), textX, bodyY, textW, math.Max(1, attributeH-3), attributeText, "#052d6e", "left", "top", fontSize, box, updated, map[string]any{"xaligoUmlClassAttributeContent": true})
-		appendUMLClassBodyDividerV1EngineSceneWalk(box, elements, updated, dividerY)
-		operationY := dividerY + 6
-		appendUMLClassTextV1EngineSceneWalk(elements, fmt.Sprintf("%s-class-operation-text", box.ID), textX, operationY, textW, math.Max(1, bottomY-operationY), operationText, "#052d6e", "left", "top", fontSize, box, updated, map[string]any{"xaligoUmlClassOperationContent": true})
-		return
+	sectionY := bodyY
+	for index, section := range sections {
+		sectionH := math.Max(lineHeight, float64(section.Lines)*lineHeight+6)
+		textH := math.Max(1, sectionH-3)
+		if index == len(sections)-1 {
+			textH = math.Max(1, bottomY-sectionY)
+		}
+		customData := map[string]any{"xaligoUmlClassOperationContent": true}
+		if section.Kind == "attribute" {
+			customData = map[string]any{"xaligoUmlClassAttributeContent": true}
+		}
+		appendUMLClassTextV1EngineSceneWalk(
+			elements,
+			fmt.Sprintf("%s-class-%s-text-%d", box.ID, section.Kind, index),
+			textX,
+			sectionY,
+			textW,
+			textH,
+			section.Text,
+			"#052d6e",
+			"left",
+			"top",
+			fontSize,
+			box,
+			updated,
+			customData,
+		)
+		if index == len(sections)-1 {
+			continue
+		}
+		dividerY := sectionY + sectionH
+		appendUMLClassBodyDividerV1EngineSceneWalk(box, elements, updated, index, dividerY)
+		sectionY = dividerY + 6
 	}
-	bodyText := attributeText
-	customData := map[string]any{"xaligoUmlClassAttributeContent": true}
-	if bodyText == "" {
-		bodyText = operationText
-		customData = map[string]any{"xaligoUmlClassOperationContent": true}
-	}
-	appendUMLClassTextV1EngineSceneWalk(elements, fmt.Sprintf("%s-class-body-text", box.ID), textX, bodyY, textW, math.Max(1, bottomY-bodyY), bodyText, "#052d6e", "left", "top", fontSize, box, updated, customData)
 }
 
 func appendUMLClassHeaderDividerV1EngineSceneWalk(box *entity.Box, elements *[]map[string]any, updated int64, y float64) {
@@ -818,8 +836,8 @@ func appendUMLClassHeaderDividerV1EngineSceneWalk(box *entity.Box, elements *[]m
 	})
 }
 
-func appendUMLClassBodyDividerV1EngineSceneWalk(box *entity.Box, elements *[]map[string]any, updated int64, y float64) {
-	id := fmt.Sprintf("%s-class-body-divider", box.ID)
+func appendUMLClassBodyDividerV1EngineSceneWalk(box *entity.Box, elements *[]map[string]any, updated int64, index int, y float64) {
+	id := fmt.Sprintf("%s-class-body-divider-%d", box.ID, index)
 	seed := stableSceneSeedV1EngineSceneTypes(id)
 	*elements = append(*elements, map[string]any{
 		"id": id, "type": "line",
@@ -859,31 +877,52 @@ func appendUMLClassTextV1EngineSceneWalk(elements *[]map[string]any, id string, 
 	})
 }
 
-func umlClassTextSectionsV1EngineSceneWalk(box *entity.Box) (string, string, string, int, int) {
+func umlClassTextSectionsV1EngineSceneWalk(box *entity.Box) (string, []umlClassSectionV1EngineParseUml) {
 	lines := strings.Split(box.Label, "\n")
+	sections := umlClassSectionsFromAttrsV1EngineParseUml(box.Attrs)
 	headerLines := int(attrFloatV1EngineLayoutAttributes(box.Attrs["uml-class-header-lines"], 1))
-	attributeLines := int(attrFloatV1EngineLayoutAttributes(box.Attrs["uml-class-attribute-lines"], 0))
-	operationLines := int(attrFloatV1EngineLayoutAttributes(box.Attrs["uml-class-operation-lines"], 0))
 	if headerLines < 1 || headerLines > len(lines) {
-		headerLines = 1
+		bodyLines := 0
+		for _, section := range sections {
+			bodyLines += section.Lines
+		}
+		headerLines = len(lines) - bodyLines
+		if headerLines < 1 || headerLines > len(lines) {
+			headerLines = 1
+		}
 	}
 	headerText := strings.Join(lines[:headerLines], "\n")
-	bodyLines := lines[headerLines:]
-	attributeText := strings.TrimSpace(box.Attrs["uml-class-attribute-text"])
-	operationText := strings.TrimSpace(box.Attrs["uml-class-operation-text"])
-	if attributeText == "" && operationText == "" {
-		attributeText = strings.Join(bodyLines, "\n")
-	}
-	if attributeLines+operationLines > len(bodyLines) {
-		attributeLines = len(bodyLines)
-		operationLines = 0
-	}
-	return headerText, attributeText, operationText, attributeLines, operationLines
+	return headerText, sections
 }
 
-func umlClassHeaderHeightV1EngineSceneWalk(box *entity.Box, lineHeight float64, headerText string) float64 {
+func umlClassBoundElementsV1EngineSceneWalk(box *entity.Box) []map[string]any {
+	headerText, sections := umlClassTextSectionsV1EngineSceneWalk(box)
+	boundElements := make([]map[string]any, 0, 1+len(sections))
+	if strings.TrimSpace(headerText) != "" {
+		boundElements = append(boundElements, map[string]any{
+			"type": "text",
+			"id":   fmt.Sprintf("%s-class-header-text", box.ID),
+		})
+	}
+	for index, section := range sections {
+		if strings.TrimSpace(section.Text) == "" {
+			continue
+		}
+		boundElements = append(boundElements, map[string]any{
+			"type": "text",
+			"id":   fmt.Sprintf("%s-class-%s-text-%d", box.ID, section.Kind, index),
+		})
+	}
+	return boundElements
+}
+
+func umlClassHeaderHeightV1EngineSceneWalk(box *entity.Box, lineHeight float64, headerText string, hasSections bool) float64 {
 	lines := strings.Count(headerText, "\n") + 1
-	return math.Min(math.Max(34, 10+float64(lines)*lineHeight), math.Max(34, box.H*0.48))
+	maximumHeight := box.H
+	if hasSections {
+		maximumHeight = box.H * 0.48
+	}
+	return math.Min(math.Max(34, 10+float64(lines)*lineHeight), math.Max(34, maximumHeight))
 }
 
 func isXaligoFinalWithDotV1EngineSceneWalk(box *entity.Box) bool {

@@ -13,17 +13,81 @@ repo_root() {
   cd "${source_dir}/../.." && pwd
 }
 
-package_version() {
-  if [[ -n "${VERSION:-}" ]]; then
-    printf '%s\n' "${VERSION#v}"
-    return
-  fi
+version_from_repository() {
   if [[ -s VERSION ]]; then
     sed -n '1{s/^v//;p;q;}' VERSION
     return
   fi
   printf 'ERROR: VERSION file not found or empty\n' >&2
-  exit 1
+  return 1
+}
+
+native_version() {
+  if [[ -n "${NATIVE_VERSION:-}" ]]; then
+    printf '%s\n' "${NATIVE_VERSION#v}"
+    return
+  fi
+  if [[ -n "${VERSION:-}" ]]; then
+    printf '%s\n' "${VERSION#v}"
+    return
+  fi
+  version_from_repository
+}
+
+package_version() {
+  if [[ -n "${PACKAGE_VERSION:-}" ]]; then
+    printf '%s\n' "${PACKAGE_VERSION#v}"
+    return
+  fi
+  if [[ -n "${VERSION:-}" ]]; then
+    printf '%s\n' "${VERSION#v}"
+    return
+  fi
+  if [[ -n "${NATIVE_VERSION:-}" ]]; then
+    printf '%s\n' "${NATIVE_VERSION#v}"
+    return
+  fi
+  version_from_repository
+}
+
+package_release() {
+  printf '%s\n' "${PACKAGE_RELEASE:-1}"
+}
+
+validate_native_version() {
+  local value
+  value="$1"
+  if [[ ! "$value" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$ ]]; then
+    printf 'ERROR: invalid native version: %s\n' "$value" >&2
+    return 1
+  fi
+}
+
+validate_deb_version() {
+  local value
+  value="$1"
+  if [[ ! "$value" =~ ^[0-9][0-9A-Za-z.+:~_-]*$ ]]; then
+    printf 'ERROR: invalid Debian package version: %s\n' "$value" >&2
+    return 1
+  fi
+}
+
+validate_rpm_version() {
+  local value
+  value="$1"
+  if [[ ! "$value" =~ ^[0-9A-Za-z.+_~^]+$ ]]; then
+    printf 'ERROR: invalid RPM Version: %s\n' "$value" >&2
+    return 1
+  fi
+}
+
+validate_rpm_release() {
+  local value
+  value="$1"
+  if [[ ! "$value" =~ ^[0-9A-Za-z.+_~^]+$ ]]; then
+    printf 'ERROR: invalid RPM Release: %s\n' "$value" >&2
+    return 1
+  fi
 }
 
 go_arch() {
@@ -104,17 +168,19 @@ build_wasm_exporter() {
   require_command npm
   require_command javy
   build_dir="$(mktemp -d)"
+  mkdir -p "$build_dir/external"
+  install -m 0644 package.json package-lock.json "$build_dir/"
   tar \
     --exclude='./node_modules' \
     --exclude='./package-lock.json' \
     --exclude='./dist' \
     --exclude='./wasm' \
-    -C external -cf - . | tar -C "$build_dir" -xf -
-  mkdir -p "$build_dir/wasm"
-  npm --prefix "$build_dir" install --no-audit --no-fund
-  npm --prefix "$build_dir" run build:pptx-exporter-wasm
+    -C external -cf - . | tar -C "$build_dir/external" -xf -
+  mkdir -p "$build_dir/external/wasm"
+  npm --prefix "$build_dir" ci --ignore-scripts --no-audit --no-fund
+  npm --prefix "$build_dir/external" run build:pptx-exporter-wasm
   mkdir -p external/wasm
-  install -m 0644 "$build_dir/wasm/xaligo.wasm" external/wasm/xaligo.wasm
+  install -m 0644 "$build_dir/external/wasm/xaligo.wasm" external/wasm/xaligo.wasm
   rm -rf "$build_dir"
   if [[ ! -s external/wasm/xaligo.wasm ]]; then
     printf 'ERROR: WASM exporter was not generated\n' >&2

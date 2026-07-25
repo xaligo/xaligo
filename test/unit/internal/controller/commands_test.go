@@ -472,6 +472,32 @@ func TestRunServeWithUseCase(t *testing.T) {
 	}
 }
 
+func TestRunServeDetectsMarkdownAndForwardsPaperOptions(t *testing.T) {
+	fake := &fakeUseCase{}
+	err := controller.NewServeController(fake).Run(context.Background(), entity.ControllerServeOptions{
+		InputPath: "guide.md", Theme: "light", Paper: "A4", Orientation: "landscape", PollInterval: time.Millisecond,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fake.lastPreviewOpts.Kind != entity.PreviewKindHTML {
+		t.Fatalf("preview kind = %q, want html", fake.lastPreviewOpts.Kind)
+	}
+	if fake.lastPreviewOpts.Render.PaperSize != "A4" || fake.lastPreviewOpts.Render.Orientation != "landscape" {
+		t.Fatalf("preview render opts = %#v", fake.lastPreviewOpts.Render)
+	}
+
+	xalFake := &fakeUseCase{}
+	if err := controller.NewServeController(xalFake).Run(context.Background(), entity.ControllerServeOptions{
+		InputPath: "diagram.xal", Theme: "light", PollInterval: time.Millisecond,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if xalFake.lastPreviewOpts.Kind != entity.PreviewKindSVG && xalFake.lastPreviewOpts.Kind != "" {
+		t.Fatalf("preview kind = %q, want svg or empty", xalFake.lastPreviewOpts.Kind)
+	}
+}
+
 func TestRunGenerateAndInit(t *testing.T) {
 	dir := t.TempDir()
 	generated := filepath.Join(dir, "generated.xal")

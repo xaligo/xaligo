@@ -46,7 +46,26 @@ func (rcvr *diffController) Command() *cobra.Command {
 	command := &cobra.Command{
 		Use:   "diff <before.xal> <after.xal>",
 		Short: "Render structural differences as removed and added SVG images",
-		Args:  cobra.ExactArgs(2),
+		Long: `Compare two .xal documents structurally, not line-by-line, and render two
+SVG images:
+
+  <prefix>-removed.svg  the OLD document, with removed elements and the old
+                        side of modified/moved elements highlighted in pale red
+  <prefix>-added.svg    the NEW document, with added elements and the new
+                        side of modified/moved elements highlighted in pale green
+
+XML formatting, comments, attribute order, and parser-private attributes
+never create a diff. Matching prefers unique name/ref/id values, then exact
+subtrees, then deterministic structural matching; give elements an explicit
+id, name, or ref when moves must remain identifiable across parents.
+
+No difference is a successful result and still produces two unhighlighted
+SVGs.
+
+Examples:
+  xaligo diff before.xal after.xal -o output/architecture
+  xaligo diff before.xal after.xal --theme dark --mode network`,
+		Args: cobra.ExactArgs(2),
 		RunE: func(command *cobra.Command, args []string) error {
 			return rcvr.Run(entity.ControllerDiffOptions{
 				BeforePath: args[0], AfterPath: args[1], OutputPrefix: outputPrefix,

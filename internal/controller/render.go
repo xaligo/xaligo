@@ -52,19 +52,35 @@ type RenderController interface {
 	Command() *cobra.Command
 	Run(inputPath, outputPath string, abbrevMap map[int]string) error
 	RunFormat(opts entity.ControllerRenderOptions) error
+	RunMarkdown(opts entity.ControllerRenderMarkdownOptions) error
 }
+
+// RenderControllerOption customizes a render controller dependency.
+type RenderControllerOption func(*renderController)
 
 type renderController struct {
-	config         *config.Config
-	renderUsecase  usecase.RenderUsecase
-	catalogUsecase usecase.CatalogUsecase
-	sceneIOUsecase usecase.SceneIOUsecase
-	themeUsecase   usecase.ThemeUsecase
-	elementUsecase usecase.ElementUsecase
+	config                       *config.Config
+	renderUsecase                usecase.RenderUsecase
+	catalogUsecase               usecase.CatalogUsecase
+	sceneIOUsecase               usecase.SceneIOUsecase
+	themeUsecase                 usecase.ThemeUsecase
+	elementUsecase               usecase.ElementUsecase
+	renderMarkdownFileOperations renderMarkdownFileOperations
 }
 
-func NewRenderController(cfg *config.Config, renderUsecase usecase.RenderUsecase, catalogUsecase usecase.CatalogUsecase, sceneIOUsecase usecase.SceneIOUsecase, themeUsecase usecase.ThemeUsecase, elementUsecase usecase.ElementUsecase) RenderController {
-	return &renderController{config: cfg, renderUsecase: renderUsecase, catalogUsecase: catalogUsecase, sceneIOUsecase: sceneIOUsecase, themeUsecase: themeUsecase, elementUsecase: elementUsecase}
+func NewRenderController(cfg *config.Config, renderUsecase usecase.RenderUsecase, catalogUsecase usecase.CatalogUsecase, sceneIOUsecase usecase.SceneIOUsecase, themeUsecase usecase.ThemeUsecase, elementUsecase usecase.ElementUsecase, options ...RenderControllerOption) RenderController {
+	controller := &renderController{
+		config: cfg, renderUsecase: renderUsecase, catalogUsecase: catalogUsecase,
+		sceneIOUsecase: sceneIOUsecase, themeUsecase: themeUsecase,
+		elementUsecase:               elementUsecase,
+		renderMarkdownFileOperations: defaultRenderMarkdownFileOperations(),
+	}
+	for _, option := range options {
+		if option != nil {
+			option(controller)
+		}
+	}
+	return controller
 }
 
 func (rcvr *renderController) Command() *cobra.Command {
@@ -100,7 +116,29 @@ func (rcvr *renderController) Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "render <input.xal>",
 		Short: "Render xaligo DSL into an output format",
-		Args:  cobra.ExactArgs(1),
+		Long: `Render a .xal source file into one of xaligo's supported output formats:
+excalidraw, svg, pptx, pdf, excel (alias xlsx), xyflow, or isoflow.
+
+Every format shares the same parser, layout, and scene/plan pipeline, so
+geometry, routing, and theming stay consistent across formats.
+
+Identified child frames become separate physical pages for svg, pptx, pdf,
+and excel by default (one file/slide/page/worksheet per frame). Pass
+--combine-frames to render them onto a single canvas/page instead.
+
+UML input (<uml>...</uml>) rejects --format excalidraw; use svg, pdf, pptx,
+excel, xyflow, or isoflow for UML diagrams.
+
+Use 'xaligo render markdown <input.md>' to render every fenced ` + "```xal" + `
+code block inside a Markdown file to SVG and embed the results as Markdown
+image references.
+
+Examples:
+  xaligo render diagram.xal --format svg -o output/diagram.svg
+  xaligo render diagram.xal --format pptx -o output/diagram.pptx --paper A3 --orientation landscape
+  xaligo render diagram.xal --format excalidraw -o output/diagram.excalidraw --services services.csv
+  xaligo render diagram.xal --format svg -o output/diagram.svg --combine-frames`,
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			input := args[0]
 			logger.DEBUG(ICRIRCWUC002, "start", map[string]any{"input": input, "format": format})
@@ -174,6 +212,7 @@ func (rcvr *renderController) Command() *cobra.Command {
 	cmd.Flags().StringVar(&theme, "theme", "light", "color theme: light | dark")
 	cmd.Flags().StringVar(&mode, "mode", "standard", "rendering mode: standard | network | aws")
 	cmd.Flags().StringVar(&svgLegendPosition, "svg-legend-position", "bottom", "SVG legend position when --services is provided: top | right | bottom | left")
+	cmd.AddCommand(initRenderMarkdownCmd(rcvr))
 	logger.DEBUG(ICRIRCWUC007, "return command")
 	return cmd
 }

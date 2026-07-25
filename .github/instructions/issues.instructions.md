@@ -2,11 +2,14 @@
 applyTo: "**/*.{go,ts,xal,md,yml,yaml,json}"
 ---
 
-# Quality Improvement Preconditions
+# Issues
 
-Use this file when planning, implementing, reviewing, or verifying feature
-quality work. The goal is to raise each Phase 2 feature from "renders" to a
-documented, tested, readable, and cross-format-stable user experience.
+Use this file as the authoritative list of open quality and feature-hardening
+issues when planning, implementing, reviewing, or verifying feature quality
+work. The goal is to raise each Phase 2 feature from "renders" to a
+documented, tested, readable, and cross-format-stable user experience. Record
+every current issue here; once an issue's work is verified complete, remove
+its row instead of marking it done in place.
 
 ## Quality Rubric
 
@@ -52,7 +55,11 @@ Use these status values:
 - `needs-work`: a quality gap is known and has not been fixed.
 - `in-progress`: a fix or quality improvement is actively being implemented.
 - `blocked`: progress requires a decision, missing tool, or external input.
-- `done`: the feature meets the Definition of Done in this file.
+
+There is no `done` status value. Once a feature or task meets the Definition
+of Done in this file, remove its row from the status board and backlog
+instead of marking it done in place, so this file always reflects only open
+issues.
 
 Update the status board when a feature-quality slice starts, when a gap is
 found, when validation changes the assessment, and when a slice is committed.
@@ -62,7 +69,7 @@ sample paths, and rendered artifact paths over prose-only status notes.
 | Order | Feature | Status | Evidence | Next action |
 |---:|---|---|---|---|
 | 1 | Canonical V1 document envelope | in-progress | `TestV1ParseValidatesCanonicalEnvelopeHierarchy`; canonical sample validates and renders two SVG artifacts | Finish migration-warning/docs-image audit, then close Q01. |
-| 2 | UML diagrams | in-progress | The supported sample matrix is frozen to class, component, activity, state-machine, and sequence; all retained samples validate under the strict profile. | Finish per-diagram visual baselines and focused semantics, then verify cross-format parity. |
+| 2 | UML diagrams | in-progress | The supported sample matrix is frozen to class, component, activity, state-machine, and sequence; all retained samples validate under the strict profile. Timing-diagram support is accepted as an additional in-scope kind, tracked as Q05.17. | Finish per-diagram visual baselines and focused semantics, then verify cross-format parity. |
 | 3 | Data registry and imports | not-started | table data, database schema, SQL import commits exist | Inventory import coverage and diagnostics after the UML precision/design pass starts. |
 | 4 | Tables | not-started | `docs/src/examples/samples/tables.xal` | Audit table layout, pipe styling, text fitting, and docs image quality. |
 | 5 | Relational databases | not-started | `docs/src/examples/samples/databases.xal` | Audit entity layout, key styling, relation routing, and SQL import behavior. |
@@ -80,9 +87,10 @@ sample paths, and rendered artifact paths over prose-only status notes.
 | 17 | Reproducibility and artifact integrity | not-started | deterministic render and generated docs assets | Audit byte stability, clean regeneration, package contents, and stale artifacts. |
 | 18 | Configuration, logging, and observability | not-started | config, options, and shared logging code | Audit defaults, precedence, redaction, error context, and noisy-output behavior. |
 
-When a row reaches `done`, its evidence should include the commit that closed
-the slice and the highest-signal verification commands that passed. If a row
-is `blocked`, the next action must state the specific decision or tool needed.
+When a row's feature or task meets the Definition of Done in this file,
+remove the row instead of marking it done, and record the closing commit in
+the relevant commit history rather than in this file. If a row is `blocked`,
+the next action must state the specific decision or tool needed.
 
 ## Detailed Task Backlog
 
@@ -94,9 +102,7 @@ when the new task can be verified and committed independently.
 
 | Task | Status | Scope | Verification target |
 |---|---|---|---|
-| Q01.1 | done | Confirm `<xaligo version="1">`, `<data>`, `<frames>`, and `<frame>` parse as the canonical V1 document shape. | `TestV1ParseValidatesCanonicalEnvelopeHierarchy`; `go run ./cmd validate docs/src/examples/samples/canonical-v1-envelope.xal` |
 | Q01.2 | not-started | Confirm legacy `<frame>` and `<frames>` inputs remain compatible and emit the intended migration warning. | diagnostics tests covering warning text and source position |
-| Q01.3 | done | Validate duplicate, missing, or unsafe frame IDs and document-level IDs. | `TestV1ParseValidatesCanonicalEnvelopeHierarchy` |
 | Q01.4 | in-progress | Confirm canonical samples render as separate artifacts and combined compatibility output. | canonical sample renders `canonical-v1-envelope-overview.svg` and `canonical-v1-envelope-database-detail.svg`; combined compatibility still pending |
 | Q01.5 | not-started | Review canonical-envelope docs for current behavior, command accuracy, and image freshness. | `mdbook build docs` and regenerated SVG comparison |
 
@@ -134,22 +140,20 @@ when the new task can be verified and committed independently.
 
 | Task | Status | Scope | Verification target |
 |---|---|---|---|
-| Q05.1 | done | Freeze the supported UML sample matrix and map each sample to its owning syntax, parser, scene, layout, routing, and renderer responsibilities. | `docs/src/examples/uml.md` indexes class, component, vertical/horizontal activity, state-machine, and sequence sources; parser/layout/scene/routing ownership is documented in the repository architecture instructions. |
 | Q05.2 | in-progress | Establish a per-UML visual baseline before edits: validate and render each supported individual `uml-*.xal` sample to SVG, then identify overlap, spacing, typography, connector, and semantic-notation gaps. | all retained UML samples validate; tracked SVG baselines exist, with component and activity visual audits completed. |
 | Q05.3 | in-progress | Improve activity-diagram semantic accuracy: initial/final nodes, actions, object nodes, decisions, forks, joins, merges, responsibilities, constraints, guards, `control-flow`, and `object-flow`. | vertical and horizontal partition samples validate; focused parser/scene tests cover partitions, loop routes, and activity metadata. |
 | Q05.4 | in-progress | Improve activity-diagram design quality: left-to-right reading flow, diamond/bar/final-node proportions, lane spacing, label placement, and control-vs-object-flow distinction. | vertical and horizontal activity SVG baselines are regenerated; focused geometry tests cover lane placement and loop routing. |
-| Q05.5 | not-started | Improve class-diagram semantic accuracy: class boxes, attributes, operations, visibility, stereotypes, abstract/static markers, inheritance, realization, association, aggregation, composition, dependency, and multiplicity. | `uml-class.xal` structural tests and relation routing assertions |
-| Q05.6 | not-started | Improve class-diagram design quality: compartment rhythm, long member wrapping, stereotype readability, relation label spacing, crow-foot/diamond marker clarity, and dense-layout crossing reduction. | class SVG/PPTX review and text-fit tests |
+| Q05.6 | in-progress | Improve class-diagram design quality: compartment rhythm, long member wrapping, stereotype readability, relation label spacing, crow-foot/diamond marker clarity, and dense-layout crossing reduction. | class SVG/PPTX review and text-fit tests; relation-label spacing fixed so labels avoid unrelated classifier boxes in the same frame, not only their own connection endpoints (`TestUMLRelationLabelsAvoidUnrelatedClassifierBoxes`, regenerated `docs/src/images/uml-class.svg`); compartment rhythm, long member wrapping, crow-foot/diamond marker clarity, and dense-layout crossing reduction remain to be reviewed |
 | Q05.7 | not-started | Improve sequence-diagram semantic accuracy: lifelines, participants, activation bars, sync/async messages, returns, self messages, create/delete, ordering, and message labels. | `uml-sequence.xal` layout tests and route ordering assertions |
 | Q05.8 | not-started | Improve sequence-diagram design quality: timeline spacing, activation contrast, message arrow style, return-line distinction, lifeline header readability, and vertical density. | sequence SVG/PPTX review and geometry assertions |
 | Q05.9 | not-started | Improve state-machine semantic accuracy: initial/final states, composite states, transitions, events, guards, effects, entry/do/exit actions, and invalid transition diagnostics. | `uml-state-machine.xal` valid/invalid tests |
 | Q05.10 | not-started | Improve state-machine design quality: state shape proportions, nested-state padding, transition bend points, guard/effect label placement, and final-node readability. | state-machine SVG review and collision assertions |
 | Q05.11 | in-progress | Improve component-diagram semantic and design quality: boundary interfaces, shared interface-name widths, compact automatic height, explicit sizing, fan-out, and connector routing. | component parser/layout/scene/routing tests plus `uml-component.xal` and its regenerated SVG baseline |
-| Q05.12 | not-started | Plan future communication/timing support only when ordered topology or time-state semantics are explicitly required beyond sequence/state-machine diagrams. | plan entry only; no implementation, samples, or generated assets until restarted |
+| Q05.12 | not-started | Plan future communication-diagram support only when ordered topology semantics are explicitly required beyond sequence/state-machine diagrams. | plan entry only; no implementation, samples, or generated assets until restarted |
 | Q05.13 | not-started | Keep object, use-case, profile, and interaction-overview out of the supported UML set unless a non-substitutable use case is identified. | unsupported parser diagnostics and documentation review |
+| Q05.17 | not-started | Accepted addition: design and implement timing-diagram support (`timing-diagram` selector) — lifeline/state-timeline elements, state/value change events, duration constraints, and time-axis layout — as a new UML family alongside class/component/activity/state-machine/sequence. | new `uml-timing.xal` sample; parser/scene/layout/routing tests; diagram-kind vocabulary and relation-projection tables in `xal-spec.instructions.md` updated once implemented |
 | Q05.14 | not-started | Normalize shared UML visual language across all diagram types: typography scale, stroke weights, marker sizes, semantic colors, label backgrounds, and light/dark contrast. | design review checklist plus theme render comparisons |
 | Q05.15 | not-started | Verify UML cross-format parity for every shared scene/plan change: SVG baseline, Excalidraw editability, PPTX plan/export, PDF/Excel page projection, and XYFlow/Isoflow applicability. | focused renderer matrix for changed UML contracts |
-| Q05.16 | done | Refresh UML documentation and examples after implementation slices, including generated images and command accuracy. | all retained UML samples validate; tracked sources and SVGs are paired; `mdbook build docs` passes. |
 
 ### Q06 Frame-Scoped References
 
@@ -317,7 +321,7 @@ smaller local detour:
    diagnostics.
 2. UML diagrams: first semantic accuracy for each UML kind, then design
    polish for that kind, then shared UML visual-language and cross-format
-   parity. Prioritize activity, class, sequence, state machine,
+   parity. Prioritize activity, class, sequence, state machine, timing,
    component/deployment/package/composite-structure, then the remaining UML
    samples and strict profile diagnostics.
 3. Data registry and imports: reusable table data, database schemas, SQL

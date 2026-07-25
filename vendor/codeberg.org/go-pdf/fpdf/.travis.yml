@@ -7,7 +7,7 @@ go:
 
 os:
   - linux
-
+            
 script: go test -v
 
 notifications:

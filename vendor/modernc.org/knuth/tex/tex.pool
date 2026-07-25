@@ -4,18 +4,18 @@
 03???
 13m2d5c2l5x2v5i
 28End of file on the terminal!
-02!
+02! 
 42(That makes 100 errors; please try again.)
-02?
-22You want to edit file
-09 at line
+02? 
+22You want to edit file 
+09 at line 
 60Type <return> to proceed, S to scroll future error messages,
 44R to run without stopping, Q to run quietly,
-23I to insert something,
+23I to insert something, 
 20E to edit your file,
 561 or ... or 9 to ignore the next 1 to 9 tokens of input,
 22H for help, X to quit.
-13OK, entering
+13OK, entering 
 09batchmode
 11nonstopmode
 10scrollmode
@@ -43,10 +43,10 @@
 58Try to insert an instruction for me (e.g., `I\showlists'),
 43unless you just want to quit by typing `X'.
 16main memory size
-24AVAIL list clobbered at
-31Double-AVAIL list clobbered at
-24Doubly free location at
-12Bad flag at
+24AVAIL list clobbered at 
+31Double-AVAIL list clobbered at 
+24Doubly free location at 
+12Bad flag at 
 14New busy locs:
 05LINK(
 05INFO(
@@ -54,8 +54,8 @@
 10CLOBBERED.
 04foul
 03fil
-06 plus
-07 minus
+06 plus 
+07 minus 
 03 []
 26Bad link, display aborted.
 04etc.
@@ -63,36 +63,36 @@
 05unset
 04box(
 02)x
-10, shifted
+10, shifted 
 09 columns)
-10, stretch
-09, shrink
-11, glue set
-02-
+10, stretch 
+09, shrink 
+11, glue set 
+02- 
 03?.?
 03< -
 05rule(
 06insert
-15, natural size
+15, natural size 
 08; split(
-14); float cost
+14); float cost 
 04glue
 09nonscript
 05mskip
 02mu
 00
-08leaders
+08leaders 
 04kern
 13 (for accent)
 05mkern
 04math
 02on
 03off
-13, surrounded
-11 (ligature
-08penalty
+13, surrounded 
+11 (ligature 
+08penalty 
 13discretionary
-11 replacing
+11 replacing 
 04mark
 07vadjust
 08flushing
@@ -105,18 +105,18 @@
 21restricted horizontal
 05 mode
 18semantic nest size
-04###
-17 entered at line
+04### 
+17 entered at line 
 10 (language
 10:hyphenmin
 18 (\output routine)
 25### recent contributions:
-10prevdepth
+10prevdepth 
 07ignored
-11, prevgraf
+11, prevgraf 
 05 line
-12spacefactor
-19, current language
+12spacefactor 
+19, current language 
 31this will begin denominator of:
 08lineskip
 12baselineskip
@@ -299,57 +299,57 @@
 04ETC.
 04BAD.
 02->
-22begin-group character
-20end-group character
-21math shift character
-26macro parameter character
-22superscript character
-20subscript character
+22begin-group character 
+20end-group character 
+21math shift character 
+26macro parameter character 
+22superscript character 
+20subscript character 
 25end of alignment template
-12blank space
-11the letter
-14the character
+12blank space 
+11the letter 
+14the character 
 23[unknown command code!]
-02:
-08Runaway
+02: 
+08Runaway 
 10definition
 08argument
 08preamble
 04text
 03<*>
-09<insert>
-06<read
+09<insert> 
+06<read 
 02l.
-11<argument>
-11<template>
-16<recently read>
-19<to be read again>
-16<inserted text>
-09<output>
-11<everypar>
-12<everymath>
-15<everydisplay>
-12<everyhbox>
-12<everyvbox>
-11<everyjob>
-10<everycr>
-07<mark>
-08<write>
+11<argument> 
+11<template> 
+16<recently read> 
+19<to be read again> 
+16<inserted text> 
+09<output> 
+11<everypar> 
+12<everymath> 
+15<everydisplay> 
+12<everyhbox> 
+12<everyvbox> 
+11<everyjob> 
+10<everycr> 
+07<mark> 
+08<write> 
 16input stack size
 05write
 48(interwoven alignment preambles are not allowed)
 17text input levels
 03par
-11Incomplete
-34; all text was ignored after line
+11Incomplete 
+34; all text was ignored after line 
 54A forbidden control sequence occurred in skipped text.
 59This kind of error happens when you say `\if...' and forget
 59the matching `\fi'. I've inserted a `\fi'; this might work.
 53The file ended while I was skipping conditional text.
 10File ended
 32Forbidden control sequence found
-16 while scanning
-04 of
+16 while scanning 
+04 of 
 46I suspect you have forgotten a `}', causing me
 41to read past where you wanted me to stop.
 49I'll try to recover; but if the error is serious,
@@ -367,7 +367,7 @@
 55misspelled it (e.g., `\hobx'), type `I' and the correct
 51spelling (e.g., `I\hbox'). Otherwise just continue,
 45and I'll forget about whatever was undefined.
-08Missing
+08Missing 
 09 inserted
 53The control sequence marked <to be read again> should
 42not appear between \csname and \endcsname.
@@ -379,7 +379,7 @@
 14splitfirstmark
 12splitbotmark
 20parameter stack size
-12Argument of
+12Argument of 
 15 has an extra }
 58I've run across a `}' that doesn't seem to match anything.
 52For example, `\def\a#1{...}' and `\a}' would produce
@@ -387,12 +387,12 @@
 52I've just inserted will cause me to report a runaway
 54argument that might be the root of the problem. But if
 57your `}' was spurious, just type `2' and it will go away.
-23Paragraph ended before
+23Paragraph ended before 
 13 was complete
 58I suspect you've forgotten a `}', causing me to apply this
 54control sequence to too much text. How can we recover?
 59My plan is to forget the whole thing and hope for the best.
-07Use of
+07Use of 
 29 doesn't match its definition
 54If you say, e.g., `\def\a1{...}', then you must always
 52put `1' after `\a', since control sequence names are
@@ -422,13 +422,13 @@
 08lastskip
 11inputlineno
 07badness
-09Improper
+09Improper 
 54You can refer to \spacefactor only in horizontal mode;
 54you can refer to \prevdepth only in vertical mode; and
 48neither of these is meaningful inside \write. So
 52I'm forgetting what you said and using zero instead.
 15You can't use `
-08' after
+08' after 
 17Bad register code
 44A register number must be between 0 and 255.
 27I changed this one to zero.
@@ -483,7 +483,7 @@
 07meaning
 08fontname
 07jobname
-04 at
+04 at 
 60Where was the left brace? You said something like `\def\a}',
 43which I'm going to interpret as `\def\a{}'.
 32You already have nine parameters
@@ -492,12 +492,12 @@
 41Parameters must be numbered consecutively
 57I've inserted the digit you should have used after the #.
 36Type `1' to delete what you did use.
-42Illegal parameter number in definition of
+42Illegal parameter number in definition of 
 41You meant to type ## instead of #, right?
 56Or maybe a } was forgotten somewhere earlier, and things
 58are all screwed up? I'm going to assume that you meant ##.
 49*** (cannot \read from terminal in nonstop modes)
-18File ended within
+18File ended within 
 33This \read has unbalanced braces.
 02if
 05ifcat
@@ -519,13 +519,13 @@
 02fi
 02or
 04else
-06Extra
+06Extra 
 44I'm ignoring this; it doesn't match any \if.
 06{true}
 07{false}
-23Missing = inserted for
+23Missing = inserted for 
 48I was expecting to see `<', `=', or `>'. Didn't.
-06{case
+06{case 
 10TeXinputs:
 09TeXfonts:
 04.fmt
@@ -534,7 +534,7 @@
 23I can't write on file `
 02'.
 04.tex
-20Please type another
+20Please type another 
 45*** (job aborted, file error in nonstop mode)
 04.dvi
 20file name for output
@@ -542,10 +542,10 @@
 04.log
 02**
 20transcript file name
-02
+02  
 08nullfont
-05Font
-08 scaled
+05Font 
+08 scaled 
 36 not loadable: Bad metric (TFM) file
 42 not loadable: Metric (TFM) file not found
 50I wasn't able to read the size data for this font,
@@ -562,46 +562,46 @@
 23Missing font identifier
 42I was looking for a control sequence whose
 42current meaning has been defined by \font.
-10 has only
+10 has only 
 21 fontdimen parameters
 51To increase the number of font parameters, you must
 53use \fontdimen immediately after the \font is loaded.
 11font memory
-31Missing character: There is no
-09 in font
-12 TeX output
+31Missing character: There is no 
+09 in font 
+12 TeX output 
 08vlistout
 31Completed box being shipped out
-21Memory usage before:
-08 after:
-19; still untouched:
+21Memory usage before: 
+08 after: 
+19; still untouched: 
 31Huge page cannot be shipped out
 50The page just created is more than 18 feet tall or
 58more than 18 feet wide, so I suspect something went wrong.
 35The following box has been deleted:
 19No pages of output.
-18Output written on
+18Output written on 
 05 page
-02,
+02, 
 08 bytes).
 02to
 06spread
 09Underfull
 05Loose
-16 \hbox (badness
+16 \hbox (badness 
 38) has occurred while \output is active
-24) in paragraph at lines
-24) in alignment at lines
+24) in paragraph at lines 
+24) in alignment at lines 
 02--
-19) detected at line
+19) detected at line 
 16Overfull \hbox (
 11pt too wide
-21Tight \hbox (badness
+21Tight \hbox (badness 
 05vpack
-16 \vbox (badness
+16 \vbox (badness 
 16Overfull \vbox (
 11pt too high
-21Tight \vbox (badness
+21Tight \vbox (badness 
 02{}
 12displaystyle
 09textstyle
@@ -622,11 +622,11 @@
 05right
 06limits
 08nolimits
-20fraction, thickness
+20fraction, thickness 
 09= default
-17, left-delimiter
-18, right-delimiter
-25 is undefined (character
+17, left-delimiter 
+18, right-delimiter 
+25 is undefined (character 
 54Somewhere in the math formula just ended, you used the
 60stated character from an undefined font family. For example,
 58plain TeX doesn't allow \it or \sl in subscripts. Proceed,
@@ -644,7 +644,7 @@
 02cr
 04crcr
 11endtemplate
-24alignment tab character
+24alignment tab character 
 40Missing # inserted in alignment preamble
 50There should be exactly one # between &'s, when an
 56\halign or \valign is being set up. In this case you had
@@ -652,7 +652,7 @@
 29Only one # is allowed per tab
 49more than one, so I'm ignoring all but the first.
 04endv
-40Extra alignment tab has been changed to
+40Extra alignment tab has been changed to 
 52You have given more \span or & marks than there were
 58in the preamble to the \halign or \valign now in progress.
 50So I'll assume that you meant to type \cr instead.
@@ -668,7 +668,7 @@
 05disc1
 05disc2
 02@@
-07: line
+07: line 
 03 t=
 06 -> @@
 07 via @@
@@ -694,10 +694,10 @@
 18pattern memory ops
 31pattern memory ops per language
 14pattern memory
-13Too late for
+13Too late for 
 08patterns
 53All patterns must be given before typesetting begins.
-04Bad
+04Bad 
 17(See Appendix H.)
 09Nonletter
 17Duplicate pattern
@@ -708,7 +708,7 @@
 57shrinkable glue, e.g., `\vss' or `\vskip 0pt minus 1fil'.
 59Such glue doesn't belong there; but you can safely proceed,
 06vsplit
-09 needs a
+09 needs a 
 04vbox
 44The box you are trying to split is an \hbox.
 49I can't split such a box, so I'll leave it alone.
@@ -724,9 +724,9 @@
 05filll
 17### current page:
 28 (held over for next output)
-13total height
-13 goal height
-06 adds
+13total height 
+13 goal height 
+06 adds 
 03, #
 12 might split
 15%% goal height=
@@ -740,11 +740,11 @@
 52The page about to be output contains some infinitely
 03 g=
 03 c=
-38Infinite glue shrinkage inserted from
+38Infinite glue shrinkage inserted from 
 53The correction glue for page breaking with insertions
 52must have finite shrinkability. But you may proceed,
 07% split
-04 to
+04 to 
 15255 is not void
 53You shouldn't use \box255 except in \output routines.
 14Output loop---
@@ -755,14 +755,14 @@
 25Unbalanced output routine
 58Your sneaky output routine has problematic {'s and/or }'s.
 41I can't handle that very well; good luck.
-33Output routine didn't use all of
+33Output routine didn't use all of 
 43Your \output commands should empty \box255,
 34e.g., by saying `\shipout\box255'.
 43Proceed; I'll discard its present contents.
 18Missing $ inserted
 56I've inserted a begin-math/end-math symbol since I think
 48you left one out. Proceed, with fingers crossed.
-05' in
+05' in 
 50Sorry, but I'm not programmed to handle this case;
 45I'll just pretend that you didn't ask for it.
 49If you're in the wrong mode, you might be able to
@@ -790,7 +790,7 @@
 42You've closed more groups than you opened.
 51Such booboos are generally harmless, so keep going.
 10rightbrace
-22Extra }, or forgotten
+22Extra }, or forgotten 
 58I've deleted a group-closing symbol because it seems to be
 59spurious, as in `$x}$'. But perhaps the } is legitimate and
 59you forgot something else, as in `\hbox{$x}'. In such cases
@@ -827,7 +827,7 @@
 26' here except with leaders
 52To put a horizontal rule in an hbox or an alignment,
 56you should use \leaders or \hrulefill (see The TeXbook).
-10You can't
+10You can't 
 45I'm changing to \insert0; box 255 is special.
 32Try `I\vskip-\lastskip' instead.
 31Try `I\kern-\lastkern' instead.
@@ -843,7 +843,7 @@
 35Sorry, Pandora. (You sneaky devil.)
 58I refuse to unbox an \hbox in vertical mode or vice versa.
 40And I can't open any boxes in math mode.
-13Illegal math
+13Illegal math 
 54Sorry: The third part of a discretionary break must be
 57empty, in math formulas. I had to delete your third part.
 30Discretionary list is too long
@@ -856,7 +856,7 @@
 45I've put in what seems to be necessary to fix
 44the current column of the current alignment.
 43Try to go on, since this might almost work.
-10Misplaced
+10Misplaced 
 55I can't figure out why you would want to use a tab mark
 50here. If you just want an ampersand, the remedy is
 52simple: Just type `I\&' now. But if some right brace
@@ -881,7 +881,7 @@
 52braces don't get unbalanced. Otherwise just proceed.
 54Acceptable delimiters are characters whose \delcode is
 58nonnegative, or you can use `\delimiter <delimiter code>'.
-11Please use
+11Please use 
 25 for accents in math mode
 55I'm changing \accent to \mathaccent here; wish me luck.
 59(Accents are not the same in formulas as they are in text.)
@@ -946,7 +946,7 @@
 34I'm going to look for the \cs now.
 14Invalid code (
 29), should be in the range 0..
-21), should be at most
+21), should be at most 
 54I'm going to use 0 instead of that illegal code value.
 02by
 19Arithmetic overflow
@@ -968,7 +968,7 @@
 21pt), replaced by 10pt
 50I can only handle fonts at positive sizes that are
 56less than 2048pt, so I've changed what you said to 10pt.
-12select font
+12select font 
 13errorstopmode
 06openin
 07closein
@@ -990,7 +990,7 @@
 43\showthe\count10, \showbox255, \showlists).
 54And type `I\tracingonline=1\show...' to show boxes and
 57lists on your terminal as well as in the transcript file.
-02>
+02> 
 09undefined
 05macro
 10long macro
@@ -1002,27 +1002,27 @@
 09 (INITEX)
 29You can't dump inside a group
 24`{...\dump}' is a no-no.
-25 strings of total length
-43 memory locations dumped; current usage is
+25 strings of total length 
+43 memory locations dumped; current usage is 
 30 multiletter control sequences
-24 words of font info for
+24 words of font info for 
 15 preloaded font
 05\font
 22 hyphenation exception
-27Hyphenation trie of length
-05 has
+27Hyphenation trie of length 
+05 has 
 03 op
-08 out of
-14 for language
+08 out of 
+14 for language 
 19 (preloaded format=
 16format file name
-26Beginning to dump on file
-22Transcript written on
+26Beginning to dump on file 
+22Transcript written on 
 02 )
-13end occurred
-24inside a group at level
-05when
-09 on line
+13end occurred 
+24inside a group at level 
+05when 
+09 on line 
 16 was incomplete)
 52(see the transcript file for additional information)
 35(\dump is performed only by INITEX)
@@ -1034,7 +1034,7 @@
 11setlanguage
 20[unknown extension!]
 04ext1
-12 (hyphenmin
+12 (hyphenmin 
 08whatsit?
 04ext2
 04ext3

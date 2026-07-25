@@ -119,6 +119,18 @@ adapter rather than an importable public Go package.
 Preserve bundled license and attribution files. Generated assets must be
 refreshed through the scripts declared in the root `package.json`.
 
+The root `package-lock.json` is the canonical lock for the npm workspace.
+Commit it with dependency changes, use `npm ci --ignore-scripts` for
+reproducible builds, and do not commit a separate `external/package-lock.json`.
+
+`VERSION` and the root `package.json` contain the next stable `X.Y.Z` version.
+Release metadata is resolved by `scripts/build/release-metadata.sh`. A main
+prerelease run `N` uses `X.Y.Z-main.N` for npm and the embedded native CLI,
+`X.Y.Z~main.N` for Debian, and RPM `Version: X.Y.Z` with
+`Release: 0.main.N`; a stable RPM uses release `1`. Keep these values separate
+so prereleases sort before the corresponding stable OS package and remain valid
+for each package manager.
+
 ## Conventions
 
 - Run `gofmt` on changed Go files.
@@ -156,7 +168,7 @@ builds:
 make security-check
 go test ./...
 go build ./...
-npm install
+npm ci --ignore-scripts
 npm run build --workspace=@xaligo/xaligo-external
 npm --prefix external run build:pptx-exporter-wasm
 git diff --check

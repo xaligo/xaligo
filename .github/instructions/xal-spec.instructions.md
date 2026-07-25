@@ -590,6 +590,11 @@ The following rules are normative:
   normal element font attributes override those defaults. An element `name`
   is display text only and never becomes a frame-level connection alias; use
   the public UML reference described below.
+- A class-diagram classifier with a non-empty `stereotype` renders
+  `«stereotype»` as a separate first header line. `abstract="true"` and
+  `static="true"` append `{abstract}` and `{static}` to the classifier-name
+  header line. These lines remain one graphical header even when the
+  classifier has no compartments.
 - The compatibility tags `<element>` and `<relation>` are not part of the
   strict V1 UML profile. A model must use one of the element and relation tags
   allowed for its selected family.
@@ -685,7 +690,12 @@ Elements absent from this table do not accept compartments. The generic
 `<compartment>` child is a compatibility spelling accepted wherever a typed
 compartment is allowed; new source should use the typed tag because its meaning
 survives future semantic processing. Compartment source order is preserved,
-but compartments are not independent connection endpoints.
+but compartments are not independent connection endpoints. In a class diagram,
+adjacent structural (`attribute` or `literal`) compartments and adjacent
+behavioral compartments may share one graphical section; a transition between
+those kinds starts a new section without reordering either kind. Every
+newline-separated compartment line contributes to the classifier's intrinsic
+height.
 
 ### Relation attributes, order, and time
 
@@ -1250,10 +1260,23 @@ Icon SVGs are sourced from `etc/resources/aws/svg/Architecture-Group-Icons/`.
 | `<elastic-beanstalk-container>` | Elastic Beanstalk container | `#E7601B` | solid | — |
 | `<aws-step-functions-workflow>` | AWS Step Functions workflow | `#E7008A` | solid | — |
 | `<generic-group>` | Generic group | `#AAB7B8` | dashed | Configurable with `icon-id` |
+| `<capture>` | Capture | `#F5A623` | dashed | — |
 
 All AWS group tags require a non-empty `id`. IDs for group tags, `<rectangle>`,
 and `<port>` must be unique among frame-like components. Group tags otherwise
 accept the same attributes as `container` (`title`, `class`, `gap`, etc.).
+
+`<capture>` is a lightweight structural annotation container rather than an
+AWS/architectural boundary. It participates in normal nested layout: its
+children are allocated within its bordered content box, including the same
+padding and optional title band used by other group tags. The border uses the
+same title/text/tag-name fallback as every other group tag without implying
+cloud/network semantics. Like every group tag, a `<capture>` is connectable by
+`id`/`name`/`ref` from `<connection>`, including the `frameId.id` qualified
+form, so a connection that starts or ends on a `<capture>` in another frame
+renders as the same "to `<frame>`" / "from `<frame>`" cross-frame page-link
+stubs used for any other connectable endpoint — no separate cross-boundary
+arrow mechanism exists for captures.
 
 `generic-group` additionally accepts `icon-id`, a positive signed 32-bit
 decimal ID (`1..2147483647`) from `service-catalog.csv`. Zero, signs,

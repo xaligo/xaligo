@@ -41,7 +41,20 @@ func (rcvr *validateController) Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "validate <input.xal>",
 		Short: "Validate xaligo DSL syntax and layout",
-		Args:  cobra.ExactArgs(1),
+		Long: `Validate a .xal source file without producing any rendered output.
+
+Runs the same parser, layout, and connection-reference checks used before
+rendering, so a file that passes validate will not fail render for a
+structural reason. Errors are source-positioned and user-correctable, for
+example an unresolved connection endpoint or an invalid attribute value.
+
+Prints "valid" and exits 0 on success; prints the error and exits non-zero
+otherwise.
+
+Examples:
+  xaligo validate diagram.xal
+  xaligo validate docs/src/examples/samples/sample.xal`,
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return rcvr.Run(args[0], os.Stdout)
 		},
