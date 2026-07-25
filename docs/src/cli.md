@@ -139,7 +139,8 @@ Useful generation flags:
 |---|---|
 | `xaligo diff <before.xal> <after.xal> -o <prefix>` | Render paired structural-diff SVGs |
 | `xaligo validate <file.xal>` | Validate syntax, layout, and connection references |
-| `xaligo serve <file.xal>` | Serve an SVG live preview |
+| `xaligo render markdown <file.md>` | Embed rendered `xal` code blocks as SVG images into a Markdown file |
+| `xaligo serve <file.xal\|file.md>` | Serve a live preview; `.xal` previews one combined SVG, `.md`/`.markdown` previews the full document with diagrams embedded inline; `--paper`/`--orientation` fix the preview to a physical page size |
 | `xaligo add service --name <name> --file <file>` | Add a service icon |
 | `xaligo add service --list <csv> --file <file>` | Bulk-add service icons |
 | `xaligo init [-o <dir>]` | Generate a sample `.xal` file |

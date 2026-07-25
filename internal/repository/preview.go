@@ -23,10 +23,11 @@ type PreviewRepository interface {
 type previewRepository struct {
 	path     string
 	opts     entity.PreviewOptions
+	kind     entity.PreviewKind
 	mu       sync.RWMutex
 	hash     [sha256.Size]byte
 	haveHash bool
-	svg      []byte
+	content  []byte
 	status   entity.PreviewStatus
 	nextSub  uint64
 	subs     map[uint64]chan uint64
@@ -54,8 +55,12 @@ func NewPreviewRepository(
 	if err := validate(opts.Render); err != nil {
 		return nil, err
 	}
+	kind := opts.Kind
+	if kind == "" {
+		kind = entity.PreviewKindSVG
+	}
 	s := &previewRepository{
-		path: path, opts: opts, subs: map[uint64]chan uint64{},
+		path: path, opts: opts, kind: kind, subs: map[uint64]chan uint64{},
 		render: render, validate: validate, diagnose: diagnose, read: read,
 	}
 	if err := s.refresh(true); err != nil {
@@ -67,7 +72,8 @@ func NewPreviewRepository(
 func (rcvr *previewRepository) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", rcvr.handleIndex)
-	mux.HandleFunc("/diagram.svg", rcvr.handleSVG)
+	mux.HandleFunc("/diagram.svg", rcvr.handleContent)
+	mux.HandleFunc("/content.html", rcvr.handleContent)
 	mux.HandleFunc("/api/status", rcvr.handleStatus)
 	mux.HandleFunc("/events", rcvr.handleEvents)
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
@@ -125,7 +131,7 @@ func (rcvr *previewRepository) refresh(force bool) error {
 		return nil
 	}
 
-	svg, renderErr := rcvr.render(context.Background(), source, rcvr.opts.Render)
+	data, renderErr := rcvr.render(context.Background(), source, rcvr.opts.Render)
 	rcvr.mu.Lock()
 	rcvr.hash = hash
 	rcvr.haveHash = true
@@ -138,11 +144,11 @@ func (rcvr *previewRepository) refresh(force bool) error {
 		} else {
 			rcvr.status.Diagnostics = []entity.Diagnostic{{Severity: entity.DiagnosticSeverity("error"), Message: renderErr.Error()}}
 		}
-		rcvr.svg = nil
+		rcvr.content = nil
 	} else {
 		rcvr.status.Error = ""
 		rcvr.status.Diagnostics = nil
-		rcvr.svg = append(rcvr.svg[:0], svg...)
+		rcvr.content = append(rcvr.content[:0], data...)
 	}
 	version := rcvr.status.Version
 	subs := make([]chan uint64, 0, len(rcvr.subs))
@@ -178,21 +184,32 @@ func (rcvr *previewRepository) handleIndex(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if rcvr.kind == entity.PreviewKindHTML {
+		_, _ = w.Write([]byte(indexHTMLMarkdown))
+		return
+	}
 	_, _ = w.Write([]byte(indexHTML))
 }
 
-func (rcvr *previewRepository) handleSVG(w http.ResponseWriter, _ *http.Request) {
+func (rcvr *previewRepository) handleContent(w http.ResponseWriter, _ *http.Request) {
 	rcvr.mu.RLock()
-	svg := append([]byte(nil), rcvr.svg...)
+	content := append([]byte(nil), rcvr.content...)
 	errText := rcvr.status.Error
 	rcvr.mu.RUnlock()
 	if errText != "" {
 		http.Error(w, errText, http.StatusUnprocessableEntity)
 		return
 	}
-	w.Header().Set("Content-Type", "image/svg+xml")
+	w.Header().Set("Content-Type", rcvr.contentType())
 	w.Header().Set("Cache-Control", "no-store")
-	_, _ = w.Write(svg)
+	_, _ = w.Write(content)
+}
+
+func (rcvr *previewRepository) contentType() string {
+	if rcvr.kind == entity.PreviewKindHTML {
+		return "text/html; charset=utf-8"
+	}
+	return "image/svg+xml"
 }
 
 func (rcvr *previewRepository) handleStatus(w http.ResponseWriter, _ *http.Request) {
@@ -248,5 +265,16 @@ const indexHTML = `<!doctype html>
 <script>
 const image=document.querySelector('#diagram'), error=document.querySelector('#error');
 async function reload(v){const status=await fetch('/api/status?'+v,{cache:'no-store'}).then(r=>r.json());if(status.error){image.hidden=true;error.hidden=false;const d=status.diagnostics?.[0];error.textContent=d?.line?'Line '+d.line+', column '+d.column+': '+d.message:status.error}else{error.hidden=true;image.hidden=false;image.src='/diagram.svg?v='+status.version}}
+new EventSource('/events').addEventListener('update',e=>reload(e.data));
+</script></body></html>`
+
+const indexHTMLMarkdown = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>xaligo preview</title><style>
+:root{color-scheme:light dark;font-family:system-ui,sans-serif}body{margin:0;background:#111827}header{height:42px;display:flex;align-items:center;padding:0 14px;color:#e5e7eb;background:#0f172a}main{height:calc(100vh - 42px);overflow:auto;background:#fff}iframe{width:100%;height:100%;border:0;background:#fff}.error{white-space:pre-wrap;color:#fecaca;background:#7f1d1d;padding:16px;border-radius:6px;margin:16px}[hidden]{display:none}
+</style></head><body><header>xaligo live preview</header><main><iframe id="content" title="xaligo markdown preview"></iframe><pre id="error" class="error" hidden></pre></main>
+<script>
+const frame=document.querySelector('#content'), error=document.querySelector('#error');
+async function reload(v){const status=await fetch('/api/status?'+v,{cache:'no-store'}).then(r=>r.json());if(status.error){frame.hidden=true;error.hidden=false;const d=status.diagnostics?.[0];error.textContent=d?.line?'Line '+d.line+', column '+d.column+': '+d.message:status.error}else{error.hidden=true;frame.hidden=false;frame.src='/content.html?v='+status.version}}
 new EventSource('/events').addEventListener('update',e=>reload(e.data));
 </script></body></html>`

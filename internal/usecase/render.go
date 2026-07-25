@@ -17,6 +17,8 @@ import (
 	"github.com/xaligo/xaligo/internal/repository"
 	"github.com/xaligo/xaligo/internal/share"
 	v1engine "github.com/xaligo/xaligo/internal/usecase/v1/engine"
+	"github.com/yuin/goldmark"
+	goldmarkhtml "github.com/yuin/goldmark/renderer/html"
 )
 
 // RenderUsecase owns format dispatch and the shared render pipeline.
@@ -283,9 +285,9 @@ func (rcvr *renderUsecase) BuildPPTXPlan(ctx context.Context, input []byte, opts
 }
 
 func (rcvr *renderUsecase) NewPreviewRepository(path string, opts entity.PreviewOptions) (repository.PreviewRepository, error) {
-	renderPreview := func(ctx context.Context, input []byte, renderOpts entity.RenderOptions) ([]byte, error) {
-		renderOpts.CombineFrames = true
-		return rcvr.RenderSVG(ctx, input, renderOpts)
+	renderPreview := rcvr.renderSVGPreview
+	if opts.Kind == entity.PreviewKindHTML {
+		renderPreview = rcvr.renderMarkdownPreview
 	}
 	return repository.NewPreviewRepository(
 		path,
@@ -296,6 +298,143 @@ func (rcvr *renderUsecase) NewPreviewRepository(path string, opts entity.Preview
 		rcvr.xaligoRepository.ReadSource,
 	)
 }
+
+// renderSVGPreview renders a .xal source onto one combined SVG canvas for
+// the live preview server.
+func (rcvr *renderUsecase) renderSVGPreview(ctx context.Context, input []byte, renderOpts entity.RenderOptions) ([]byte, error) {
+	renderOpts.CombineFrames = true
+	return rcvr.RenderSVG(ctx, input, renderOpts)
+}
+
+// renderMarkdownPreview renders every ```xal code block in a Markdown source
+// to SVG, embeds the SVGs inline, and converts the result to a standalone
+// HTML document for the live preview server.
+func (rcvr *renderUsecase) renderMarkdownPreview(ctx context.Context, input []byte, renderOpts entity.RenderOptions) ([]byte, error) {
+	blockIndex := 0
+	embedded, err := EmbedXalCodeBlocks(string(input), func(xal string) ([]string, error) {
+		blockIndex++
+		artifacts, renderErr := rcvr.RenderArtifacts(ctx, []byte(xal), renderOpts)
+		if renderErr != nil {
+			return nil, fmt.Errorf("render xal code block %d: %w", blockIndex, renderErr)
+		}
+		lines := make([]string, 0, len(artifacts)*2)
+		for _, artifact := range artifacts {
+			lines = append(lines, "", string(artifact.Data), "")
+		}
+		return lines, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return renderMarkdownHTMLDocument(embedded)
+}
+
+// EmbedXalCodeBlocks scans Markdown source for fenced code blocks whose info
+// string is exactly "xal" (``` or ~~~ fences, up to 3 leading spaces of
+// indentation per CommonMark) and replaces each one with the lines returned
+// by renderBlock for that block's body. Every other line is preserved as-is.
+// Shared by the `render markdown` file-output flow and the Markdown live
+// preview flow.
+func EmbedXalCodeBlocks(source string, renderBlock func(xal string) ([]string, error)) (string, error) {
+	lines := strings.Split(source, "\n")
+	output := make([]string, 0, len(lines))
+	lineIndex := 0
+	for lineIndex < len(lines) {
+		line := lines[lineIndex]
+		fenceChar, fenceLen, info, isFence := parseMarkdownFenceOpen(line)
+		if !isFence || info != "xal" {
+			output = append(output, line)
+			lineIndex++
+			continue
+		}
+		bodyStart := lineIndex + 1
+		closeIndex := findMarkdownFenceClose(lines, bodyStart, fenceChar, fenceLen)
+		if closeIndex == -1 {
+			return "", fmt.Errorf("unterminated ```xal code fence starting at line %d", lineIndex+1)
+		}
+		body := strings.Join(lines[bodyStart:closeIndex], "\n")
+		replacement, err := renderBlock(body)
+		if err != nil {
+			return "", err
+		}
+		output = append(output, replacement...)
+		lineIndex = closeIndex + 1
+	}
+	return strings.Join(output, "\n"), nil
+}
+
+// parseMarkdownFenceOpen reports whether line opens a fenced code block (at
+// most 3 leading spaces, 3+ backticks or tildes), returning the fence
+// character, fence length, and trimmed info string.
+func parseMarkdownFenceOpen(line string) (fenceChar byte, fenceLen int, info string, ok bool) {
+	trimmed := strings.TrimLeft(line, " ")
+	if len(line)-len(trimmed) > 3 {
+		return 0, 0, "", false
+	}
+	if len(trimmed) < 3 {
+		return 0, 0, "", false
+	}
+	fenceChar = trimmed[0]
+	if fenceChar != '`' && fenceChar != '~' {
+		return 0, 0, "", false
+	}
+	for fenceLen < len(trimmed) && trimmed[fenceLen] == fenceChar {
+		fenceLen++
+	}
+	if fenceLen < 3 {
+		return 0, 0, "", false
+	}
+	return fenceChar, fenceLen, strings.TrimSpace(trimmed[fenceLen:]), true
+}
+
+// findMarkdownFenceClose returns the index of the first line at or after
+// start that closes a fence opened with fenceChar/fenceLen, or -1 if none is
+// found.
+func findMarkdownFenceClose(lines []string, start int, fenceChar byte, fenceLen int) int {
+	for index := start; index < len(lines); index++ {
+		trimmed := strings.TrimLeft(lines[index], " ")
+		if len(lines[index])-len(trimmed) > 3 {
+			continue
+		}
+		count := 0
+		for count < len(trimmed) && trimmed[count] == fenceChar {
+			count++
+		}
+		if count >= fenceLen && strings.TrimSpace(trimmed[count:]) == "" {
+			return index
+		}
+	}
+	return -1
+}
+
+// renderMarkdownHTMLDocument converts Markdown source (with raw <svg> blocks
+// already embedded by EmbedXalCodeBlocks) into a standalone HTML document
+// suitable for direct or iframe-embedded live preview.
+func renderMarkdownHTMLDocument(source string) ([]byte, error) {
+	converter := goldmark.New(goldmark.WithRendererOptions(goldmarkhtml.WithUnsafe()))
+	var htmlBody bytes.Buffer
+	if err := converter.Convert([]byte(source), &htmlBody); err != nil {
+		return nil, fmt.Errorf("convert markdown to HTML: %w", err)
+	}
+	var doc bytes.Buffer
+	doc.WriteString(markdownPreviewHTMLHeader)
+	doc.Write(htmlBody.Bytes())
+	doc.WriteString(markdownPreviewHTMLFooter)
+	return doc.Bytes(), nil
+}
+
+const markdownPreviewHTMLHeader = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>xaligo markdown preview</title><style>
+body{margin:0;padding:24px;background:#fff;color:#111827;font-family:system-ui,sans-serif;line-height:1.6}
+svg{max-width:100%;height:auto;box-shadow:0 4px 16px #0002;margin:8px 0;display:block}
+pre{background:#f3f4f6;padding:12px;border-radius:6px;overflow:auto}
+code{background:#f3f4f6;padding:2px 4px;border-radius:4px}
+</style></head><body>
+`
+
+const markdownPreviewHTMLFooter = `
+</body></html>`
 
 func (rcvr *renderUsecase) diagnose(ctx context.Context, input []byte) ([]entity.Diagnostic, error) {
 	if err := checkContext(ctx); err != nil {

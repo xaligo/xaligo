@@ -68,6 +68,25 @@ func TestRunMarkdownEmbedsSingleFrameSVG(t *testing.T) {
 	}
 }
 
+func TestRunMarkdownForwardsPaperAndOrientation(t *testing.T) {
+	dir := t.TempDir()
+	input := "```xal\n<frame></frame>\n```\n"
+	inputPath := filepath.Join(dir, "guide.md")
+	if err := os.WriteFile(inputPath, []byte(input), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	uc := &fakeUseCase{renderSVG: []byte(`<svg>ok</svg>`)}
+	if err := newRenderController(uc).RunMarkdown(entity.ControllerRenderMarkdownOptions{
+		InputPath: inputPath, Paper: "A4", Orientation: "landscape",
+	}); err != nil {
+		t.Fatalf("RunMarkdown() error = %v", err)
+	}
+	if uc.lastRenderOpts.PaperSize != "A4" || uc.lastRenderOpts.Orientation != "landscape" {
+		t.Fatalf("lastRenderOpts = %#v, want PaperSize=A4 Orientation=landscape", uc.lastRenderOpts)
+	}
+}
+
 func TestRunMarkdownEmbedsMultiFrameSVGs(t *testing.T) {
 	dir := t.TempDir()
 	input := "```xal\n<frames></frames>\n```\n"

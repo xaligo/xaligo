@@ -101,3 +101,56 @@ func TestPreviewRepositoryRunStopsWhenContextCanceled(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+const simpleMarkdownXAL = "# Guide\n\nIntro text.\n\n```xal\n" + simpleXAL + "\n```\n\nOutro text.\n"
+
+func TestPreviewRepositoryHandlersMarkdownKind(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "guide.md")
+	if err := os.WriteFile(path, []byte(simpleMarkdownXAL), 0644); err != nil {
+		t.Fatal(err)
+	}
+	server, err := newUsecase().NewPreviewRepository(path, entity.PreviewOptions{
+		Kind:   entity.PreviewKindHTML,
+		Render: entity.RenderOptions{Theme: "light"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	handler := server.Handler()
+
+	index := httptest.NewRecorder()
+	handler.ServeHTTP(index, httptest.NewRequest(http.MethodGet, "/", nil))
+	if index.Code != http.StatusOK || !strings.Contains(index.Body.String(), "xaligo live preview") || !strings.Contains(index.Body.String(), "<iframe") {
+		t.Fatalf("index status=%d body=%q", index.Code, index.Body.String())
+	}
+
+	content := httptest.NewRecorder()
+	handler.ServeHTTP(content, httptest.NewRequest(http.MethodGet, "/content.html", nil))
+	if content.Code != http.StatusOK || content.Header().Get("Content-Type") != "text/html; charset=utf-8" {
+		t.Fatalf("content status=%d header=%q", content.Code, content.Header().Get("Content-Type"))
+	}
+	body := content.Body.String()
+	if !strings.Contains(body, "<svg") || !strings.Contains(body, "<h1>Guide</h1>") || !strings.Contains(body, "Outro text.") {
+		t.Fatalf("content body = %q", body)
+	}
+}
+
+func TestPreviewRepositoryMarkdownHandlerReportsRenderError(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "broken.md")
+	broken := "```xal\n<frame><item id=\"bad\" /></frame>\n```\n"
+	if err := os.WriteFile(path, []byte(broken), 0644); err != nil {
+		t.Fatal(err)
+	}
+	server, err := newUsecase().NewPreviewRepository(path, entity.PreviewOptions{
+		Kind:   entity.PreviewKindHTML,
+		Render: entity.RenderOptions{Theme: "light"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	response := httptest.NewRecorder()
+	server.Handler().ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/content.html", nil))
+	if response.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("response status=%d body=%q", response.Code, response.Body.String())
+	}
+}

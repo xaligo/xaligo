@@ -79,6 +79,8 @@ type ControllerServeOptions struct {
 	Address      string
 	Mode         string
 	Theme        string
+	Paper        string
+	Orientation  string
 	PollInterval time.Duration
 }
 
@@ -90,4 +92,6 @@ type ControllerRenderMarkdownOptions struct {
 	PxPerInch    float64
 	Theme        string
 	Mode         string
+	Paper        string
+	Orientation  string
 }

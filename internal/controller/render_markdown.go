@@ -22,7 +22,6 @@ var (
 	ICRRM005   = share.NewMCode("ICRRM-005", "Run render markdown embed code blocks failed")
 	ICRRM006   = share.NewMCode("ICRRM-006", "Run render markdown write output failed")
 	ICRRM007   = share.NewMCode("ICRRM-007", "Run render markdown generated output")
-	IEXCB001   = share.NewMCode("IEXCB-001", "Embed xal code blocks unterminated fence")
 	IEXCB002   = share.NewMCode("IEXCB-002", "Embed xal code blocks render block failed")
 )
 
@@ -39,6 +38,8 @@ func initRenderMarkdownCmd(rcvr *renderController) *cobra.Command {
 		theme        string
 		mode         string
 		pxPerInch    float64
+		paper        string
+		orientation  string
 	)
 
 	cmd := &cobra.Command{
@@ -50,10 +51,14 @@ with a Markdown image reference (![](path/to/file.svg)) in place of each
 original code block. Generated SVG files are written next to the input
 Markdown file by default; use --svg-dir to write them elsewhere.
 
+Use --paper and --orientation to fit each rendered diagram to a specific
+physical page size, the same as 'render --format svg'.
+
 Examples:
   xaligo render markdown docs/guide.md
   xaligo render markdown docs/guide.md -o docs/guide.embedded.md
-  xaligo render markdown docs/guide.md --svg-dir docs/images`,
+  xaligo render markdown docs/guide.md --svg-dir docs/images
+  xaligo render markdown docs/guide.md --paper A4 --orientation landscape`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return rcvr.RunMarkdown(entity.ControllerRenderMarkdownOptions{
@@ -64,6 +69,8 @@ Examples:
 				Theme:        theme,
 				Mode:         mode,
 				PxPerInch:    pxPerInch,
+				Paper:        paper,
+				Orientation:  orientation,
 			})
 		},
 	}
@@ -74,6 +81,8 @@ Examples:
 	cmd.Flags().StringVar(&theme, "theme", "light", "color theme: light | dark")
 	cmd.Flags().StringVar(&mode, "mode", "standard", "rendering mode: standard | network | aws")
 	cmd.Flags().Float64Var(&pxPerInch, "px-per-inch", 0, "pixels per inch for SVG layout scaling (default 96)")
+	cmd.Flags().StringVar(&paper, "paper", "", "physical paper size to fit each diagram to: A5 | A4 | A3 | A2 | A1 | Letter | Legal | Tabloid (default: auto-fit)")
+	cmd.Flags().StringVar(&orientation, "orientation", "", "page orientation: portrait | landscape (default: auto-fit)")
 	return cmd
 }
 
@@ -119,11 +128,13 @@ func (rcvr *renderController) RunMarkdown(opts entity.ControllerRenderMarkdownOp
 		return err
 	}
 	renderOpts := entity.RenderOptions{
-		Format:    usecase.FormatSVG,
-		Mode:      entity.Mode(strings.TrimSpace(opts.Mode)),
-		Theme:     theme,
-		PxPerInch: opts.PxPerInch,
-		Imports:   &entity.ImportSource{FS: os.DirFS(filepath.Dir(absInputPath))},
+		Format:      usecase.FormatSVG,
+		Mode:        entity.Mode(strings.TrimSpace(opts.Mode)),
+		Theme:       theme,
+		PxPerInch:   opts.PxPerInch,
+		PaperSize:   opts.Paper,
+		Orientation: opts.Orientation,
+		Imports:     &entity.ImportSource{FS: os.DirFS(filepath.Dir(absInputPath))},
 	}
 	if opts.ServicesFile != "" {
 		servicesCSV, readErr := os.ReadFile(opts.ServicesFile)
@@ -142,7 +153,7 @@ func (rcvr *renderController) RunMarkdown(opts entity.ControllerRenderMarkdownOp
 	seen := map[string]string{}
 	blockIndex := 0
 
-	embedded, err := embedXalCodeBlocks(string(input), func(xal string) ([]string, error) {
+	embedded, err := usecase.EmbedXalCodeBlocks(string(input), func(xal string) ([]string, error) {
 		blockIndex++
 		artifacts, renderErr := rcvr.renderUsecase.RenderArtifacts(context.Background(), []byte(xal), renderOpts)
 		if renderErr != nil {
@@ -200,80 +211,4 @@ func renderMarkdownSVGFileName(mdStem string, blockIndex, artifactIndex int, art
 		safeID = fmt.Sprintf("frame-%d", artifactIndex+1)
 	}
 	return fmt.Sprintf("%s-%d-%s.svg", mdStem, blockIndex, safeID)
-}
-
-// embedXalCodeBlocks scans Markdown source for fenced code blocks whose info
-// string is exactly "xal" (``` or ~~~ fences, up to 3 leading spaces of
-// indentation per CommonMark) and replaces each one with the lines returned
-// by renderBlock for that block's body. Every other line is preserved as-is.
-func embedXalCodeBlocks(source string, renderBlock func(xal string) ([]string, error)) (string, error) {
-	lines := strings.Split(source, "\n")
-	output := make([]string, 0, len(lines))
-	lineIndex := 0
-	for lineIndex < len(lines) {
-		line := lines[lineIndex]
-		fenceChar, fenceLen, info, isFence := parseFenceOpen(line)
-		if !isFence || info != "xal" {
-			output = append(output, line)
-			lineIndex++
-			continue
-		}
-		bodyStart := lineIndex + 1
-		closeIndex := findFenceClose(lines, bodyStart, fenceChar, fenceLen)
-		if closeIndex == -1 {
-			logger.ERROR(IEXCB001, "unterminated code fence", map[string]any{"line": lineIndex + 1})
-			return "", fmt.Errorf("unterminated ```xal code fence starting at line %d", lineIndex+1)
-		}
-		body := strings.Join(lines[bodyStart:closeIndex], "\n")
-		replacement, err := renderBlock(body)
-		if err != nil {
-			return "", err
-		}
-		output = append(output, replacement...)
-		lineIndex = closeIndex + 1
-	}
-	return strings.Join(output, "\n"), nil
-}
-
-// parseFenceOpen reports whether line opens a fenced code block (at most 3
-// leading spaces, 3+ backticks or tildes), returning the fence character,
-// fence length, and trimmed info string.
-func parseFenceOpen(line string) (fenceChar byte, fenceLen int, info string, ok bool) {
-	trimmed := strings.TrimLeft(line, " ")
-	if len(line)-len(trimmed) > 3 {
-		return 0, 0, "", false
-	}
-	if len(trimmed) < 3 {
-		return 0, 0, "", false
-	}
-	fenceChar = trimmed[0]
-	if fenceChar != '`' && fenceChar != '~' {
-		return 0, 0, "", false
-	}
-	for fenceLen < len(trimmed) && trimmed[fenceLen] == fenceChar {
-		fenceLen++
-	}
-	if fenceLen < 3 {
-		return 0, 0, "", false
-	}
-	return fenceChar, fenceLen, strings.TrimSpace(trimmed[fenceLen:]), true
-}
-
-// findFenceClose returns the index of the first line at or after start that
-// closes a fence opened with fenceChar/fenceLen, or -1 if none is found.
-func findFenceClose(lines []string, start int, fenceChar byte, fenceLen int) int {
-	for index := start; index < len(lines); index++ {
-		trimmed := strings.TrimLeft(lines[index], " ")
-		if len(lines[index])-len(trimmed) > 3 {
-			continue
-		}
-		count := 0
-		for count < len(trimmed) && trimmed[count] == fenceChar {
-			count++
-		}
-		if count >= fenceLen && strings.TrimSpace(trimmed[count:]) == "" {
-			return index
-		}
-	}
-	return -1
 }
