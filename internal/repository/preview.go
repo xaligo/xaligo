@@ -7,7 +7,12 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"mime"
 	"net/http"
+	"net/url"
+	"os"
+	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -21,20 +26,21 @@ type PreviewRepository interface {
 }
 
 type previewRepository struct {
-	path     string
-	opts     entity.PreviewOptions
-	kind     entity.PreviewKind
-	mu       sync.RWMutex
-	hash     [sha256.Size]byte
-	haveHash bool
-	content  []byte
-	status   entity.PreviewStatus
-	nextSub  uint64
-	subs     map[uint64]chan uint64
-	render   func(context.Context, []byte, entity.RenderOptions) ([]byte, error)
-	validate func(entity.RenderOptions) error
-	diagnose func(context.Context, []byte) ([]entity.Diagnostic, error)
-	read     func(string) ([]byte, error)
+	path      string
+	assetRoot string
+	opts      entity.PreviewOptions
+	kind      entity.PreviewKind
+	mu        sync.RWMutex
+	hash      [sha256.Size]byte
+	haveHash  bool
+	content   []byte
+	status    entity.PreviewStatus
+	nextSub   uint64
+	subs      map[uint64]chan uint64
+	render    func(context.Context, []byte, entity.RenderOptions) ([]byte, error)
+	validate  func(entity.RenderOptions) error
+	diagnose  func(context.Context, []byte) ([]entity.Diagnostic, error)
+	read      func(string) ([]byte, error)
 }
 
 func NewPreviewRepository(
@@ -59,9 +65,14 @@ func NewPreviewRepository(
 	if kind == "" {
 		kind = entity.PreviewKindSVG
 	}
+	absolutePath, err := filepath.Abs(path)
+	if err != nil {
+		return nil, fmt.Errorf("resolve preview input path: %w", err)
+	}
 	s := &previewRepository{
-		path: path, opts: opts, kind: kind, subs: map[uint64]chan uint64{},
-		render: render, validate: validate, diagnose: diagnose, read: read,
+		path: path, assetRoot: filepath.Dir(absolutePath), opts: opts, kind: kind,
+		subs: map[uint64]chan uint64{}, render: render, validate: validate,
+		diagnose: diagnose, read: read,
 	}
 	if err := s.refresh(true); err != nil {
 		return nil, err
@@ -76,6 +87,9 @@ func (rcvr *previewRepository) Handler() http.Handler {
 	mux.HandleFunc("/content.html", rcvr.handleContent)
 	mux.HandleFunc("/api/status", rcvr.handleStatus)
 	mux.HandleFunc("/events", rcvr.handleEvents)
+	if rcvr.kind == entity.PreviewKindHTML {
+		mux.HandleFunc("/assets/", rcvr.handleAsset)
+	}
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		_, _ = w.Write([]byte("ok\n"))
@@ -138,11 +152,15 @@ func (rcvr *previewRepository) refresh(force bool) error {
 	rcvr.status.Version++
 	if renderErr != nil {
 		rcvr.status.Error = renderErr.Error()
-		diagnostics, diagnoseErr := rcvr.diagnose(context.Background(), source)
-		if diagnoseErr == nil && len(diagnostics) > 0 {
-			rcvr.status.Diagnostics = diagnostics
-		} else {
-			rcvr.status.Diagnostics = []entity.Diagnostic{{Severity: entity.DiagnosticSeverity("error"), Message: renderErr.Error()}}
+		rcvr.status.Diagnostics = []entity.Diagnostic{{
+			Severity: entity.DiagnosticSeverity("error"),
+			Message:  renderErr.Error(),
+		}}
+		if rcvr.kind == entity.PreviewKindSVG {
+			diagnostics, diagnoseErr := rcvr.diagnose(context.Background(), source)
+			if diagnoseErr == nil && len(diagnostics) > 0 {
+				rcvr.status.Diagnostics = diagnostics
+			}
 		}
 		rcvr.content = nil
 	} else {
@@ -184,6 +202,9 @@ func (rcvr *previewRepository) handleIndex(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Content-Security-Policy", "default-src 'none'; connect-src 'self'; frame-src 'self'; img-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'")
+	w.Header().Set("Referrer-Policy", "no-referrer")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
 	if rcvr.kind == entity.PreviewKindHTML {
 		_, _ = w.Write([]byte(indexHTMLMarkdown))
 		return
@@ -202,7 +223,81 @@ func (rcvr *previewRepository) handleContent(w http.ResponseWriter, _ *http.Requ
 	}
 	w.Header().Set("Content-Type", rcvr.contentType())
 	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	if rcvr.kind == entity.PreviewKindHTML {
+		w.Header().Set("Content-Security-Policy", "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'; sandbox")
+		w.Header().Set("Referrer-Policy", "no-referrer")
+	}
 	_, _ = w.Write(content)
+}
+
+func (rcvr *previewRepository) handleAsset(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		w.Header().Set("Allow", "GET, HEAD")
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	escapedPath := strings.TrimPrefix(r.URL.EscapedPath(), "/assets/")
+	relativePath, err := url.PathUnescape(escapedPath)
+	if err != nil || !validPreviewAssetPath(relativePath) {
+		http.NotFound(w, r)
+		return
+	}
+	root, err := os.OpenRoot(rcvr.assetRoot)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	defer root.Close()
+	file, err := root.Open(filepath.FromSlash(relativePath))
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	defer file.Close()
+	info, err := file.Stat()
+	if err != nil || !info.Mode().IsRegular() {
+		http.NotFound(w, r)
+		return
+	}
+	contentType := mime.TypeByExtension(strings.ToLower(filepath.Ext(info.Name())))
+	if !strings.HasPrefix(contentType, "image/") {
+		var sample [512]byte
+		count, readErr := file.Read(sample[:])
+		if readErr != nil && count == 0 {
+			http.NotFound(w, r)
+			return
+		}
+		contentType = http.DetectContentType(sample[:count])
+		if !strings.HasPrefix(contentType, "image/") {
+			http.NotFound(w, r)
+			return
+		}
+		if _, err := file.Seek(0, 0); err != nil {
+			http.NotFound(w, r)
+			return
+		}
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; sandbox")
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Referrer-Policy", "no-referrer")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	http.ServeContent(w, r, info.Name(), info.ModTime(), file)
+}
+
+func validPreviewAssetPath(relativePath string) bool {
+	if relativePath == "" || strings.ContainsRune(relativePath, '\x00') ||
+		strings.Contains(relativePath, `\`) || filepath.IsAbs(relativePath) ||
+		filepath.VolumeName(relativePath) != "" {
+		return false
+	}
+	for _, segment := range strings.Split(relativePath, "/") {
+		if segment == "" || segment == "." || segment == ".." {
+			return false
+		}
+	}
+	return true
 }
 
 func (rcvr *previewRepository) contentType() string {
@@ -272,7 +367,7 @@ const indexHTMLMarkdown = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>xaligo preview</title><style>
 :root{color-scheme:light dark;font-family:system-ui,sans-serif}body{margin:0;background:#111827}header{height:42px;display:flex;align-items:center;padding:0 14px;color:#e5e7eb;background:#0f172a}main{height:calc(100vh - 42px);overflow:auto;background:#fff}iframe{width:100%;height:100%;border:0;background:#fff}.error{white-space:pre-wrap;color:#fecaca;background:#7f1d1d;padding:16px;border-radius:6px;margin:16px}[hidden]{display:none}
-</style></head><body><header>xaligo live preview</header><main><iframe id="content" title="xaligo markdown preview"></iframe><pre id="error" class="error" hidden></pre></main>
+</style></head><body><header>xaligo live preview</header><main><iframe sandbox id="content" title="xaligo markdown preview"></iframe><pre id="error" class="error" hidden></pre></main>
 <script>
 const frame=document.querySelector('#content'), error=document.querySelector('#error');
 async function reload(v){const status=await fetch('/api/status?'+v,{cache:'no-store'}).then(r=>r.json());if(status.error){frame.hidden=true;error.hidden=false;const d=status.diagnostics?.[0];error.textContent=d?.line?'Line '+d.line+', column '+d.column+': '+d.message:status.error}else{error.hidden=true;frame.hidden=false;frame.src='/content.html?v='+status.version}}

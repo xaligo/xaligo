@@ -55,17 +55,32 @@ type RenderController interface {
 	RunMarkdown(opts entity.ControllerRenderMarkdownOptions) error
 }
 
+// RenderControllerOption customizes a render controller dependency.
+type RenderControllerOption func(*renderController)
+
 type renderController struct {
-	config         *config.Config
-	renderUsecase  usecase.RenderUsecase
-	catalogUsecase usecase.CatalogUsecase
-	sceneIOUsecase usecase.SceneIOUsecase
-	themeUsecase   usecase.ThemeUsecase
-	elementUsecase usecase.ElementUsecase
+	config                       *config.Config
+	renderUsecase                usecase.RenderUsecase
+	catalogUsecase               usecase.CatalogUsecase
+	sceneIOUsecase               usecase.SceneIOUsecase
+	themeUsecase                 usecase.ThemeUsecase
+	elementUsecase               usecase.ElementUsecase
+	renderMarkdownFileOperations renderMarkdownFileOperations
 }
 
-func NewRenderController(cfg *config.Config, renderUsecase usecase.RenderUsecase, catalogUsecase usecase.CatalogUsecase, sceneIOUsecase usecase.SceneIOUsecase, themeUsecase usecase.ThemeUsecase, elementUsecase usecase.ElementUsecase) RenderController {
-	return &renderController{config: cfg, renderUsecase: renderUsecase, catalogUsecase: catalogUsecase, sceneIOUsecase: sceneIOUsecase, themeUsecase: themeUsecase, elementUsecase: elementUsecase}
+func NewRenderController(cfg *config.Config, renderUsecase usecase.RenderUsecase, catalogUsecase usecase.CatalogUsecase, sceneIOUsecase usecase.SceneIOUsecase, themeUsecase usecase.ThemeUsecase, elementUsecase usecase.ElementUsecase, options ...RenderControllerOption) RenderController {
+	controller := &renderController{
+		config: cfg, renderUsecase: renderUsecase, catalogUsecase: catalogUsecase,
+		sceneIOUsecase: sceneIOUsecase, themeUsecase: themeUsecase,
+		elementUsecase:               elementUsecase,
+		renderMarkdownFileOperations: defaultRenderMarkdownFileOperations(),
+	}
+	for _, option := range options {
+		if option != nil {
+			option(controller)
+		}
+	}
+	return controller
 }
 
 func (rcvr *renderController) Command() *cobra.Command {

@@ -2,7 +2,9 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -118,11 +120,6 @@ func (rcvr *renderController) RunMarkdown(opts entity.ControllerRenderMarkdownOp
 	if err != nil {
 		return fmt.Errorf("resolve svg directory: %w", err)
 	}
-	if err := os.MkdirAll(absSVGDir, 0o755); err != nil {
-		logger.ERROR(ICRRM004, "create svg directory failed", map[string]any{"svgDir": absSVGDir, "error": err})
-		return fmt.Errorf("create svg directory: %w", err)
-	}
-
 	theme, err := entity.NormalizeTheme(opts.Theme)
 	if err != nil {
 		return err
@@ -150,7 +147,10 @@ func (rcvr *renderController) RunMarkdown(opts entity.ControllerRenderMarkdownOp
 
 	mdStem := strings.TrimSuffix(filepath.Base(opts.InputPath), filepath.Ext(opts.InputPath))
 	outputDir := filepath.Dir(absOutputPath)
-	seen := map[string]string{}
+	seen := map[string]string{
+		strings.ToLower(filepath.Clean(absOutputPath)): "Markdown output",
+	}
+	pendingOutputs := make([]renderMarkdownPendingOutput, 0)
 	blockIndex := 0
 
 	embedded, err := usecase.EmbedXalCodeBlocks(string(input), func(xal string) ([]string, error) {
@@ -169,14 +169,16 @@ func (rcvr *renderController) RunMarkdown(opts entity.ControllerRenderMarkdownOp
 				return nil, fmt.Errorf("code block %d frame %q and %s resolve to the same SVG output %s", blockIndex, artifact.ID, prior, svgPath)
 			}
 			seen[collisionKey] = fmt.Sprintf("block %d frame %q", blockIndex, artifact.ID)
-			if writeErr := os.WriteFile(svgPath, artifact.Data, 0o644); writeErr != nil {
-				return nil, fmt.Errorf("write SVG file %s: %w", svgPath, writeErr)
-			}
-			relPath, relErr := filepath.Rel(outputDir, svgPath)
+			pendingOutputs = append(pendingOutputs, renderMarkdownPendingOutput{path: svgPath, data: artifact.Data})
+			relPath, relErr := rcvr.renderMarkdownFileOperations.relativePath(outputDir, svgPath)
 			if relErr != nil {
-				relPath = svgPath
+				return nil, fmt.Errorf(
+					"make SVG output %s relative to Markdown output directory %s: %w; "+
+						"place both outputs on the same filesystem volume",
+					svgPath, outputDir, relErr,
+				)
 			}
-			lines = append(lines, fmt.Sprintf("![](%s)", filepath.ToSlash(relPath)), "")
+			lines = append(lines, renderMarkdownImageReference(relPath), "")
 		}
 		return lines, nil
 	})
@@ -185,9 +187,10 @@ func (rcvr *renderController) RunMarkdown(opts entity.ControllerRenderMarkdownOp
 		return err
 	}
 
-	if err := os.WriteFile(outputPath, []byte(embedded), 0o644); err != nil {
+	pendingOutputs = append(pendingOutputs, renderMarkdownPendingOutput{path: absOutputPath, data: []byte(embedded)})
+	if err := writeRenderMarkdownOutputs(pendingOutputs, rcvr.renderMarkdownFileOperations); err != nil {
 		logger.ERROR(ICRRM006, "write output failed", map[string]any{"output": outputPath, "error": err})
-		return fmt.Errorf("write output file: %w", err)
+		return fmt.Errorf("write Markdown output set: %w", err)
 	}
 	logger.INFO(ICRRM007, "generated", map[string]any{"input": opts.InputPath, "output": outputPath, "svgDir": svgDir, "blocks": blockIndex})
 	return nil
@@ -211,4 +214,236 @@ func renderMarkdownSVGFileName(mdStem string, blockIndex, artifactIndex int, art
 		safeID = fmt.Sprintf("frame-%d", artifactIndex+1)
 	}
 	return fmt.Sprintf("%s-%d-%s.svg", mdStem, blockIndex, safeID)
+}
+
+type renderMarkdownPendingOutput struct {
+	path string
+	data []byte
+}
+
+type renderMarkdownStagedOutput struct {
+	target    string
+	temporary string
+	backup    string
+	installed bool
+}
+
+// RenderMarkdownFileOperations provides the filesystem operations whose
+// failures must be simulated to verify output-set rollback behavior.
+type RenderMarkdownFileOperations struct {
+	Remove       func(string) error
+	Rename       func(string, string) error
+	RelativePath func(string, string) (string, error)
+}
+
+type renderMarkdownFileOperations struct {
+	remove       func(string) error
+	rename       func(string, string) error
+	relativePath func(string, string) (string, error)
+}
+
+func defaultRenderMarkdownFileOperations() renderMarkdownFileOperations {
+	return renderMarkdownFileOperations{
+		remove:       os.Remove,
+		rename:       os.Rename,
+		relativePath: filepath.Rel,
+	}
+}
+
+// WithRenderMarkdownFileOperations overrides selected Markdown output
+// filesystem operations while retaining native defaults for nil callbacks.
+func WithRenderMarkdownFileOperations(operations RenderMarkdownFileOperations) RenderControllerOption {
+	return func(controller *renderController) {
+		if operations.Remove != nil {
+			controller.renderMarkdownFileOperations.remove = operations.Remove
+		}
+		if operations.Rename != nil {
+			controller.renderMarkdownFileOperations.rename = operations.Rename
+		}
+		if operations.RelativePath != nil {
+			controller.renderMarkdownFileOperations.relativePath = operations.RelativePath
+		}
+	}
+}
+
+func renderMarkdownImageReference(path string) string {
+	normalized := filepath.ToSlash(path)
+	escaped := (&url.URL{Path: normalized}).EscapedPath()
+	return fmt.Sprintf("![](<%s>)", escaped)
+}
+
+func writeRenderMarkdownOutputs(outputs []renderMarkdownPendingOutput, operations renderMarkdownFileOperations) error {
+	staged := make([]renderMarkdownStagedOutput, 0, len(outputs))
+	cleanupTemporary := func() error {
+		failures := make([]error, 0)
+		for index := range staged {
+			temporary := staged[index].temporary
+			if temporary == "" {
+				continue
+			}
+			if err := operations.remove(temporary); err != nil && !os.IsNotExist(err) {
+				failures = append(failures, fmt.Errorf("remove staged output %s: %w", temporary, err))
+				continue
+			}
+			staged[index].temporary = ""
+		}
+		return errors.Join(failures...)
+	}
+	rollback := func() error {
+		failures := make([]error, 0)
+		for index := len(staged) - 1; index >= 0; index-- {
+			output := &staged[index]
+			if output.installed {
+				if err := operations.remove(output.target); err != nil && !os.IsNotExist(err) {
+					failures = append(failures, fmt.Errorf("remove newly installed output %s: %w", output.target, err))
+				} else {
+					output.installed = false
+				}
+			}
+			if output.backup != "" {
+				backup := output.backup
+				if err := operations.rename(backup, output.target); err != nil {
+					failures = append(failures, fmt.Errorf(
+						"restore existing output %s from backup %s: %w; previous output is preserved at %s",
+						output.target, backup, err, backup,
+					))
+				} else {
+					output.backup = ""
+				}
+			}
+		}
+		if err := cleanupTemporary(); err != nil {
+			failures = append(failures, err)
+		}
+		return errors.Join(failures...)
+	}
+	failStaging := func(primary error, additional ...error) error {
+		failures := []error{primary}
+		for _, err := range additional {
+			if err != nil {
+				failures = append(failures, err)
+			}
+		}
+		if err := cleanupTemporary(); err != nil {
+			failures = append(failures, err)
+		}
+		return errors.Join(failures...)
+	}
+	failTransaction := func(primary error, additional ...error) error {
+		failures := []error{primary}
+		for _, err := range additional {
+			if err != nil {
+				failures = append(failures, err)
+			}
+		}
+		if err := rollback(); err != nil {
+			failures = append(failures, fmt.Errorf("rollback Markdown output set: %w", err))
+		}
+		return errors.Join(failures...)
+	}
+
+	for _, output := range outputs {
+		directory := filepath.Dir(output.path)
+		if err := os.MkdirAll(directory, 0o755); err != nil {
+			return failStaging(fmt.Errorf("create output directory %s: %w", directory, err))
+		}
+		info, err := os.Stat(output.path)
+		if err == nil && info.IsDir() {
+			return failStaging(fmt.Errorf("output path is a directory: %s", output.path))
+		}
+		if err != nil && !os.IsNotExist(err) {
+			return failStaging(fmt.Errorf("inspect output path %s: %w", output.path, err))
+		}
+
+		file, err := os.CreateTemp(directory, ".xaligo-markdown-*")
+		if err != nil {
+			return failStaging(fmt.Errorf("create staged output for %s: %w", output.path, err))
+		}
+		temporary := file.Name()
+		staged = append(staged, renderMarkdownStagedOutput{target: output.path, temporary: temporary})
+		if err := file.Chmod(0o644); err != nil {
+			closeErr := file.Close()
+			return failStaging(
+				fmt.Errorf("set staged output permissions for %s: %w", output.path, err),
+				wrapRenderMarkdownOutputError("close staged output "+temporary, closeErr),
+			)
+		}
+		if _, err := file.Write(output.data); err != nil {
+			closeErr := file.Close()
+			return failStaging(
+				fmt.Errorf("write staged output for %s: %w", output.path, err),
+				wrapRenderMarkdownOutputError("close staged output "+temporary, closeErr),
+			)
+		}
+		if err := file.Sync(); err != nil {
+			closeErr := file.Close()
+			return failStaging(
+				fmt.Errorf("sync staged output for %s: %w", output.path, err),
+				wrapRenderMarkdownOutputError("close staged output "+temporary, closeErr),
+			)
+		}
+		if err := file.Close(); err != nil {
+			return failStaging(fmt.Errorf("close staged output for %s: %w", output.path, err))
+		}
+	}
+
+	for index := range staged {
+		if _, err := os.Lstat(staged[index].target); err == nil {
+			backupFile, createErr := os.CreateTemp(filepath.Dir(staged[index].target), ".xaligo-markdown-backup-*")
+			if createErr != nil {
+				return failTransaction(fmt.Errorf("create backup path for %s: %w", staged[index].target, createErr))
+			}
+			backup := backupFile.Name()
+			if closeErr := backupFile.Close(); closeErr != nil {
+				removeErr := operations.remove(backup)
+				return failTransaction(
+					fmt.Errorf("close backup path for %s: %w", staged[index].target, closeErr),
+					wrapRenderMarkdownOutputError("remove unused backup path "+backup, removeErr),
+				)
+			}
+			if removeErr := operations.remove(backup); removeErr != nil {
+				return failTransaction(fmt.Errorf(
+					"prepare backup path for %s: %w; unused backup placeholder remains at %s",
+					staged[index].target, removeErr, backup,
+				))
+			}
+			if renameErr := operations.rename(staged[index].target, backup); renameErr != nil {
+				return failTransaction(fmt.Errorf("back up existing output %s: %w", staged[index].target, renameErr))
+			}
+			staged[index].backup = backup
+		} else if !os.IsNotExist(err) {
+			return failTransaction(fmt.Errorf("inspect existing output %s: %w", staged[index].target, err))
+		}
+	}
+
+	for index := range staged {
+		if err := operations.rename(staged[index].temporary, staged[index].target); err != nil {
+			return failTransaction(fmt.Errorf("install output %s: %w", staged[index].target, err))
+		}
+		staged[index].temporary = ""
+		staged[index].installed = true
+	}
+	cleanupFailures := make([]error, 0)
+	for index := range staged {
+		output := &staged[index]
+		if output.backup != "" {
+			backup := output.backup
+			if err := operations.remove(backup); err != nil && !os.IsNotExist(err) {
+				cleanupFailures = append(cleanupFailures, fmt.Errorf(
+					"Markdown output set was installed, but removing the previous output backup %s for %s failed: %w; previous output is preserved at %s",
+					backup, output.target, err, backup,
+				))
+			} else {
+				output.backup = ""
+			}
+		}
+	}
+	return errors.Join(cleanupFailures...)
+}
+
+func wrapRenderMarkdownOutputError(context string, err error) error {
+	if err == nil {
+		return nil
+	}
+	return fmt.Errorf("%s: %w", context, err)
 }

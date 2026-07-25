@@ -47,6 +47,24 @@ func TestEmbedXalCodeBlocksIgnoresOtherFences(t *testing.T) {
 	}
 }
 
+func TestEmbedXalCodeBlocksIgnoresXalExampleInsideOuterFence(t *testing.T) {
+	source := "````markdown\n```xal\n<frame></frame>\n```\n````\n"
+	called := false
+	result, err := usecase.EmbedXalCodeBlocks(source, func(string) ([]string, error) {
+		called = true
+		return nil, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if called {
+		t.Fatal("renderBlock should not be called for a literal xal example inside another fence")
+	}
+	if result != source {
+		t.Fatalf("result = %q, want unchanged source", result)
+	}
+}
+
 func TestEmbedXalCodeBlocksUnterminatedFenceErrors(t *testing.T) {
 	source := "```xal\n<frame></frame>\n"
 	_, err := usecase.EmbedXalCodeBlocks(source, func(xal string) ([]string, error) {

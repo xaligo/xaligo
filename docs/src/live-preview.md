@@ -16,15 +16,23 @@ A `.md`/`.markdown` source previews the full Markdown document with rendered
 `xal` code blocks embedded inline, the same as `render markdown`:
 
 ```bash
-xaligo serve docs/guide.md
+xaligo serve docs/src/examples/samples/markdown-preview.md
 ```
+
+Markdown raw HTML is not executed. Rendered diagrams are isolated as SVG image
+documents, and relative Markdown images are served only when they resolve to an
+image file inside the Markdown file's directory. Parent-directory traversal,
+escaping symlinks, and remote image loading are blocked by the preview sandbox
+and Content Security Policy.
 
 Use `--paper`/`--orientation` to preview how a diagram fits a specific
 physical page size and orientation; changing the paper size or orientation
 requires restarting the server:
 
 ```bash
-xaligo serve diagram.xal --paper A4 --orientation landscape
+xaligo serve docs/src/examples/samples/markdown-preview.md \
+  --paper A4 \
+  --orientation landscape
 ```
 
 Endpoints:
