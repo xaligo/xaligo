@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -31,11 +32,22 @@ func (rcvr *versionController) Command() *cobra.Command {
 		Short: "Print xaligo version",
 		Long: `Print the resolved xaligo build/release version.
 
-The version is taken from an embedded build-time value first, then the file
-path named by the XALIGO_VERSION_FILE environment variable, then falls back
-to the repository VERSION file, and finally to "dev" if none is available.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			logger.INFO(ICVERSIONIVC002, "version", map[string]any{"version": resolvedVersion()})
+The version is resolved in this order:
+  1. the embedded build-time value;
+  2. the explicit file named by XALIGO_VERSION_FILE, when set;
+  3. $XALIGO_HOME/VERSION;
+  4. the nearest VERSION file in the current directory or its parents; and
+  5. "dev" when no version is available.
+
+An unreadable XALIGO_VERSION_FILE is an explicit override and resolves to
+"dev" instead of consulting lower-priority VERSION files.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			resolved := resolvedVersion()
+			logger.DEBUG(ICVERSIONIVC002, "version", map[string]any{"version": resolved})
+			if _, err := fmt.Fprintln(cmd.OutOrStdout(), resolved); err != nil {
+				return fmt.Errorf("write version output: %w", err)
+			}
+			return nil
 		},
 	}
 }

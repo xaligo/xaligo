@@ -53,7 +53,7 @@ go test ./...
 # Build distributable adapters
 make build
 make build-wasm
-npm install
+npm ci --ignore-scripts
 npm run build --workspace=@xaligo/xaligo-external
 
 # Render and validate
