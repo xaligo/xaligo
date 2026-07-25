@@ -60,7 +60,14 @@ func NewRootCmd() *cobra.Command {
 	root := &cobra.Command{
 		Use:   "xaligo",
 		Short: "Vue-like DSL to Excalidraw layout generator",
-		Long:  "xaligo renders a Vue-like layout DSL into an Excalidraw JSON file.",
+		Long: `xaligo is a diagram-as-code engine for architecture, network, and UML
+diagrams. It parses the Vue-style .xal XML DSL once and pushes the result
+through one shared parser -> layout -> scene/plan -> encoder pipeline shared
+by every output format: Excalidraw, SVG, PPTX, PDF, Excel, XYFlow, and
+Isoflow.
+
+Use 'xaligo <command> --help' for full details, flags, and examples for any
+subcommand below.`,
 	}
 
 	root.AddCommand(renderController.Command())

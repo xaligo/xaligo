@@ -29,6 +29,11 @@ func (rcvr *versionController) Command() *cobra.Command {
 	return &cobra.Command{
 		Use:   "version",
 		Short: "Print xaligo version",
+		Long: `Print the resolved xaligo build/release version.
+
+The version is taken from an embedded build-time value first, then the file
+path named by the XALIGO_VERSION_FILE environment variable, then falls back
+to the repository VERSION file, and finally to "dev" if none is available.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			logger.INFO(ICVERSIONIVC002, "version", map[string]any{"version": resolvedVersion()})
 		},

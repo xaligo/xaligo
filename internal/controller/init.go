@@ -54,6 +54,15 @@ func (rcvr *initController) Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init",
 		Short: "Create starter xaligo template",
+		Long: `Write a minimal sample sample.xal file to help new users get started.
+
+The generated file demonstrates the core Vuetify-style layout primitives
+(frame, container, row, col, card, panel) and is a convenient starting point
+for 'xaligo render' and 'xaligo validate'.
+
+Examples:
+  xaligo init
+  xaligo init -o ./my-project`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return rcvr.Run(outputDir)
 		},

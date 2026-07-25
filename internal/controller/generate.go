@@ -60,6 +60,13 @@ func (rcvr *generateController) Command() *cobra.Command {
 	parent := &cobra.Command{
 		Use:   "generate",
 		Short: "Generate source files",
+		Long: `Generate starter source files.
+
+Currently provides one subcommand:
+  xal   generate a .xal file with an AWS infrastructure hierarchy
+
+Format conversion (Excalidraw, SVG, PPTX, PDF, Excel, XYFlow, Isoflow) is a
+separate concern; use 'xaligo render' on the generated .xal file for that.`,
 	}
 	parent.AddCommand(initGenerateXalCmd())
 	return parent
