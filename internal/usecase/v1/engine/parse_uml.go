@@ -781,6 +781,9 @@ func normalizeUMLElementV1EngineParseUml(source *entity.Node, scopedID, diagramK
 	delete(attrs, "name")
 	attrs["title"] = umlElementHeaderTextV1EngineParseUml(attrs["title"], attrs["uml-abstract"], attrs["uml-static"], attrs["uml-stereotype"])
 	headerLines := strings.Count(attrs["title"], "\n") + 1
+	if diagramKind == "class-diagram" {
+		attrs["uml-class-header-lines"] = strconv.Itoa(headerLines)
+	}
 	var compartments []string
 	var compartmentKinds []string
 	var componentInterfaces []string
@@ -806,19 +809,18 @@ func normalizeUMLElementV1EngineParseUml(source *entity.Node, scopedID, diagramK
 		if diagramKind == "class-diagram" {
 			// Classifiers keep the name/stereotype header and the graphical
 			// header divider drawn by the class-shape renderer; the joined
-			// body text does not repeat that divider as a text line, and
-			// structural (attribute/literal) compartments are kept visually
-			// separate from behavioral (operation/constraint/note) ones.
-			attributeText, operationText, attributeLines, operationLines := umlClassCompartmentBucketsV1EngineParseUml(compartments, compartmentKinds)
+			// body text does not repeat that divider as a text line. Consecutive
+			// structural (attribute/literal) or behavioral compartments share a
+			// visual section, while transitions between the two retain source
+			// order as separate sections.
+			sections := umlClassCompartmentSectionsV1EngineParseUml(compartments, compartmentKinds)
 			attrs["title"] += "\n" + strings.Join(compartments, "\n")
-			attrs["uml-class-header-lines"] = strconv.Itoa(headerLines)
-			if attributeText != "" {
-				attrs["uml-class-attribute-text"] = attributeText
-				attrs["uml-class-attribute-lines"] = strconv.Itoa(attributeLines)
-			}
-			if operationText != "" {
-				attrs["uml-class-operation-text"] = operationText
-				attrs["uml-class-operation-lines"] = strconv.Itoa(operationLines)
+			attrs["uml-class-section-count"] = strconv.Itoa(len(sections))
+			for index, section := range sections {
+				prefix := fmt.Sprintf("uml-class-section-%d-", index)
+				attrs[prefix+"kind"] = section.Kind
+				attrs[prefix+"text"] = section.Text
+				attrs[prefix+"lines"] = strconv.Itoa(section.Lines)
 			}
 		} else {
 			attrs["title"] += "\n────────\n" + strings.Join(compartments, "\n")
@@ -849,24 +851,98 @@ func umlElementHeaderTextV1EngineParseUml(name, abstract, static, stereotype str
 	return header
 }
 
-// umlClassCompartmentBucketsV1EngineParseUml splits a classifier's ordered
-// compartments into the structural (attribute/literal) and behavioral
-// (operation and everything else) UML compartments so the class-shape
-// renderer can draw them as visually distinct sections.
-func umlClassCompartmentBucketsV1EngineParseUml(compartments, kinds []string) (string, string, int, int) {
-	var attributeLines, operationLines []string
+type umlClassSectionV1EngineParseUml struct {
+	Kind  string
+	Text  string
+	Lines int
+}
+
+// umlClassCompartmentSectionsV1EngineParseUml groups only adjacent
+// compartments of the same visual kind. Keeping non-adjacent structural and
+// behavioral compartments separate preserves their source order.
+func umlClassCompartmentSectionsV1EngineParseUml(compartments, kinds []string) []umlClassSectionV1EngineParseUml {
+	var sections []umlClassSectionV1EngineParseUml
 	for index, compartment := range compartments {
 		kind := ""
 		if index < len(kinds) {
 			kind = kinds[index]
 		}
+		sectionKind := "operation"
 		if kind == "attribute" || kind == "literal" {
-			attributeLines = append(attributeLines, compartment)
+			sectionKind = "attribute"
+		}
+		lineCount := umlClassSectionLineCountV1EngineParseUml(compartment)
+		last := len(sections) - 1
+		if last >= 0 && sections[last].Kind == sectionKind {
+			sections[last].Text += "\n" + compartment
+			sections[last].Lines += lineCount
+		} else {
+			sections = append(sections, umlClassSectionV1EngineParseUml{
+				Kind:  sectionKind,
+				Text:  compartment,
+				Lines: lineCount,
+			})
+		}
+	}
+	return sections
+}
+
+func umlClassSectionsFromAttrsV1EngineParseUml(attrs map[string]string) []umlClassSectionV1EngineParseUml {
+	count, _ := strconv.Atoi(attrs["uml-class-section-count"])
+	sections := make([]umlClassSectionV1EngineParseUml, 0, count)
+	for index := 0; index < count; index++ {
+		prefix := fmt.Sprintf("uml-class-section-%d-", index)
+		text := strings.TrimSpace(attrs[prefix+"text"])
+		if text == "" {
 			continue
 		}
-		operationLines = append(operationLines, compartment)
+		lines, _ := strconv.Atoi(attrs[prefix+"lines"])
+		if lines < 1 {
+			lines = umlClassSectionLineCountV1EngineParseUml(text)
+		}
+		kind := attrs[prefix+"kind"]
+		if kind != "attribute" {
+			kind = "operation"
+		}
+		sections = append(sections, umlClassSectionV1EngineParseUml{
+			Kind:  kind,
+			Text:  text,
+			Lines: lines,
+		})
 	}
-	return strings.Join(attributeLines, "\n"), strings.Join(operationLines, "\n"), len(attributeLines), len(operationLines)
+	if len(sections) > 0 || count > 0 {
+		return sections
+	}
+	for _, legacy := range []struct {
+		kind    string
+		textKey string
+		lineKey string
+	}{
+		{kind: "attribute", textKey: "uml-class-attribute-text", lineKey: "uml-class-attribute-lines"},
+		{kind: "operation", textKey: "uml-class-operation-text", lineKey: "uml-class-operation-lines"},
+	} {
+		text := strings.TrimSpace(attrs[legacy.textKey])
+		if text == "" {
+			continue
+		}
+		lines, _ := strconv.Atoi(attrs[legacy.lineKey])
+		if lines < 1 {
+			lines = umlClassSectionLineCountV1EngineParseUml(text)
+		}
+		sections = append(sections, umlClassSectionV1EngineParseUml{
+			Kind:  legacy.kind,
+			Text:  text,
+			Lines: lines,
+		})
+	}
+	return sections
+}
+
+func umlClassSectionLineCountV1EngineParseUml(text string) int {
+	if strings.TrimSpace(text) == "" {
+		return 0
+	}
+	return strings.Count(text, "\n") + 1
 }
 
 func normalizeUMLRelationV1EngineParseUml(source *entity.Node, scopedSrc, scopedDst, srcKind, dstKind, diagramKind, umlID string) *entity.Node {

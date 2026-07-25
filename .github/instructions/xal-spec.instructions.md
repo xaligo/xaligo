@@ -590,6 +590,11 @@ The following rules are normative:
   normal element font attributes override those defaults. An element `name`
   is display text only and never becomes a frame-level connection alias; use
   the public UML reference described below.
+- A class-diagram classifier with a non-empty `stereotype` renders
+  `«stereotype»` as a separate first header line. `abstract="true"` and
+  `static="true"` append `{abstract}` and `{static}` to the classifier-name
+  header line. These lines remain one graphical header even when the
+  classifier has no compartments.
 - The compatibility tags `<element>` and `<relation>` are not part of the
   strict V1 UML profile. A model must use one of the element and relation tags
   allowed for its selected family.
@@ -685,7 +690,12 @@ Elements absent from this table do not accept compartments. The generic
 `<compartment>` child is a compatibility spelling accepted wherever a typed
 compartment is allowed; new source should use the typed tag because its meaning
 survives future semantic processing. Compartment source order is preserved,
-but compartments are not independent connection endpoints.
+but compartments are not independent connection endpoints. In a class diagram,
+adjacent structural (`attribute` or `literal`) compartments and adjacent
+behavioral compartments may share one graphical section; a transition between
+those kinds starts a new section without reordering either kind. Every
+newline-separated compartment line contributes to the classifier's intrinsic
+height.
 
 ### Relation attributes, order, and time
 

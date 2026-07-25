@@ -112,15 +112,7 @@ func umlClassNodeSizeV1EngineLayoutUmlClass(node *entity.Node, maxW, maxH, compo
 	if node.Attr("uml-diagram-kind") == "component-diagram" && node.Attr("uml-element-kind") == "component" {
 		width = umlComponentNodeWidthV1EngineLayoutUmlClass(node, width, componentWidth)
 	}
-	heightLimit := 220.0
-	if node.Attr("uml-diagram-kind") == "component-diagram" && node.Attr("uml-element-kind") == "component" {
-		if maxH > 0 {
-			heightLimit = math.Max(heightLimit, maxH-24)
-		} else {
-			heightLimit = math.Inf(1)
-		}
-	}
-	height := math.Min(umlClassNodeHeightV1EngineLayoutUmlClass(node, componentHeight), heightLimit)
+	height := umlClassNodeHeightV1EngineLayoutUmlClass(node, componentHeight)
 	if maxW > 0 {
 		width = math.Min(width, math.Max(MinBoxWidthV1EngineLayoutFlow, maxW-24))
 	}
@@ -207,6 +199,8 @@ func isUMLClassPackageNodeV1EngineLayoutUmlClass(node *entity.Node) bool {
 
 func umlClassNodeHeightV1EngineLayoutUmlClass(node *entity.Node, componentHeight float64) float64 {
 	lines := strings.Count(labelOfV1EngineLayoutAttributes(node), "\n") + 1
+	fontSize := attrFloatV1EngineLayoutAttributes(node.Attr("font-size"), 14)
+	lineHeight := fontSize * 1.2
 	if node.Attr("uml-diagram-kind") == "component-diagram" && node.Attr("uml-element-kind") == "component" {
 		if height := attrFloatV1EngineLayoutAttributes(node.Attr("height"), 0); height > 0 {
 			return height
@@ -231,16 +225,15 @@ func umlClassNodeHeightV1EngineLayoutUmlClass(node *entity.Node, componentHeight
 		}
 	}
 	headerLines := attrFloatV1EngineLayoutAttributes(node.Attr("uml-class-header-lines"), 1)
-	attributeLines := attrFloatV1EngineLayoutAttributes(node.Attr("uml-class-attribute-lines"), 0)
-	operationLines := attrFloatV1EngineLayoutAttributes(node.Attr("uml-class-operation-lines"), 0)
-	if attributeLines == 0 && operationLines == 0 {
-		return math.Max(96, 38+float64(lines)*20)
+	sections := umlClassSectionsFromAttrsV1EngineParseUml(node.Attrs)
+	if len(sections) == 0 {
+		return math.Max(96, 38+float64(lines)*math.Max(20, lineHeight))
 	}
-	headerH := math.Max(34, 10+headerLines*16.8)
-	bodyH := 18 + attributeLines*18
-	if attributeLines > 0 && operationLines > 0 {
-		bodyH += 8
+	bodyLines := 0
+	for _, section := range sections {
+		bodyLines += section.Lines
 	}
-	bodyH += operationLines * 18
+	headerH := math.Max(34, 10+headerLines*lineHeight)
+	bodyH := 7 + float64(bodyLines)*lineHeight + float64(len(sections))*12
 	return math.Max(108, headerH+bodyH)
 }
