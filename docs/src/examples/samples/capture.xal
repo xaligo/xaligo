@@ -7,10 +7,10 @@
     <frame id="overview" width="420" height="360" class="pa-3">
       <container gap="24">
         <!--
-          <capture> wraps already-placed content with an annotation-style
-          border. It is a plain overlay: it does not change the layout of
-          its children (they still occupy their own row/col/container flow)
-          and does not carry AWS/architectural semantics like <generic-group>.
+          <capture> is a structural annotation group with an annotation-style
+          border. Its children participate in the normal nested group layout,
+          but it does not carry AWS/architectural semantics like
+          <generic-group>.
         -->
         <capture id="hot-path" title="Hot Path">
           <rectangle id="public-api" title="Overview API" />

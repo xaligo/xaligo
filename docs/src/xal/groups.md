@@ -39,12 +39,13 @@ non-decimal syntax, and out-of-range values are invalid.
 </generic-group>
 ```
 
-## Capture (Overlay Annotation)
+## Capture (Structural Annotation)
 
-`<capture>` is a lightweight overlay annotation group: it wraps already-placed
-content with a border (and title band) without implying any AWS/architectural
-semantics, unlike `<generic-group>` and the AWS boundary tags above. Use it to
-highlight an existing region of a diagram, such as a "hot path".
+`<capture>` is a lightweight structural annotation group. It participates in
+normal nested layout and places its children inside a border (and optional title
+band) without implying any AWS/architectural semantics, unlike
+`<generic-group>` and the AWS boundary tags above. Use it to highlight a
+diagram region such as a "hot path".
 
 `<capture>` is connectable exactly like any other group tag, including the
 `frameId.id` qualified cross-frame form, so a connection to/from a `<capture>`

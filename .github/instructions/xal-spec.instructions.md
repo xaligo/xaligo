@@ -1256,12 +1256,13 @@ All AWS group tags require a non-empty `id`. IDs for group tags, `<rectangle>`,
 and `<port>` must be unique among frame-like components. Group tags otherwise
 accept the same attributes as `container` (`title`, `class`, `gap`, etc.).
 
-`<capture>` is a lightweight overlay annotation tag rather than an
-AWS/architectural boundary: it wraps already-placed content as a structural
-child container and draws a border (and title band, using the same
-title/text/tag-name fallback as every other group tag) without implying any
-cloud/network semantics. Like every group tag, a `<capture>` is connectable
-by `id`/`name`/`ref` from `<connection>`, including the `frameId.id` qualified
+`<capture>` is a lightweight structural annotation container rather than an
+AWS/architectural boundary. It participates in normal nested layout: its
+children are allocated within its bordered content box, including the same
+padding and optional title band used by other group tags. The border uses the
+same title/text/tag-name fallback as every other group tag without implying
+cloud/network semantics. Like every group tag, a `<capture>` is connectable by
+`id`/`name`/`ref` from `<connection>`, including the `frameId.id` qualified
 form, so a connection that starts or ends on a `<capture>` in another frame
 renders as the same "to `<frame>`" / "from `<frame>`" cross-frame page-link
 stubs used for any other connectable endpoint — no separate cross-boundary

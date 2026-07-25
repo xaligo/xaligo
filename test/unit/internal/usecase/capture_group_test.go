@@ -9,8 +9,8 @@ import (
 	"github.com/xaligo/xaligo/internal/usecase"
 )
 
-// <capture> is an overlay annotation group tag: it draws a border (and title
-// band) around already-placed content without any AWS/architectural
+// <capture> is a structural annotation group tag: it draws a border (and title
+// band) around normally laid-out child content without any AWS/architectural
 // semantics, and it is connectable by id exactly like any other group tag,
 // including cross-frame page links.
 

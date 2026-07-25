@@ -74,7 +74,7 @@ ships).
 | XAL-2000090 | `<item>` AWS service-icon leaf | Implemented | Places a catalog service icon by numeric ID, with configurable `item-size` and `dx`/`dy` offset; missing icons warn and skip instead of failing. |
 | XAL-2000100 | `<spacer>`/`<blank>` empty slots | Implemented | Dedicated empty layout tags that occupy a grid slot without rendering an icon, border, or label. |
 | XAL-2000110 | Custom leaf display toggles | Implemented | `border="none"` hides a leaf/group border; `visible="false"` hides one component's border/icon/label while preserving its layout space. |
-| XAL-2000120 | `<capture>` overlay annotation tag | Implemented | Border-only annotation group wrapping already-placed content as a structural child container; connectable by id/name/ref like any other group tag, including cross-frame page-link stubs, without AWS/architectural semantics. |
+| XAL-2000120 | `<capture>` annotation group tag | Implemented | Border-only structural child container that participates in normal nested layout; connectable by id/name/ref like any other group tag, including cross-frame page-link stubs, without AWS/architectural semantics. |
 
 ## Group 3 — AWS Architecture Primitives & Icon Catalog (`XAL-3xxxxxx`)
 
