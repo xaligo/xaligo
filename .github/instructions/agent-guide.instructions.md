@@ -7,14 +7,16 @@ applyTo: "**"
 Use this file as the repository working agreement. Read the following
 preconditions before changing code:
 
-1. `development-flow.instructions.md` — task slicing, verification, and local
+1. `feature-catalog.instructions.md` — ID-addressable catalog of xaligo's
+   supported features; check it before treating a request as new scope.
+2. `development-flow.instructions.md` — task slicing, verification, and local
    commit workflow.
-2. `quality-improvement.instructions.md` — feature hardening, design quality,
-  and completion gates.
-3. `roadmap.instructions.md` — product and pipeline direction.
-4. `xal-spec.instructions.md` — authoritative `.xal` behavior.
-5. `architecture.instructions.md` — package boundaries and dependency rules.
-6. `coding.instructions.md` — mandatory file and identifier conventions.
+3. `issues.instructions.md` — open quality and feature-hardening issues,
+  design quality, and completion gates.
+4. `roadmap.instructions.md` — product and pipeline direction.
+5. `xal-spec.instructions.md` — authoritative `.xal` behavior.
+6. `architecture.instructions.md` — package boundaries and dependency rules.
+7. `coding.instructions.md` — mandatory file and identifier conventions.
 
 ## Project summary
 

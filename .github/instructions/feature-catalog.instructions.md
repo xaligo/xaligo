@@ -20,7 +20,7 @@ Every row carries a `Status` column:
 
 - `Implemented` — shipped and available today.
 - `Planned` — not yet implemented; tracked in `roadmap.instructions.md` and/or
-  the `quality-improvement.instructions.md` Q05 backlog, which is the
+  the `issues.instructions.md` Q05 backlog, which is the
   authoritative source for its exact sequencing and scope.
 - `Excluded unless justified` — a considered but deliberately unsupported
   capability that stays out of scope until a non-substitutable use case is
