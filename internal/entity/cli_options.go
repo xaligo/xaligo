@@ -81,3 +81,13 @@ type ControllerServeOptions struct {
 	Theme        string
 	PollInterval time.Duration
 }
+
+type ControllerRenderMarkdownOptions struct {
+	InputPath    string
+	OutputPath   string
+	SVGDir       string
+	ServicesFile string
+	PxPerInch    float64
+	Theme        string
+	Mode         string
+}
