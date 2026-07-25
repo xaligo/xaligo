@@ -136,6 +136,9 @@ func TestPreviewRepositoryHandlersMarkdownKind(t *testing.T) {
 	if !strings.Contains(body, `class="xaligo-diagram"`) || strings.Contains(body, "<svg") || !strings.Contains(body, "<h1>Guide</h1>") || !strings.Contains(body, "Outro text.") {
 		t.Fatalf("content body = %q", body)
 	}
+	if !strings.Contains(body, `.xaligo-diagram img{max-width:100%;height:auto;border:0;box-shadow:none;display:block}`) {
+		t.Fatalf("rendered Markdown diagrams must not have a border or shadow: %q", body)
+	}
 	if !strings.Contains(content.Header().Get("Content-Security-Policy"), "sandbox") {
 		t.Fatalf("content CSP = %q", content.Header().Get("Content-Security-Policy"))
 	}
