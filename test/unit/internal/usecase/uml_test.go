@@ -2427,7 +2427,8 @@ func TestUMLClassStereotypeAndModifiersReachEditableScene(t *testing.T) {
 	}
 	foundHeader := false
 	foundHeaderText := false
-	foundBodyText := false
+	foundAttributeText := false
+	foundOperationText := false
 	for _, rawElement := range raw["elements"].([]any) {
 		element, _ := rawElement.(map[string]any)
 		customData, _ := element["customData"].(map[string]any)
@@ -2435,28 +2436,44 @@ func TestUMLClassStereotypeAndModifiersReachEditableScene(t *testing.T) {
 			foundHeader = true
 		}
 		if customData["xaligoUmlClassHeaderContent"] == true && element["strokeColor"] == "#ffffff" {
-			if element["text"] == "Repository" {
+			if element["text"] == "«service»\nRepository {abstract} {static}" {
 				foundHeaderText = true
 			}
 		}
-		if text, _ := element["text"].(string); strings.Contains(text, "- store: Store") && strings.Contains(text, "+ find(id): Entity") {
-			foundBodyText = true
+		if customData["xaligoUmlClassAttributeContent"] == true {
+			if text, _ := element["text"].(string); text == "- store: Store" {
+				foundAttributeText = true
+			}
+		}
+		if customData["xaligoUmlClassOperationContent"] == true {
+			if text, _ := element["text"].(string); text == "+ find(id): Entity" {
+				foundOperationText = true
+			}
+		}
+		if text, _ := element["text"].(string); strings.Contains(text, "────────") {
+			t.Fatalf("class compartment text should not repeat the graphical divider as a text line: %#v", element)
 		}
 	}
-	if !foundHeader || !foundHeaderText || !foundBodyText {
-		t.Fatalf("class compartment rendering missing header=%t headerText=%t bodyText=%t: %s", foundHeader, foundHeaderText, foundBodyText, rawScene)
+	if !foundHeader || !foundHeaderText || !foundAttributeText || !foundOperationText {
+		t.Fatalf("class compartment rendering missing header=%t headerText=%t attributeText=%t operationText=%t: %s", foundHeader, foundHeaderText, foundAttributeText, foundOperationText, rawScene)
 	}
-	foundDivider := false
+	foundHeaderDivider := false
+	foundBodyDivider := false
 	for _, rawElement := range raw["elements"].([]any) {
 		element, _ := rawElement.(map[string]any)
 		customData, _ := element["customData"].(map[string]any)
 		if customData["xaligoUmlClassHeaderDivider"] == true {
-			foundDivider = true
-			break
+			foundHeaderDivider = true
+		}
+		if customData["xaligoUmlClassBodyDivider"] == true {
+			foundBodyDivider = true
 		}
 	}
-	if !foundDivider {
+	if !foundHeaderDivider {
 		t.Fatalf("class header divider missing: %s", rawScene)
+	}
+	if !foundBodyDivider {
+		t.Fatalf("class attribute/operation body divider missing: %s", rawScene)
 	}
 	xyflow, err := newUsecase().RenderXYFlow(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {

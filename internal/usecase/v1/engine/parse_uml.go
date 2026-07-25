@@ -779,6 +779,8 @@ func normalizeUMLElementV1EngineParseUml(source *entity.Node, scopedID, diagramK
 	// endpoint references are exclusively uml-id/local-id, so retaining name on
 	// the normalized rectangle would create false collisions between diagrams.
 	delete(attrs, "name")
+	attrs["title"] = umlElementHeaderTextV1EngineParseUml(attrs["title"], attrs["uml-abstract"], attrs["uml-static"], attrs["uml-stereotype"])
+	headerLines := strings.Count(attrs["title"], "\n") + 1
 	var compartments []string
 	var compartmentKinds []string
 	var componentInterfaces []string
@@ -800,13 +802,71 @@ func normalizeUMLElementV1EngineParseUml(source *entity.Node, scopedID, diagramK
 		}
 	}
 	if len(compartments) > 0 {
-		attrs["title"] += "\n────────\n" + strings.Join(compartments, "\n")
 		attrs["uml-compartment-kinds"] = strings.Join(compartmentKinds, ",")
+		if diagramKind == "class-diagram" {
+			// Classifiers keep the name/stereotype header and the graphical
+			// header divider drawn by the class-shape renderer; the joined
+			// body text does not repeat that divider as a text line, and
+			// structural (attribute/literal) compartments are kept visually
+			// separate from behavioral (operation/constraint/note) ones.
+			attributeText, operationText, attributeLines, operationLines := umlClassCompartmentBucketsV1EngineParseUml(compartments, compartmentKinds)
+			attrs["title"] += "\n" + strings.Join(compartments, "\n")
+			attrs["uml-class-header-lines"] = strconv.Itoa(headerLines)
+			if attributeText != "" {
+				attrs["uml-class-attribute-text"] = attributeText
+				attrs["uml-class-attribute-lines"] = strconv.Itoa(attributeLines)
+			}
+			if operationText != "" {
+				attrs["uml-class-operation-text"] = operationText
+				attrs["uml-class-operation-lines"] = strconv.Itoa(operationLines)
+			}
+		} else {
+			attrs["title"] += "\n────────\n" + strings.Join(compartments, "\n")
+		}
 	}
 	if len(componentInterfaces) > 0 {
 		attrs["uml-component-interfaces"] = strings.Join(componentInterfaces, "\n")
 	}
 	return &entity.Node{Tag: "rectangle", Attrs: attrs, Position: source.Position}
+}
+
+// umlElementHeaderTextV1EngineParseUml builds the visible classifier header
+// from its resolved name plus the abstract/static/stereotype markers. V1 has
+// no per-run rich-text styling shared across every output format, so it uses
+// the standard UML textual notation {abstract}/{static} and «stereotype»
+// guillemets instead of italic or underlined glyphs.
+func umlElementHeaderTextV1EngineParseUml(name, abstract, static, stereotype string) string {
+	header := name
+	if abstract == "true" {
+		header += " {abstract}"
+	}
+	if static == "true" {
+		header += " {static}"
+	}
+	if stereotype != "" {
+		header = "«" + stereotype + "»\n" + header
+	}
+	return header
+}
+
+// umlClassCompartmentBucketsV1EngineParseUml splits a classifier's ordered
+// compartments into the structural (attribute/literal) and behavioral
+// (operation and everything else) UML compartments so the class-shape
+// renderer can draw them as visually distinct sections.
+func umlClassCompartmentBucketsV1EngineParseUml(compartments, kinds []string) (string, string, int, int) {
+	var attributeLines, operationLines []string
+	for index, compartment := range compartments {
+		kind := ""
+		if index < len(kinds) {
+			kind = kinds[index]
+		}
+		if kind == "attribute" || kind == "literal" {
+			attributeLines = append(attributeLines, compartment)
+			continue
+		}
+		operationLines = append(operationLines, compartment)
+	}
+	return strings.Join(attributeLines, "\n"), strings.Join(operationLines, "\n"), len(attributeLines), len(operationLines)
 }
 
 func normalizeUMLRelationV1EngineParseUml(source *entity.Node, scopedSrc, scopedDst, srcKind, dstKind, diagramKind, umlID string) *entity.Node {
