@@ -1,0 +1,2 @@
+# Vendored module files must retain their upstream bytes, including line endings.
+vendor/** -text -whitespace

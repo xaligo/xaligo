@@ -33,3 +33,4 @@ ex-%:
 
 gopherimg:
 	go-bindata -f GopherPng -p gopher -i gopher/gophercolor-small.png -o gopher/gopher.go
+

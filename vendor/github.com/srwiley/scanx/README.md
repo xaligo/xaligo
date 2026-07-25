@@ -18,9 +18,9 @@ spanner     = scanx.NewImgSpanner(img)
 scanner    = scanx.NewScanner(spanner, w, h)
 raster = rasterx.NewDasher(w, h, scanner)
 //Use the raster to draw and the results go to the img
-```
+``` 
 # Example using LinkListSpanner:
-```golang
+```golang  
 bounds     = image.Rect(0, 0, w, h)
 img        = image.NewRGBA(bounds)
 spanner    = &scanx.LinkListSpanner{}
@@ -32,7 +32,7 @@ raster = rasterx.NewDasher(w, h, scanner)
 spanner.DrawToImage(img)
 //Get the spanner ready for another image
 spanner.Clear()
-```
+``` 
 # Test results in comparison to scanFT and scanGV
 Images for the svg files in the test folder have all been generated and compared pixel for pixel using ScanFT, ImgSpanner and LinkListSpanner. ImgSpanner and LinkListSpanner generated images are all identical except in the case of gradients, which LinkListSpanner does not at this time support. ScanFT will differ from ImgScanner and LinkList spanner in some pixel values, usually by one digit, but in cases with multiple semitransparent overlays the effect can be cummulative. The highest difference in the data set is found in the randspot.svg file, where for some pixels the total difference is 4, although it is hard to see any difference visually.
 
@@ -43,7 +43,7 @@ goos: linux
 goarch: amd64
 pkg: github.com/srwiley/scanx
 
-Resolution: 0.5x
+Resolution: 0.5x 
 BenchmarkLinkListSpanner5-16      	     100	  15692425 ns/op	   37215 B/op	     634 allocs/op
 BenchmarkImgSpanner5-16           	     100	  14352161 ns/op	    8708 B/op	     634 allocs/op
 BenchmarkFTScanner5-16            	      50	  24019383 ns/op	    3699 B/op	     321 allocs/op

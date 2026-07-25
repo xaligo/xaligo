@@ -1,6 +1,6 @@
 all : documentation
 
-documentation : doc/index.html doc.go README.md
+documentation : doc/index.html doc.go README.md 
 
 cov : all
 	go test -v -coverprofile=coverage && go tool cover -html=coverage -o=coverage.html

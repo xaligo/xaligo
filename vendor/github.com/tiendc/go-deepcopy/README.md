@@ -354,7 +354,7 @@ convenient when you don't want to send something like a date of `0001-01-01` to 
 ```
 
 - Ignore ErrTypeNonCopyable, the process will not return that kind of error, but some copyings won't be performed.
-
+  
   [Playground 1](https://go.dev/play/p/YPz49D_oiTY) /
   [Playground 2](https://go.dev/play/p/DNrBJUP-rrM)
 
@@ -387,7 +387,7 @@ convenient when you don't want to send something like a date of `0001-01-01` to 
 
 This benchmark is done on go-deepcopy v1.6.0 using Go 1.24.2
 
-**Copy between 2 different struct types**
+**Copy between 2 different struct types** 
   [Benchmark code](https://gist.github.com/tiendc/0a739fd880b9aac5373de95458d54808)
 
 ```

@@ -67,7 +67,7 @@ main := |*
 
 
 func findSyllablesKhmer (buffer * Buffer) {
-    var p, ts, te, act, cs int
+    var p, ts, te, act, cs int 
     info := buffer.Info;
     %%{
         write init;
@@ -83,3 +83,6 @@ func findSyllablesKhmer (buffer * Buffer) {
     }%%
     _ = act // needed by Ragel, but unused
 }
+
+
+
