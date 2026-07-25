@@ -51,6 +51,7 @@ func TestValidateReportsItemAndConnectionBranches(t *testing.T) {
 		{"missing src", `<frame><connection dst="2" /></frame>`, "src attribute"},
 		{"missing dst", `<frame><connection src="1" /></frame>`, "dst attribute"},
 		{"missing group id", `<frame><generic-group title="g" /></frame>`, `<generic-group> requires a non-empty id attribute`},
+		{"missing capture id", `<frame><capture title="g" /></frame>`, `<capture> requires a non-empty id attribute`},
 		{"missing rectangle id", `<frame><rectangle title="r" /></frame>`, `<rectangle> requires a non-empty id attribute`},
 		{"missing port id", `<frame><rectangle id="r"><port title="p" /></rectangle></frame>`, `<port> requires a non-empty id attribute`},
 		{"duplicate frame id", `<frame><generic-group id="dup" /><rectangle id="dup" /></frame>`, `duplicate frame reference id "dup"`},

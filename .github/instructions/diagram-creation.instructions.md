@@ -83,6 +83,7 @@ For logical groupings that do not correspond to a specific AWS construct, use `<
 | `<security-group>` | Resources sharing an EC2 security group |
 | `<auto-scaling-group>` | An EC2 Auto Scaling group |
 | `<generic-group>` | Any logical grouping that does not fit the above (security services, storage tiers, CI/CD, etc.) |
+| `<capture>` | A border-only overlay annotation around already-placed content (e.g. highlighting a "hot path"), not meant to convey AWS/architectural semantics |
 
 > **Incorrect:** using `<public-subnet title="Security &amp; Identity">` for IAM / WAF — these are not subnet resources.
 > **Correct:** use `<generic-group title="Security &amp; Identity">` instead.

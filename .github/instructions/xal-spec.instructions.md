@@ -1250,10 +1250,22 @@ Icon SVGs are sourced from `etc/resources/aws/svg/Architecture-Group-Icons/`.
 | `<elastic-beanstalk-container>` | Elastic Beanstalk container | `#E7601B` | solid | — |
 | `<aws-step-functions-workflow>` | AWS Step Functions workflow | `#E7008A` | solid | — |
 | `<generic-group>` | Generic group | `#AAB7B8` | dashed | Configurable with `icon-id` |
+| `<capture>` | Capture | `#F5A623` | dashed | — |
 
 All AWS group tags require a non-empty `id`. IDs for group tags, `<rectangle>`,
 and `<port>` must be unique among frame-like components. Group tags otherwise
 accept the same attributes as `container` (`title`, `class`, `gap`, etc.).
+
+`<capture>` is a lightweight overlay annotation tag rather than an
+AWS/architectural boundary: it wraps already-placed content as a structural
+child container and draws a border (and title band, using the same
+title/text/tag-name fallback as every other group tag) without implying any
+cloud/network semantics. Like every group tag, a `<capture>` is connectable
+by `id`/`name`/`ref` from `<connection>`, including the `frameId.id` qualified
+form, so a connection that starts or ends on a `<capture>` in another frame
+renders as the same "to `<frame>`" / "from `<frame>`" cross-frame page-link
+stubs used for any other connectable endpoint — no separate cross-boundary
+arrow mechanism exists for captures.
 
 `generic-group` additionally accepts `icon-id`, a positive signed 32-bit
 decimal ID (`1..2147483647`) from `service-catalog.csv`. Zero, signs,
