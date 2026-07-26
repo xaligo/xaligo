@@ -36,6 +36,10 @@ the frame is a page boundary, not a visible container. Excalidraw retains
 editable frame objects with transparent outlines; Excalidraw, XYFlow, and
 Isoflow remain one logical document.
 
+PPTX embeds diagram and legend icons as native SVG and therefore requires an
+SVG-capable PowerPoint or compatible viewer. Viewers that only understand the
+legacy raster fallback do not display those icons.
+
 Build from source:
 
 ```bash

@@ -39,6 +39,7 @@ SPEC_PATH="${RPM_TOP}/SPECS/${PACKAGE_NAME}.spec"
 BINARY_PATH="${BUILD_ROOT}/usr/bin/${PACKAGE_NAME}"
 ABS_BINARY_PATH="${ROOT}/${BINARY_PATH}"
 ABS_LICENSE_PATH="${ROOT}/${BUILD_ROOT}/usr/share/doc/${PACKAGE_NAME}/LICENSE"
+ABS_THIRD_PARTY_LICENSES_PATH="${ROOT}/${BUILD_ROOT}/usr/share/doc/${PACKAGE_NAME}/THIRD_PARTY_LICENSES"
 RUNTIME_PATH="${BUILD_ROOT}/${RUNTIME_REL}"
 ABS_RUNTIME_PATH="${ROOT}/${RUNTIME_PATH}"
 
@@ -58,13 +59,14 @@ build_wasm_exporter
 install_runtime_files "$RUNTIME_PATH"
 chmod 0755 "$BINARY_PATH"
 install -m 0644 LICENSE "$BUILD_ROOT/usr/share/doc/${PACKAGE_NAME}/LICENSE"
+install -m 0644 THIRD_PARTY_LICENSES "$BUILD_ROOT/usr/share/doc/${PACKAGE_NAME}/THIRD_PARTY_LICENSES"
 
 cat > "$SPEC_PATH" <<EOF
 Name: ${PACKAGE_NAME}
 Version: ${RPM_VERSION_VALUE}
 Release: ${RPM_RELEASE_VALUE}%{?dist}
 Summary: ${PACKAGE_DESCRIPTION}
-License: MIT
+License: MIT AND Zlib
 URL: ${PACKAGE_URL}
 
 %description
@@ -76,13 +78,16 @@ mkdir -p %{buildroot}/usr/share/doc/%{name}
 mkdir -p %{buildroot}/usr/lib/%{name}
 install -m 0755 ${ABS_BINARY_PATH} %{buildroot}/usr/bin/%{name}
 install -m 0644 ${ABS_LICENSE_PATH} %{buildroot}/usr/share/doc/%{name}/LICENSE
+install -m 0644 ${ABS_THIRD_PARTY_LICENSES_PATH} %{buildroot}/usr/share/doc/%{name}/THIRD_PARTY_LICENSES
 cp -a ${ABS_RUNTIME_PATH}/. %{buildroot}/usr/lib/%{name}/
 chmod 0644 %{buildroot}/usr/share/doc/%{name}/LICENSE
+chmod 0644 %{buildroot}/usr/share/doc/%{name}/THIRD_PARTY_LICENSES
 
 %files
 /usr/bin/%{name}
 /usr/lib/%{name}
 %doc /usr/share/doc/%{name}/LICENSE
+%doc /usr/share/doc/%{name}/THIRD_PARTY_LICENSES
 
 %changelog
 * Tue Jun 23 2026 ${PACKAGE_MAINTAINER} - ${RPM_VERSION_VALUE}-${RPM_RELEASE_VALUE}

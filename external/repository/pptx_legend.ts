@@ -8,7 +8,6 @@ import type {
 } from '../entity/pptx';
 import { NewEnvLogger } from '../share/logger';
 import { NewMCode } from '../share/mcode';
-import { imageDataForPptx } from './pptx_image';
 
 type LegendLineOptions = pptxgen.ShapeLineProps;
 
@@ -192,7 +191,7 @@ export async function drawLegendSlides(pptx: pptxgen, plan: PptxPlan): Promise<n
         logger.DEBUG(ERPLDLS003, 'branch image', { catalogId: entry.catalogId });
         const imageSize = Math.min(0.2, fields.icon.w, vertical.rowH * 0.7);
         slide.addImage({
-          data: await imageDataForPptx(entry.data, imageSize),
+          data: entry.data,
           x: fields.icon.x + (fields.icon.w - imageSize) / 2,
           y: y + (vertical.rowH - imageSize) / 2,
           w: imageSize,

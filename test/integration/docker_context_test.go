@@ -12,9 +12,10 @@ import (
 
 var versionNumberPattern = regexp.MustCompile(`[0-9]+(?:\.[0-9]+)*`)
 
-func TestRockyWASMBuilderCopiesTypeScriptEntrypoints(t *testing.T) {
+func TestRockyWASMBuilderCopiesTypeScriptBuildInputs(t *testing.T) {
 	repositoryRoot := integrationRepositoryRoot(t)
 	packageJSON := readIntegrationFile(t, filepath.Join(repositoryRoot, "external", "package.json"))
+	buildTool := readIntegrationFile(t, filepath.Join(repositoryRoot, "external", "tool", "build.mjs"))
 	dockerfile := readIntegrationFile(t, filepath.Join(repositoryRoot, "docker", "rocky.Dockerfile"))
 
 	buildStart := strings.Index(dockerfile, "npm run build:pptx-exporter-wasm")
@@ -22,14 +23,21 @@ func TestRockyWASMBuilderCopiesTypeScriptEntrypoints(t *testing.T) {
 		t.Fatal("Rocky Dockerfile does not invoke build:pptx-exporter-wasm")
 	}
 	copySources := rockyWASMBuilderCopySources(dockerfile[:buildStart])
+	if !strings.Contains(packageJSON, `"build": "node tool/build.mjs"`) {
+		t.Fatal("external build script does not invoke tool/build.mjs")
+	}
 	for _, entrypoint := range []string{"index.ts", "command.ts"} {
-		if !strings.Contains(packageJSON, "esbuild "+entrypoint) {
+		compiledEntrypoint := strings.TrimSuffix(entrypoint, ".ts") + ".js"
+		if !strings.Contains(buildTool, "'"+compiledEntrypoint+"'") {
 			t.Fatalf("external build script does not contain TypeScript entrypoint %q", entrypoint)
 		}
 		required := filepath.ToSlash(filepath.Join("external", entrypoint))
 		if !copySources[required] && !copySources["external"] {
 			t.Errorf("Rocky wasm-builder does not COPY TypeScript entrypoint %q before building", required)
 		}
+	}
+	if !copySources["external/tool"] {
+		t.Error("Rocky wasm-builder does not COPY external/tool before building")
 	}
 }
 
@@ -45,6 +53,115 @@ func TestRockyWASMBuilderCopySourcesExist(t *testing.T) {
 		if _, err := os.Stat(filepath.Join(repositoryRoot, filepath.FromSlash(source))); err != nil {
 			t.Errorf("Rocky wasm-builder COPY source %q: %v", source, err)
 		}
+	}
+}
+
+func TestNPMDependencyGraphExcludesRemovedNativeTools(t *testing.T) {
+	repositoryRoot := integrationRepositoryRoot(t)
+	for _, path := range []string{
+		filepath.Join(repositoryRoot, "package.json"),
+		filepath.Join(repositoryRoot, "external", "package.json"),
+	} {
+		var manifest struct {
+			Dependencies    map[string]string `json:"dependencies"`
+			DevDependencies map[string]string `json:"devDependencies"`
+			Overrides       map[string]string `json:"overrides"`
+		}
+		if err := json.Unmarshal([]byte(readIntegrationFile(t, path)), &manifest); err != nil {
+			t.Fatalf("parse %s: %v", path, err)
+		}
+		for _, dependency := range []string{"@resvg/resvg-js", "esbuild"} {
+			if _, ok := manifest.Dependencies[dependency]; ok {
+				t.Errorf("%s still declares dependency %q", path, dependency)
+			}
+			if _, ok := manifest.DevDependencies[dependency]; ok {
+				t.Errorf("%s still declares dev dependency %q", path, dependency)
+			}
+			if _, ok := manifest.Overrides[dependency]; ok {
+				t.Errorf("%s still overrides dependency %q", path, dependency)
+			}
+		}
+	}
+
+	var lock struct {
+		Packages map[string]json.RawMessage `json:"packages"`
+	}
+	lockPath := filepath.Join(repositoryRoot, "package-lock.json")
+	if err := json.Unmarshal([]byte(readIntegrationFile(t, lockPath)), &lock); err != nil {
+		t.Fatalf("parse %s: %v", lockPath, err)
+	}
+	for packagePath := range lock.Packages {
+		if packagePath == "node_modules/esbuild" ||
+			strings.HasPrefix(packagePath, "node_modules/@esbuild/") ||
+			packagePath == "node_modules/@resvg/resvg-js" ||
+			strings.HasPrefix(packagePath, "node_modules/@resvg/resvg-js-") {
+			t.Errorf("%s still contains removed package %q", lockPath, packagePath)
+		}
+	}
+}
+
+func TestDistributionsIncludeBundledPptxLicenses(t *testing.T) {
+	repositoryRoot := integrationRepositoryRoot(t)
+	notice := readIntegrationFile(t, filepath.Join(repositoryRoot, "THIRD_PARTY_LICENSES"))
+	var lock struct {
+		Packages map[string]struct {
+			Version string `json:"version"`
+		} `json:"packages"`
+	}
+	lockPath := filepath.Join(repositoryRoot, "package-lock.json")
+	if err := json.Unmarshal([]byte(readIntegrationFile(t, lockPath)), &lock); err != nil {
+		t.Fatalf("parse %s: %v", lockPath, err)
+	}
+	for _, dependency := range []struct {
+		packageName string
+		heading     string
+	}{
+		{packageName: "pptxgenjs", heading: "PptxGenJS"},
+		{packageName: "jszip", heading: "JSZip"},
+		{packageName: "pako", heading: "pako"},
+		{packageName: "lie", heading: "lie"},
+		{packageName: "immediate", heading: "immediate"},
+		{packageName: "setimmediate", heading: "setimmediate"},
+	} {
+		packagePath := "node_modules/" + dependency.packageName
+		version := lock.Packages[packagePath].Version
+		if version == "" {
+			t.Fatalf("resolve bundled dependency version for %q", packagePath)
+		}
+		heading := dependency.heading + " " + version
+		if !strings.Contains(notice, heading) {
+			t.Errorf("third-party license notice does not contain %q", heading)
+		}
+	}
+
+	var manifest struct {
+		Files []string `json:"files"`
+	}
+	manifestPath := filepath.Join(repositoryRoot, "package.json")
+	if err := json.Unmarshal([]byte(readIntegrationFile(t, manifestPath)), &manifest); err != nil {
+		t.Fatalf("parse %s: %v", manifestPath, err)
+	}
+	if !containsIntegrationString(manifest.Files, "THIRD_PARTY_LICENSES") {
+		t.Error("npm package does not include THIRD_PARTY_LICENSES")
+	}
+
+	debScript := readIntegrationFile(t, filepath.Join(repositoryRoot, "scripts", "build", "build-deb.sh"))
+	rpmScript := readIntegrationFile(t, filepath.Join(repositoryRoot, "scripts", "build", "build-rpm.sh"))
+	if !strings.Contains(
+		debScript,
+		`cat LICENSE THIRD_PARTY_LICENSES > "$WORK_DIR/usr/share/doc/${PACKAGE_NAME}/copyright"`,
+	) {
+		t.Error("Debian copyright file does not include bundled license terms")
+	}
+	if !strings.Contains(debScript, "install -m 0644 THIRD_PARTY_LICENSES") {
+		t.Error("Debian package does not install THIRD_PARTY_LICENSES")
+	}
+	if !strings.Contains(rpmScript, "install -m 0644 THIRD_PARTY_LICENSES") ||
+		!strings.Contains(rpmScript, "%doc /usr/share/doc/%{name}/THIRD_PARTY_LICENSES") {
+		t.Error("RPM package does not install THIRD_PARTY_LICENSES as documentation")
+	}
+	if !strings.Contains(rpmScript, "License: MIT AND Zlib") {
+		t.Error("RPM metadata does not declare bundled license terms")
 	}
 }
 
@@ -67,6 +184,15 @@ func TestDockerToolchainsMatchRepositoryRequirements(t *testing.T) {
 			t.Errorf("Dockerfile %d does not use required Node major %s", index, nodeVersion)
 		}
 	}
+}
+
+func containsIntegrationString(values []string, expected string) bool {
+	for _, value := range values {
+		if value == expected {
+			return true
+		}
+	}
+	return false
 }
 
 func integrationRepositoryRoot(t *testing.T) string {

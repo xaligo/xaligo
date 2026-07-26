@@ -45,7 +45,8 @@ build_linux_binary "$NATIVE_VERSION_VALUE" "$WORK_DIR/usr/bin/${PACKAGE_NAME}"
 build_wasm_exporter
 install_runtime_files "$RUNTIME_DIR"
 chmod 0755 "$WORK_DIR/usr/bin/${PACKAGE_NAME}"
-install -m 0644 LICENSE "$WORK_DIR/usr/share/doc/${PACKAGE_NAME}/copyright"
+cat LICENSE THIRD_PARTY_LICENSES > "$WORK_DIR/usr/share/doc/${PACKAGE_NAME}/copyright"
+install -m 0644 THIRD_PARTY_LICENSES "$WORK_DIR/usr/share/doc/${PACKAGE_NAME}/THIRD_PARTY_LICENSES"
 
 cat > "$WORK_DIR/DEBIAN/control" <<EOF
 Package: ${PACKAGE_NAME}
