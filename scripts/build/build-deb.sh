@@ -9,8 +9,8 @@ Usage:
   scripts/build/build-deb.sh
 
 Environment:
-  NATIVE_VERSION=1.2.3-main.42    Embedded CLI version. Defaults to VERSION, then the VERSION file.
-  PACKAGE_VERSION=1.2.3~main.42   Debian package version. Defaults to VERSION, then the VERSION file.
+  NATIVE_VERSION=1.2.3-42         Embedded CLI version. Defaults to VERSION, then the VERSION file.
+  PACKAGE_VERSION=1.2.3~42        Debian package version. Defaults to VERSION, then the VERSION file.
   GOARCH=amd64                    Target Go architecture. Supported mappings include amd64 and arm64.
   OUTPUT_DIR=output/packages
   PACKAGE_MAINTAINER="Name <email>"

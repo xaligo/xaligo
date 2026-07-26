@@ -9,9 +9,9 @@ Usage:
   scripts/build/build-rpm.sh
 
 Environment:
-  NATIVE_VERSION=1.2.3-main.42   Embedded CLI version. Defaults to VERSION, then the VERSION file.
+  NATIVE_VERSION=1.2.3-42        Embedded CLI version. Defaults to VERSION, then the VERSION file.
   PACKAGE_VERSION=1.2.3          RPM Version. Defaults to VERSION, then the VERSION file.
-  PACKAGE_RELEASE=0.main.42      RPM Release. Defaults to 1.
+  PACKAGE_RELEASE=0.42           RPM Release. Defaults to 1.
   GOARCH=amd64                   Target Go architecture. Supported mappings include amd64 and arm64.
   OUTPUT_DIR=output/packages
 EOF

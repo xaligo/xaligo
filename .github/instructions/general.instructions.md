@@ -125,11 +125,13 @@ reproducible builds, and do not commit a separate `external/package-lock.json`.
 
 `VERSION` and the root `package.json` contain the next stable `X.Y.Z` version.
 Release metadata is resolved by `scripts/build/release-metadata.sh`. A main
-prerelease run `N` uses `X.Y.Z-main.N` for npm and the embedded native CLI,
-`X.Y.Z~main.N` for Debian, and RPM `Version: X.Y.Z` with
-`Release: 0.main.N`; a stable RPM uses release `1`. Keep these values separate
-so prereleases sort before the corresponding stable OS package and remain valid
-for each package manager.
+prerelease run `N` uses `X.Y.Z-N` for the embedded native CLI, exactly `X.Y.Z`
+from `VERSION` for npm, `X.Y.Z~N` for Debian, and RPM `Version: X.Y.Z` with
+`Release: 0.N`; a stable RPM uses release `1`. Source branch names such as
+`main` must not appear in a package name or package version. Keep these values
+separate so native and OS prereleases sort before the corresponding stable
+package and remain valid for each package manager. Publish npm only from the
+stable release workflow because npm package versions are immutable.
 
 ## Conventions
 
