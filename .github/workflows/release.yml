@@ -127,18 +127,6 @@ jobs:
         with:
           platforms: amd64,arm64
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
-      - name: Build Ubuntu package image
-        run: |
-          docker buildx build \
-            --platform "${{ matrix.platform }}" \
-            --load \
-            -f docker/ubuntu.Dockerfile \
-            -t "xaligo-package-ubuntu:${{ matrix.goarch }}" \
-            .
-
       - name: Build Debian package
         run: |
           docker run --rm \
@@ -149,17 +137,8 @@ jobs:
             -e PACKAGE_VERSION="${{ needs.metadata.outputs.deb_version }}" \
             -e GOARCH="${{ matrix.goarch }}" \
             -e GOFLAGS="-buildvcs=false" \
-            "xaligo-package-ubuntu:${{ matrix.goarch }}" \
+            xaligo/ubuntu:26.04 \
             scripts/build/build-deb.sh
-
-      - name: Build Rocky package image
-        run: |
-          docker buildx build \
-            --platform "${{ matrix.platform }}" \
-            --load \
-            -f docker/rocky.Dockerfile \
-            -t "xaligo-package-rocky:${{ matrix.goarch }}" \
-            .
 
       - name: Build RPM package
         run: |
@@ -172,7 +151,7 @@ jobs:
             -e PACKAGE_RELEASE="${{ needs.metadata.outputs.rpm_release }}" \
             -e GOARCH="${{ matrix.goarch }}" \
             -e GOFLAGS="-buildvcs=false" \
-            "xaligo-package-rocky:${{ matrix.goarch }}" \
+            xaligo/rocky:10.2 \
             scripts/build/build-rpm.sh
 
       - name: Build npm package
@@ -187,11 +166,10 @@ jobs:
             -e RELEASE_TAG="${{ needs.metadata.outputs.release_tag }}" \
             -e GOFLAGS="-buildvcs=false" \
             -e NPM_PACKAGE_TARGETS="darwin/amd64 darwin/arm64 linux/amd64 linux/arm64 windows/amd64 windows/arm64" \
-            "xaligo-package-ubuntu:${{ matrix.goarch }}" \
+            xaligo/ubuntu:26.04 \
             sh -ec '
               npm ci --ignore-scripts --no-audit --no-fund
-              node -e "const fs=require(\"node:fs\"); const path=\"package.json\"; const pkg=JSON.parse(fs.readFileSync(path, \"utf8\")); pkg.version=process.env.NPM_VERSION; pkg.xaligo={...(pkg.xaligo || {}), releaseTag: process.env.RELEASE_TAG}; fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + \"\n\");"
-              printf "%s\n" "$NPM_VERSION" > VERSION
+              node -e "const fs=require(\"node:fs\"); const path=\"package.json\"; const pkg=JSON.parse(fs.readFileSync(path, \"utf8\")); const version=fs.readFileSync(\"VERSION\", \"utf8\").trim().replace(/^v/, \"\"); if (pkg.version !== version || process.env.NPM_VERSION !== version) throw new Error(\"package.json, VERSION, and NPM_VERSION must match\"); pkg.xaligo={...(pkg.xaligo || {}), releaseTag: process.env.RELEASE_TAG}; fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + \"\n\");"
               npm run test:npm-installer
               npm run test:release-metadata
               npm run build
@@ -296,7 +274,8 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
           scope: '@xaligo'
 
-      - name: Publish npm package
+      - name: Publish stable npm package
+        if: needs.metadata.outputs.prerelease == 'false'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_TAG: ${{ needs.metadata.outputs.npm_tag }}

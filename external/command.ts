@@ -1,15 +1,12 @@
 import { runPptxExporter } from './controller/pptx_exporter';
 import { NewEnvLogger } from './share/logger';
 import { NewMCode } from './share/mcode';
+import { installPptxRuntimeShims } from './share/pptx_runtime';
 
 const logger = NewEnvLogger('external', 'command');
 const ECM001 = NewMCode('ECM-001', 'Main start');
 const ECM002 = NewMCode('ECM-002', 'Main export failed');
 const ECM003 = NewMCode('ECM-003', 'Main completed');
-const ECIPWS001 = NewMCode('ECIPWS-001', 'Install PPTX WASI shims start');
-const ECIPWS002 = NewMCode('ECIPWS-002', 'Install PPTX WASI shims set immediate branch');
-const ECIPWS003 = NewMCode('ECIPWS-003', 'Install PPTX WASI shims set image branch');
-const ECIPWS004 = NewMCode('ECIPWS-004', 'Install PPTX WASI shims set document branch');
 const ECRAT001 = NewMCode('ECRAT-001', 'Read all text EOF branch');
 const ECRAT002 = NewMCode('ECRAT-002', 'Read all text completed');
 const ECWA001 = NewMCode('ECWA-001', 'Write all chunk branch');
@@ -31,50 +28,10 @@ main().catch((err: unknown) => {
 
 async function main(): Promise<void> {
   logger.DEBUG(ECM001, 'start');
-  installPptxWasiShims();
+  installPptxRuntimeShims();
   const pptx = await runPptxExporter(readAllText(0));
   writeAll(1, new TextEncoder().encode(bytesToBase64(pptx)));
   logger.DEBUG(ECM003, 'completed', { bytes: pptx.length });
-}
-
-function installPptxWasiShims(): void {
-  logger.DEBUG(ECIPWS001, 'start');
-  const globals = globalThis as Record<string, unknown>;
-  if (globals.setImmediate === undefined) logger.DEBUG(ECIPWS002, 'branch set immediate');
-  globals.setImmediate ??= (callback: (...args: unknown[]) => void, ...args: unknown[]) => {
-    if (typeof queueMicrotask === 'function') queueMicrotask(() => callback(...args));
-    else void Promise.resolve().then(() => callback(...args));
-    return 0;
-  };
-  globals.clearImmediate ??= () => undefined;
-  if (globals.Image === undefined) logger.DEBUG(ECIPWS003, 'branch set image');
-  globals.Image ??= class {
-    width = 1;
-    height = 1;
-    onload?: () => void;
-    onerror?: (err: unknown) => void;
-    set src(_value: string) {
-      this.onload?.();
-    }
-    get src(): string {
-      return '';
-    }
-  };
-  if (globals.document === undefined) logger.DEBUG(ECIPWS004, 'branch set document');
-  globals.document ??= {
-    createElement() {
-      return {
-        width: 1,
-        height: 1,
-        getContext() {
-          return { drawImage() { /* preview shim */ } };
-        },
-        toDataURL() {
-          return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADElEQVR4nGNgYGBgAAAABAABJzQnCgAAAABJRU5ErkJggg==';
-        },
-      };
-    },
-  };
 }
 
 function readAllText(fd: number): string {

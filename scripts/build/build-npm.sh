@@ -9,7 +9,7 @@ Usage:
   scripts/build/build-npm.sh
 
 Environment:
-  NATIVE_VERSION=1.2.3-main.42
+  NATIVE_VERSION=1.2.3-42
   NPM_PACKAGE_TARGETS="darwin/amd64 darwin/arm64 linux/amd64 linux/arm64 windows/amd64 windows/arm64"
 EOF
 }

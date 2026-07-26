@@ -34,6 +34,7 @@ COPY external/controller ./external/controller
 COPY external/entity ./external/entity
 COPY external/repository ./external/repository
 COPY external/share ./external/share
+COPY external/tool ./external/tool
 COPY external/usecase ./external/usecase
 
 RUN mkdir -p external/wasm \

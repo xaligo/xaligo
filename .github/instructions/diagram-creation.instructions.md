@@ -240,6 +240,9 @@ service legend; place that legend with
 
 - Native CLI export requires `xaligo.wasm`; the npm/WASM API currently
   exports through PptxGenJS.
+- Diagram and legend icons are native SVG media. SVG-capable PowerPoint or a
+  compatible viewer is required; legacy raster-only viewers do not display the
+  icons because independently rasterized copies are not embedded.
 - PPTX export adds separate legend slide(s) after all frame/diagram slides.
 - Legend pages use 4 columns and show icon, abbreviation, and official name.
 - Use `--paper A3 --orientation landscape --paper-margin-top 0.75 --paper-margin-bottom 0.75`

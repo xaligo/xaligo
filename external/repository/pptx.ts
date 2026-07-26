@@ -15,7 +15,6 @@ import type {
 import { planObjectName, planTextOverflow, pptxPlanOpCount, pptxPlanPages } from '../entity/pptx';
 import { NewEnvLogger } from '../share/logger';
 import { NewMCode } from '../share/mcode';
-import { imageDataForPptx } from './pptx_image';
 import { drawConnectorLegendSlide, drawLegendSlides } from './pptx_legend';
 import { convertPptxOutput, finalizePptxPackage, type PptxPackageSlidePlan } from './pptx_package';
 
@@ -265,7 +264,7 @@ async function drawImage(slide: pptxgen.Slide, op: PlanOp): Promise<void> {
     y: op.y,
     w: op.w,
     h: op.h,
-    data: await imageDataForPptx(op.data, op.w),
+    data: op.data,
     rotate: op.rotate ?? 0,
     transparency: op.transparency ?? 0,
     ...objectNameOptions(op),

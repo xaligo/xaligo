@@ -30,9 +30,9 @@ The browser calls the application API, which stores data in the database.
   <frames>
     <frame id="application" width="960" height="540" class="pa-4">
       <container layout="horizontal" align="middle-center" gap="32">
-        <rectangle id="browser" title="ブラウザー" height="200" />
-        <rectangle id="api" title="アプリケーション API" height="200" />
-        <rectangle id="database" title="データベース" height="200" />
+        <rectangle id="browser" title="Browser" height="200" />
+        <rectangle id="api" title="Application API" height="200" />
+        <rectangle id="database" title="Database" height="200" />
       </container>
 
       <connections>

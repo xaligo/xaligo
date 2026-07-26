@@ -509,7 +509,7 @@ const markdownPreviewHTMLHeader = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>xaligo markdown preview</title><style>
 body{margin:0;padding:24px;background:#fff;color:#111827;font-family:system-ui,sans-serif;line-height:1.6}
-.xaligo-diagram{margin:8px 0}.xaligo-diagram img{max-width:100%;height:auto;box-shadow:0 4px 16px #0002;display:block}
+.xaligo-diagram{margin:8px 0}.xaligo-diagram img{max-width:100%;height:auto;border:0;box-shadow:none;display:block}
 pre{background:#f3f4f6;padding:12px;border-radius:6px;overflow:auto}
 code{background:#f3f4f6;padding:2px 4px;border-radius:4px}
 </style></head><body>

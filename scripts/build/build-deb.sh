@@ -9,8 +9,8 @@ Usage:
   scripts/build/build-deb.sh
 
 Environment:
-  NATIVE_VERSION=1.2.3-main.42    Embedded CLI version. Defaults to VERSION, then the VERSION file.
-  PACKAGE_VERSION=1.2.3~main.42   Debian package version. Defaults to VERSION, then the VERSION file.
+  NATIVE_VERSION=1.2.3-42         Embedded CLI version. Defaults to VERSION, then the VERSION file.
+  PACKAGE_VERSION=1.2.3~42        Debian package version. Defaults to VERSION, then the VERSION file.
   GOARCH=amd64                    Target Go architecture. Supported mappings include amd64 and arm64.
   OUTPUT_DIR=output/packages
   PACKAGE_MAINTAINER="Name <email>"
@@ -45,7 +45,8 @@ build_linux_binary "$NATIVE_VERSION_VALUE" "$WORK_DIR/usr/bin/${PACKAGE_NAME}"
 build_wasm_exporter
 install_runtime_files "$RUNTIME_DIR"
 chmod 0755 "$WORK_DIR/usr/bin/${PACKAGE_NAME}"
-install -m 0644 LICENSE "$WORK_DIR/usr/share/doc/${PACKAGE_NAME}/copyright"
+cat LICENSE THIRD_PARTY_LICENSES > "$WORK_DIR/usr/share/doc/${PACKAGE_NAME}/copyright"
+install -m 0644 THIRD_PARTY_LICENSES "$WORK_DIR/usr/share/doc/${PACKAGE_NAME}/THIRD_PARTY_LICENSES"
 
 cat > "$WORK_DIR/DEBIAN/control" <<EOF
 Package: ${PACKAGE_NAME}

@@ -40,15 +40,15 @@ assert_output() {
 }
 
 source "$COMMON"
-native_value="$(NATIVE_VERSION=1.2.3-main.42 VERSION=1.2.3 native_version)"
-package_value="$(PACKAGE_VERSION=1.2.3~main.42 VERSION=1.2.3 package_version)"
+native_value="$(NATIVE_VERSION=1.2.3-42 VERSION=1.2.3 native_version)"
+package_value="$(PACKAGE_VERSION=1.2.3~42 VERSION=1.2.3 package_version)"
 package_fallback_value="$(NATIVE_VERSION=1.2.3 VERSION= PACKAGE_VERSION= package_version)"
-release_value="$(PACKAGE_RELEASE=0.main.42 package_release)"
-if [[ "$native_value" != "1.2.3-main.42" ]]; then
+release_value="$(PACKAGE_RELEASE=0.42 package_release)"
+if [[ "$native_value" != "1.2.3-42" ]]; then
   printf 'FAIL: native version did not prefer NATIVE_VERSION: %s\n' "$native_value" >&2
   exit 1
 fi
-if [[ "$package_value" != "1.2.3~main.42" ]]; then
+if [[ "$package_value" != "1.2.3~42" ]]; then
   printf 'FAIL: package version did not prefer PACKAGE_VERSION: %s\n' "$package_value" >&2
   exit 1
 fi
@@ -56,7 +56,7 @@ if [[ "$package_fallback_value" != "1.2.3" ]]; then
   printf 'FAIL: package version did not fall back to NATIVE_VERSION: %s\n' "$package_fallback_value" >&2
   exit 1
 fi
-if [[ "$release_value" != "0.main.42" ]]; then
+if [[ "$release_value" != "0.42" ]]; then
   printf 'FAIL: RPM release did not preserve PACKAGE_RELEASE: %s\n' "$release_value" >&2
   exit 1
 fi
@@ -75,11 +75,11 @@ assert_output "$stable_output" npm_tag "latest"
 
 main_output="$(resolve push 42)"
 assert_output "$main_output" base_version "1.2.3"
-assert_output "$main_output" native_version "1.2.3-main.42"
-assert_output "$main_output" npm_version "1.2.3-main.42"
-assert_output "$main_output" deb_version "1.2.3~main.42"
+assert_output "$main_output" native_version "1.2.3-42"
+assert_output "$main_output" npm_version "1.2.3"
+assert_output "$main_output" deb_version "1.2.3~42"
 assert_output "$main_output" rpm_version "1.2.3"
-assert_output "$main_output" rpm_release "0.main.42"
+assert_output "$main_output" rpm_release "0.42"
 assert_output "$main_output" release_tag "main-42"
 assert_output "$main_output" prerelease "true"
 assert_output "$main_output" npm_tag "next"

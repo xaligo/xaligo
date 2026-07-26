@@ -11,6 +11,7 @@ import {
 } from '../entity/pptx';
 import { NewEnvLogger } from '../share/logger';
 import { NewMCode } from '../share/mcode';
+import { PPTX_FALLBACK_PNG_BYTES } from '../share/pptx_runtime';
 
 interface XmlObjectBlock {
   start: number;
@@ -30,6 +31,7 @@ const logger = NewEnvLogger('external/repository', 'pptx_package');
 const ERPPGAOIP001 = NewMCode('ERPPGAOIP-001', 'Finalize PPTX package unnecessary branch');
 const ERPPGAOIP002 = NewMCode('ERPPGAOIP-002', 'Finalize PPTX package missing slide branch');
 const ERPPGAOIP003 = NewMCode('ERPPGAOIP-003', 'Finalize PPTX package completed');
+const ERPPNSFI001 = NewMCode('ERPPNSFI-001', 'Normalize SVG fallback image completed');
 const ERPPCPO001 = NewMCode('ERPPCPO-001', 'Convert PPTX output arraybuffer branch');
 const ERPPCPO002 = NewMCode('ERPPCPO-002', 'Convert PPTX output base64 branch');
 const ERPPCPO003 = NewMCode('ERPPCPO-003', 'Convert PPTX output blob branch');
@@ -50,12 +52,13 @@ export interface PptxPackageSlidePlan {
 }
 
 export async function finalizePptxPackage(bytes: Uint8Array, pages: PptxPackageSlidePlan[], compression: boolean): Promise<Uint8Array> {
-  if (!pages.some(requiresPackageFinalization)) {
+  const zip = await JSZip.loadAsync(bytes);
+  const normalizedFallbacks = await normalizeSvgFallbackImages(zip);
+  if (!pages.some(requiresPackageFinalization) && normalizedFallbacks === 0) {
     logger.DEBUG(ERPPGAOIP001, 'branch no package finalization');
     return bytes;
   }
 
-  const zip = await JSZip.loadAsync(bytes);
   let finalizedSlides = 0;
   let finalizedGroups = 0;
   for (const page of pages) {
@@ -79,10 +82,114 @@ export async function finalizePptxPackage(bytes: Uint8Array, pages: PptxPackageS
     finalizedSlides++;
     finalizedGroups += groupIds.length;
   }
-  if (finalizedSlides === 0) return bytes;
+  if (finalizedSlides === 0 && normalizedFallbacks === 0) return bytes;
   const out = await zip.generateAsync({ type: 'uint8array', compression: compression ? 'DEFLATE' : 'STORE' });
-  logger.DEBUG(ERPPGAOIP003, 'completed', { slides: finalizedSlides, groups: finalizedGroups, bytes: out.length });
+  logger.DEBUG(ERPPGAOIP003, 'completed', {
+    slides: finalizedSlides,
+    groups: finalizedGroups,
+    normalizedFallbacks,
+    bytes: out.length,
+  });
   return out;
+}
+
+async function normalizeSvgFallbackImages(zip: JSZip): Promise<number> {
+  let normalized = 0;
+  const paths = Object.keys(zip.files)
+    .filter((path) => /^ppt\/media\/.+[.]png$/.test(path))
+    .sort();
+  for (const path of paths) {
+    const file = zip.file(path);
+    if (!file) continue;
+    const bytes = await file.async('uint8array');
+    if (hasPNGSignature(bytes) || !hasSVGSignature(bytes)) continue;
+    zip.file(path, PPTX_FALLBACK_PNG_BYTES);
+    normalized++;
+  }
+  if (normalized > 0) logger.DEBUG(ERPPNSFI001, 'completed', { images: normalized });
+  return normalized;
+}
+
+function hasPNGSignature(bytes: Uint8Array): boolean {
+  const signature = PPTX_FALLBACK_PNG_BYTES.subarray(0, 8);
+  return bytes.length >= signature.length
+    && signature.every((value, index) => bytes[index] === value);
+}
+
+function hasSVGSignature(bytes: Uint8Array): boolean {
+  const source = decodeSVGSource(bytes);
+  if (source === undefined) return false;
+
+  let offset = source.charCodeAt(0) === 0xfeff ? 1 : 0;
+  for (;;) {
+    while (/\s/.test(source[offset] ?? '')) offset++;
+    if (source.startsWith('<?', offset)) {
+      const end = source.indexOf('?>', offset + 2);
+      if (end < 0) return false;
+      offset = end + 2;
+      continue;
+    }
+    if (source.startsWith('<!--', offset)) {
+      const end = source.indexOf('-->', offset + 4);
+      if (end < 0) return false;
+      offset = end + 3;
+      continue;
+    }
+    if (source.slice(offset, offset + 9).toLowerCase() === '<!doctype') {
+      const end = markupDeclarationEnd(source, offset + 9);
+      if (end < 0) return false;
+      offset = end + 1;
+      continue;
+    }
+    break;
+  }
+  return /^<(?:[A-Za-z_][\w.-]*:)?svg(?:[\s/>])/i.test(source.slice(offset));
+}
+
+function decodeSVGSource(bytes: Uint8Array): string | undefined {
+  const isUTF16LE = (bytes[0] === 0xff && bytes[1] === 0xfe)
+    || (bytes[0] === 0x3c && bytes[1] === 0);
+  const isUTF16BE = (bytes[0] === 0xfe && bytes[1] === 0xff)
+    || (bytes[0] === 0 && bytes[1] === 0x3c);
+  if (isUTF16LE || isUTF16BE) {
+    if (bytes.length % 2 !== 0) return undefined;
+    let source = '';
+    const chunk: number[] = [];
+    for (let index = 0; index < bytes.length; index += 2) {
+      const first = bytes[index] ?? 0;
+      const second = bytes[index + 1] ?? 0;
+      chunk.push(isUTF16LE ? first | (second << 8) : (first << 8) | second);
+      if (chunk.length < 4096) continue;
+      source += String.fromCharCode(...chunk);
+      chunk.length = 0;
+    }
+    return source + String.fromCharCode(...chunk);
+  }
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+  } catch {
+    return undefined;
+  }
+}
+
+function markupDeclarationEnd(source: string, offset: number): number {
+  let quote = '';
+  let subsetDepth = 0;
+  for (let index = offset; index < source.length; index++) {
+    const char = source[index] ?? '';
+    if (quote) {
+      if (char === quote) quote = '';
+      continue;
+    }
+    if (char === '"' || char === '\'') {
+      quote = char;
+      continue;
+    }
+    if (char === '[') subsetDepth++;
+    else if (char === ']' && subsetDepth > 0) subsetDepth--;
+    else if (char === '>' && subsetDepth === 0) return index;
+  }
+  return -1;
 }
 
 function requiresPackageFinalization(page: PptxPackageSlidePlan): boolean {
