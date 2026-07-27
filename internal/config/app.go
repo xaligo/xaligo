@@ -7,6 +7,8 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
+const DefaultServePort = 8080
+
 // appYAML mirrors the structure of etc/app.yaml.
 type appYAML struct {
 	Paths struct {
@@ -24,6 +26,9 @@ type appYAML struct {
 	Item struct {
 		IconSize float64 `yaml:"icon_size"`
 	} `yaml:"item"`
+	Serve struct {
+		Port int `yaml:"port"`
+	} `yaml:"serve"`
 }
 
 // LegendConfig holds resolved legend defaults.
@@ -32,6 +37,11 @@ type LegendConfig struct {
 	OffsetY  float64
 	IconSize int
 	FontSize int
+}
+
+// ServeConfig holds live-preview server defaults.
+type ServeConfig struct {
+	Port int
 }
 
 // Config holds application-wide configuration resolved from etc/app.yaml.
@@ -43,6 +53,7 @@ type Config struct {
 	PptxExporterWASM string // absolute path to the PPTX WASM exporter
 	Legend           LegendConfig
 	ItemIconSize     float64 // default max icon size for <item> elements (px)
+	Serve            ServeConfig
 }
 
 // New loads etc/app.yaml from the project root and returns a resolved Config.
@@ -60,10 +71,14 @@ func New() *Config {
 	def.Legend.IconSize = 32
 	def.Legend.FontSize = 12
 	def.Item.IconSize = 32.0
+	def.Serve.Port = DefaultServePort
 
 	yamlPath := filepath.Join(root, "etc", "resources", "aws", "app.yaml")
 	if data, err := os.ReadFile(yamlPath); err == nil {
 		_ = yaml.Unmarshal(data, &def)
+	}
+	if def.Serve.Port < 1 || def.Serve.Port > 65535 {
+		def.Serve.Port = DefaultServePort
 	}
 
 	abs := func(rel string) string {
@@ -80,6 +95,7 @@ func New() *Config {
 		SvcCatalogCSV:    abs(def.Paths.ServiceCatalogCSV),
 		PptxExporterWASM: abs(def.Paths.PptxExporterWASM),
 		ItemIconSize:     def.Item.IconSize,
+		Serve:            ServeConfig{Port: def.Serve.Port},
 		Legend: LegendConfig{
 			OffsetX:  def.Legend.OffsetX,
 			OffsetY:  def.Legend.OffsetY,

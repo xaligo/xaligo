@@ -29,6 +29,7 @@ type fakeUseCase struct {
 	lastPlanOpts     entity.RenderOptions
 	lastPreviewPath  string
 	lastPreviewOpts  entity.PreviewOptions
+	lastPreviewAddr  string
 	renderExcalidraw []byte
 	renderSVG        []byte
 	renderXYFlow     []byte
@@ -165,7 +166,7 @@ func (rcvr *fakeUseCase) NewPreviewRepository(path string, opts entity.PreviewOp
 	if rcvr.previewErr != nil {
 		return nil, rcvr.previewErr
 	}
-	return fakePreviewRepository{}, nil
+	return fakePreviewRepository{usecase: rcvr}, nil
 }
 
 func (rcvr *fakeUseCase) ReadScene(path string) (*entity.Scene, error) {
@@ -212,6 +213,16 @@ func newRenderController(uc *fakeUseCase) controller.RenderController {
 	return controller.NewRenderController(config.New(), uc, uc, uc, usecase.NewThemeUsecase(), usecase.NewElementUsecase())
 }
 
+func newServeController(uc *fakeUseCase, port ...int) controller.ServeController {
+	servePort := config.DefaultServePort
+	if len(port) > 0 {
+		servePort = port[0]
+	}
+	return controller.NewServeController(&config.Config{
+		Serve: config.ServeConfig{Port: servePort},
+	}, uc)
+}
+
 func newRealGenerateController() controller.GenerateController {
 	excalidrawRepository := repository.NewExcalidrawRepository()
 	xaligoRepository := repository.NewXaligoRepository()
@@ -231,11 +242,16 @@ func newRealGenerateController() controller.GenerateController {
 	)
 }
 
-type fakePreviewRepository struct{}
+type fakePreviewRepository struct {
+	usecase *fakeUseCase
+}
 
-func (fakePreviewRepository) Handler() http.Handler             { return http.NewServeMux() }
-func (fakePreviewRepository) Run(context.Context, string) error { return nil }
-func (fakePreviewRepository) Refresh() error                    { return nil }
+func (fakePreviewRepository) Handler() http.Handler { return http.NewServeMux() }
+func (rcvr fakePreviewRepository) Run(_ context.Context, address string) error {
+	rcvr.usecase.lastPreviewAddr = address
+	return nil
+}
+func (fakePreviewRepository) Refresh() error { return nil }
 
 func writeTempXAL(t *testing.T, dir string) string {
 	t.Helper()
@@ -252,7 +268,7 @@ func TestControllerCommandInitializers(t *testing.T) {
 		newAddController(uc).Command(),
 		newGenerateController(uc).Command(),
 		controller.NewInitController().Command(),
-		controller.NewServeController(uc).Command(),
+		newServeController(uc).Command(),
 		controller.NewValidateController(uc).Command(),
 		controller.NewVersionController().Command(),
 	}
@@ -457,24 +473,82 @@ func TestRunRenderFormatWithUseCaseErrors(t *testing.T) {
 
 func TestRunServeWithUseCase(t *testing.T) {
 	fake := &fakeUseCase{}
-	if err := controller.NewServeController(&fakeUseCase{previewErr: errors.New("missing")}).Run(context.Background(), entity.ControllerServeOptions{InputPath: filepath.Join(t.TempDir(), "missing.xal"), Theme: "light"}); err == nil {
+	if err := newServeController(&fakeUseCase{previewErr: errors.New("missing")}).Run(context.Background(), entity.ControllerServeOptions{InputPath: filepath.Join(t.TempDir(), "missing.xal"), Theme: "light"}); err == nil {
 		t.Fatal("RunServe missing input error = nil")
 	}
-	err := controller.NewServeController(fake).Run(context.Background(), entity.ControllerServeOptions{InputPath: "input.xal", Theme: "light", PollInterval: time.Millisecond})
+	err := newServeController(fake).Run(context.Background(), entity.ControllerServeOptions{InputPath: "input.xal", Theme: "light", PollInterval: time.Millisecond})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if fake.lastPreviewPath != "input.xal" || fake.lastPreviewOpts.Render.Format != usecase.FormatSVG {
 		t.Fatalf("preview path=%q opts=%#v", fake.lastPreviewPath, fake.lastPreviewOpts)
 	}
-	if err := controller.NewServeController(&fakeUseCase{previewErr: errors.New("preview failed")}).Run(nil, entity.ControllerServeOptions{InputPath: "input.xal", Theme: "light"}); err == nil {
+	if fake.lastPreviewAddr != "127.0.0.1:8080" {
+		t.Fatalf("preview address = %q, want 127.0.0.1:8080", fake.lastPreviewAddr)
+	}
+	if err := newServeController(&fakeUseCase{previewErr: errors.New("preview failed")}).Run(nil, entity.ControllerServeOptions{InputPath: "input.xal", Theme: "light"}); err == nil {
 		t.Fatal("preview creation error = nil")
+	}
+}
+
+func TestRunServeUsesConfiguredAndExplicitPorts(t *testing.T) {
+	configured := &fakeUseCase{}
+	if err := newServeController(configured, 9090).Run(context.Background(), entity.ControllerServeOptions{
+		InputPath: "input.xal", Theme: "light", PollInterval: time.Millisecond,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if configured.lastPreviewAddr != "127.0.0.1:9090" {
+		t.Fatalf("configured preview address = %q, want 127.0.0.1:9090", configured.lastPreviewAddr)
+	}
+
+	overridden := &fakeUseCase{}
+	if err := newServeController(overridden, 9090).Run(context.Background(), entity.ControllerServeOptions{
+		InputPath: "input.xal", Address: "0.0.0.0:7777", Port: 9191,
+		Theme: "light", PollInterval: time.Millisecond,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if overridden.lastPreviewAddr != "0.0.0.0:9191" {
+		t.Fatalf("overridden preview address = %q, want 0.0.0.0:9191", overridden.lastPreviewAddr)
+	}
+
+	invalid := &fakeUseCase{}
+	err := newServeController(invalid).Run(context.Background(), entity.ControllerServeOptions{
+		InputPath: "input.xal", Port: 65536, Theme: "light",
+	})
+	if err == nil || !strings.Contains(err.Error(), "serve port must be between 1 and 65535") {
+		t.Fatalf("invalid port error = %v", err)
+	}
+	if invalid.lastPreviewPath != "" {
+		t.Fatalf("preview was created before port validation: %q", invalid.lastPreviewPath)
+	}
+}
+
+func TestServeCommandPortOverridesAddressPort(t *testing.T) {
+	fake := &fakeUseCase{}
+	cmd := newServeController(fake, 9090).Command()
+	if flag := cmd.Flags().Lookup("port"); flag == nil || flag.DefValue != "9090" {
+		t.Fatalf("port flag = %#v, want configured default 9090", flag)
+	}
+	cmd.SetArgs([]string{"input.xal", "--address", "0.0.0.0:7777", "--port", "9191"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+	if fake.lastPreviewAddr != "0.0.0.0:9191" {
+		t.Fatalf("preview address = %q, want 0.0.0.0:9191", fake.lastPreviewAddr)
+	}
+
+	invalid := newServeController(&fakeUseCase{}).Command()
+	invalid.SetArgs([]string{"input.xal", "--port", "0"})
+	if err := invalid.Execute(); err == nil || !strings.Contains(err.Error(), "serve port must be between 1 and 65535") {
+		t.Fatalf("explicit zero port error = %v", err)
 	}
 }
 
 func TestRunServeDetectsMarkdownAndForwardsPaperOptions(t *testing.T) {
 	fake := &fakeUseCase{}
-	err := controller.NewServeController(fake).Run(context.Background(), entity.ControllerServeOptions{
+	err := newServeController(fake).Run(context.Background(), entity.ControllerServeOptions{
 		InputPath: "guide.md", Theme: "light", Paper: "A4", Orientation: "landscape", PollInterval: time.Millisecond,
 	})
 	if err != nil {
@@ -488,7 +562,7 @@ func TestRunServeDetectsMarkdownAndForwardsPaperOptions(t *testing.T) {
 	}
 
 	xalFake := &fakeUseCase{}
-	if err := controller.NewServeController(xalFake).Run(context.Background(), entity.ControllerServeOptions{
+	if err := newServeController(xalFake).Run(context.Background(), entity.ControllerServeOptions{
 		InputPath: "diagram.xal", Theme: "light", PollInterval: time.Millisecond,
 	}); err != nil {
 		t.Fatal(err)

@@ -77,6 +77,8 @@ type ControllerPptxGenerateOptions struct {
 type ControllerServeOptions struct {
 	InputPath    string
 	Address      string
+	Port         int
+	PortSet      bool
 	Mode         string
 	Theme        string
 	Paper        string

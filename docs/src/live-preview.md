@@ -12,6 +12,17 @@ Open:
 http://127.0.0.1:8080
 ```
 
+The default port is `8080`. Set `serve.port` in
+`etc/resources/aws/app.yaml`, or override it for one process with `--port`:
+
+```bash
+xaligo serve docs/src/examples/samples/junctions.xal --port 9090
+```
+
+The existing `--address` flag remains available for choosing both the listen
+host and port. When both flags are present, `--port` replaces only the port
+part of `--address`.
+
 A `.md`/`.markdown` source previews the full Markdown document with rendered
 `xal` code blocks embedded inline, the same as `render markdown`:
 
