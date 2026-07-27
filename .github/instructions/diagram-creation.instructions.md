@@ -111,8 +111,10 @@ Quick checklist:
 - [ ] Services not tied to a VPC → never inside `<vpc>` or `<availability-zone>`
 
 ```xml
-<frame version="1" width="1440" height="900" class="pa-4">
-  <aws-cloud id="aws-cloud" title="AWS Cloud">
+<xaligo version="1">
+  <frames>
+    <frame id="overview" width="1440" height="900" class="pa-4">
+      <aws-cloud id="aws-cloud" title="AWS Cloud">
 
     <!-- ✅ Global: outside <region> — not bound to any specific region -->
     <generic-group id="global-services" title="Global Services">
@@ -163,11 +165,13 @@ Quick checklist:
 
       </vpc>
     </region>
-  </aws-cloud>
+      </aws-cloud>
 
-  <connection src="1182" dst="27" />
-  <connection src="27"   dst="117" />
-</frame>
+      <connection src="1182" dst="27" />
+      <connection src="27"   dst="117" />
+    </frame>
+  </frames>
+</xaligo>
 ```
 
 Every `<connection>` must be a direct child of `<frame>` or a direct child of a

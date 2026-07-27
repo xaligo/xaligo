@@ -125,13 +125,18 @@ xaligo generate xal -o generated.xal --paper A4 --orientation landscape
 
 Useful generation flags:
 
-| Flag | Description |
-|---|---|
-| `--clouds`, `--accounts`, `--regions`, `--azs` | AWS hierarchy counts |
-| `--az-layout grid|staggered` | Availability Zone placement |
-| `--subnets` | Number of subnets |
-| `--spacing vertical|horizontal|both` | Spacing direction |
-| `--start top|left` | Drawing start position |
+| Flag | Default | Description |
+|---|---:|---|
+| `--clouds`, `--accounts`, `--regions`, `--azs` | `1`, `1`, `1`, `2` | AWS hierarchy counts |
+| `--az-layout grid|staggered` | `grid` | Availability Zone placement |
+| `--subnets` | `2` | Number of subnets |
+| `--spacing vertical|horizontal|both` | `both` | Spacing direction |
+| `--start top|left` | `top` | Drawing start position |
+| `--paper` | `A4` | Paper size |
+| `--orientation` | `landscape` | Page orientation |
+
+Only `--output` is required. The generated file uses the canonical
+`<xaligo version="1"><frames>...</frames></xaligo>` document envelope.
 
 ## Other Commands
 

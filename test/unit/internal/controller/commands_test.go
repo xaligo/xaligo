@@ -508,8 +508,17 @@ func TestRunGenerateAndInit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(data), `<frame version="1" width="1122" height="794"`) || !strings.Contains(string(data), "<aws-cloud") {
+	if !strings.Contains(string(data), `<xaligo version="1">`) ||
+		!strings.Contains(string(data), `<frame id="overview" width="1122" height="794"`) ||
+		!strings.Contains(string(data), "<aws-cloud") {
 		t.Fatalf("generated XAL = %s", data)
+	}
+	diagnostics, err := usecase.Diagnose(context.Background(), data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(diagnostics) != 0 {
+		t.Fatalf("generated XAL diagnostics = %#v, want none", diagnostics)
 	}
 
 	leftVertical := filepath.Join(dir, "left-vertical.xal")
@@ -548,8 +557,39 @@ func TestRunGenerateAndInit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(initialized), `<frame version="1"`) {
+	if !strings.Contains(string(initialized), `<xaligo version="1">`) ||
+		!strings.Contains(string(initialized), `<frame id="overview"`) {
 		t.Fatalf("initialized XAL = %s", initialized)
+	}
+	diagnostics, err = usecase.Diagnose(context.Background(), initialized)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(diagnostics) != 0 {
+		t.Fatalf("initialized XAL diagnostics = %#v, want none", diagnostics)
+	}
+}
+
+func TestGenerateCommandUsesDocumentedDefaults(t *testing.T) {
+	output := filepath.Join(t.TempDir(), "generated.xal")
+	cmd := controller.NewGenerateController(&fakeUseCase{}, nil).Command()
+	cmd.SetArgs([]string{"xal", "--output", output})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(output)
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(data)
+	for _, want := range []string{
+		`clouds=1 accounts=1 regions=1 azs=2 az-layout=grid subnets=2 spacing=both start=top`,
+		`<frame id="overview" width="1122" height="794"`,
+		`<availability-zone id="availability-zone-az-2"`,
+	} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("generated XAL missing %q:\n%s", want, text)
+		}
 	}
 }
 

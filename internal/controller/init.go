@@ -16,27 +16,31 @@ var (
 	ICIRI003  = share.NewMCode("ICIRI-003", "Run init created sample DSL")
 )
 
-const sampleDSL = `<frame version="1" width="1440" height="900" class="pa-4">
-  <container class="pa-4">
-    <row gap="20" class="mb-2">
-      <col span="8" class="pa-2">
-        <card title="Dashboard" />
-      </col>
-      <col span="4" class="pa-2">
-        <card title="Summary" />
-      </col>
-    </row>
+const sampleDSL = `<xaligo version="1">
+  <frames>
+    <frame id="overview" width="1440" height="900" class="pa-4">
+      <container class="pa-4">
+        <row gap="20" class="mb-2">
+          <col span="8" class="pa-2">
+            <card title="Dashboard" />
+          </col>
+          <col span="4" class="pa-2">
+            <card title="Summary" />
+          </col>
+        </row>
 
-    <row gap="20">
-      <col span="4" class="pa-2">
-        <panel title="Filters" />
-      </col>
-      <col span="8" class="pa-2">
-        <panel title="Main Chart" />
-      </col>
-    </row>
-  </container>
-</frame>
+        <row gap="20">
+          <col span="4" class="pa-2">
+            <panel title="Filters" />
+          </col>
+          <col span="8" class="pa-2">
+            <panel title="Main Chart" />
+          </col>
+        </row>
+      </container>
+    </frame>
+  </frames>
+</xaligo>
 `
 
 type InitController interface {
