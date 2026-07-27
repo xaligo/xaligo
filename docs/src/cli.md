@@ -125,13 +125,18 @@ xaligo generate xal -o generated.xal --paper A4 --orientation landscape
 
 Useful generation flags:
 
-| Flag | Description |
-|---|---|
-| `--clouds`, `--accounts`, `--regions`, `--azs` | AWS hierarchy counts |
-| `--az-layout grid|staggered` | Availability Zone placement |
-| `--subnets` | Number of subnets |
-| `--spacing vertical|horizontal|both` | Spacing direction |
-| `--start top|left` | Drawing start position |
+| Flag | Default | Description |
+|---|---:|---|
+| `--clouds`, `--accounts`, `--regions`, `--azs` | `1`, `1`, `1`, `2` | AWS hierarchy counts |
+| `--az-layout grid|staggered` | `grid` | Availability Zone placement |
+| `--subnets` | `2` | Number of subnets |
+| `--spacing vertical|horizontal|both` | `both` | Spacing direction |
+| `--start top|left` | `top` | Drawing start position |
+| `--paper` | `A4` | Paper size |
+| `--orientation` | `landscape` | Page orientation |
+
+Only `--output` is required. The generated file uses the canonical
+`<xaligo version="1"><frames>...</frames></xaligo>` document envelope.
 
 ## Other Commands
 
@@ -140,7 +145,7 @@ Useful generation flags:
 | `xaligo diff <before.xal> <after.xal> -o <prefix>` | Render paired structural-diff SVGs |
 | `xaligo validate <file.xal>` | Validate syntax, layout, and connection references |
 | `xaligo render markdown <file.md>` | Embed rendered `xal` code blocks as SVG images into a Markdown file |
-| `xaligo serve <file.xal\|file.md>` | Serve a live preview; `.xal` previews one combined SVG, `.md`/`.markdown` previews the full document with diagrams embedded inline; `--paper`/`--orientation` fix the preview to a physical page size |
+| `xaligo serve <file.xal\|file.md>` | Serve a live preview; `.xal` previews one combined SVG, `.md`/`.markdown` previews the full document with diagrams embedded inline; `--port` overrides the configured `serve.port` (default `8080`), and `--paper`/`--orientation` fix the preview to a physical page size |
 | `xaligo add service --name <name> --file <file>` | Add a service icon |
 | `xaligo add service --list <csv> --file <file>` | Bulk-add service icons |
 | `xaligo init [-o <dir>]` | Generate a sample `.xal` file |

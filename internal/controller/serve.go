@@ -3,14 +3,17 @@ package controller
 import (
 	"context"
 	"fmt"
+	"net"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/xaligo/xaligo/internal/config"
 	"github.com/xaligo/xaligo/internal/entity"
 	"github.com/xaligo/xaligo/internal/share"
 	"github.com/xaligo/xaligo/internal/usecase"
@@ -34,17 +37,21 @@ type ServeController interface {
 }
 
 type serveController struct {
+	config        *config.Config
 	renderUsecase usecase.RenderUsecase
 }
 
-func NewServeController(renderUsecase usecase.RenderUsecase) ServeController {
-	return &serveController{renderUsecase: renderUsecase}
+func NewServeController(cfg *config.Config, renderUsecase usecase.RenderUsecase) ServeController {
+	return &serveController{config: cfg, renderUsecase: renderUsecase}
 }
 
 func (rcvr *serveController) Command() *cobra.Command {
 	logger.DEBUG(ICSISCWUC001, "start")
 	var address, mode, theme, paper, orientation string
+	var port int
 	var poll time.Duration
+	defaultPort := rcvr.defaultServePort()
+	defaultAddress := net.JoinHostPort("127.0.0.1", strconv.Itoa(defaultPort))
 	cmd := &cobra.Command{
 		Use:   "serve <input.xal|input.md>",
 		Short: "Serve a live preview and reload it when the source changes",
@@ -57,22 +64,31 @@ func (rcvr *serveController) Command() *cobra.Command {
 			"code block to SVG and previews the full Markdown document with the\n" +
 			"diagrams embedded inline, the same as 'render markdown'.\n\n" +
 			"Use --paper and --orientation to preview how a diagram fits a specific\n" +
-			"physical page size.\n\n" +
+			"physical page size. Use --port to override the configured serve.port;\n" +
+			"when both --address and --port are present, --port replaces the port\n" +
+			"part of --address.\n\n" +
 			"Press Ctrl+C to stop the server.\n\n" +
 			"Examples:\n" +
 			"  xaligo serve diagram.xal\n" +
+			"  xaligo serve diagram.xal --port 9090\n" +
 			"  xaligo serve diagram.xal --address 0.0.0.0:9090 --mode network --theme dark\n" +
 			"  xaligo serve guide.md\n" +
 			"  xaligo serve diagram.xal --paper A4 --orientation landscape",
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			portOverride := 0
+			if cmd.Flags().Changed("port") {
+				portOverride = port
+			}
 			return rcvr.Run(cmd.Context(), entity.ControllerServeOptions{
-				InputPath: args[0], Address: address, Mode: mode, Theme: theme,
+				InputPath: args[0], Address: address, Port: portOverride,
+				PortSet: cmd.Flags().Changed("port"), Mode: mode, Theme: theme,
 				PollInterval: poll, Paper: paper, Orientation: orientation,
 			})
 		},
 	}
-	cmd.Flags().StringVar(&address, "address", "127.0.0.1:8080", "HTTP listen address")
+	cmd.Flags().StringVar(&address, "address", defaultAddress, "HTTP listen address")
+	cmd.Flags().IntVar(&port, "port", defaultPort, "HTTP listen port; overrides the port in --address")
 	cmd.Flags().StringVar(&mode, "mode", "standard", "rendering mode: standard | network | aws")
 	cmd.Flags().StringVar(&theme, "theme", "light", "color theme: light | dark")
 	cmd.Flags().DurationVar(&poll, "poll-interval", 500*time.Millisecond, "source file polling interval")
@@ -83,6 +99,10 @@ func (rcvr *serveController) Command() *cobra.Command {
 
 func (rcvr *serveController) Run(ctx context.Context, opts entity.ControllerServeOptions) error {
 	logger.DEBUG(ICSRS001, "start", map[string]any{"input": opts.InputPath, "address": opts.Address})
+	address, err := rcvr.resolveServeAddress(opts.Address, opts.Port, opts.PortSet || opts.Port != 0)
+	if err != nil {
+		return err
+	}
 	absInputPath, err := filepath.Abs(opts.InputPath)
 	if err != nil {
 		return fmt.Errorf("resolve input file path: %w", err)
@@ -111,14 +131,44 @@ func (rcvr *serveController) Run(ctx context.Context, opts entity.ControllerServ
 	}
 	ctx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	address := opts.Address
-	if address == "" {
+	if opts.Address == "" && opts.Port == 0 {
 		logger.DEBUG(ICSRSWUC003, "branch default address")
-		address = "127.0.0.1:8080"
 	} else {
 		logger.DEBUG(ICSRSWUC004, "branch explicit address", map[string]any{"address": address})
 	}
 	logger.INFO(ICSRSWUC005, "preview", map[string]any{"url": "http://" + address})
 	logger.INFO(ICSRSWUC006, "watching", map[string]any{"input": opts.InputPath})
 	return server.Run(ctx, address)
+}
+
+func (rcvr *serveController) defaultServePort() int {
+	if rcvr.config != nil && rcvr.config.Serve.Port >= 1 && rcvr.config.Serve.Port <= 65535 {
+		return rcvr.config.Serve.Port
+	}
+	return config.DefaultServePort
+}
+
+func (rcvr *serveController) resolveServeAddress(address string, port int, overridePort bool) (string, error) {
+	if address == "" {
+		address = net.JoinHostPort("127.0.0.1", strconv.Itoa(rcvr.defaultServePort()))
+	}
+	if !overridePort {
+		return address, nil
+	}
+	if port < 1 || port > 65535 {
+		return "", fmt.Errorf("serve port must be between 1 and 65535: %d", port)
+	}
+
+	host, _, err := net.SplitHostPort(address)
+	if err != nil {
+		candidate := strings.TrimSpace(address)
+		if parsedIP := net.ParseIP(strings.Trim(candidate, "[]")); parsedIP != nil {
+			host = parsedIP.String()
+		} else if candidate != "" && !strings.Contains(candidate, ":") {
+			host = candidate
+		} else {
+			return "", fmt.Errorf("resolve serve host from address %q: %w", address, err)
+		}
+	}
+	return net.JoinHostPort(host, strconv.Itoa(port)), nil
 }

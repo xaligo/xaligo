@@ -12,3 +12,6 @@ legend:
 
 item:
   icon_size: 32
+
+serve:
+  port: 8080

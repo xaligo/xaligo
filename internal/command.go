@@ -52,7 +52,7 @@ func NewRootCmd() *cobra.Command {
 	generateController := controller.NewGenerateController(renderUsecase, exportUsecase)
 	renderController := controller.NewRenderController(cfg, renderUsecase, catalogUsecase, sceneIOUsecase, themeUsecase, elementUsecase)
 	validateController := controller.NewValidateController(diagnosticsUsecase)
-	serveController := controller.NewServeController(renderUsecase)
+	serveController := controller.NewServeController(cfg, renderUsecase)
 	initController := controller.NewInitController()
 	versionController := controller.NewVersionController()
 	diffController := controller.NewDiffController(diffUsecase)

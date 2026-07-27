@@ -1,6 +1,6 @@
 {
   "name": "@xaligo/xaligo",
-  "version": "0.1.26",
+  "version": "0.1.27",
   "description": "xaligo CLI and TypeScript/WASM API for rendering .xal diagrams",
   "keywords": [
     "xaligo",

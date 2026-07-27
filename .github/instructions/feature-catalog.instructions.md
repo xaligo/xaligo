@@ -197,7 +197,7 @@ ships).
 |---|---|---|---|
 | XAL-8000010 | `xaligo render` command | Implemented | Renders a `.xal` source file into any supported output format via `--format`. |
 | XAL-8000020 | `xaligo validate` command | Implemented | Validates `.xal` syntax, layout, and connection references without producing output. |
-| XAL-8000030 | `xaligo serve` command | Implemented | Serves a live-reloading preview over HTTP, polling the source file and re-rendering on change; a `.xal` source previews one combined SVG canvas, a `.md`/`.markdown` source previews the full Markdown document with rendered `xal` code blocks embedded inline; `--paper`/`--orientation` fix the preview to a specific physical page size and orientation at server startup. |
+| XAL-8000030 | `xaligo serve` command | Implemented | Serves a live-reloading preview over HTTP, polling the source file and re-rendering on change; a `.xal` source previews one combined SVG canvas, a `.md`/`.markdown` source previews the full Markdown document with rendered `xal` code blocks embedded inline; `serve.port` configures the default HTTP port (`8080`), `--port` overrides it, and `--paper`/`--orientation` fix the preview to a specific physical page size and orientation at server startup. |
 | XAL-8000040 | `xaligo diff` command | Implemented | Renders paired removed/added structural-diff SVGs comparing two `.xal` documents. |
 | XAL-8000050 | `xaligo generate xal` command | Implemented | Scaffolds a `.xal` file with a configurable AWS Cloud/Account/Region/VPC/AZ/Subnet hierarchy. |
 | XAL-8000060 | `xaligo add service` (single mode) | Implemented | Appends one named AWS service icon and a legend entry into an existing `.excalidraw` file. |

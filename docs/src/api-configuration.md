@@ -54,11 +54,19 @@ legend:
 
 item:
   icon_size: 32
+
+serve:
+  port: 8080
 ```
 
 Native configuration remains the default when no explicit asset source is
 provided. Embedded and WASM environments provide assets through their adapter
 instead of forking the render pipeline.
+
+`serve.port` selects the default HTTP port for `xaligo serve`. Valid ports are
+`1` through `65535`, and the default is `8080`; an explicit `--address` keeps
+its own port, while an explicit `--port` overrides the port portion of
+`--address`.
 
 The V1 compatibility default is `32` layout pixels. `item.icon_size` or an
 embedded `AssetSource` supplies that render-context default, and a root

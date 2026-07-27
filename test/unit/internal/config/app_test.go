@@ -23,6 +23,9 @@ func TestNewResolvesDefaultConfigPaths(t *testing.T) {
 	if cfg.Legend.IconSize <= 0 || cfg.Legend.FontSize <= 0 || cfg.ItemIconSize <= 0 {
 		t.Fatalf("config sizes = %#v", cfg)
 	}
+	if cfg.Serve.Port != config.DefaultServePort {
+		t.Fatalf("Serve.Port = %d, want %d", cfg.Serve.Port, config.DefaultServePort)
+	}
 }
 
 func TestNewUsesProjectLocalYAMLAndAbsolutePaths(t *testing.T) {
@@ -35,7 +38,7 @@ func TestNewUsesProjectLocalYAMLAndAbsolutePaths(t *testing.T) {
 		t.Fatal(err)
 	}
 	absCatalog := filepath.Join(dir, "catalog.csv")
-	yaml := []byte("paths:\n  asset_package: custom/assets\n  service_catalog_csv: " + absCatalog + "\n  output_frames: custom/output\n  pptx_exporter_wasm: custom/exporter.wasm\nlegend:\n  offset_x: 7\n  offset_y: 8\n  icon_size: 9\n  font_size: 10\nitem:\n  icon_size: 11\n")
+	yaml := []byte("paths:\n  asset_package: custom/assets\n  service_catalog_csv: " + absCatalog + "\n  output_frames: custom/output\n  pptx_exporter_wasm: custom/exporter.wasm\nlegend:\n  offset_x: 7\n  offset_y: 8\n  icon_size: 9\n  font_size: 10\nitem:\n  icon_size: 11\nserve:\n  port: 9090\n")
 	if err := os.WriteFile(filepath.Join(configDir, "app.yaml"), yaml, 0644); err != nil {
 		t.Fatal(err)
 	}
@@ -65,6 +68,9 @@ func TestNewUsesProjectLocalYAMLAndAbsolutePaths(t *testing.T) {
 	}
 	if cfg.Legend.OffsetX != 7 || cfg.Legend.OffsetY != 8 || cfg.Legend.IconSize != 9 || cfg.Legend.FontSize != 10 || cfg.ItemIconSize != 11 {
 		t.Fatalf("values = %#v", cfg)
+	}
+	if cfg.Serve.Port != 9090 {
+		t.Fatalf("Serve.Port = %d, want 9090", cfg.Serve.Port)
 	}
 }
 

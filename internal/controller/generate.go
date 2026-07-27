@@ -99,11 +99,11 @@ The hierarchy is: Cloud > Account > Region > VPC > AZ > Subnet.
 Subnets alternate between public and private (1st=public, 2nd=private, ...).
 
 Parameters correspond to options in generate_aws_frames.py:
-  --az-layout   grid | staggered
-  --spacing     vertical | horizontal | both
-  --start       top (vertical stack) | left (horizontal side-by-side)
-  --paper       A5 | A4 | A3 | A2 | A1 | Letter | Legal | Tabloid
-  --orientation portrait | landscape`,
+  --az-layout   grid | staggered (default: grid)
+  --spacing     vertical | horizontal | both (default: both)
+  --start       top (vertical stack) | left (horizontal side-by-side) (default: top)
+  --paper       A5 | A4 | A3 | A2 | A1 | Letter | Legal | Tabloid (default: A4)
+  --orientation portrait | landscape (default: landscape)`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return RunGenerate(
 				nClouds, nAccounts, nRegions, nAZs,
@@ -113,28 +113,18 @@ Parameters correspond to options in generate_aws_frames.py:
 		},
 	}
 
-	cmd.Flags().IntVar(&nClouds, "clouds", 0, "number of AWS clouds (1–2)")
-	cmd.Flags().IntVar(&nAccounts, "accounts", 0, "number of AWS accounts per cloud (1–3)")
-	cmd.Flags().IntVar(&nRegions, "regions", 0, "number of regions per account (1–2)")
-	cmd.Flags().IntVar(&nAZs, "azs", 0, "number of availability zones per region (1–3)")
-	cmd.Flags().StringVar(&azLayout, "az-layout", "", "AZ layout: grid or staggered")
-	cmd.Flags().IntVar(&nSubnets, "subnets", 0, "number of subnets per AZ (2–4)")
-	cmd.Flags().StringVar(&spacingMode, "spacing", "", "spacing mode: vertical | horizontal | both")
-	cmd.Flags().StringVar(&startMode, "start", "", "start mode: top (vertical) | left (horizontal)")
-	cmd.Flags().StringVar(&paper, "paper", "", "paper size: A5 A4 A3 A2 A1 Letter Legal Tabloid")
-	cmd.Flags().StringVar(&orientation, "orientation", "", "page orientation: portrait | landscape")
+	cmd.Flags().IntVar(&nClouds, "clouds", 1, "number of AWS clouds (1–2)")
+	cmd.Flags().IntVar(&nAccounts, "accounts", 1, "number of AWS accounts per cloud (1–3)")
+	cmd.Flags().IntVar(&nRegions, "regions", 1, "number of regions per account (1–2)")
+	cmd.Flags().IntVar(&nAZs, "azs", 2, "number of availability zones per region (1–3)")
+	cmd.Flags().StringVar(&azLayout, "az-layout", "grid", "AZ layout: grid or staggered")
+	cmd.Flags().IntVar(&nSubnets, "subnets", 2, "number of subnets per AZ (1–4)")
+	cmd.Flags().StringVar(&spacingMode, "spacing", "both", "spacing mode: vertical | horizontal | both")
+	cmd.Flags().StringVar(&startMode, "start", "top", "start mode: top (vertical) | left (horizontal)")
+	cmd.Flags().StringVar(&paper, "paper", "A4", "paper size: A5 A4 A3 A2 A1 Letter Legal Tabloid")
+	cmd.Flags().StringVar(&orientation, "orientation", "landscape", "page orientation: portrait | landscape")
 	cmd.Flags().StringVarP(&output, "output", "o", "", "output .xal file path")
 
-	_ = cmd.MarkFlagRequired("clouds")
-	_ = cmd.MarkFlagRequired("accounts")
-	_ = cmd.MarkFlagRequired("regions")
-	_ = cmd.MarkFlagRequired("azs")
-	_ = cmd.MarkFlagRequired("az-layout")
-	_ = cmd.MarkFlagRequired("subnets")
-	_ = cmd.MarkFlagRequired("spacing")
-	_ = cmd.MarkFlagRequired("start")
-	_ = cmd.MarkFlagRequired("paper")
-	_ = cmd.MarkFlagRequired("orientation")
 	_ = cmd.MarkFlagRequired("output")
 
 	return cmd
@@ -377,9 +367,11 @@ func buildXAL(W, H, nClouds, nAccounts, nRegions, nAZs int, azLayout string, nSu
 	if azLayout == "staggered" {
 		b.sb.WriteString("<!-- az-layout=staggered: AZs are rendered with depth offset in the excalidraw output -->\n")
 	}
-	b.sb.WriteString(fmt.Sprintf("<frame version=\"1\" width=\"%d\" height=\"%d\" class=\"pa-4\">\n", W, H))
+	b.sb.WriteString("<xaligo version=\"1\">\n")
+	b.sb.WriteString("  <frames>\n")
+	b.sb.WriteString(fmt.Sprintf("    <frame id=\"overview\" width=\"%d\" height=\"%d\" class=\"pa-4\">\n", W, H))
 
-	b.many(1, nClouds, func(ci, level int) {
+	b.many(3, nClouds, func(ci, level int) {
 		b.group("aws-cloud", fmt.Sprintf("AWS Cloud %d", ci+1), level, func() {
 			b.many(level+1, nAccounts, func(ai, level int) {
 				b.group("aws-account", fmt.Sprintf("Account %d", ai+1), level, func() {
@@ -409,6 +401,8 @@ func buildXAL(W, H, nClouds, nAccounts, nRegions, nAZs int, azLayout string, nSu
 		})
 	})
 
-	b.sb.WriteString("</frame>\n")
+	b.sb.WriteString("    </frame>\n")
+	b.sb.WriteString("  </frames>\n")
+	b.sb.WriteString("</xaligo>\n")
 	return b.sb.String()
 }
