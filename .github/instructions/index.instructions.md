@@ -4,20 +4,20 @@ applyTo: "**"
 
 # Instruction index
 
-This is the only always-loaded instruction. Read the task route, then open only
-the listed numbered files. Re-evaluate when scope changes. Numbers are the
-canonical reading order; read a listed `.00` before relevant sections.
+This index and `operations.instructions.md` are the only always-loaded files.
+Search by task terms, then open only matching entries. Re-evaluate when scope
+changes. Numbers are the canonical reading order.
 
 ## Task routes
 
 | Task | Read in order |
 |---|---|
-| Any repository change | 01, 02, 03 |
-| Scope/status/planning | 04, 05, 06 |
-| `.xal` syntax or behavior | 07, then 08 for implementation |
-| Go/TypeScript structure | 08, 09 |
-| PPTX/connectors/routing | relevant 07 sections, then 08 and 10 |
-| Diagram authoring | relevant 07 sections, then 11 |
+| Any repository change | keyword-matched sections in 01–03 |
+| Scope/status/planning | keyword-matched sections in 04–06 |
+| `.xal` syntax or behavior | matching 07 section; add matching 08 section for implementation |
+| Go/TypeScript structure | matching 08–09 sections |
+| PPTX/connectors/routing | matching 07, 08, and 10 sections |
+| Diagram authoring | matching 07 and 11 sections |
 
 Preserve unrelated worktree changes. Implementation requests allow local
 commits; never push, publish, tag, open a PR, or rewrite history without explicit
@@ -43,6 +43,10 @@ loaded through this index.
 ## Numbered contents
 
 Search this file directly, for example: `rg -i "metadata|page-link|WASM" .github/instructions/index.instructions.md`.
+
+### AI operations
+
+- [Development command workflow](operations.instructions.md) — keywords: AI, operation, development, commands, minimal-context, rg, sed, git
 
 ### 01 General
 
