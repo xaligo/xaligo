@@ -24,3 +24,7 @@ and format encoders. The V1 compatibility path must not rewrite XML, parse a
 document twice, serialize through an intermediate V1 scene, or invoke a full
 V1 renderer and then reverse-engineer its output. This one-way relationship
 allows V2 to render V1 while V1 remains unaware of V2.
+
+The planned generic calculation core, declarative AWS/UML profile boundaries,
+builtin icons, and per-element parameter contract are defined in
+`08-10-architecture-v2-generic-engine-and-plugins.instructions.md`.

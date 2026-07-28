@@ -258,6 +258,7 @@ Search this file directly, for example: `rg -i "metadata|page-link|WASM" .github
 - 08.07 [Renderer-neutral text contract](08-architecture/08-07-architecture-renderer-neutral-text-contract.instructions.md) — keywords: architecture, pipeline, layers, Renderer-neutral, text, contract
 - 08.08 [Dependency direction](08-architecture/08-08-architecture-dependency-direction.instructions.md) — keywords: architecture, pipeline, layers, Dependency, direction
 - 08.09 [Verification](08-architecture/08-09-architecture-verification.instructions.md) — keywords: architecture, pipeline, layers, Verification, tests, validation
+- 08.10 [V2 generic engine and plugins](08-architecture/08-10-architecture-v2-generic-engine-and-plugins.instructions.md) — keywords: architecture, V2, engine, generic, plugin, AWS, UML, icons, parameters, layout, routing, design, dependencies
 
 
 ### 09 Coding
