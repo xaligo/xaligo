@@ -7,7 +7,7 @@ applyTo: ".github/instructions/manual/**"
 
 This file is the authoritative, ID-addressable catalog of xaligo's supported
 and planned features. Read it as a precondition alongside
-`02-00-agent-guide-overview.instructions.md` to understand what the product already does (and
+`../02-agent-guide/02-00-agent-guide-overview.instructions.md` to understand what the product already does (and
 what it has already committed to doing) before proposing new work, filing a
 roadmap entry, or judging whether a request is a bug fix, an extension of an
 existing feature, genuinely new scope, or an already-tracked planned item.
@@ -20,8 +20,8 @@ renumbered once assigned; a removed feature's ID is retired, not recycled.
 Every row carries a `Status` column:
 
 - `Implemented` — shipped and available today.
-- `Planned` — not yet implemented; tracked in `06-00-roadmap-overview.instructions.md` and/or
-  the `05-00-issues-and-quality-overview.instructions.md` Q05 backlog, which is the
+- `Planned` — not yet implemented; tracked in `../06-roadmap/06-00-roadmap-overview.instructions.md` and/or
+  the `../05-issues-quality/05-00-issues-and-quality-overview.instructions.md` Q05 backlog, which is the
   authoritative source for its exact sequencing and scope.
 - `Excluded unless justified` — a considered but deliberately unsupported
   capability that stays out of scope until a non-substitutable use case is

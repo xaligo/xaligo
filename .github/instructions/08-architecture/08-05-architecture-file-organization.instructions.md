@@ -33,7 +33,7 @@ Current component prefixes are `add`, `diff`, `generate`, `init`, `render`,
 `internal/repository`. Repository supporting files retain the same prefix, such
 as `powerpoint_export.go` and `isoflow_assets.go`. Every direct
 `internal/usecase/*.go` file is a complete component as specified in
-`09-00-coding-overview.instructions.md`.
+`../09-coding/09-00-coding-overview.instructions.md`.
 
 Calculation files in `internal/usecase/v1/engine` use functional prefixes
 such as `parse_*`, `layout_*`, `scene_*`, `route_*`, and `plan_*`. They contain
