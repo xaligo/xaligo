@@ -114,6 +114,6 @@ the same X or Y lane, the renderer offsets later lines where possible. Group
 header tags are treated as route obstacles so tag labels stay readable.
 
 Reference: [docs/src/examples/samples/sample.xal](../../docs/src/examples/samples/sample.xal)
-DSL specification: [../07-xal-spec/07-00-xal-specification-overview.instructions.md](../07-xal-spec/07-00-xal-specification-overview.instructions.md)
+DSL specification: [07.01 XAL overview](../07-xal-spec/07-01-xal-specification-overview.instructions.md)
 
 ---

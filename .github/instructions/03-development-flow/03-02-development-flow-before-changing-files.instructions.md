@@ -6,7 +6,7 @@ applyTo: ".github/instructions/manual/**"
 
 ## Before Changing Files
 
-1. Read `../01-general/01-00-general-overview.instructions.md` and every instruction whose `applyTo` matches
+1. Read `../01-general/01-01-general-project.instructions.md` and every instruction whose `applyTo` matches
    the current scope. Re-evaluate matching instructions whenever the scope
    expands.
 2. Use RTK for repository operations when an RTK wrapper exists, especially

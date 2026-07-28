@@ -6,7 +6,7 @@ applyTo: "**"
 
 This is the only always-loaded instruction. Read the task route, then open only
 the listed numbered files. Re-evaluate when scope changes. Numbers are the
-canonical reading order; within a chapter read `.00` before relevant sections.
+canonical reading order; read a listed `.00` before relevant sections.
 
 ## Task routes
 
@@ -44,7 +44,6 @@ loaded through this index.
 
 ### 01 General
 
-- 01.00 [Overview](01-general/01-00-general-overview.instructions.md)
 - 01.01 [Project](01-general/01-01-general-project.instructions.md)
 - 01.02 [Directory structure](01-general/01-02-general-directory-structure.instructions.md)
 - 01.03 [Architecture rules](01-general/01-03-general-architecture-rules.instructions.md)
@@ -194,7 +193,6 @@ loaded through this index.
 
 ### 07 XAL specification
 
-- 07.00 [Overview](07-xal-spec/07-00-xal-specification-overview.instructions.md)
 - 07.01 [Overview](07-xal-spec/07-01-xal-specification-overview.instructions.md)
 - 07.02 [V1 Compatibility Profile and Version Boundary](07-xal-spec/07-02-xal-specification-v1-compatibility-profile-and-version-boundary.instructions.md)
 - 07.03 [Root Tag](07-xal-spec/07-03-xal-specification-root-tag.instructions.md)
