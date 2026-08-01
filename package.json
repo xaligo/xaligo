@@ -20,17 +20,17 @@
   },
   "license": "MIT",
   "type": "module",
-  "main": "./external/dist/index.js",
-  "module": "./external/dist/index.js",
-  "types": "./external/dist/index.d.ts",
+  "main": "./external/pptx-exporter/dist/index.js",
+  "module": "./external/pptx-exporter/dist/index.js",
+  "types": "./external/pptx-exporter/dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./external/dist/index.d.ts",
-      "import": "./external/dist/index.js"
+      "types": "./external/pptx-exporter/dist/index.d.ts",
+      "import": "./external/pptx-exporter/dist/index.js"
     }
   },
   "workspaces": [
-    "external"
+    "external/pptx-exporter"
   ],
   "overrides": {
     "brace-expansion": "5.0.8"
@@ -46,8 +46,8 @@
     "etc/resources/aws/service-catalog.csv",
     "etc/resources/aws/service-index.csv",
     "etc/resources/aws/svg",
-    "external/dist",
-    "external/wasm/xaligo.wasm",
+    "external/pptx-exporter/dist",
+    "external/pptx-exporter/wasm/xaligo.wasm",
     "VERSION",
     "README.md",
     "LICENSE",
@@ -57,9 +57,9 @@
     "access": "public"
   },
   "scripts": {
-    "build": "npm --prefix external run build",
+    "build": "npm --prefix external/pptx-exporter run build",
     "build:npm-binaries": "scripts/build/build-npm.sh",
-    "clean": "npm --prefix external run clean",
+    "clean": "npm --prefix external/pptx-exporter run clean",
     "gen:isoflow-icons": "node scripts/tool/gen_isoflow_icons.mjs",
     "postinstall": "node scripts/npm/install.cjs",
     "test:npm-installer": "node --test test/unit/scripts/npm/install_test.cjs",

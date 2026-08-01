@@ -5,7 +5,7 @@ import { createPptxFromPlan } from '../repository/pptx';
 import { NewEnvLogger } from '../share/logger';
 import { NewMCode } from '../share/mcode';
 
-const logger = NewEnvLogger('external/usecase', 'pptx_exporter');
+const logger = NewEnvLogger('external/pptx-exporter/usecase', 'pptx_exporter');
 const EUPE001 = NewMCode('EUPE-001', 'Export PPTX from request start');
 const EUPE002 = NewMCode('EUPE-002', 'Export PPTX from request completed');
 

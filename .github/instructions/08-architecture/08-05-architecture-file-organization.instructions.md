@@ -51,8 +51,8 @@ name in filenames.
   implementation with its own methods; do not introduce a declaration-only
   file merely to appear neutral.
 - Cross-layer entity DTOs and renderer-neutral value contracts remain in
-  `internal/entity` or `external/entity`; this rule does not move shared data
-  models into implementation packages.
+  `internal/entity` or `external/pptx-exporter/entity`; this rule does not move
+  shared data models into implementation packages.
 - File splitting must move complete responsibility slices. Do not split an
   interface, its constructor, and its concrete behavior into separate files.
 - Place the interface, unexported concrete type, and constructor at the start of

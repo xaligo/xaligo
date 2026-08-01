@@ -21,6 +21,6 @@ go test ./...
 go build ./...
 npm ci --ignore-scripts
 npm run build --workspace=@xaligo/xaligo-external
-npm --prefix external run build:pptx-exporter-wasm
+npm --prefix external/pptx-exporter run build:pptx-exporter-wasm
 git diff --check
 ```

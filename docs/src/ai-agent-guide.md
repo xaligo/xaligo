@@ -39,7 +39,8 @@ scene/plan data wherever possible.
 | `internal/repository/` | Filesystem, catalog, preview, and output-format adapters |
 | `cmd/` | Native CLI entry point |
 | `cmd/wasm/` | JavaScript/WASM adapter |
-| `external/` | TypeScript package and PPTX exporter implementation |
+| `external/engine/` | Rust layout/SVG engine workspace |
+| `external/pptx-exporter/` | TypeScript PPTX exporter implementation |
 | `docs/src/examples/samples/` | Source `.xal` and CSV examples |
 | `docs/src/examples/previews/` | Rendered SVG previews used by the book |
 | `etc/resources/aws/` | Catalogs, icons, templates, and attribution |

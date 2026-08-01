@@ -94,7 +94,8 @@ Implemented or partially implemented:
 
 Important gaps:
 
-- `external/wasm/xaligo.wasm` is the PPTX exporter WASM artifact.
+- `external/pptx-exporter/wasm/xaligo.wasm` is the generated PPTX exporter
+  WASM artifact.
 - Cross-renderer visual regression coverage is still limited.
 - Numeric domains are checked before layout, but a typed normalized layout
   structure has not yet replaced repeated reads from `Node.Attrs`.

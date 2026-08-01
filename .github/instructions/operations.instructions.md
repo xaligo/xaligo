@@ -38,7 +38,8 @@ git status --short
 git log -1 --oneline
 ```
 
-Use `npm --prefix external test`, `go build ./...`, `mdbook build docs`, or
+Use `npm --prefix external/pptx-exporter test`, `go build ./...`,
+`mdbook build docs`, or
 format-specific render checks only when the changed scope requires them.
 Diagnose/read-only requests stop before editing, staging, or committing.
 Never push, publish, tag, open a PR, or rewrite history without explicit user

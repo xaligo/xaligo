@@ -14,8 +14,8 @@ var versionNumberPattern = regexp.MustCompile(`[0-9]+(?:\.[0-9]+)*`)
 
 func TestRockyWASMBuilderCopiesTypeScriptBuildInputs(t *testing.T) {
 	repositoryRoot := integrationRepositoryRoot(t)
-	packageJSON := readIntegrationFile(t, filepath.Join(repositoryRoot, "external", "package.json"))
-	buildTool := readIntegrationFile(t, filepath.Join(repositoryRoot, "external", "tool", "build.mjs"))
+	packageJSON := readIntegrationFile(t, filepath.Join(repositoryRoot, "external", "pptx-exporter", "package.json"))
+	buildTool := readIntegrationFile(t, filepath.Join(repositoryRoot, "external", "pptx-exporter", "tool", "build.mjs"))
 	dockerfile := readIntegrationFile(t, filepath.Join(repositoryRoot, "docker", "rocky.Dockerfile"))
 
 	buildStart := strings.Index(dockerfile, "npm run build:pptx-exporter-wasm")
@@ -31,13 +31,13 @@ func TestRockyWASMBuilderCopiesTypeScriptBuildInputs(t *testing.T) {
 		if !strings.Contains(buildTool, "'"+compiledEntrypoint+"'") {
 			t.Fatalf("external build script does not contain TypeScript entrypoint %q", entrypoint)
 		}
-		required := filepath.ToSlash(filepath.Join("external", entrypoint))
-		if !copySources[required] && !copySources["external"] {
+		required := filepath.ToSlash(filepath.Join("external", "pptx-exporter", entrypoint))
+		if !copySources[required] && !copySources["external/pptx-exporter"] {
 			t.Errorf("Rocky wasm-builder does not COPY TypeScript entrypoint %q before building", required)
 		}
 	}
-	if !copySources["external/tool"] {
-		t.Error("Rocky wasm-builder does not COPY external/tool before building")
+	if !copySources["external/pptx-exporter/tool"] {
+		t.Error("Rocky wasm-builder does not COPY external/pptx-exporter/tool before building")
 	}
 }
 
@@ -60,7 +60,7 @@ func TestNPMDependencyGraphExcludesRemovedNativeTools(t *testing.T) {
 	repositoryRoot := integrationRepositoryRoot(t)
 	for _, path := range []string{
 		filepath.Join(repositoryRoot, "package.json"),
-		filepath.Join(repositoryRoot, "external", "package.json"),
+		filepath.Join(repositoryRoot, "external", "pptx-exporter", "package.json"),
 	} {
 		var manifest struct {
 			Dependencies    map[string]string `json:"dependencies"`
@@ -168,7 +168,7 @@ func TestDistributionsIncludeBundledPptxLicenses(t *testing.T) {
 func TestDockerToolchainsMatchRepositoryRequirements(t *testing.T) {
 	repositoryRoot := integrationRepositoryRoot(t)
 	goMod := readIntegrationFile(t, filepath.Join(repositoryRoot, "go.mod"))
-	packageJSON := readIntegrationFile(t, filepath.Join(repositoryRoot, "external", "package.json"))
+	packageJSON := readIntegrationFile(t, filepath.Join(repositoryRoot, "external", "pptx-exporter", "package.json"))
 	dockerfiles := []string{
 		readIntegrationFile(t, filepath.Join(repositoryRoot, "docker", "rocky.Dockerfile")),
 		readIntegrationFile(t, filepath.Join(repositoryRoot, "docker", "ubuntu.Dockerfile")),
@@ -230,7 +230,7 @@ func requiredNodeMajor(t *testing.T, packageJSON string) string {
 		} `json:"engines"`
 	}
 	if err := json.Unmarshal([]byte(packageJSON), &manifest); err != nil {
-		t.Fatalf("parse external/package.json: %v", err)
+		t.Fatalf("parse external/pptx-exporter/package.json: %v", err)
 	}
 	version := versionNumberPattern.FindString(manifest.Engines.Node)
 	if version == "" {

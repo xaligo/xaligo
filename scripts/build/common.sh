@@ -161,28 +161,28 @@ build_wasm_exporter() {
       printf 'ERROR: prebuilt WASM exporter not found: %s\n' "$PREBUILT_WASM" >&2
       exit 1
     fi
-    mkdir -p external/wasm
-    install -m 0644 "$PREBUILT_WASM" external/wasm/xaligo.wasm
+    mkdir -p external/pptx-exporter/wasm
+    install -m 0644 "$PREBUILT_WASM" external/pptx-exporter/wasm/xaligo.wasm
     return
   fi
   require_command npm
   require_command javy
   build_dir="$(mktemp -d)"
-  mkdir -p "$build_dir/external"
+  mkdir -p "$build_dir/external/pptx-exporter"
   install -m 0644 package.json package-lock.json "$build_dir/"
   tar \
     --exclude='./node_modules' \
     --exclude='./package-lock.json' \
     --exclude='./dist' \
     --exclude='./wasm' \
-    -C external -cf - . | tar -C "$build_dir/external" -xf -
-  mkdir -p "$build_dir/external/wasm"
+    -C external/pptx-exporter -cf - . | tar -C "$build_dir/external/pptx-exporter" -xf -
+  mkdir -p "$build_dir/external/pptx-exporter/wasm"
   npm --prefix "$build_dir" ci --ignore-scripts --no-audit --no-fund
-  npm --prefix "$build_dir/external" run build:pptx-exporter-wasm
-  mkdir -p external/wasm
-  install -m 0644 "$build_dir/external/wasm/xaligo.wasm" external/wasm/xaligo.wasm
+  npm --prefix "$build_dir/external/pptx-exporter" run build:pptx-exporter-wasm
+  mkdir -p external/pptx-exporter/wasm
+  install -m 0644 "$build_dir/external/pptx-exporter/wasm/xaligo.wasm" external/pptx-exporter/wasm/xaligo.wasm
   rm -rf "$build_dir"
-  if [[ ! -s external/wasm/xaligo.wasm ]]; then
+  if [[ ! -s external/pptx-exporter/wasm/xaligo.wasm ]]; then
     printf 'ERROR: WASM exporter was not generated\n' >&2
     exit 1
   fi
@@ -193,11 +193,11 @@ install_runtime_files() {
   destination="$1"
   mkdir -p \
     "$destination/etc/resources/aws" \
-    "$destination/external/wasm"
+    "$destination/external/pptx-exporter/wasm"
   install -m 0644 etc/resources/aws/app.yaml "$destination/etc/resources/aws/app.yaml"
   install -m 0644 etc/resources/aws/service-catalog.csv "$destination/etc/resources/aws/service-catalog.csv"
   install -m 0644 etc/resources/aws/service-index.csv "$destination/etc/resources/aws/service-index.csv"
   install -m 0644 etc/resources/aws/isoflow-icons.json "$destination/etc/resources/aws/isoflow-icons.json"
   cp -R etc/resources/aws/svg "$destination/etc/resources/aws/svg"
-  install -m 0644 external/wasm/xaligo.wasm "$destination/external/wasm/xaligo.wasm"
+  install -m 0644 external/pptx-exporter/wasm/xaligo.wasm "$destination/external/pptx-exporter/wasm/xaligo.wasm"
 }

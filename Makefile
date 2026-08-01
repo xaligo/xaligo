@@ -5,7 +5,8 @@ BINARY   := $(BIN_DIR)/xaligo
 TOOLS_BIN_DIR := $(BIN_DIR)/tools
 GOVULNCHECK   := $(TOOLS_BIN_DIR)/govulncheck
 GOVULNCHECK_VERSION := v1.6.0
-WASM_OUT      := external/wasm
+PPTX_EXPORTER_DIR := external/pptx-exporter
+WASM_OUT      := $(PPTX_EXPORTER_DIR)/wasm
 VERSION  := $(shell sed -n '1{s/^v//;p;q;}' VERSION)
 LDFLAGS  := -X github.com/xaligo/xaligo/internal/controller.version=$(VERSION)
 
@@ -18,9 +19,9 @@ build: build-wasm ## Build CLI binary and PPTX exporter WASM bundle
 	go build -ldflags "$(LDFLAGS)" -o $(BINARY) ./cmd
 	@echo "Built: $(BINARY)"
 
-build-wasm: ## Build TS/WASI PPTX exporter into external/wasm/
+build-wasm: ## Build TS/WASI PPTX exporter into external/pptx-exporter/wasm/
 	@mkdir -p $(WASM_OUT)
-	npm --prefix external run build:pptx-exporter-wasm
+	npm --prefix $(PPTX_EXPORTER_DIR) run build:pptx-exporter-wasm
 	@echo "Built: $(WASM_OUT)/xaligo.wasm"
 
 test: ## Run tests

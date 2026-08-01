@@ -12,6 +12,6 @@ applyTo: ".github/instructions/manual/**"
 | Canonical scene and item metadata | `internal/usecase/v1/engine/scene_*` |
 | Plan geometry, text layout, paper scaling, routing, legend data | `internal/usecase/v1/engine/plan_*`, `internal/usecase/v1/engine/route_*` |
 | WASM exporter invocation from Go | `internal/repository/powerpoint.go` |
-| WASM-compatible PPTX drawing/export | `external` TypeScript package and implementation |
-| PPTX WASI command entry | `external/command.ts` |
+| WASM-compatible PPTX drawing/export | `external/pptx-exporter` TypeScript package and implementation |
+| PPTX WASI command entry | `external/pptx-exporter/command.ts` |
 | Public browser/JavaScript API bridge | `cmd/wasm/main.go` |

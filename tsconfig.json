@@ -4,7 +4,7 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "types": ["node"],
-    "typeRoots": ["./external/node_modules/@types"],
+    "typeRoots": ["./external/pptx-exporter/node_modules/@types"],
     "lib": ["ES2020", "DOM"],
     "strict": true,
     "exactOptionalPropertyTypes": true,
@@ -13,6 +13,6 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true
   },
-  "include": ["external/**/*.ts"],
-  "exclude": ["node_modules", "external/node_modules", "external/dist"]
+  "include": ["external/pptx-exporter/**/*.ts"],
+  "exclude": ["node_modules", "external/pptx-exporter/node_modules", "external/pptx-exporter/dist"]
 }

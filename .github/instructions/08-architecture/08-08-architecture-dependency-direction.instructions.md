@@ -19,16 +19,16 @@ internal/usecase/       internal/repository
      v                         |
  internal/entity <-------------+
 
-external/command.ts
+external/pptx-exporter/command.ts
         |
         v
-external/controller
+external/pptx-exporter/controller
         |
         v
-external/usecase
+external/pptx-exporter/usecase
         |
         v
-external/repository
+external/pptx-exporter/repository
 ```
 
 Entity and use-case packages must not depend on CLI, preview, WASM, or

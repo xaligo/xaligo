@@ -27,7 +27,7 @@ interface XmlBounds {
   cy: number;
 }
 
-const logger = NewEnvLogger('external/repository', 'pptx_package');
+const logger = NewEnvLogger('external/pptx-exporter/repository', 'pptx_package');
 const ERPPGAOIP001 = NewMCode('ERPPGAOIP-001', 'Finalize PPTX package unnecessary branch');
 const ERPPGAOIP002 = NewMCode('ERPPGAOIP-002', 'Finalize PPTX package missing slide branch');
 const ERPPGAOIP003 = NewMCode('ERPPGAOIP-003', 'Finalize PPTX package completed');

@@ -141,9 +141,9 @@ jobs:
         run: npm run test:release-metadata
 
       - name: Run tests
-        working-directory: external
+        working-directory: external/pptx-exporter
         run: npm test
 
       - name: Build exporters
-        working-directory: external
+        working-directory: external/pptx-exporter
         run: npm run build

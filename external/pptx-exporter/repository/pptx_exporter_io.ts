@@ -3,7 +3,7 @@ import process from 'node:process';
 import { NewEnvLogger } from '../share/logger';
 import { NewMCode } from '../share/mcode';
 
-const logger = NewEnvLogger('external/repository', 'pptx_exporter_io');
+const logger = NewEnvLogger('external/pptx-exporter/repository', 'pptx_exporter_io');
 const ERPEIRI001 = NewMCode('ERPEIRI-001', 'Read PPTX exporter input start');
 const ERPEIRI002 = NewMCode('ERPEIRI-002', 'Read PPTX exporter input chunk branch');
 const ERPEIRI003 = NewMCode('ERPEIRI-003', 'Read PPTX exporter input completed');

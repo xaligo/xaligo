@@ -2,7 +2,7 @@ import type { PptxExporterRequest } from '../entity/pptx_exporter';
 import { NewEnvLogger } from '../share/logger';
 import { NewMCode } from '../share/mcode';
 
-const logger = NewEnvLogger('external/usecase', 'pptx_exporter_request');
+const logger = NewEnvLogger('external/pptx-exporter/usecase', 'pptx_exporter_request');
 const EUPERPPER001 = NewMCode('EUPERPPER-001', 'Parse PPTX exporter request empty input branch');
 const EUPERVPER001 = NewMCode('EUPERVPER-001', 'Validate PPTX exporter request invalid object branch');
 const EUPERVPER002 = NewMCode('EUPERVPER-002', 'Validate PPTX exporter request invalid plan branch');

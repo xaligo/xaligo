@@ -4,7 +4,7 @@ import { pptxPlanOpCount, pptxPlanPages } from '../entity/pptx';
 import { exportPptxFromRequest } from '../usecase/pptx_exporter';
 import { parsePptxExporterRequest } from '../usecase/pptx_exporter_request';
 
-const logger = NewEnvLogger('external/controller', 'pptx_exporter');
+const logger = NewEnvLogger('external/pptx-exporter/controller', 'pptx_exporter');
 const ECPE001 = NewMCode('ECPE-001', 'Run PPTX exporter start');
 const ECPE002 = NewMCode('ECPE-002', 'Run PPTX exporter parse completed');
 const ECPE003 = NewMCode('ECPE-003', 'Run PPTX exporter export completed');

@@ -54,4 +54,4 @@ Package layout:
 | Path | Purpose |
 |---|---|
 | `@xaligo/xaligo` | CLI binary plus TypeScript/WASM API exports |
-| `external/` | Internal TypeScript/PptxGenJS build workspace |
+| `external/pptx-exporter/` | Internal TypeScript/PptxGenJS build workspace |

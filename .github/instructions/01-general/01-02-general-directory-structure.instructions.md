@@ -35,13 +35,15 @@ xaligo/
 ├── test/
 │   ├── unit/                    unit tests mirroring the project tree
 │   └── integration/             black-box use-case/adapter tests
-├── external/                    TypeScript external adapter layer
-│   ├── index.ts                 package API composition boundary
-│   ├── command.ts               TypeScript CLI entry point
-│   ├── controller/              CLI argument and file-I/O adapters
-│   ├── entity/                  TypeScript API and PPTX plan types
-│   ├── repository/              WASM, PptxGenJS, and package adapters
-│   └── usecase/                 independent TypeScript application use cases
+├── external/
+│   ├── engine/                  Rust layout/SVG engine workspace
+│   └── pptx-exporter/           TypeScript/PptxGenJS PPTX adapter
+│       ├── index.ts             package API composition boundary
+│       ├── command.ts           TypeScript/WASI entry point
+│       ├── controller/          request and byte-I/O adapter
+│       ├── entity/              TypeScript PPTX plan types
+│       ├── repository/          PptxGenJS and package adapters
+│       └── usecase/             independent PPTX application use cases
 ├── etc/resources/aws/           catalogs, templates, icons, attribution
 ├── docs/src/examples/samples/   example .xal and services CSV files
 ├── scripts/                     asset/catalog generation scripts

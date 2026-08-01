@@ -3,7 +3,7 @@ import { createPptxFromPlan } from '../repository/pptx';
 import { NewEnvLogger } from '../share/logger';
 import { NewMCode } from '../share/mcode';
 
-const logger = NewEnvLogger('external/usecase', 'pptx');
+const logger = NewEnvLogger('external/pptx-exporter/usecase', 'pptx');
 const EUPPOPJ001 = NewMCode('EUPPOPJ-001', 'PPTX plan options JSON theme branch');
 const EUPPOPJ002 = NewMCode('EUPPOPJ-002', 'PPTX plan options JSON px per inch branch');
 const EUPPOPJ003 = NewMCode('EUPPOPJ-003', 'PPTX plan options JSON arrow style branch');

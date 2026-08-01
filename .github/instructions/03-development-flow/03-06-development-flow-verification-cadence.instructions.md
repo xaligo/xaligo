@@ -23,7 +23,7 @@ Typical final checks are selected by scope:
 make security-check
 go test ./... -count=1
 go build ./...
-npm --prefix external test
+npm --prefix external/pptx-exporter test
 mdbook build docs
 git diff --check
 git status --short

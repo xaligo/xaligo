@@ -1,7 +1,7 @@
 {
   "name": "@xaligo/xaligo-external",
   "version": "0.0.1",
-  "description": "WebAssembly build of xaligo — convert .xal DSL to Excalidraw JSON from TypeScript/JavaScript",
+  "description": "WASI PPTX exporter for resolved xaligo document plans",
   "keywords": [
     "xaligo",
     "excalidraw",
@@ -18,7 +18,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/xaligo/xaligo.git",
-    "directory": "external"
+    "directory": "external/pptx-exporter"
   },
   "license": "MIT",
   "private": true,

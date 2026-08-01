@@ -15,7 +15,8 @@ applyTo: ".github/instructions/manual/**"
 | `internal/command.go` | Root Cobra command assembly |
 | `internal/controller` | Cobra CLI argument and file-I/O adapters |
 | `cmd/wasm` | JavaScript-global adapter over shared use cases and embedded assets |
-| `external` | TypeScript external adapter layer mirroring `internal`: `command.ts`, `controller`, `entity`, `repository`, `usecase` |
+| `external/engine` | Rust generic layout/SVG workspace and versioned in-process ABI |
+| `external/pptx-exporter` | TypeScript PPTX adapter: `command.ts`, `controller`, `entity`, `repository`, and `usecase` |
 | `test/unit` | Unit tests mirroring the source tree they cover |
 | `test/integration` | Black-box tests of exported APIs and adapters |
 | `etc/resources/aws` | Catalogs, templates, embedded assets, and attribution |

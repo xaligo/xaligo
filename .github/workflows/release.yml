@@ -100,7 +100,7 @@ jobs:
 
       - name: Test and build TypeScript exporters
         run: |
-          npm --prefix external test
+          npm --prefix external/pptx-exporter test
           npm run build --workspace=@xaligo/xaligo-external
 
   package:

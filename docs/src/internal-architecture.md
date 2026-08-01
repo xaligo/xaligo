@@ -132,7 +132,8 @@ those semantics.
 | `internal/usecase/v1/engine` | Synchronous V1 parser, validation, layout, scene, routing, pagination, theme, and draw-plan calculations | [`v1/engine`](https://github.com/xaligo/xaligo/tree/main/internal/usecase/v1/engine) |
 | `internal/entity` | Data exchanged across layers, including resolved content boxes, `PresentationScene`, `DocumentPlan`, `Plan`, and `TextLayout`; no orchestration | [`internal/entity`](https://github.com/xaligo/xaligo/tree/main/internal/entity) |
 | `internal/repository` | Catalog/filesystem access and output encoders | [`internal/repository`](https://github.com/xaligo/xaligo/tree/main/internal/repository) |
-| `external` | TypeScript API and the PptxGenJS/WASM adapter | [`external`](https://github.com/xaligo/xaligo/tree/main/external) |
+| `external/engine` | Rust layout/SVG engine source workspace | [`external/engine`](https://github.com/xaligo/xaligo/tree/main/external/engine) |
+| `external/pptx-exporter` | TypeScript API and the PptxGenJS/WASM adapter | [`external/pptx-exporter`](https://github.com/xaligo/xaligo/tree/main/external/pptx-exporter) |
 
 Use-case declarations are not collected in a package-wide facade. Each
 responsibility file begins with its interface, private concrete type, and
@@ -415,9 +416,9 @@ generated IDs are used only as an old-plan compatibility fallback. SVG performs
 deterministic wrapping and shrink-to-fit and emits a clip path
 ([`writeText`](https://github.com/xaligo/xaligo/blob/main/internal/repository/svg.go));
 the external PPTX repository consumes the same fields
-([`drawText`](https://github.com/xaligo/xaligo/blob/main/external/repository/pptx.ts)).
+([`drawText`](https://github.com/xaligo/xaligo/blob/main/external/pptx-exporter/repository/pptx.ts)).
 After PptxGenJS serializes the package,
-[`finalizePptxPackage`](https://github.com/xaligo/xaligo/blob/main/external/repository/pptx_package.ts)
+[`finalizePptxPackage`](https://github.com/xaligo/xaligo/blob/main/external/pptx-exporter/repository/pptx_package.ts)
 sets DrawingML horizontal and vertical overflow to `clip` or `overflow` on the
 matching text object. This preserves `fit="none"` instead of approximating a
 clip request by shrinking the text.
@@ -437,7 +438,7 @@ PPTX is deliberately split at a serialization boundary: Go produces the plan,
 then [`PowerpointRepository`](https://github.com/xaligo/xaligo/blob/main/internal/repository/powerpoint.go)
 invokes the configured WASI/PptxGenJS exporter. Inside that exporter, the WASI
 command delegates to
-[`runPptxExporter`](https://github.com/xaligo/xaligo/blob/main/external/controller/pptx_exporter.ts),
+[`runPptxExporter`](https://github.com/xaligo/xaligo/blob/main/external/pptx-exporter/controller/pptx_exporter.ts),
 which calls the external use case before the PptxGenJS repository. The internal
 repository never calls the external repository directly. There is no second
 OOXML layout implementation in Go.

@@ -29,18 +29,18 @@ RUN case "${TARGETARCH}" in \
 WORKDIR /build
 
 COPY package.json package-lock.json ./
-COPY external/package.json external/tsconfig.json external/command.ts external/index.ts ./external/
-COPY external/controller ./external/controller
-COPY external/entity ./external/entity
-COPY external/repository ./external/repository
-COPY external/share ./external/share
-COPY external/tool ./external/tool
-COPY external/usecase ./external/usecase
+COPY external/pptx-exporter/package.json external/pptx-exporter/tsconfig.json external/pptx-exporter/command.ts external/pptx-exporter/index.ts ./external/pptx-exporter/
+COPY external/pptx-exporter/controller ./external/pptx-exporter/controller
+COPY external/pptx-exporter/entity ./external/pptx-exporter/entity
+COPY external/pptx-exporter/repository ./external/pptx-exporter/repository
+COPY external/pptx-exporter/share ./external/pptx-exporter/share
+COPY external/pptx-exporter/tool ./external/pptx-exporter/tool
+COPY external/pptx-exporter/usecase ./external/pptx-exporter/usecase
 
-RUN mkdir -p external/wasm \
+RUN mkdir -p external/pptx-exporter/wasm \
   && npm ci --ignore-scripts --no-audit --no-fund \
   && npm run build:pptx-exporter-wasm --workspace=@xaligo/xaligo-external \
-  && test -s external/wasm/xaligo.wasm
+  && test -s external/pptx-exporter/wasm/xaligo.wasm
 
 FROM rockylinux:9
 
@@ -69,6 +69,6 @@ RUN case "${TARGETARCH}" in \
   && rm /tmp/go.tgz \
   && go version
 
-COPY --from=wasm-builder /build/external/wasm/xaligo.wasm /opt/xaligo/xaligo.wasm
+COPY --from=wasm-builder /build/external/pptx-exporter/wasm/xaligo.wasm /opt/xaligo/xaligo.wasm
 
 WORKDIR /workspace

@@ -11,7 +11,7 @@ import { NewMCode } from '../share/mcode';
 
 type LegendLineOptions = pptxgen.ShapeLineProps;
 
-const logger = NewEnvLogger('external/repository', 'pptx_legend');
+const logger = NewEnvLogger('external/pptx-exporter/repository', 'pptx_legend');
 const ERPLDCLS001 = NewMCode('ERPLDCLS-001', 'Draw connector legend slide empty branch');
 const ERPLDCLS002 = NewMCode('ERPLDCLS-002', 'Draw connector legend slide page branch');
 const ERPLDLS001 = NewMCode('ERPLDLS-001', 'Draw legend slides empty branch');

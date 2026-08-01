@@ -18,7 +18,7 @@ import { NewMCode } from '../share/mcode';
 import { drawConnectorLegendSlide, drawLegendSlides } from './pptx_legend';
 import { convertPptxOutput, finalizePptxPackage, type PptxPackageSlidePlan } from './pptx_package';
 
-const logger = NewEnvLogger('external/repository', 'pptx');
+const logger = NewEnvLogger('external/pptx-exporter/repository', 'pptx');
 const ERPCPFP001 = NewMCode('ERPCPFP-001', 'Create PPTX from plan start');
 const ERPCPFP002 = NewMCode('ERPCPFP-002', 'Create PPTX from plan write completed');
 const ERPCPFP003 = NewMCode('ERPCPFP-003', 'Create PPTX from plan package finalization completed');

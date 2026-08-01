@@ -18,7 +18,8 @@ Important package boundaries:
 | `internal/entity` | Shared structures exchanged between layers |
 | `internal/repository` | Filesystem and output-format adapters |
 | `cmd` | CLI entry points |
-| `external` | TypeScript/WASM package and PPTX adapter |
+| `external/engine` | Rust layout/SVG engine workspace |
+| `external/pptx-exporter` | TypeScript/WASM package and PPTX adapter |
 
 Verification commands:
 

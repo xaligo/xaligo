@@ -1,7 +1,7 @@
 import { NewEnvLogger } from './logger';
 import { NewMCode } from './mcode';
 
-const logger = NewEnvLogger('external/share', 'pptx_runtime');
+const logger = NewEnvLogger('external/pptx-exporter/share', 'pptx_runtime');
 const ESPRS001 = NewMCode('ESPRS-001', 'Install PPTX runtime shims start');
 const ESPRS002 = NewMCode('ESPRS-002', 'Install PPTX runtime set immediate branch');
 const ESPRS003 = NewMCode('ESPRS-003', 'Install PPTX runtime set image branch');
