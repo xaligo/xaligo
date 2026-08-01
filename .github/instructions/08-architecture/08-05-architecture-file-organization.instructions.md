@@ -40,6 +40,10 @@ such as `parse_*`, `layout_*`, `scene_*`, `route_*`, and `plan_*`. They contain
 cohesive algorithm slices and do not repeat the package or architectural layer
 name in filenames.
 
+V2 orchestration components live in `internal/usecase/v2`. The Go/cgo adapter,
+C header, Rust crates, and generated ignored link directory stay together in
+`external/engine`; do not recreate an `internal/engineffi` package.
+
 - Keep a Go interface in the file containing the corresponding concrete
   implementation and its principal methods.
 - Keep a Go constructor in the file containing the concrete type it returns or

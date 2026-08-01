@@ -1,0 +1,15 @@
+[package]
+name = "xaligo-svg-engine"
+description = "Deterministic SVG projection for resolved xaligo V2 geometry"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
+name = "xaligo_svg_engine"
+path = "src/lib.rs"
+
+[dependencies]
+xaligo-layout-engine = { path = "../layout-engine" }

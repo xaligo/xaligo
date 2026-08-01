@@ -77,18 +77,23 @@ namespaces, `aws`, `uml`, or another domain name.
 ```text
 internal/
 ├── entity/engine.go       typed Go-side engine request and response
-├── usecase/engine.go      cancellation, lifecycle, and Rust invocation
+├── usecase/v2/engine.go   cancellation, lifecycle, and Rust invocation
 ├── parser/                V1 compatibility and native V2 frontends (target)
 ├── ir/                    version-neutral normalized document (target)
 └── core/profiles/         builtin/AWS/UML declarative profiles (target)
 
 external/
 ├── engine/
+│   ├── api.go             Go-side availability contract
+│   ├── bridge_cgo.go      cgo C-ABI invocation adapter
+│   ├── bridge_stub.go     non-native/browser build fallback
 │   ├── Cargo.toml
+│   ├── include/xaligo_engine.h
+│   ├── lib/               generated ignored static-library link location
 │   └── crates/
 │       ├── layout-engine/ generic measurement, layout, and routing
 │       ├── svg-engine/    SVG validation, normalization, and projection
-│       └── wasm-bridge/   versioned explicit-memory host ABI boundary
+│       └── ffi/           versioned C ABI static-library boundary
 └── pptx-exporter/         TypeScript/PptxGenJS PPTX adapter
 ```
 
@@ -99,7 +104,7 @@ native frontend ─────────┐
 V1 compatibility ────────┼─> normalized typed IR
 builtin/AWS/UML profiles ┘             |
                                        v
-                              internal/usecase/engine
+                             internal/usecase/v2/engine
                                        |
                               direct in-process ABI
                                        |
@@ -107,14 +112,15 @@ builtin/AWS/UML profiles ┘             |
                          external/engine Rust workspace
 ```
 
-The parent `internal/usecase` package owns root dispatch, profile registration,
-I/O adaptation, cancellation, stage ordering, Rust module lifecycle, and
-concurrency policy. Rust engine calculations are synchronous and contain no
+The parent `internal/usecase` composition owns root dispatch and profile
+registration. `internal/usecase/v2` owns V2 I/O adaptation, cancellation,
+stage ordering, Rust library invocation, and concurrency policy. Rust engine
+calculations are synchronous and contain no
 repository access, command dispatch, daemon discovery, sockets, HTTP calls, or
-process spawning. A native build compiles the Rust engine to a generated WASM
-module and embeds it into the Go executable. Go invokes exported functions
-directly through the in-process runtime; it does not launch Cargo or an engine
-subprocess at runtime.
+process spawning. A native build compiles the Rust engine as a platform-native
+`staticlib` and links it into the Go executable through cgo. Go invokes the
+versioned `extern "C"` functions directly; it does not launch Cargo, load a
+sidecar library, or start an engine subprocess at runtime.
 
 Builtin, AWS, and UML profiles are separate declarative data boundaries from
 their first implementation. They depend only on the stable V2 profile/model
@@ -309,8 +315,8 @@ V2 implementation slices must include tests that establish:
 
 - Rust layout and SVG crates compile and test without importing AWS or UML;
 - Go invokes the Rust engine in-process without a subprocess or daemon;
-- the generated Rust WASM is embedded only by native distribution builds and
-  is not committed as a repository artifact;
+- the generated Rust static library is linked only by matching native target
+  builds and is not committed as a repository artifact;
 - ABI version, malformed payload, non-finite number, and range failures are
   rejected deterministically;
 - builtin-only rendering supports generic frames, groups, captures, items,

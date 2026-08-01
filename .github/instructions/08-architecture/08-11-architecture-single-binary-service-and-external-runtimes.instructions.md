@@ -109,11 +109,16 @@ xaligo/
 │   └── storage/
 ├── external/
 │   ├── engine/
+│   │   ├── api.go
+│   │   ├── bridge_cgo.go
+│   │   ├── bridge_stub.go
 │   │   ├── Cargo.toml
+│   │   ├── include/xaligo_engine.h
+│   │   ├── lib/               generated and ignored
 │   │   └── crates/
 │   │       ├── layout-engine/
 │   │       ├── svg-engine/
-│   │       └── wasm-bridge/
+│   │       └── ffi/
 │   └── pptx-exporter/
 ├── assets/
 ├── Makefile
@@ -128,25 +133,28 @@ programs.
 ## Rust engine integration
 
 Rust owns generic layout and SVG calculation. Native builds compile the Rust
-workspace to `wasm32-unknown-unknown`, copy the generated module to a temporary
-ignored Go embed location, and build the Go executable with the engine embed
-tag. The final native executable invokes the module through wazero in process.
+workspace to a platform-native static library, copy the generated archive to
+the ignored `external/engine/lib` cgo link location, and build the Go executable with cgo and
+the engine build tag. The final executable contains the Rust archive and calls
+it through a versioned C ABI in process.
 
 ```text
 Go EngineUsecase
       |
-      | versioned typed ABI
+      | cgo + versioned C ABI
       v
-embedded Rust WASM module
+linked Rust static library
       |
       +-- layout-engine
       +-- svg-engine
 ```
 
-The generated `.wasm`, Cargo `target`, npm `dist`, and `node_modules` content
-are never committed. A future static-library implementation may replace the
-WASM host only if it preserves the typed ABI semantics, cross-platform single
-binary, and direct in-process invocation.
+The generated static libraries, Cargo `target`, npm `dist`, and `node_modules`
+content are never committed. Each target platform builds its own Rust archive;
+do not cross-link a host archive into another target. The C ABI keeps variable
+length request/response data behind an explicit Rust-owned buffer contract and
+requires the matching Rust free function. The engine remains part of the one
+native executable, not a separately distributed dynamic library.
 
 The TypeScript PPTX exporter remains under `external/pptx-exporter` during its
 migration. All build, test, configuration, packaging, and documentation paths

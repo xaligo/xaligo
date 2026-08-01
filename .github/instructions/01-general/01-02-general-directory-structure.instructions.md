@@ -29,14 +29,15 @@ xaligo/
 │   │   ├── plan.go              PlanUsecase over the V1 engine
 │   │   ├── scene.go             SceneUsecase and repository-port adapter
 │   │   ├── theme.go             ThemeUsecase over the V1 engine
-│   │   └── v1/engine/           synchronous V1 parser/layout/scene/plan logic
+│   │   ├── v1/engine/           synchronous V1 parser/layout/scene/plan logic
+│   │   └── v2/                  V2 Go orchestration over the Rust engine ABI
 │   ├── repository/              filesystem and output-format adapters
 │   └── config/                  project configuration
 ├── test/
 │   ├── unit/                    unit tests mirroring the project tree
 │   └── integration/             black-box use-case/adapter tests
 ├── external/
-│   ├── engine/                  Rust layout/SVG engine workspace
+│   ├── engine/                  Rust layout/SVG workspace and Go/cgo ABI adapter
 │   └── pptx-exporter/           TypeScript/PptxGenJS PPTX adapter
 │       ├── index.ts             package API composition boundary
 │       ├── command.ts           TypeScript/WASI entry point

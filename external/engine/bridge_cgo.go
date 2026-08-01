@@ -1,0 +1,57 @@
+//go:build cgo && xaligo_engine
+
+package engine
+
+/*
+#cgo CFLAGS: -I${SRCDIR}/include
+#cgo LDFLAGS: -L${SRCDIR}/lib -lxaligo_engine
+#cgo darwin LDFLAGS: -lm
+#cgo linux LDFLAGS: -ldl -lm -lpthread
+#include "xaligo_engine.h"
+*/
+import "C"
+
+import (
+	"fmt"
+	"math"
+	"unsafe"
+)
+
+// Available reports whether this build contains the Rust engine static
+// library.
+func Available() bool {
+	return true
+}
+
+// ABIVersion returns the version exported by the linked Rust library.
+func ABIVersion() uint32 {
+	return uint32(C.xaligo_engine_abi_version())
+}
+
+// Process synchronously transfers one versioned request to Rust and copies the
+// Rust-owned response into Go memory before releasing it through the C ABI.
+func Process(input []byte) ([]byte, error) {
+	var inputPointer *C.uint8_t
+	if len(input) > 0 {
+		inputPointer = (*C.uint8_t)(unsafe.Pointer(&input[0]))
+	}
+
+	var output C.XaligoEngineBuffer
+	status := int32(C.xaligo_engine_process(inputPointer, C.size_t(len(input)), &output))
+	if output.data != nil {
+		defer C.xaligo_engine_buffer_free(output)
+	}
+	if status != 0 {
+		return nil, fmt.Errorf("Rust engine C ABI failed with status %d", status)
+	}
+	if output.len > C.size_t(math.MaxInt32) {
+		return nil, fmt.Errorf("Rust engine response is too large: %d bytes", uint64(output.len))
+	}
+	if output.len == 0 {
+		return []byte{}, nil
+	}
+	if output.data == nil {
+		return nil, fmt.Errorf("Rust engine returned a null response for %d bytes", uint64(output.len))
+	}
+	return C.GoBytes(unsafe.Pointer(output.data), C.int(output.len)), nil
+}
