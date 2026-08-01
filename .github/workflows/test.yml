@@ -102,8 +102,8 @@ jobs:
       - name: Download Go dependencies
         run: go mod download
 
-      - name: Run tests
-        run: go test ./...
+      - name: Run native Go and Rust tests
+        run: make test-engine
 
       - name: Build browser WebAssembly adapter
         run: GOOS=js GOARCH=wasm go build -o /tmp/xaligo-browser.wasm ./cmd/wasm

@@ -21,6 +21,7 @@ Typical final checks are selected by scope:
 
 ```bash
 make security-check
+make test-engine
 go test ./... -count=1
 go build ./...
 npm --prefix external/pptx-exporter test

@@ -45,15 +45,21 @@ RUN mkdir -p external/pptx-exporter/wasm \
 FROM rockylinux:9
 
 ARG GO_VERSION=1.26.5
+ARG RUST_VERSION=1.85.1
 ARG TARGETARCH
 
-ENV PATH=/usr/local/go/bin:/root/go/bin:${PATH}
+ENV PATH=/usr/local/go/bin:/root/go/bin:/root/.cargo/bin:${PATH}
 ENV PREBUILT_WASM=/opt/xaligo/xaligo.wasm
 
 RUN dnf install -y \
     ca-certificates \
+    curl \
+    gcc \
+    gcc-c++ \
     git \
+    glibc-devel \
     gzip \
+    make \
     rpm-build \
     tar \
   && dnf clean all \
@@ -68,6 +74,12 @@ RUN case "${TARGETARCH}" in \
   && tar -C /usr/local -xzf /tmp/go.tgz \
   && rm /tmp/go.tgz \
   && go version
+
+RUN curl --proto '=https' --tlsv1.2 -fsSL https://sh.rustup.rs -o /tmp/rustup-init.sh \
+  && sh /tmp/rustup-init.sh -y --profile minimal --default-toolchain "${RUST_VERSION}" \
+  && rm /tmp/rustup-init.sh \
+  && rustc --version \
+  && cargo --version
 
 COPY --from=wasm-builder /build/external/pptx-exporter/wasm/xaligo.wasm /opt/xaligo/xaligo.wasm
 

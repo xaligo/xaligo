@@ -26,7 +26,7 @@ build: build-engine build-wasm ## Build the single CLI binary with Rust engine a
 	@echo "Built: $(BINARY)"
 
 build-engine: ## Build and stage the Rust static library for cgo
-	cargo build --manifest-path $(ENGINE_DIR)/Cargo.toml --package $(ENGINE_PACKAGE) --release
+	cargo build --manifest-path $(ENGINE_DIR)/Cargo.toml --package $(ENGINE_PACKAGE) --release --locked
 	@mkdir -p $(ENGINE_LINK_DIR)
 	install -m 0644 $(ENGINE_STATICLIB) $(ENGINE_LINK_LIB)
 	@echo "Built: $(ENGINE_LINK_LIB)"
@@ -40,7 +40,7 @@ test: test-engine ## Run tests
 	go test ./...
 
 test-engine: build-engine ## Test Rust crates and the linked cgo engine path
-	cargo test --manifest-path $(ENGINE_DIR)/Cargo.toml --workspace
+	cargo test --manifest-path $(ENGINE_DIR)/Cargo.toml --workspace --locked
 	CGO_ENABLED=1 go test -tags "$(NATIVE_BUILD_TAGS)" ./... -count=1
 
 security-setup: ## Install security scanners and prepare npm audit metadata

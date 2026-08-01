@@ -1,6 +1,12 @@
 .git
+.bin
+bin/native
+docs/book
+external/engine/lib
+external/engine/target
 external/pptx-exporter/dist
 external/pptx-exporter/node_modules
 external/pptx-exporter/wasm/*.wasm
+node_modules
 output
 vendor

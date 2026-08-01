@@ -17,6 +17,7 @@ builds:
 
 ```bash
 make security-check
+make test-engine
 go test ./...
 go build ./...
 npm ci --ignore-scripts

@@ -5,7 +5,9 @@ package engine
 /*
 #cgo CFLAGS: -I${SRCDIR}/include
 #cgo LDFLAGS: -L${SRCDIR}/lib -lxaligo_engine
-#cgo linux LDFLAGS: -ldl -lm -lpthread
+#cgo linux LDFLAGS: -lutil -lrt -lpthread -lm -ldl
+#cgo windows LDFLAGS: -lkernel32 -lntdll -luserenv -lws2_32 -ldbghelp
+#cgo windows,arm64 LDFLAGS: -lunwind
 #include "xaligo_engine.h"
 */
 import "C"

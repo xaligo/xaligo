@@ -15,16 +15,17 @@ Important package boundaries:
 | Path | Responsibility |
 |---|---|
 | `internal/usecase` | Parser, layout, validation, scene, routing, and plans |
+| `internal/usecase/v2` | V2 orchestration, cancellation, and typed Rust-engine invocation |
 | `internal/entity` | Shared structures exchanged between layers |
 | `internal/repository` | Filesystem and output-format adapters |
 | `cmd` | CLI entry points |
-| `external/engine` | Rust layout/SVG engine workspace |
+| `external/engine` | Go/cgo adapter, C ABI, and Rust layout/SVG engine workspace |
 | `external/pptx-exporter` | TypeScript/WASM package and PPTX adapter |
 
 Verification commands:
 
 ```bash
-go test ./...
+make test-engine
 go build ./...
 git diff --check
 ```

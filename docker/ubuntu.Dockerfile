@@ -3,15 +3,17 @@ FROM node:24-bookworm-slim AS node-runtime
 FROM ubuntu:24.04
 
 ARG GO_VERSION=1.26.5
+ARG RUST_VERSION=1.85.1
 ARG JAVY_VERSION=9.0.0
 ARG TARGETARCH
 
 ENV DEBIAN_FRONTEND=noninteractive
-ENV PATH=/usr/local/go/bin:/root/go/bin:${PATH}
+ENV PATH=/usr/local/go/bin:/root/go/bin:/root/.cargo/bin:${PATH}
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
     ca-certificates \
+    build-essential \
     curl \
     dpkg-dev \
     git \
@@ -31,6 +33,12 @@ RUN case "${TARGETARCH}" in \
   && tar -C /usr/local -xzf /tmp/go.tgz \
   && rm /tmp/go.tgz \
   && go version
+
+RUN curl --proto '=https' --tlsv1.2 -fsSL https://sh.rustup.rs -o /tmp/rustup-init.sh \
+  && sh /tmp/rustup-init.sh -y --profile minimal --default-toolchain "${RUST_VERSION}" \
+  && rm /tmp/rustup-init.sh \
+  && rustc --version \
+  && cargo --version
 
 RUN case "${TARGETARCH}" in \
     amd64) javy_arch="x86_64" ;; \

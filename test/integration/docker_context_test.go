@@ -168,6 +168,7 @@ func TestDistributionsIncludeBundledPptxLicenses(t *testing.T) {
 func TestDockerToolchainsMatchRepositoryRequirements(t *testing.T) {
 	repositoryRoot := integrationRepositoryRoot(t)
 	goMod := readIntegrationFile(t, filepath.Join(repositoryRoot, "go.mod"))
+	cargoManifest := readIntegrationFile(t, filepath.Join(repositoryRoot, "external", "engine", "Cargo.toml"))
 	packageJSON := readIntegrationFile(t, filepath.Join(repositoryRoot, "external", "pptx-exporter", "package.json"))
 	dockerfiles := []string{
 		readIntegrationFile(t, filepath.Join(repositoryRoot, "docker", "rocky.Dockerfile")),
@@ -175,6 +176,7 @@ func TestDockerToolchainsMatchRepositoryRequirements(t *testing.T) {
 	}
 
 	goVersion := requiredVersion(t, goMod, `(?m)^toolchain go([0-9.]+)$`, "Go toolchain")
+	rustVersion := requiredVersion(t, cargoManifest, `(?m)^rust-version = "([0-9.]+)"$`, "Rust toolchain")
 	nodeVersion := requiredNodeMajor(t, packageJSON)
 	for index, dockerfile := range dockerfiles {
 		if !strings.Contains(dockerfile, "ARG GO_VERSION="+goVersion) {
@@ -182,6 +184,54 @@ func TestDockerToolchainsMatchRepositoryRequirements(t *testing.T) {
 		}
 		if !strings.Contains(dockerfile, "FROM node:"+nodeVersion+"-") {
 			t.Errorf("Dockerfile %d does not use required Node major %s", index, nodeVersion)
+		}
+		if !strings.Contains(dockerfile, "ARG RUST_VERSION="+rustVersion+".") {
+			t.Errorf("Dockerfile %d does not pin required Rust series %s", index, rustVersion)
+		}
+	}
+}
+
+func TestNativePackageBuildLinksRustEngineAndSQLiteFTS(t *testing.T) {
+	repositoryRoot := integrationRepositoryRoot(t)
+	common := readIntegrationFile(t, filepath.Join(repositoryRoot, "scripts", "build", "common.sh"))
+	for _, required := range []string{
+		"cargo build",
+		"CGO_ENABLED=1",
+		"xaligo_engine sqlite_fts5 sqlite_omit_load_extension",
+		"external/engine/lib/libxaligo_engine.a",
+	} {
+		if !strings.Contains(common, required) {
+			t.Errorf("native package build does not contain %q", required)
+		}
+	}
+	if strings.Contains(common, "CGO_ENABLED=0") {
+		t.Error("native package build still disables cgo")
+	}
+}
+
+func TestReleaseBuildsEachNativeTargetWithRustEngine(t *testing.T) {
+	repositoryRoot := integrationRepositoryRoot(t)
+	workflow := readIntegrationFile(t, filepath.Join(repositoryRoot, ".github", "workflows", "release.yml"))
+	for _, target := range []string{
+		"darwin-amd64",
+		"darwin-arm64",
+		"linux-amd64",
+		"linux-arm64",
+		"windows-amd64",
+		"windows-arm64",
+	} {
+		if !strings.Contains(workflow, "target: "+target) {
+			t.Errorf("release workflow does not build native target %q", target)
+		}
+	}
+	for _, required := range []string{
+		"make test-engine",
+		"NPM_SKIP_WASM: '1'",
+		"NPM_PACKAGE_TARGETS: none",
+		"pattern: xaligo-native-*",
+	} {
+		if !strings.Contains(workflow, required) {
+			t.Errorf("release workflow does not contain %q", required)
 		}
 	}
 }

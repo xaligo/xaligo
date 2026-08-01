@@ -11,6 +11,8 @@ Usage:
 Environment:
   NATIVE_VERSION=1.2.3-42
   NPM_PACKAGE_TARGETS="darwin/amd64 darwin/arm64 linux/amd64 linux/arm64 windows/amd64 windows/arm64"
+  NPM_SKIP_WASM=1               Skip the shared PPTX WASM build in native-only matrix jobs.
+  NPM_PACKAGE_TARGETS=none      Build only the shared PPTX WASM artifact.
 EOF
 }
 
@@ -24,6 +26,9 @@ cd "$ROOT"
 
 VERSION_VALUE="$(native_version)"
 TARGETS="${NPM_PACKAGE_TARGETS:-darwin/amd64 darwin/arm64 linux/amd64 linux/arm64 windows/amd64 windows/arm64}"
+if [[ "$TARGETS" == "none" ]]; then
+  TARGETS=""
+fi
 OUT_DIR="bin/native"
 
 validate_native_version "$VERSION_VALUE"
@@ -47,7 +52,9 @@ write_sha256() {
   chmod 0644 "${file}.sha256"
 }
 
-build_wasm_exporter
+if [[ "${NPM_SKIP_WASM:-0}" != "1" ]]; then
+  build_wasm_exporter
+fi
 mkdir -p "$OUT_DIR"
 
 for target in $TARGETS; do

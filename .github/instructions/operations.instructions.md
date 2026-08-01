@@ -39,6 +39,7 @@ git log -1 --oneline
 ```
 
 Use `npm --prefix external/pptx-exporter test`, `go build ./...`,
+`make test-engine` for native Rust/cgo engine changes,
 `mdbook build docs`, or
 format-specific render checks only when the changed scope requires them.
 Diagnose/read-only requests stop before editing, staging, or committing.
