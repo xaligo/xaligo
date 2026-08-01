@@ -21,5 +21,5 @@ Conceptual shape:
 [EC2] -- o -------- o -- [RDS]
 ```
 
-Future behavior may render explicit connector nodes in SVG/PPTX and equivalent
-editable shapes in Excalidraw. It is not part of the V1 compatibility profile.
+Future behavior may render explicit connector nodes in SVG/PPTX. It is not
+part of the V1 compatibility profile.

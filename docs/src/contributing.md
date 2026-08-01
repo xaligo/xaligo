@@ -18,7 +18,7 @@ more useful than a large rewrite.
 Good contribution areas include:
 
 - `.xal` examples for real architecture patterns.
-- Rendering bugs in Excalidraw, SVG, PPTX, PDF, Excel, XYFlow, or Isoflow output.
+- Rendering bugs in SVG, PPTX, or Markdown SVG embedding.
 - Connector routing improvements.
 - AWS, Tabler, or Yamaha catalog corrections.
 - Documentation improvements.

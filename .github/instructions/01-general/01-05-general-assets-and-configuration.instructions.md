@@ -11,7 +11,6 @@ applyTo: ".github/instructions/manual/**"
 - Full catalog: `etc/resources/aws/service-catalog.csv`
 - Embedded assets: `etc/resources/aws/assets.go`
 - SVG assets: `etc/resources/aws/svg`
-- Isoflow manifest: `etc/resources/aws/isoflow-icons.json`
 
 Preserve bundled license and attribution files. Generated assets must be
 refreshed through the scripts declared in the root `package.json`.

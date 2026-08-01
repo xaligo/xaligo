@@ -6,5 +6,5 @@ applyTo: ".github/instructions/manual/**"
 
 ### Features
 
-- updateScene() support
-- Real-time synchronization
+Retired with Excalidraw integration. Do not implement `updateScene()` or an
+Excalidraw synchronization protocol under the current output contract.

@@ -4,7 +4,6 @@
   "description": "WASI PPTX exporter for resolved xaligo document plans",
   "keywords": [
     "xaligo",
-    "excalidraw",
     "aws",
     "architecture-diagram",
     "wasm",

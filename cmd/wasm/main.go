@@ -18,50 +18,36 @@ import (
 
 var embeddedAssets = &entity.AssetSource{
 	FS: awsassets.Assets, CatalogCSV: awsassets.CatalogCSV,
-	GroupIconsDir: awsassets.GroupIconsDir, IsoflowIconsJSON: awsassets.IsoflowIconsJSON,
-	ItemIconSize: 32,
+	GroupIconsDir: awsassets.GroupIconsDir,
+	ItemIconSize:  32,
 }
 
 var renderUsecase = usecase.NewRenderUsecase(
-	repository.NewExcalidrawRepository(),
+	repository.NewSceneRepository(),
 	repository.NewXaligoRepository(),
-	repository.NewPowerpointRepository(),
-	repository.NewIsoflowRepository(),
+	nil,
 	repository.NewSVGRepository(),
-	repository.NewXYFlowRepository(),
-	nil,
-	nil,
 )
 
 var diagnosticsUsecase = usecase.NewDiagnosticsUsecase()
 
 func main() {
-	js.Global().Set("xaligoRender", js.FuncOf(jsRender))
-	js.Global().Set("xaligoRenderWithServices", js.FuncOf(jsRenderWithServices))
+	js.Global().Set("xaligoRenderSVG", js.FuncOf(jsRenderSVG))
+	js.Global().Set("xaligoRenderSVGWithServices", js.FuncOf(jsRenderSVGWithServices))
 	js.Global().Set("xaligoBuildPptxPlan", js.FuncOf(jsBuildPptxPlan))
 	js.Global().Set("xaligoDiagnose", js.FuncOf(jsDiagnose))
-	js.Global().Set("xaligoRenderXYFlow", js.FuncOf(jsRenderXYFlow))
-	js.Global().Set("xaligoRenderIsoflow", js.FuncOf(jsRenderIsoflow))
 	<-make(chan struct{})
 }
 
-func jsRender(_ js.Value, args []js.Value) any {
-	return renderResult("xaligoRender", args, usecase.FormatExcalidraw, nil)
+func jsRenderSVG(_ js.Value, args []js.Value) any {
+	return renderResult("xaligoRenderSVG", args, usecase.FormatSVG, nil)
 }
 
-func jsRenderWithServices(_ js.Value, args []js.Value) any {
+func jsRenderSVGWithServices(_ js.Value, args []js.Value) any {
 	if len(args) < 2 {
-		return jsResult(nil, fmt.Errorf("xaligoRenderWithServices: expected 2 arguments (xal, servicesCsv)"))
+		return jsResult(nil, fmt.Errorf("xaligoRenderSVGWithServices: expected 2 arguments (xal, servicesCsv)"))
 	}
-	return renderResult("xaligoRenderWithServices", args, usecase.FormatExcalidraw, []byte(args[1].String()))
-}
-
-func jsRenderXYFlow(_ js.Value, args []js.Value) any {
-	return renderResult("xaligoRenderXYFlow", args, usecase.FormatXYFlow, nil)
-}
-
-func jsRenderIsoflow(_ js.Value, args []js.Value) any {
-	return renderResult("xaligoRenderIsoflow", args, usecase.FormatIsoflow, nil)
+	return renderResult("xaligoRenderSVGWithServices", args, usecase.FormatSVG, []byte(args[1].String()))
 }
 
 func renderResult(name string, args []js.Value, format entity.Format, servicesCSV []byte) any {

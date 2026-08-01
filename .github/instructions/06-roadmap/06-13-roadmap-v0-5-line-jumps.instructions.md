@@ -7,5 +7,4 @@ applyTo: ".github/instructions/manual/**"
 ## v0.5 Line Jumps
 
 Status: rectangular background-mask jumps are implemented in the shared draw
-plan for SVG/PPTX and therefore their PDF/Excel projections. Curved bridge arcs
-and an Excalidraw approximation remain.
+plan for SVG and PPTX. Curved bridge arcs remain future work.

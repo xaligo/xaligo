@@ -11,7 +11,7 @@ import (
 )
 
 func TestValidateRenderOptionsAcceptsSupportedFormatsAndModes(t *testing.T) {
-	for _, format := range []entity.Format{"", usecase.FormatExcalidraw, usecase.FormatSVG, usecase.FormatPPTX, usecase.FormatPDF, usecase.FormatExcel, usecase.FormatXYFlow, usecase.FormatIsoflow} {
+	for _, format := range []entity.Format{"", usecase.FormatSVG, usecase.FormatPPTX} {
 		if err := usecase.ValidateRenderOptions(entity.RenderOptions{Mode: " network ", Format: format, Theme: "dark"}); err != nil {
 			t.Fatalf("format %q error = %v", format, err)
 		}
@@ -29,7 +29,7 @@ func TestValidateRenderOptionsRejectsInvalidValues(t *testing.T) {
 	}{
 		{"format", entity.RenderOptions{Format: "bad"}, "unknown render format"},
 		{"mode", entity.RenderOptions{Mode: "bad"}, "unknown render mode"},
-		{"future mode", entity.RenderOptions{Mode: "aws-2.5d"}, "renderer not implemented"},
+		{"retired mode", entity.RenderOptions{Mode: "aws-2.5d"}, "unknown render mode"},
 		{"negative margin", entity.RenderOptions{PaperMarginLeftIn: -0.1}, "paper margin left"},
 		{"NaN PPI", entity.RenderOptions{PxPerInch: math.NaN()}, "pixels per inch must be finite"},
 		{"infinite PPI", entity.RenderOptions{PxPerInch: math.Inf(1)}, "pixels per inch must be finite"},

@@ -6,11 +6,10 @@ applyTo: ".github/instructions/manual/**"
 
 ## Long-Term Product Position
 
-Position xaligo between PlantUML, Excalidraw, draw.io, Cloudcraft, and
-Instana-style topology tools:
+Position xaligo as a focused Diagram-as-Code tool for infrastructure and UML:
 
 - Diagram as Code.
 - Strong AWS and network diagram support.
 - 2D, 2.5D, and topology views from one DSL.
 - Comfortable VS Code authoring.
-- SVG, PPTX, PDF, Excel, Excalidraw, XYFlow, and Isoflow output.
+- SVG and PPTX output, plus Markdown SVG embedding.

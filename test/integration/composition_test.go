@@ -7,13 +7,9 @@ import (
 
 func newUsecase() usecase.RenderUsecase {
 	return usecase.NewRenderUsecase(
-		repository.NewExcalidrawRepository(),
+		repository.NewSceneRepository(),
 		repository.NewXaligoRepository(),
 		repository.NewPowerpointRepository(),
-		repository.NewIsoflowRepository(),
 		repository.NewSVGRepository(),
-		repository.NewXYFlowRepository(),
-		repository.NewPDFRepository(),
-		repository.NewSpreadsheetRepository(),
 	)
 }

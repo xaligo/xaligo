@@ -302,7 +302,7 @@ func TestRenderPlanWrapsShrinksAndClipsTextFromSharedContract(t *testing.T) {
 		Ops: []entity.DrawOp{
 			{
 				ID: "long-label", Kind: "text", X: 0.05, Y: 0.05, W: 0.3, H: 0.15,
-				Text: "Excalidraw / XYFlow / Isoflow", FontSize: 12,
+				Text: "SVG / PPTX / Markdown", FontSize: 12,
 				TextLayout: &entity.TextLayout{
 					Role: entity.TextRoleLabel, Wrap: false, Fit: entity.TextFitShrink,
 					Overflow: entity.TextOverflowClip, Clip: true, LineHeight: 1.2,

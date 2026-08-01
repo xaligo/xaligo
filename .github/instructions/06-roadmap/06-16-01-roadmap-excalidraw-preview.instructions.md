@@ -6,10 +6,5 @@ applyTo: ".github/instructions/manual/**"
 
 ### Excalidraw Preview
 
-```text
-.xal
- ↓
-Excalidraw JSON
- ↓
-WebView
-```
+Retired and excluded unless a future explicit product-scope decision restores
+it. Live preview uses SVG.

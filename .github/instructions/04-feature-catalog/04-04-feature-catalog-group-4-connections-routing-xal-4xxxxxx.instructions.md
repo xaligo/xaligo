@@ -24,7 +24,7 @@ applyTo: ".github/instructions/manual/**"
 | XAL-4000140 | Cross-frame terminal side/anchor control | Implemented | `src/dst-frame-side` and `src/dst-frame-anchor` fix the logical page side and tangent slot used by a cross-frame page-link stub. |
 | XAL-4000150 | Automatic safe-side selection | Implemented | Automatic page-terminal selection picks the nearest safe frame side from rendered visual geometry, honoring the frame metadata reservation strip. |
 | XAL-4000160 | Lane offsetting for overlapping connectors | Implemented | Parallel connectors sharing the same X/Y lane are offset from one another to remain individually legible. |
-| XAL-4000170 | Plan-level `--arrow-style` default | Implemented | A render-option arrowhead/width default applied to SVG/PPTX/PDF/Excel Plan output only when a connection omits its own explicit value. |
+| XAL-4000170 | Plan-level `--arrow-style` default | Implemented | A render-option arrowhead/width default applied to SVG/PPTX plan output only when a connection omits its own explicit value. |
 | XAL-4000180 | Explicit circular connector nodes | Planned | A future versioned routing model with dedicated circular/loopback connector nodes, distinct from today's headless V1 route connectors. |
 | XAL-4000190 | Line Jump routing | Planned | Phase-2 roadmap routing feature: a small arc/hop where two unrelated crossing connectors overlap, keeping crossing lines visually distinguishable. |
 | XAL-4000200 | Layer Routing | Planned | Phase-2 roadmap routing feature that groups related connectors into coherent routing layers/lanes instead of resolving each connector independently. |

@@ -10,15 +10,16 @@ applyTo: ".github/instructions/manual/**"
 2. Mode selects visual semantics; format selects output serialization.
 3. Format-rendering production paths call parser and layout through
    `internal/usecase`. Adapters use an injected `usecase.RenderUsecase`;
-   controllers use separate narrow use cases for diagnostics, scene I/O,
-   catalog access, and persisted export.
+   controllers use separate narrow use cases for diagnostics and other
+   supporting workflows.
 4. Routing and connector behavior belongs in shared scene/plan layers, not in
    individual output adapters.
 5. Filesystem-less environments provide an `AssetSource`; they do not fork the
    render pipeline.
 6. Native configuration remains the default when `RenderOptions.Assets` is nil.
-7. New formats require a `Format` value, shared render function, CLI wiring,
-   tests, and adapter documentation.
+7. The supported engine formats are a closed set: SVG and PPTX. Markdown is an
+   SVG-embedding workflow. Adding another format requires a new explicit
+   product-scope decision before implementation work begins.
 8. Errors are returned and wrapped with context. Core packages do not panic.
 9. Native CLI dependency construction belongs in `NewRootCmd`; the WASM entry
    point is its own composition root. Controllers depend on use cases, never on
@@ -84,29 +85,24 @@ applyTo: ".github/instructions/manual/**"
     modified/moved nodes in pale green. Highlight overlays are added after
     layout and route resolution and must not become routing obstacles.
 26. An identified child `<frame>` is one physical page by default. SVG emits
-    one artifact per frame, PPTX maps one frame to one slide, PDF maps one
-    frame to one page, and Excel maps one frame to one worksheet containing
-    that frame's SVG image. `CombineFrames` is the explicit compatibility
-    policy that preserves the former single-canvas, single-slide, single-page,
-    or single-sheet result. Excalidraw, XYFlow, and Isoflow remain single
-    logical documents and do not split by frame. Page-oriented encoders omit
-    the page-frame outline in default and combined output; the frame remains a
-    logical crop/page-link boundary rather than a visible rectangle.
-    Excalidraw retains page-frame objects with transparent strokes.
+    one artifact per frame and PPTX maps one frame to one slide.
+    `CombineFrames` explicitly requests one combined SVG canvas or PPTX slide.
+    Both encoders omit the page-frame outline in default and combined output;
+    the frame remains a logical crop/page-link boundary rather than a visible
+    rectangle.
     A default page-local SVG uses the exact logical frame rectangle as its
-    canvas and clip boundary, without adding stroke/marker safety padding;
-    PDF pages and Excel page images inherit that strict crop. Combined SVG
-    compatibility output retains marker-safe canvas expansion.
+    canvas and clip boundary, without adding stroke/marker safety padding.
+    Combined SVG output retains marker-safe canvas expansion.
 27. Page projection happens only after the complete document scene, connector
     routing, and cross-frame link semantics are resolved. A per-frame encoder
     consumes an ordered `DocumentPlan` projection; it must not parse, lay out,
     route, or infer crop geometry independently. A one-frame SVG render returns
     the exact requested output path, while a multi-frame SVG render uses stable
     frame-derived artifact IDs and rejects filename collisions.
-28. Native PDF and Excel encoders remain behind `!js` build constraints. The
-    browser adapter uses lightweight `js` repository stubs because those
-    formats are not exposed there; native canvas, font, and spreadsheet
-    dependencies must not enter the browser-WASM dependency graph.
+28. Retired Excalidraw, PDF, Excel/XLSX, XYFlow, and Isoflow adapters,
+    dependencies, aliases, assets, and browser globals must remain absent.
+    The browser adapter exposes SVG rendering, PPTX-plan construction, and
+    diagnostics only.
 29. A frame metadata tag band is resolved once in the V1 shared layout and
     presentation scene as page-owned decoration. The resolved metadata
     `row-gap`, which defaults to 4 layout pixels, is both the inter-row spacing
@@ -140,9 +136,8 @@ applyTo: ".github/instructions/manual/**"
     labels stay adjacent to the final inset terminal with a 4-layout-pixel gap
     while avoiding metadata and endpoint geometry. These rules, text metrics,
     layer order, and per-page ownership are
-    encoder-independent. SVG, PPTX, PDF, Excel, and Excalidraw consume that
-    shared result; XYFlow and Isoflow may omit the decoration but must not
-    reinterpret it as graph nodes or endpoints.
+    encoder-independent. SVG and PPTX consume that shared result; Markdown
+    inherits it through embedded SVG artifacts.
 30. Cross-frame connector geometry distinguishes the item endpoint from the
     logical page terminal. `src-side`/`dst-side` and
     `src-anchor`/`dst-anchor` bind the endpoint; `src-frame-side`/

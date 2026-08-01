@@ -24,39 +24,25 @@ func NewRootCmd() *cobra.Command {
 	logger.DEBUG(ICNRC001, "start")
 	cfg := config.New()
 
-	excalidrawRepository := repository.NewExcalidrawRepository()
+	sceneRepository := repository.NewSceneRepository()
 	xaligoRepository := repository.NewXaligoRepository()
 	powerpointRepository := repository.NewPowerpointRepository()
-	isoflowRepository := repository.NewIsoflowRepository()
 	svgRepository := repository.NewSVGRepository()
-	xyFlowRepository := repository.NewXYFlowRepository()
-	pdfRepository := repository.NewPDFRepository()
-	spreadsheetRepository := repository.NewSpreadsheetRepository()
 
 	renderUsecase := usecase.NewRenderUsecase(
-		excalidrawRepository,
+		sceneRepository,
 		xaligoRepository,
 		powerpointRepository,
-		isoflowRepository,
 		svgRepository,
-		xyFlowRepository,
-		pdfRepository,
-		spreadsheetRepository,
 	)
-	sceneIOUsecase := usecase.NewSceneIOUsecase(excalidrawRepository)
-	catalogUsecase := usecase.NewCatalogUsecase(xaligoRepository)
-	exportUsecase := usecase.NewExportUsecase(powerpointRepository)
 	diagnosticsUsecase := usecase.NewDiagnosticsUsecase()
-	elementUsecase := usecase.NewElementUsecase()
-	themeUsecase := usecase.NewThemeUsecase()
-	diffUsecase := usecase.NewDiffUsecase(xaligoRepository, excalidrawRepository, svgRepository)
+	diffUsecase := usecase.NewDiffUsecase(xaligoRepository, sceneRepository, svgRepository)
 	engineUsecase := v2.NewEngineUsecase()
 	iconRegistryRepository := iconrepository.NewRegistryRepository(cfg.AssetsDB)
 	iconUsecase := v2.NewIconUsecase(iconRegistryRepository, engineUsecase, builtin.IconRegistrations()...)
 
-	addController := controller.NewAddController(cfg, sceneIOUsecase, catalogUsecase, elementUsecase)
-	generateController := controller.NewGenerateController(renderUsecase, exportUsecase)
-	renderController := controller.NewRenderController(cfg, renderUsecase, catalogUsecase, sceneIOUsecase, themeUsecase, elementUsecase)
+	generateController := controller.NewGenerateController()
+	renderController := controller.NewRenderController(renderUsecase)
 	validateController := controller.NewValidateController(diagnosticsUsecase)
 	serveController := controller.NewServeController(cfg, renderUsecase)
 	initController := controller.NewInitController()
@@ -66,12 +52,11 @@ func NewRootCmd() *cobra.Command {
 
 	root := &cobra.Command{
 		Use:   "xaligo",
-		Short: "Vue-like DSL to Excalidraw layout generator",
+		Short: "Diagram-as-code renderer for SVG, PPTX, and Markdown",
 		Long: `xaligo is a diagram-as-code engine for architecture, network, and UML
 diagrams. It parses the Vue-style .xal XML DSL once and pushes the result
-through one shared parser -> layout -> scene/plan -> encoder pipeline shared
-by every output format: Excalidraw, SVG, PPTX, PDF, Excel, XYFlow, and
-Isoflow.
+through one shared parser -> layout -> draw-plan pipeline. The supported
+outputs are SVG and PPTX, plus Markdown documents that embed rendered SVGs.
 
 Use 'xaligo <command> --help' for full details, flags, and examples for any
 subcommand below.`,
@@ -85,7 +70,6 @@ subcommand below.`,
 	root.AddCommand(serveController.Command())
 	root.AddCommand(initController.Command())
 	root.AddCommand(versionController.Command())
-	root.AddCommand(addController.Command())
 	root.AddCommand(generateController.Command())
 	root.AddCommand(diffController.Command())
 	root.AddCommand(iconController.Command())

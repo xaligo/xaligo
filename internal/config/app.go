@@ -14,30 +14,15 @@ type appYAML struct {
 	Paths struct {
 		AssetPackage      string `yaml:"asset_package"`
 		ServiceCatalogCSV string `yaml:"service_catalog_csv"`
-		OutputFrames      string `yaml:"output_frames"`
 		PptxExporterWASM  string `yaml:"pptx_exporter_wasm"`
 		AssetsDB          string `yaml:"assets_db"`
 	} `yaml:"paths"`
-	Legend struct {
-		OffsetX  float64 `yaml:"offset_x"`
-		OffsetY  float64 `yaml:"offset_y"`
-		IconSize int     `yaml:"icon_size"`
-		FontSize int     `yaml:"font_size"`
-	} `yaml:"legend"`
 	Item struct {
 		IconSize float64 `yaml:"icon_size"`
 	} `yaml:"item"`
 	Serve struct {
 		Port int `yaml:"port"`
 	} `yaml:"serve"`
-}
-
-// LegendConfig holds resolved legend defaults.
-type LegendConfig struct {
-	OffsetX  float64
-	OffsetY  float64
-	IconSize int
-	FontSize int
 }
 
 // ServeConfig holds live-preview server defaults.
@@ -48,12 +33,10 @@ type ServeConfig struct {
 // Config holds application-wide configuration resolved from etc/app.yaml.
 type Config struct {
 	ProjectRoot      string
-	AssetDir_        string // absolute path to Asset-Package
-	OutFramesDir     string // absolute path to generated frames output dir
-	SvcCatalogCSV    string // absolute path to service-catalog.csv
-	PptxExporterWASM string // absolute path to the PPTX WASM exporter
-	AssetsDB         string // absolute path to the embedded SVG registry
-	Legend           LegendConfig
+	AssetDir_        string  // absolute path to Asset-Package
+	SvcCatalogCSV    string  // absolute path to service-catalog.csv
+	PptxExporterWASM string  // absolute path to the PPTX WASM exporter
+	AssetsDB         string  // absolute path to the embedded SVG registry
 	ItemIconSize     float64 // default max icon size for <item> elements (px)
 	Serve            ServeConfig
 }
@@ -66,13 +49,8 @@ func New() *Config {
 	def := appYAML{}
 	def.Paths.AssetPackage = "etc/resources/aws/svg"
 	def.Paths.ServiceCatalogCSV = "etc/resources/aws/service-catalog.csv"
-	def.Paths.OutputFrames = "output/aws-frames"
 	def.Paths.PptxExporterWASM = "external/pptx-exporter/wasm/xaligo.wasm"
 	def.Paths.AssetsDB = "xaligo-assets.db"
-	def.Legend.OffsetX = 120
-	def.Legend.OffsetY = 0
-	def.Legend.IconSize = 32
-	def.Legend.FontSize = 12
 	def.Item.IconSize = 32.0
 	def.Serve.Port = DefaultServePort
 
@@ -94,26 +72,16 @@ func New() *Config {
 	return &Config{
 		ProjectRoot:      root,
 		AssetDir_:        abs(def.Paths.AssetPackage),
-		OutFramesDir:     abs(def.Paths.OutputFrames),
 		SvcCatalogCSV:    abs(def.Paths.ServiceCatalogCSV),
 		PptxExporterWASM: abs(def.Paths.PptxExporterWASM),
 		AssetsDB:         abs(def.Paths.AssetsDB),
 		ItemIconSize:     def.Item.IconSize,
 		Serve:            ServeConfig{Port: def.Serve.Port},
-		Legend: LegendConfig{
-			OffsetX:  def.Legend.OffsetX,
-			OffsetY:  def.Legend.OffsetY,
-			IconSize: def.Legend.IconSize,
-			FontSize: def.Legend.FontSize,
-		},
 	}
 }
 
 // AssetDir returns the absolute path to the Asset-Package directory.
 func (rcvr *Config) AssetDir() string { return rcvr.AssetDir_ }
-
-// OutputFramesDir returns the absolute path to the frames output directory.
-func (rcvr *Config) OutputFramesDir() string { return rcvr.OutFramesDir }
 
 // ServiceCatalogCSVPath returns the absolute path to service-catalog.csv.
 func (rcvr *Config) ServiceCatalogCSVPath() string { return rcvr.SvcCatalogCSV }

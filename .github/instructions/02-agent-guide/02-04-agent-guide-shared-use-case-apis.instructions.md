@@ -17,8 +17,6 @@ renderUsecase.Render(ctx, source, options)
 renderUsecase.RenderSVG(ctx, source, options)
 renderUsecase.RenderArtifacts(ctx, source, options)
 renderUsecase.RenderPPTX(ctx, source, options)
-renderUsecase.RenderPDF(ctx, source, options)
-renderUsecase.RenderExcel(ctx, source, options)
 
 diagnosticsUsecase := NewDiagnosticsUsecase()
 diagnosticsUsecase.Validate(ctx, source)
@@ -27,3 +25,8 @@ diagnosticsUsecase.Diagnose(ctx, source)
 
 `RenderOptions.Assets` is only needed by embedded or virtual-filesystem
 adapters. Native callers should leave it nil.
+
+The only public render formats are `svg` and `pptx`. `BuildScene` is a
+temporary internal V1 compatibility stage used to produce their shared draw
+plan; it is not a public output API. Markdown rendering is an orchestration
+flow over `RenderArtifacts`, not a third engine encoder.

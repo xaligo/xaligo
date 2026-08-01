@@ -170,9 +170,9 @@ The same qualification applies to connectable table, database, entity, group,
 rectangle, port, and item IDs. An unqualified reference never falls back to a
 different frame.
 
-When endpoints belong to different child frames, Excalidraw, SVG, PPTX, PDF,
-and Excel show the connection as a page link with two local stubs rather than
-one line across the inter-frame canvas:
+When endpoints belong to different child frames, SVG and PPTX show the
+connection as a page link with two local stubs rather than one line across the
+inter-frame canvas. Markdown inherits this behavior through its embedded SVG:
 
 - The source stub runs from the source endpoint to its frame's page-terminal
   inset line and is labeled exactly `to <destination frame ID>`.
@@ -212,7 +212,7 @@ being silently moved. The path and `to <...>` / `from <...>` label cannot enter
 the strip.
 
 The outer logical frame edge remains the side, tangent-anchor, and crop
-reference; SVG, PPTX, PDF, and Excel do not draw it as a frame outline. The
+reference; SVG and PPTX do not draw it as a frame outline. The
 drawable terminal is on a parallel inward inset line. Its inset is the resolved
 metadata `row-gap` when that frame has metadata, or 4 layout pixels when it
 does not. The metadata value applies to all four terminal sides regardless of
@@ -267,13 +267,11 @@ and metadata strip; a tiny page clamps or shrinks the fallback instead of
 moving the label farther inward.
 
 The stubs share a logical connector ID and the original endpoint, frame, and
-routing metadata. Graph-oriented XYFlow and Isoflow output use that metadata
-to emit one logical edge rather than two disconnected stubs.
+routing metadata.
 
 By default, the source and destination stubs appear on their respective SVG
-files, PPTX slides, PDF pages, or Excel worksheet images. With
-`--combine-frames`, both remain visible on the compatibility canvas but are not
-joined across the frame gap.
+files or PPTX slides. With `--combine-frames`, both remain visible on the
+compatibility canvas but are not joined across the frame gap.
 
 ## Manual Bends
 

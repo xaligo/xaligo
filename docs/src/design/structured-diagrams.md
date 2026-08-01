@@ -121,31 +121,25 @@ is resolved once, then each frame is projected in source order.
 |---|---|
 | SVG | One file per frame |
 | PPTX | One slide per frame |
-| PDF | One page per frame |
-| Excel | One worksheet per frame containing its SVG image |
-| Excalidraw, XYFlow, Isoflow | One logical document containing every frame |
 
-`--combine-frames` preserves the historical single canvas, slide, PDF page, or
-Excel worksheet. It is an output projection option, not a change to frame
+`--combine-frames` preserves a single canvas or slide. It is an output
+projection option, not a change to frame
 identity, layout, or connection resolution. A one-frame SVG document writes the
 exact requested filename; multiple frames append a filename-safe frame ID to
 the requested stem.
 
-For SVG, PPTX, PDF, and Excel, a page frame is not a visible rectangle. Its
+For SVG and PPTX, a page frame is not a visible rectangle. Its
 outline is omitted in both default and combined compatibility output; its
 geometry remains the page/crop boundary and the logical terminal for
-cross-frame page-link stubs. Excalidraw retains frame structure for editing
-with a transparent page-frame outline.
+cross-frame page-link stubs.
 
 A default page-local SVG uses the exact logical frame rectangle as its canvas
-and clip boundary. PDF pages and the SVG images placed into Excel worksheets
-inherit that strict crop, so a top/bottom metadata band's `row-gap` gutter
-reaches the physical page/image edge while its tag cells remain inset by that
-value. The combined SVG compatibility canvas retains marker-safe bounds
-expansion. PPTX uses one common slide size; when frame sizes differ, smaller
-frame pages are centered on the largest slide without changing their logical
-frame edge. The metadata inset is measured from that logical frame edge, not
-from the common slide edge.
+and clip boundary, so a top/bottom metadata band's `row-gap` gutter reaches the
+physical page edge while its tag cells remain inset by that value. The combined
+SVG compatibility canvas retains marker-safe bounds expansion. PPTX uses one
+common slide size; when frame sizes differ, smaller frame pages are centered on
+the largest slide without changing their logical frame edge. The metadata inset
+is measured from that logical frame edge, not from the common slide edge.
 
 ## Frame metadata tag-band projection
 
@@ -167,10 +161,9 @@ left/center/right alignment for each row within
 from the outer logical frame edge to the final content-box boundary and is at
 least `row-gap + complete band height + 8` pixels deep. The canonical scene
 then represents every key and value cell as page-owned decoration with stable
-ownership metadata. SVG, PPTX, PDF, Excel, and Excalidraw consume that same
-geometry. Per-frame projection retains only the owning page's tags, while
-combined compatibility output retains all bands. XYFlow and Isoflow omit them
-because page decoration is neither a graph node nor an endpoint.
+ownership metadata. SVG and PPTX consume that same geometry, and Markdown
+inherits it through embedded SVG artifacts. Per-frame projection retains only
+the owning page's tags, while combined compatibility output retains all bands.
 
 The entire reservation strip is a hard exclusion zone for normal items and
 text, local and UML connector paths and labels, and page-link paths and labels.
@@ -205,9 +198,8 @@ facing the other frame, then the stable order top, right, bottom, left.
 Frame-terminal attributes are cross-frame-only; same-frame use is an error.
 Manual bends remain logical
 connection metadata and do not steer the two local stubs.
-Excalidraw, SVG, PPTX, PDF, and Excel preserve the two page-local projections;
-graph adapters combine their shared logical connection ID into one XYFlow or
-Isoflow edge.
+SVG and PPTX preserve the two page-local projections. Markdown inherits the SVG
+projection it embeds.
 
 Metadata reservation is applied after that normal precedence. Without explicit
 frame-terminal geometry, unsafe candidates are excluded before the visual
@@ -437,9 +429,9 @@ uses ellipses for initial/final nodes, diamonds for decision-like nodes,
 rectangles with flattened text compartments for the other elements, and
 orthogonal semantic connectors for relations. Sequence order sets top-to-bottom
 connector anchors, and semantic owners do not imply spatial nesting. This keeps
-the resolved geometry shared by SVG, Excalidraw, PPTX, PDF, Excel, XYFlow, and
-Isoflow; target formats may omit UML metadata or marker details they cannot
-represent without private schema extensions.
+the resolved geometry shared by SVG and PPTX; Markdown inherits the SVG
+projection it embeds. An encoder may omit UML metadata or marker details it
+cannot represent without private schema extensions.
 
 ## Imports and overrides
 
@@ -495,9 +487,9 @@ layout stage.
 After layout, processors emit shared renderer-neutral operations for shapes,
 text, compartments, icons, ports, and semantic edges. Operations retain stable
 source IDs, semantic kind, parentage, text policy, geometry, style, and
-optional endpoint metadata. Output encoders project these operations into SVG,
-PPTX, PDF, Excel, Excalidraw, XYFlow, or another supported capability set without becoming
-alternate semantic models.
+optional endpoint metadata. Output encoders project these operations into SVG
+or PPTX without becoming alternate semantic models. Markdown composes generated
+SVG artifacts rather than defining a third rendering encoder.
 
 ## Delivery sequence
 

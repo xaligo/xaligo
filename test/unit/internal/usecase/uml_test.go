@@ -18,9 +18,9 @@ import (
 func TestUMLMetadataAndRelationLabelsReachSharedOutputs(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="640" height="360"><uml id="sequence"><sequence-diagram><participant id="user" title="User"/><lifeline id="api" title="API"/><message src="user" dst="api" order="1" title="submit()"/></sequence-diagram></uml></frame></frames></xaligo>`)
 	options := entity.RenderOptions{PxPerInch: 96}
-	scene, err := newUsecase().RenderExcalidraw(context.Background(), source, options)
+	scene, err := newUsecase().BuildScene(context.Background(), source, options)
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	for _, want := range []string{
 		`"xaligoUmlDiagramKind": "sequence-diagram"`,
@@ -47,9 +47,9 @@ func TestUMLMetadataAndRelationLabelsReachSharedOutputs(t *testing.T) {
 
 func TestUMLCommonRelationAnchorsUseShapeProfiles(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="900" height="520"><uml id="state"><state-machine-diagram direction="right"><state id="source" title="Source"/><state id="target" title="Target"/><state id="alternate" title="Alternate"/><choice id="choice"/><transition src="source" dst="target" src-anchor="right-5" dst-anchor="left-2"/><transition src="source" dst="choice" dst-anchor="top-5"/><transition src="choice" dst="target" src-anchor="right-1"/><transition src="choice" dst="alternate" src-anchor="bottom-2"/></state-machine-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var scene entity.PresentationScene
 	if err := json.Unmarshal(rawScene, &scene); err != nil {
@@ -223,9 +223,9 @@ func nearPointV1UsecaseUMLTest(got struct{ X, Y float64 }, wantX, wantY, toleran
 func TestUMLShapeKindsReachEditableSceneAndSharedPlan(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="activity"><activity-diagram direction="right"><action id="before"/><decision id="choice"/><action id="yes"/><action id="no"/><control-flow src="before" dst="choice"/><control-flow src="choice" dst="yes" guard="yes"/><control-flow src="choice" dst="no" guard="no"/></activity-diagram></uml></frame></frames></xaligo>`)
 	options := entity.RenderOptions{PxPerInch: 96}
-	scene, err := newUsecase().RenderExcalidraw(context.Background(), source, options)
+	scene, err := newUsecase().BuildScene(context.Background(), source, options)
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	if !strings.Contains(string(scene), `"type": "diamond"`) {
 		t.Fatalf("scene missing UML diamond: %s", scene)
@@ -241,9 +241,9 @@ func TestUMLShapeKindsReachEditableSceneAndSharedPlan(t *testing.T) {
 
 func TestUMLActivitySwimlanesReachEditableScene(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="960" height="640"><uml id="activity"><activity-diagram direction="down" lanes="vertical" theme="xaligo"><partition id="customer" title="Customer"><initial id="start"/><action id="enter-pin" title="Enter PIN" tone="primary"/><final id="done"/></partition><partition id="atm" title="ATM"><action id="request-pin" title="Request PIN"/><decision id="pin-valid" title="PIN valid?"/></partition><control-flow src="start" dst="enter-pin"/><control-flow src="enter-pin" dst="request-pin"/><control-flow src="request-pin" dst="pin-valid"/><control-flow src="pin-valid" dst="request-pin" guard="invalid PIN" route="loop"/><control-flow src="pin-valid" dst="done" guard="valid"/></activity-diagram></uml></frame></frames></xaligo>`)
-	scene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	scene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	for _, want := range []string{
 		`"xaligoUmlPartition": true`,
@@ -262,9 +262,9 @@ func TestUMLActivitySwimlanesReachEditableScene(t *testing.T) {
 
 func TestUMLActivityHidesRedundantContainerBorderAndTitle(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" title="Activity Process" width="760" height="420"><uml id="activity"><activity-diagram direction="down" lanes="vertical" theme="xaligo"><partition id="customer" title="Customer"><action id="one" title="One"/></partition><partition id="system" title="System"><action id="two" title="Two"/></partition><control-flow src="one" dst="two"/></activity-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var scene map[string]any
 	if err := json.Unmarshal(rawScene, &scene); err != nil {
@@ -285,9 +285,9 @@ func TestUMLActivityHidesRedundantContainerBorderAndTitle(t *testing.T) {
 
 func TestUMLClassHidesRedundantContainerBorderAndTitle(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" title="Class Model" width="760" height="420"><uml id="classes" title="Domain Classes"><class-diagram><class id="user" title="User"><attribute>- id: int</attribute><operation>+ login()</operation></class></class-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var scene map[string]any
 	if err := json.Unmarshal(rawScene, &scene); err != nil {
@@ -308,9 +308,9 @@ func TestUMLClassHidesRedundantContainerBorderAndTitle(t *testing.T) {
 
 func TestUMLSequenceHidesRedundantContainerBorderAndTitle(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" title="Sequence Model" width="760" height="420"><uml id="sequence" title="Checkout Sequence"><sequence-diagram><participant id="user" title="User"/><lifeline id="api" title="API"/><message src="user" dst="api" order="1" title="submit()"/></sequence-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var scene map[string]any
 	if err := json.Unmarshal(rawScene, &scene); err != nil {
@@ -331,9 +331,9 @@ func TestUMLSequenceHidesRedundantContainerBorderAndTitle(t *testing.T) {
 
 func TestUMLStateMachineHidesRedundantContainerBorderAndTitle(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" title="State Machine" width="760" height="420"><uml id="state" title="Order State"><state-machine-diagram><initial id="start"/><state id="open" title="Open"/><final id="done"/><transition src="start" dst="open"/><transition src="open" dst="done"/></state-machine-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var scene map[string]any
 	if err := json.Unmarshal(rawScene, &scene); err != nil {
@@ -354,9 +354,9 @@ func TestUMLStateMachineHidesRedundantContainerBorderAndTitle(t *testing.T) {
 
 func TestUMLStateMachineCanHideCompartmentElementNames(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="1200" height="520"><uml id="state"><state-machine-diagram direction="right" show-element-names="false"><state id="hidden" title="Hidden"><entry>prepare order</entry><do>pack order</do></state><state id="visible" title="Visible" show-element-names="true"><exit>visible exit</exit></state><choice id="choice" title="Hidden Choice"/><state id="accepted" title="Accepted"/><state id="rejected" title="Rejected"/><transition src="hidden" dst="choice"/><transition src="choice" dst="accepted" guard="yes"/><transition src="choice" dst="rejected" guard="no"/></state-machine-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var scene entity.PresentationScene
 	if err := json.Unmarshal(rawScene, &scene); err != nil {
@@ -406,9 +406,9 @@ func TestUMLStateMachineCanHideCompartmentElementNames(t *testing.T) {
 
 func TestUMLStateMachineFinalRendersFinalDot(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="760" height="420"><uml id="state"><state-machine-diagram><initial id="start"/><state id="open" title="Open"/><final id="done"/><transition src="start" dst="open"/><transition src="open" dst="done"/></state-machine-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var scene map[string]any
 	if err := json.Unmarshal(rawScene, &scene); err != nil {
@@ -427,9 +427,9 @@ func TestUMLStateMachineFinalRendersFinalDot(t *testing.T) {
 
 func TestUMLStateMachinePseudostatesKeepCompactProportions(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="960" height="520"><uml id="state"><state-machine-diagram direction="right"><initial id="start"/><state id="open" title="Open"/><choice id="choice" title="Choice"/><state id="done-state" title="Done"/><final id="done"/><transition src="start" dst="open"/><transition src="open" dst="choice"/><transition src="choice" dst="done-state" guard="ok"/><transition src="choice" dst="open" guard="retry"/><transition src="done-state" dst="done"/></state-machine-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var scene entity.PresentationScene
 	if err := json.Unmarshal(rawScene, &scene); err != nil {
@@ -453,9 +453,9 @@ func TestUMLStateMachinePseudostatesKeepCompactProportions(t *testing.T) {
 
 func TestUMLStateMachineRowsSeparateBranches(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="960" height="620"><uml id="state"><state-machine-diagram direction="right"><initial id="start" row="1" col="1"/><state id="paid" title="Paid" row="1" col="2"/><final id="done" row="1" col="3"/><state id="refund" title="Refund" row="2" col="2"/><state id="cancelled" title="Cancelled" row="3" col="2"/><transition src="start" dst="paid"/><transition src="paid" dst="done"/><transition src="paid" dst="refund"/><transition src="refund" dst="cancelled"/></state-machine-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var scene entity.PresentationScene
 	if err := json.Unmarshal(rawScene, &scene); err != nil {
@@ -490,9 +490,9 @@ func TestUMLStateMachineRowsSeparateBranches(t *testing.T) {
 
 func TestUMLStateMachineGridColumnsAlignRelatedRows(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="1080" height="620"><uml id="state"><state-machine-diagram direction="right"><initial id="start" row="1" col="1"/><state id="paid" title="Paid" row="1" col="2"/><state id="shipped" title="Shipped" row="1" col="4"/><final id="done" row="1" col="5"/><state id="return" title="Return" row="2" col="4"/><state id="cancelled" title="Cancelled" row="3" col="4"/><transition src="start" dst="paid"/><transition src="paid" dst="shipped"/><transition src="shipped" dst="done"/><transition src="shipped" dst="return"/><transition src="return" dst="cancelled"/></state-machine-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var scene entity.PresentationScene
 	if err := json.Unmarshal(rawScene, &scene); err != nil {
@@ -521,9 +521,9 @@ func TestUMLStateMachineGridColumnsAlignRelatedRows(t *testing.T) {
 
 func TestUMLStateMachineConnectorsAvoidIntermediateStates(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="960" height="360"><uml id="state"><state-machine-diagram direction="right"><state id="left" title="Left" row="1" col="1"/><state id="middle" title="Middle" row="1" col="2"/><state id="right" title="Right" row="1" col="3"/><transition src="left" dst="right" event="skip middle"/></state-machine-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var scene entity.PresentationScene
 	if err := json.Unmarshal(rawScene, &scene); err != nil {
@@ -555,9 +555,9 @@ func TestUMLStateMachineConnectorsAvoidIntermediateStates(t *testing.T) {
 
 func TestUMLStateMachineBentConnectorsAvoidIntermediateStates(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="960" height="520"><uml id="state"><state-machine-diagram direction="right"><state id="left" title="Left" row="1" col="1"/><state id="middle" title="Middle" row="1" col="2"/><state id="right" title="Right" row="1" col="3"/><transition src="left" dst="right" event="skip middle"><bend x="480" y="300"/></transition></state-machine-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	middle, arrow := umlStateAndArrowV1UMLTest(t, rawScene, "middle", "left", "right")
 	assertArrowDoesNotCrossRectV1UMLTest(t, arrow, middle)
@@ -565,9 +565,9 @@ func TestUMLStateMachineBentConnectorsAvoidIntermediateStates(t *testing.T) {
 
 func TestUMLStateMachineBentRouteAvoidanceStaysInsideFrame(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="960" height="520"><uml id="state"><state-machine-diagram direction="right"><state id="left" title="Left" row="1" col="1"/><state id="middle" title="Middle" row="1" col="2"/><state id="right" title="Right" row="1" col="3"/><state id="cancelled" title="Cancelled" row="3" col="3"/><transition src="left" dst="cancelled" event="outside"><bend x="920" y="170"/><bend x="920" y="430"/></transition></state-machine-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	middle, arrow := umlStateAndArrowV1UMLTest(t, rawScene, "middle", "left", "cancelled")
 	assertArrowDoesNotCrossRectV1UMLTest(t, arrow, middle)
@@ -591,9 +591,9 @@ func TestUMLStateMachineSampleSVGRoutesStayInsideFrameAndAvoidStates(t *testing.
 
 func TestUMLStateMachineConceptLabelsReachEditableScene(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="960" height="520"><uml id="state"><state-machine-diagram direction="right"><initial id="start"/><state id="processing" title="Processing"><entry>reserve stock</entry><do>pack order</do><exit>publish event</exit><region>fulfilment</region></state><choice id="result" title="Result"/><final id="done"/><transition src="start" dst="processing" event="created"/><transition src="processing" dst="result" event="paymentCaptured" guard="stock available" action="ship"/><transition src="result" dst="done" guard="ok"/><transition src="result" dst="processing" guard="retry"/></state-machine-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	for _, want := range []string{`"text": "[stock available] / ship"`, `"xaligoUmlEvent": "paymentCaptured"`, `"xaligoUmlGuard": "stock available"`, `"xaligoUmlAction": "ship"`} {
 		if !strings.Contains(string(rawScene), want) {
@@ -630,9 +630,9 @@ func TestUMLStateMachineConceptLabelsReachEditableScene(t *testing.T) {
 
 func TestUMLActivityHorizontalSwimlanesReachEditableScene(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="760" height="420"><uml id="activity"><activity-diagram direction="right" lanes="horizontal" theme="xaligo"><partition id="customer" title="Customer"><initial id="start"/><action id="choose" title="Choose amount" tone="primary"/></partition><partition id="atm" title="ATM"><action id="read" title="Read card"/><final id="done"/></partition><control-flow src="start" dst="choose"/><control-flow src="choose" dst="read"/><control-flow src="read" dst="done"/></activity-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var scene map[string]any
 	if err := json.Unmarshal(rawScene, &scene); err != nil {
@@ -663,9 +663,9 @@ func TestUMLActivityElementsSupportCrossFramePageLinks(t *testing.T) {
 <frame id="overview" width="620" height="360"><uml id="start"><activity-diagram direction="right" lanes="horizontal"><partition id="actor" title="Actor"><action id="request" title="Request"/></partition></activity-diagram></uml><connection src="start/request" dst="detail.finish/done" src-frame-side="right" dst-frame-side="left"/></frame>
 <frame id="detail" width="620" height="360"><uml id="finish"><activity-diagram direction="right" lanes="horizontal"><partition id="system" title="System"><action id="done" title="Complete"/></partition></activity-diagram></uml></frame>
 </frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var scene map[string]any
 	if err := json.Unmarshal(rawScene, &scene); err != nil {
@@ -691,9 +691,9 @@ func TestUMLActivityElementsSupportCrossFramePageLinks(t *testing.T) {
 
 func TestUMLGuardLabelsDoNotOverlapTheirConnectorSegment(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="420" height="320"><uml id="activity"><activity-diagram direction="down"><action id="one" title="One"/><action id="two" title="Two"/><control-flow src="one" dst="two" guard="next step"/></activity-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var scene entity.PresentationScene
 	if err := json.Unmarshal(rawScene, &scene); err != nil {
@@ -734,9 +734,9 @@ func TestUMLGuardLabelsDoNotOverlapTheirConnectorSegment(t *testing.T) {
 
 func TestUMLComponentInterfacesReachEditableScene(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="760" height="420"><uml id="components"><component-diagram direction="right"><component id="web" title="Web UI"><interface description="Checkout commands">Ordering API</interface></component><component id="orders" title="Order Service"><interface description="Order workflow commands">Ordering API</interface></component><association src="web" dst="orders"/></component-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	scene := string(rawScene)
 	for _, want := range []string{
@@ -754,9 +754,9 @@ func TestUMLComponentInterfacesReachEditableScene(t *testing.T) {
 
 func TestUMLComponentCallerSocketAlignsWithInterfaceCircle(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="760" height="420"><uml id="components"><component-diagram direction="right"><component id="web" title="Web"><interface>Ordering API</interface></component><component id="orders" title="Orders"><interface>Ordering API</interface></component><association src="web" dst="orders"/></component-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var raw map[string]any
 	if err := json.Unmarshal(rawScene, &raw); err != nil {
@@ -803,9 +803,9 @@ func TestUMLComponentCallerSocketAlignsWithInterfaceCircle(t *testing.T) {
 
 func TestUMLComponentMultipleCallersRenderSeparateInterfaceCircles(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="980" height="520"><uml id="components"><component-diagram grid="3"><component id="web" title="Web"><interface>Shared API</interface></component><component id="worker" title="Worker"><interface>Shared API</interface></component><component id="api" title="API"><interface>Shared API</interface><interface>Admin API</interface></component><association src="web" dst="api"/><association src="worker" dst="api"/></component-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var raw map[string]any
 	if err := json.Unmarshal(rawScene, &raw); err != nil {
@@ -922,9 +922,9 @@ func TestUMLComponentLargerGraphBindsAllInterfaceAssociations(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var raw map[string]any
 	if err := json.Unmarshal(rawScene, &raw); err != nil {
@@ -1078,9 +1078,9 @@ func TestUMLComponentHeightCompactsInterfacesAndHonorsOverrides(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var raw map[string]any
 	if err := json.Unmarshal(rawScene, &raw); err != nil {
@@ -1139,9 +1139,9 @@ func TestUMLComponentHeightCompactsInterfacesAndHonorsOverrides(t *testing.T) {
 	}
 
 	overrideSource := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="900" height="420"><uml id="components"><component-diagram grid="2" component-height="180"><component id="default" title="Default"><interface>Default API</interface></component><component id="override" title="Override" height="220"><interface>Override API</interface></component></component-diagram></uml></frame></frames></xaligo>`)
-	overrideScene, err := newUsecase().RenderExcalidraw(context.Background(), overrideSource, entity.RenderOptions{PxPerInch: 96})
+	overrideScene, err := newUsecase().BuildScene(context.Background(), overrideSource, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw(overrides) error = %v", err)
+		t.Fatalf("BuildScene(overrides) error = %v", err)
 	}
 	if err := json.Unmarshal(overrideScene, &raw); err != nil {
 		t.Fatalf("json.Unmarshal(overrides) error = %v", err)
@@ -1163,9 +1163,9 @@ func TestUMLComponentHeightCompactsInterfacesAndHonorsOverrides(t *testing.T) {
 
 func TestUMLComponentInterfaceHorizontalPlacementIgnoresComponentWidth(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="900" height="360"><uml id="components"><component-diagram grid="2"><component id="standard" title="Standard" width="280"><interface>Standard API</interface></component><component id="wide" title="Wide" width="340"><interface>Wide API</interface></component></component-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var raw map[string]any
 	if err := json.Unmarshal(rawScene, &raw); err != nil {
@@ -1209,9 +1209,9 @@ func TestUMLComponentInterfaceHorizontalPlacementIgnoresComponentWidth(t *testin
 
 func TestUMLComponentInterfaceWidthAppliesToEveryInterfaceName(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="760" height="420"><uml id="components"><component-diagram><component id="workflow" title="Order Workflow" width="340" interface-width="88"><interface description="Command handler">Workflow Commands</interface><interface description="Inventory reservation">Inventory API</interface><interface description="Payment authorization">Payment Gateway</interface></component></component-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var raw map[string]any
 	if err := json.Unmarshal(rawScene, &raw); err != nil {
@@ -1234,12 +1234,12 @@ func TestUMLComponentInterfaceWidthAppliesToEveryInterfaceName(t *testing.T) {
 	}
 
 	invalid := []byte(`<xaligo version="1"><data></data><frames><frame id="main"><uml id="components"><component-diagram><component id="workflow" interface-width="0"><interface>Workflow Commands</interface></component></component-diagram></uml></frame></frames></xaligo>`)
-	if _, err := newUsecase().RenderExcalidraw(context.Background(), invalid, entity.RenderOptions{PxPerInch: 96}); err == nil || !strings.Contains(err.Error(), "interface-width") || !strings.Contains(err.Error(), "greater than zero") {
-		t.Fatalf("RenderExcalidraw(invalid interface-width) error = %v", err)
+	if _, err := newUsecase().BuildScene(context.Background(), invalid, entity.RenderOptions{PxPerInch: 96}); err == nil || !strings.Contains(err.Error(), "interface-width") || !strings.Contains(err.Error(), "greater than zero") {
+		t.Fatalf("BuildScene(invalid interface-width) error = %v", err)
 	}
 	overflow := []byte(`<xaligo version="1"><data></data><frames><frame id="main"><uml id="components"><component-diagram><component id="workflow" width="280" interface-width="260"><interface description="Command handler">Workflow Commands</interface></component></component-diagram></uml></frame></frames></xaligo>`)
-	if _, err := newUsecase().RenderExcalidraw(context.Background(), overflow, entity.RenderOptions{PxPerInch: 96}); err == nil || !strings.Contains(err.Error(), "interface-width") || !strings.Contains(err.Error(), "available") {
-		t.Fatalf("RenderExcalidraw(overflowing interface-width) error = %v", err)
+	if _, err := newUsecase().BuildScene(context.Background(), overflow, entity.RenderOptions{PxPerInch: 96}); err == nil || !strings.Contains(err.Error(), "interface-width") || !strings.Contains(err.Error(), "available") {
+		t.Fatalf("BuildScene(overflowing interface-width) error = %v", err)
 	}
 }
 
@@ -1369,9 +1369,9 @@ func axisAlignedSegmentCrossesRectInteriorV1Test(start, end [2]float64, rect [4]
 
 func TestUMLComponentManyInterfacesStayInsideOwner(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="1280" height="720"><uml id="components"><component-diagram grid="3"><component id="web" title="Web"><interface>Shared API</interface></component><component id="mobile" title="Mobile"><interface>Shared API</interface></component><component id="kiosk" title="Kiosk"><interface>Shared API</interface></component><component id="partner" title="Partner"><interface>Shared API</interface></component><component id="batch" title="Batch"><interface>Shared API</interface></component><component id="hub" title="Integration Hub"><interface>Shared API</interface><interface>Admin API</interface><interface>Audit API</interface><interface>Billing API</interface><interface>Inventory API</interface><interface>Reporting API</interface></component><association src="web" dst="hub"/><association src="mobile" dst="hub"/><association src="kiosk" dst="hub"/><association src="partner" dst="hub"/><association src="batch" dst="hub"/></component-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var raw map[string]any
 	if err := json.Unmarshal(rawScene, &raw); err != nil {
@@ -1527,9 +1527,9 @@ func TestUMLComponentManyInterfacesStayInsideOwner(t *testing.T) {
 
 func TestUMLComponentDescriptionTextFollowsRebalancedInterfaces(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="1480" height="760"><uml id="components"><component-diagram grid="3"><component id="web" title="Web"><interface>Ordering API</interface></component><component id="admin" title="Admin"><interface>Operations API</interface></component><component id="api" title="API Gateway"><interface description="Public ordering boundary">Ordering API</interface><interface description="Back-office boundary">Operations API</interface><interface description="Workflow command boundary">Workflow Commands</interface></component><component id="workflow" title="Order Workflow"><interface description="Workflow command handler">Workflow Commands</interface><interface description="Inventory reservation">Inventory API</interface><interface description="Payment authorization">Payment Gateway</interface><interface description="Persistence boundary">Order Store</interface></component><component id="inventory" title="Inventory"><interface>Inventory API</interface></component><component id="payment" title="Payment"><interface>Payment Gateway</interface></component><component id="repository" title="Repository"><interface>Order Store</interface></component><association src="web" dst="api"/><association src="admin" dst="api"/><association src="api" dst="workflow"/><association src="workflow" dst="inventory"/><association src="workflow" dst="payment"/><association src="workflow" dst="repository"/></component-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var raw map[string]any
 	if err := json.Unmarshal(rawScene, &raw); err != nil {
@@ -1673,9 +1673,9 @@ func TestUMLRelationBendsReachEditableScene(t *testing.T) {
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			rawScene, err := newUsecase().RenderExcalidraw(context.Background(), test.source, entity.RenderOptions{PxPerInch: 96})
+			rawScene, err := newUsecase().BuildScene(context.Background(), test.source, entity.RenderOptions{PxPerInch: 96})
 			if err != nil {
-				t.Fatalf("RenderExcalidraw() error = %v", err)
+				t.Fatalf("BuildScene() error = %v", err)
 			}
 			if !strings.Contains(string(rawScene), `"xaligoConnectorBends":`) {
 				t.Fatalf("UML relation bend metadata missing: %s", rawScene)
@@ -1701,9 +1701,9 @@ func TestUMLRelationBendsReachEditableScene(t *testing.T) {
 
 func TestUMLRelationLabelsAvoidEndpointItems(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="360"><uml id="state"><state-machine-diagram direction="right"><state id="left" title="Left" row="1" col="1"/><state id="right" title="Right" row="1" col="2"/><transition src="left" dst="right" event="label" action="that should avoid boxes"><bend x="360" y="180"/></transition></state-machine-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var scene entity.PresentationScene
 	if err := json.Unmarshal(rawScene, &scene); err != nil {
@@ -1995,9 +1995,9 @@ func segmentIntersectsRectV1UMLTest(x1, y1, x2, y2, rx, ry, rw, rh float64) bool
 
 func TestUMLSequenceOrderControlsVerticalMessageAnchors(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="sequence"><sequence-diagram><participant id="a"/><lifeline id="b"/><message src="a" dst="b" order="1"/><message src="b" dst="b" order="2"/><return-message src="b" dst="a" order="3"/></sequence-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var scene entity.PresentationScene
 	if err := json.Unmarshal(rawScene, &scene); err != nil {
@@ -2109,9 +2109,9 @@ func TestUMLSequenceSelfMessageSVGAlignsWithActivationBar(t *testing.T) {
 
 func TestUMLSequenceCallerActivationCoversChildMessageStart(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="sequence"><sequence-diagram><participant id="customer"/><lifeline id="api"/><lifeline id="session"/><message src="customer" dst="api" order="1" title="checkout"/><create-message src="api" dst="session" order="1.1" title="create"/><return-message src="session" dst="api" order="1.2" title="created"/><return-message src="api" dst="customer" order="2" title="ok"/></sequence-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var scene entity.PresentationScene
 	if err := json.Unmarshal(rawScene, &scene); err != nil {
@@ -2142,9 +2142,9 @@ func TestUMLSequenceCallerActivationCoversChildMessageStart(t *testing.T) {
 
 func TestUMLSequenceActivationCoversReturnAndCleanupMessages(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="960" height="520"><uml id="sequence"><sequence-diagram><participant id="customer"/><lifeline id="api"/><lifeline id="session"/><message src="customer" dst="api" order="1" title="checkout"/><create-message src="api" dst="session" order="1.1" title="create"/><message src="session" dst="session" order="1.2" title="validate"/><return-message src="session" dst="api" order="1.3" title="receipt"/><message src="api" dst="session" order="1.4" title="release"/><return-message src="api" dst="customer" order="2" title="ok"/></sequence-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var scene entity.PresentationScene
 	if err := json.Unmarshal(rawScene, &scene); err != nil {
@@ -2188,9 +2188,9 @@ func TestUMLSequenceActivationCoversReturnAndCleanupMessages(t *testing.T) {
 
 func TestUMLSequenceSuppressesContainedActivationBars(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="960" height="520"><uml id="sequence"><sequence-diagram><participant id="customer"/><lifeline id="session"/><message src="customer" dst="session" order="1" title="checkout"/><message src="session" dst="session" order="1.1" title="validate"/><return-message src="session" dst="customer" order="2" title="ok"/></sequence-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var scene entity.PresentationScene
 	if err := json.Unmarshal(rawScene, &scene); err != nil {
@@ -2223,9 +2223,9 @@ func TestUMLSequenceSuppressesContainedActivationBars(t *testing.T) {
 
 func TestUMLSequenceMessagesRenderActivationBars(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="sequence"><sequence-diagram><participant id="user" title="User"/><lifeline id="api" title="API"/><lifeline id="worker" title="Worker"/><message src="user" dst="api" order="1" title="submit()"/><create-message src="api" dst="worker" order="2" title="create"/><return-message src="worker" dst="api" order="3" title="ok"/><destroy-message src="api" dst="worker" order="4" title="destroy"/></sequence-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var scene entity.PresentationScene
 	if err := json.Unmarshal(rawScene, &scene); err != nil {
@@ -2248,9 +2248,9 @@ func TestUMLSequenceMessagesRenderActivationBars(t *testing.T) {
 
 func TestUMLSequenceMessagesUseResponseAndStopNotation(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="sequence"><sequence-diagram><participant id="user" title="User"/><lifeline id="api" title="API"/><lifeline id="worker" title="Worker"/><message src="user" dst="api" order="1" title="submit()"/><create-message src="api" dst="worker" order="2" title="create"/><return-message src="worker" dst="api" order="3" title="ok"/><destroy-message src="api" dst="worker" order="4" title="destroy"/></sequence-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var scene entity.PresentationScene
 	if err := json.Unmarshal(rawScene, &scene); err != nil {
@@ -2279,9 +2279,9 @@ func TestUMLSequenceMessagesUseResponseAndStopNotation(t *testing.T) {
 
 func TestUMLSequenceMessagesDistinguishSyncAndAsyncNotation(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="sequence"><sequence-diagram><participant id="client" title="Client"/><lifeline id="filterChain" title="FilterChain"/><lifeline id="filter" title="Filter"/><message src="client" dst="filterChain" order="1" title="request"/><message src="filterChain" dst="filter" order="2" title="doFilter" mode="async"/></sequence-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var scene entity.PresentationScene
 	if err := json.Unmarshal(rawScene, &scene); err != nil {
@@ -2303,9 +2303,9 @@ func TestUMLSequenceMessagesDistinguishSyncAndAsyncNotation(t *testing.T) {
 
 func TestUMLSequenceParticipantsRenderAsLifelines(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="sequence"><sequence-diagram><participant id="client" title="Client"/><lifeline id="filterChain" title="FilterChain"/><lifeline id="filter" title="Filter"/><message src="client" dst="filterChain" order="1" title="request"/><message src="filterChain" dst="filter" order="2" title="doFilter" mode="async"/></sequence-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var scene entity.PresentationScene
 	if err := json.Unmarshal(rawScene, &scene); err != nil {
@@ -2341,9 +2341,9 @@ func TestUMLSequenceParticipantsRenderAsLifelines(t *testing.T) {
 func TestUMLAggregationAndCompositionRemainHeadlessAtDestination(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="classes"><class-diagram><class id="whole"/><class id="aggregate"/><class id="composite"/><aggregation src="whole" dst="aggregate"/><composition src="whole" dst="composite"/></class-diagram></uml></frame></frames></xaligo>`)
 	options := entity.RenderOptions{PxPerInch: 96}
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, options)
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, options)
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var scene entity.PresentationScene
 	if err := json.Unmarshal(rawScene, &scene); err != nil {
@@ -2396,9 +2396,9 @@ func TestUMLAggregationAndCompositionRemainHeadlessAtDestination(t *testing.T) {
 
 func TestUMLClassStereotypeAndModifiersReachEditableScene(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="640" height="360"><uml id="classes"><class-diagram><class id="repository" title="Repository" stereotype="service" abstract="true" static="true"><attribute>- store: Store</attribute><operation>+ find(id): Entity</operation></class></class-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var scene entity.PresentationScene
 	if err := json.Unmarshal(rawScene, &scene); err != nil {
@@ -2506,22 +2506,13 @@ func TestUMLClassStereotypeAndModifiersReachEditableScene(t *testing.T) {
 	if !foundBodyDivider {
 		t.Fatalf("class attribute/operation body divider missing: %s", rawScene)
 	}
-	xyflow, err := newUsecase().RenderXYFlow(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
-	if err != nil {
-		t.Fatalf("RenderXYFlow() error = %v", err)
-	}
-	for _, want := range []string{`"umlStereotype": "service"`, `"umlAbstract": "true"`, `"umlStatic": "true"`} {
-		if !strings.Contains(string(xyflow), want) {
-			t.Fatalf("XYFlow missing %q: %s", want, xyflow)
-		}
-	}
 }
 
 func TestUMLClassStereotypeWithoutCompartmentsStaysInHeader(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="640" height="360"><uml id="classes"><class-diagram><class id="repository" title="Repository" stereotype="service" font-size="24"/></class-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	classElement, ok := umlElementPositionsV1UMLTest(t, rawScene)["repository"]
 	if !ok {
@@ -2565,9 +2556,9 @@ func TestUMLClassStereotypeWithoutCompartmentsStaysInHeader(t *testing.T) {
 
 func TestUMLClassCompartmentRenderingPreservesSourceOrder(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="640" height="360"><uml id="classes"><class-diagram><class id="repository" title="Repository"><operation>+ open()</operation><attribute>- store: Store</attribute><operation>+ close()</operation></class></class-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	var raw map[string]any
 	if err := json.Unmarshal(rawScene, &raw); err != nil {
@@ -2602,9 +2593,9 @@ func TestUMLClassCompartmentRenderingPreservesSourceOrder(t *testing.T) {
 
 func TestUMLClassMultilineCompartmentsContributeEveryLineToHeight(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="640" height="360"><uml id="classes"><class-diagram><class id="repository" title="Repository"><attribute>- primary: Store&#10;- replica: Store</attribute><operation>+ open()&#10;+ close()</operation></class></class-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	positions := umlElementPositionsV1UMLTest(t, rawScene)
 	classElement, ok := positions["repository"]
@@ -2645,9 +2636,9 @@ func TestUMLClassMultilineCompartmentsContributeEveryLineToHeight(t *testing.T) 
 
 func TestUMLClassCompartmentsUseConfiguredFontSizeForIntrinsicHeight(t *testing.T) {
 	source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="640" height="520"><uml id="classes"><class-diagram><class id="repository" title="Repository" stereotype="service" font-size="24"><attribute>- primary: Store&#10;- replica: Store&#10;- archive: Store</attribute><operation>+ open()&#10;+ close()&#10;+ archive()</operation></class></class-diagram></uml></frame></frames></xaligo>`)
-	rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
-		t.Fatalf("RenderExcalidraw() error = %v", err)
+		t.Fatalf("BuildScene() error = %v", err)
 	}
 	positions := umlElementPositionsV1UMLTest(t, rawScene)
 	classElement, ok := positions["repository"]
@@ -2697,9 +2688,9 @@ func TestUMLSequenceOrderAnchorsRemainTopToBottomForEveryConnectionSide(t *testi
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			source := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="720" height="420"><uml id="sequence"><sequence-diagram><participant id="a"/><lifeline id="b"/><message src="a" dst="b" order="1" ` + test.sides + `/><message src="a" dst="b" order="2" ` + test.sides + `/><message src="a" dst="b" order="3" ` + test.sides + `/></sequence-diagram></uml></frame></frames></xaligo>`)
-			rawScene, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+			rawScene, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 			if err != nil {
-				t.Fatalf("RenderExcalidraw() error = %v", err)
+				t.Fatalf("BuildScene() error = %v", err)
 			}
 			var scene entity.PresentationScene
 			if err := json.Unmarshal(rawScene, &scene); err != nil {
@@ -2733,44 +2724,5 @@ func TestUMLSequenceOrderAnchorsRemainTopToBottomForEveryConnectionSide(t *testi
 				}
 			}
 		})
-	}
-}
-
-func TestUMLCrossFramePublicReferenceReachesGraphOutputs(t *testing.T) {
-	source := []byte(`<xaligo version="1"><data></data><frames>
-<frame id="overview" width="720" height="420"><rectangle id="caller" title="Caller"/><connection src="caller" dst="detail.domain/order"/></frame>
-<frame id="detail" width="720" height="420"><uml id="domain"><class-diagram><class id="order" title="Order"/></class-diagram></uml></frame>
-</frames></xaligo>`)
-	options := entity.RenderOptions{PxPerInch: 96, Theme: "light"}
-
-	rawXYFlow, err := newUsecase().RenderXYFlow(context.Background(), source, options)
-	if err != nil {
-		t.Fatalf("RenderXYFlow() error = %v", err)
-	}
-	var xyflow entity.XYFlowDocument
-	if err := json.Unmarshal(rawXYFlow, &xyflow); err != nil {
-		t.Fatalf("json.Unmarshal(XYFlow) error = %v", err)
-	}
-	if len(xyflow.Edges) != 1 || xyflow.Edges[0].Source == "" || xyflow.Edges[0].Target == "" || xyflow.Edges[0].Source == xyflow.Edges[0].Target {
-		t.Fatalf("XYFlow cross-frame UML edge = %#v", xyflow.Edges)
-	}
-	if crossFrame, _ := xyflow.Edges[0].Data["crossFrame"].(bool); !crossFrame {
-		t.Fatalf("XYFlow edge missing cross-frame metadata: %#v", xyflow.Edges[0])
-	}
-
-	rawIsoflow, err := newUsecase().RenderIsoflow(context.Background(), source, options)
-	if err != nil {
-		t.Fatalf("RenderIsoflow() error = %v", err)
-	}
-	var isoflow entity.IsoflowDocument
-	if err := json.Unmarshal(rawIsoflow, &isoflow); err != nil {
-		t.Fatalf("json.Unmarshal(Isoflow) error = %v", err)
-	}
-	if len(isoflow.Views) != 1 || len(isoflow.Views[0].Connectors) != 1 {
-		t.Fatalf("Isoflow cross-frame UML connectors = %#v", isoflow.Views)
-	}
-	anchors := isoflow.Views[0].Connectors[0].Anchors
-	if len(anchors) < 2 || anchors[0].Ref.Item == "" || anchors[len(anchors)-1].Ref.Item == "" || anchors[0].Ref.Item == anchors[len(anchors)-1].Ref.Item {
-		t.Fatalf("Isoflow cross-frame UML anchors = %#v", anchors)
 	}
 }

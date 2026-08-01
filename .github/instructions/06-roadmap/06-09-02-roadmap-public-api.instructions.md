@@ -7,14 +7,9 @@ applyTo: ".github/instructions/manual/**"
 ### Public API
 
 ```go
-RenderExcalidraw()
 RenderSVG()
 RenderArtifacts()
 RenderPPTX()
-RenderPDF()
-RenderExcel()
-RenderXYFlow()
-RenderIsoflow()
 ```
 
 Current target API shape:
@@ -23,3 +18,7 @@ Current target API shape:
 Render(ctx, input, RenderOptions{Mode: mode, Format: format}) ([]byte, error)
 Validate(ctx, input) error
 ```
+
+Only `svg` and `pptx` are valid `RenderOptions.Format` values. Markdown uses
+the SVG artifact API. The V1 scene builder is internal and must not be exposed
+as a format convenience API.

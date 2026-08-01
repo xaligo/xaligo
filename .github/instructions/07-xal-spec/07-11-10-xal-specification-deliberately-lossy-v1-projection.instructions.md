@@ -21,12 +21,9 @@ capabilities common to xaligo outputs:
   fragments, or a separate vertical event axis;
 - current V1 UML elements do not support semantic ownership.
 
-SVG, Excalidraw, PPTX, PDF, Excel, XYFlow, and Isoflow all consume this same resolved
-geometry. Excalidraw-compatible output carries xaligo UML custom data for
-editing. XYFlow retains UML node and relation fields in node/edge `data` and
-records the projected node shape. Isoflow projects every connected UML shape
-to a labeled generic endpoint icon because its upstream connector schema has no
-arbitrary UML data field. Another target schema may omit marker details it
-cannot represent. An encoder must use native target constructs where available
-and must not add private schema-breaking fields. The output is not XMI and is not a
-lossless UML interchange representation.
+SVG and PPTX consume this same resolved geometry, and Markdown inherits the
+SVG projection. The temporary V1 compatibility scene may carry richer xaligo
+UML metadata internally, but it is not an output or interchange contract. An
+encoder must use native target constructs where available and must not add
+private schema-breaking fields. The output is not XMI and is not a lossless
+UML interchange representation.

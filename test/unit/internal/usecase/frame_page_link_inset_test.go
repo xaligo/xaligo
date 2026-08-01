@@ -150,7 +150,7 @@ func TestCrossFrameZeroInsetCoincidentFrameEndpointIsRejected(t *testing.T) {
 		{
 			name: "render",
 			run: func() error {
-				_, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{Theme: "light"})
+				_, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{Theme: "light"})
 				return err
 			},
 		},
@@ -388,7 +388,7 @@ func TestCrossFrameNarrowMetadataSafeRangeKeepsAutomaticCoincidenceInsideFrame(t
 
 func renderPageLinkInsetScene(t *testing.T, source []byte) sceneFile {
 	t.Helper()
-	out, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{Theme: "light"})
+	out, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{Theme: "light"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -501,17 +501,17 @@ func assertValidateAndRenderPageLinkInsetErrorTest(t *testing.T, source []byte, 
 		}
 	}
 
-	_, renderErr := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{Theme: "light"})
+	_, renderErr := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{Theme: "light"})
 	if renderErr == nil {
-		t.Fatalf("RenderExcalidraw() error = nil, want positioned page-link diagnostic containing %q", needles)
+		t.Fatalf("BuildScene() error = nil, want positioned page-link diagnostic containing %q", needles)
 	}
 	var positionedErr *entity.ParseError
 	if !errors.As(renderErr, &positionedErr) || positionedErr.Position.Line != wantLine || positionedErr.Position.Column == 0 {
-		t.Fatalf("RenderExcalidraw() error = %T %v, want ParseError on line %d with a non-zero column", renderErr, renderErr, wantLine)
+		t.Fatalf("BuildScene() error = %T %v, want ParseError on line %d with a non-zero column", renderErr, renderErr, wantLine)
 	}
 	for _, needle := range needles {
 		if !strings.Contains(renderErr.Error(), needle) {
-			t.Fatalf("RenderExcalidraw() error = %v, want %q", renderErr, needle)
+			t.Fatalf("BuildScene() error = %v, want %q", renderErr, needle)
 		}
 	}
 }

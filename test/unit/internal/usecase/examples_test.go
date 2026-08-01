@@ -33,25 +33,23 @@ func TestRenderExamplesThroughPublicUseCases(t *testing.T) {
 		t.Fatal(err)
 	}
 	cases := []struct {
-		name       string
-		file       string
-		services   []byte
-		wantScene  string
-		wantSVG    string
-		wantXYFlow string
-		wantIso    string
+		name      string
+		file      string
+		services  []byte
+		wantScene string
+		wantSVG   string
 	}{
-		{"sample", "sample.xal", servicesCSV, `"type": "excalidraw"`, `<svg`, `"nodes"`, `"version": "3.3.0"`},
-		{"line variants", "line-variants.xal", nil, `"type": "excalidraw"`, `<svg`, `"edges"`, `"connectors"`},
-		{"junctions", "junctions.xal", nil, `"type": "excalidraw"`, `<svg`, `"edges"`, `"connectors"`},
-		{"complex hybrid", "complex-hybrid-architecture.xal", nil, `"type": "excalidraw"`, `<svg`, `"nodes"`, `"version": "3.3.0"`},
-		{"onprem access", "onprem-access.xal", onpremServicesCSV, `"type": "excalidraw"`, `<svg`, `"nodes"`, `"version": "3.3.0"`},
-		{"tabler", "tabler.xal", nil, `"type": "excalidraw"`, `<svg`, `"nodes"`, `"version": "3.3.0"`},
-		{"yamaha", "yamaha-icons.xal", nil, `"type": "excalidraw"`, `<svg`, `"nodes"`, `"version": "3.3.0"`},
-		{"UML class", "uml-class.xal", nil, `"xaligoCrossFrame": true`, `Repository Contract`, `"crossFrame": true`, `"connectors"`},
-		{"canonical V1 envelope", "canonical-v1-envelope.xal", nil, `to \u003cdatabase-detail\u003e`, `from &lt;overview&gt;`, `"crossFrame": true`, `"connectors"`},
-		{"cross-frame page links", "page-links.xal", nil, `to \u003cservice-detail\u003e`, `from &lt;overview&gt;`, `"crossFrame": true`, `"connectors"`},
-		{"frame metadata", "frame-metadata.xal", nil, `"xaligoFrameMetadata": true`, `AWS Architecture`, `"crossFrame": true`, `"connectors"`},
+		{"sample", "sample.xal", servicesCSV, `"type": "excalidraw"`, `<svg`},
+		{"line variants", "line-variants.xal", nil, `"type": "excalidraw"`, `<svg`},
+		{"junctions", "junctions.xal", nil, `"type": "excalidraw"`, `<svg`},
+		{"complex hybrid", "complex-hybrid-architecture.xal", nil, `"type": "excalidraw"`, `<svg`},
+		{"onprem access", "onprem-access.xal", onpremServicesCSV, `"type": "excalidraw"`, `<svg`},
+		{"tabler", "tabler.xal", nil, `"type": "excalidraw"`, `<svg`},
+		{"yamaha", "yamaha-icons.xal", nil, `"type": "excalidraw"`, `<svg`},
+		{"UML class", "uml-class.xal", nil, `"xaligoCrossFrame": true`, `Repository Contract`},
+		{"canonical V1 envelope", "canonical-v1-envelope.xal", nil, `to \u003cdatabase-detail\u003e`, `from &lt;overview&gt;`},
+		{"cross-frame page links", "page-links.xal", nil, `to \u003cservice-detail\u003e`, `from &lt;overview&gt;`},
+		{"frame metadata", "frame-metadata.xal", nil, `"xaligoFrameMetadata": true`, `AWS Architecture`},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -60,7 +58,7 @@ func TestRenderExamplesThroughPublicUseCases(t *testing.T) {
 				t.Fatal(err)
 			}
 			opts := entity.RenderOptions{Theme: "light", PxPerInch: 96, ServicesCSV: tc.services, Mode: usecase.ModeNetwork}
-			scene, err := newUsecase().RenderExcalidraw(context.Background(), source, opts)
+			scene, err := newUsecase().BuildScene(context.Background(), source, opts)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -75,20 +73,6 @@ func TestRenderExamplesThroughPublicUseCases(t *testing.T) {
 			}
 			if !strings.Contains(string(svg), tc.wantSVG) {
 				t.Fatalf("svg output missing %q", tc.wantSVG)
-			}
-			xyflow, err := newUsecase().RenderXYFlow(context.Background(), source, opts)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !strings.Contains(string(xyflow), tc.wantXYFlow) {
-				t.Fatalf("xyflow output missing %q", tc.wantXYFlow)
-			}
-			isoflow, err := newUsecase().RenderIsoflow(context.Background(), source, opts)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !strings.Contains(string(isoflow), tc.wantIso) {
-				t.Fatalf("isoflow output missing %q", tc.wantIso)
 			}
 			plan, err := newUsecase().BuildPPTXPlan(context.Background(), source, opts)
 			if err != nil {
@@ -108,7 +92,7 @@ func TestRenderActivityCrossFrameTargetExample(t *testing.T) {
 		t.Fatal(err)
 	}
 	opts := entity.RenderOptions{Theme: "light", PxPerInch: 96, Mode: usecase.ModeNetwork}
-	scene, err := newUsecase().RenderExcalidraw(context.Background(), source, opts)
+	scene, err := newUsecase().BuildScene(context.Background(), source, opts)
 	if err != nil {
 		t.Fatal(err)
 	}

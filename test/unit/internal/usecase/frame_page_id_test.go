@@ -19,7 +19,7 @@ func TestFramePageIdentityDoesNotCollapsePunctuation(t *testing.T) {
 </xaligo>`)
 
 	uc := newUsecase()
-	sceneJSON, err := uc.RenderExcalidraw(context.Background(), input, entity.RenderOptions{Theme: "light"})
+	sceneJSON, err := uc.BuildScene(context.Background(), input, entity.RenderOptions{Theme: "light"})
 	if err != nil {
 		t.Fatal(err)
 	}

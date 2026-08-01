@@ -233,11 +233,9 @@ func TestV1RouteHeadlessValidationIsSharedByPublicRenderFormats(t *testing.T) {
 		format entity.Format
 		call   func(context.Context, []byte, entity.RenderOptions) ([]byte, error)
 	}{
-		{name: "Excalidraw", format: usecase.FormatExcalidraw, call: renderUsecase.RenderExcalidraw},
+		{name: "Internal scene", format: usecase.FormatSVG, call: renderUsecase.BuildScene},
 		{name: "SVG", format: usecase.FormatSVG, call: renderUsecase.RenderSVG},
 		{name: "PPTX", format: usecase.FormatPPTX, call: renderUsecase.RenderPPTX},
-		{name: "XYFlow", format: usecase.FormatXYFlow, call: renderUsecase.RenderXYFlow},
-		{name: "Isoflow", format: usecase.FormatIsoflow, call: renderUsecase.RenderIsoflow},
 	}
 	for _, renderer := range renders {
 		t.Run(renderer.name, func(t *testing.T) {

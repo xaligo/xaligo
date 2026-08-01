@@ -108,16 +108,6 @@ jobs:
       - name: Build browser WebAssembly adapter
         run: GOOS=js GOARCH=wasm go build -o /tmp/xaligo-browser.wasm ./cmd/wasm
 
-      - name: Verify native document encoders stay out of browser WebAssembly
-        shell: bash
-        run: |
-          set -euo pipefail
-          dependencies="$(GOOS=js GOARCH=wasm go list -deps ./cmd/wasm)"
-          if grep -Eq '^(github.com/tdewolff/canvas($|/)|github.com/xuri/excelize/v2($|/))' <<< "$dependencies"; then
-            echo "Native PDF/Excel dependencies entered the browser WebAssembly graph." >&2
-            exit 1
-          fi
-
   external:
     name: TypeScript test
     runs-on: ubuntu-latest

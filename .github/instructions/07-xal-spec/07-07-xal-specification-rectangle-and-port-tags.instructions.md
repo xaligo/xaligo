@@ -33,6 +33,5 @@ also comes from `title` or direct text content, and it supports `font-size`.
 Port boxes must remain inside their parent rectangle. Explicit positions are
 normalized before drawing, and overlapping ports on the same side are a layout
 diagnostic rather than a renderer-specific accident. Port text carries the
-shared text-layout policy: SVG, its PDF/Excel projections, and PPTX enforce it,
-while editable Excalidraw-compatible output preserves it in metadata for
-bound-text consumers.
+shared text-layout policy, which SVG and PPTX enforce identically. Markdown
+inherits the SVG result.

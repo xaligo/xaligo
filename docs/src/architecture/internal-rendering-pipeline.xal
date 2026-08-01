@@ -64,14 +64,6 @@
               <rectangle id="load-assets" title="LookupCatalogByID()" width="170" font-size="13">
                 <port id="asset-data" side="top" title="catalog + icons" width="104" font-size="8" />
               </rectangle>
-              <rectangle id="render-xyflow" title="XYFlow.Render()" width="170" font-size="13">
-                <port id="xyflow-scene" side="top" title="PresentationScene" width="116" font-size="8" />
-                <port id="xyflow-output" side="bottom" title="XYFlow bytes" width="84" font-size="8" />
-              </rectangle>
-              <rectangle id="render-isoflow" title="Isoflow.RenderWithIcons()" width="184" font-size="11">
-                <port id="isoflow-scene" side="top" title="PresentationScene" width="116" font-size="8" />
-                <port id="isoflow-output" side="bottom" title="Isoflow bytes" width="84" font-size="8" />
-              </rectangle>
               <rectangle id="render-svg" title="SVG.Render()" width="170" font-size="13">
                 <port id="svg-plan" side="top" title="Plan / DrawOp" width="100" font-size="8" />
                 <port id="svg-output" side="bottom" title="SVG bytes" width="72" font-size="8" />
@@ -189,8 +181,6 @@
     <connection src="box-tree" dst="scene-boxes" />
     <connection src="scene-data" dst="plan-scene" />
     <connection src="asset-data" dst="scene-assets" />
-    <connection src="scene-data" dst="xyflow-scene" />
-    <connection src="scene-data" dst="isoflow-scene" />
     <connection src="plan-data" dst="svg-plan" />
     <connection src="plan-data" dst="repo-plan" />
     <connection src="config-data" dst="controller-config" />

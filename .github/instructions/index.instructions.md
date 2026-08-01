@@ -305,6 +305,6 @@ Search this file directly, for example: `rg -i "metadata|page-link|WASM" .github
 - 11.03 [Step 3 — Create a .xal file](11-diagram-creation/11-03-diagram-creation-step-3-create-a-xal-file.instructions.md) — keywords: diagram, authoring, services, Create, .xal, file
   - 11.03.01 [Choosing the right group tag](11-diagram-creation/11-03-01-diagram-creation-choosing-the-right-group-tag.instructions.md) — keywords: diagram, authoring, services, Choosing, right, tag, capability, implemented
   - 11.03.02 [Service Scope Validation](11-diagram-creation/11-03-02-diagram-creation-service-scope-validation.instructions.md) — keywords: diagram, authoring, services, Service, Scope, Validation, assets, catalog
-- 11.04 [Step 4 — Render the Excalidraw file](11-diagram-creation/11-04-diagram-creation-step-4-render-the-excalidraw-file.instructions.md) — keywords: diagram, authoring, services, Render, Excalidraw, file, scene
+- 11.04 [Step 4 — Render SVG](11-diagram-creation/11-04-diagram-creation-step-4-render-svg.instructions.md) — keywords: diagram, authoring, services, Render, SVG
 - 11.05 [Command Reference](11-diagram-creation/11-05-diagram-creation-command-reference.instructions.md) — keywords: diagram, authoring, services, Command, Reference, CLI
 - 11.06 [PPTX Notes](11-diagram-creation/11-06-diagram-creation-pptx-notes.instructions.md) — keywords: diagram, authoring, services, PPTX, Notes, PowerPoint

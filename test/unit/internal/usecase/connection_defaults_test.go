@@ -65,7 +65,7 @@ func renderGroupedConnectionV1DefaultsTest(t *testing.T, groupAttrs, childAttrs 
     <connection src="source" dst="target" ` + childAttrs + ` />
   </connections>
 </frame>`)
-	out, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{Theme: "light"})
+	out, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{Theme: "light"})
 	if err != nil {
 		t.Fatal(err)
 	}

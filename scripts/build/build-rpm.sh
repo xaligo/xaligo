@@ -70,7 +70,7 @@ License: MIT AND Zlib
 URL: ${PACKAGE_URL}
 
 %description
-xaligo renders the .xal diagram DSL to Excalidraw, SVG, PPTX, XYFlow, and Isoflow formats.
+xaligo renders the .xal diagram DSL to SVG and PPTX, with SVG embedding for Markdown.
 
 %install
 mkdir -p %{buildroot}/usr/bin

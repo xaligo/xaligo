@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 
 	"github.com/xaligo/xaligo/internal/entity"
 	"github.com/xaligo/xaligo/internal/share"
@@ -13,12 +12,10 @@ import (
 
 var (
 	logger     = share.DefaultLogger()
-	IRPEPWX001 = share.NewMCode("IRPEPWX-001", "Export PPTX with exporter generated output")
 	IRPEPWX002 = share.NewMCode("IRPEPWX-002", "Export PPTX bytes generated output")
 )
 
 type PowerpointRepository interface {
-	WritePptx(context.Context, entity.PptxExportOptions) error
 	ExportPptxBytes(ctx context.Context, opts entity.PptxExportOptions) ([]byte, error)
 }
 
@@ -63,22 +60,6 @@ type pptxWasmOptions struct {
 	Compression *bool  `json:"compression,omitempty"`
 }
 
-// WritePptx invokes the WASM PPTX exporter and writes the returned PPTX bytes.
-func (rcvr *powerpointRepository) WritePptx(ctx context.Context, opts entity.PptxExportOptions) error {
-	pptxBytes, err := rcvr.ExportPptxBytes(ctx, opts)
-	if err != nil {
-		return err
-	}
-	if opts.Output == "" {
-		return fmt.Errorf("output path is required")
-	}
-	if err := os.WriteFile(opts.Output, pptxBytes, 0644); err != nil {
-		return fmt.Errorf("write PPTX output %s: %w", opts.Output, err)
-	}
-	logger.INFO(IRPEPWX001, "generated", map[string]any{"output": opts.Output})
-	return nil
-}
-
 func (rcvr *powerpointRepository) ExportPptxBytes(ctx context.Context, opts entity.PptxExportOptions) ([]byte, error) {
 	if len(bytes.TrimSpace(opts.PlanJSON)) == 0 {
 		return nil, fmt.Errorf("PPTX plan JSON is required")
@@ -98,12 +79,7 @@ func (rcvr *powerpointRepository) ExportPptxBytes(ctx context.Context, opts enti
 		return nil, fmt.Errorf("encode PPTX WASM request: %w", err)
 	}
 
-	pptxBytes, stderr, err := rcvr.export(ctx, opts.ExporterWASM, reqJSON)
-	if len(stderr) > 0 {
-		if opts.Stderr != nil {
-			_, _ = opts.Stderr.Write(stderr)
-		}
-	}
+	pptxBytes, _, err := rcvr.export(ctx, opts.ExporterWASM, reqJSON)
 	if err != nil {
 		return nil, err
 	}

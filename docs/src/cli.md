@@ -10,34 +10,25 @@ Supported formats:
 
 | Format | Output |
 |---|---|
-| `excalidraw` | Editable Excalidraw JSON |
 | `svg` | Standalone SVG; one file per frame by default |
 | `pptx` | PowerPoint presentation; one slide per frame by default |
-| `pdf` | PDF document; one page per frame by default |
-| `excel` | Excel workbook; one frame SVG per worksheet by default |
-| `xlsx` | Alias for `excel` |
-| `xyflow` | React Flow / XYFlow JSON |
-| `isoflow` | Isoflow-compatible model JSON |
 
-UML input (`<uml>...</uml>`) currently rejects `--format excalidraw` because
-the editable UML Excalidraw export is disabled. Use `svg`, `pdf`, `pptx`,
-`excel`, `xyflow`, or `isoflow` for UML diagrams.
+The default is `svg`. Retired format names are rejected as unknown formats.
+Markdown is handled by `xaligo render markdown`; it embeds SVG artifacts and is
+not a separate `--format` value.
 
 ### Frames and physical pages
 
-Identified child frames are physical pages for SVG, PPTX, PDF, and Excel. They
+Identified child frames are physical pages for SVG and PPTX. They
 are emitted in source order.
 
 | Format | Multiple-frame default | `--combine-frames` |
 |---|---|---|
 | SVG | Separate `<output-stem>-<safe-frame-id>.svg` files | One SVG canvas |
 | PPTX | One slide per frame in one presentation | One diagram slide |
-| PDF | One page per frame in one document | One PDF page |
-| Excel | One worksheet per frame in one workbook | One worksheet |
 
-Excalidraw, XYFlow, and Isoflow always remain one logical document, so
-`--combine-frames` does not change them. Live SVG preview also uses the combined
-canvas so every frame remains visible in one browser view.
+Live SVG preview uses the combined canvas so every frame remains visible in
+one browser view. Markdown follows the SVG artifact mapping.
 
 For a one-frame SVG document, `-o` is the exact output filename. For several
 frames, `-o output/diagram.svg` produces names such as
@@ -55,18 +46,13 @@ Common render flags:
 | `--theme light|dark` | Output theme |
 | `--services <csv>` | Service metadata and label overrides |
 | `--svg-legend-position top|right|bottom|left` | SVG legend placement |
-| `--arrow-style thin|standard|triangle|stealth|arrow|diamond|oval|none` | SVG/PPTX/PDF/Excel Plan default used when a connection omits its arrowhead. Explicit DSL arrowheads on normal/traffic connections and explicit stroke widths take precedence; routes require effective arrowheads to be `none` |
-| `--combine-frames` | Preserve the compatibility single-canvas/page form for SVG, PPTX, PDF, and Excel |
+| `--arrow-style thin|standard|triangle|stealth|arrow|diamond|oval|none` | SVG/PPTX plan default used when a connection omits its arrowhead. Explicit DSL arrowheads on normal/traffic connections and explicit stroke widths take precedence; routes require effective arrowheads to be `none` |
+| `--combine-frames` | Combine all frames onto one SVG canvas or PPTX slide |
 
-`aws-2.5d` and `topology` are recognized roadmap modes but currently return a
-not-implemented error. Any other mode, format, theme, orientation, paper size,
-arrow-style option, or SVG legend-position value outside its documented enum
-returns an error.
+Any mode, format, theme, orientation, paper size, arrow-style option, or SVG
+legend-position value outside its documented enum returns an error.
 
-`--arrow-style` belongs to the shared physical Plan used by SVG, PPTX, PDF, and
-Excel. The editable Excalidraw, XYFlow, and Isoflow V1 outputs consume the
-resolved DSL scene directly and therefore use the DSL connection defaults
-instead.
+`--arrow-style` belongs to the shared physical plan used by SVG and PPTX.
 
 Physical-page and PPTX flags:
 
@@ -171,8 +157,6 @@ database path with `paths.assets_db` in `etc/resources/aws/app.yaml`.
 | `xaligo validate <file.xal>` | Validate syntax, layout, and connection references |
 | `xaligo render markdown <file.md>` | Embed rendered `xal` code blocks as SVG images into a Markdown file |
 | `xaligo serve <file.xal\|file.md>` | Serve a live preview; `.xal` previews one combined SVG, `.md`/`.markdown` previews the full document with diagrams embedded inline; `--port` overrides the configured `serve.port` (default `8080`), and `--paper`/`--orientation` fix the preview to a physical page size |
-| `xaligo add service --name <name> --file <file>` | Add a service icon |
-| `xaligo add service --list <csv> --file <file>` | Bulk-add service icons |
 | `xaligo icon <add|get|search|remove|list|namespaces>` | Manage the embedded SQLite SVG registry |
 | `xaligo init [-o <dir>]` | Generate a sample `.xal` file |
 | `xaligo version` | Print version |

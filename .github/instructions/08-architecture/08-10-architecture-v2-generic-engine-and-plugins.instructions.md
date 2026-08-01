@@ -23,6 +23,15 @@ In this design, a plugin is a separable package of declarative concept data,
 parameter defaults and constraints, aliases, styles, icons, and attribution.
 A plugin is not an executable layout or routing extension.
 
+## Supported output boundary
+
+V2 has exactly two output encoders: SVG and PPTX. Markdown support is a host
+workflow that renders fenced `xal` blocks through the SVG artifact API and
+embeds image references. Excalidraw, PDF, Excel/XLSX, XYFlow, and Isoflow are
+outside the V2 product and plugin contracts. Plugins may tune generic concepts
+and parameters, but may not add encoders, format-specific fields, or output
+callbacks.
+
 ## Pipeline
 
 ```text
@@ -36,8 +45,8 @@ A plugin is not an executable layout or routing extension.
    -> Rust generic layout and constraint resolution
    -> Rust generic port and line routing
    -> typed immutable ResolvedDocument response
-   -> shared scene/plan projection
-   -> output encoder
+   -> renderer-neutral draw/document plan
+   -> SVG encoder | PPTX exporter boundary
 ```
 
 The native V2 and V1 compatibility frontends each parse the original bytes
@@ -329,6 +338,6 @@ V2 implementation slices must include tests that establish:
 - equivalent normalized documents from builtin, AWS, and UML profiles resolve
   to equal geometry;
 - registry and layout results are deterministic;
-- missing-icon policies behave identically across output formats; and
+- missing-icon policies behave identically in SVG and PPTX; and
 - the V1 compatibility frontend matches frozen V1 neutral-model and
   resolved-geometry goldens.

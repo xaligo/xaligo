@@ -57,7 +57,7 @@ Architecture: ${ARCH}
 Maintainer: ${PACKAGE_MAINTAINER}
 Homepage: ${PACKAGE_URL}
 Description: ${PACKAGE_DESCRIPTION}
- xaligo renders the .xal diagram DSL to Excalidraw, SVG, PPTX, XYFlow, and Isoflow formats.
+ xaligo renders the .xal diagram DSL to SVG and PPTX, with SVG embedding for Markdown.
 EOF
 
 mkdir -p "$OUT_DIR"

@@ -27,9 +27,9 @@ xaligo has one source DSL: `.xal`. Keep every renderer on the same pipeline:
 .xal -> parser -> layout -> shared scene/plan -> encoder
 ```
 
-Do not add format-specific parsers or hidden alternate layout paths. SVG,
-Excalidraw, PPTX, XYFlow, and Isoflow should consume shared parser, layout, and
-scene/plan data wherever possible.
+Do not add format-specific parsers or hidden alternate layout paths. SVG and
+PPTX consume the shared parser, layout, and document plan; Markdown embeds SVG
+artifacts. Other outputs are outside the current product contract.
 
 ## Important Paths
 

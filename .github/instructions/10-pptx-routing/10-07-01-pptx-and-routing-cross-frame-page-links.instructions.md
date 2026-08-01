@@ -7,8 +7,8 @@ applyTo: ".github/instructions/manual/**"
 ### Cross-frame page links
 
 A connection between different frames is a page link in page-oriented output;
-it is never one line crossing the inter-frame canvas. The shared scene emits
-two axis-aligned local stubs for Excalidraw, SVG, PPTX, PDF, and Excel:
+it is never one line crossing the inter-frame canvas. The shared route stage
+emits two axis-aligned local stubs for SVG and PPTX:
 
 - source endpoint to the source frame's page-terminal inset line, with the
   exact label `to <destination frame ID>`; and
@@ -98,8 +98,7 @@ xaligo must not move the fixed frame-anchor tangent coordinate or emit an
 invisible zero-length stub.
 
 Manual bends remain connector metadata and do not steer page-local stubs. Both
-stubs retain one logical connector ID; XYFlow and Isoflow reconstruct one graph
-edge from that metadata rather than exporting the two page projections.
+stubs retain one logical connector ID for deterministic shared-plan projection.
 
 The `to <...>` / `from <...>` label is placed from the final inset terminal
 with a 4-layout-pixel inward gap and a minimum 4-layout-pixel tangent gap.
@@ -108,7 +107,7 @@ the endpoint envelope and metadata reservation; tiny pages use a clamped
 fallback rather than increasing the normal label distance.
 
 The outer logical page edge and the parallel terminal inset line are geometric,
-not visible rectangles: SVG, PPTX, PDF, and Excel omit page-frame outlines in
+not visible rectangles: SVG and PPTX omit page-frame outlines in
 both default and combined output.
 
 Default PPTX output places the source and destination stubs on their respective

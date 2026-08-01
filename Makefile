@@ -62,8 +62,8 @@ tidy: ## Tidy go.mod
 
 run: build ## Render sample DSL
 	@mkdir -p output
-	$(BINARY) render docs/src/examples/samples/sample.xal -o output/sample.excalidraw
-	@echo "Generated: output/sample.excalidraw"
+	$(BINARY) render docs/src/examples/samples/sample.xal --format svg -o output/sample.svg
+	@echo "Generated: output/sample.svg"
 
 init: build ## Create starter template under output/example/
 	$(BINARY) init -o output/example

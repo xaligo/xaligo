@@ -9,9 +9,9 @@
 > Licensed under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/).<br>
 > This illustration is a derivative work inspired by the original Go Gopher design.
 
-xaligo is a Diagram-as-Code engine for architecture and network diagrams. It
-renders the Vue-style `.xal` DSL to Excalidraw, SVG, PPTX, PDF, Excel, XYFlow,
-and Isoflow-compatible output.
+xaligo is a Diagram-as-Code engine for architecture, network, and UML diagrams.
+It renders the Vue-style `.xal` DSL to SVG and PPTX, and embeds rendered SVGs
+in Markdown documents.
 
 ## Quick Start
 
@@ -19,6 +19,7 @@ and Isoflow-compatible output.
 npm install -g @xaligo/xaligo
 xaligo init -o example
 xaligo render example/sample.xal --format svg -o example/sample.svg
+xaligo render markdown example/guide.md
 xaligo diff example/before.xal example/after.xal -o example/architecture-diff
 ```
 
@@ -27,14 +28,12 @@ elements and `architecture-diff-added.svg` with pale-green added elements. The
 comparison operates on parsed `.xal` structure rather than raw text lines.
 
 Identified child frames are physical pages by default: SVG creates one file per
-frame, PPTX one slide per frame, PDF one page per frame, and Excel one worksheet
-per frame containing its SVG image. For example, `-o architecture.svg` with
+frame and PPTX creates one slide per frame. For example, `-o architecture.svg` with
 frames `overview` and `detail` writes `architecture-overview.svg` and
 `architecture-detail.svg`. Use `--combine-frames` to retain the former single
-canvas/slide/page/sheet. Page-frame outlines are not drawn in these outputs;
-the frame is a page boundary, not a visible container. Excalidraw retains
-editable frame objects with transparent outlines; Excalidraw, XYFlow, and
-Isoflow remain one logical document.
+canvas or slide. Page-frame outlines are not drawn in these outputs; the frame
+is a page boundary, not a visible container. Markdown uses the same SVG
+artifacts and frame mapping.
 
 PPTX embeds diagram and legend icons as native SVG and therefore requires an
 SVG-capable PowerPoint or compatible viewer. Viewers that only understand the
@@ -52,10 +51,6 @@ make build
 ## Samples
 
 ![Hybrid enterprise architecture sample](docs/src/images/complex-hybrid-architecture.svg)
-
-Source: [docs/src/examples/samples/complex-hybrid-architecture.xal](docs/src/examples/samples/complex-hybrid-architecture.xal)
-
-![Isoflow editor rendering the hybrid architecture sample](docs/src/images/isoflow-complex-hybrid-architecture.png)
 
 Source: [docs/src/examples/samples/complex-hybrid-architecture.xal](docs/src/examples/samples/complex-hybrid-architecture.xal)
 

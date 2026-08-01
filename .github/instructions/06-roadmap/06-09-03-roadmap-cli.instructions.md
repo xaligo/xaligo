@@ -11,11 +11,14 @@ xaligo render
 xaligo validate
 ```
 
-Required compatibility:
+Required contract:
 
-- Keep existing `xaligo render <input.xal> -o <out.excalidraw>` working.
-- Add `xaligo render <input.xal> --format excalidraw|svg|pptx|pdf|excel`;
-  accept `xlsx` as the Excel alias.
+- `xaligo render <input.xal> --format svg|pptx`; omitted format defaults to
+  `svg`.
+- `xaligo render markdown <input.md>` renders fenced `xal` blocks to SVG and
+  embeds image references.
+- Reject retired format names (`excalidraw`, `pdf`, `excel`, `xlsx`, `xyflow`,
+  and `isoflow`) as unknown formats.
 - Keep format conversion under `xaligo render --format ...`; `generate` should
   remain focused on source `.xal` generation.
 - `validate` must reuse parser/layout validation rather than duplicate parsing.

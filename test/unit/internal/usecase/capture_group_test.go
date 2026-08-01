@@ -16,7 +16,7 @@ import (
 
 func TestCaptureGroupRendersAnnotationBorder(t *testing.T) {
 	input := []byte(`<frame width="400" height="200"><capture id="hot-path" title="Hot Path"><rectangle id="inner" title="Inner" /></capture></frame>`)
-	out, err := newUsecase().RenderExcalidraw(context.Background(), input, entity.RenderOptions{Theme: "light"})
+	out, err := newUsecase().BuildScene(context.Background(), input, entity.RenderOptions{Theme: "light"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,7 +49,7 @@ func TestCaptureGroupConnectableWithinSameFrame(t *testing.T) {
   </container>
   <connection src="hot-path" dst="slow-path" />
 </frame>`)
-	out, err := newUsecase().RenderExcalidraw(context.Background(), input, entity.RenderOptions{Theme: "light"})
+	out, err := newUsecase().BuildScene(context.Background(), input, entity.RenderOptions{Theme: "light"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -86,7 +86,7 @@ func TestCaptureGroupSupportsCrossFramePageLink(t *testing.T) {
     <capture id="slow-path" title="Slow Path"><rectangle id="b" title="B" width="120" height="80" /></capture>
   </frame>
 </frames></xaligo>`)
-	out, err := newUsecase().RenderExcalidraw(context.Background(), input, entity.RenderOptions{Theme: "light"})
+	out, err := newUsecase().BuildScene(context.Background(), input, entity.RenderOptions{Theme: "light"})
 	if err != nil {
 		t.Fatal(err)
 	}

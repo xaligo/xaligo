@@ -20,6 +20,6 @@ applyTo: ".github/instructions/manual/**"
   tag background width and label width in sync when adjusting tag text metrics.
 - Group header and item label width estimates count East Asian full-width
   characters as double-width, so Japanese and other full-width labels keep their
-  text boxes aligned across Excalidraw, SVG, and PPTX.
+  text boxes aligned across SVG and PPTX.
 - Keep `docs/src/examples/samples/sample.xal` and `docs/src/examples/samples/services.csv` in sync so the legend
   includes every diagram service.

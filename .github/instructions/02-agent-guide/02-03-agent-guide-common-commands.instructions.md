@@ -19,18 +19,15 @@ npm run build --workspace=@xaligo/xaligo-external
 
 # Render and validate
 .bin/xaligo validate docs/src/examples/samples/sample.xal
-.bin/xaligo render docs/src/examples/samples/sample.xal --format excalidraw -o output/sample.excalidraw
 .bin/xaligo render docs/src/examples/samples/sample.xal --format svg -o output/sample.svg
-.bin/xaligo render docs/src/examples/samples/sample.xal --format pdf -o output/sample.pdf
-.bin/xaligo render docs/src/examples/samples/sample.xal --format excel -o output/sample.xlsx
-.bin/xaligo render docs/src/examples/samples/sample.xal --format xyflow -o output/sample.xyflow.json
-.bin/xaligo render docs/src/examples/samples/sample.xal --format isoflow -o output/sample.isoflow.json
+.bin/xaligo render docs/src/examples/samples/sample.xal --format pptx -o output/sample.pptx
+.bin/xaligo render markdown docs/src/examples/embedded-xal.md
 .bin/xaligo serve docs/src/examples/samples/sample.xal --mode network
 
 # Clean generated artifacts
 make clean
 ```
 
-Native PPTX export additionally requires the configured `xaligo.wasm` PPTX exporter.
-The TypeScript package consumes `BuildPPTXPlan` through WASM and creates PPTX
-with PptxGenJS.
+Native PPTX export additionally requires the configured `xaligo.wasm` PPTX
+exporter. The TypeScript package consumes `BuildPPTXPlan` through WASM and
+creates PPTX with PptxGenJS.

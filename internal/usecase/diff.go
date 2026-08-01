@@ -27,14 +27,14 @@ type DiffUsecase interface {
 }
 
 type diffUsecase struct {
-	xaligoRepository     repository.XaligoRepository
-	excalidrawRepository repository.ExcalidrawRepository
-	svgRepository        repository.SVGRepository
+	xaligoRepository repository.XaligoRepository
+	sceneRepository  repository.SceneRepository
+	svgRepository    repository.SVGRepository
 }
 
-func NewDiffUsecase(xaligoRepository repository.XaligoRepository, excalidrawRepository repository.ExcalidrawRepository, svgRepository repository.SVGRepository) DiffUsecase {
+func NewDiffUsecase(xaligoRepository repository.XaligoRepository, sceneRepository repository.SceneRepository, svgRepository repository.SVGRepository) DiffUsecase {
 	return &diffUsecase{
-		xaligoRepository: xaligoRepository, excalidrawRepository: excalidrawRepository, svgRepository: svgRepository,
+		xaligoRepository: xaligoRepository, sceneRepository: sceneRepository, svgRepository: svgRepository,
 	}
 }
 
@@ -100,7 +100,7 @@ func (rcvr *diffUsecase) renderDiffDocument(ctx context.Context, side string, do
 		return nil, err
 	}
 	dependencies := SceneDependencies{
-		XaligoRepository: rcvr.xaligoRepository, ExcalidrawRepository: rcvr.excalidrawRepository,
+		XaligoRepository: rcvr.xaligoRepository, SceneRepository: rcvr.sceneRepository,
 	}.core()
 	connections := v1engine.CollectConnectionNodesV1EngineSceneConnection(document.Root)
 	var sceneJSON []byte

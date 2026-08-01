@@ -252,7 +252,6 @@ install_runtime_files() {
   install -m 0644 etc/resources/aws/app.yaml "$destination/etc/resources/aws/app.yaml"
   install -m 0644 etc/resources/aws/service-catalog.csv "$destination/etc/resources/aws/service-catalog.csv"
   install -m 0644 etc/resources/aws/service-index.csv "$destination/etc/resources/aws/service-index.csv"
-  install -m 0644 etc/resources/aws/isoflow-icons.json "$destination/etc/resources/aws/isoflow-icons.json"
   cp -R etc/resources/aws/svg "$destination/etc/resources/aws/svg"
   install -m 0644 external/pptx-exporter/wasm/xaligo.wasm "$destination/external/pptx-exporter/wasm/xaligo.wasm"
 }

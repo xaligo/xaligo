@@ -8,11 +8,10 @@ type DiagnosticSeverity string
 
 // AssetSource describes an embedded or virtual asset tree.
 type AssetSource struct {
-	FS               fs.FS
-	CatalogCSV       string
-	GroupIconsDir    string
-	IsoflowIconsJSON string
-	ItemIconSize     float64
+	FS            fs.FS
+	CatalogCSV    string
+	GroupIconsDir string
+	ItemIconSize  float64
 }
 
 // ImportSource describes files referenced relative to the input document.
@@ -22,14 +21,13 @@ type ImportSource struct {
 
 // RenderOptions contains renderer-independent presentation and output options.
 type RenderOptions struct {
-	Mode          Mode           `json:"mode,omitempty"`
-	Format        Format         `json:"format,omitempty"`
-	Theme         string         `json:"theme,omitempty"`
-	ServicesCSV   []byte         `json:"-"`
-	Abbreviations map[int]string `json:"-"`
-	Assets        *AssetSource   `json:"-"`
-	Imports       *ImportSource  `json:"-"`
-	CombineFrames bool           `json:"combineFrames,omitempty"`
+	Mode          Mode          `json:"mode,omitempty"`
+	Format        Format        `json:"format,omitempty"`
+	Theme         string        `json:"theme,omitempty"`
+	ServicesCSV   []byte        `json:"-"`
+	Assets        *AssetSource  `json:"-"`
+	Imports       *ImportSource `json:"-"`
+	CombineFrames bool          `json:"combineFrames,omitempty"`
 
 	PxPerInch           float64 `json:"pxPerInch,omitempty"`
 	ArrowStyle          string  `json:"arrowStyle,omitempty"`

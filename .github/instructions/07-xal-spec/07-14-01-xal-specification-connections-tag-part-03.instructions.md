@@ -10,23 +10,20 @@ Placement chooses the closest tangent position that avoids the endpoint
 envelope and metadata reservation. Tiny pages clamp or shrink the label
 fallback instead of moving it farther inward from that terminal.
 
-Both scene stubs carry the same logical connector ID, original endpoint/frame
-IDs, and V1 routing metadata. XYFlow and Isoflow use those fields to emit one
-logical edge instead of two partial edges.
+Both internal scene stubs carry the same logical connector ID, original
+endpoint/frame IDs, and V1 routing metadata so the shared plan can project
+them consistently.
 
 Default page-oriented export projects only the local stub belonging to each
-frame: the source SVG/slide/page/worksheet contains `to <destination frame
+frame: the source SVG/slide contains `to <destination frame
 ID>`, and the destination one contains `from <source frame ID>`.
-`--combine-frames` places both local stubs on the compatibility canvas but
-never reconnects them across the frame gap. Excalidraw also retains both stubs
-in its one editable scene.
+`--combine-frames` places both local stubs on the combined canvas or slide but
+never reconnects them across the frame gap.
 
-Output formats are projections of this resolved V1 meaning. A target schema
-may not have fields for every V1 connector value; the upstream-compatible
-Isoflow connector schema, for example, has no arbitrary metadata field. Such
-adapters must use native constructs where available and must not add private,
-schema-breaking fields. A V2 compatibility frontend consumes V1 directly and
-must never use an output format as an intermediate representation.
+SVG and PPTX are projections of this resolved V1 meaning. They use native
+constructs where available and must not add private, schema-breaking fields. A
+V2 compatibility frontend consumes V1 directly and must never use an output
+format as an intermediate representation.
 
 When `src-side`, `dst-side`, `src-anchor`, and `dst-anchor` are omitted,
 endpoint sides and anchor positions are calculated automatically from endpoint
@@ -87,18 +84,16 @@ aliases `start`, `near`, `center`, `far`, and `end`. Conflicting side and
 complete-anchor values are validation errors for both endpoint and frame
 anchors.
 
-Excalidraw output always serializes arrowhead sizes as the smallest supported
-size (`"s"`) to keep dense diagrams readable. The logical arrowhead type and
-style metadata are still stored on the connector and used by SVG/PPTX export
-and the SVG-based PDF/Excel projections.
+The current internal V1 compatibility scene stores the smallest legacy
+arrowhead size (`"s"`) while the shared plan retains the logical arrowhead type
+and style used by SVG and PPTX.
 
 Manual bend coordinates are expressed as child tags in the same Cartesian
 layout coordinate space as the frame, with the origin at the upper-left of the
 rendered frame and positive `x`/`y` extending right/down. SVG and PPTX route
 calculations keep the connector orthogonal while forcing the route through each
-listed bend in order. Excalidraw output stores the routing metadata on the
-arrow; Excalidraw's own editor may still display its editable elbow connector
-approximation.
+listed bend in order. The internal V1 compatibility scene retains the routing
+metadata until the neutral V2 resolved model replaces it.
 
 ```xml
 <connection src="web" dst="db"

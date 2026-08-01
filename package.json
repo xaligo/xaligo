@@ -5,7 +5,6 @@
   "keywords": [
     "xaligo",
     "diagram-as-code",
-    "excalidraw",
     "pptx",
     "svg",
     "aws"
@@ -42,7 +41,6 @@
     "bin/xaligo.cjs",
     "scripts/npm",
     "etc/resources/aws/app.yaml",
-    "etc/resources/aws/isoflow-icons.json",
     "etc/resources/aws/service-catalog.csv",
     "etc/resources/aws/service-index.csv",
     "etc/resources/aws/svg",
@@ -60,7 +58,6 @@
     "build": "npm --prefix external/pptx-exporter run build",
     "build:npm-binaries": "scripts/build/build-npm.sh",
     "clean": "npm --prefix external/pptx-exporter run clean",
-    "gen:isoflow-icons": "node scripts/tool/gen_isoflow_icons.mjs",
     "postinstall": "node scripts/npm/install.cjs",
     "test:npm-installer": "node --test test/unit/scripts/npm/install_test.cjs",
     "test:release-metadata": "bash test/unit/scripts/build/release_metadata_test.sh",

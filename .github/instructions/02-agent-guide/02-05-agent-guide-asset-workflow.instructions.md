@@ -10,8 +10,6 @@ applyTo: ".github/instructions/manual/**"
 - Full catalog: `etc/resources/aws/service-catalog.csv`
 - Embedded asset declaration: `etc/resources/aws/assets.go`
 - AWS/Tabler/Yamaha SVGs: `etc/resources/aws/svg`
-- Isoflow icon manifest: `etc/resources/aws/isoflow-icons.json`
 
-Use `npm run import:tabler-icons`, `npm run import:yamaha-icons`, or
-`npm run generate:isoflow-icons` to refresh generated catalogs. Preserve the
-bundled license and attribution files.
+Use `npm run import:tabler-icons` or `npm run import:yamaha-icons` to refresh
+generated catalogs. Preserve the bundled license and attribution files.

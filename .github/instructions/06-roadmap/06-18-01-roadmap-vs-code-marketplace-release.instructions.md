@@ -10,8 +10,8 @@ applyTo: ".github/instructions/manual/**"
 
 - Live Preview
 - SVG Export
-- Excalidraw Export
 - PPTX Export
+- Markdown SVG Embedding
 - Route Connectors
 - Orthogonal Routing
 - Traffic Layers

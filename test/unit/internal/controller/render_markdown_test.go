@@ -8,10 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/xaligo/xaligo/internal/config"
 	"github.com/xaligo/xaligo/internal/controller"
 	"github.com/xaligo/xaligo/internal/entity"
-	"github.com/xaligo/xaligo/internal/usecase"
 )
 
 type sequencedMarkdownUseCase struct {
@@ -251,7 +249,7 @@ func TestRunMarkdownLateRenderFailurePreservesExistingOutputSet(t *testing.T) {
 		errors: []error{nil, errors.New("second block failed")},
 	}
 	markdownController := controller.NewRenderController(
-		config.New(), uc, uc, uc, usecase.NewThemeUsecase(), usecase.NewElementUsecase(),
+		uc,
 	)
 	err := markdownController.RunMarkdown(entity.ControllerRenderMarkdownOptions{InputPath: inputPath})
 	if err == nil || !strings.Contains(err.Error(), "second block failed") {
@@ -311,7 +309,7 @@ func TestRunMarkdownReportsFailedRollbackAndPreservesBackup(t *testing.T) {
 	}
 	uc := &fakeUseCase{renderSVG: []byte("new svg")}
 	markdownController := controller.NewRenderController(
-		config.New(), uc, uc, uc, usecase.NewThemeUsecase(), usecase.NewElementUsecase(),
+		uc,
 		controller.WithRenderMarkdownFileOperations(controller.RenderMarkdownFileOperations{
 			Remove: remove,
 			Rename: rename,
@@ -374,7 +372,7 @@ func TestRunMarkdownRejectsImageReferenceAcrossFilesystemVolumes(t *testing.T) {
 	}
 	uc := &fakeUseCase{renderSVG: []byte("new svg")}
 	markdownController := controller.NewRenderController(
-		config.New(), uc, uc, uc, usecase.NewThemeUsecase(), usecase.NewElementUsecase(),
+		uc,
 		controller.WithRenderMarkdownFileOperations(controller.RenderMarkdownFileOperations{
 			RelativePath: func(string, string) (string, error) {
 				return "", errors.New(`Rel: can't make D:\diagrams relative to C:\docs`)

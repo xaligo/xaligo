@@ -14,14 +14,14 @@ type SceneUsecase interface {
 }
 
 type sceneUsecase struct {
-	xaligoRepository     repository.XaligoRepository
-	excalidrawRepository repository.ExcalidrawRepository
+	xaligoRepository repository.XaligoRepository
+	sceneRepository  repository.SceneRepository
 }
 
-func NewSceneUsecase(xaligoRepository repository.XaligoRepository, excalidrawRepository repository.ExcalidrawRepository) SceneUsecase {
+func NewSceneUsecase(xaligoRepository repository.XaligoRepository, sceneRepository repository.SceneRepository) SceneUsecase {
 	return &sceneUsecase{
-		xaligoRepository:     xaligoRepository,
-		excalidrawRepository: excalidrawRepository,
+		xaligoRepository: xaligoRepository,
+		sceneRepository:  sceneRepository,
 	}
 }
 
@@ -35,8 +35,8 @@ func (rcvr *sceneUsecase) BuildJSON(root *entity.Box, svgGroupDir, catalogCSV, p
 
 func (rcvr *sceneUsecase) engineDependencies() v1engine.SceneDependenciesV1EngineSceneTypes {
 	return SceneDependencies{
-		XaligoRepository:     rcvr.xaligoRepository,
-		ExcalidrawRepository: rcvr.excalidrawRepository,
+		XaligoRepository: rcvr.xaligoRepository,
+		SceneRepository:  rcvr.sceneRepository,
 	}.core()
 }
 
@@ -44,8 +44,8 @@ func (rcvr *sceneUsecase) engineDependencies() v1engine.SceneDependenciesV1Engin
 // scene helpers. Repositories are adapted here to the V1 engine's synchronous
 // function ports; the V1 engine never imports the repository layer.
 type SceneDependencies struct {
-	XaligoRepository     repository.XaligoRepository
-	ExcalidrawRepository repository.ExcalidrawRepository
+	XaligoRepository repository.XaligoRepository
+	SceneRepository  repository.SceneRepository
 }
 
 func (d SceneDependencies) core() v1engine.SceneDependenciesV1EngineSceneTypes {
@@ -54,19 +54,19 @@ func (d SceneDependencies) core() v1engine.SceneDependenciesV1EngineSceneTypes {
 		ports.LookupCatalogByID = d.XaligoRepository.LookupCatalogByID
 		ports.LookupCatalogByIDFS = d.XaligoRepository.LookupCatalogByIDFS
 	}
-	if d.ExcalidrawRepository != nil {
-		ports.SVGToDataURL = d.ExcalidrawRepository.SvgToDataURL
-		ports.SVGToDataURLFS = d.ExcalidrawRepository.SvgToDataURLFS
-		ports.FileID = d.ExcalidrawRepository.FileID
-		ports.SVGBGColor = d.ExcalidrawRepository.SVGBGColor
+	if d.SceneRepository != nil {
+		ports.SVGToDataURL = d.SceneRepository.SvgToDataURL
+		ports.SVGToDataURLFS = d.SceneRepository.SvgToDataURLFS
+		ports.FileID = d.SceneRepository.FileID
+		ports.SVGBGColor = d.SceneRepository.SVGBGColor
 	}
 	return ports
 }
 
 func BuildJSONWithFS(root *entity.Box, fsys fs.FS, catalogCSV, svgGroupDir string, itemIconSize float64, connections []*entity.Node, abbrevMap map[int]string, deps SceneDependencies) ([]byte, error) {
-	return NewSceneUsecase(deps.XaligoRepository, deps.ExcalidrawRepository).BuildJSONWithFS(root, fsys, catalogCSV, svgGroupDir, itemIconSize, connections, abbrevMap)
+	return NewSceneUsecase(deps.XaligoRepository, deps.SceneRepository).BuildJSONWithFS(root, fsys, catalogCSV, svgGroupDir, itemIconSize, connections, abbrevMap)
 }
 
 func BuildJSON(root *entity.Box, svgGroupDir, catalogCSV, projectRoot string, itemIconSize float64, connections []*entity.Node, abbrevMap map[int]string, fsys fs.FS, deps SceneDependencies) ([]byte, error) {
-	return NewSceneUsecase(deps.XaligoRepository, deps.ExcalidrawRepository).BuildJSON(root, svgGroupDir, catalogCSV, projectRoot, itemIconSize, connections, abbrevMap, fsys)
+	return NewSceneUsecase(deps.XaligoRepository, deps.SceneRepository).BuildJSON(root, svgGroupDir, catalogCSV, projectRoot, itemIconSize, connections, abbrevMap, fsys)
 }

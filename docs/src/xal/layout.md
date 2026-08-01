@@ -5,14 +5,12 @@
 `<frame>` defines one page canvas and its top-level layout. `<frames>` wraps
 multiple identified `<frame>` children; it lays them out horizontally by
 default and vertically with `layout="vertical"` in the complete logical scene.
-SVG, PPTX, PDF, and Excel project each child frame to one file, slide, page, or
-worksheet by default. `--combine-frames` preserves that complete scene as one
-physical canvas/page. SVG, PPTX, PDF, and Excel do not draw the page frame's
-outline, including in combined compatibility output. A default page-local SVG
-uses the exact frame rectangle as its canvas and clip boundary; PDF and Excel
-inherit that strict page/image crop. Combined SVG keeps marker-safe bounds
-expansion. Excalidraw keeps editable frame objects but gives them transparent
-strokes.
+SVG and PPTX project each child frame to one file or slide by default.
+`--combine-frames` preserves that complete scene as one physical canvas or
+slide. Neither encoder draws the page frame's outline, including in combined
+compatibility output. A default page-local SVG uses the exact frame rectangle
+as its canvas and clip boundary. Combined SVG keeps marker-safe bounds
+expansion. Markdown inherits the SVG projection it embeds.
 
 | Attribute | Default | Description |
 |---|---|---|
@@ -118,8 +116,8 @@ strip. An explicit `src-frame-side`, `dst-frame-side`, `src-frame-anchor`, or
 resolved safe side, the drawable terminal uses this metadata `row-gap` as its
 inward normal inset; a zero value retains the outer logical edge. The
 `to <...>` / `from <...>` label is positioned from that final terminal.
-SVG, PPTX, PDF, Excel, and Excalidraw display the page-owned band; XYFlow and
-Isoflow omit it as page decoration. See the
+SVG and PPTX display the page-owned band; Markdown inherits it through the
+embedded SVG. See the
 [frame metadata example](../examples/frame-metadata.md) for top, bottom,
 left/right/center alignment, explicit row breaks, and auto or fixed widths.
 

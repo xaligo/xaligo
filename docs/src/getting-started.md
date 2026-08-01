@@ -54,15 +54,13 @@ Create a `.xal` file:
 Render it:
 
 ```bash
-xaligo render diagram.xal --format excalidraw -o diagram.excalidraw
 xaligo render diagram.xal --format svg -o diagram.svg
 ```
 
-PDF and Excel use the same source:
+SVG is the default, so this is equivalent:
 
 ```bash
-xaligo render diagram.xal --format pdf -o diagram.pdf
-xaligo render diagram.xal --format excel -o diagram.xlsx
+xaligo render diagram.xal -o diagram.svg
 ```
 
 PPTX export uses the bundled or configured WASM exporter:
@@ -76,8 +74,8 @@ xaligo render diagram.xal --format pptx -o diagram.pptx \
 ## Render Multiple Frames
 
 An identified child frame is one physical output page. A multi-frame document
-therefore creates one SVG file per frame, one PPTX slide per frame, one PDF page
-per frame, or one Excel worksheet per frame. With `overview` and `detail`
+therefore creates one SVG file per frame or one PPTX slide per frame. With
+`overview` and `detail`
 frames, this SVG command:
 
 ```bash
@@ -94,6 +92,16 @@ xaligo render diagram.xal --format svg -o diagram.svg --combine-frames
 
 See [Cross-Frame Page Links](examples/page-links.md) for a complete multi-frame
 source and the matching `to ...` / `from ...` page-link labels.
+
+## Render Markdown
+
+Fenced `xal` blocks can be replaced with generated SVG image references:
+
+```bash
+xaligo render markdown guide.md
+```
+
+See [Markdown rendering](rendering/markdown.md) for output-location options.
 
 ## Validate
 

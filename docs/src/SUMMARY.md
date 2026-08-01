@@ -38,12 +38,9 @@
 
 # Rendering
 
-- [Excalidraw](rendering/excalidraw.md)
 - [SVG](rendering/svg.md)
 - [PowerPoint](rendering/pptx.md)
-- [PDF](rendering/pdf.md)
-- [Excel](rendering/excel.md)
-- [XYFlow and Isoflow](rendering/xyflow-isoflow.md)
+- [Markdown](rendering/markdown.md)
 
 # Reference
 
@@ -68,7 +65,6 @@
     - [Category Icons](reference/icons/category-icons.md)
       - [Page 1](reference/icons/category-icons-001.md)
       - [Page 2](reference/icons/category-icons-002.md)
-    - [Isoflow Icons](reference/icons/isoflow-icons.md)
     - [Resource Icons](reference/icons/resource-icons.md)
       - [Page 1](reference/icons/resource-icons-001.md)
       - [Page 2](reference/icons/resource-icons-002.md)

@@ -67,16 +67,14 @@ validation error. Explicit `none` is accepted. Explicit `stroke-width`, color,
 and stroke style are preserved for every kind; non-route arrowhead attributes
 are also preserved.
 
-For SVG, PPTX, PDF, and Excel Plan output, the render option `arrow-style`
+For SVG and PPTX plan output, the render option `arrow-style`
 supplies the global arrowhead (and, for `thin`/`standard`, width) only when the connection
 does not explicitly set that semantic value. Explicit DSL or inherited group
-values take precedence, and `kind="route"` remains headless. Excalidraw,
-XYFlow, and Isoflow V1 output consume the resolved DSL scene rather than this
-Plan-only option.
+values take precedence, and `kind="route"` remains headless.
 
 When a connection references endpoints in different frames, the shared scene
 represents it as a page link instead of drawing one line across the inter-frame
-gap. SVG, PPTX, PDF, Excel, and Excalidraw derive exactly two local stubs:
+gap. SVG and PPTX derive exactly two local stubs:
 
 - the source stub runs from the source endpoint to the page-terminal inset line
   of its owning frame and has the exact label `to <destination frame ID>`; and

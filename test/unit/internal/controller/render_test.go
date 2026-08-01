@@ -13,8 +13,8 @@ func TestRenderCommandDefaults(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if format != "excalidraw" {
-		t.Fatalf("format default = %q, want excalidraw", format)
+	if format != "svg" {
+		t.Fatalf("format default = %q, want svg", format)
 	}
 	theme, err := cmd.Flags().GetString("theme")
 	if err != nil {

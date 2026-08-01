@@ -23,11 +23,8 @@ xaligo validate docs/src/examples/samples/frame-metadata.xal
 xaligo render docs/src/examples/samples/frame-metadata.xal --format svg -o output/frame-metadata.svg
 ```
 
-PPTX, PDF, and Excel preserve the same source order as slides, pages, or
-worksheets:
+PPTX preserves the same source order as slides:
 
 ```bash
 xaligo render docs/src/examples/samples/frame-metadata.xal --format pptx -o output/frame-metadata.pptx
-xaligo render docs/src/examples/samples/frame-metadata.xal --format pdf -o output/frame-metadata.pdf
-xaligo render docs/src/examples/samples/frame-metadata.xal --format excel -o output/frame-metadata.xlsx
 ```

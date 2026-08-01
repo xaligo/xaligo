@@ -11,12 +11,7 @@ The shared in-repository use-case boundary should support at least:
 ```go
 RenderSVG()
 RenderArtifacts()
-RenderExcalidraw()
 RenderPPTX()
-RenderPDF()
-RenderExcel()
-RenderXYFlow()
-RenderIsoflow()
 ```
 
 Prefer a shared extensible API underneath the convenience functions:
@@ -25,3 +20,7 @@ Prefer a shared extensible API underneath the convenience functions:
 Render(ctx, input, RenderOptions{Mode: mode, Format: format})
 Validate(ctx, input)
 ```
+
+`BuildScene()` may remain internal while V1 compatibility still lowers
+through the legacy scene schema. It is not an output format or public product
+contract. Markdown rendering composes `RenderArtifacts()`.
