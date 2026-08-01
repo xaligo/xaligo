@@ -259,6 +259,8 @@ Search this file directly, for example: `rg -i "metadata|page-link|WASM" .github
 - 08.08 [Dependency direction](08-architecture/08-08-architecture-dependency-direction.instructions.md) — keywords: architecture, pipeline, layers, Dependency, direction
 - 08.09 [Verification](08-architecture/08-09-architecture-verification.instructions.md) — keywords: architecture, pipeline, layers, Verification, tests, validation
 - 08.10 [V2 generic engine and plugins](08-architecture/08-10-architecture-v2-generic-engine-and-plugins.instructions.md) — keywords: architecture, V2, engine, generic, plugin, AWS, UML, icons, parameters, layout, routing, design, dependencies
+- 08.11 [Single binary, shared service, and external runtimes](08-architecture/08-11-architecture-single-binary-service-and-external-runtimes.instructions.md) — keywords: architecture, single binary, subcommand, service, daemon, Rust, external, engine, PPTX
+- 08.12 [Embedded SVG asset registry](08-architecture/08-12-architecture-embedded-svg-asset-registry.instructions.md) — keywords: architecture, SQLite, FTS5, SVG, icon, asset, registry, search, storage
 
 
 ### 09 Coding
