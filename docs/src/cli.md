@@ -138,6 +138,31 @@ Useful generation flags:
 Only `--output` is required. The generated file uses the canonical
 `<xaligo version="1"><frames>...</frames></xaligo>` document envelope.
 
+## SVG Icon Registry
+
+The native CLI manages namespaced SVGs in the local `xaligo-assets.db` SQLite
+registry. The first icon operation installs 13 domain-neutral icons in the
+`builtin` namespace. Registrations are size-limited, safety-checked, and
+normalized by the in-process Rust engine before SQLite indexes their name,
+description, tags, and aliases with FTS5.
+
+```bash
+xaligo icon list --namespace builtin
+xaligo icon search 'database OR storage'
+xaligo icon get builtin:database -o database.svg
+xaligo icon add router.svg --name network:router \
+  --description 'Generic network router' --tag network --tag routing \
+  --alias gateway --license MIT --source local
+xaligo icon remove network:router
+xaligo icon namespaces
+```
+
+Stable identities use `namespace:name`. `icon add` updates an existing identity
+atomically, including its tags, aliases, and search row. `icon get` writes SVG
+to standard output unless `-o` names a file. `icon search` accepts an FTS5
+query and all list/search commands accept `--limit` up to 100. Configure the
+database path with `paths.assets_db` in `etc/resources/aws/app.yaml`.
+
 ## Other Commands
 
 | Command | Description |
@@ -148,5 +173,6 @@ Only `--output` is required. The generated file uses the canonical
 | `xaligo serve <file.xal\|file.md>` | Serve a live preview; `.xal` previews one combined SVG, `.md`/`.markdown` previews the full document with diagrams embedded inline; `--port` overrides the configured `serve.port` (default `8080`), and `--paper`/`--orientation` fix the preview to a physical page size |
 | `xaligo add service --name <name> --file <file>` | Add a service icon |
 | `xaligo add service --list <csv> --file <file>` | Bulk-add service icons |
+| `xaligo icon <add|get|search|remove|list|namespaces>` | Manage the embedded SQLite SVG registry |
 | `xaligo init [-o <dir>]` | Generate a sample `.xal` file |
 | `xaligo version` | Print version |

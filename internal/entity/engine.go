@@ -42,3 +42,11 @@ type EngineResolvedDocument struct {
 	Height   float64
 	Elements []EngineResolvedElement
 }
+
+// EngineSVG is a safe canonical SVG returned by the Rust SVG engine.
+type EngineSVG struct {
+	Data    []byte
+	ViewBox string
+	Width   float64
+	Height  float64
+}

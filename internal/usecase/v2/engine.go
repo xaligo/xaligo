@@ -16,6 +16,7 @@ import (
 type EngineUsecase interface {
 	Resolve(context.Context, entity.EngineDocumentSpec) (entity.EngineResolvedDocument, error)
 	RenderSVG(context.Context, entity.EngineDocumentSpec) ([]byte, error)
+	NormalizeSVG(context.Context, []byte) (entity.EngineSVG, error)
 }
 
 type engineUsecase struct{}
@@ -25,13 +26,15 @@ func NewEngineUsecase() EngineUsecase {
 }
 
 const (
-	engineABIVersion      = uint16(1)
-	engineOperationLayout = byte(1)
-	engineOperationSVG    = byte(2)
-	engineStatusOK        = byte(0)
-	engineStatusError     = byte(1)
-	engineMaxElements     = 10_000
-	engineMaxResponse     = 32 * 1024 * 1024
+	engineABIVersion            = uint16(1)
+	engineOperationLayout       = byte(1)
+	engineOperationSVG          = byte(2)
+	engineOperationNormalizeSVG = byte(3)
+	engineStatusOK              = byte(0)
+	engineStatusError           = byte(1)
+	engineMaxElements           = 10_000
+	engineMaxResponse           = 32 * 1024 * 1024
+	engineMaxSVG                = 2 * 1024 * 1024
 )
 
 var (
@@ -55,7 +58,27 @@ func (rcvr *engineUsecase) RenderSVG(ctx context.Context, spec entity.EngineDocu
 	return decodeEngineBytes(response, engineOperationSVG)
 }
 
+func (rcvr *engineUsecase) NormalizeSVG(ctx context.Context, input []byte) (entity.EngineSVG, error) {
+	request, err := encodeEngineSVGRequest(input)
+	if err != nil {
+		return entity.EngineSVG{}, err
+	}
+	response, err := rcvr.executeRequest(ctx, request)
+	if err != nil {
+		return entity.EngineSVG{}, err
+	}
+	return decodeEngineSVG(response)
+}
+
 func (rcvr *engineUsecase) execute(ctx context.Context, operation byte, spec entity.EngineDocumentSpec) ([]byte, error) {
+	request, err := encodeEngineRequest(operation, spec)
+	if err != nil {
+		return nil, err
+	}
+	return rcvr.executeRequest(ctx, request)
+}
+
+func (rcvr *engineUsecase) executeRequest(ctx context.Context, request []byte) ([]byte, error) {
 	if err := checkEngineContext(ctx); err != nil {
 		return nil, err
 	}
@@ -64,10 +87,6 @@ func (rcvr *engineUsecase) execute(ctx context.Context, operation byte, spec ent
 	}
 	if version := enginebridge.ABIVersion(); version != uint32(engineABIVersion) {
 		return nil, fmt.Errorf("Rust engine ABI version %d does not match Go ABI version %d", version, engineABIVersion)
-	}
-	request, err := encodeEngineRequest(operation, spec)
-	if err != nil {
-		return nil, err
 	}
 	response, err := enginebridge.Process(request)
 	if err != nil {
@@ -80,6 +99,24 @@ func (rcvr *engineUsecase) execute(ctx context.Context, operation byte, spec ent
 		return nil, fmt.Errorf("Rust engine response size %d exceeds %d", len(response), engineMaxResponse)
 	}
 	return response, nil
+}
+
+func encodeEngineSVGRequest(input []byte) ([]byte, error) {
+	if len(input) == 0 {
+		return nil, errors.New("SVG input must not be empty")
+	}
+	if len(input) > engineMaxSVG {
+		return nil, fmt.Errorf("SVG input size %d exceeds %d", len(input), engineMaxSVG)
+	}
+	var output bytes.Buffer
+	output.Grow(12 + len(input))
+	output.Write(engineRequestMagic[:])
+	writeUint16(&output, engineABIVersion)
+	output.WriteByte(engineOperationNormalizeSVG)
+	output.WriteByte(0)
+	writeUint32(&output, uint32(len(input)))
+	output.Write(input)
+	return output.Bytes(), nil
 }
 
 func checkEngineContext(ctx context.Context) error {
@@ -225,6 +262,49 @@ func decodeEngineBytes(input []byte, operation byte) ([]byte, error) {
 		return nil, fmt.Errorf("decode Rust engine payload: %w", err)
 	}
 	return payload, nil
+}
+
+func decodeEngineSVG(input []byte) (entity.EngineSVG, error) {
+	reader, err := decodeEngineResponseHeader(input, engineOperationNormalizeSVG)
+	if err != nil {
+		return entity.EngineSVG{}, err
+	}
+	width, err := readFloat64(reader)
+	if err != nil {
+		return entity.EngineSVG{}, fmt.Errorf("decode normalized SVG width: %w", err)
+	}
+	height, err := readFloat64(reader)
+	if err != nil {
+		return entity.EngineSVG{}, fmt.Errorf("decode normalized SVG height: %w", err)
+	}
+	viewBoxLength, err := readUint16(reader)
+	if err != nil {
+		return entity.EngineSVG{}, fmt.Errorf("decode normalized SVG viewBox length: %w", err)
+	}
+	reserved, err := readUint16(reader)
+	if err != nil {
+		return entity.EngineSVG{}, fmt.Errorf("decode normalized SVG reserved field: %w", err)
+	}
+	if reserved != 0 {
+		return entity.EngineSVG{}, fmt.Errorf("normalized SVG reserved field is %d", reserved)
+	}
+	svgLength, err := readUint32(reader)
+	if err != nil {
+		return entity.EngineSVG{}, fmt.Errorf("decode normalized SVG length: %w", err)
+	}
+	totalLength := uint64(viewBoxLength) + uint64(svgLength)
+	if totalLength != uint64(reader.Len()) {
+		return entity.EngineSVG{}, fmt.Errorf("normalized SVG payload length %d does not match %d available bytes", totalLength, reader.Len())
+	}
+	viewBox := make([]byte, viewBoxLength)
+	if _, err := io.ReadFull(reader, viewBox); err != nil {
+		return entity.EngineSVG{}, fmt.Errorf("decode normalized SVG viewBox: %w", err)
+	}
+	data := make([]byte, svgLength)
+	if _, err := io.ReadFull(reader, data); err != nil {
+		return entity.EngineSVG{}, fmt.Errorf("decode normalized SVG data: %w", err)
+	}
+	return entity.EngineSVG{Data: data, ViewBox: string(viewBox), Width: width, Height: height}, nil
 }
 
 func decodeEngineResponseHeader(input []byte, expectedOperation byte) (*bytes.Reader, error) {

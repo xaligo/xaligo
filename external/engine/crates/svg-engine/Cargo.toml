@@ -12,4 +12,5 @@ name = "xaligo_svg_engine"
 path = "src/lib.rs"
 
 [dependencies]
+usvg = { version = "0.45.1", default-features = false }
 xaligo-layout-engine = { path = "../layout-engine" }

@@ -16,6 +16,7 @@ type appYAML struct {
 		ServiceCatalogCSV string `yaml:"service_catalog_csv"`
 		OutputFrames      string `yaml:"output_frames"`
 		PptxExporterWASM  string `yaml:"pptx_exporter_wasm"`
+		AssetsDB          string `yaml:"assets_db"`
 	} `yaml:"paths"`
 	Legend struct {
 		OffsetX  float64 `yaml:"offset_x"`
@@ -51,6 +52,7 @@ type Config struct {
 	OutFramesDir     string // absolute path to generated frames output dir
 	SvcCatalogCSV    string // absolute path to service-catalog.csv
 	PptxExporterWASM string // absolute path to the PPTX WASM exporter
+	AssetsDB         string // absolute path to the embedded SVG registry
 	Legend           LegendConfig
 	ItemIconSize     float64 // default max icon size for <item> elements (px)
 	Serve            ServeConfig
@@ -66,6 +68,7 @@ func New() *Config {
 	def.Paths.ServiceCatalogCSV = "etc/resources/aws/service-catalog.csv"
 	def.Paths.OutputFrames = "output/aws-frames"
 	def.Paths.PptxExporterWASM = "external/pptx-exporter/wasm/xaligo.wasm"
+	def.Paths.AssetsDB = "xaligo-assets.db"
 	def.Legend.OffsetX = 120
 	def.Legend.OffsetY = 0
 	def.Legend.IconSize = 32
@@ -94,6 +97,7 @@ func New() *Config {
 		OutFramesDir:     abs(def.Paths.OutputFrames),
 		SvcCatalogCSV:    abs(def.Paths.ServiceCatalogCSV),
 		PptxExporterWASM: abs(def.Paths.PptxExporterWASM),
+		AssetsDB:         abs(def.Paths.AssetsDB),
 		ItemIconSize:     def.Item.IconSize,
 		Serve:            ServeConfig{Port: def.Serve.Port},
 		Legend: LegendConfig{

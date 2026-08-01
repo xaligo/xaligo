@@ -45,6 +45,7 @@ paths:
   service_catalog_csv: etc/resources/aws/service-catalog.csv
   output_frames:       output/aws-frames
   pptx_exporter_wasm:  external/pptx-exporter/wasm/xaligo.wasm
+  assets_db:           xaligo-assets.db
 
 legend:
   offset_x:  120
@@ -72,3 +73,9 @@ The V1 compatibility default is `32` layout pixels. `item.icon_size` or an
 embedded `AssetSource` supplies that render-context default, and a root
 `item-size` attribute overrides it. Callers that need stable cross-environment
 geometry should set the root attribute explicitly.
+
+`paths.assets_db` selects the writable SQLite and FTS5 SVG registry. Relative
+paths resolve from the project or runtime root. The first icon operation adds
+the domain-neutral `builtin` catalog through the same Rust SVG validation and
+normalization boundary used for user registrations. AWS and UML catalogs are
+separate profile data and are not prerequisites for the builtin catalog.

@@ -12,7 +12,7 @@ ENGINE_PACKAGE := xaligo-engine-ffi
 ENGINE_STATICLIB ?= $(ENGINE_DIR)/target/release/libxaligo_engine.a
 ENGINE_LINK_DIR := $(ENGINE_DIR)/lib
 ENGINE_LINK_LIB := $(ENGINE_LINK_DIR)/libxaligo_engine.a
-ENGINE_BUILD_TAG := xaligo_engine
+NATIVE_BUILD_TAGS := xaligo_engine sqlite_fts5 sqlite_omit_load_extension
 VERSION  := $(shell sed -n '1{s/^v//;p;q;}' VERSION)
 LDFLAGS  := -X github.com/xaligo/xaligo/internal/controller.version=$(VERSION)
 
@@ -22,7 +22,7 @@ help: ## Show commands
 
 build: build-engine build-wasm ## Build the single CLI binary with Rust engine and PPTX exporter
 	@mkdir -p $(BIN_DIR)
-	CGO_ENABLED=1 go build -tags $(ENGINE_BUILD_TAG) -ldflags "$(LDFLAGS)" -o $(BINARY) ./cmd
+	CGO_ENABLED=1 go build -tags "$(NATIVE_BUILD_TAGS)" -ldflags "$(LDFLAGS)" -o $(BINARY) ./cmd
 	@echo "Built: $(BINARY)"
 
 build-engine: ## Build and stage the Rust static library for cgo
@@ -41,7 +41,7 @@ test: test-engine ## Run tests
 
 test-engine: build-engine ## Test Rust crates and the linked cgo engine path
 	cargo test --manifest-path $(ENGINE_DIR)/Cargo.toml --workspace
-	CGO_ENABLED=1 go test -tags $(ENGINE_BUILD_TAG) ./... -count=1
+	CGO_ENABLED=1 go test -tags "$(NATIVE_BUILD_TAGS)" ./... -count=1
 
 security-setup: ## Install security scanners and prepare npm audit metadata
 	@mkdir -p $(TOOLS_BIN_DIR)

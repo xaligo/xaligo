@@ -6,9 +6,12 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/xaligo/xaligo/internal/config"
 	"github.com/xaligo/xaligo/internal/controller"
+	"github.com/xaligo/xaligo/internal/core/profiles/builtin"
 	"github.com/xaligo/xaligo/internal/repository"
+	iconrepository "github.com/xaligo/xaligo/internal/repository/icon"
 	"github.com/xaligo/xaligo/internal/share"
 	"github.com/xaligo/xaligo/internal/usecase"
+	v2 "github.com/xaligo/xaligo/internal/usecase/v2"
 )
 
 var (
@@ -47,6 +50,9 @@ func NewRootCmd() *cobra.Command {
 	elementUsecase := usecase.NewElementUsecase()
 	themeUsecase := usecase.NewThemeUsecase()
 	diffUsecase := usecase.NewDiffUsecase(xaligoRepository, excalidrawRepository, svgRepository)
+	engineUsecase := v2.NewEngineUsecase()
+	iconRegistryRepository := iconrepository.NewRegistryRepository(cfg.AssetsDB)
+	iconUsecase := v2.NewIconUsecase(iconRegistryRepository, engineUsecase, builtin.IconRegistrations()...)
 
 	addController := controller.NewAddController(cfg, sceneIOUsecase, catalogUsecase, elementUsecase)
 	generateController := controller.NewGenerateController(renderUsecase, exportUsecase)
@@ -56,6 +62,7 @@ func NewRootCmd() *cobra.Command {
 	initController := controller.NewInitController()
 	versionController := controller.NewVersionController()
 	diffController := controller.NewDiffController(diffUsecase)
+	iconController := controller.NewIconController(iconUsecase)
 
 	root := &cobra.Command{
 		Use:   "xaligo",
@@ -68,6 +75,9 @@ Isoflow.
 
 Use 'xaligo <command> --help' for full details, flags, and examples for any
 subcommand below.`,
+		PersistentPostRunE: func(*cobra.Command, []string) error {
+			return iconRegistryRepository.Close()
+		},
 	}
 
 	root.AddCommand(renderController.Command())
@@ -78,6 +88,7 @@ subcommand below.`,
 	root.AddCommand(addController.Command())
 	root.AddCommand(generateController.Command())
 	root.AddCommand(diffController.Command())
+	root.AddCommand(iconController.Command())
 	return root
 }
 

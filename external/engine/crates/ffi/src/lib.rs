@@ -10,6 +10,7 @@ const REQUEST_MAGIC: &[u8; 4] = b"XLE2";
 const RESPONSE_MAGIC: &[u8; 4] = b"XLR2";
 const OPERATION_LAYOUT: u8 = 1;
 const OPERATION_SVG: u8 = 2;
+const OPERATION_NORMALIZE_SVG: u8 = 3;
 const STATUS_OK: u8 = 0;
 const STATUS_ERROR: u8 = 1;
 const MAX_REQUEST_BYTES: usize = 16 * 1024 * 1024;
@@ -119,22 +120,33 @@ pub fn process_request(input: &[u8]) -> Vec<u8> {
 enum EngineResponse {
     Layout(ResolvedDocument),
     Svg(Vec<u8>),
+    NormalizedSvg(xaligo_svg_engine::NormalizedSvg),
 }
 
-struct EngineRequest {
-    operation: u8,
-    document: DocumentSpec,
+enum EngineRequest {
+    Document {
+        operation: u8,
+        document: DocumentSpec,
+    },
+    NormalizeSvg(Vec<u8>),
 }
 
 fn execute(request: EngineRequest) -> Result<EngineResponse, String> {
-    let resolved = resolve(&request.document).map_err(|error| error.to_string())?;
-    match request.operation {
-        OPERATION_LAYOUT => Ok(EngineResponse::Layout(resolved)),
-        OPERATION_SVG => Ok(EngineResponse::Svg(xaligo_svg_engine::render(&resolved))),
-        _ => Err(format!(
-            "unsupported engine operation {}",
-            request.operation
-        )),
+    match request {
+        EngineRequest::Document {
+            operation,
+            document,
+        } => {
+            let resolved = resolve(&document).map_err(|error| error.to_string())?;
+            match operation {
+                OPERATION_LAYOUT => Ok(EngineResponse::Layout(resolved)),
+                OPERATION_SVG => Ok(EngineResponse::Svg(xaligo_svg_engine::render(&resolved))),
+                _ => Err(format!("unsupported engine operation {operation}")),
+            }
+        }
+        EngineRequest::NormalizeSvg(svg) => xaligo_svg_engine::normalize(&svg)
+            .map(EngineResponse::NormalizedSvg)
+            .map_err(|error| error.to_string()),
     }
 }
 
@@ -156,10 +168,22 @@ fn decode_request(input: &[u8]) -> Result<EngineRequest, String> {
         ));
     }
     let operation = decoder.read_u8()?;
+    let discriminator = decoder.read_u8()?;
+    if operation == OPERATION_NORMALIZE_SVG {
+        if discriminator != 0 {
+            return Err("invalid SVG normalization request flags".to_owned());
+        }
+        let length = decoder.read_u32()? as usize;
+        let svg = decoder.read_exact(length)?.to_vec();
+        if !decoder.is_empty() {
+            return Err("engine request has trailing bytes".to_owned());
+        }
+        return Ok(EngineRequest::NormalizeSvg(svg));
+    }
     if operation != OPERATION_LAYOUT && operation != OPERATION_SVG {
         return Err(format!("unsupported engine operation {operation}"));
     }
-    let direction = match decoder.read_u8()? {
+    let direction = match discriminator {
         1 => Direction::Vertical,
         2 => Direction::Horizontal,
         value => return Err(format!("unsupported layout direction {value}")),
@@ -201,7 +225,7 @@ fn decode_request(input: &[u8]) -> Result<EngineRequest, String> {
     if !decoder.is_empty() {
         return Err("engine request has trailing bytes".to_owned());
     }
-    Ok(EngineRequest {
+    Ok(EngineRequest::Document {
         operation,
         document: DocumentSpec {
             direction,
@@ -242,6 +266,17 @@ fn encode_success(response: EngineResponse) -> Vec<u8> {
             output.push(OPERATION_SVG);
             output.extend_from_slice(&(svg.len() as u32).to_le_bytes());
             output.extend_from_slice(&svg);
+        }
+        EngineResponse::NormalizedSvg(svg) => {
+            let view_box = svg.view_box.as_bytes();
+            output.push(OPERATION_NORMALIZE_SVG);
+            output.extend_from_slice(&svg.width.to_le_bytes());
+            output.extend_from_slice(&svg.height.to_le_bytes());
+            output.extend_from_slice(&(view_box.len() as u16).to_le_bytes());
+            output.extend_from_slice(&0u16.to_le_bytes());
+            output.extend_from_slice(&(svg.data.len() as u32).to_le_bytes());
+            output.extend_from_slice(view_box);
+            output.extend_from_slice(&svg.data);
         }
     }
     output
@@ -351,6 +386,17 @@ mod tests {
         bytes
     }
 
+    fn normalize_request(svg: &[u8]) -> Vec<u8> {
+        let mut input = Vec::new();
+        input.extend_from_slice(REQUEST_MAGIC);
+        input.extend_from_slice(&ABI_VERSION.to_le_bytes());
+        input.push(OPERATION_NORMALIZE_SVG);
+        input.push(0);
+        input.extend_from_slice(&(svg.len() as u32).to_le_bytes());
+        input.extend_from_slice(svg);
+        input
+    }
+
     #[test]
     fn layout_and_svg_operations_share_resolution() {
         let layout = process_request(&request(OPERATION_LAYOUT, 1, 100.0, 80.0));
@@ -376,6 +422,22 @@ mod tests {
         let response = process_request(&unknown);
         assert_eq!(response[6], STATUS_ERROR);
         assert!(String::from_utf8_lossy(&response).contains("ABI version 99"));
+    }
+
+    #[test]
+    fn normalizes_svg_and_rejects_active_content_through_abi() {
+        let safe = process_request(&normalize_request(
+            br#"<svg xmlns="http://www.w3.org/2000/svg" width="8" height="4"><path d="M0 0h8v4z"/></svg>"#,
+        ));
+        assert_eq!(safe[6], STATUS_OK);
+        assert_eq!(safe[7], OPERATION_NORMALIZE_SVG);
+        assert!(String::from_utf8_lossy(&safe).contains("<svg"));
+
+        let unsafe_svg = process_request(&normalize_request(
+            br#"<svg xmlns="http://www.w3.org/2000/svg"><script/></svg>"#,
+        ));
+        assert_eq!(unsafe_svg[6], STATUS_ERROR);
+        assert!(String::from_utf8_lossy(&unsafe_svg).contains("forbidden"));
     }
 
     #[test]

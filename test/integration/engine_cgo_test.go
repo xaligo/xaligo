@@ -48,3 +48,26 @@ func TestRustStaticLibraryEngineThroughCgo(t *testing.T) {
 		t.Fatalf("Rust SVG projection = %s", svg)
 	}
 }
+
+func TestRustSVGNormalizationThroughCgo(t *testing.T) {
+	engine := v2.NewEngineUsecase()
+	normalized, err := engine.NormalizeSVG(context.Background(), []byte(
+		`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="8"><path d="M0 0h16v8z"/></svg>`,
+	))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if normalized.Width != 16 || normalized.Height != 8 || normalized.ViewBox != "0 0 16 8" || !bytes.Contains(normalized.Data, []byte(`<svg`)) {
+		t.Fatalf("normalized SVG = %#v %s", normalized, normalized.Data)
+	}
+	for _, input := range [][]byte{
+		[]byte(`<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>`),
+		[]byte(`<svg xmlns="http://www.w3.org/2000/svg"><image href="https://example.com/icon.png"/></svg>`),
+		[]byte(`<svg`),
+		make([]byte, 2*1024*1024+1),
+	} {
+		if _, err := engine.NormalizeSVG(context.Background(), input); err == nil {
+			t.Fatalf("unsafe or oversized SVG was accepted: %q", input[:min(len(input), 80)])
+		}
+	}
+}

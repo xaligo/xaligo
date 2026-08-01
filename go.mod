@@ -6,6 +6,7 @@ toolchain go1.26.5
 
 require (
 	github.com/go-fonts/latin-modern v0.3.3
+	github.com/mattn/go-sqlite3 v1.14.49
 	github.com/spf13/cobra v1.10.2
 	github.com/tdewolff/canvas v0.0.0-20260714230319-248e24504c3b
 	github.com/tetratelabs/wazero v1.12.0
