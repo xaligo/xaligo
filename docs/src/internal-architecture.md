@@ -77,12 +77,18 @@ external/engine/src
 ├── rep/          generic layout and SVG implementations
 ├── usc/          engine operation orchestration
 ├── ctl/          C ABI controller
-└── util/         binary decoding and shared errors
+└── util/         explicit codecs/traits, message codes, logger, and errors
 ```
 
 `lib.rs` only assembles these modules and exports the static-library symbols.
 Layout, SVG, and FFI are responsibility layers in one crate rather than
 separately versioned crates.
+
+As in VEM, engine entities do not use derive or serde annotations to generate
+their implementations. Explicit standard-trait implementations and bounded
+little-endian ABI serialization/deserialization live under `util`. Rust
+message-code logging follows the Go logger's `XALIGO_LOG_*` configuration while
+defaulting diagnostics to stderr and never terminating the embedding process.
 
 Rust calculates only generic frames, groups, captures, items, ports, text,
 spacers, and lines. It now resolves nested vertical/horizontal/fixed/flex/grid

@@ -1,9 +1,18 @@
-use std::panic::{AssertUnwindSafe, catch_unwind};
+#[rustfmt::skip]
+use std::panic::{
+    AssertUnwindSafe,
+    catch_unwind,
+};
 use std::ptr;
 
 use crate::base::process_request;
+#[rustfmt::skip]
 use crate::cnf::engine::{
-    ABI_VERSION, FFI_NULL_INPUT, FFI_NULL_OUTPUT, FFI_OK, FFI_PANIC,
+    ABI_VERSION,
+    FFI_NULL_INPUT,
+    FFI_NULL_OUTPUT,
+    FFI_OK,
+    FFI_PANIC,
 };
 
 #[repr(C)]
@@ -95,9 +104,17 @@ pub unsafe extern "C" fn xaligo_engine_buffer_free(buffer: XaligoEngineBuffer) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[rustfmt::skip]
     use crate::cnf::engine::{
-        NUMERIC_FIELD_COUNT, OPERATION_LAYOUT, OPERATION_NORMALIZE_SVG, OPERATION_SVG,
-        REQUEST_MAGIC, RESPONSE_MAGIC, STATUS_ERROR, STATUS_OK, STRING_FIELD_COUNT,
+        NUMERIC_FIELD_COUNT,
+        OPERATION_LAYOUT,
+        OPERATION_NORMALIZE_SVG,
+        OPERATION_SVG,
+        REQUEST_MAGIC,
+        RESPONSE_MAGIC,
+        STATUS_ERROR,
+        STATUS_OK,
+        STRING_FIELD_COUNT,
     };
 
     fn document_request(operation: u8, width: f64, elements: Vec<Vec<u8>>) -> Vec<u8> {

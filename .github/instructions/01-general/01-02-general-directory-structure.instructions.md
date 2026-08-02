@@ -43,7 +43,7 @@ xaligo/
 │   │   ├── src/rep/             generic layout and SVG implementations
 │   │   ├── src/usc/             engine operation orchestration
 │   │   ├── src/ctl/             C ABI controller
-│   │   └── src/util/            binary decoding and shared errors
+│   │   └── src/util/            explicit codecs/traits, message codes, logging, and errors
 │   └── pptx-exporter/           TypeScript/PptxGenJS PPTX adapter
 │       ├── index.ts             package API composition boundary
 │       ├── command.ts           TypeScript/WASI entry point

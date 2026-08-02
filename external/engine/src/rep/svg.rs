@@ -1,6 +1,13 @@
 use crate::cnf::engine::MAX_SVG_BYTES;
+#[rustfmt::skip]
 use crate::ent::model::document::{
-    Concept, Decoration, LineStyle, Point, ResolvedDocument, ResolvedElement, Shape,
+    Concept,
+    Decoration,
+    LineStyle,
+    Point,
+    ResolvedDocument,
+    ResolvedElement,
+    Shape,
 };
 use crate::ent::model::svg::NormalizedSvg;
 use crate::util::error::SvgError;
@@ -518,7 +525,12 @@ fn format_number(value: f64) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ent::model::document::{ResolvedLine, ResolvedText, ResolvedVisual};
+    #[rustfmt::skip]
+    use crate::ent::model::document::{
+        ResolvedLine,
+        ResolvedText,
+        ResolvedVisual,
+    };
 
     fn resolved_element(concept: Concept) -> ResolvedElement {
         ResolvedElement {

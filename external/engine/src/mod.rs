@@ -29,6 +29,13 @@ pub mod ctl {
 }
 
 pub mod util {
-    pub mod binary;
+    pub mod clone;
+    pub mod debug;
+    pub mod default;
+    pub mod deserialize;
+    pub mod eq;
     pub mod error;
+    pub mod logger;
+    pub mod mcode;
+    pub mod serialize;
 }

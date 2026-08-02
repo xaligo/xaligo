@@ -1,7 +1,15 @@
-use crate::cnf::engine::{OPERATION_LAYOUT, OPERATION_SVG};
+#[rustfmt::skip]
+use crate::cnf::engine::{
+    OPERATION_LAYOUT,
+    OPERATION_SVG,
+};
 use crate::ent::request::engine::EngineRequest;
 use crate::ent::response::engine::EngineResponse;
-use crate::rep::{layout, svg};
+#[rustfmt::skip]
+use crate::rep::{
+    layout,
+    svg,
+};
 
 pub(crate) fn execute(request: EngineRequest) -> Result<EngineResponse, String> {
     match request {

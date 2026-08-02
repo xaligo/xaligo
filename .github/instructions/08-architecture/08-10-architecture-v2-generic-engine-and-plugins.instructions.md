@@ -112,7 +112,7 @@ external/
 │       ├── rep/           generic layout and SVG implementations
 │       ├── usc/           engine operation orchestration
 │       ├── ctl/           versioned C ABI controller
-│       └── util/          binary decoding and shared errors
+│       └── util/          explicit codecs/traits, message codes, logger, and errors
 └── pptx-exporter/         TypeScript/PptxGenJS PPTX adapter
 ```
 
@@ -152,6 +152,20 @@ The engine ABI version is independent from the XAL document version. Reject an
 unknown ABI before calculation. Requests and responses use fixed-width,
 little-endian fields with finite numeric validation and explicit optional-value
 flags. Arbitrary maps and renderer-specific JSON must not cross the ABI.
+
+Rust entities do not use derive or serde annotations to generate behavior.
+Shared standard-trait implementations live explicitly in `util/clone.rs`,
+`util/debug.rs`, `util/default.rs`, and `util/eq.rs`; the request decoder and
+response encoder live in `util/deserialize.rs` and `util/serialize.rs`. This is
+an organization rule, not permission to serialize the neutral model as JSON.
+
+Rust logging uses message codes and the same `XALIGO_LOG_LEVEL`,
+`XALIGO_LOG_STRUCTURED`, `XALIGO_LOG_CALLER`, and `XALIGO_LOG_OUTPUT`
+configuration vocabulary as the Go logger. The in-process static library uses
+stderr as its default diagnostic destination, emits no source document
+contents or sensitive absolute paths, and never exits the Go host. Failures
+continue to cross the typed ABI response; logging is supplementary and debug
+lifecycle logging remains filtered at the default info level.
 
 ## Declarative plugin contract
 

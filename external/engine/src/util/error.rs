@@ -1,9 +1,12 @@
 use std::error::Error;
-use std::fmt::{Display, Formatter};
+#[rustfmt::skip]
+use std::fmt::{
+    Display,
+    Formatter,
+};
 
-#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct LayoutError {
-    message: String,
+    pub(crate) message: String,
 }
 
 impl LayoutError {
@@ -22,9 +25,8 @@ impl Display for LayoutError {
 
 impl Error for LayoutError {}
 
-#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SvgError {
-    message: String,
+    pub(crate) message: String,
 }
 
 impl SvgError {

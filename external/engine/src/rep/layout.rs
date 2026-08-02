@@ -1,10 +1,41 @@
-use std::collections::{HashMap, HashSet};
-
-use crate::cnf::engine::{
-    DEFAULT_FONT_SIZE, DEFAULT_GAP, DEFAULT_ITEM_SIZE, DEFAULT_LINE_HEIGHT, DEFAULT_PORT_SIZE,
-    MAX_COLUMNS, MAX_DEPTH, MAX_ELEMENTS, MAX_ID_BYTES,
+#[rustfmt::skip]
+use std::collections::{
+    HashMap,
+    HashSet,
 };
-use crate::ent::model::document::*;
+
+#[rustfmt::skip]
+use crate::cnf::engine::{
+    DEFAULT_FONT_SIZE,
+    DEFAULT_GAP,
+    DEFAULT_ITEM_SIZE,
+    DEFAULT_LINE_HEIGHT,
+    DEFAULT_PORT_SIZE,
+    MAX_COLUMNS,
+    MAX_DEPTH,
+    MAX_ELEMENTS,
+    MAX_ID_BYTES,
+};
+use crate::ent::model::document::{
+    Alignment,
+    Concept,
+    DocumentSpec,
+    ElementSpec,
+    Insets,
+    Justification,
+    LayoutPolicy,
+    MissingIconPolicy,
+    Overflow,
+    Point,
+    ResolvedDocument,
+    ResolvedElement,
+    ResolvedLine,
+    ResolvedText,
+    ResolvedVisual,
+    RoutingPolicy,
+    Shape,
+    Side,
+};
 use crate::util::error::LayoutError;
 
 impl Insets {
@@ -18,7 +49,6 @@ impl Insets {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
 struct ResolvedInsets {
     top: f64,
     right: f64,
@@ -26,13 +56,28 @@ struct ResolvedInsets {
     left: f64,
 }
 
-#[derive(Clone, Copy, Debug)]
+impl Clone for ResolvedInsets {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl Copy for ResolvedInsets {}
+
 struct Bounds {
     x: f64,
     y: f64,
     width: f64,
     height: f64,
 }
+
+impl Clone for Bounds {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl Copy for Bounds {}
 
 impl Bounds {
     fn content(self, padding: ResolvedInsets, owner: &str) -> Result<Self, LayoutError> {
@@ -788,11 +833,18 @@ impl LayoutState<'_> {
     }
 }
 
-#[derive(Clone, Copy)]
 enum Axis {
     Vertical,
     Horizontal,
 }
+
+impl Clone for Axis {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl Copy for Axis {}
 
 impl Axis {
     fn main_size(self, bounds: Bounds) -> f64 {
@@ -1489,6 +1541,16 @@ fn format_number(value: f64) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[rustfmt::skip]
+    use crate::ent::model::document::{
+        Decoration,
+        IconSpec,
+        LineSpec,
+        LineStyle,
+        PortSpec,
+        TextSpec,
+        VisualSpec,
+    };
 
     fn empty_text() -> TextSpec {
         TextSpec {

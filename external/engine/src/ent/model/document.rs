@@ -1,4 +1,3 @@
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Concept {
     Frame,
     Group,
@@ -10,7 +9,6 @@ pub enum Concept {
     Spacer,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum LayoutPolicy {
     Default,
     Vertical,
@@ -20,13 +18,11 @@ pub enum LayoutPolicy {
     None,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Overflow {
     Error,
     Visible,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Alignment {
     Start,
     Center,
@@ -34,7 +30,6 @@ pub enum Alignment {
     Stretch,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Justification {
     Start,
     Center,
@@ -43,7 +38,6 @@ pub enum Justification {
     SpaceEvenly,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Shape {
     Default,
     Rectangle,
@@ -51,7 +45,6 @@ pub enum Shape {
     None,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Side {
     Auto,
     Top,
@@ -60,20 +53,17 @@ pub enum Side {
     Left,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum RoutingPolicy {
     Orthogonal,
     Straight,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum LineStyle {
     Solid,
     Dashed,
     Dotted,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Decoration {
     None,
     Arrow,
@@ -82,14 +72,12 @@ pub enum Decoration {
     Circle,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum MissingIconPolicy {
     Error,
     Fallback,
     Hide,
 }
 
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Insets {
     pub top: Option<f64>,
     pub right: Option<f64>,
@@ -97,7 +85,6 @@ pub struct Insets {
     pub left: Option<f64>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
 pub struct VisualSpec {
     pub shape: Shape,
     pub fill: String,
@@ -109,7 +96,6 @@ pub struct VisualSpec {
     pub layer: Option<i32>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
 pub struct TextSpec {
     pub value: String,
     pub font_family: String,
@@ -123,7 +109,6 @@ pub struct TextSpec {
     pub padding: Insets,
 }
 
-#[derive(Clone, Debug, PartialEq)]
 pub struct IconSpec {
     pub reference: String,
     pub fallback_reference: String,
@@ -136,7 +121,6 @@ pub struct IconSpec {
     pub missing_policy: MissingIconPolicy,
 }
 
-#[derive(Clone, Debug, PartialEq)]
 pub struct PortSpec {
     pub side: Side,
     pub anchor: Option<f64>,
@@ -146,7 +130,6 @@ pub struct PortSpec {
     pub label: String,
 }
 
-#[derive(Clone, Debug, PartialEq)]
 pub struct LineSpec {
     pub source: String,
     pub target: String,
@@ -163,7 +146,6 @@ pub struct LineSpec {
     pub label_position: Option<f64>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
 pub struct ElementSpec {
     pub parent: Option<usize>,
     pub id: String,
@@ -198,7 +180,6 @@ pub struct ElementSpec {
     pub line: LineSpec,
 }
 
-#[derive(Clone, Debug, PartialEq)]
 pub struct DocumentSpec {
     pub layout: LayoutPolicy,
     pub width: f64,
@@ -210,13 +191,11 @@ pub struct DocumentSpec {
     pub elements: Vec<ElementSpec>,
 }
 
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Point {
     pub x: f64,
     pub y: f64,
 }
 
-#[derive(Clone, Debug, PartialEq)]
 pub struct ResolvedVisual {
     pub shape: Shape,
     pub fill: String,
@@ -228,7 +207,6 @@ pub struct ResolvedVisual {
     pub layer: i32,
 }
 
-#[derive(Clone, Debug, PartialEq)]
 pub struct ResolvedText {
     pub value: String,
     pub font_family: String,
@@ -238,7 +216,6 @@ pub struct ResolvedText {
     pub line_height: f64,
 }
 
-#[derive(Clone, Debug, PartialEq)]
 pub struct ResolvedLine {
     pub style: LineStyle,
     pub source_decoration: Decoration,
@@ -247,7 +224,6 @@ pub struct ResolvedLine {
     pub label_position: f64,
 }
 
-#[derive(Clone, Debug, PartialEq)]
 pub struct ResolvedElement {
     pub parent: Option<usize>,
     pub id: String,
@@ -263,7 +239,6 @@ pub struct ResolvedElement {
     pub points: Vec<Point>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
 pub struct ResolvedDocument {
     pub width: f64,
     pub height: f64,

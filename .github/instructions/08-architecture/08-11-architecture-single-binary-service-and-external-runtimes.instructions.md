@@ -159,8 +159,10 @@ The Rust source layout follows `ryo-arima/vem/src`, adapted from a CLI binary
 to a static library: `base.rs` composes the request pipeline; `cnf` owns ABI
 configuration; `ent` owns model, request, and response values; `rep` owns
 layout and SVG implementations; `usc` coordinates operations; `ctl` exposes
-the C ABI; and `util` contains shared binary and error helpers. The engine is
-one crate. Do not split these responsibilities into independently versioned
+the C ABI; and `util` contains explicit binary serialization/deserialization,
+standard-trait implementations, message codes, logging, and errors. Entity
+behavior is implemented there without derive or serde annotations. The engine
+is one crate. Do not split these responsibilities into independently versioned
 layout, SVG, or FFI crates.
 
 The generated static libraries, Cargo `target`, npm `dist`, and `node_modules`

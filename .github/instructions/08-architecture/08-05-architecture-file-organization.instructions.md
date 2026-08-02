@@ -45,11 +45,34 @@ C header, single Rust staticlib crate, and generated ignored link directory
 stay together in `external/engine`; do not recreate an `internal/engineffi`
 package. Rust source follows the same responsibility layering as
 `ryo-arima/vem/src`: `cnf` owns constants and limits, `ent` owns model,
-request, and response data, `rep` owns layout and SVG implementations, `usc` owns operation
-orchestration, `ctl` owns the C ABI, `util` owns shared technical helpers, and
-`base.rs` is the composition root. `lib.rs` exports only the static-library
-boundary. Do not restore separate layout, SVG, or FFI crates or place all
-responsibilities back into a monolithic `lib.rs`.
+request, and response data, `rep` owns layout and SVG implementations, `usc`
+owns operation orchestration, `ctl` owns the C ABI, `util` owns shared
+technical helpers, and `base.rs` is the composition root. `lib.rs` exports only
+the static-library boundary. Do not restore separate layout, SVG, or FFI crates
+or place all responsibilities back into a monolithic `lib.rs`.
+
+The Rust engine follows VEM's explicit implementation convention. Keep entity
+declarations free of `derive`-generated implementations. Implement `Clone`,
+`Debug`, `Default`, and equality in the matching `util` responsibility files,
+and implement ABI serialization/deserialization explicitly in
+`util/serialize.rs` and `util/deserialize.rs`. These codec files operate on the
+bounded little-endian ABI; they must not introduce serde, JSON, or arbitrary
+maps at the Go/Rust boundary. Required ABI/compiler/test/tooling attributes,
+including `repr(C)`, exported-symbol, `cfg(test)`, test, lint, and targeted
+rustfmt attributes, are not model implementations and remain permitted.
+
+Write every grouped Rust import vertically, with one imported item per line:
+
+```rust
+use module::{
+    First,
+    Second,
+};
+```
+
+Single-item imports may use the ungrouped form. A targeted `rustfmt::skip` may
+be placed on a short grouped import only when stable rustfmt would otherwise
+collapse this required layout.
 
 - Keep a Go interface in the file containing the corresponding concrete
   implementation and its principal methods.

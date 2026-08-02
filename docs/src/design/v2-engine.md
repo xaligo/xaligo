@@ -41,13 +41,43 @@ external/engine/src/
 ├── rep/svg.rs              SVG normalization and projection
 ├── usc/engine.rs           operation orchestration
 ├── ctl/engine.rs           panic-safe C ABI and owned buffers
-└── util/                   binary reader and shared errors
+└── util/
+    ├── serialize.rs        explicit ABI response serialization
+    ├── deserialize.rs      explicit bounded ABI request deserialization
+    ├── clone/debug/eq.rs   explicit model trait implementations
+    ├── default.rs          explicit neutral-value defaults
+    ├── mcode.rs            engine message codes and log levels
+    ├── logger.rs           Go-compatible environment-configured logging
+    └── error.rs            layout and SVG errors
 ```
 
 This preserves the `cnf / ent / rep / usc / ctl / util` dependency vocabulary
 without copying VEM's CLI-specific `main.rs`. `lib.rs` is the corresponding
 library entry point. The C symbols and Go `EngineUsecase` contract are
 unchanged by this source-only reorganization.
+
+Engine-owned models intentionally have no `derive` or serde annotations.
+Standard traits and the binary ABI codecs are implemented explicitly under
+`util`, following VEM's implementation pattern. `serialize.rs` and
+`deserialize.rs` continue to read and write the fixed-width little-endian ABI;
+they do not add a JSON or generic-map boundary.
+
+Grouped imports use a vertical, one-item-per-line form throughout the Rust
+crate. This makes imports stable and reviewable as layer dependencies change.
+
+## Rust logging
+
+`util/mcode.rs` defines structured engine message codes and
+`util/logger.rs` follows the Go shared logger contract: level filtering,
+optional structured JSON, component/service metadata, caller metadata, error
+field extraction, and `XALIGO_LOG_*` configuration. The static library adapts
+that contract in two ways: stderr is the default so Go protocol stdout remains
+machine-usable, and a Rust fatal log never terminates the embedding Go process.
+Engine failures are still returned through the typed ABI.
+
+Default-level execution is silent because the composition root emits only
+debug lifecycle events. Logs do not include `.xal` contents or absolute caller
+paths.
 
 ## Generic concepts
 
