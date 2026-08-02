@@ -9,6 +9,12 @@
 # Generated Excalidraw output
 output/
 
+# Local SQLite registries and project indexes
+.xaligo/
+xaligo-assets.db
+xaligo-assets.db-shm
+xaligo-assets.db-wal
+
 # npm
 node_modules/
 external/pptx-exporter/node_modules/

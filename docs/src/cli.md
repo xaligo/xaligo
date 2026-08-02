@@ -149,6 +149,27 @@ to standard output unless `-o` names a file. `icon search` accepts an FTS5
 query and all list/search commands accept `--limit` up to 100. Configure the
 database path with `paths.assets_db` in `etc/resources/aws/app.yaml`.
 
+## Local RAG Index
+
+The RAG command family builds a local SQLite/FTS5 knowledge index. Its initial
+corpus is intentionally restricted to Markdown files below `docs/`; `.xal`
+samples, the root `README.md`, source code, and generated documentation are not
+registered implicitly.
+
+```bash
+xaligo rag index
+xaligo rag search 'database AND table'
+xaligo rag search routing --limit 10 --json
+xaligo rag watch --interval 2s
+```
+
+`rag index` hashes each Markdown source and skips unchanged documents. It
+removes stale rows for deleted documentation files. `rag watch` runs the same
+incremental pass repeatedly. The shared project service can analyze an
+explicit `.xal` document into generic Frame, Group, Capture, Item, Port, Line,
+Text, and Spacer concepts for editor or agent requests, but that explicit path
+does not broaden the initial RAG corpus.
+
 ## Other Commands
 
 | Command | Description |
@@ -158,5 +179,6 @@ database path with `paths.assets_db` in `etc/resources/aws/app.yaml`.
 | `xaligo render markdown <file.md>` | Embed rendered `xal` code blocks as SVG images into a Markdown file |
 | `xaligo serve <file.xal\|file.md>` | Serve a live preview; `.xal` previews one combined SVG, `.md`/`.markdown` previews the full document with diagrams embedded inline; `--port` overrides the configured `serve.port` (default `8080`), and `--paper`/`--orientation` fix the preview to a physical page size |
 | `xaligo icon <add|get|search|remove|list|namespaces>` | Manage the embedded SQLite SVG registry |
+| `xaligo rag <index|search|watch>` | Index only `docs/**/*.md`/`docs/**/*.markdown` initially and search the local FTS5 knowledge base |
 | `xaligo init [-o <dir>]` | Generate a sample `.xal` file |
 | `xaligo version` | Print version |

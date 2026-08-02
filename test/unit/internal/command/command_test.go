@@ -18,7 +18,7 @@ func TestNewRootCmdAssemblesSubcommands(t *testing.T) {
 		for _, sub := range cmd.Commands() {
 			seen[sub.Name()] = true
 		}
-		for _, name := range []string{"render", "validate", "serve", "init", "version", "generate", "diff", "icon"} {
+		for _, name := range []string{"render", "validate", "serve", "init", "version", "generate", "diff", "icon", "rag"} {
 			if !seen[name] {
 				t.Fatalf("subcommand %q missing from %#v", name, seen)
 			}

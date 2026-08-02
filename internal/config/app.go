@@ -16,6 +16,7 @@ type appYAML struct {
 		ServiceCatalogCSV string `yaml:"service_catalog_csv"`
 		PptxExporterWASM  string `yaml:"pptx_exporter_wasm"`
 		AssetsDB          string `yaml:"assets_db"`
+		ProjectDB         string `yaml:"project_db"`
 	} `yaml:"paths"`
 	Item struct {
 		IconSize float64 `yaml:"icon_size"`
@@ -37,6 +38,7 @@ type Config struct {
 	SvcCatalogCSV    string  // absolute path to service-catalog.csv
 	PptxExporterWASM string  // absolute path to the PPTX WASM exporter
 	AssetsDB         string  // absolute path to the embedded SVG registry
+	ProjectDB        string  // absolute path to the durable project search index
 	ItemIconSize     float64 // default max icon size for <item> elements (px)
 	Serve            ServeConfig
 }
@@ -51,6 +53,7 @@ func New() *Config {
 	def.Paths.ServiceCatalogCSV = "etc/resources/aws/service-catalog.csv"
 	def.Paths.PptxExporterWASM = "external/pptx-exporter/wasm/xaligo.wasm"
 	def.Paths.AssetsDB = "xaligo-assets.db"
+	def.Paths.ProjectDB = ".xaligo/project.db"
 	def.Item.IconSize = 32.0
 	def.Serve.Port = DefaultServePort
 
@@ -75,6 +78,7 @@ func New() *Config {
 		SvcCatalogCSV:    abs(def.Paths.ServiceCatalogCSV),
 		PptxExporterWASM: abs(def.Paths.PptxExporterWASM),
 		AssetsDB:         abs(def.Paths.AssetsDB),
+		ProjectDB:        abs(def.Paths.ProjectDB),
 		ItemIconSize:     def.Item.IconSize,
 		Serve:            ServeConfig{Port: def.Serve.Port},
 	}

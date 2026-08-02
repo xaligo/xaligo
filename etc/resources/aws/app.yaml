@@ -3,6 +3,7 @@ paths:
   service_catalog_csv:  etc/resources/aws/service-catalog.csv
   pptx_exporter_wasm:   external/pptx-exporter/wasm/xaligo.wasm
   assets_db:            xaligo-assets.db
+  project_db:           .xaligo/project.db
 
 item:
   icon_size: 32

@@ -36,6 +36,10 @@ Implemented or partially implemented:
   under `external/engine`; generic V2 calculation migration remains underway.
 - The embedded SQLite SVG registry and builtin generic icon profile are
   available to the V2 use cases.
+- `xaligo rag index|search|watch` provides the durable project FTS5 boundary.
+  Its initial corpus is deliberately restricted to Markdown below `docs/`;
+  `.xal` concepts are analyzed only when an editor or agent explicitly supplies
+  a document.
 
 Important gaps:
 
