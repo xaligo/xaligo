@@ -3,6 +3,7 @@ package command
 import (
 	"errors"
 	"os"
+	"sync"
 
 	"github.com/spf13/cobra"
 	"github.com/xaligo/xaligo/internal/config"
@@ -24,6 +25,11 @@ var (
 )
 
 func NewRootCmd() *cobra.Command {
+	root, _ := newRootCmd()
+	return root
+}
+
+func newRootCmd() (*cobra.Command, func() error) {
 	logger.DEBUG(ICNRC001, "start")
 	cfg := config.New()
 
@@ -45,6 +51,14 @@ func NewRootCmd() *cobra.Command {
 	iconUsecase := v2.NewIconUsecase(iconRegistryRepository, engineUsecase, builtin.IconRegistrations()...)
 	projectIndexRepository := projectrepository.NewIndexRepository(cfg.ProjectDB)
 	projectUsecase := usecase.NewProjectUsecase(projectIndexRepository)
+	var closeOnce sync.Once
+	var closeErr error
+	closeResources := func() error {
+		closeOnce.Do(func() {
+			closeErr = errors.Join(iconRegistryRepository.Close(), projectUsecase.Close())
+		})
+		return closeErr
+	}
 
 	generateController := controller.NewGenerateController()
 	renderController := controller.NewRenderController(renderUsecase)
@@ -70,7 +84,7 @@ outputs are SVG and PPTX, plus Markdown documents that embed rendered SVGs.
 Use 'xaligo <command> --help' for full details, flags, and examples for any
 subcommand below.`,
 		PersistentPostRunE: func(*cobra.Command, []string) error {
-			return errors.Join(iconRegistryRepository.Close(), projectUsecase.Close())
+			return closeResources()
 		},
 	}
 
@@ -85,11 +99,17 @@ subcommand below.`,
 	root.AddCommand(ragController.Command())
 	root.AddCommand(lspController.Command())
 	root.AddCommand(mcpController.Command())
-	return root
+	return root, closeResources
 }
 
 func Execute() {
-	if err := NewRootCmd().Execute(); err != nil {
+	root, closeResources := newRootCmd()
+	defer func() {
+		if err := closeResources(); err != nil {
+			logger.ERROR(ICE001, "close resources failed", map[string]any{"error": err})
+		}
+	}()
+	if err := root.Execute(); err != nil {
 		logger.ERROR(ICE001, "execute failed", map[string]any{"error": err})
 		os.Exit(1)
 	}

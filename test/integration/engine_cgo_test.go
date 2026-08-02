@@ -5,12 +5,49 @@ package integration_test
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"math"
 	"testing"
 
 	"github.com/xaligo/xaligo/internal/entity"
+	"github.com/xaligo/xaligo/internal/repository"
+	"github.com/xaligo/xaligo/internal/usecase"
 	v2 "github.com/xaligo/xaligo/internal/usecase/v2"
 )
+
+func TestV2SourceUsesOneResolvedPlanForSVGAndPPTX(t *testing.T) {
+	renderer := usecase.NewRenderUsecase(
+		repository.NewSceneRepository(), repository.NewXaligoRepository(),
+		repository.NewPowerpointRepository(), repository.NewSVGRepository(),
+	)
+	source := []byte(`<xaligo version="2"><frames><frame id="page" width="320" height="180" layout="horizontal"><item id="left" width="80">Left</item><item id="right" weight="1">Right</item><connection id="flow" source="left" target="right" routing="orthogonal"/></frame></frames></xaligo>`)
+	svg, err := renderer.RenderSVG(context.Background(), source, entity.RenderOptions{Format: usecase.FormatSVG, PxPerInch: 96})
+	if err != nil {
+		t.Fatal(err)
+	}
+	planJSON, err := renderer.BuildPPTXPlan(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var plan entity.Plan
+	if err := json.Unmarshal(planJSON, &plan); err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Ops) == 0 || !bytes.Contains(svg, []byte(`>Left</tspan>`)) || !bytes.Contains(planJSON, []byte(`"id":"left"`)) {
+		t.Fatalf("V2 projections diverged: svg=%s plan=%s", svg, planJSON)
+	}
+}
+
+func TestV2StructuredDiagnosticMapsBackToSourceSpan(t *testing.T) {
+	source := []byte("<xaligo version=\"2\"><frame width=\"200\" height=\"100\">\n  <connection id=\"bad\" source=\"missing\" target=\"also-missing\"/>\n</frame></xaligo>")
+	diagnostics, err := usecase.NewDiagnosticsUsecase().Diagnose(context.Background(), source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(diagnostics) != 1 || diagnostics[0].Code != "XAL-E2001" || diagnostics[0].Element != "bad" || diagnostics[0].Line != 2 {
+		t.Fatalf("diagnostics = %#v", diagnostics)
+	}
+}
 
 func engineFloat(value float64) *float64 {
 	return &value

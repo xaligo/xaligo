@@ -120,6 +120,44 @@ type EngineInsets struct {
 	Left   *float64
 }
 
+// EngineSourceSpan identifies a source range without exposing source contents
+// to the Rust engine. Span IDs are stable within one request.
+type EngineSourceSpan struct {
+	ID     uint32
+	File   string
+	Offset int
+	Line   int
+	Column int
+	Length int
+}
+
+// EngineParameterSource records where and how one concrete parameter was
+// selected. Origin is a closed frontend vocabulary such as explicit, class,
+// inherited, profile, or default.
+type EngineParameterSource struct {
+	Parameter string
+	Origin    string
+	SpanID    uint32
+}
+
+type EngineDiagnostic struct {
+	Code      string
+	Severity  string
+	Stage     string
+	ElementID string
+	Parameter string
+	SpanID    uint32
+	Message   string
+}
+
+type EngineDiagnosticError struct {
+	Diagnostic EngineDiagnostic
+}
+
+func (rcvr *EngineDiagnosticError) Error() string {
+	return rcvr.Diagnostic.Message
+}
+
 type EngineVisualSpec struct {
 	Shape        EngineShape
 	Fill         string
@@ -188,6 +226,8 @@ type EngineLineSpec struct {
 type EngineElementSpec struct {
 	ID      string
 	Concept EngineConcept
+	SpanID  uint32
+	Sources []EngineParameterSource
 
 	X               *float64
 	Y               *float64
@@ -237,6 +277,7 @@ type EngineDocumentSpec struct {
 	Overflow  EngineOverflow
 	Columns   *uint16
 	Elements  []EngineElementSpec
+	Spans     []EngineSourceSpan
 }
 
 type EnginePoint struct {

@@ -22,18 +22,19 @@ pub(crate) const DEFAULT_PORT_SIZE: f64 = 8.0;
 pub(crate) const DEFAULT_FONT_SIZE: f64 = 14.0;
 pub(crate) const DEFAULT_LINE_HEIGHT: f64 = 1.2;
 
-pub(crate) const NUMERIC_FIELD_COUNT: usize = 43;
-pub(crate) const STRING_FIELD_COUNT: usize = 14;
-
-pub(crate) const BOOL_VISIBLE: u16 = 1 << 0;
-pub(crate) const BOOL_TEXT_WRAP: u16 = 1 << 1;
-pub(crate) const BOOL_TEXT_FIT: u16 = 1 << 2;
-pub(crate) const BOOL_TEXT_CLIP: u16 = 1 << 3;
-pub(crate) const BOOL_PORT_VISIBLE: u16 = 1 << 4;
-pub(crate) const BOOL_LAYER: u16 = 1 << 5;
-pub(crate) const BOOL_COLUMNS: u16 = 1 << 6;
-pub(crate) const BOOL_COLUMN_SPAN: u16 = 1 << 7;
-pub(crate) const BOOL_ROW_SPAN: u16 = 1 << 8;
+pub(crate) use crate::cnf::engine_abi::{
+    BOOL_COLUMNS,
+    BOOL_COLUMN_SPAN,
+    BOOL_LAYER,
+    BOOL_PORT_VISIBLE,
+    BOOL_ROW_SPAN,
+    BOOL_TEXT_CLIP,
+    BOOL_TEXT_FIT,
+    BOOL_TEXT_WRAP,
+    BOOL_VISIBLE,
+    NUMBER_FIELD_COUNT as NUMERIC_FIELD_COUNT,
+    STRING_FIELD_COUNT,
+};
 pub(crate) const BOOL_KNOWN: u16 = BOOL_VISIBLE
     | BOOL_TEXT_WRAP
     | BOOL_TEXT_FIT

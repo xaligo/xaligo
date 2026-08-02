@@ -121,7 +121,6 @@ xaligo/
 │   │       ├── ent/model/
 │   │       ├── ent/request/
 │   │       ├── ent/response/
-│   │       ├── rep/
 │   │       ├── usc/
 │   │       ├── ctl/
 │   │       └── util/
@@ -151,15 +150,17 @@ Go EngineUsecase
       v
 linked Rust static library
       |
-      +-- ctl -> usc -> rep
+      +-- ctl -> usc -> ctl
+      +-- rep (reserved for future Rust-owned encoders such as PPTX)
       +-- cnf + ent + util
 ```
 
 The Rust source layout follows `ryo-arima/vem/src`, adapted from a CLI binary
 to a static library: `base.rs` composes the request pipeline; `cnf` owns ABI
-configuration; `ent` owns model, request, and response values; `rep` owns
-layout and SVG implementations; `usc` coordinates operations; `ctl` exposes
-the C ABI; and `util` contains explicit binary serialization/deserialization,
+configuration; `ent` owns model, request, and response values; `usc` coordinates
+operations and contains cohesive layout, routing, and SVG calculation files;
+`ctl` exposes C ABI ingress and egress; `rep` remains empty until Rust owns an
+external representation encoder; and `util` contains explicit binary serialization/deserialization,
 standard-trait implementations, message codes, logging, and errors. Entity
 behavior is implemented there without derive or serde annotations. The engine
 is one crate. Do not split these responsibilities into independently versioned

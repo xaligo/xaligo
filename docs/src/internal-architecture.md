@@ -74,15 +74,20 @@ external/engine/src
 ├── base.rs       composition root
 ├── cnf/          ABI constants, limits, and defaults
 ├── ent/          model, request, and response entities
-├── rep/          generic layout and SVG implementations
-├── usc/          engine operation orchestration
+├── usc/          flat operation, layout_*, routing, and SVG calculation files
+├── rep.rs        reserved for future Rust-owned external encoders
 ├── ctl/          C ABI controller
 └── util/         explicit codecs/traits, message codes, logger, and errors
 ```
 
 `lib.rs` only assembles these modules and exports the static-library symbols.
-Layout, SVG, and FFI are responsibility layers in one crate rather than
+Layout, SVG, and FFI are cohesive responsibility files in one crate rather than
 separately versioned crates.
+
+Requests currently travel `ctl -> usc -> ctl`; `rep` is not part of the active
+calculation path. A future Rust PPTX writer may use `rep`, but calculation stays
+in `usc`. The layer directories remain shallow and responsibility is expressed
+in filenames rather than deeper directory trees.
 
 As in VEM, engine entities do not use derive or serde annotations to generate
 their implementations. Explicit standard-trait implementations and bounded

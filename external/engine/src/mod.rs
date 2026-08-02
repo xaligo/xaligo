@@ -1,5 +1,6 @@
 pub mod cnf {
     pub mod engine;
+    pub mod engine_abi;
 }
 
 pub mod ent {
@@ -15,14 +16,14 @@ pub mod ent {
     }
 }
 
-pub mod rep {
+pub mod usc {
+    pub mod cancel;
+    pub mod engine;
     pub mod layout;
     pub mod svg;
 }
 
-pub mod usc {
-    pub mod engine;
-}
+pub mod rep;
 
 pub mod ctl {
     pub mod engine;

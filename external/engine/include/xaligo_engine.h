@@ -16,11 +16,23 @@ typedef struct XaligoEngineBuffer {
     size_t capacity;
 } XaligoEngineBuffer;
 
+typedef struct XaligoEngineCancel XaligoEngineCancel;
+
 uint32_t xaligo_engine_abi_version(void);
 
 int32_t xaligo_engine_process(
     const uint8_t *input,
     size_t input_len,
+    XaligoEngineBuffer *output
+);
+
+XaligoEngineCancel *xaligo_engine_cancel_new(void);
+void xaligo_engine_cancel_set(XaligoEngineCancel *cancel);
+void xaligo_engine_cancel_free(XaligoEngineCancel *cancel);
+int32_t xaligo_engine_process_with_cancel(
+    const uint8_t *input,
+    size_t input_len,
+    const XaligoEngineCancel *cancel,
     XaligoEngineBuffer *output
 );
 

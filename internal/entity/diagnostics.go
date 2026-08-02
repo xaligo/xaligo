@@ -3,11 +3,15 @@ package entity
 import "fmt"
 
 type Diagnostic struct {
-	Severity DiagnosticSeverity `json:"severity"`
-	Message  string             `json:"message"`
-	Offset   int                `json:"offset,omitempty"`
-	Line     int                `json:"line,omitempty"`
-	Column   int                `json:"column,omitempty"`
+	Code      string             `json:"code,omitempty"`
+	Severity  DiagnosticSeverity `json:"severity"`
+	Stage     string             `json:"stage,omitempty"`
+	Element   string             `json:"element,omitempty"`
+	Parameter string             `json:"parameter,omitempty"`
+	Message   string             `json:"message"`
+	Offset    int                `json:"offset,omitempty"`
+	Line      int                `json:"line,omitempty"`
+	Column    int                `json:"column,omitempty"`
 }
 
 type DiagnosticsError struct {

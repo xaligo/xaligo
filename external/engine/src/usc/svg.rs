@@ -12,7 +12,7 @@ use crate::ent::model::document::{
 use crate::ent::model::svg::NormalizedSvg;
 use crate::util::error::SvgError;
 
-pub fn normalize(input: &[u8]) -> Result<NormalizedSvg, SvgError> {
+pub(crate) fn normalize(input: &[u8]) -> Result<NormalizedSvg, SvgError> {
     if input.is_empty() {
         return Err(SvgError::new("SVG input must not be empty"));
     }
@@ -140,7 +140,7 @@ fn contains_external_url(value: &str) -> bool {
     false
 }
 
-pub fn render(document: &ResolvedDocument) -> Vec<u8> {
+pub(crate) fn render(document: &ResolvedDocument) -> Vec<u8> {
     let mut output = String::new();
     output.push_str(r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 "#);
     output.push_str(&format_number(document.width));

@@ -37,6 +37,13 @@ Implemented or partially implemented:
   generic straight/orthogonal routing, safe SVG normalization, and a
   deterministic generic SVG projection. The three-method Go `EngineUsecase`
   boundary remains source-compatible with the original flat prototype.
+- The generic V1/V2 frontend retains source spans while lowering common
+  concepts to `EngineDocumentSpec`. Native `version="2"` rendering resolves
+  through Rust and projects the same `DocumentPlan` to SVG or the existing
+  PPTX exporter. Full V1 profile parity remains on the frozen V1 render path.
+- ABI field indexes are generated for Go and Rust from one CSV schema. Native
+  calls use a C-owned atomic cancellation handle, and engine failures surface
+  through a structured Go diagnostic contract.
 - The embedded SQLite SVG registry and builtin generic icon profile are
   available to the V2 use cases.
 - `xaligo rag index|search|watch` provides the durable project FTS5 boundary.
@@ -54,10 +61,8 @@ Implemented or partially implemented:
 
 Important gaps:
 
-- Native V2 and frozen V1-compatibility frontends do not yet both lower
-  directly to the final typed neutral model.
-- The V2 resolved document is not yet the shared input to the PPTX plan, and
-  profile normalization has not yet replaced the current V1 source-tag path.
+- Full builtin/AWS/UML profile normalization has not yet replaced the current
+  V1 source-tag path; the shared frontend currently covers generic concepts.
 - The V1 SVG/PPTX path still depends on a renderer-shaped compatibility scene;
   it must migrate to an immutable renderer-neutral resolved document.
 - Numeric domains are checked before layout, but a typed normalized parameter

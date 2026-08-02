@@ -19,9 +19,11 @@ type EngineUsecase interface {
 ```
 
 The generic calculation core and this ABI are implemented. The native
-`<scene version="2">` frontend and the frozen V1 compatibility frontend still
-need to lower `.xal` directly to `EngineDocumentSpec`; the existing public V1
-render path is not silently redirected through an incomplete adapter.
+`<xaligo version="2">` generic frontend now lowers directly to
+`EngineDocumentSpec` and the ordinary render use case projects its resolved
+result through the shared SVG/PPTX document plan. The same frontend contract
+accepts generic V1 input for compatibility analysis. The full-profile V1
+render path remains frozen until equivalent profile normalization is complete.
 
 ## Rust source structure
 
@@ -34,12 +36,20 @@ external/engine/src/
 ├── mod.rs                  module registry
 ├── base.rs                 decode/execute/encode composition root
 ├── cnf/engine.rs           ABI constants, limits, and defaults
+├── cnf/engine_abi.rs       generated ABI field constants
 ├── ent/model/              generic document and normalized SVG models
 ├── ent/request/engine.rs   binary request decoding
 ├── ent/response/engine.rs  binary response encoding
-├── rep/layout.rs           layout, validation, ports, and routing
-├── rep/svg.rs              SVG normalization and projection
-├── usc/engine.rs           operation orchestration
+├── usc/engine.rs           operation dispatch
+├── usc/cancel.rs           call-scoped cooperative cancellation
+├── usc/layout.rs           layout resolution entry point and shared state
+├── usc/layout_flow.rs      stack, grid, and absolute placement
+├── usc/layout_geometry.rs  bounds and geometry helpers
+├── usc/layout_routing.rs   ports and line routing
+├── usc/layout_validation.rs input and constraint validation
+├── usc/layout_tests.rs     layout regression tests
+├── usc/svg.rs              SVG normalization and projection
+├── rep.rs                  reserved for future encoders such as PPTX
 ├── ctl/engine.rs           panic-safe C ABI and owned buffers
 └── util/
     ├── serialize.rs        explicit ABI response serialization
@@ -51,10 +61,22 @@ external/engine/src/
     └── error.rs            layout and SVG errors
 ```
 
-This preserves the `cnf / ent / rep / usc / ctl / util` dependency vocabulary
-without copying VEM's CLI-specific `main.rs`. `lib.rs` is the corresponding
-library entry point. The C symbols and Go `EngineUsecase` contract are
-unchanged by this source-only reorganization.
+`external/engine/abi/fields.csv` is the single field-index schema. Running
+`make generate-engine-abi` regenerates both Go and Rust constants without
+introducing runtime reflection, serde, JSON, or arbitrary maps.
+
+This preserves the `cnf / ent / usc / ctl / util` dependency vocabulary while
+placing calculation behavior in cohesive use-case files and without copying
+VEM's CLI-specific `main.rs`. `lib.rs` is the corresponding library entry
+point. The C symbols and Go `EngineUsecase` contract are unchanged by this
+source-only reorganization.
+
+The current data path is `ctl -> usc -> ctl`. The `rep` layer deliberately has
+no implementation because calculation results return directly through `ctl`.
+If PPTX package generation later moves into Rust, its external-representation
+writer belongs in a flat `rep/pptx_*.rs` slice and may be called from `usc`;
+layout, routing, and validation remain in `usc`. Layer directories stay shallow
+and use filenames such as `layout_flow.rs` instead of nested directories.
 
 Engine-owned models intentionally have no `derive` or serde annotations.
 Standard traits and the binary ABI codecs are implemented explicitly under
@@ -146,6 +168,15 @@ The engine limits one request to 10,000 elements, 128 nesting levels, 16 MiB
 of ABI input, 32 MiB of ABI output, and 2 MiB for one normalized SVG. Rust owns
 the response allocation; Go copies it before invoking the matching C free
 function.
+
+Go creates a C-owned atomic cancellation handle for each context-aware engine
+call. Rust checks it at bounded layout and routing boundaries and returns the
+ordinary typed error response; no callback, daemon, or subprocess is involved.
+
+Frontend elements retain source-span IDs and parameter provenance in Go.
+Calculation errors are exposed as structured diagnostics and mapped back to
+the originating span for CLI, LSP, and MCP consumers without sending source
+contents through the ABI.
 
 ## `.xal` lowering and efficiency
 

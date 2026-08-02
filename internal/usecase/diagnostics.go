@@ -2,9 +2,11 @@ package usecase
 
 import (
 	"context"
+	"errors"
 
 	"github.com/xaligo/xaligo/internal/entity"
 	v1engine "github.com/xaligo/xaligo/internal/usecase/v1/engine"
+	v2usecase "github.com/xaligo/xaligo/internal/usecase/v2"
 )
 
 type DiagnosticsUsecase interface {
@@ -14,10 +16,13 @@ type DiagnosticsUsecase interface {
 	DiagnoseWithImports(context.Context, []byte, *entity.ImportSource) ([]entity.Diagnostic, error)
 }
 
-type diagnosticsUsecase struct{}
+type diagnosticsUsecase struct {
+	frontend v2usecase.FrontendUsecase
+	engine   v2usecase.EngineUsecase
+}
 
 func NewDiagnosticsUsecase() DiagnosticsUsecase {
-	return &diagnosticsUsecase{}
+	return &diagnosticsUsecase{frontend: v2usecase.NewFrontendUsecase(), engine: v2usecase.NewEngineUsecase()}
 }
 
 func (rcvr *diagnosticsUsecase) Validate(ctx context.Context, input []byte) error {
@@ -49,6 +54,32 @@ func (rcvr *diagnosticsUsecase) DiagnoseWithImports(ctx context.Context, input [
 	if err := checkContext(ctx); err != nil {
 		return nil, err
 	}
+	if renderDocumentVersion(input) == "2" {
+		spec, _, err := rcvr.frontend.Lower(input)
+		if err != nil {
+			return []entity.Diagnostic{{Code: "XAL-E1001", Severity: SeverityError, Stage: "parse", Message: err.Error()}}, nil
+		}
+		_, err = rcvr.engine.Resolve(ctx, spec)
+		if err == nil {
+			return nil, nil
+		}
+		var engineErr *entity.EngineDiagnosticError
+		if !errors.As(err, &engineErr) {
+			return nil, err
+		}
+		diagnostic := entity.Diagnostic{
+			Code: engineErr.Diagnostic.Code, Severity: SeverityError, Stage: engineErr.Diagnostic.Stage,
+			Element: engineErr.Diagnostic.ElementID, Parameter: engineErr.Diagnostic.Parameter,
+			Message: engineErr.Diagnostic.Message,
+		}
+		for _, span := range spec.Spans {
+			if span.ID == engineErr.Diagnostic.SpanID {
+				diagnostic.Offset, diagnostic.Line, diagnostic.Column = span.Offset, span.Line, span.Column
+				break
+			}
+		}
+		return []entity.Diagnostic{diagnostic}, nil
+	}
 	diagnostics := v1engine.DiagnoseWithImportsV1EngineDiagnoseDocument(input, imports)
 	if err := checkContext(ctx); err != nil {
 		return nil, err
@@ -59,13 +90,13 @@ func (rcvr *diagnosticsUsecase) DiagnoseWithImports(ctx context.Context, input [
 // Validate is kept as a source-compatible package boundary.
 // Deprecated: construct DiagnosticsUsecase and call Validate.
 func Validate(ctx context.Context, input []byte) error {
-	return (&diagnosticsUsecase{}).Validate(ctx, input)
+	return NewDiagnosticsUsecase().Validate(ctx, input)
 }
 
 // Diagnose is kept as a source-compatible package boundary.
 // Deprecated: construct DiagnosticsUsecase and call Diagnose.
 func Diagnose(ctx context.Context, input []byte) ([]entity.Diagnostic, error) {
-	return (&diagnosticsUsecase{}).Diagnose(ctx, input)
+	return NewDiagnosticsUsecase().Diagnose(ctx, input)
 }
 
 func checkContext(ctx context.Context) error {

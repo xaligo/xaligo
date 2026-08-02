@@ -45,11 +45,17 @@ C header, single Rust staticlib crate, and generated ignored link directory
 stay together in `external/engine`; do not recreate an `internal/engineffi`
 package. Rust source follows the same responsibility layering as
 `ryo-arima/vem/src`: `cnf` owns constants and limits, `ent` owns model,
-request, and response data, `rep` owns layout and SVG implementations, `usc`
-owns operation orchestration, `ctl` owns the C ABI, `util` owns shared
+request, and response data, `usc` owns operation orchestration and its
+cohesive flow, geometry, routing, validation, and SVG calculation slices,
+`ctl` owns ingress/egress through the C ABI, `rep` is intentionally empty until
+Rust owns an external representation such as PPTX package generation, and `util` owns shared
 technical helpers, and `base.rs` is the composition root. `lib.rs` exports only
 the static-library boundary. Do not restore separate layout, SVG, or FFI crates
-or place all responsibilities back into a monolithic `lib.rs`.
+or place all responsibilities back into a monolithic `lib.rs` or `usc/engine.rs`.
+
+Keep `ctl`, `usc`, and `rep` shallow. Express cohesive slices with filenames
+such as `layout_flow.rs`, `layout_routing.rs`, and a future `pptx_package.rs`;
+do not create responsibility subdirectories below those layer directories.
 
 The Rust engine follows VEM's explicit implementation convention. Keep entity
 declarations free of `derive`-generated implementations. Implement `Clone`,

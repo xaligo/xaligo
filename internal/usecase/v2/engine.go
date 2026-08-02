@@ -1,5 +1,7 @@
 package v2
 
+//go:generate env GOCACHE=/tmp/xaligo-go-generate-cache go run ../../../scripts/tool/gen_engine_abi.go ../../..
+
 import (
 	"bytes"
 	"context"
@@ -8,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"strings"
 	"unicode/utf8"
 
 	enginebridge "github.com/xaligo/xaligo/external/engine"
@@ -38,69 +41,7 @@ const (
 	engineMaxRequest            = 16 * 1024 * 1024
 	engineMaxResponse           = 32 * 1024 * 1024
 	engineMaxSVG                = 2 * 1024 * 1024
-	engineNumericFieldCount     = 43
-	engineStringFieldCount      = 14
-	engineResolvedNumericCount  = 10
-	engineResolvedStringCount   = 9
 	engineMaxRoutePoints        = 4096
-)
-
-const (
-	engineNumberX = iota
-	engineNumberY
-	engineNumberWidth
-	engineNumberHeight
-	engineNumberIntrinsicWidth
-	engineNumberIntrinsicHeight
-	engineNumberMinWidth
-	engineNumberMaxWidth
-	engineNumberMinHeight
-	engineNumberMaxHeight
-	engineNumberOffsetX
-	engineNumberOffsetY
-	engineNumberWeight
-	engineNumberGap
-	engineNumberMarginTop
-	engineNumberMarginRight
-	engineNumberMarginBottom
-	engineNumberMarginLeft
-	engineNumberPaddingTop
-	engineNumberPaddingRight
-	engineNumberPaddingBottom
-	engineNumberPaddingLeft
-	engineNumberStrokeWidth
-	engineNumberCornerRadius
-	engineNumberOpacity
-	engineNumberFontSize
-	engineNumberLineHeight
-	engineNumberTextPaddingTop
-	engineNumberTextPaddingRight
-	engineNumberTextPaddingBottom
-	engineNumberTextPaddingLeft
-	engineNumberIconWidth
-	engineNumberIconHeight
-	engineNumberIconScale
-	engineNumberIconOffsetX
-	engineNumberIconOffsetY
-	engineNumberPortAnchor
-	engineNumberPortOffset
-	engineNumberPortSize
-	engineNumberSourceAnchor
-	engineNumberTargetAnchor
-	engineNumberObstacleMargin
-	engineNumberLabelPosition
-)
-
-const (
-	engineBoolVisible = iota
-	engineBoolTextWrap
-	engineBoolTextFit
-	engineBoolTextClip
-	engineBoolPortVisible
-	engineBoolLayer
-	engineBoolColumns
-	engineBoolColumnSpan
-	engineBoolRowSpan
 )
 
 var (
@@ -118,7 +59,8 @@ func (rcvr *engineUsecase) Resolve(ctx context.Context, spec entity.EngineDocume
 	if err != nil {
 		return entity.EngineResolvedDocument{}, err
 	}
-	return decodeEngineLayout(response, spec)
+	resolved, err := decodeEngineLayout(response, spec)
+	return resolved, enrichEngineDiagnostic(err, spec)
 }
 
 func (rcvr *engineUsecase) RenderSVG(ctx context.Context, spec entity.EngineDocumentSpec) ([]byte, error) {
@@ -126,7 +68,8 @@ func (rcvr *engineUsecase) RenderSVG(ctx context.Context, spec entity.EngineDocu
 	if err != nil {
 		return nil, err
 	}
-	return decodeEngineBytes(response, engineOperationSVG)
+	data, err := decodeEngineBytes(response, engineOperationSVG)
+	return data, enrichEngineDiagnostic(err, spec)
 }
 
 func (rcvr *engineUsecase) NormalizeSVG(ctx context.Context, input []byte) (entity.EngineSVG, error) {
@@ -162,7 +105,7 @@ func (rcvr *engineUsecase) executeRequest(ctx context.Context, request []byte) (
 	if version := enginebridge.ABIVersion(); version != uint32(engineABIVersion) {
 		return nil, fmt.Errorf("Rust engine ABI version %d does not match Go ABI version %d", version, engineABIVersion)
 	}
-	response, err := enginebridge.Process(request)
+	response, err := enginebridge.ProcessContext(ctx, request)
 	if err != nil {
 		return nil, fmt.Errorf("invoke Rust engine: %w", err)
 	}
@@ -308,7 +251,7 @@ func encodeEngineElement(output *bytes.Buffer, flat flatEngineElement) error {
 		return fmt.Errorf("engine element %q: %w", element.ID, err)
 	}
 
-	var numbers [engineNumericFieldCount]float64
+	var numbers [engineNumberFieldCount]float64
 	var numberFlags uint64
 	setEngineNumber(&numberFlags, &numbers, engineNumberX, element.X)
 	setEngineNumber(&numberFlags, &numbers, engineNumberY, element.Y)
@@ -469,14 +412,14 @@ func setDocumentNumber(flags *byte, values *[4]float64, index int, value *float6
 	values[index] = *value
 }
 
-func setEngineInsets(flags *uint64, values *[engineNumericFieldCount]float64, start int, insets entity.EngineInsets) {
+func setEngineInsets(flags *uint64, values *[engineNumberFieldCount]float64, start int, insets entity.EngineInsets) {
 	setEngineNumber(flags, values, start, insets.Top)
 	setEngineNumber(flags, values, start+1, insets.Right)
 	setEngineNumber(flags, values, start+2, insets.Bottom)
 	setEngineNumber(flags, values, start+3, insets.Left)
 }
 
-func setEngineNumber(flags *uint64, values *[engineNumericFieldCount]float64, index int, value *float64) {
+func setEngineNumber(flags *uint64, values *[engineNumberFieldCount]float64, index int, value *float64) {
 	if value == nil {
 		return
 	}
@@ -781,14 +724,14 @@ func decodeEngineLayout(input []byte, spec entity.EngineDocumentSpec) (entity.En
 		if reserved != 0 {
 			return entity.EngineResolvedDocument{}, fmt.Errorf("decode Rust engine route reserved field is %d", reserved)
 		}
-		var stringLengths [engineResolvedStringCount]uint16
+		var stringLengths [engineResolvedStringFieldCount]uint16
 		for stringIndex := range stringLengths {
 			stringLengths[stringIndex], err = readUint16(reader)
 			if err != nil {
 				return entity.EngineResolvedDocument{}, fmt.Errorf("decode Rust engine string length: %w", err)
 			}
 		}
-		var numbers [engineResolvedNumericCount]float64
+		var numbers [engineResolvedNumberFieldCount]float64
 		for numberIndex := range numbers {
 			numbers[numberIndex], err = readFloat64(reader)
 			if err != nil {
@@ -798,7 +741,7 @@ func decodeEngineLayout(input []byte, spec entity.EngineDocumentSpec) (entity.En
 				return entity.EngineResolvedDocument{}, fmt.Errorf("decode Rust engine number %d is non-finite", numberIndex)
 			}
 		}
-		var strings [engineResolvedStringCount]string
+		var strings [engineResolvedStringFieldCount]string
 		for stringIndex, length := range stringLengths {
 			value := make([]byte, length)
 			if _, err := io.ReadFull(reader, value); err != nil {
@@ -1036,11 +979,11 @@ func decodeEngineResponseHeader(input []byte, expectedOperation byte) (*bytes.Re
 		return nil, fmt.Errorf("decode Rust engine response operation: %w", err)
 	}
 	if status == engineStatusError {
-		message, decodeErr := decodeEngineError(reader)
+		diagnostic, decodeErr := decodeEngineError(reader)
 		if decodeErr != nil {
 			return nil, decodeErr
 		}
-		return nil, errors.New(message)
+		return nil, &entity.EngineDiagnosticError{Diagnostic: diagnostic}
 	}
 	if status != engineStatusOK {
 		return nil, fmt.Errorf("unsupported Rust engine response status %d", status)
@@ -1051,19 +994,53 @@ func decodeEngineResponseHeader(input []byte, expectedOperation byte) (*bytes.Re
 	return reader, nil
 }
 
-func decodeEngineError(reader *bytes.Reader) (string, error) {
+func decodeEngineError(reader *bytes.Reader) (entity.EngineDiagnostic, error) {
 	length, err := readUint32(reader)
 	if err != nil {
-		return "", fmt.Errorf("decode Rust engine error length: %w", err)
+		return entity.EngineDiagnostic{}, fmt.Errorf("decode Rust engine error length: %w", err)
 	}
 	if uint64(length) != uint64(reader.Len()) {
-		return "", fmt.Errorf("Rust engine error length %d does not match %d available bytes", length, reader.Len())
+		return entity.EngineDiagnostic{}, fmt.Errorf("Rust engine error length %d does not match %d available bytes", length, reader.Len())
 	}
 	message := make([]byte, length)
 	if _, err := io.ReadFull(reader, message); err != nil {
-		return "", fmt.Errorf("decode Rust engine error: %w", err)
+		return entity.EngineDiagnostic{}, fmt.Errorf("decode Rust engine error: %w", err)
 	}
-	return "Rust engine: " + string(message), nil
+	return entity.EngineDiagnostic{
+		Code: "XAL-E2001", Severity: "error", Stage: "calculate",
+		Message: "Rust engine: " + string(message),
+	}, nil
+}
+
+func enrichEngineDiagnostic(err error, spec entity.EngineDocumentSpec) error {
+	if err == nil {
+		return nil
+	}
+	var diagnosticErr *entity.EngineDiagnosticError
+	if !errors.As(err, &diagnosticErr) {
+		return err
+	}
+	for _, element := range flattenEngineDiagnosticElements(spec.Elements) {
+		if element.ID != "" && strings.Contains(diagnosticErr.Diagnostic.Message, fmt.Sprintf("%q", element.ID)) {
+			diagnosticErr.Diagnostic.ElementID = element.ID
+			diagnosticErr.Diagnostic.SpanID = element.SpanID
+			break
+		}
+	}
+	return diagnosticErr
+}
+
+func flattenEngineDiagnosticElements(roots []entity.EngineElementSpec) []entity.EngineElementSpec {
+	result := make([]entity.EngineElementSpec, 0, len(roots))
+	var walk func([]entity.EngineElementSpec)
+	walk = func(elements []entity.EngineElementSpec) {
+		for _, element := range elements {
+			result = append(result, element)
+			walk(element.Children)
+		}
+	}
+	walk(roots)
+	return result
 }
 
 func isFinite(value float64) bool {

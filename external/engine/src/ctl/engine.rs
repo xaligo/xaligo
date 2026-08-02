@@ -4,6 +4,10 @@ use std::panic::{
     catch_unwind,
 };
 use std::ptr;
+use std::sync::atomic::{
+    AtomicU8,
+    Ordering,
+};
 
 use crate::base::process_request;
 #[rustfmt::skip]
@@ -20,6 +24,11 @@ pub struct XaligoEngineBuffer {
     pub data: *mut u8,
     pub len: usize,
     pub capacity: usize,
+}
+
+#[repr(C)]
+pub struct XaligoEngineCancel {
+    cancelled: AtomicU8,
 }
 
 impl XaligoEngineBuffer {
@@ -61,6 +70,56 @@ pub unsafe extern "C" fn xaligo_engine_process(
     input_len: usize,
     output: *mut XaligoEngineBuffer,
 ) -> i32 {
+    unsafe { xaligo_engine_process_with_cancel(input, input_len, ptr::null(), output) }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn xaligo_engine_cancel_new() -> *mut XaligoEngineCancel {
+    Box::into_raw(Box::new(XaligoEngineCancel {
+        cancelled: AtomicU8::new(0),
+    }))
+}
+
+/// Marks a cancellation handle as cancelled.
+///
+/// # Safety
+///
+/// `cancel` must be null or an allocation returned by
+/// `xaligo_engine_cancel_new` that has not been freed.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn xaligo_engine_cancel_set(cancel: *mut XaligoEngineCancel) {
+    if let Some(cancel) = unsafe { cancel.as_ref() } {
+        cancel.cancelled.store(1, Ordering::Relaxed);
+    }
+}
+
+/// Releases a cancellation handle.
+///
+/// # Safety
+///
+/// `cancel` must be null or an allocation returned by
+/// `xaligo_engine_cancel_new`, and it must be released exactly once after all
+/// concurrent process/cancel calls using it have completed.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn xaligo_engine_cancel_free(cancel: *mut XaligoEngineCancel) {
+    if !cancel.is_null() {
+        drop(unsafe { Box::from_raw(cancel) });
+    }
+}
+
+/// Runs one engine operation with optional cooperative cancellation.
+///
+/// # Safety
+///
+/// The input and output requirements match `xaligo_engine_process`. `cancel`
+/// must be null or point to a live `XaligoEngineCancel` for the entire call.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn xaligo_engine_process_with_cancel(
+    input: *const u8,
+    input_len: usize,
+    cancel: *const XaligoEngineCancel,
+    output: *mut XaligoEngineBuffer,
+) -> i32 {
     if output.is_null() {
         return FFI_NULL_OUTPUT;
     }
@@ -75,8 +134,14 @@ pub unsafe extern "C" fn xaligo_engine_process(
         } else {
             unsafe { std::slice::from_raw_parts(input, input_len) }
         };
-        process_request(request)
+        let token = if cancel.is_null() {
+            ptr::null()
+        } else {
+            unsafe { &(*cancel).cancelled as *const AtomicU8 }
+        };
+        crate::usc::cancel::with_token(token, || process_request(request))
     }));
+    crate::usc::cancel::clear();
 
     match result {
         Ok(response) => {
@@ -260,5 +325,33 @@ mod tests {
         let response = unsafe { std::slice::from_raw_parts(output.data, output.len) };
         assert_eq!(&response[0..4], RESPONSE_MAGIC);
         unsafe { xaligo_engine_buffer_free(output) };
+    }
+
+    #[test]
+    fn cancellation_handle_stops_calculation_with_typed_error() {
+        let request = document_request(
+            OPERATION_LAYOUT,
+            100.0,
+            vec![element("item", -1, 1 << 3, &[(3, 20.0)])],
+        );
+        let cancel = xaligo_engine_cancel_new();
+        unsafe { xaligo_engine_cancel_set(cancel) };
+        let mut output = XaligoEngineBuffer::empty();
+        let status = unsafe {
+            xaligo_engine_process_with_cancel(
+                request.as_ptr(),
+                request.len(),
+                cancel,
+                &mut output as *mut _,
+            )
+        };
+        assert_eq!(status, FFI_OK);
+        let response = unsafe { std::slice::from_raw_parts(output.data, output.len) };
+        assert_eq!(response[6], STATUS_ERROR);
+        assert!(String::from_utf8_lossy(response).contains("cancelled"));
+        unsafe {
+            xaligo_engine_buffer_free(output);
+            xaligo_engine_cancel_free(cancel);
+        }
     }
 }

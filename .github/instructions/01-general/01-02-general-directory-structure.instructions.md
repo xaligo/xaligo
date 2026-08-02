@@ -37,11 +37,12 @@ xaligo/
 │   └── integration/             black-box use-case/adapter tests
 ├── external/
 │   ├── engine/                  Go/cgo adapter and one Rust staticlib crate
+│   │   ├── abi/fields.csv       authoritative Go/Rust ABI field index schema
 │   │   ├── src/base.rs          Rust engine composition root
 │   │   ├── src/cnf/             ABI constants, limits, and defaults
 │   │   ├── src/ent/             model, request, and response entities
-│   │   ├── src/rep/             generic layout and SVG implementations
-│   │   ├── src/usc/             engine operation orchestration
+│   │   ├── src/usc/             flat dispatch, layout_*, routing, and SVG calculations
+│   │   ├── src/rep.rs           reserved future external-representation layer
 │   │   ├── src/ctl/             C ABI controller
 │   │   └── src/util/            explicit codecs/traits, message codes, logging, and errors
 │   └── pptx-exporter/           TypeScript/PptxGenJS PPTX adapter

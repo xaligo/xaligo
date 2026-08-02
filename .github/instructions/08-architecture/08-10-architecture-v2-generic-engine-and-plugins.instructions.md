@@ -109,8 +109,8 @@ external/
 │       ├── base.rs        composition root
 │       ├── cnf/           ABI constants, limits, and defaults
 │       ├── ent/           model plus ABI request/response entities
-│       ├── rep/           generic layout and SVG implementations
-│       ├── usc/           engine operation orchestration
+│       ├── usc/           operation dispatch plus flat layout_*, routing, validation, and SVG files
+│       ├── rep.rs         reserved external-representation layer; currently no implementation
 │       ├── ctl/           versioned C ABI controller
 │       └── util/          explicit codecs/traits, message codes, logger, and errors
 └── pptx-exporter/         TypeScript/PptxGenJS PPTX adapter
@@ -148,10 +148,23 @@ V1 implementation, one another, private builtin assets, or Rust implementation
 details. The Go host serializes normalized typed data; the Rust engine never
 branches on profile IDs or source tag names.
 
+The current request path is `ctl -> usc -> ctl`: `ctl` receives and returns
+versioned ABI data, while `usc` validates and calculates the result. `rep` does
+not sit on that path and must not receive calculation logic merely to populate
+the layer. It is reserved for a future Rust-owned external representation such
+as PPTX package generation; such an encoder may be called by `usc` through
+`rep`, while layout and routing remain owned by `usc`. Keep all three layers
+shallow and express responsibility through filenames such as `layout_flow.rs`.
+
 The engine ABI version is independent from the XAL document version. Reject an
 unknown ABI before calculation. Requests and responses use fixed-width,
 little-endian fields with finite numeric validation and explicit optional-value
 flags. Arbitrary maps and renderer-specific JSON must not cross the ABI.
+
+ABI field indexes have one authoritative source at
+`external/engine/abi/fields.csv`. `make generate-engine-abi` produces the Go
+and Rust constants consumed by the explicit codecs. Do not hand-maintain a
+second field-order list.
 
 Rust entities do not use derive or serde annotations to generate behavior.
 Shared standard-trait implementations live explicitly in `util/clone.rs`,

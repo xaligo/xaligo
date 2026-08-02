@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"html"
 	"net/url"
@@ -17,6 +18,7 @@ import (
 	"github.com/xaligo/xaligo/internal/repository"
 	"github.com/xaligo/xaligo/internal/share"
 	v1engine "github.com/xaligo/xaligo/internal/usecase/v1/engine"
+	v2usecase "github.com/xaligo/xaligo/internal/usecase/v2"
 	"github.com/yuin/goldmark"
 	goldmarkast "github.com/yuin/goldmark/ast"
 	goldmarktext "github.com/yuin/goldmark/text"
@@ -39,6 +41,8 @@ type renderUsecase struct {
 	xaligoRepository     repository.XaligoRepository
 	powerpointRepository repository.PowerpointRepository
 	svgRepository        repository.SVGRepository
+	v2Frontend           v2usecase.FrontendUsecase
+	v2Engine             v2usecase.EngineUsecase
 }
 
 func NewRenderUsecase(
@@ -52,6 +56,8 @@ func NewRenderUsecase(
 		xaligoRepository:     xaligoRepository,
 		powerpointRepository: powerpointRepository,
 		svgRepository:        svgRepository,
+		v2Frontend:           v2usecase.NewFrontendUsecase(),
+		v2Engine:             v2usecase.NewEngineUsecase(),
 	}
 }
 
@@ -189,6 +195,24 @@ var (
 )
 
 func (rcvr *renderUsecase) buildDocumentPlan(ctx context.Context, input []byte, opts entity.RenderOptions, uniformPages bool) (entity.DocumentPlan, error) {
+	if renderDocumentVersion(input) == "2" {
+		spec, _, err := rcvr.v2Frontend.Lower(input)
+		if err != nil {
+			return entity.DocumentPlan{}, fmt.Errorf("lower V2 document: %w", err)
+		}
+		resolved, err := rcvr.v2Engine.Resolve(ctx, spec)
+		if err != nil {
+			return entity.DocumentPlan{}, fmt.Errorf("resolve V2 document: %w", err)
+		}
+		document, err := v2usecase.BuildDocumentPlan(resolved, opts.PxPerInch)
+		if err != nil {
+			return entity.DocumentPlan{}, fmt.Errorf("build V2 document plan: %w", err)
+		}
+		if uniformPages {
+			v1engine.NormalizeDocumentPageSizesV1EnginePlanDocument(&document)
+		}
+		return document, nil
+	}
 	scene, entries, err := rcvr.buildScene(ctx, input, opts)
 	if err != nil {
 		logger.ERROR(IURBPP001, "build scene failed", map[string]any{"error": err})
@@ -209,6 +233,26 @@ func (rcvr *renderUsecase) buildDocumentPlan(ctx context.Context, input []byte, 
 		v1engine.NormalizeDocumentPageSizesV1EnginePlanDocument(&document)
 	}
 	return document, nil
+}
+
+func renderDocumentVersion(input []byte) string {
+	decoder := xml.NewDecoder(bytes.NewReader(input))
+	for {
+		token, err := decoder.Token()
+		if err != nil {
+			return ""
+		}
+		start, ok := token.(xml.StartElement)
+		if !ok {
+			continue
+		}
+		for _, attr := range start.Attr {
+			if attr.Name.Local == "version" {
+				return strings.TrimSpace(attr.Value)
+			}
+		}
+		return ""
+	}
 }
 
 // BuildPPTXPlan remains as the format-specific compatibility boundary for WASM.

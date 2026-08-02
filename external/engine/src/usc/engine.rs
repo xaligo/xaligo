@@ -6,12 +6,13 @@ use crate::cnf::engine::{
 use crate::ent::request::engine::EngineRequest;
 use crate::ent::response::engine::EngineResponse;
 #[rustfmt::skip]
-use crate::rep::{
+use crate::usc::{
     layout,
     svg,
 };
 
 pub(crate) fn execute(request: EngineRequest) -> Result<EngineResponse, String> {
+    crate::usc::cancel::check()?;
     match request {
         EngineRequest::Document {
             operation,

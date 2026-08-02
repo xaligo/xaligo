@@ -1,4 +1,4 @@
-.PHONY: help build build-engine build-wasm test test-engine security-setup security-check fmt tidy run init clean
+.PHONY: help build build-engine build-wasm generate-engine-abi test test-engine security-setup security-check fmt tidy run init clean
 
 BIN_DIR  := .bin
 BINARY   := $(BIN_DIR)/xaligo
@@ -25,11 +25,14 @@ build: build-engine build-wasm ## Build the single CLI binary with Rust engine a
 	CGO_ENABLED=1 go build -tags "$(NATIVE_BUILD_TAGS)" -ldflags "$(LDFLAGS)" -o $(BINARY) ./cmd
 	@echo "Built: $(BINARY)"
 
-build-engine: ## Build and stage the Rust static library for cgo
+build-engine: generate-engine-abi ## Build and stage the Rust static library for cgo
 	cargo build --manifest-path $(ENGINE_DIR)/Cargo.toml --package $(ENGINE_PACKAGE) --release --locked
 	@mkdir -p $(ENGINE_LINK_DIR)
 	install -m 0644 $(ENGINE_STATICLIB) $(ENGINE_LINK_LIB)
 	@echo "Built: $(ENGINE_LINK_LIB)"
+
+generate-engine-abi: ## Generate Go and Rust ABI field constants from one schema
+	go run scripts/tool/gen_engine_abi.go .
 
 build-wasm: ## Build TS/WASI PPTX exporter into external/pptx-exporter/wasm/
 	@mkdir -p $(WASM_OUT)
