@@ -54,6 +54,7 @@ func NewRootCmd() *cobra.Command {
 	diffController := controller.NewDiffController(diffUsecase)
 	iconController := controller.NewIconController(iconUsecase)
 	ragController := controller.NewRAGController(projectUsecase, cfg.ProjectRoot)
+	lspController := controller.NewLSPController(projectUsecase)
 
 	root := &cobra.Command{
 		Use:   "xaligo",
@@ -79,6 +80,7 @@ subcommand below.`,
 	root.AddCommand(diffController.Command())
 	root.AddCommand(iconController.Command())
 	root.AddCommand(ragController.Command())
+	root.AddCommand(lspController.Command())
 	return root
 }
 

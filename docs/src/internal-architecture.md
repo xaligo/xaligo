@@ -77,6 +77,20 @@ text policy, or icon placement. The V1 compatibility frontend will eventually
 lower directly to the same model, removing the temporary renderer-shaped
 scene.
 
+## Project intelligence
+
+RAG, LSP, and the planned MCP adapter share the constructor-injected project
+use case. One `.xal` analysis pass produces diagnostics and generic Frame,
+Group, Capture, Item, Port, Line, Text, and Spacer symbols for editor and agent
+requests. Markdown headings and content are indexed in SQLite/FTS5 for durable
+search.
+
+The initial RAG corpus is intentionally narrower than the analysis service:
+`rag index` and `rag watch` discover only Markdown below `docs/`. Open or saved
+`.xal` documents are explicit editor requests and do not broaden that discovery
+rule. LSP session state remains in memory; only durable search rows are shared
+between separately launched xaligo processes.
+
 ## Assets
 
 Generic icons are built in. AWS and UML icon data remain separable profiles.

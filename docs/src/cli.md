@@ -170,6 +170,24 @@ explicit `.xal` document into generic Frame, Group, Capture, Item, Port, Line,
 Text, and Spacer concepts for editor or agent requests, but that explicit path
 does not broaden the initial RAG corpus.
 
+## Language Server
+
+`xaligo lsp` runs the in-process Language Server Protocol 3.18 adapter over
+standard input and output. It uses `Content-Length` framed JSON-RPC and keeps
+all ordinary logs on standard error so protocol output remains clean.
+
+```bash
+xaligo lsp
+```
+
+The server provides full-document synchronization, push and pull diagnostics,
+hierarchical document symbols, project-backed workspace symbols, semantic
+tokens, and hover details. It reuses the same parser and generic concept
+analysis as the project service rather than maintaining an editor-only parser.
+Saving an open `.xal` file is an explicit editor operation and updates that
+document's concept rows; it does not make `.xal` part of `rag index`, whose
+initial corpus remains only `docs/**/*.md` and `docs/**/*.markdown`.
+
 ## Other Commands
 
 | Command | Description |
@@ -180,5 +198,6 @@ does not broaden the initial RAG corpus.
 | `xaligo serve <file.xal\|file.md>` | Serve a live preview; `.xal` previews one combined SVG, `.md`/`.markdown` previews the full document with diagrams embedded inline; `--port` overrides the configured `serve.port` (default `8080`), and `--paper`/`--orientation` fix the preview to a physical page size |
 | `xaligo icon <add|get|search|remove|list|namespaces>` | Manage the embedded SQLite SVG registry |
 | `xaligo rag <index|search|watch>` | Index only `docs/**/*.md`/`docs/**/*.markdown` initially and search the local FTS5 knowledge base |
+| `xaligo lsp` | Run the LSP 3.18 language server over stdio |
 | `xaligo init [-o <dir>]` | Generate a sample `.xal` file |
 | `xaligo version` | Print version |

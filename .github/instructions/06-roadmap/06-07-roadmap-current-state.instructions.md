@@ -40,6 +40,10 @@ Implemented or partially implemented:
   Its initial corpus is deliberately restricted to Markdown below `docs/`;
   `.xal` concepts are analyzed only when an editor or agent explicitly supplies
   a document.
+- `xaligo lsp` implements an LSP 3.18 stdio session over the same project
+  analysis boundary. Open-document diagnostics and symbols stay in memory;
+  saving an explicitly opened `.xal` document may update its concept rows
+  without changing the docs-only initial RAG corpus.
 
 Important gaps:
 
