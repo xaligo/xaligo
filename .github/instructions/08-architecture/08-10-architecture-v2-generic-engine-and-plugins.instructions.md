@@ -6,7 +6,11 @@ applyTo: ".github/instructions/manual/**"
 
 ## Status and purpose
 
-This file defines the planned V2 architecture. It is a target contract, not a
+This file defines the V2 architecture. The generic Rust concepts, typed Go
+request/response, C ABI v2, nested layout, generic port/routing calculation,
+SVG projection, builtin icon registry, and LSP/RAG/MCP service boundaries are
+implemented. Native V2 and frozen V1-compatibility frontends, complete profile
+normalization, and shared PPTX consumption remain target work. This is not a
 description of the current V1 implementation. V2 adopts the single-binary,
 shared-service, Rust-engine, and external-runtime boundary in
 `08-11-architecture-single-binary-service-and-external-runtimes.instructions.md`

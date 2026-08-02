@@ -58,24 +58,29 @@ does not parse `.xal` or recalculate layout and routing.
 
 ## V2 engine boundary
 
-V2 moves generic measurement, layout, and routing into the Rust workspace at
-`external/engine`. Native Go calls a Rust `staticlib` through the versioned C
-ABI and cgo:
+The V2 generic calculation core lives in the Rust workspace at
+`external/engine`. Native Go calls its `staticlib` through C ABI v2 and cgo:
 
 ```text
 Go use case -> cgo -> C ABI -> Rust staticlib
 ```
 
 Rust calculates only generic frames, groups, captures, items, ports, text,
-spacers, and lines. Builtin, AWS, and UML profiles are declarative concept data,
+spacers, and lines. It now resolves nested vertical/horizontal/fixed/flex/grid
+and absolute layouts, ports, straight/orthogonal routes, and the matching SVG
+projection. Builtin, AWS, and UML profiles are declarative concept data,
 defaults, constraints, styles, aliases, icons, and attribution. Profiles cannot
 register calculation callbacks or output encoders.
 
-The target V2 response is an immutable, renderer-neutral `ResolvedDocument`.
-SVG and PPTX consume it without recomputing dimensions, grids, anchors, paths,
-text policy, or icon placement. The V1 compatibility frontend will eventually
-lower directly to the same model, removing the temporary renderer-shaped
-scene.
+The V2 response is an immutable, renderer-neutral `ResolvedDocument`. ABI input
+uses contiguous pre-order records and parent indexes rather than JSON or
+arbitrary maps, preserving unset values separately from explicit zero values.
+The native V2 and V1 compatibility frontends still need to lower `.xal`
+directly to this model; until then, the existing V1 public render path remains
+independent rather than using a partial conversion.
+
+See [V2 Generic Engine](design/v2-engine.md) for the implemented calculation,
+validation, ABI, and compatibility contracts.
 
 ## Project intelligence
 

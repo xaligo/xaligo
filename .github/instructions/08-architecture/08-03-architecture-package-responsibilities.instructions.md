@@ -9,10 +9,12 @@ applyTo: ".github/instructions/manual/**"
 | Path | Responsibility |
 |---|---|
 | `internal/entity` | Independent entity layer containing cross-layer structures |
-| `internal/usecase` | Render orchestration, context checks, repository port adaptation, and future parallel scheduling |
+| `internal/usecase` | Complete render, diagnostics, diff, project-intelligence, parser, layout, pagination, plan, and scene components |
 | `internal/usecase/v1/engine` | Synchronous V1 parser, validation, layout, scene, routing, and plan calculations; no repository or scheduling ownership |
 | `internal/usecase/v2` | V2 Go orchestration, cancellation, typed ABI encoding, and Rust engine invocation |
-| `internal/repository` | Filesystem, catalog, HTTP preview, and output-format encoding/export adapters |
+| `internal/repository` | Filesystem, catalog, HTTP preview, output-format adapters, and SQLite icon/project stores |
+| `internal/lsp` | LSP 3.18 stdio session state and protocol adaptation over shared use cases |
+| `internal/mcp` | Stateless MCP protocol handling and tool adaptation over shared use cases |
 | `internal/command.go` | Root Cobra command assembly |
 | `internal/controller` | Cobra CLI argument and file-I/O adapters |
 | `cmd/wasm` | JavaScript-global adapter over shared use cases and embedded assets |

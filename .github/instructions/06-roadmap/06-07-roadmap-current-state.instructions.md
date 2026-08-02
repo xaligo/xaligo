@@ -32,8 +32,11 @@ Implemented or partially implemented:
 - Excalidraw persistence/editing, PDF, Excel/XLSX, XYFlow, and Isoflow output
   implementations, dependencies, generated assets, commands, aliases, and
   browser globals have been removed.
-- The Rust V2 engine workspace and C ABI/static-library bridge are initialized
-  under `external/engine`; generic V2 calculation migration remains underway.
+- The Rust V2 engine under `external/engine` implements C ABI v2, parent-indexed
+  typed concept transfer, nested fixed/flex/grid/absolute layout, ports,
+  generic straight/orthogonal routing, safe SVG normalization, and a
+  deterministic generic SVG projection. The three-method Go `EngineUsecase`
+  boundary remains source-compatible with the original flat prototype.
 - The embedded SQLite SVG registry and builtin generic icon profile are
   available to the V2 use cases.
 - `xaligo rag index|search|watch` provides the durable project FTS5 boundary.
@@ -53,6 +56,8 @@ Important gaps:
 
 - Native V2 and frozen V1-compatibility frontends do not yet both lower
   directly to the final typed neutral model.
+- The V2 resolved document is not yet the shared input to the PPTX plan, and
+  profile normalization has not yet replaced the current V1 source-tag path.
 - The V1 SVG/PPTX path still depends on a renderer-shaped compatibility scene;
   it must migrate to an immutable renderer-neutral resolved document.
 - Numeric domains are checked before layout, but a typed normalized parameter

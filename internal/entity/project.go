@@ -11,19 +11,20 @@ const (
 	ProjectDocumentMarkdown ProjectDocumentKind = "markdown"
 )
 
-// ProjectConcept is the compact, domain-neutral vocabulary shared by RAG,
-// LSP, and MCP project inspection.
-type ProjectConcept string
+// ProjectConcept reuses the engine's closed, domain-neutral vocabulary for
+// RAG, LSP, and MCP inspection. The alias avoids a second concept mapping when
+// a parsed .xal tree is later lowered into EngineDocumentSpec.
+type ProjectConcept = EngineConcept
 
 const (
-	ProjectConceptFrame   ProjectConcept = "frame"
-	ProjectConceptGroup   ProjectConcept = "group"
-	ProjectConceptCapture ProjectConcept = "capture"
-	ProjectConceptItem    ProjectConcept = "item"
-	ProjectConceptPort    ProjectConcept = "port"
-	ProjectConceptLine    ProjectConcept = "line"
-	ProjectConceptText    ProjectConcept = "text"
-	ProjectConceptSpacer  ProjectConcept = "spacer"
+	ProjectConceptFrame   = EngineConceptFrame
+	ProjectConceptGroup   = EngineConceptGroup
+	ProjectConceptCapture = EngineConceptCapture
+	ProjectConceptItem    = EngineConceptItem
+	ProjectConceptPort    = EngineConceptPort
+	ProjectConceptLine    = EngineConceptLine
+	ProjectConceptText    = EngineConceptText
+	ProjectConceptSpacer  = EngineConceptSpacer
 )
 
 // ProjectSymbol is one compact semantic row derived from a parsed document.

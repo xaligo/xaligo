@@ -25,11 +25,12 @@ responsibility as the filename prefix:
   `New<Component>Repository` and returns that interface.
 - The concrete implementation type is unexported.
 
-Current component prefixes are `diff`, `generate`, `init`, `render`, `serve`,
-`validate`, and `version` in `internal/controller`; `render`, `diff`,
-`diagnostics`, `parser`, `layout`, `pagination`, `plan`, and `scene` in
-`internal/usecase`; and `powerpoint`, `preview`, `svg`, `scene`, and `xaligo`
-in `internal/repository`. Repository supporting files retain the same prefix,
+Current component prefixes are `diff`, `generate`, `icon`, `init`, `lsp`,
+`mcp`, `rag`, `render`, `serve`, `validate`, and `version` in
+`internal/controller`; `render`, `diff`, `diagnostics`, `project`, `parser`,
+`layout`, `pagination`, `plan`, and `scene` in `internal/usecase`; and
+`powerpoint`, `preview`, `svg`, `scene`, and `xaligo` in
+`internal/repository`. Repository supporting files retain the same prefix,
 such as `powerpoint_export.go`. Every direct
 `internal/usecase/*.go` file is a complete component as specified in
 `../09-coding/09-00-coding-overview.instructions.md`.

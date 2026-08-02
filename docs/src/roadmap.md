@@ -87,6 +87,14 @@ lowered directly to the same typed, renderer-neutral model. The design avoids
 XML rewriting, parser retry, serialized scene round-trips, and running the full
 V1 renderer inside V2. V1 itself remains independent of V2.
 
+The embedded Rust calculation core and C ABI v2 are now implemented for the
+generic Frame, Group, Capture, Item, Port, Line, Text, and Spacer concepts. It
+supports nested fixed/flex, grid, absolute placement, ports, generic routing,
+and deterministic SVG projection. The remaining V2 work is the native syntax
+frontend, V1 compatibility lowering, profile normalization, and connecting the
+resolved document to the PPTX plan. See [V2 Generic
+Engine](design/v2-engine.md).
+
 Golden compatibility tests will cover roots and defaults, unknown nested tags,
 strict versus fallback enum behavior, connection inheritance and anchors,
 signed-32-bit catalog IDs, item-size render contexts, and equivalent resolved
@@ -109,8 +117,8 @@ canonical V1 syntax; legacy root documents continue to render with warnings.
 ## Editing and Automation
 
 - A dedicated UI for authoring and editing diagrams.
-- MCP interfaces so AI agents and tools can inspect, generate, and update
-  diagrams through xaligo.
+- Extend the implemented MCP inspect, validate, render, project-search, and
+  icon tools with explicitly authorized model-assisted editing operations.
 - GUI-to-`.xal` workflows, including configuration changes driven from visual
   edits.
 

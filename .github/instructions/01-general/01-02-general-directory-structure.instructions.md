@@ -13,25 +13,24 @@ xaligo/
 │   └── wasm/main.go             JavaScript/WASM adapter
 ├── internal/
 │   ├── command.go               root Cobra command assembly
-│   ├── controller/              CLI flags and file-I/O adapters
+│   ├── controller/              CLI/LSP/MCP/RAG flags and transport/file-I/O adapters
+│   ├── core/profiles/           declarative builtin and domain profile boundaries
 │   ├── entity/                  internal structures; independent entity layer
+│   ├── lsp/                     LSP 3.18 session and protocol adapter
+│   ├── mcp/                     stateless MCP protocol and shared tool adapter
 │   ├── usecase/
 │   │   ├── render.go            RenderUsecase, dispatch, and orchestration
 │   │   ├── diff.go              DiffUsecase, structural comparison, and paired SVG orchestration
 │   │   ├── diagnostics.go       DiagnosticsUsecase and shared validation
-│   │   ├── scene_io.go          SceneIOUsecase for editable scene persistence
-│   │   ├── catalog.go           CatalogUsecase for service metadata
-│   │   ├── export.go            ExportUsecase for persisted PPTX output
+│   │   ├── project.go           docs-only RAG indexing and explicit .xal concept analysis
 │   │   ├── parser.go            ParserUsecase over the V1 engine
 │   │   ├── layout.go            LayoutUsecase over the V1 engine
-│   │   ├── element.go           ElementUsecase over the V1 engine
 │   │   ├── pagination.go        PaginationUsecase over the V1 engine
 │   │   ├── plan.go              PlanUsecase over the V1 engine
 │   │   ├── scene.go             SceneUsecase and repository-port adapter
-│   │   ├── theme.go             ThemeUsecase over the V1 engine
 │   │   ├── v1/engine/           synchronous V1 parser/layout/scene/plan logic
 │   │   └── v2/                  V2 Go orchestration over the Rust engine ABI
-│   ├── repository/              filesystem and output-format adapters
+│   ├── repository/              filesystem/output adapters plus SQLite icon/project stores
 │   └── config/                  project configuration
 ├── test/
 │   ├── unit/                    unit tests mirroring the project tree

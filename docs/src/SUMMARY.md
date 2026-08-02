@@ -22,6 +22,7 @@
 
 # Design Proposals
 
+- [V2 Generic Engine](design/v2-engine.md)
 - [Structured Diagrams: Tables, Databases, and UML](design/structured-diagrams.md)
 
 # .xal DSL

@@ -1,6 +1,6 @@
 # Development
 
-The canonical implementation pipeline is:
+The current V1 compatibility pipeline is:
 
 ```text
 .xal source
@@ -22,10 +22,26 @@ Important package boundaries:
 | `external/engine` | Go/cgo adapter, C ABI, and Rust layout/SVG engine workspace |
 | `external/pptx-exporter` | TypeScript/WASM package and PPTX adapter |
 
+The implemented V2 calculation boundary is:
+
+```text
+typed EngineDocumentSpec
+  -> internal/usecase/v2 (cancellation and ABI adaptation)
+  -> external/engine (Rust layout, routing, and SVG)
+  -> immutable EngineResolvedDocument
+```
+
+ABI v2 flattens the typed tree in pre-order and retains hierarchy with parent
+indexes. The future native V2 and V1 compatibility frontends should lower one
+parsed `.xal` concept tree directly into this request without JSON, source
+rewrites, or a renderer-shaped intermediate scene. See [V2 Generic
+Engine](design/v2-engine.md).
+
 Verification commands:
 
 ```bash
 make test-engine
+cargo clippy --manifest-path external/engine/Cargo.toml --workspace --all-targets --locked -- -D warnings
 go build ./...
 git diff --check
 ```
