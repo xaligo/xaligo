@@ -8,6 +8,7 @@ import (
 	"github.com/xaligo/xaligo/internal/config"
 	"github.com/xaligo/xaligo/internal/controller"
 	"github.com/xaligo/xaligo/internal/core/profiles/builtin"
+	"github.com/xaligo/xaligo/internal/mcp"
 	"github.com/xaligo/xaligo/internal/repository"
 	iconrepository "github.com/xaligo/xaligo/internal/repository/icon"
 	projectrepository "github.com/xaligo/xaligo/internal/repository/project"
@@ -55,6 +56,8 @@ func NewRootCmd() *cobra.Command {
 	iconController := controller.NewIconController(iconUsecase)
 	ragController := controller.NewRAGController(projectUsecase, cfg.ProjectRoot)
 	lspController := controller.NewLSPController(projectUsecase)
+	mcpTools := mcp.NewToolService(diagnosticsUsecase, renderUsecase, projectUsecase, iconUsecase, cfg.ProjectRoot)
+	mcpController := controller.NewMCPController(mcpTools)
 
 	root := &cobra.Command{
 		Use:   "xaligo",
@@ -81,6 +84,7 @@ subcommand below.`,
 	root.AddCommand(iconController.Command())
 	root.AddCommand(ragController.Command())
 	root.AddCommand(lspController.Command())
+	root.AddCommand(mcpController.Command())
 	return root
 }
 

@@ -44,6 +44,10 @@ Implemented or partially implemented:
   analysis boundary. Open-document diagnostics and symbols stay in memory;
   saving an explicitly opened `.xal` document may update its concept rows
   without changing the docs-only initial RAG corpus.
+- `xaligo mcp` implements the stateless MCP 2026-07-28 contract over
+  newline-delimited stdio and localhost-only Streamable HTTP POST. Its tools
+  compose the existing diagnostics, render, project, and icon use cases;
+  `index_docs` retains the same docs-Markdown-only discovery boundary.
 
 Important gaps:
 
