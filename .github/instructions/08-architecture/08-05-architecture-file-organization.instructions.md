@@ -41,8 +41,15 @@ cohesive algorithm slices and do not repeat the package or architectural layer
 name in filenames.
 
 V2 orchestration components live in `internal/usecase/v2`. The Go/cgo adapter,
-C header, Rust crates, and generated ignored link directory stay together in
-`external/engine`; do not recreate an `internal/engineffi` package.
+C header, single Rust staticlib crate, and generated ignored link directory
+stay together in `external/engine`; do not recreate an `internal/engineffi`
+package. Rust source follows the same responsibility layering as
+`ryo-arima/vem/src`: `cnf` owns constants and limits, `ent` owns model,
+request, and response data, `rep` owns layout and SVG implementations, `usc` owns operation
+orchestration, `ctl` owns the C ABI, `util` owns shared technical helpers, and
+`base.rs` is the composition root. `lib.rs` exports only the static-library
+boundary. Do not restore separate layout, SVG, or FFI crates or place all
+responsibilities back into a monolithic `lib.rs`.
 
 - Keep a Go interface in the file containing the corresponding concrete
   implementation and its principal methods.

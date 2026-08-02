@@ -39,8 +39,8 @@ build-wasm: ## Build TS/WASI PPTX exporter into external/pptx-exporter/wasm/
 test: test-engine ## Run tests
 	go test ./...
 
-test-engine: build-engine ## Test Rust crates and the linked cgo engine path
-	cargo test --manifest-path $(ENGINE_DIR)/Cargo.toml --workspace --locked
+test-engine: build-engine ## Test the Rust crate and the linked cgo engine path
+	cargo test --manifest-path $(ENGINE_DIR)/Cargo.toml --locked
 	CGO_ENABLED=1 go test -tags "$(NATIVE_BUILD_TAGS)" ./... -count=1
 
 security-setup: ## Install security scanners and prepare npm audit metadata

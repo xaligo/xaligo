@@ -58,12 +58,31 @@ does not parse `.xal` or recalculate layout and routing.
 
 ## V2 engine boundary
 
-The V2 generic calculation core lives in the Rust workspace at
+The V2 generic calculation core lives in the single Rust staticlib crate at
 `external/engine`. Native Go calls its `staticlib` through C ABI v2 and cgo:
 
 ```text
 Go use case -> cgo -> C ABI -> Rust staticlib
 ```
+
+The Rust source uses the same responsibility structure as
+[`ryo-arima/vem/src`](https://github.com/ryo-arima/vem/tree/main/src), adapted
+for an in-process library rather than a CLI executable:
+
+```text
+external/engine/src
+├── base.rs       composition root
+├── cnf/          ABI constants, limits, and defaults
+├── ent/          model, request, and response entities
+├── rep/          generic layout and SVG implementations
+├── usc/          engine operation orchestration
+├── ctl/          C ABI controller
+└── util/         binary decoding and shared errors
+```
+
+`lib.rs` only assembles these modules and exports the static-library symbols.
+Layout, SVG, and FFI are responsibility layers in one crate rather than
+separately versioned crates.
 
 Rust calculates only generic frames, groups, captures, items, ports, text,
 spacers, and lines. It now resolves nested vertical/horizontal/fixed/flex/grid

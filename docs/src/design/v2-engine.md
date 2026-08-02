@@ -23,6 +23,32 @@ The generic calculation core and this ABI are implemented. The native
 need to lower `.xal` directly to `EngineDocumentSpec`; the existing public V1
 render path is not silently redirected through an incomplete adapter.
 
+## Rust source structure
+
+The engine is one staticlib crate and follows the responsibility structure of
+[`ryo-arima/vem/src`](https://github.com/ryo-arima/vem/tree/main/src):
+
+```text
+external/engine/src/
+├── lib.rs                  staticlib export boundary
+├── mod.rs                  module registry
+├── base.rs                 decode/execute/encode composition root
+├── cnf/engine.rs           ABI constants, limits, and defaults
+├── ent/model/              generic document and normalized SVG models
+├── ent/request/engine.rs   binary request decoding
+├── ent/response/engine.rs  binary response encoding
+├── rep/layout.rs           layout, validation, ports, and routing
+├── rep/svg.rs              SVG normalization and projection
+├── usc/engine.rs           operation orchestration
+├── ctl/engine.rs           panic-safe C ABI and owned buffers
+└── util/                   binary reader and shared errors
+```
+
+This preserves the `cnf / ent / rep / usc / ctl / util` dependency vocabulary
+without copying VEM's CLI-specific `main.rs`. `lib.rs` is the corresponding
+library entry point. The C symbols and Go `EngineUsecase` contract are
+unchanged by this source-only reorganization.
+
 ## Generic concepts
 
 The engine accepts only the following calculation concepts:

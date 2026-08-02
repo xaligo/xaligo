@@ -221,20 +221,7 @@ dependencies = [
 name = "xaligo-engine-ffi"
 version = "0.1.0"
 dependencies = [
- "xaligo-layout-engine",
- "xaligo-svg-engine",
-]
-
-[[package]]
-name = "xaligo-layout-engine"
-version = "0.1.0"
-
-[[package]]
-name = "xaligo-svg-engine"
-version = "0.1.0"
-dependencies = [
  "usvg",
- "xaligo-layout-engine",
 ]
 
 [[package]]

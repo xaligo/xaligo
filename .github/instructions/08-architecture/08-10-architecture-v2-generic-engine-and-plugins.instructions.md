@@ -103,10 +103,16 @@ external/
 │   ├── Cargo.toml
 │   ├── include/xaligo_engine.h
 │   ├── lib/               generated ignored static-library link location
-│   └── crates/
-│       ├── layout-engine/ generic measurement, layout, and routing
-│       ├── svg-engine/    SVG validation, normalization, and projection
-│       └── ffi/           versioned C ABI static-library boundary
+│   └── src/
+│       ├── lib.rs         staticlib export boundary
+│       ├── mod.rs         module registry
+│       ├── base.rs        composition root
+│       ├── cnf/           ABI constants, limits, and defaults
+│       ├── ent/           model plus ABI request/response entities
+│       ├── rep/           generic layout and SVG implementations
+│       ├── usc/           engine operation orchestration
+│       ├── ctl/           versioned C ABI controller
+│       └── util/          binary decoding and shared errors
 └── pptx-exporter/         TypeScript/PptxGenJS PPTX adapter
 ```
 
@@ -122,7 +128,7 @@ builtin/AWS/UML profiles ┘             |
                               direct in-process ABI
                                        |
                                        v
-                         external/engine Rust workspace
+                       external/engine Rust staticlib crate
 ```
 
 The parent `internal/usecase` composition owns root dispatch and profile
@@ -326,7 +332,7 @@ set or the geometry of an already normalized generic document.
 
 V2 implementation slices must include tests that establish:
 
-- Rust layout and SVG crates compile and test without importing AWS or UML;
+- the Rust staticlib crate compiles and tests without importing AWS or UML;
 - Go invokes the Rust engine in-process without a subprocess or daemon;
 - the generated Rust static library is linked only by matching native target
   builds and is not committed as a repository artifact;

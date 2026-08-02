@@ -1,40 +1,9 @@
-use std::error::Error;
-use std::fmt::{Display, Formatter};
-
-use xaligo_layout_engine::{
+use crate::cnf::engine::MAX_SVG_BYTES;
+use crate::ent::model::document::{
     Concept, Decoration, LineStyle, Point, ResolvedDocument, ResolvedElement, Shape,
 };
-
-const MAX_SVG_BYTES: usize = 2 * 1024 * 1024;
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct NormalizedSvg {
-    pub data: Vec<u8>,
-    pub view_box: String,
-    pub width: f64,
-    pub height: f64,
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct SvgError {
-    message: String,
-}
-
-impl SvgError {
-    fn new(message: impl Into<String>) -> Self {
-        Self {
-            message: message.into(),
-        }
-    }
-}
-
-impl Display for SvgError {
-    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
-        formatter.write_str(&self.message)
-    }
-}
-
-impl Error for SvgError {}
+use crate::ent::model::svg::NormalizedSvg;
+use crate::util::error::SvgError;
 
 pub fn normalize(input: &[u8]) -> Result<NormalizedSvg, SvgError> {
     if input.is_empty() {
@@ -549,7 +518,7 @@ fn format_number(value: f64) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use xaligo_layout_engine::{Decoration, LineStyle, ResolvedLine, ResolvedText, ResolvedVisual};
+    use crate::ent::model::document::{ResolvedLine, ResolvedText, ResolvedVisual};
 
     fn resolved_element(concept: Concept) -> ResolvedElement {
         ResolvedElement {

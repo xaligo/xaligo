@@ -36,7 +36,14 @@ xaligo/
 │   ├── unit/                    unit tests mirroring the project tree
 │   └── integration/             black-box use-case/adapter tests
 ├── external/
-│   ├── engine/                  Rust layout/SVG workspace and Go/cgo ABI adapter
+│   ├── engine/                  Go/cgo adapter and one Rust staticlib crate
+│   │   ├── src/base.rs          Rust engine composition root
+│   │   ├── src/cnf/             ABI constants, limits, and defaults
+│   │   ├── src/ent/             model, request, and response entities
+│   │   ├── src/rep/             generic layout and SVG implementations
+│   │   ├── src/usc/             engine operation orchestration
+│   │   ├── src/ctl/             C ABI controller
+│   │   └── src/util/            binary decoding and shared errors
 │   └── pptx-exporter/           TypeScript/PptxGenJS PPTX adapter
 │       ├── index.ts             package API composition boundary
 │       ├── command.ts           TypeScript/WASI entry point

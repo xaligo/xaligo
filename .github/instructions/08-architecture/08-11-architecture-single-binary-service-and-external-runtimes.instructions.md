@@ -115,10 +115,16 @@ xaligo/
 │   │   ├── Cargo.toml
 │   │   ├── include/xaligo_engine.h
 │   │   ├── lib/               generated and ignored
-│   │   └── crates/
-│   │       ├── layout-engine/
-│   │       ├── svg-engine/
-│   │       └── ffi/
+│   │   └── src/
+│   │       ├── base.rs
+│   │       ├── cnf/
+│   │       ├── ent/model/
+│   │       ├── ent/request/
+│   │       ├── ent/response/
+│   │       ├── rep/
+│   │       ├── usc/
+│   │       ├── ctl/
+│   │       └── util/
 │   └── pptx-exporter/
 ├── assets/
 ├── Makefile
@@ -132,11 +138,11 @@ programs.
 
 ## Rust engine integration
 
-Rust owns generic layout and SVG calculation. Native builds compile the Rust
-workspace to a platform-native static library, copy the generated archive to
-the ignored `external/engine/lib` cgo link location, and build the Go executable with cgo and
-the engine build tag. The final executable contains the Rust archive and calls
-it through a versioned C ABI in process.
+Rust owns generic layout and SVG calculation. Native builds compile the single
+layered Rust crate to a platform-native static library, copy the generated
+archive to the ignored `external/engine/lib` cgo link location, and build the
+Go executable with cgo and the engine build tag. The final executable contains
+the Rust archive and calls it through a versioned C ABI in process.
 
 ```text
 Go EngineUsecase
@@ -145,9 +151,17 @@ Go EngineUsecase
       v
 linked Rust static library
       |
-      +-- layout-engine
-      +-- svg-engine
+      +-- ctl -> usc -> rep
+      +-- cnf + ent + util
 ```
+
+The Rust source layout follows `ryo-arima/vem/src`, adapted from a CLI binary
+to a static library: `base.rs` composes the request pipeline; `cnf` owns ABI
+configuration; `ent` owns model, request, and response values; `rep` owns
+layout and SVG implementations; `usc` coordinates operations; `ctl` exposes
+the C ABI; and `util` contains shared binary and error helpers. The engine is
+one crate. Do not split these responsibilities into independently versioned
+layout, SVG, or FFI crates.
 
 The generated static libraries, Cargo `target`, npm `dist`, and `node_modules`
 content are never committed. Each target platform builds its own Rust archive;
