@@ -175,18 +175,18 @@ ordinary typed error response; no callback, daemon, or subprocess is involved.
 
 Frontend elements retain source-span IDs and parameter provenance in Go.
 Calculation errors are exposed as structured diagnostics and mapped back to
-the originating span for CLI, LSP, and MCP consumers without sending source
+the originating span for CLI and LSP consumers without sending source
 contents through the ABI.
 
 ## `.xal` lowering and efficiency
 
 The native frontend should parse the original `.xal` bytes once and lower the
 typed concepts directly to `EngineDocumentSpec`. The same parsed concept tree
-can supply diagnostics, LSP symbols, MCP inspection, and engine input, but
+can supply diagnostics, LSP symbols, RAG rows, and engine input, but
 those consumers must not serialize and parse an intermediate scene.
 
 `ProjectConcept` is a Go type alias of the closed `EngineConcept` vocabulary,
-so project analysis, LSP, MCP, RAG rows, and future engine lowering do not need
+so project analysis, LSP, RAG rows, and future engine lowering do not need
 another domain-name-to-concept conversion.
 
 The ABI representation is designed for that reuse:

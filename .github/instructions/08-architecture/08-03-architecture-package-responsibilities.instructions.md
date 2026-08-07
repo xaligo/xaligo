@@ -14,7 +14,6 @@ applyTo: ".github/instructions/manual/**"
 | `internal/usecase/v2` | V2 Go orchestration, cancellation, typed ABI encoding, and Rust engine invocation |
 | `internal/repository` | Filesystem, catalog, HTTP preview, output-format adapters, and SQLite icon/project stores |
 | `internal/lsp` | LSP 3.18 stdio session state and protocol adaptation over shared use cases |
-| `internal/mcp` | Stateless MCP protocol handling and tool adaptation over shared use cases |
 | `internal/command.go` | Root Cobra command assembly |
 | `internal/controller` | Cobra CLI argument and file-I/O adapters |
 | `cmd/wasm` | JavaScript-global adapter over shared use cases and embedded assets |

@@ -122,7 +122,7 @@ func DefaultLogger() Logger {
 }
 
 // UseStderrForProtocol keeps stdout reserved for framed LSP or newline-framed
-// MCP messages. An explicitly configured stderr or file destination is kept.
+// protocol messages. An explicitly configured stderr or file destination is kept.
 func UseStderrForProtocol() {
 	configured := DefaultLogger()
 	if concrete, ok := configured.(*logger); ok {

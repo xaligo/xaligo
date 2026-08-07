@@ -117,8 +117,8 @@ canonical V1 syntax; legacy root documents continue to render with warnings.
 ## Editing and Automation
 
 - A dedicated UI for authoring and editing diagrams.
-- Extend the implemented MCP inspect, validate, render, project-search, and
-  icon tools with explicitly authorized model-assisted editing operations.
+- Add explicitly authorized model-assisted editing operations through the
+  existing application-service boundary.
 - GUI-to-`.xal` workflows, including configuration changes driven from visual
   edits.
 

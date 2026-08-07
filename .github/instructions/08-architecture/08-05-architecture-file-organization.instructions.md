@@ -26,7 +26,7 @@ responsibility as the filename prefix:
 - The concrete implementation type is unexported.
 
 Current component prefixes are `diff`, `generate`, `icon`, `init`, `lsp`,
-`mcp`, `rag`, `render`, `serve`, `validate`, and `version` in
+`rag`, `render`, `serve`, `validate`, and `version` in
 `internal/controller`; `render`, `diff`, `diagnostics`, `project`, `parser`,
 `layout`, `pagination`, `plan`, and `scene` in `internal/usecase`; and
 `powerpoint`, `preview`, `svg`, `scene`, and `xaligo` in

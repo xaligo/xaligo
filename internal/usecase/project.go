@@ -17,7 +17,7 @@ import (
 )
 
 // ProjectUsecase owns source analysis and the durable concept index shared by
-// RAG, LSP workspace features, and MCP project tools.
+// RAG and LSP workspace features.
 type ProjectUsecase interface {
 	Analyze(context.Context, string, []byte) (entity.ProjectAnalysis, error)
 	IndexDocument(context.Context, string, []byte) (entity.ProjectAnalysis, bool, error)

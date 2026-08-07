@@ -1,5 +1,5 @@
 // Package project implements the durable SQLite project concept index shared
-// by RAG, LSP workspace search, and MCP inspection tools.
+// by RAG and LSP workspace search.
 package project
 
 import (

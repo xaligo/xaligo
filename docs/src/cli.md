@@ -188,42 +188,6 @@ Saving an open `.xal` file is an explicit editor operation and updates that
 document's concept rows; it does not make `.xal` part of `rag index`, whose
 initial corpus remains only `docs/**/*.md` and `docs/**/*.markdown`.
 
-## Model Context Protocol
-
-`xaligo mcp` exposes the shared analysis, rendering, search, and icon services
-through the stateless MCP 2026-07-28 protocol. Standard I/O is the default and
-uses one compact JSON-RPC message per line. Protocol output stays on standard
-output and ordinary logs move to standard error.
-
-```bash
-xaligo mcp
-xaligo mcp --stdio
-xaligo mcp --http --address 127.0.0.1:8081
-```
-
-Streamable HTTP accepts `POST /mcp` only and binds only to `localhost` or a
-loopback IP. Requests must carry the 2026-07-28 per-request `_meta`, both MCP
-response media types in `Accept`, and matching `MCP-Protocol-Version`,
-`Mcp-Method`, and—for `tools/call`—`Mcp-Name` headers. Non-loopback browser
-origins are rejected.
-
-The deterministic tool catalog contains:
-
-| Tool | Purpose |
-|---|---|
-| `validate_xal` | Return shared parser/layout/connection diagnostics for supplied source |
-| `inspect_xal` | Return generic concepts for explicitly supplied `.xal` without automatic indexing |
-| `render_svg` | Return one SVG artifact per frame, or one combined artifact |
-| `index_docs` | Incrementally index only Markdown below the configured `docs/` directory |
-| `search_project` | Search docs and any separately stored explicit concept rows |
-| `search_icons`, `get_icon`, `list_icon_namespaces` | Query the SVG registry |
-| `register_icon`, `remove_icon` | Update the SVG registry through the shared validation boundary |
-
-Tool execution failures are returned as MCP tool results with `isError: true`;
-malformed requests and unknown tools use JSON-RPC protocol errors. The HTTP
-transport does not create sessions, expose a GET-SSE endpoint, or launch a
-sidecar process.
-
 ## Other Commands
 
 | Command | Description |
@@ -235,6 +199,5 @@ sidecar process.
 | `xaligo icon <add|get|search|remove|list|namespaces>` | Manage the embedded SQLite SVG registry |
 | `xaligo rag <index|search|watch>` | Index only `docs/**/*.md`/`docs/**/*.markdown` initially and search the local FTS5 knowledge base |
 | `xaligo lsp` | Run the LSP 3.18 language server over stdio |
-| `xaligo mcp [--stdio\|--http]` | Run the stateless MCP 2026-07-28 adapter; stdio is the default |
 | `xaligo init [-o <dir>]` | Generate a sample `.xal` file |
 | `xaligo version` | Print version |

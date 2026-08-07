@@ -115,7 +115,7 @@ validation, ABI, and compatibility contracts.
 
 ## Project intelligence
 
-RAG, LSP, and MCP share the constructor-injected project use case. One `.xal`
+RAG and LSP share the constructor-injected project use case. One `.xal`
 analysis pass produces diagnostics and generic Frame,
 Group, Capture, Item, Port, Line, Text, and Spacer symbols for editor and agent
 requests. Markdown headings and content are indexed in SQLite/FTS5 for durable
@@ -126,14 +126,6 @@ The initial RAG corpus is intentionally narrower than the analysis service:
 `.xal` documents are explicit editor requests and do not broaden that discovery
 rule. LSP session state remains in memory; only durable search rows are shared
 between separately launched xaligo processes.
-
-The MCP protocol layer is stateless. Each request supplies its protocol version
-and client capabilities, then a deterministic tool adapter calls the existing
-diagnostics, render, project, or icon use case. The stdio transport uses one
-JSON object per line; Streamable HTTP uses one localhost-only `POST /mcp` per
-message and validates Origin plus mirrored routing headers before dispatch.
-Neither transport creates another parser, opens a second project database, or
-starts a daemon or Rust sidecar.
 
 ## Assets
 

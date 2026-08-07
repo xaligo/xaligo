@@ -19,7 +19,6 @@ The target native distribution is one cross-platform executable:
 ```text
 xaligo | xaligo.exe
 ├── lsp
-├── mcp
 ├── serve
 ├── rag
 ├── icon
@@ -34,8 +33,6 @@ Long-running capabilities are modes of that executable:
 
 ```text
 xaligo lsp
-xaligo mcp --stdio
-xaligo mcp --http
 xaligo serve
 xaligo rag watch
 ```
@@ -46,11 +43,11 @@ Single-operation commands terminate after producing their result. Do not add:
 - automatic daemon startup, reconnect, or lifecycle management;
 - Unix sockets, named pipes, or an internal RPC protocol for local features;
 - `RemoteService` versus `LocalService` selection for in-process work; or
-- separate LSP, MCP, layout, SVG, RAG, icon, or model executables.
+- separate LSP, layout, SVG, RAG, icon, or model executables.
 
 ## Shared application service
 
-The command dispatcher, LSP adapter, MCP adapter, preview server, and ordinary
+The command dispatcher, LSP adapter, preview server, and ordinary
 CLI controllers call one constructor-injected application service. They do not
 assemble independent parser, validator, layout, formatter, renderer, registry,
 search, or persistence pipelines.
@@ -74,7 +71,7 @@ declaration-only facade. During migration, complete constructor-injected
 components in `internal/usecase` are the shared service boundary.
 
 ```text
-LSP | MCP | serve | validate | render | format | icon
+LSP | serve | validate | render | format | icon
                          |
                          v
                  shared Xaligo service
@@ -102,7 +99,6 @@ xaligo/
 │   ├── renderer/
 │   ├── project/
 │   ├── lsp/
-│   ├── mcp/
 │   ├── rag/
 │   ├── ai/
 │   ├── icon/
@@ -198,17 +194,16 @@ caches.
 `serve` is the explicit multi-capability process:
 
 ```text
-xaligo serve --preview --mcp --rag-watch --port 8080
+xaligo serve --preview --rag-watch --port 8080
 ├── web preview
 ├── file watcher
 ├── RAG watcher
-├── MCP HTTP
 ├── shared AST and render caches
 └── shared SQLite connections
 ```
 
-Separately launched `xaligo lsp` and `xaligo mcp` have independent in-memory
-caches and may share the same durable databases. That simplicity tradeoff is
+Separately launched `xaligo lsp` processes have independent in-memory caches
+and may share the same durable databases. That simplicity tradeoff is
 intentional and is not a reason to add a daemon.
 
 ## Migration order
@@ -218,6 +213,6 @@ intentional and is not a reason to add a daemon.
 3. move the generic layout/SVG engine to embedded Rust;
 4. route `validate`, `format`, and `render` through one service composition;
 5. add the SQLite SVG registry and `icon` commands;
-6. add RAG, LSP, MCP, and model command families;
+6. add RAG, LSP, and model command families;
 7. add integrated `serve` capabilities without a hidden daemon; and
 8. package the same single-binary topology for every supported platform.

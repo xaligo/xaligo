@@ -66,7 +66,7 @@ the domain-neutral `builtin` catalog through the same Rust SVG validation and
 normalization boundary used for user registrations. AWS and UML catalogs are
 separate profile data and are not prerequisites for the builtin catalog.
 
-`paths.project_db` selects the durable project knowledge index shared by RAG,
-LSP workspace search, and MCP project tools. The database uses WAL mode and
+`paths.project_db` selects the durable project knowledge index shared by RAG
+and LSP workspace search. The database uses WAL mode and
 FTS5. The initial RAG indexing pass reads only Markdown below `docs/`; `.xal`
 concept rows are added only through an explicit document-analysis request.

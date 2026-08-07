@@ -12,7 +12,7 @@ const (
 )
 
 // ProjectConcept reuses the engine's closed, domain-neutral vocabulary for
-// RAG, LSP, and MCP inspection. The alias avoids a second concept mapping when
+// RAG and LSP inspection. The alias avoids a second concept mapping when
 // a parsed .xal tree is later lowered into EngineDocumentSpec.
 type ProjectConcept = EngineConcept
 

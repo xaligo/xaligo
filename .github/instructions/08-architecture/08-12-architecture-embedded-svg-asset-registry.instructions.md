@@ -106,7 +106,6 @@ xaligo icon list [--namespace <name>]
 xaligo icon optimize
 ```
 
-MCP operations call the same use case; they do not open SQLite independently.
 
 ## SQLite operation rules
 
@@ -141,7 +140,7 @@ external catalog or manifest
 
 Importers verify checksums, reject unsafe or malformed SVG, preserve licensing,
 and produce the canonical registry schema. Do not download catalog content
-during render, validate, LSP, MCP, or preview requests.
+during render, validate, LSP, or preview requests.
 
 ## Verification gates
 

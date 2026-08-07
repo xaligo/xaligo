@@ -13,11 +13,10 @@ xaligo/
 │   └── wasm/main.go             JavaScript/WASM adapter
 ├── internal/
 │   ├── command.go               root Cobra command assembly
-│   ├── controller/              CLI/LSP/MCP/RAG flags and transport/file-I/O adapters
+│   ├── controller/              CLI/LSP/RAG flags and transport/file-I/O adapters
 │   ├── core/profiles/           declarative builtin and domain profile boundaries
 │   ├── entity/                  internal structures; independent entity layer
 │   ├── lsp/                     LSP 3.18 session and protocol adapter
-│   ├── mcp/                     stateless MCP protocol and shared tool adapter
 │   ├── usecase/
 │   │   ├── render.go            RenderUsecase, dispatch, and orchestration
 │   │   ├── diff.go              DiffUsecase, structural comparison, and paired SVG orchestration
