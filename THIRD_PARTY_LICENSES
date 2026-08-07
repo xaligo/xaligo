@@ -1,7 +1,7 @@
 Third-Party Licenses
 ====================
 
-The statically linked xaligo Rust PPTX exporter includes the following direct dependency.
+The statically linked xaligo Rust PPTX exporter includes the following direct dependencies.
 Its transitive Rust dependencies and exact versions are recorded in
 `external/exporter/Cargo.lock`.
 
@@ -30,8 +30,16 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+resvg 0.45.1
+------------
+
+Copyright (c) the resvg contributors
+
+Licensed under either the Apache License, Version 2.0 or the MIT License. xaligo
+uses it to render SVG media into real PNG fallback images for PowerPoint.
+
 The exporter also links Rust crates under MIT, Apache-2.0, BSD-3-Clause, and
 Zlib-compatible terms, including base64, serde, serde_json, zip, quick-xml,
-thiserror, sha1, flate2, zlib-rs, time, and their locked transitive
+thiserror, sha1, flate2, zlib-rs, time, resvg, and their locked transitive
 dependencies. Source distributions retain each crate's license metadata in
 Cargo.lock and the crates.io source package.

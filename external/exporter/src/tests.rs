@@ -29,16 +29,35 @@ fn exports_pages_shapes_groups_text_and_legends() {
 
 #[test]
 fn embeds_svg_with_png_fallback() {
-    let input = r#"{"plan":{"slide":{"w":4,"h":3,"background":"FFFFFF"},"ops":[{"id":"icon","kind":"image","x":0.5,"y":0.5,"w":1,"h":1,"data":"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciLz4="}]}}"#;
+    let input = r#"{"plan":{"slide":{"w":4,"h":3,"background":"FFFFFF"},"ops":[{"id":"icon","groupId":"icons","kind":"image","x":0.5,"y":0.5,"w":1,"h":1,"data":"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMCAxMCI+PHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjZmYwMDAwIi8+PC9zdmc+"}]}}"#;
     let bytes = export(input).expect("export PPTX");
     assert_eq!(
-        package_file(&bytes, "ppt/media/image1_2.svg"),
-        br#"<svg xmlns="http://www.w3.org/2000/svg"/>"#
+        package_file(&bytes, "ppt/media/image1_3.svg"),
+        br##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="10" height="10" fill="#ff0000"/></svg>"##
     );
-    assert!(package_file(&bytes, "ppt/media/image1_2.png").starts_with(&[137, 80, 78, 71]));
+    let fallback = package_file(&bytes, "ppt/media/image1_3.png");
+    assert!(fallback.starts_with(&[137, 80, 78, 71]));
+    assert_eq!(
+        u32::from_be_bytes(fallback[16..20].try_into().expect("PNG width")),
+        96
+    );
+    assert_eq!(
+        u32::from_be_bytes(fallback[20..24].try_into().expect("PNG height")),
+        96
+    );
+    let slide =
+        String::from_utf8(package_file(&bytes, "ppt/slides/slide1.xml")).expect("slide XML");
     let relationships = String::from_utf8(package_file(&bytes, "ppt/slides/_rels/slide1.xml.rels"))
         .expect("relationships XML");
-    assert!(relationships.contains("../media/image1_2.svg"));
+    assert!(slide.contains("r:embed=\"rIdImg3\""));
+    assert!(slide.contains("r:embed=\"rIdSvg3\""));
+    assert!(relationships.contains("Id=\"rIdImg3\""));
+    assert!(relationships.contains("Id=\"rIdSvg3\""));
+    assert!(relationships.contains("../media/image1_3.svg"));
+    let content_types =
+        String::from_utf8(package_file(&bytes, "[Content_Types].xml")).expect("content types XML");
+    assert!(content_types.contains("Extension=\"png\" ContentType=\"image/png\""));
+    assert!(content_types.contains("Extension=\"svg\" ContentType=\"image/svg+xml\""));
 }
 
 #[test]

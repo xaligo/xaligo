@@ -14,11 +14,6 @@ use crate::ent::model::pptx::{
 };
 use crate::util::error::Error;
 
-const FALLBACK_PNG: &[u8] = &[
-    137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,0,0,0,1,0,0,0,1,8,4,0,0,0,181,28,12,2,
-    0,0,0,11,73,68,65,84,120,218,99,96,96,0,0,0,3,0,1,43,9,77,132,0,0,0,0,73,69,78,68,174,66,96,130,
-];
-
 pub fn slide_xml(slide: &Slide, ops: &[Op]) -> Result<String, Error> {
     let mut xml = format!(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"><p:cSld><p:bg><p:bgPr><a:solidFill><a:srgbClr val="{}"/></a:solidFill><a:effectLst/></p:bgPr></p:bg><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr>"#, color(&slide.background, DEFAULT_BACKGROUND));
     let mut grouped = HashSet::new();
@@ -87,21 +82,37 @@ pub fn finalize_package(bytes: Vec<u8>, pages: &[Vec<Op>], compression: bool) ->
     }
     let mut replacements = HashMap::new();
     let mut additions = Vec::new();
+    if let Some((_, content_types)) = files.iter().find(|(name, _)| name == "[Content_Types].xml") {
+        let original = String::from_utf8_lossy(content_types);
+        let mut defaults = String::new();
+        if !original.contains("Extension=\"png\"") {
+            defaults.push_str(r#"<Default Extension="png" ContentType="image/png"/>"#);
+        }
+        if !original.contains("Extension=\"svg\"") {
+            defaults.push_str(r#"<Default Extension="svg" ContentType="image/svg+xml"/>"#);
+        }
+        replacements.insert("[Content_Types].xml".into(), original.replace("</Types>", &format!("{defaults}</Types>")).into_bytes());
+    }
     for (page_index, ops) in pages.iter().enumerate() {
-        let images: Vec<(usize, &Op)> = ops.iter().enumerate().filter(|(_, op)| op.kind == "image" && op.data.is_some()).collect();
+        let images = image_bindings(ops);
         if images.is_empty() { continue; }
         let rel_path = format!("ppt/slides/_rels/slide{}.xml.rels", page_index + 1);
         let original = files.iter().find(|(name, _)| name == &rel_path).map(|(_, data)| String::from_utf8_lossy(data).into_owned())
             .unwrap_or_else(|| r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>"#.into());
         let mut relationships = String::new();
-        for (op_index, op) in images {
+        for (shape_id, op) in images {
             let (mime, data) = decode_data_uri(op.data.as_deref().unwrap_or_default())?;
-            let ext = if mime.contains("svg") { "svg" } else { "png" };
-            let stem = format!("image{}_{}", page_index + 1, op_index + 2);
-            additions.push((format!("ppt/media/{stem}.{ext}"), data));
-            additions.push((format!("ppt/media/{stem}.png"), FALLBACK_PNG.to_vec()));
-            relationships.push_str(&format!(r#"<Relationship Id="rIdImg{}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/{stem}.png"/>"#, op_index + 2));
-            relationships.push_str(&format!(r#"<Relationship Id="rIdSvg{}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/{stem}.{ext}"/>"#, op_index + 2));
+            let stem = format!("image{}_{}", page_index + 1, shape_id);
+            if mime.contains("svg") {
+                let fallback = render_svg_fallback(&data, op)?;
+                additions.push((format!("ppt/media/{stem}.svg"), data));
+                additions.push((format!("ppt/media/{stem}.png"), fallback));
+                relationships.push_str(&format!(r#"<Relationship Id="rIdImg{shape_id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/{stem}.png"/>"#));
+                relationships.push_str(&format!(r#"<Relationship Id="rIdSvg{shape_id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/{stem}.svg"/>"#));
+            } else {
+                additions.push((format!("ppt/media/{stem}.png"), data));
+                relationships.push_str(&format!(r#"<Relationship Id="rIdImg{shape_id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/{stem}.png"/>"#));
+            }
         }
         replacements.insert(rel_path, original.replace("</Relationships>", &format!("{relationships}</Relationships>" )).into_bytes());
     }
@@ -181,8 +192,44 @@ fn write_text(xml: &mut String, id: usize, op: &Op) -> Result<(), Error> {
 
 fn write_image(xml: &mut String, id: usize, op: &Op) -> Result<(), Error> {
     let name = object_name(op).unwrap_or_else(|| format!("Picture {id}"));
-    write!(xml, r#"<p:pic><p:nvPicPr><p:cNvPr id="{id}" name="{}"/><p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr/></p:nvPicPr><p:blipFill><a:blip r:embed="rIdImg{id}"><a:extLst><a:ext uri="{{28A0092B-C50C-407E-A947-70E740481C1C}}"><asvg:svgBlip xmlns:asvg="http://schemas.microsoft.com/office/drawing/2016/SVG/main" r:embed="rIdSvg{id}"/></a:ext></a:extLst></a:blip><a:stretch><a:fillRect/></a:stretch></p:blipFill><p:spPr><a:xfrm{}><a:off x="{}" y="{}"/><a:ext cx="{}" cy="{}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr></p:pic>"#, escape(&name), rotation(op), emu(op.x), emu(op.y), emu(op.w), emu(op.h)).map_err(xml_error)?;
+    let extension = if op.data.as_deref().is_some_and(|data| data.starts_with("data:image/svg")) { format!(r#"<a:extLst><a:ext uri="{{28A0092B-C50C-407E-A947-70E740481C1C}}"><asvg:svgBlip xmlns:asvg="http://schemas.microsoft.com/office/drawing/2016/SVG/main" r:embed="rIdSvg{id}"/></a:ext></a:extLst>"#) } else { String::new() };
+    write!(xml, r#"<p:pic><p:nvPicPr><p:cNvPr id="{id}" name="{}"/><p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr/></p:nvPicPr><p:blipFill><a:blip r:embed="rIdImg{id}">{extension}</a:blip><a:stretch><a:fillRect/></a:stretch></p:blipFill><p:spPr><a:xfrm{}><a:off x="{}" y="{}"/><a:ext cx="{}" cy="{}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr></p:pic>"#, escape(&name), rotation(op), emu(op.x), emu(op.y), emu(op.w), emu(op.h)).map_err(xml_error)?;
     Ok(())
+}
+
+fn image_bindings(ops: &[Op]) -> Vec<(usize, &Op)> {
+    let mut bindings = Vec::new();
+    let mut grouped = HashSet::new();
+    let mut next_id = 2;
+    for front in [false, true] {
+        for op in ops.iter().filter(|op| op.front_layer == front) {
+            if let Some(group) = &op.group_id {
+                if grouped.insert(group.clone()) {
+                    next_id += 1;
+                    for member in ops.iter().filter(|item| item.group_id.as_ref() == Some(group)) {
+                        if member.kind == "image" && member.data.is_some() { bindings.push((next_id, member)); }
+                        next_id += 1;
+                    }
+                }
+            } else {
+                if op.kind == "image" && op.data.is_some() { bindings.push((next_id, op)); }
+                next_id += 1;
+            }
+        }
+    }
+    bindings
+}
+
+fn render_svg_fallback(svg: &[u8], op: &Op) -> Result<Vec<u8>, Error> {
+    let options = resvg::usvg::Options::default();
+    let tree = resvg::usvg::Tree::from_data(svg, &options).map_err(|error| Error::invalid(format!("parse PPTX SVG fallback: {error}")))?;
+    let width = (op.w.max(0.01) * 96.0).round().clamp(1.0, 4096.0) as u32;
+    let height = (op.h.max(0.01) * 96.0).round().clamp(1.0, 4096.0) as u32;
+    let mut pixmap = resvg::tiny_skia::Pixmap::new(width, height).ok_or_else(|| Error::invalid("allocate PPTX SVG fallback"))?;
+    let sx = width as f32 / tree.size().width();
+    let sy = height as f32 / tree.size().height();
+    resvg::render(&tree, resvg::tiny_skia::Transform::from_scale(sx, sy), &mut pixmap.as_mut());
+    pixmap.encode_png().map_err(|error| Error::invalid(format!("encode PPTX SVG fallback: {error}")))
 }
 
 fn text_op(text: &str, x: f64, y: f64, w: f64, h: f64, size: f64, bold: bool) -> Op {
