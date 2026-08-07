@@ -101,6 +101,7 @@ func newUsecaseWithPPTX(powerpointRepository repository.PowerpointRepository) us
 		repository.NewXaligoRepository(),
 		powerpointRepository,
 		repository.NewSVGRepository(),
+		repository.NewTerminalRepository(),
 	)
 }
 
@@ -180,6 +181,23 @@ func TestUseCaseRenderDispatcherBranches(t *testing.T) {
 	cancel()
 	if _, err := uc.Render(canceled, []byte(simpleXAL), entity.RenderOptions{Format: usecase.FormatSVG, Theme: "light"}); err == nil {
 		t.Fatal("canceled Render error = nil")
+	}
+}
+
+func TestRenderTerminalSupportsOnlyV2(t *testing.T) {
+	uc := newUsecase()
+	v2 := []byte(`<scene version="2" width="320" height="180" layout="horizontal"><item id="client">Client</item><item id="api">API</item><line id="request" source="client" target="api" target-decoration="arrow"/></scene>`)
+	output, err := uc.Render(context.Background(), v2, entity.RenderOptions{
+		Format: usecase.FormatTerminal, TerminalLayout: entity.TerminalLayoutSemantic,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(output), "Client") || !strings.Contains(string(output), "API") {
+		t.Fatalf("terminal output = %q", output)
+	}
+	if _, err := uc.Render(context.Background(), []byte(simpleXAL), entity.RenderOptions{Format: usecase.FormatTerminal}); err == nil || !strings.Contains(err.Error(), "only for V2") {
+		t.Fatalf("V1 terminal error = %v", err)
 	}
 }
 

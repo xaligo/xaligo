@@ -729,6 +729,7 @@ func newUsecase() usecase.RenderUsecase {
 		repository.NewXaligoRepository(),
 		repository.NewPowerpointRepository(),
 		repository.NewSVGRepository(),
+		repository.NewTerminalRepository(),
 	)
 }
 

@@ -13,8 +13,8 @@ xaligo validate
 
 Required contract:
 
-- `xaligo render <input.xal> --format svg|pptx`; omitted format defaults to
-  `svg`.
+- `xaligo render <input.xal> --format svg|pptx|terminal`; omitted format
+  defaults to `svg`, and `terminal` requires V2 input.
 - `xaligo render markdown <input.md>` renders fenced `xal` blocks to SVG and
   embeds image references.
 - Reject retired format names (`excalidraw`, `pdf`, `excel`, `xlsx`, `xyflow`,

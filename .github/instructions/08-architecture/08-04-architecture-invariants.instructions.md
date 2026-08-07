@@ -17,9 +17,9 @@ applyTo: ".github/instructions/manual/**"
 5. Filesystem-less environments provide an `AssetSource`; they do not fork the
    render pipeline.
 6. Native configuration remains the default when `RenderOptions.Assets` is nil.
-7. The supported engine formats are a closed set: SVG and PPTX. Markdown is an
-   SVG-embedding workflow. Adding another format requires a new explicit
-   product-scope decision before implementation work begins.
+7. The supported engine formats are a closed set: SVG and PPTX for V1/V2, plus
+   terminal text for V2 only. Markdown is an SVG-embedding workflow. Any other
+   format requires a new explicit product-scope decision before implementation.
 8. Errors are returned and wrapped with context. Core packages do not panic.
 9. Native CLI dependency construction belongs in `NewRootCmd`; the WASM entry
    point is its own composition root. Controllers depend on use cases, never on

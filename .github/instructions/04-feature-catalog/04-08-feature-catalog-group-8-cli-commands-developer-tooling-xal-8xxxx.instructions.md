@@ -8,7 +8,7 @@ applyTo: ".github/instructions/manual/**"
 
 | ID | Feature | Status | Summary |
 |---|---|---|---|
-| XAL-8000010 | `xaligo render` command | Implemented | Renders a `.xal` source file as SVG or PPTX via `--format`; SVG is the default. |
+| XAL-8000010 | `xaligo render` command | Implemented | Renders V1/V2 as SVG or PPTX and V2 as terminal text via `--format`; SVG is the default. |
 | XAL-8000020 | `xaligo validate` command | Implemented | Validates `.xal` syntax, layout, and connection references without producing output. |
 | XAL-8000030 | `xaligo serve` command | Implemented | Serves a live-reloading preview over HTTP, polling the source file and re-rendering on change; a `.xal` source previews one combined SVG canvas, a `.md`/`.markdown` source previews the full Markdown document with rendered `xal` code blocks embedded inline; `--paper`/`--orientation` fix the preview to a specific physical page size and orientation at server startup. |
 | XAL-8000040 | `xaligo diff` command | Implemented | Renders paired removed/added structural-diff SVGs comparing two `.xal` documents. |

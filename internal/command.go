@@ -36,12 +36,14 @@ func newRootCmd() (*cobra.Command, func() error) {
 	xaligoRepository := repository.NewXaligoRepository()
 	powerpointRepository := repository.NewPowerpointRepository()
 	svgRepository := repository.NewSVGRepository()
+	terminalRepository := repository.NewTerminalRepository()
 
 	renderUsecase := usecase.NewRenderUsecase(
 		sceneRepository,
 		xaligoRepository,
 		powerpointRepository,
 		svgRepository,
+		terminalRepository,
 	)
 	diagnosticsUsecase := usecase.NewDiagnosticsUsecase()
 	diffUsecase := usecase.NewDiffUsecase(xaligoRepository, sceneRepository, svgRepository)
@@ -72,11 +74,11 @@ func newRootCmd() (*cobra.Command, func() error) {
 
 	root := &cobra.Command{
 		Use:   "xaligo",
-		Short: "Diagram-as-code renderer for SVG, PPTX, and Markdown",
+		Short: "Diagram-as-code renderer for SVG, PPTX, terminal, and Markdown",
 		Long: `xaligo is a diagram-as-code engine for architecture, network, and UML
 diagrams. It parses the Vue-style .xal XML DSL once and pushes the result
 through one shared parser -> layout -> draw-plan pipeline. The supported
-outputs are SVG and PPTX, plus Markdown documents that embed rendered SVGs.
+outputs are SVG and PPTX, V2 terminal text, plus Markdown documents that embed rendered SVGs.
 
 Use 'xaligo <command> --help' for full details, flags, and examples for any
 subcommand below.`,

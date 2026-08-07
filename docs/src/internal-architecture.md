@@ -20,7 +20,8 @@ Diagram source: [internal-rendering-pipeline.xal](architecture/internal-renderin
 
 Controllers collect command options and persist returned bytes. They do not
 parse, lay out, route, or own a second format switch. `RenderUsecase` owns
-dispatch and accepts only `svg` and `pptx`; SVG is the default.
+dispatch and accepts `svg` and `pptx` for V1/V2 plus `terminal` for V2; SVG is
+the default.
 
 ## Markdown
 

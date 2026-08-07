@@ -83,6 +83,8 @@ func (rcvr *fakeUseCase) Render(_ context.Context, _ []byte, opts entity.RenderO
 		return []byte(`<svg></svg>`), rcvr.renderErr
 	case usecase.FormatPPTX:
 		return []byte(`pptx`), rcvr.renderErr
+	case usecase.FormatTerminal:
+		return []byte("terminal\n"), rcvr.renderErr
 	default:
 		return nil, errors.New("unsupported format")
 	}
@@ -106,6 +108,11 @@ func (rcvr *fakeUseCase) RenderSVG(_ context.Context, _ []byte, opts entity.Rend
 
 func (rcvr *fakeUseCase) RenderPPTX(context.Context, []byte, entity.RenderOptions) ([]byte, error) {
 	return []byte(`pptx`), rcvr.renderErr
+}
+
+func (rcvr *fakeUseCase) RenderTerminal(_ context.Context, _ []byte, opts entity.RenderOptions) ([]byte, error) {
+	rcvr.lastRenderOpts = opts
+	return []byte("terminal\n"), rcvr.renderErr
 }
 
 func (rcvr *fakeUseCase) BuildPPTXPlan(_ context.Context, _ []byte, opts entity.RenderOptions) ([]byte, error) {

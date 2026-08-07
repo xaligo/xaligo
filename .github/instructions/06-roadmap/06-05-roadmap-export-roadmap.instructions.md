@@ -6,7 +6,8 @@ applyTo: ".github/instructions/manual/**"
 
 ## Export Roadmap
 
-The supported formats are SVG and PPTX. Identified child frames are the default
+The cross-version formats are SVG and PPTX; V2 additionally supports terminal
+text. Identified child frames are the default
 physical page boundary: one SVG artifact or one PPTX slide per frame.
 `--combine-frames` retains the combined-canvas/slide behavior. Markdown embeds
 the SVG artifacts produced by this same pipeline.

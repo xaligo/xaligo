@@ -27,6 +27,7 @@ var renderUsecase = usecase.NewRenderUsecase(
 	repository.NewXaligoRepository(),
 	nil,
 	repository.NewSVGRepository(),
+	repository.NewTerminalRepository(),
 )
 
 var diagnosticsUsecase = usecase.NewDiagnosticsUsecase()

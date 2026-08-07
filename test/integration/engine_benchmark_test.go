@@ -25,12 +25,23 @@ func benchmarkComplexHybridSource(b *testing.B) []byte {
 	return source
 }
 
+func benchmarkComplexHybridV2Source(b *testing.B) []byte {
+	b.Helper()
+	path := filepath.Join("..", "..", "docs", "src", "examples", "samples", "complex-hybrid-architecture-v2.xal")
+	source, err := os.ReadFile(path)
+	if err != nil {
+		b.Fatal(err)
+	}
+	return source
+}
+
 func benchmarkRenderUsecase() usecase.RenderUsecase {
 	return usecase.NewRenderUsecase(
 		repository.NewSceneRepository(),
 		repository.NewXaligoRepository(),
 		repository.NewPowerpointRepository(),
 		repository.NewSVGRepository(),
+		repository.NewTerminalRepository(),
 	)
 }
 
@@ -95,7 +106,7 @@ func BenchmarkV2RenderSVGEndToEnd(b *testing.B) {
 	source := []byte(`<xaligo version="2"><frame id="page" width="1280" height="720" layout="horizontal" gap="16"><group id="clients" weight="1" layout="vertical"><item id="web">Web</item><item id="mobile">Mobile</item></group><group id="services" weight="2" layout="vertical"><item id="api">API</item><item id="worker">Worker</item><item id="database">Database</item></group><connection id="request" source="web" target="api" routing="orthogonal"/><connection id="job" source="api" target="worker" routing="orthogonal"/><connection id="store" source="worker" target="database" routing="orthogonal"/></frame></xaligo>`)
 	renderer := usecase.NewRenderUsecase(
 		repository.NewSceneRepository(), repository.NewXaligoRepository(),
-		repository.NewPowerpointRepository(), repository.NewSVGRepository(),
+		repository.NewPowerpointRepository(), repository.NewSVGRepository(), repository.NewTerminalRepository(),
 	)
 	options := entity.RenderOptions{Format: usecase.FormatSVG, PxPerInch: 96}
 	b.ReportAllocs()
@@ -103,6 +114,40 @@ func BenchmarkV2RenderSVGEndToEnd(b *testing.B) {
 	b.ResetTimer()
 	for range b.N {
 		if _, err := renderer.RenderSVG(context.Background(), source, options); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkV2RenderTerminalEndToEnd(b *testing.B) {
+	source := []byte(`<scene version="2" width="1280" height="720" layout="horizontal" gap="16"><group id="clients" weight="1" layout="vertical"><item id="web">Web</item><item id="mobile">Mobile</item></group><group id="services" weight="2" layout="vertical"><item id="api">API</item><item id="worker">Worker</item><item id="database">Database</item></group><line id="request" source="web" target="api" routing="orthogonal"/><line id="job" source="api" target="worker" routing="orthogonal"/><line id="store" source="worker" target="database" routing="orthogonal"/></scene>`)
+	renderer := benchmarkRenderUsecase()
+	options := entity.RenderOptions{
+		Format: usecase.FormatTerminal, TerminalLayout: entity.TerminalLayoutHybrid,
+		TerminalWidth: 120, TerminalHeight: 40, TerminalColor: entity.TerminalColorNever,
+	}
+	b.ReportAllocs()
+	b.SetBytes(int64(len(source)))
+	b.ResetTimer()
+	for range b.N {
+		if _, err := renderer.Render(context.Background(), source, options); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkComplexHybridV2RenderTerminal(b *testing.B) {
+	source := benchmarkComplexHybridV2Source(b)
+	renderer := benchmarkRenderUsecase()
+	options := entity.RenderOptions{
+		Format: usecase.FormatTerminal, TerminalLayout: entity.TerminalLayoutHybrid,
+		TerminalWidth: 120, TerminalHeight: 40, TerminalColor: entity.TerminalColorNever,
+	}
+	b.ReportAllocs()
+	b.SetBytes(int64(len(source)))
+	b.ResetTimer()
+	for range b.N {
+		if _, err := renderer.Render(context.Background(), source, options); err != nil {
 			b.Fatal(err)
 		}
 	}

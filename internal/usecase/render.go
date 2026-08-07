@@ -38,6 +38,7 @@ type RenderUsecase interface {
 	BuildScene(context.Context, []byte, entity.RenderOptions) ([]byte, error)
 	RenderSVG(context.Context, []byte, entity.RenderOptions) ([]byte, error)
 	RenderPPTX(context.Context, []byte, entity.RenderOptions) ([]byte, error)
+	RenderTerminal(context.Context, []byte, entity.RenderOptions) ([]byte, error)
 	BuildPPTXPlan(context.Context, []byte, entity.RenderOptions) ([]byte, error)
 	NewPreviewRepository(string, entity.PreviewOptions) (repository.PreviewRepository, error)
 }
@@ -47,6 +48,7 @@ type renderUsecase struct {
 	xaligoRepository     repository.XaligoRepository
 	powerpointRepository repository.PowerpointRepository
 	svgRepository        repository.SVGRepository
+	terminalRepository   repository.TerminalRepository
 	v2Frontend           v2usecase.FrontendUsecase
 	v2Engine             v2usecase.EngineUsecase
 }
@@ -56,12 +58,14 @@ func NewRenderUsecase(
 	xaligoRepository repository.XaligoRepository,
 	powerpointRepository repository.PowerpointRepository,
 	svgRepository repository.SVGRepository,
+	terminalRepository repository.TerminalRepository,
 ) RenderUsecase {
 	return &renderUsecase{
 		sceneRepository:      sceneRepository,
 		xaligoRepository:     xaligoRepository,
 		powerpointRepository: powerpointRepository,
 		svgRepository:        svgRepository,
+		terminalRepository:   terminalRepository,
 		v2Frontend:           v2usecase.NewFrontendUsecase(),
 		v2Engine:             v2usecase.NewEngineUsecase(),
 	}
@@ -72,8 +76,9 @@ const (
 	ModeNetwork  = v1engine.ModeNetworkV1EngineOptionRender
 	ModeAWS      = v1engine.ModeAWSV1EngineOptionRender
 
-	FormatSVG  = v1engine.FormatSVGV1EngineOptionRender
-	FormatPPTX = v1engine.FormatPPTXV1EngineOptionRender
+	FormatSVG                    = v1engine.FormatSVGV1EngineOptionRender
+	FormatPPTX                   = v1engine.FormatPPTXV1EngineOptionRender
+	FormatTerminal entity.Format = "terminal"
 
 	SeverityError   = v1engine.SeverityErrorV1EngineOptionRender
 	SeverityWarning = v1engine.SeverityWarningV1EngineOptionRender
@@ -86,6 +91,7 @@ var (
 	IURR003  = share.NewMCode("IURR-003", "Render default format branch")
 	IURR005  = share.NewMCode("IURR-005", "Render SVG branch")
 	IURR006  = share.NewMCode("IURR-006", "Render PPTX branch")
+	IURR010  = share.NewMCode("IURR-010", "Render terminal branch")
 	IURR009  = share.NewMCode("IURR-009", "Render unknown format branch")
 	IURSO001 = share.NewMCode("IURSO-001", "Service options no services CSV branch")
 	IURSO002 = share.NewMCode("IURSO-002", "Service options services CSV branch")
@@ -104,7 +110,39 @@ var (
 )
 
 func (rcvr *renderUsecase) ValidateRenderOptions(opts entity.RenderOptions) error {
+	return ValidateRenderOptions(opts)
+}
+
+func validateRenderOptions(opts entity.RenderOptions) error {
+	if entity.Format(strings.ToLower(strings.TrimSpace(string(opts.Format)))) == FormatTerminal {
+		if err := validateTerminalRenderOptions(opts); err != nil {
+			return err
+		}
+		opts.Format = FormatSVG
+	}
 	return v1engine.ValidateRenderOptionsV1EngineOptionRender(opts)
+}
+
+func validateTerminalRenderOptions(opts entity.RenderOptions) error {
+	if opts.TerminalStyle != "" && opts.TerminalStyle != entity.TerminalStyleUnicode && opts.TerminalStyle != entity.TerminalStyleASCII {
+		return fmt.Errorf("unknown terminal style %q", opts.TerminalStyle)
+	}
+	if opts.TerminalLayout != "" && opts.TerminalLayout != entity.TerminalLayoutDiagram && opts.TerminalLayout != entity.TerminalLayoutSemantic && opts.TerminalLayout != entity.TerminalLayoutHybrid {
+		return fmt.Errorf("unknown terminal layout %q", opts.TerminalLayout)
+	}
+	if opts.TerminalDetail != "" && opts.TerminalDetail != entity.TerminalDetailCompact && opts.TerminalDetail != entity.TerminalDetailNormal && opts.TerminalDetail != entity.TerminalDetailFull {
+		return fmt.Errorf("unknown terminal detail %q", opts.TerminalDetail)
+	}
+	if opts.TerminalColor != "" && opts.TerminalColor != entity.TerminalColorAuto && opts.TerminalColor != entity.TerminalColorAlways && opts.TerminalColor != entity.TerminalColorNever {
+		return fmt.Errorf("unknown terminal color %q", opts.TerminalColor)
+	}
+	if opts.TerminalIcons != "" && opts.TerminalIcons != entity.TerminalIconsLabel && opts.TerminalIcons != entity.TerminalIconsSymbol && opts.TerminalIcons != entity.TerminalIconsNone {
+		return fmt.Errorf("unknown terminal icons %q", opts.TerminalIcons)
+	}
+	if opts.TerminalWidth < 0 || opts.TerminalHeight < 0 {
+		return fmt.Errorf("terminal dimensions must not be negative")
+	}
+	return nil
 }
 
 func (rcvr *renderUsecase) Render(ctx context.Context, input []byte, opts entity.RenderOptions) ([]byte, error) {
@@ -112,7 +150,7 @@ func (rcvr *renderUsecase) Render(ctx context.Context, input []byte, opts entity
 		logger.ERROR(IURR001, "context check failed", map[string]any{"error": err})
 		return nil, err
 	}
-	if err := ValidateRenderOptions(opts); err != nil {
+	if err := rcvr.ValidateRenderOptions(opts); err != nil {
 		logger.ERROR(IURR002, "validate render options failed", map[string]any{"format": opts.Format, "error": err})
 		return nil, err
 	}
@@ -129,10 +167,32 @@ func (rcvr *renderUsecase) Render(ctx context.Context, input []byte, opts entity
 	case FormatPPTX:
 		logger.DEBUG(IURR006, "branch pptx")
 		return rcvr.RenderPPTX(ctx, input, opts)
+	case FormatTerminal:
+		logger.DEBUG(IURR010, "branch terminal")
+		return rcvr.RenderTerminal(ctx, input, opts)
 	default:
 		logger.ERROR(IURR009, "branch unknown format", map[string]any{"format": format})
 		return nil, fmt.Errorf("unknown render format %q", format)
 	}
+}
+
+func (rcvr *renderUsecase) RenderTerminal(ctx context.Context, input []byte, opts entity.RenderOptions) ([]byte, error) {
+	if renderDocumentVersion(input) != "2" {
+		return nil, fmt.Errorf("terminal output is available only for V2 documents")
+	}
+	spec, _, err := rcvr.v2Frontend.Lower(input)
+	if err != nil {
+		return nil, fmt.Errorf("lower V2 document: %w", err)
+	}
+	resolved, err := rcvr.v2Engine.Resolve(ctx, spec)
+	if err != nil {
+		return nil, fmt.Errorf("resolve V2 document: %w", err)
+	}
+	data, err := rcvr.terminalRepository.Render(resolved, opts)
+	if err != nil {
+		return nil, fmt.Errorf("render V2 terminal output: %w", err)
+	}
+	return data, nil
 }
 
 var IURBS012 = share.NewMCode("IURBS-012", "Build presentation scene completed")
@@ -758,5 +818,5 @@ func (rcvr *renderUsecase) checkRenderContext(ctx context.Context) error {
 // ValidateRenderOptions is kept as a source-compatible package boundary.
 // Deprecated: construct RenderUsecase and call ValidateRenderOptions.
 func ValidateRenderOptions(opts entity.RenderOptions) error {
-	return v1engine.ValidateRenderOptionsV1EngineOptionRender(opts)
+	return validateRenderOptions(opts)
 }

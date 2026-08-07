@@ -12,6 +12,7 @@ Available render paths include:
 - `RenderSVG`
 - `RenderArtifacts`
 - `RenderPPTX`
+- `RenderTerminal`
 - `BuildPPTXPlan`
 - `Validate`
 - `Diagnose`
@@ -21,7 +22,8 @@ artifact per identified frame by default. `RenderSVG` remains convenient for a
 single frame or for `RenderOptions.CombineFrames`; it reports an error instead
 of silently discarding extra frame artifacts. PPTX is a container format, so
 `RenderPPTX` returns one byte sequence containing one slide per frame. `Render`
-accepts only `FormatSVG` and `FormatPPTX`; SVG is the default. Markdown
+accepts `FormatSVG` and `FormatPPTX` for V1/V2 plus V2-only `FormatTerminal`;
+SVG is the default. Markdown
 rendering composes `RenderArtifacts` and is exposed through the CLI.
 
 Editor integrations should prefer diagnostics from the validation API because

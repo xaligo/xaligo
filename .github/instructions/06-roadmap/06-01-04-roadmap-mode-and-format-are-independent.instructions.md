@@ -26,6 +26,7 @@ Target formats:
 |---|---|
 | `svg` | Portable output and live preview |
 | `pptx` | Editable presentation export; one frame per slide by default |
+| `terminal` | V2-only text projection for terminals, TUIs, logs, and SSH sessions |
 
 Markdown is a document workflow that embeds SVG artifacts; it is not a
 separate engine format. Excalidraw, PDF, Excel/XLSX, XYFlow, and Isoflow are

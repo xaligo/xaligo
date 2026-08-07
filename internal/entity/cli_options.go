@@ -38,8 +38,17 @@ type ControllerRenderOptions struct {
 	PaperMarginBottom float64
 	PaperMarginLeft   float64
 	SVGLegendPosition string
+	TerminalStyle     string
+	TerminalLayout    string
+	TerminalDetail    string
+	TerminalColor     string
+	TerminalIcons     string
+	TerminalWidth     int
+	TerminalHeight    int
+	TerminalFocus     string
 	Theme             string
 	Mode              string
+	Stdout            io.Writer
 }
 
 type ControllerServeOptions struct {

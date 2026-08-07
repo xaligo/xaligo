@@ -102,7 +102,8 @@ geometry across native and embedded targets.
 
 ## Input and Output Formats
 
-SVG and PPTX are the closed engine-output set; Markdown embeds SVG artifacts.
+SVG and PPTX are the cross-version engine-output set. V2 additionally exposes
+terminal text; Markdown embeds SVG artifacts.
 Import from existing diagram formats may be considered separately, but it must
 normalize into `.xal`/the generic model and cannot add a hidden render path.
 

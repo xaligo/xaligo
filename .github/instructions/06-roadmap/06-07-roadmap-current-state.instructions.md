@@ -15,7 +15,8 @@ Implemented or partially implemented:
   That scene is not a supported output and has no CLI or WASM format surface.
 - Draw-plan geometry, text resolution, page projection, and connector routing
   live in `internal/usecase/v1/engine/plan_*` and `route_*`.
-- `xaligo render --format svg|pptx` is the complete public render matrix.
+- `xaligo render --format svg|pptx` supports V1/V2 and `--format terminal`
+  supports V2-only text projection.
   Omitting `--format` defaults to SVG. Retired format names are rejected.
 - Identified child frames map to separate SVG artifacts or PPTX slides in
   source order. `--combine-frames` requests one combined canvas or slide.

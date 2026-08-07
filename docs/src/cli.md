@@ -12,8 +12,9 @@ Supported formats:
 |---|---|
 | `svg` | Standalone SVG; one file per frame by default |
 | `pptx` | PowerPoint presentation; one slide per frame by default |
+| `terminal` | V2-only Unicode/ASCII text written to stdout by default |
 
-The default is `svg`. Retired format names are rejected as unknown formats.
+The default is `svg`. Terminal output requires a V2 document. Retired format names are rejected as unknown formats.
 Markdown is handled by `xaligo render markdown`; it embeds SVG artifacts and is
 not a separate `--format` value.
 
@@ -48,6 +49,18 @@ Common render flags:
 | `--svg-legend-position top|right|bottom|left` | SVG legend placement |
 | `--arrow-style thin|standard|triangle|stealth|arrow|diamond|oval|none` | SVG/PPTX plan default used when a connection omits its arrowhead. Explicit DSL arrowheads on normal/traffic connections and explicit stroke widths take precedence; routes require effective arrowheads to be `none` |
 | `--combine-frames` | Combine all frames onto one SVG canvas or PPTX slide |
+
+Terminal flags:
+
+| Flag | Description |
+|---|---|
+| `--terminal-layout diagram|semantic|hybrid` | Spatial diagram, hierarchy and flow list, or both |
+| `--terminal-style unicode|ascii` | Unicode box drawing or strict 7-bit ASCII |
+| `--terminal-width`, `--terminal-height` | Output grid dimensions; detected for a TTY and otherwise fixed at 100×40 |
+| `--terminal-detail compact|normal|full` | Semantic and hybrid detail level |
+| `--terminal-icons label|symbol|none` | Icon representation policy |
+| `--terminal-focus <id>` | Element shown in the hybrid detail pane |
+| `--color auto|always|never` | ANSI color policy; `auto` enables color only for a TTY |
 
 Any mode, format, theme, orientation, paper size, arrow-style option, or SVG
 legend-position value outside its documented enum returns an error.

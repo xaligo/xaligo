@@ -42,6 +42,7 @@
 
 - [SVG](rendering/svg.md)
 - [PowerPoint](rendering/pptx.md)
+- [Terminal](rendering/terminal.md)
 - [Markdown](rendering/markdown.md)
 
 # Reference

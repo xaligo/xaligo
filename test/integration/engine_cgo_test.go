@@ -21,7 +21,7 @@ import (
 func TestV2SourceUsesRustSVGAndSharedResolvedPPTXPlan(t *testing.T) {
 	renderer := usecase.NewRenderUsecase(
 		repository.NewSceneRepository(), repository.NewXaligoRepository(),
-		repository.NewPowerpointRepository(), repository.NewSVGRepository(),
+		repository.NewPowerpointRepository(), repository.NewSVGRepository(), repository.NewTerminalRepository(),
 	)
 	source := []byte(`<xaligo version="2"><frames><frame id="page" width="320" height="180" layout="horizontal"><item id="left" width="80">Left</item><item id="right" weight="1">Right</item><connection id="flow" source="left" target="right" routing="orthogonal"/></frame></frames></xaligo>`)
 	svg, err := renderer.RenderSVG(context.Background(), source, entity.RenderOptions{Format: usecase.FormatSVG, PxPerInch: 96})
@@ -44,7 +44,7 @@ func TestV2SourceUsesRustSVGAndSharedResolvedPPTXPlan(t *testing.T) {
 func TestV2SVGIsByteStable(t *testing.T) {
 	renderer := usecase.NewRenderUsecase(
 		repository.NewSceneRepository(), repository.NewXaligoRepository(),
-		repository.NewPowerpointRepository(), repository.NewSVGRepository(),
+		repository.NewPowerpointRepository(), repository.NewSVGRepository(), repository.NewTerminalRepository(),
 	)
 	source := []byte(`<xaligo version="2"><frame id="page" width="320" height="180" layout="horizontal"><item id="left" width="80">Left</item><item id="right" weight="1">Right</item><connection id="flow" source="left" target="right" routing="orthogonal"/></frame></xaligo>`)
 	first, err := renderer.RenderSVG(context.Background(), source, entity.RenderOptions{Format: usecase.FormatSVG, PxPerInch: 96})
@@ -67,7 +67,7 @@ func TestComplexHybridV2CompatibilityProjection(t *testing.T) {
 	}
 	renderer := usecase.NewRenderUsecase(
 		repository.NewSceneRepository(), repository.NewXaligoRepository(),
-		repository.NewPowerpointRepository(), repository.NewSVGRepository(),
+		repository.NewPowerpointRepository(), repository.NewSVGRepository(), repository.NewTerminalRepository(),
 	)
 	svg, err := renderer.RenderSVG(context.Background(), source, entity.RenderOptions{Format: usecase.FormatSVG, PxPerInch: 96})
 	if err != nil {

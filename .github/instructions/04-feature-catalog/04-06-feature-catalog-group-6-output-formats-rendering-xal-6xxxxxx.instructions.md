@@ -26,3 +26,4 @@ applyTo: ".github/instructions/manual/**"
 | XAL-6000160 | Isoflow generic-endpoint projection | Excluded unless justified | Retired with Isoflow output. |
 | XAL-6000170 | Oversized-frame page tiling | Planned | Generic tiling of one oversized frame across several physical pages/slides, distinct from the existing one-frame-per-page mapping. |
 | XAL-6000180 | Renderer capability/projection contract | Planned | A typed SVG/PPTX capability declaration so any intentionally lossy projection is explicit and tested. |
+| XAL-6000190 | V2 terminal text output | Implemented | `--format terminal` projects only resolved V2 documents as Unicode or strict ASCII using diagram, semantic, or hybrid layouts, with bounded dimensions, optional ANSI color, icon-label policies, and deterministic non-TTY defaults. |

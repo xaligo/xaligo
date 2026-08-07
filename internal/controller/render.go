@@ -3,8 +3,10 @@ package controller
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -91,12 +93,20 @@ func (rcvr *renderController) Command() *cobra.Command {
 		mode              string
 		svgLegendPosition string
 		combineFrames     bool
+		terminalStyle     string
+		terminalLayout    string
+		terminalDetail    string
+		terminalColor     string
+		terminalIcons     string
+		terminalWidth     int
+		terminalHeight    int
+		terminalFocus     string
 	)
 
 	cmd := &cobra.Command{
 		Use:   "render <input.xal>",
 		Short: "Render xaligo DSL into an output format",
-		Long: `Render a .xal source file as SVG or PPTX.
+		Long: `Render a .xal source file as SVG or PPTX, or a V2 source as terminal text.
 
 Both formats share the same parser, layout, scene, routing, and draw-plan
 pipeline, so geometry and theming remain consistent.
@@ -111,6 +121,7 @@ image references.
 Examples:
   xaligo render diagram.xal --format svg -o output/diagram.svg
   xaligo render diagram.xal --format pptx -o output/diagram.pptx --paper A3 --orientation landscape
+  xaligo render diagram-v2.xal --format terminal --terminal-layout hybrid
   xaligo render diagram.xal --format svg -o output/diagram.svg --combine-frames`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -154,12 +165,17 @@ Examples:
 				Theme:             theme,
 				Mode:              mode,
 				SVGLegendPosition: svgLegendPosition,
+				TerminalStyle:     terminalStyle, TerminalLayout: terminalLayout,
+				TerminalDetail: terminalDetail, TerminalColor: terminalColor,
+				TerminalIcons: terminalIcons, TerminalWidth: terminalWidth,
+				TerminalHeight: terminalHeight, TerminalFocus: terminalFocus,
+				Stdout: cmd.OutOrStdout(),
 			})
 		},
 	}
 
 	cmd.Flags().StringVarP(&output, "output", "o", "", "output file path")
-	cmd.Flags().StringVar(&format, "format", "svg", "output format: svg | pptx")
+	cmd.Flags().StringVar(&format, "format", "svg", "output format: svg | pptx | terminal (terminal requires V2)")
 	cmd.Flags().StringVar(&servicesFile, "services", "", "optional services.csv for icon labels and output legends")
 	cmd.Flags().BoolVar(&combineFrames, "combine-frames", false, "combine all frames on one SVG canvas or PPTX slide")
 	cmd.Flags().StringVar(&title, "title", "", "optional PPTX title metadata")
@@ -182,6 +198,14 @@ Examples:
 	cmd.Flags().StringVar(&theme, "theme", "light", "color theme: light | dark")
 	cmd.Flags().StringVar(&mode, "mode", "standard", "rendering mode: standard | network | aws")
 	cmd.Flags().StringVar(&svgLegendPosition, "svg-legend-position", "bottom", "SVG legend position when --services is provided: top | right | bottom | left")
+	cmd.Flags().StringVar(&terminalStyle, "terminal-style", "unicode", "terminal line style: unicode | ascii")
+	cmd.Flags().StringVar(&terminalLayout, "terminal-layout", "diagram", "terminal presentation: diagram | semantic | hybrid")
+	cmd.Flags().StringVar(&terminalDetail, "terminal-detail", "normal", "terminal detail level: compact | normal | full")
+	cmd.Flags().StringVar(&terminalColor, "color", "auto", "terminal ANSI color: auto | always | never")
+	cmd.Flags().StringVar(&terminalIcons, "terminal-icons", "label", "terminal icon presentation: label | symbol | none")
+	cmd.Flags().IntVar(&terminalWidth, "terminal-width", 0, "terminal output width in columns (default: detected or 100)")
+	cmd.Flags().IntVar(&terminalHeight, "terminal-height", 0, "terminal diagram height in rows (default: detected or 40)")
+	cmd.Flags().StringVar(&terminalFocus, "terminal-focus", "", "element ID shown in the hybrid detail pane")
 	cmd.AddCommand(initRenderMarkdownCmd(rcvr))
 	logger.DEBUG(ICRIRCWUC007, "return command")
 	return cmd
@@ -193,6 +217,9 @@ func (rcvr *renderController) RunFormat(opts entity.ControllerRenderOptions) err
 	logger.DEBUG(ICRRRF001, "start", map[string]any{"format": opts.Format, "input": opts.InputPath, "output": opts.OutputPath})
 	logger.DEBUG(ICRRRFWUC001, "start", map[string]any{"format": opts.Format, "input": opts.InputPath, "output": opts.OutputPath})
 	format := entity.Format(normalizeRenderFormat(opts.Format))
+	if format == usecase.FormatTerminal && opts.OutputPath == "" {
+		opts.OutputPath = "-"
+	}
 	if format == usecase.FormatPPTX && opts.OutputPath == "" {
 		return fmt.Errorf("--output is required")
 	}
@@ -205,6 +232,13 @@ func (rcvr *renderController) RunFormat(opts entity.ControllerRenderOptions) err
 		PaperMarginIn: opts.PaperMargin, PaperMarginTopIn: opts.PaperMarginTop, PaperMarginRightIn: opts.PaperMarginRight,
 		PaperMarginBottomIn: opts.PaperMarginBottom, PaperMarginLeftIn: opts.PaperMarginLeft,
 		SVGLegendPosition: opts.SVGLegendPosition,
+		TerminalStyle:     entity.TerminalStyle(opts.TerminalStyle), TerminalLayout: entity.TerminalLayout(opts.TerminalLayout),
+		TerminalDetail: entity.TerminalDetail(opts.TerminalDetail), TerminalColor: entity.TerminalColor(opts.TerminalColor),
+		TerminalIcons: entity.TerminalIcons(opts.TerminalIcons), TerminalWidth: opts.TerminalWidth,
+		TerminalHeight: opts.TerminalHeight, TerminalFocus: opts.TerminalFocus,
+	}
+	if format == usecase.FormatTerminal {
+		resolveTerminalEnvironment(&renderOpts, opts.Stdout, opts.OutputPath == "-")
 	}
 	if err := rcvr.renderUsecase.ValidateRenderOptions(renderOpts); err != nil {
 		logger.ERROR(ICRRRFWUC002, "validate render options failed", map[string]any{"error": err})
@@ -225,10 +259,10 @@ func (rcvr *renderController) RunFormat(opts entity.ControllerRenderOptions) err
 		}
 	}
 
-	return runRender(rcvr.renderUsecase, opts.InputPath, opts.OutputPath, renderOpts)
+	return runRender(rcvr.renderUsecase, opts.InputPath, opts.OutputPath, opts.Stdout, renderOpts)
 }
 
-func runRender(renderUsecase usecase.RenderUsecase, inputPath, outputPath string, opts entity.RenderOptions) error {
+func runRender(renderUsecase usecase.RenderUsecase, inputPath, outputPath string, stdout io.Writer, opts entity.RenderOptions) error {
 	input, err := os.ReadFile(inputPath)
 	if err != nil {
 		logger.ERROR(ICRRR001, "read input failed", map[string]any{"input": inputPath, "error": err})
@@ -251,6 +285,15 @@ func runRender(renderUsecase usecase.RenderUsecase, inputPath, outputPath string
 	if err != nil {
 		logger.ERROR(ICRRR003, "render failed", map[string]any{"format": opts.Format, "error": err})
 		return err
+	}
+	if outputPath == "-" {
+		if stdout == nil {
+			stdout = os.Stdout
+		}
+		if _, err := stdout.Write(out); err != nil {
+			return fmt.Errorf("write terminal output: %w", err)
+		}
+		return nil
 	}
 	if err := os.WriteFile(outputPath, out, 0644); err != nil {
 		logger.ERROR(ICRRR004, "write output failed", map[string]any{"output": outputPath, "error": err})
@@ -334,7 +377,50 @@ func defaultRenderOutput(format string) string {
 	case "pptx":
 		logger.DEBUG(ICRDRO002, "branch pptx output")
 		return "output.pptx"
+	case "terminal":
+		return "-"
 	default:
 		return "output"
 	}
+}
+
+func resolveTerminalEnvironment(opts *entity.RenderOptions, output io.Writer, stdoutTarget bool) {
+	tty := false
+	if stdoutTarget {
+		if file, ok := output.(*os.File); ok {
+			if info, err := file.Stat(); err == nil && info.Mode()&os.ModeCharDevice != 0 && os.Getenv("TERM") != "dumb" {
+				tty = true
+			}
+		}
+	}
+	if opts.TerminalWidth <= 0 {
+		opts.TerminalWidth = 100
+		if tty {
+			opts.TerminalWidth = terminalEnvironmentInt("COLUMNS", 100)
+		}
+	}
+	if opts.TerminalHeight <= 0 {
+		opts.TerminalHeight = 40
+		if tty {
+			opts.TerminalHeight = terminalEnvironmentInt("LINES", 40)
+		}
+	}
+	if opts.TerminalColor == "" {
+		opts.TerminalColor = entity.TerminalColorAuto
+	}
+	if opts.TerminalColor != entity.TerminalColorAuto {
+		return
+	}
+	opts.TerminalColor = entity.TerminalColorNever
+	if tty {
+		opts.TerminalColor = entity.TerminalColorAlways
+	}
+}
+
+func terminalEnvironmentInt(name string, fallback int) int {
+	value, err := strconv.Atoi(strings.TrimSpace(os.Getenv(name)))
+	if err != nil || value <= 0 {
+		return fallback
+	}
+	return value
 }
