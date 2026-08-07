@@ -26,6 +26,6 @@ applyTo: ".github/instructions/manual/**"
 - `cmd` imports command/adapters only; business logic stays outside entry points.
 - Native and embedded environments differ through `usecase.AssetSource`, not
   through duplicated render implementations.
-- Go constructs PPTX draw plans; the configured Rust/WASI `pptx` adapter writes
+- Go constructs PPTX draw plans; the statically linked Rust `pptx` adapter writes
   PPTX bytes. Do not add a second OOXML writer.
 - Return context-wrapped errors. Do not panic in core code.

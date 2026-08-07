@@ -13,7 +13,7 @@ Use this order when starting new roadmap work from the current repository state:
 2. Move mixed item-grid occupancy into resolved layout and finish neutral
    scene/plan naming.
 3. Complete the repository-layer WASM PPTX exporter contract by providing
-   `xaligo.wasm`; keep Go free of PPTX/OOXML writer code.
+   the native Rust exporter C ABI; keep Go free of PPTX/OOXML writer code.
 4. Harden shared network routing with cross-renderer visual regression tests.
 5. Build the VS Code preview on the reusable HTTP/SSE protocol exposed by
    `xaligo serve`.

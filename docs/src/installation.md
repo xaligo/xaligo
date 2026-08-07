@@ -51,7 +51,7 @@ const pptx = await renderPptxPlan(planJson, { title: "Architecture" });
 Build only the PPTX exporter WASM artifact:
 
 ```bash
-make build-wasm
+make build-exporter
 ```
 
 Package layout:
@@ -59,4 +59,4 @@ Package layout:
 | Path | Purpose |
 |---|---|
 | `@xaligo/xaligo` | CLI binary plus TypeScript/WASM API exports |
-| `external/exporter/` | Internal Rust/WASI PPTX exporter workspace |
+| `external/exporter/` | Internal Rust PPTX exporter linked into the engine static library |

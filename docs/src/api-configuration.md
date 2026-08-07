@@ -36,7 +36,6 @@ Native runs can customize resource paths and defaults with
 paths:
   asset_package:       etc/resources/aws/svg
   service_catalog_csv: etc/resources/aws/service-catalog.csv
-  pptx_exporter_wasm:  external/exporter/wasm/xaligo.wasm
   assets_db:           xaligo-assets.db
   project_db:          .xaligo/project.db
 

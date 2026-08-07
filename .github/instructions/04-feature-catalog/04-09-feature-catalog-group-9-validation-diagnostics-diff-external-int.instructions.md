@@ -14,7 +14,7 @@ applyTo: ".github/instructions/manual/**"
 | XAL-9000040 | Structural document diff engine | Implemented | `xaligo diff` compares parsed `.xal` data structures rather than source lines or formatting. |
 | XAL-9000050 | Diff element matching strategy | Implemented | Matching prefers unique `id`/`name`/`ref`, then exact subtrees, then deterministic order-aware structural matching. |
 | XAL-9000060 | Diff visual output | Implemented | Paired `-removed.svg`/`-added.svg` images highlighting removed/added elements and the old/new side of modified or moved elements. |
-| XAL-9000070 | Rust/WASI exporter | Implemented | Consumes the PPTX draw-plan request through stdin/stdout under wazero. |
+| XAL-9000070 | Rust PPTX exporter | Implemented | Consumes the PPTX draw-plan request through the in-process C ABI. |
 | XAL-9000080 | Rust PPTX byte-output pipeline | Implemented | The external crate consumes `BuildPPTXPlan` output and produces PPTX bytes via the MIT-licensed `pptx` crate. |
 | XAL-9000090 | `cmd/wasm` JavaScript/WASM adapter | Implemented | Exposes SVG rendering, PPTX-plan construction, and diagnostics to JavaScript/WASM hosts alongside the native CLI entry point. |
 | XAL-9000100 | V1/V2 compatibility golden tests | Planned | Golden tests comparing V1-compatibility and native V2 engine output at the neutral-model and resolved-geometry boundaries once the V2 engine exists. |

@@ -40,7 +40,7 @@ artifacts. Other outputs are outside the current product contract.
 | `cmd/` | Native CLI entry point |
 | `cmd/wasm/` | JavaScript/WASM adapter |
 | `external/engine/` | Rust layout/SVG engine workspace |
-| `external/exporter/` | Rust/WASI PPTX exporter implementation |
+| `external/exporter/` | Statically linked Rust PPTX exporter implementation |
 | `docs/src/examples/samples/` | Source `.xal` and CSV examples |
 | `docs/src/examples/previews/` | Rendered SVG previews used by the book |
 | `etc/resources/aws/` | Catalogs, icons, templates, and attribution |

@@ -183,27 +183,15 @@ func TestUseCaseRenderDispatcherBranches(t *testing.T) {
 	}
 }
 
-func TestUseCaseRenderPPTXExportErrorAfterPlanBuild(t *testing.T) {
-	badWASM := filepath.Join(t.TempDir(), "bad.wasm")
-	if err := os.WriteFile(badWASM, []byte("not wasm"), 0644); err != nil {
-		t.Fatal(err)
-	}
-	_, err := newUsecase().RenderPPTX(context.Background(), []byte(simpleXAL), entity.RenderOptions{Format: usecase.FormatPPTX, Theme: "light", PPTXExporterWASM: badWASM})
-	if err == nil || !strings.Contains(err.Error(), "run PPTX WASM exporter") {
-		t.Fatalf("RenderPPTX err = %v", err)
-	}
-}
-
 func TestUseCaseRenderPPTXUsesInjectedExporter(t *testing.T) {
 	exporter := &fakePPTXExporter{}
 	uc := newUsecaseWithPPTX(exporter)
 	compression := false
 	opts := entity.RenderOptions{
-		Format:           usecase.FormatPPTX,
-		Theme:            "light",
-		Title:            "Injected",
-		Compression:      &compression,
-		PPTXExporterWASM: "custom.wasm",
+		Format:      usecase.FormatPPTX,
+		Theme:       "light",
+		Title:       "Injected",
+		Compression: &compression,
 	}
 	out, err := uc.RenderPPTX(context.Background(), []byte(simpleXAL), opts)
 	if err != nil {
@@ -212,7 +200,7 @@ func TestUseCaseRenderPPTXUsesInjectedExporter(t *testing.T) {
 	if string(out) != "pptx-from-fake" {
 		t.Fatalf("RenderPPTX output = %q", out)
 	}
-	if exporter.seen.Title != "Injected" || exporter.seen.ExporterWASM != "custom.wasm" || exporter.seen.Compression == nil || *exporter.seen.Compression {
+	if exporter.seen.Title != "Injected" || exporter.seen.Compression == nil || *exporter.seen.Compression {
 		t.Fatalf("exporter opts = %#v", exporter.seen)
 	}
 	if !strings.Contains(string(exporter.seen.PlanJSON), `"slide"`) {

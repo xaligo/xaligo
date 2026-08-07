@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/xaligo/xaligo/external/exporter"
 	"github.com/xaligo/xaligo/internal/entity"
 	"github.com/xaligo/xaligo/internal/share"
 )
@@ -28,7 +29,7 @@ type powerpointRepository struct {
 }
 
 func NewPowerpointRepository(options ...PowerpointRepositoryOption) PowerpointRepository {
-	repository := &powerpointRepository{export: exportPptxWithWASM}
+	repository := &powerpointRepository{export: exportPptxNative}
 	for _, option := range options {
 		if option != nil {
 			option(repository)
@@ -38,7 +39,7 @@ func NewPowerpointRepository(options ...PowerpointRepositoryOption) PowerpointRe
 }
 
 // WithPowerpointExportFunc replaces the external byte exporter. It is intended
-// for adapter tests; production construction uses the WASM implementation.
+// for adapter tests; production construction uses the statically linked Rust implementation.
 func WithPowerpointExportFunc(export func(context.Context, string, []byte) ([]byte, []byte, error)) PowerpointRepositoryOption {
 	return func(repository *powerpointRepository) {
 		if export != nil {
@@ -47,12 +48,12 @@ func WithPowerpointExportFunc(export func(context.Context, string, []byte) ([]by
 	}
 }
 
-type pptxWasmRequest struct {
-	Plan    json.RawMessage `json:"plan"`
-	Options pptxWasmOptions `json:"options,omitempty"`
+type pptxExporterRequest struct {
+	Plan    json.RawMessage     `json:"plan"`
+	Options pptxExporterOptions `json:"options,omitempty"`
 }
 
-type pptxWasmOptions struct {
+type pptxExporterOptions struct {
 	Title       string `json:"title,omitempty"`
 	Author      string `json:"author,omitempty"`
 	Company     string `json:"company,omitempty"`
@@ -64,9 +65,9 @@ func (rcvr *powerpointRepository) ExportPptxBytes(ctx context.Context, opts enti
 	if len(bytes.TrimSpace(opts.PlanJSON)) == 0 {
 		return nil, fmt.Errorf("PPTX plan JSON is required")
 	}
-	req := pptxWasmRequest{
+	req := pptxExporterRequest{
 		Plan: json.RawMessage(opts.PlanJSON),
-		Options: pptxWasmOptions{
+		Options: pptxExporterOptions{
 			Title:       opts.Title,
 			Author:      opts.Author,
 			Company:     opts.Company,
@@ -76,16 +77,21 @@ func (rcvr *powerpointRepository) ExportPptxBytes(ctx context.Context, opts enti
 	}
 	reqJSON, err := json.Marshal(req)
 	if err != nil {
-		return nil, fmt.Errorf("encode PPTX WASM request: %w", err)
+		return nil, fmt.Errorf("encode PPTX exporter request: %w", err)
 	}
 
-	pptxBytes, _, err := rcvr.export(ctx, opts.ExporterWASM, reqJSON)
+	pptxBytes, _, err := rcvr.export(ctx, "", reqJSON)
 	if err != nil {
 		return nil, err
 	}
 	if len(pptxBytes) == 0 {
-		return nil, fmt.Errorf("PPTX WASM exporter produced no output")
+		return nil, fmt.Errorf("Rust PPTX exporter produced no output")
 	}
 	logger.INFO(IRPEPWX002, "generated")
 	return pptxBytes, nil
+}
+
+func exportPptxNative(ctx context.Context, _ string, requestJSON []byte) ([]byte, []byte, error) {
+	data, err := exporter.ProcessContext(ctx, requestJSON)
+	return data, nil, err
 }

@@ -14,7 +14,6 @@ type appYAML struct {
 	Paths struct {
 		AssetPackage      string `yaml:"asset_package"`
 		ServiceCatalogCSV string `yaml:"service_catalog_csv"`
-		PptxExporterWASM  string `yaml:"pptx_exporter_wasm"`
 		AssetsDB          string `yaml:"assets_db"`
 		ProjectDB         string `yaml:"project_db"`
 	} `yaml:"paths"`
@@ -33,14 +32,13 @@ type ServeConfig struct {
 
 // Config holds application-wide configuration resolved from etc/app.yaml.
 type Config struct {
-	ProjectRoot      string
-	AssetDir_        string  // absolute path to Asset-Package
-	SvcCatalogCSV    string  // absolute path to service-catalog.csv
-	PptxExporterWASM string  // absolute path to the PPTX WASM exporter
-	AssetsDB         string  // absolute path to the embedded SVG registry
-	ProjectDB        string  // absolute path to the durable project search index
-	ItemIconSize     float64 // default max icon size for <item> elements (px)
-	Serve            ServeConfig
+	ProjectRoot   string
+	AssetDir_     string  // absolute path to Asset-Package
+	SvcCatalogCSV string  // absolute path to service-catalog.csv
+	AssetsDB      string  // absolute path to the embedded SVG registry
+	ProjectDB     string  // absolute path to the durable project search index
+	ItemIconSize  float64 // default max icon size for <item> elements (px)
+	Serve         ServeConfig
 }
 
 // New loads etc/app.yaml from the project root and returns a resolved Config.
@@ -51,7 +49,6 @@ func New() *Config {
 	def := appYAML{}
 	def.Paths.AssetPackage = "etc/resources/aws/svg"
 	def.Paths.ServiceCatalogCSV = "etc/resources/aws/service-catalog.csv"
-	def.Paths.PptxExporterWASM = "external/exporter/wasm/xaligo.wasm"
 	def.Paths.AssetsDB = "xaligo-assets.db"
 	def.Paths.ProjectDB = ".xaligo/project.db"
 	def.Item.IconSize = 32.0
@@ -73,14 +70,13 @@ func New() *Config {
 	}
 
 	return &Config{
-		ProjectRoot:      root,
-		AssetDir_:        abs(def.Paths.AssetPackage),
-		SvcCatalogCSV:    abs(def.Paths.ServiceCatalogCSV),
-		PptxExporterWASM: abs(def.Paths.PptxExporterWASM),
-		AssetsDB:         abs(def.Paths.AssetsDB),
-		ProjectDB:        abs(def.Paths.ProjectDB),
-		ItemIconSize:     def.Item.IconSize,
-		Serve:            ServeConfig{Port: def.Serve.Port},
+		ProjectRoot:   root,
+		AssetDir_:     abs(def.Paths.AssetPackage),
+		SvcCatalogCSV: abs(def.Paths.ServiceCatalogCSV),
+		AssetsDB:      abs(def.Paths.AssetsDB),
+		ProjectDB:     abs(def.Paths.ProjectDB),
+		ItemIconSize:  def.Item.IconSize,
+		Serve:         ServeConfig{Port: def.Serve.Port},
 	}
 }
 

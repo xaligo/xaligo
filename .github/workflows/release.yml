@@ -91,9 +91,8 @@ jobs:
 
       - name: Test and build Rust exporter
         run: |
-          rustup target add wasm32-wasip1
           cargo test --manifest-path external/exporter/Cargo.toml --locked
-          make build-wasm
+          make build-exporter
 
   native:
     name: Build native binary (${{ matrix.target }})
@@ -279,9 +278,6 @@ jobs:
               sha256sum --check "$(basename "$checksum")"
             )
           done
-
-      - name: Install Rust WASI target
-        run: rustup target add wasm32-wasip1
 
       - name: Build and pack npm distribution
         shell: bash

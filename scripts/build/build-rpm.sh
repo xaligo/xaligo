@@ -55,7 +55,6 @@ rm -rf "$BUILD_ROOT" "$RPM_TOP"
 mkdir -p "$BUILD_ROOT/usr/bin" "$BUILD_ROOT/usr/share/doc/${PACKAGE_NAME}" "$RPM_TOP/BUILD" "$RPM_TOP/BUILDROOT" "$RPM_TOP/RPMS" "$RPM_TOP/SOURCES" "$RPM_TOP/SPECS" "$RPM_TOP/SRPMS"
 
 build_linux_binary "$NATIVE_VERSION_VALUE" "$BINARY_PATH"
-build_wasm_exporter
 install_runtime_files "$RUNTIME_PATH"
 chmod 0755 "$BINARY_PATH"
 install -m 0644 LICENSE "$BUILD_ROOT/usr/share/doc/${PACKAGE_NAME}/LICENSE"

@@ -1,6 +1,6 @@
 [package]
 name = "xaligo-pptx-exporter"
-description = "WASI PPTX exporter for resolved xaligo document plans"
+description = "Native PPTX exporter for resolved xaligo document plans"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.85"
@@ -10,11 +10,7 @@ repository = "https://github.com/xaligo/xaligo"
 [lib]
 name = "xaligo_pptx_exporter"
 path = "src/lib.rs"
-crate-type = ["rlib"]
-
-[[bin]]
-name = "xaligo-exporter"
-path = "src/ctl/command.rs"
+crate-type = ["rlib", "staticlib"]
 
 [dependencies]
 base64 = "0.22.1"

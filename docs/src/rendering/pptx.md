@@ -1,7 +1,7 @@
 # PowerPoint Output
 
 PPTX output is generated from a Go draw plan and written by the configured
-Rust/WASI `pptx` exporter.
+statically linked Rust `pptx` exporter.
 
 ```bash
 xaligo render diagram.xal --format pptx -o diagram.pptx \

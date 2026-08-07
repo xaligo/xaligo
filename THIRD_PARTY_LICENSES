@@ -1,7 +1,7 @@
 Third-Party Licenses
 ====================
 
-The xaligo Rust/WASI PPTX exporter includes the following direct dependency.
+The statically linked xaligo Rust PPTX exporter includes the following direct dependency.
 Its transitive Rust dependencies and exact versions are recorded in
 `external/exporter/Cargo.lock`.
 

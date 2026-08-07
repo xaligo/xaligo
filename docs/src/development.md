@@ -20,7 +20,7 @@ Important package boundaries:
 | `internal/repository` | Filesystem and output-format adapters |
 | `cmd` | CLI entry points |
 | `external/engine` | Go/cgo adapter, C ABI, and Rust layout/SVG engine workspace |
-| `external/exporter` | Rust/WASI PPTX adapter |
+| `external/exporter` | Rust PPTX adapter exposed through a C ABI |
 
 The implemented V2 calculation boundary is:
 
@@ -49,8 +49,8 @@ git diff --check
 PPTX exporter builds:
 
 ```bash
-make build-wasm
-make build-wasm
+make build-exporter
+make build
 ```
 
 Generated binaries, `node_modules`, `output`, mdBook build output, WASM

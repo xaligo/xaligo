@@ -5,7 +5,6 @@ docs/book
 external/engine/lib
 external/engine/target
 external/exporter/target
-external/exporter/wasm/*.wasm
 node_modules
 output
 vendor

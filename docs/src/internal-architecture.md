@@ -11,7 +11,7 @@ PPTX. Markdown support is a host workflow that embeds SVG artifacts.
    -> renderer-neutral document/draw plan
    -> SVG encoder
       or
-   -> PPTX WASM exporter
+   -> statically linked Rust PPTX exporter
 ```
 
 ![xaligo rendering pipeline](images/internal-rendering-pipeline.svg)
@@ -52,7 +52,8 @@ Diagram source: [internal-routing-algorithm.xal](architecture/internal-routing-a
 ## PPTX boundary
 
 Go owns semantic interpretation and geometry. It serializes a resolved document
-plan and invokes `external/exporter/wasm/xaligo.wasm` in process. The
+plan and invokes the Rust PPTX C ABI in process. The exporter is compiled into
+the same static library as the Rust engine. The
 Rust `pptx` adapter translates plan operations into PPTX bytes; it
 does not parse `.xal` or recalculate layout and routing.
 

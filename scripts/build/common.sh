@@ -9,7 +9,7 @@ RUNTIME_REL="usr/lib/${PACKAGE_NAME}"
 ENGINE_DIR="external/engine"
 ENGINE_PACKAGE="xaligo-engine-ffi"
 ENGINE_LINK_ARCHIVE="external/engine/lib/libxaligo_engine.a"
-NATIVE_BUILD_TAGS="xaligo_engine sqlite_fts5 sqlite_omit_load_extension"
+NATIVE_BUILD_TAGS="xaligo_engine xaligo_exporter sqlite_fts5 sqlite_omit_load_extension"
 
 repo_root() {
   local source_dir
@@ -209,45 +209,12 @@ require_command() {
   fi
 }
 
-build_wasm_exporter() {
-  local build_dir
-  if [[ -n "${PREBUILT_WASM:-}" ]]; then
-    if [[ ! -s "$PREBUILT_WASM" ]]; then
-      printf 'ERROR: prebuilt WASM exporter not found: %s\n' "$PREBUILT_WASM" >&2
-      exit 1
-    fi
-    mkdir -p external/exporter/wasm
-    install -m 0644 "$PREBUILT_WASM" external/exporter/wasm/xaligo.wasm
-    return
-  fi
-  require_command cargo
-  build_dir="$(mktemp -d)"
-  mkdir -p "$build_dir/external/exporter"
-  tar \
-    --exclude='./target' \
-    --exclude='./wasm' \
-    -C external/exporter -cf - . | tar -C "$build_dir/external/exporter" -xf -
-  mkdir -p "$build_dir/external/exporter/wasm"
-  cargo build --manifest-path "$build_dir/external/exporter/Cargo.toml" --package xaligo-pptx-exporter --bin xaligo-exporter --target wasm32-wasip1 --release --locked
-  install -m 0644 "$build_dir/external/exporter/target/wasm32-wasip1/release/xaligo-exporter.wasm" "$build_dir/external/exporter/wasm/xaligo.wasm"
-  mkdir -p external/exporter/wasm
-  install -m 0644 "$build_dir/external/exporter/wasm/xaligo.wasm" external/exporter/wasm/xaligo.wasm
-  rm -rf "$build_dir"
-  if [[ ! -s external/exporter/wasm/xaligo.wasm ]]; then
-    printf 'ERROR: WASM exporter was not generated\n' >&2
-    exit 1
-  fi
-}
-
 install_runtime_files() {
   local destination
   destination="$1"
-  mkdir -p \
-    "$destination/etc/resources/aws" \
-    "$destination/external/exporter/wasm"
+  mkdir -p "$destination/etc/resources/aws"
   install -m 0644 etc/resources/aws/app.yaml "$destination/etc/resources/aws/app.yaml"
   install -m 0644 etc/resources/aws/service-catalog.csv "$destination/etc/resources/aws/service-catalog.csv"
   install -m 0644 etc/resources/aws/service-index.csv "$destination/etc/resources/aws/service-index.csv"
   cp -R etc/resources/aws/svg "$destination/etc/resources/aws/svg"
-  install -m 0644 external/exporter/wasm/xaligo.wasm "$destination/external/exporter/wasm/xaligo.wasm"
 }

@@ -37,7 +37,6 @@ RUN curl --proto '=https' --tlsv1.2 -fsSL https://sh.rustup.rs -o /tmp/rustup-in
   && sh /tmp/rustup-init.sh -y --profile minimal --default-toolchain "${RUST_VERSION}" \
   && rm /tmp/rustup-init.sh \
   && rustc --version \
-  && cargo --version \
-  && rustup target add wasm32-wasip1
+  && cargo --version
 
 WORKDIR /workspace

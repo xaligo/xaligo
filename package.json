@@ -32,7 +32,6 @@
     "etc/resources/aws/service-catalog.csv",
     "etc/resources/aws/service-index.csv",
     "etc/resources/aws/svg",
-    "external/exporter/wasm/xaligo.wasm",
     "VERSION",
     "README.md",
     "LICENSE",
@@ -42,7 +41,7 @@
     "access": "public"
   },
   "scripts": {
-    "build": "make build-wasm",
+    "build": "make build",
     "build:npm-binaries": "scripts/build/build-npm.sh",
     "clean": "make clean",
     "postinstall": "node scripts/npm/install.cjs",

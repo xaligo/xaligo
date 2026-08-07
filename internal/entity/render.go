@@ -42,10 +42,9 @@ type RenderOptions struct {
 	PaperMarginLeftIn   float64 `json:"paperMarginLeft,omitempty"`
 	SVGLegendPosition   string  `json:"svgLegendPosition,omitempty"`
 
-	Title            string `json:"title,omitempty"`
-	Author           string `json:"author,omitempty"`
-	Company          string `json:"company,omitempty"`
-	Subject          string `json:"subject,omitempty"`
-	Compression      *bool  `json:"compression,omitempty"`
-	PPTXExporterWASM string `json:"pptxExporterWasm,omitempty"`
+	Title       string `json:"title,omitempty"`
+	Author      string `json:"author,omitempty"`
+	Company     string `json:"company,omitempty"`
+	Subject     string `json:"subject,omitempty"`
+	Compression *bool  `json:"compression,omitempty"`
 }

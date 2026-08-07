@@ -38,7 +38,6 @@ type ControllerRenderOptions struct {
 	PaperMarginBottom float64
 	PaperMarginLeft   float64
 	SVGLegendPosition string
-	ExporterWASM      string
 	Theme             string
 	Mode              string
 }

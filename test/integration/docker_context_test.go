@@ -12,37 +12,6 @@ import (
 
 var versionNumberPattern = regexp.MustCompile(`[0-9]+(?:\.[0-9]+)*`)
 
-func TestRockyWASMBuilderCopiesRustBuildInputs(t *testing.T) {
-	repositoryRoot := integrationRepositoryRoot(t)
-	dockerfile := readIntegrationFile(t, filepath.Join(repositoryRoot, "docker", "rocky.Dockerfile"))
-
-	buildStart := strings.Index(dockerfile, "cargo build --manifest-path external/exporter/Cargo.toml")
-	if buildStart < 0 {
-		t.Fatal("Rocky Dockerfile does not build the Rust/WASI exporter")
-	}
-	copySources := rockyWASMBuilderCopySources(dockerfile[:buildStart])
-	for _, required := range []string{"external/exporter/Cargo.toml", "external/exporter/Cargo.lock", "external/exporter/src"} {
-		if !copySources[required] {
-			t.Errorf("Rocky wasm-builder does not COPY Rust input %q", required)
-		}
-	}
-}
-
-func TestRockyWASMBuilderCopySourcesExist(t *testing.T) {
-	repositoryRoot := integrationRepositoryRoot(t)
-	dockerfile := readIntegrationFile(t, filepath.Join(repositoryRoot, "docker", "rocky.Dockerfile"))
-
-	buildStart := strings.Index(dockerfile, "cargo build --manifest-path external/exporter/Cargo.toml")
-	if buildStart < 0 {
-		t.Fatal("Rocky Dockerfile does not build the Rust/WASI exporter")
-	}
-	for source := range rockyWASMBuilderCopySources(dockerfile[:buildStart]) {
-		if _, err := os.Stat(filepath.Join(repositoryRoot, filepath.FromSlash(source))); err != nil {
-			t.Errorf("Rocky wasm-builder COPY source %q: %v", source, err)
-		}
-	}
-}
-
 func TestNPMDependencyGraphExcludesRemovedNativeTools(t *testing.T) {
 	repositoryRoot := integrationRepositoryRoot(t)
 	for _, path := range []string{filepath.Join(repositoryRoot, "package.json")} {
@@ -153,7 +122,7 @@ func TestNativePackageBuildLinksRustEngineAndSQLiteFTS(t *testing.T) {
 	for _, required := range []string{
 		"cargo build",
 		"CGO_ENABLED=1",
-		"xaligo_engine sqlite_fts5 sqlite_omit_load_extension",
+		"xaligo_engine xaligo_exporter sqlite_fts5 sqlite_omit_load_extension",
 		"external/engine/lib/libxaligo_engine.a",
 	} {
 		if !strings.Contains(common, required) {
@@ -243,23 +212,4 @@ func requiredNodeMajor(t *testing.T, packageJSON string) string {
 		t.Fatal("resolve required Node version")
 	}
 	return strings.SplitN(version, ".", 2)[0]
-}
-
-func rockyWASMBuilderCopySources(dockerfile string) map[string]bool {
-	sources := map[string]bool{}
-	normalized := strings.ReplaceAll(dockerfile, "\\\n", " ")
-	for _, line := range strings.Split(normalized, "\n") {
-		fields := strings.Fields(strings.TrimSpace(line))
-		if len(fields) < 3 || fields[0] != "COPY" {
-			continue
-		}
-		for _, source := range fields[1 : len(fields)-1] {
-			if strings.HasPrefix(source, "--") {
-				continue
-			}
-			cleaned := filepath.ToSlash(filepath.Clean(strings.TrimPrefix(source, "./")))
-			sources[cleaned] = true
-		}
-	}
-	return sources
 }

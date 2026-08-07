@@ -13,7 +13,7 @@ go test ./...
 go build ./...
 npm ci --ignore-scripts
 cargo test --manifest-path external/exporter/Cargo.toml --locked
-make build-wasm
+make build-exporter
 ```
 
 Generated binaries, `node_modules`, `output`, and package `dist` directories are

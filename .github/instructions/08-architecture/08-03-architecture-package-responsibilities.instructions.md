@@ -19,7 +19,7 @@ applyTo: ".github/instructions/manual/**"
 | `internal/controller` | Cobra CLI argument and file-I/O adapters |
 | `cmd/wasm` | JavaScript-global adapter over shared use cases and embedded assets |
 | `external/engine` | One layered Rust staticlib crate (`cnf`, `ent`, `usc`, `ctl`, reserved `rep`, and `util`), C header, and Go/cgo adapter for the versioned in-process ABI |
-| `external/exporter` | Rust/WASI PPTX adapter with the same `cnf`, `ent`, `usc`, `rep`, `ctl`, and `util` layering as `external/engine` |
+| `external/exporter` | Rust PPTX adapter with the same `cnf`, `ent`, `usc`, `rep`, `ctl`, and `util` layering as `external/engine`; linked into its static library |
 | `test/unit` | Unit tests mirroring the source tree they cover |
 | `test/integration` | Black-box tests of exported APIs and adapters |
 | `etc/resources/aws` | Catalogs, templates, embedded assets, and attribution |

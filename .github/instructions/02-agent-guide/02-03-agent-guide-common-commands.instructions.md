@@ -13,9 +13,9 @@ go test ./...
 
 # Build distributable adapters
 make build
-make build-wasm
+make build-exporter
 npm ci --ignore-scripts
-make build-wasm
+make build-exporter
 
 # Render and validate
 .bin/xaligo validate docs/src/examples/samples/sample.xal
@@ -28,6 +28,6 @@ make build-wasm
 make clean
 ```
 
-Native PPTX export additionally requires the configured `xaligo.wasm` PPTX
-exporter. The TypeScript package consumes `BuildPPTXPlan` through WASM and
-creates PPTX with the Rust `pptx` crate.
+Native PPTX export is compiled into the engine static library. It consumes the
+resolved `BuildPPTXPlan` JSON through a C ABI and creates PPTX with the Rust
+`pptx` crate; no runtime exporter artifact is required.

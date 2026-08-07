@@ -1,4 +1,4 @@
-.PHONY: help build build-engine build-wasm generate-engine-abi test test-engine security-setup security-check fmt tidy run init clean
+.PHONY: help build build-engine build-exporter generate-engine-abi test test-native security-setup security-check fmt tidy run init clean
 
 BIN_DIR  := .bin
 BINARY   := $(BIN_DIR)/xaligo
@@ -7,13 +7,12 @@ GOVULNCHECK   := $(TOOLS_BIN_DIR)/govulncheck
 GOVULNCHECK_VERSION := v1.6.0
 EXPORTER_DIR  := external/exporter
 EXPORTER_PACKAGE := xaligo-pptx-exporter
-WASM_OUT      := $(EXPORTER_DIR)/wasm
 ENGINE_DIR    := external/engine
 ENGINE_PACKAGE := xaligo-engine-ffi
 ENGINE_STATICLIB ?= $(ENGINE_DIR)/target/release/libxaligo_engine.a
 ENGINE_LINK_DIR := $(ENGINE_DIR)/lib
 ENGINE_LINK_LIB := $(ENGINE_LINK_DIR)/libxaligo_engine.a
-NATIVE_BUILD_TAGS := xaligo_engine sqlite_fts5 sqlite_omit_load_extension
+NATIVE_BUILD_TAGS := xaligo_engine xaligo_exporter sqlite_fts5 sqlite_omit_load_extension
 VERSION  := $(shell sed -n '1{s/^v//;p;q;}' VERSION)
 LDFLAGS  := -X github.com/xaligo/xaligo/internal/controller.version=$(VERSION)
 
@@ -21,7 +20,7 @@ help: ## Show commands
 	@echo "Available targets:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2}'
 
-build: build-engine build-wasm ## Build the single CLI binary with Rust engine and PPTX exporter
+build: build-engine ## Build the single CLI binary with Rust engine and PPTX exporter
 	@mkdir -p $(BIN_DIR)
 	CGO_ENABLED=1 go build -tags "$(NATIVE_BUILD_TAGS)" -ldflags "$(LDFLAGS)" -o $(BINARY) ./cmd
 	@echo "Built: $(BINARY)"
@@ -35,16 +34,14 @@ build-engine: generate-engine-abi ## Build and stage the Rust static library for
 generate-engine-abi: ## Generate Go and Rust ABI field constants from one schema
 	go run scripts/tool/gen_engine_abi.go .
 
-build-wasm: ## Build Rust/WASI PPTX exporter into external/exporter/wasm/
-	@mkdir -p $(WASM_OUT)
-	cargo build --manifest-path $(EXPORTER_DIR)/Cargo.toml --package $(EXPORTER_PACKAGE) --bin xaligo-exporter --target wasm32-wasip1 --release --locked
-	install -m 0644 $(EXPORTER_DIR)/target/wasm32-wasip1/release/xaligo-exporter.wasm $(WASM_OUT)/xaligo.wasm
-	@echo "Built: $(WASM_OUT)/xaligo.wasm"
+build-exporter: ## Build the Rust PPTX exporter crate
+	cargo build --manifest-path $(EXPORTER_DIR)/Cargo.toml --package $(EXPORTER_PACKAGE) --release --locked
+	@echo "Built: $(EXPORTER_DIR)/target/release/libxaligo_pptx_exporter.a"
 
-test: test-engine ## Run tests
+test: test-native ## Run tests
 	go test ./...
 
-test-engine: build-engine ## Test the Rust crates and the linked cgo engine path
+test-native: build-engine build-exporter ## Test the Rust crates and linked cgo paths
 	cargo test --manifest-path $(ENGINE_DIR)/Cargo.toml --locked
 	cargo test --manifest-path $(EXPORTER_DIR)/Cargo.toml --locked
 	CGO_ENABLED=1 go test -tags "$(NATIVE_BUILD_TAGS)" ./... -count=1
@@ -77,7 +74,6 @@ init: build ## Create starter template under output/example/
 
 clean: ## Remove build artifacts
 	rm -rf $(BIN_DIR)
-	rm -f $(WASM_OUT)/xaligo.wasm
 	rm -rf $(ENGINE_DIR)/target
 	rm -rf $(EXPORTER_DIR)/target
 	rm -rf $(ENGINE_LINK_DIR)

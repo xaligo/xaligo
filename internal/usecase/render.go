@@ -522,7 +522,6 @@ func (rcvr *renderUsecase) RenderPPTX(ctx context.Context, input []byte, opts en
 	data, err := rcvr.powerpointRepository.ExportPptxBytes(ctx, entity.PptxExportOptions{
 		PlanJSON: planJSON, Title: opts.Title, Author: opts.Author,
 		Company: opts.Company, Subject: opts.Subject, Compression: opts.Compression,
-		ExporterWASM: opts.PPTXExporterWASM,
 	})
 	if err != nil {
 		logger.ERROR(IURRP003, "export failed", map[string]any{"error": err})

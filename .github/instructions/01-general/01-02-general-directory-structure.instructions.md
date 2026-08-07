@@ -45,7 +45,7 @@ xaligo/
 │   │   ├── src/rep.rs           reserved future external-representation layer
 │   │   ├── src/ctl/             C ABI controller
 │   │   └── src/util/            explicit codecs/traits, message codes, logging, and errors
-│   └── exporter/                Rust/WASI `pptx` adapter
+│   └── exporter/                Rust `pptx` adapter with a C ABI
 │       ├── Cargo.toml
 │       └── src/                 same cnf/ent/usc/rep/ctl/util layers as engine
 ├── etc/resources/aws/           catalogs, templates, icons, attribution
