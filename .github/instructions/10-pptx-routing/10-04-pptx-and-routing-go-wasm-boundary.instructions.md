@@ -20,15 +20,13 @@ Implementation preconditions:
 - The WASM exporter consumes the resolved shared Go plan and returns PPTX
   bytes or writes them through a repository-controlled output path.
 - The WASM exporter must not perform independent geometry, layout, or routing.
-- The external WASI command calls its controller, the controller calls the
-  external use case, and only the use case calls the external PPTX repository.
-  Command/controller code must not bypass this path.
+- The external WASI command follows `ctl -> usc -> rep`, matching the Rust
+  engine's layer structure. Command/controller code must not bypass this path.
 - Go repository/controller code must not implement PPTX/OOXML drawing or zip
   writing directly. Keep Go as the adapter that builds the plan, invokes the
   WASM exporter, and persists the returned bytes.
-- If existing TypeScript/PptxGenJS code cannot be compiled into a practical WASM
-  exporter, replace that drawing layer with a WASM-compatible PPTX writer rather
-  than introducing `goja` or V8.
+- Use the MIT-licensed pure-Rust `pptx` crate as the WASM-compatible package
+  writer; do not introduce `goja`, V8, or a JavaScript drawing layer.
 
 Other integration styles are not the current implementation target:
 

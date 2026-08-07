@@ -280,7 +280,7 @@ Search this file directly, for example: `rg -i "metadata|page-link|WASM" .github
 - 10.01 [Brainstorm Reference](10-pptx-routing/10-01-pptx-and-routing-brainstorm-reference.instructions.md) — keywords: PPTX, routing, connector, Brainstorm, Reference
 - 10.02 [Confirmed Decisions](10-pptx-routing/10-02-pptx-and-routing-confirmed-decisions.instructions.md) — keywords: PPTX, routing, connector, Confirmed, Decisions, CI, release
 - 10.03 [Current Pipeline](10-pptx-routing/10-03-pptx-and-routing-current-pipeline.instructions.md) — keywords: PPTX, routing, connector, Pipeline, design, dependencies
-- 10.04 [Go / WASM Boundary](10-pptx-routing/10-04-pptx-and-routing-go-wasm-boundary.instructions.md) — keywords: PPTX, routing, connector, WASM, Boundary, PptxGenJS
+- 10.04 [Go / WASM Boundary](10-pptx-routing/10-04-pptx-and-routing-go-wasm-boundary.instructions.md) — keywords: PPTX, routing, connector, WASM, Boundary, Rust
 - 10.05 [Ownership](10-pptx-routing/10-05-pptx-and-routing-ownership.instructions.md) — keywords: PPTX, routing, connector, Ownership
 - 10.06 [Paper / Scaling](10-pptx-routing/10-06-pptx-and-routing-paper-scaling.instructions.md) — keywords: PPTX, routing, connector, Paper, Scaling, PPI
 - 10.07 [Routing Rules](10-pptx-routing/10-07-pptx-and-routing-routing-rules.instructions.md) — keywords: PPTX, routing, connector, connection

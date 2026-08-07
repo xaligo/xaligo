@@ -10,7 +10,7 @@ applyTo: ".github/instructions/manual/**"
 |---|---|---|---|
 | XAL-6000010 | Excalidraw output | Excluded unless justified | Retired public output; the remaining Excalidraw-shaped V1 scene is an internal compatibility stage only. |
 | XAL-6000020 | SVG output | Implemented | Standalone SVG, one file per frame by default or one combined canvas with `--combine-frames`. |
-| XAL-6000030 | PowerPoint (PPTX) output | Implemented | PPTX presentation built from a shared Go draw plan and executed by a configured WASM/PptxGenJS exporter, one slide per frame by default. |
+| XAL-6000030 | PowerPoint (PPTX) output | Implemented | PPTX presentation built from a shared Go draw plan and executed by the configured Rust/WASI `pptx` exporter, one slide per frame by default. |
 | XAL-6000040 | PDF output | Excluded unless justified | Retired output and native PDF dependencies removed. |
 | XAL-6000050 | Excel output | Excluded unless justified | Retired output, XLSX alias, and spreadsheet dependencies removed. |
 | XAL-6000060 | XYFlow (React Flow) output | Excluded unless justified | Retired graph-integration output and public APIs removed. |

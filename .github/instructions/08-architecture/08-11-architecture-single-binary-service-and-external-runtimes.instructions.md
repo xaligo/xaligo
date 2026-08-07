@@ -132,7 +132,7 @@ xaligo/
 
 The physical Go package migration follows behavior and dependency movement; do
 not perform a directory-only rewrite. `external/engine` and
-`external/pptx-exporter` are source workspaces, not separately launched runtime
+`external/exporter` are source workspaces, not separately launched runtime
 programs.
 
 ## Rust engine integration
@@ -173,7 +173,7 @@ length request/response data behind an explicit Rust-owned buffer contract and
 requires the matching Rust free function. The engine remains part of the one
 native executable, not a separately distributed dynamic library.
 
-The TypeScript PPTX exporter remains under `external/pptx-exporter` during its
+The Rust/WASI PPTX exporter remains under `external/exporter` during its
 migration. All build, test, configuration, packaging, and documentation paths
 must use that boundary. It must not gain layout or routing ownership.
 

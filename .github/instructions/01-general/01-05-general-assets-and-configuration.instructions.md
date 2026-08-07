@@ -15,10 +15,9 @@ applyTo: ".github/instructions/manual/**"
 Preserve bundled license and attribution files. Generated assets must be
 refreshed through the scripts declared in the root `package.json`.
 
-The root `package-lock.json` is the canonical lock for the npm workspace.
-Commit it with dependency changes, use `npm ci --ignore-scripts` for
-reproducible builds, and do not commit a separate
-`external/pptx-exporter/package-lock.json`.
+The root `package-lock.json` is the canonical npm lock. The Rust exporter uses
+the committed `external/exporter/Cargo.lock`. Commit each lock with dependency
+changes and use locked builds.
 
 `VERSION` and the root `package.json` contain the next stable `X.Y.Z` version.
 Release metadata is resolved by `scripts/build/release-metadata.sh`. A main

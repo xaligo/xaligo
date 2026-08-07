@@ -12,8 +12,8 @@ Run after structural changes:
 go test ./...
 go build ./...
 npm ci --ignore-scripts
-npm run build --workspace=@xaligo/xaligo-external
-npm --prefix external/pptx-exporter run build:pptx-exporter-wasm
+cargo test --manifest-path external/exporter/Cargo.toml --locked
+make build-wasm
 ```
 
 Generated binaries, `node_modules`, `output`, and package `dist` directories are

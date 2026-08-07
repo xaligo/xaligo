@@ -24,7 +24,7 @@ make security-check
 make test-engine
 go test ./... -count=1
 go build ./...
-npm --prefix external/pptx-exporter test
+cargo test --manifest-path external/exporter/Cargo.toml --locked
 mdbook build docs
 git diff --check
 git status --short

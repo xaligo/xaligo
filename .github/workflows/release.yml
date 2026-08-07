@@ -89,10 +89,11 @@ jobs:
           npm run test:npm-installer
           npm run test:release-metadata
 
-      - name: Test and build TypeScript exporters
+      - name: Test and build Rust exporter
         run: |
-          npm --prefix external/pptx-exporter test
-          npm run build --workspace=@xaligo/xaligo-external
+          rustup target add wasm32-wasip1
+          cargo test --manifest-path external/exporter/Cargo.toml --locked
+          make build-wasm
 
   native:
     name: Build native binary (${{ matrix.target }})
@@ -279,18 +280,8 @@ jobs:
             )
           done
 
-      - name: Install Javy
-        shell: bash
-        env:
-          JAVY_VERSION: 9.0.0
-        run: |
-          asset="javy-x86_64-linux-v${JAVY_VERSION}.gz"
-          curl -fsSL "https://github.com/bytecodealliance/javy/releases/download/v${JAVY_VERSION}/${asset}" -o /tmp/javy.gz
-          curl -fsSL "https://github.com/bytecodealliance/javy/releases/download/v${JAVY_VERSION}/${asset}.sha256" -o /tmp/javy.sha256
-          printf '%s  %s\n' "$(cut -d ' ' -f 1 /tmp/javy.sha256)" /tmp/javy.gz | sha256sum -c -
-          gzip -dc /tmp/javy.gz | sudo tee /usr/local/bin/javy >/dev/null
-          sudo chmod 0755 /usr/local/bin/javy
-          javy --version
+      - name: Install Rust WASI target
+        run: rustup target add wasm32-wasip1
 
       - name: Build and pack npm distribution
         shell: bash

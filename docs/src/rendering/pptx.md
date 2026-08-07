@@ -1,7 +1,7 @@
 # PowerPoint Output
 
 PPTX output is generated from a Go draw plan and written by the configured
-WASM/PptxGenJS exporter.
+Rust/WASI `pptx` exporter.
 
 ```bash
 xaligo render diagram.xal --format pptx -o diagram.pptx \

@@ -1,46 +1,14 @@
-FROM node:24-bookworm-slim AS wasm-builder
+FROM rust:1.85.1-bookworm AS wasm-builder
 
-ARG JAVY_VERSION=9.0.0
-ARG TARGETARCH
-
-ENV DEBIAN_FRONTEND=noninteractive
-
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    curl \
-    gzip \
-  && rm -rf /var/lib/apt/lists/*
-
-RUN case "${TARGETARCH}" in \
-    amd64) javy_arch="x86_64" ;; \
-    arm64) javy_arch="arm" ;; \
-    *) echo "unsupported TARGETARCH: ${TARGETARCH}" >&2; exit 1 ;; \
-  esac \
-  && javy_asset="javy-${javy_arch}-linux-v${JAVY_VERSION}.gz" \
-  && curl -fsSL "https://github.com/bytecodealliance/javy/releases/download/v${JAVY_VERSION}/${javy_asset}" -o /tmp/javy.gz \
-  && curl -fsSL "https://github.com/bytecodealliance/javy/releases/download/v${JAVY_VERSION}/${javy_asset}.sha256" -o /tmp/javy.sha256 \
-  && printf '%s  %s\n' "$(cut -d ' ' -f 1 /tmp/javy.sha256)" /tmp/javy.gz | sha256sum -c - \
-  && gzip -dc /tmp/javy.gz > /usr/local/bin/javy \
-  && chmod 0755 /usr/local/bin/javy \
-  && rm /tmp/javy.gz /tmp/javy.sha256 \
-  && javy --version
+RUN rustup target add wasm32-wasip1
 
 WORKDIR /build
 
-COPY package.json package-lock.json ./
-COPY external/pptx-exporter/package.json external/pptx-exporter/tsconfig.json external/pptx-exporter/command.ts external/pptx-exporter/index.ts ./external/pptx-exporter/
-COPY external/pptx-exporter/controller ./external/pptx-exporter/controller
-COPY external/pptx-exporter/entity ./external/pptx-exporter/entity
-COPY external/pptx-exporter/repository ./external/pptx-exporter/repository
-COPY external/pptx-exporter/share ./external/pptx-exporter/share
-COPY external/pptx-exporter/tool ./external/pptx-exporter/tool
-COPY external/pptx-exporter/usecase ./external/pptx-exporter/usecase
+COPY external/exporter/Cargo.toml external/exporter/Cargo.lock ./external/exporter/
+COPY external/exporter/src ./external/exporter/src
 
-RUN mkdir -p external/pptx-exporter/wasm \
-  && npm ci --ignore-scripts --no-audit --no-fund \
-  && npm run build:pptx-exporter-wasm --workspace=@xaligo/xaligo-external \
-  && test -s external/pptx-exporter/wasm/xaligo.wasm
+RUN cargo build --manifest-path external/exporter/Cargo.toml --package xaligo-pptx-exporter --bin xaligo-exporter --target wasm32-wasip1 --release --locked \
+  && test -s external/exporter/target/wasm32-wasip1/release/xaligo-exporter.wasm
 
 FROM rockylinux:9
 
@@ -81,6 +49,6 @@ RUN curl --proto '=https' --tlsv1.2 -fsSL https://sh.rustup.rs -o /tmp/rustup-in
   && rustc --version \
   && cargo --version
 
-COPY --from=wasm-builder /build/external/pptx-exporter/wasm/xaligo.wasm /opt/xaligo/xaligo.wasm
+COPY --from=wasm-builder /build/external/exporter/target/wasm32-wasip1/release/xaligo-exporter.wasm /opt/xaligo/xaligo.wasm
 
 WORKDIR /workspace

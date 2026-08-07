@@ -113,7 +113,7 @@ external/
 │       ├── rep.rs         reserved external-representation layer; currently no implementation
 │       ├── ctl/           versioned C ABI controller
 │       └── util/          explicit codecs/traits, message codes, logger, and errors
-└── pptx-exporter/         TypeScript/PptxGenJS PPTX adapter
+└── exporter/              Rust/WASI `pptx` adapter
 ```
 
 The intended dependency and data direction is:

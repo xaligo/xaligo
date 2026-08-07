@@ -19,18 +19,15 @@ internal/usecase/       internal/repository
      v                         |
  internal/entity <-------------+
 
-external/pptx-exporter/command.ts
+external/exporter/src/ctl
         |
         v
-external/pptx-exporter/controller
+external/exporter/src/usc
         |
         v
-external/pptx-exporter/usecase
-        |
-        v
-external/pptx-exporter/repository
+external/exporter/src/rep.rs
 ```
 
 Entity and use-case packages must not depend on CLI, preview, WASM, or
-TypeScript adapters. Encoders consume entity structures and must not depend on
+runtime adapters. Encoders consume entity structures and must not depend on
 use-case implementations merely to access types.

@@ -45,13 +45,9 @@ xaligo/
 │   │   ├── src/rep.rs           reserved future external-representation layer
 │   │   ├── src/ctl/             C ABI controller
 │   │   └── src/util/            explicit codecs/traits, message codes, logging, and errors
-│   └── pptx-exporter/           TypeScript/PptxGenJS PPTX adapter
-│       ├── index.ts             package API composition boundary
-│       ├── command.ts           TypeScript/WASI entry point
-│       ├── controller/          request and byte-I/O adapter
-│       ├── entity/              TypeScript PPTX plan types
-│       ├── repository/          PptxGenJS and package adapters
-│       └── usecase/             independent PPTX application use cases
+│   └── exporter/                Rust/WASI `pptx` adapter
+│       ├── Cargo.toml
+│       └── src/                 same cnf/ent/usc/rep/ctl/util layers as engine
 ├── etc/resources/aws/           catalogs, templates, icons, attribution
 ├── docs/src/examples/samples/   example .xal and services CSV files
 ├── scripts/                     asset/catalog generation scripts

@@ -108,7 +108,9 @@ func TestExportPptxUsesWASMExporterAndReportsMissingPath(t *testing.T) {
 		PlanJSON:     []byte(`{"slides":[]}`),
 		ExporterWASM: filepath.Join(t.TempDir(), "missing-explicit.wasm"),
 	})
-	if err == nil || (!strings.Contains(err.Error(), "PPTX WASM exporter not found") && !strings.Contains(err.Error(), "produced no output")) {
+	if err == nil || (!strings.Contains(err.Error(), "PPTX WASM exporter not found") &&
+		!strings.Contains(err.Error(), "produced no output") &&
+		!strings.Contains(err.Error(), "run PPTX WASM exporter")) {
 		t.Fatalf("err = %v", err)
 	}
 }

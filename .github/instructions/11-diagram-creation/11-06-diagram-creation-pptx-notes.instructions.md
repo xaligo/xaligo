@@ -7,7 +7,7 @@ applyTo: ".github/instructions/manual/**"
 ## PPTX Notes
 
 - Native CLI export requires `xaligo.wasm`; the npm/WASM API currently
-  exports through PptxGenJS.
+  exports through the Rust `pptx` adapter.
 - Diagram and legend icons are native SVG media. SVG-capable PowerPoint or a
   compatible viewer is required; legacy raster-only viewers do not display the
   icons because independently rasterized copies are not embedded.

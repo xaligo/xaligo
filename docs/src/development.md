@@ -20,7 +20,7 @@ Important package boundaries:
 | `internal/repository` | Filesystem and output-format adapters |
 | `cmd` | CLI entry points |
 | `external/engine` | Go/cgo adapter, C ABI, and Rust layout/SVG engine workspace |
-| `external/pptx-exporter` | TypeScript/WASM package and PPTX adapter |
+| `external/exporter` | Rust/WASI PPTX adapter |
 
 The implemented V2 calculation boundary is:
 
@@ -50,7 +50,7 @@ PPTX exporter builds:
 
 ```bash
 make build-wasm
-npm run build --workspace=@xaligo/xaligo-external
+make build-wasm
 ```
 
 Generated binaries, `node_modules`, `output`, mdBook build output, WASM

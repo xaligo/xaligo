@@ -51,7 +51,7 @@ func New() *Config {
 	def := appYAML{}
 	def.Paths.AssetPackage = "etc/resources/aws/svg"
 	def.Paths.ServiceCatalogCSV = "etc/resources/aws/service-catalog.csv"
-	def.Paths.PptxExporterWASM = "external/pptx-exporter/wasm/xaligo.wasm"
+	def.Paths.PptxExporterWASM = "external/exporter/wasm/xaligo.wasm"
 	def.Paths.AssetsDB = "xaligo-assets.db"
 	def.Paths.ProjectDB = ".xaligo/project.db"
 	def.Item.IconSize = 32.0

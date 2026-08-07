@@ -24,8 +24,8 @@ Implemented or partially implemented:
 - `.xal` and Markdown live preview are SVG-based.
 - `xaligo validate` reuses parser and layout validation. `xaligo diff` compares
   parsed V1 structures and emits paired SVG views.
-- PPTX uses a shared Go document plan and the WASM/PptxGenJS exporter under
-  `external/pptx-exporter`; repository code receives PPTX bytes and the CLI
+- PPTX uses a shared Go document plan and the Rust/WASI `pptx` exporter under
+  `external/exporter`; repository code receives PPTX bytes and the CLI
   owns file persistence.
 - Native CLI dependency composition is in `internal.NewRootCmd`. The browser
   WASM surface exposes SVG rendering, PPTX-plan construction, and diagnostics.

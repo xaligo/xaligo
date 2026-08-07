@@ -14,7 +14,7 @@ import (
 	"github.com/xaligo/xaligo/internal/config"
 )
 
-const pptxExporterWasmRel = "external/pptx-exporter/wasm/xaligo.wasm"
+const pptxExporterWasmRel = "external/exporter/wasm/xaligo.wasm"
 
 func exportPptxWithWASM(ctx context.Context, path string, requestJSON []byte) ([]byte, []byte, error) {
 	wasmPath, err := resolvePptxExporterWASM(path)

@@ -52,8 +52,8 @@ Diagram source: [internal-routing-algorithm.xal](architecture/internal-routing-a
 ## PPTX boundary
 
 Go owns semantic interpretation and geometry. It serializes a resolved document
-plan and invokes `external/pptx-exporter/wasm/xaligo.wasm` in process. The
-TypeScript/PptxGenJS adapter translates plan operations into PPTX bytes; it
+plan and invokes `external/exporter/wasm/xaligo.wasm` in process. The
+Rust `pptx` adapter translates plan operations into PPTX bytes; it
 does not parse `.xal` or recalculate layout and routing.
 
 ## V2 engine boundary

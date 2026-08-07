@@ -21,7 +21,7 @@ make test-engine
 go test ./...
 go build ./...
 npm ci --ignore-scripts
-npm run build --workspace=@xaligo/xaligo-external
-npm --prefix external/pptx-exporter run build:pptx-exporter-wasm
+cargo test --manifest-path external/exporter/Cargo.toml --locked
+make build-wasm
 git diff --check
 ```

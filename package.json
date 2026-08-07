@@ -1,7 +1,7 @@
 {
   "name": "@xaligo/xaligo",
   "version": "0.1.28",
-  "description": "xaligo CLI and TypeScript/WASM API for rendering .xal diagrams",
+  "description": "xaligo CLI for rendering .xal diagrams",
   "keywords": [
     "xaligo",
     "diagram-as-code",
@@ -19,18 +19,6 @@
   },
   "license": "MIT",
   "type": "module",
-  "main": "./external/pptx-exporter/dist/index.js",
-  "module": "./external/pptx-exporter/dist/index.js",
-  "types": "./external/pptx-exporter/dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./external/pptx-exporter/dist/index.d.ts",
-      "import": "./external/pptx-exporter/dist/index.js"
-    }
-  },
-  "workspaces": [
-    "external/pptx-exporter"
-  ],
   "overrides": {
     "brace-expansion": "5.0.8"
   },
@@ -44,8 +32,7 @@
     "etc/resources/aws/service-catalog.csv",
     "etc/resources/aws/service-index.csv",
     "etc/resources/aws/svg",
-    "external/pptx-exporter/dist",
-    "external/pptx-exporter/wasm/xaligo.wasm",
+    "external/exporter/wasm/xaligo.wasm",
     "VERSION",
     "README.md",
     "LICENSE",
@@ -55,14 +42,18 @@
     "access": "public"
   },
   "scripts": {
-    "build": "npm --prefix external/pptx-exporter run build",
+    "build": "make build-wasm",
     "build:npm-binaries": "scripts/build/build-npm.sh",
-    "clean": "npm --prefix external/pptx-exporter run clean",
+    "clean": "make clean",
     "postinstall": "node scripts/npm/install.cjs",
     "test:npm-installer": "node --test test/unit/scripts/npm/install_test.cjs",
     "test:release-metadata": "bash test/unit/scripts/build/release_metadata_test.sh",
     "import:tabler-icons": "node scripts/tool/import_tabler_icons.mjs",
     "import:yamaha-icons": "node scripts/tool/import_yamaha_icons.mjs"
+  },
+  "devDependencies": {
+    "@tabler/icons": "^3.45.0",
+    "jszip": "^3.10.1"
   },
   "engines": {
     "node": ">=24.0.0",

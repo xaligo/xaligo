@@ -130,10 +130,8 @@ jobs:
       - name: Test release metadata
         run: npm run test:release-metadata
 
-      - name: Run tests
-        working-directory: external/pptx-exporter
-        run: npm test
-
-      - name: Build exporters
-        working-directory: external/pptx-exporter
-        run: npm run build
+      - name: Test and build Rust exporter
+        run: |
+          rustup target add wasm32-wasip1
+          cargo test --manifest-path external/exporter/Cargo.toml --locked
+          make build-wasm

@@ -5,8 +5,9 @@ BINARY   := $(BIN_DIR)/xaligo
 TOOLS_BIN_DIR := $(BIN_DIR)/tools
 GOVULNCHECK   := $(TOOLS_BIN_DIR)/govulncheck
 GOVULNCHECK_VERSION := v1.6.0
-PPTX_EXPORTER_DIR := external/pptx-exporter
-WASM_OUT      := $(PPTX_EXPORTER_DIR)/wasm
+EXPORTER_DIR  := external/exporter
+EXPORTER_PACKAGE := xaligo-pptx-exporter
+WASM_OUT      := $(EXPORTER_DIR)/wasm
 ENGINE_DIR    := external/engine
 ENGINE_PACKAGE := xaligo-engine-ffi
 ENGINE_STATICLIB ?= $(ENGINE_DIR)/target/release/libxaligo_engine.a
@@ -34,16 +35,18 @@ build-engine: generate-engine-abi ## Build and stage the Rust static library for
 generate-engine-abi: ## Generate Go and Rust ABI field constants from one schema
 	go run scripts/tool/gen_engine_abi.go .
 
-build-wasm: ## Build TS/WASI PPTX exporter into external/pptx-exporter/wasm/
+build-wasm: ## Build Rust/WASI PPTX exporter into external/exporter/wasm/
 	@mkdir -p $(WASM_OUT)
-	npm --prefix $(PPTX_EXPORTER_DIR) run build:pptx-exporter-wasm
+	cargo build --manifest-path $(EXPORTER_DIR)/Cargo.toml --package $(EXPORTER_PACKAGE) --bin xaligo-exporter --target wasm32-wasip1 --release --locked
+	install -m 0644 $(EXPORTER_DIR)/target/wasm32-wasip1/release/xaligo-exporter.wasm $(WASM_OUT)/xaligo.wasm
 	@echo "Built: $(WASM_OUT)/xaligo.wasm"
 
 test: test-engine ## Run tests
 	go test ./...
 
-test-engine: build-engine ## Test the Rust crate and the linked cgo engine path
+test-engine: build-engine ## Test the Rust crates and the linked cgo engine path
 	cargo test --manifest-path $(ENGINE_DIR)/Cargo.toml --locked
+	cargo test --manifest-path $(EXPORTER_DIR)/Cargo.toml --locked
 	CGO_ENABLED=1 go test -tags "$(NATIVE_BUILD_TAGS)" ./... -count=1
 
 security-setup: ## Install security scanners and prepare npm audit metadata
@@ -59,6 +62,7 @@ security-check: ## Scan Go and npm dependencies for known vulnerabilities
 fmt: ## Format Go files
 	gofmt -w $$(find . -name '*.go' -not -path './vendor/*')
 	cargo fmt --manifest-path $(ENGINE_DIR)/Cargo.toml --all
+	cargo fmt --manifest-path $(EXPORTER_DIR)/Cargo.toml --all
 
 tidy: ## Tidy go.mod
 	go mod tidy
@@ -75,4 +79,5 @@ clean: ## Remove build artifacts
 	rm -rf $(BIN_DIR)
 	rm -f $(WASM_OUT)/xaligo.wasm
 	rm -rf $(ENGINE_DIR)/target
+	rm -rf $(EXPORTER_DIR)/target
 	rm -rf $(ENGINE_LINK_DIR)

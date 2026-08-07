@@ -12,8 +12,8 @@ Before considering PPTX routing/layout changes complete:
 go test ./...
 make build
 make build-wasm
-npm --prefix external/pptx-exporter test
-npm run build --workspace @xaligo/xaligo-external
+cargo test --manifest-path external/exporter/Cargo.toml --locked
+make build-wasm
 .bin/xaligo render docs/src/examples/samples/sample.xal --format pptx --services docs/src/examples/samples/services.csv -o out.pptx --paper A3 --orientation landscape --arrow-style thin
 unzip -t out.pptx
 ```

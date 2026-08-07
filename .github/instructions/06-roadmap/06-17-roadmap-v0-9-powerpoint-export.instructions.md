@@ -7,6 +7,6 @@ applyTo: ".github/instructions/manual/**"
 ## v0.9 PowerPoint Export
 
 Status: partially implemented ahead of schedule. Go-side geometry/routing plan
-generation exists, and Node/PptxGenJS can generate PPTX as a temporary
+generation exists, and the Rust/WASI `pptx` adapter generates PPTX through the
 development path. The required long-term gap is `xaligo.wasm`, invoked
 from the Go repository layer with resolved plan JSON.

@@ -12,32 +12,19 @@ import (
 
 var versionNumberPattern = regexp.MustCompile(`[0-9]+(?:\.[0-9]+)*`)
 
-func TestRockyWASMBuilderCopiesTypeScriptBuildInputs(t *testing.T) {
+func TestRockyWASMBuilderCopiesRustBuildInputs(t *testing.T) {
 	repositoryRoot := integrationRepositoryRoot(t)
-	packageJSON := readIntegrationFile(t, filepath.Join(repositoryRoot, "external", "pptx-exporter", "package.json"))
-	buildTool := readIntegrationFile(t, filepath.Join(repositoryRoot, "external", "pptx-exporter", "tool", "build.mjs"))
 	dockerfile := readIntegrationFile(t, filepath.Join(repositoryRoot, "docker", "rocky.Dockerfile"))
 
-	buildStart := strings.Index(dockerfile, "npm run build:pptx-exporter-wasm")
+	buildStart := strings.Index(dockerfile, "cargo build --manifest-path external/exporter/Cargo.toml")
 	if buildStart < 0 {
-		t.Fatal("Rocky Dockerfile does not invoke build:pptx-exporter-wasm")
+		t.Fatal("Rocky Dockerfile does not build the Rust/WASI exporter")
 	}
 	copySources := rockyWASMBuilderCopySources(dockerfile[:buildStart])
-	if !strings.Contains(packageJSON, `"build": "node tool/build.mjs"`) {
-		t.Fatal("external build script does not invoke tool/build.mjs")
-	}
-	for _, entrypoint := range []string{"index.ts", "command.ts"} {
-		compiledEntrypoint := strings.TrimSuffix(entrypoint, ".ts") + ".js"
-		if !strings.Contains(buildTool, "'"+compiledEntrypoint+"'") {
-			t.Fatalf("external build script does not contain TypeScript entrypoint %q", entrypoint)
+	for _, required := range []string{"external/exporter/Cargo.toml", "external/exporter/Cargo.lock", "external/exporter/src"} {
+		if !copySources[required] {
+			t.Errorf("Rocky wasm-builder does not COPY Rust input %q", required)
 		}
-		required := filepath.ToSlash(filepath.Join("external", "pptx-exporter", entrypoint))
-		if !copySources[required] && !copySources["external/pptx-exporter"] {
-			t.Errorf("Rocky wasm-builder does not COPY TypeScript entrypoint %q before building", required)
-		}
-	}
-	if !copySources["external/pptx-exporter/tool"] {
-		t.Error("Rocky wasm-builder does not COPY external/pptx-exporter/tool before building")
 	}
 }
 
@@ -45,9 +32,9 @@ func TestRockyWASMBuilderCopySourcesExist(t *testing.T) {
 	repositoryRoot := integrationRepositoryRoot(t)
 	dockerfile := readIntegrationFile(t, filepath.Join(repositoryRoot, "docker", "rocky.Dockerfile"))
 
-	buildStart := strings.Index(dockerfile, "npm run build:pptx-exporter-wasm")
+	buildStart := strings.Index(dockerfile, "cargo build --manifest-path external/exporter/Cargo.toml")
 	if buildStart < 0 {
-		t.Fatal("Rocky Dockerfile does not invoke build:pptx-exporter-wasm")
+		t.Fatal("Rocky Dockerfile does not build the Rust/WASI exporter")
 	}
 	for source := range rockyWASMBuilderCopySources(dockerfile[:buildStart]) {
 		if _, err := os.Stat(filepath.Join(repositoryRoot, filepath.FromSlash(source))); err != nil {
@@ -58,10 +45,7 @@ func TestRockyWASMBuilderCopySourcesExist(t *testing.T) {
 
 func TestNPMDependencyGraphExcludesRemovedNativeTools(t *testing.T) {
 	repositoryRoot := integrationRepositoryRoot(t)
-	for _, path := range []string{
-		filepath.Join(repositoryRoot, "package.json"),
-		filepath.Join(repositoryRoot, "external", "pptx-exporter", "package.json"),
-	} {
+	for _, path := range []string{filepath.Join(repositoryRoot, "package.json")} {
 		var manifest struct {
 			Dependencies    map[string]string `json:"dependencies"`
 			DevDependencies map[string]string `json:"devDependencies"`
@@ -103,35 +87,12 @@ func TestNPMDependencyGraphExcludesRemovedNativeTools(t *testing.T) {
 func TestDistributionsIncludeBundledPptxLicenses(t *testing.T) {
 	repositoryRoot := integrationRepositoryRoot(t)
 	notice := readIntegrationFile(t, filepath.Join(repositoryRoot, "THIRD_PARTY_LICENSES"))
-	var lock struct {
-		Packages map[string]struct {
-			Version string `json:"version"`
-		} `json:"packages"`
+	cargoLock := readIntegrationFile(t, filepath.Join(repositoryRoot, "external", "exporter", "Cargo.lock"))
+	if !strings.Contains(cargoLock, "name = \"pptx\"\nversion = \"0.1.0\"") {
+		t.Fatal("Rust exporter does not lock pptx 0.1.0")
 	}
-	lockPath := filepath.Join(repositoryRoot, "package-lock.json")
-	if err := json.Unmarshal([]byte(readIntegrationFile(t, lockPath)), &lock); err != nil {
-		t.Fatalf("parse %s: %v", lockPath, err)
-	}
-	for _, dependency := range []struct {
-		packageName string
-		heading     string
-	}{
-		{packageName: "pptxgenjs", heading: "PptxGenJS"},
-		{packageName: "jszip", heading: "JSZip"},
-		{packageName: "pako", heading: "pako"},
-		{packageName: "lie", heading: "lie"},
-		{packageName: "immediate", heading: "immediate"},
-		{packageName: "setimmediate", heading: "setimmediate"},
-	} {
-		packagePath := "node_modules/" + dependency.packageName
-		version := lock.Packages[packagePath].Version
-		if version == "" {
-			t.Fatalf("resolve bundled dependency version for %q", packagePath)
-		}
-		heading := dependency.heading + " " + version
-		if !strings.Contains(notice, heading) {
-			t.Errorf("third-party license notice does not contain %q", heading)
-		}
+	if !strings.Contains(notice, "pptx 0.1.0") {
+		t.Error("third-party license notice does not contain pptx 0.1.0")
 	}
 
 	var manifest struct {
@@ -169,7 +130,6 @@ func TestDockerToolchainsMatchRepositoryRequirements(t *testing.T) {
 	repositoryRoot := integrationRepositoryRoot(t)
 	goMod := readIntegrationFile(t, filepath.Join(repositoryRoot, "go.mod"))
 	cargoManifest := readIntegrationFile(t, filepath.Join(repositoryRoot, "external", "engine", "Cargo.toml"))
-	packageJSON := readIntegrationFile(t, filepath.Join(repositoryRoot, "external", "pptx-exporter", "package.json"))
 	dockerfiles := []string{
 		readIntegrationFile(t, filepath.Join(repositoryRoot, "docker", "rocky.Dockerfile")),
 		readIntegrationFile(t, filepath.Join(repositoryRoot, "docker", "ubuntu.Dockerfile")),
@@ -177,13 +137,9 @@ func TestDockerToolchainsMatchRepositoryRequirements(t *testing.T) {
 
 	goVersion := requiredVersion(t, goMod, `(?m)^toolchain go([0-9.]+)$`, "Go toolchain")
 	rustVersion := requiredVersion(t, cargoManifest, `(?m)^rust-version = "([0-9.]+)"$`, "Rust toolchain")
-	nodeVersion := requiredNodeMajor(t, packageJSON)
 	for index, dockerfile := range dockerfiles {
 		if !strings.Contains(dockerfile, "ARG GO_VERSION="+goVersion) {
 			t.Errorf("Dockerfile %d does not pin required Go version %s", index, goVersion)
-		}
-		if !strings.Contains(dockerfile, "FROM node:"+nodeVersion+"-") {
-			t.Errorf("Dockerfile %d does not use required Node major %s", index, nodeVersion)
 		}
 		if !strings.Contains(dockerfile, "ARG RUST_VERSION="+rustVersion+".") {
 			t.Errorf("Dockerfile %d does not pin required Rust series %s", index, rustVersion)
@@ -280,7 +236,7 @@ func requiredNodeMajor(t *testing.T, packageJSON string) string {
 		} `json:"engines"`
 	}
 	if err := json.Unmarshal([]byte(packageJSON), &manifest); err != nil {
-		t.Fatalf("parse external/pptx-exporter/package.json: %v", err)
+		t.Fatalf("parse external/exporter/package.json: %v", err)
 	}
 	version := versionNumberPattern.FindString(manifest.Engines.Node)
 	if version == "" {

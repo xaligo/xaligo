@@ -59,4 +59,4 @@ Package layout:
 | Path | Purpose |
 |---|---|
 | `@xaligo/xaligo` | CLI binary plus TypeScript/WASM API exports |
-| `external/pptx-exporter/` | Internal TypeScript/PptxGenJS build workspace |
+| `external/exporter/` | Internal Rust/WASI PPTX exporter workspace |
