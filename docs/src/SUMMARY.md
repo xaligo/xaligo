@@ -5,6 +5,7 @@
 - [Getting Started](getting-started.md)
 - [Command Line](cli.md)
 - [Services and Legends](services.md)
+- [Beautiful Diagram Guidelines](diagram-guidelines.md)
 - [Samples](samples.md)
 - [Examples](examples/index.md)
   - [Line Variants](examples/line-variants.md)
