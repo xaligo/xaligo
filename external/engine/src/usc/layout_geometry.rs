@@ -233,6 +233,13 @@ fn contains(parent: Bounds, child: Bounds) -> bool {
         && child.y + child.height <= parent.y + parent.height + EPSILON
 }
 
+fn rectangles_overlap(left: Bounds, right: Bounds) -> bool {
+    left.x <= right.x + right.width
+        && left.x + left.width >= right.x
+        && left.y <= right.y + right.height
+        && left.y + left.height >= right.y
+}
+
 fn resolve_auto_side(side: Side, from: Point, to: Point) -> Side {
     if side != Side::Auto {
         return side;

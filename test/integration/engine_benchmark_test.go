@@ -108,6 +108,24 @@ func BenchmarkV2RenderSVGEndToEnd(b *testing.B) {
 	}
 }
 
+func BenchmarkComplexHybridV2RenderSVGEndToEnd(b *testing.B) {
+	path := filepath.Join("..", "..", "docs", "src", "examples", "samples", "complex-hybrid-architecture-v2.xal")
+	source, err := os.ReadFile(path)
+	if err != nil {
+		b.Fatal(err)
+	}
+	renderer := benchmarkRenderUsecase()
+	options := entity.RenderOptions{Format: usecase.FormatSVG, PxPerInch: 96}
+	b.ReportAllocs()
+	b.SetBytes(int64(len(source)))
+	b.ResetTimer()
+	for range b.N {
+		if _, err := renderer.RenderSVG(context.Background(), source, options); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
 // benchmarkComplexHybridEngineSpec preserves the sample's generic concept
 // count, hierarchy, and line count. It is intentionally not a V1-to-V2 visual
 // compatibility adapter; that frontend remains roadmap work.

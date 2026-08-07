@@ -6,7 +6,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"encoding/xml"
 	"math"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/xaligo/xaligo/internal/entity"
@@ -54,6 +57,44 @@ func TestV2SVGIsByteStable(t *testing.T) {
 	}
 	if !bytes.Equal(first, second) {
 		t.Fatal("V2 SVG changed between identical geometry renders")
+	}
+}
+
+func TestComplexHybridV2CompatibilityProjection(t *testing.T) {
+	source, err := os.ReadFile(filepath.Join("..", "..", "docs", "src", "examples", "samples", "complex-hybrid-architecture-v2.xal"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	renderer := usecase.NewRenderUsecase(
+		repository.NewSceneRepository(), repository.NewXaligoRepository(),
+		repository.NewPowerpointRepository(), repository.NewSVGRepository(),
+	)
+	svg, err := renderer.RenderSVG(context.Background(), source, entity.RenderOptions{Format: usecase.FormatSVG, PxPerInch: 96})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := bytes.Count(svg, []byte(`<polyline`)); got != 36 {
+		t.Fatalf("V2 connections = %d, want 36", got)
+	}
+	for _, token := range [][]byte{
+		[]byte(`>Complex Hybrid Architecture</text>`),
+		[]byte(`>employee</text>`),
+		[]byte(`data-icon="catalog:200025"`),
+		[]byte(`stroke="#2563eb"`),
+		[]byte(`stroke-dasharray="8 5"`),
+	} {
+		if !bytes.Contains(svg, token) {
+			t.Fatalf("V2 compatibility SVG does not contain %q", token)
+		}
+	}
+	var root struct {
+		XMLName xml.Name
+	}
+	if err := xml.Unmarshal(svg, &root); err != nil {
+		t.Fatal(err)
+	}
+	if root.XMLName.Local != "svg" {
+		t.Fatalf("SVG root = %q", root.XMLName.Local)
 	}
 }
 

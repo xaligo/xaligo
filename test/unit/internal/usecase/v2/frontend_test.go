@@ -41,3 +41,33 @@ func TestResolvedDocumentBuildsRendererNeutralPlan(t *testing.T) {
 		t.Fatalf("plan = %#v", plan)
 	}
 }
+
+func TestFrontendNormalizesV1ProfileAttributesForV2(t *testing.T) {
+	source := []byte(`<xaligo version="2"><frame id="page" width="640" height="360"><row><col span="3"><generic-group id="group" title="Services" icon-id="100"><item id="200" name="API"/></generic-group></col><col span="9"><rectangle id="target" title="Target"><port id="in" side="left" title="IN"/></rectangle></col></row><connections><connection id="flow" src="200" dst="in" color="#2563eb" stroke-style="dashed" arrow="triangle"/></connections></frame></xaligo>`)
+	spec, _, err := v2.NewFrontendUsecase().Lower(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	frame := spec.Elements[0]
+	row := frame.Children[0]
+	left, right := row.Children[0], row.Children[1]
+	group := left.Children[0]
+	item := group.Children[0]
+	port := right.Children[0].Children[0]
+	line := frame.Children[1]
+	if row.Layout != entity.EngineLayoutHorizontal || left.Weight == nil || *left.Weight != 3 || right.Weight == nil || *right.Weight != 9 {
+		t.Fatalf("V1 column layout was not normalized: %#v", row)
+	}
+	if group.Layout != entity.EngineLayoutVertical || group.Text == nil || group.Text.Value != "Services" || group.Icon == nil || group.Icon.Ref != "catalog:100" {
+		t.Fatalf("V1 group was not normalized: %#v", group)
+	}
+	if item.Text == nil || item.Text.Value != "API" || item.Icon == nil || item.Icon.Ref != "catalog:200" || port.Port.Label != "IN" {
+		t.Fatalf("V1 item/port was not normalized: item=%#v port=%#v", item, port)
+	}
+	if line.Line.Routing != entity.EngineRoutingOrthogonal || line.Visual.Stroke != "#2563eb" || line.Line.Style != entity.EngineLineDashed || line.Line.TargetDecoration != entity.EngineDecorationTriangle {
+		t.Fatalf("V1 connection was not normalized: %#v", line)
+	}
+	if line.Concept != entity.EngineConceptLine || len(frame.Children) != 2 {
+		t.Fatalf("V1 connections wrapper was not flattened: %#v", frame.Children)
+	}
+}

@@ -236,7 +236,16 @@ impl LayoutState<'_> {
                 Some(bounds_of(resolved).expanded(margin))
             })
             .collect::<Vec<_>>();
-        for obstacle in &obstacle_bounds {
+        let route_corridor = Bounds {
+            x: start.x.min(end.x) - margin,
+            y: start.y.min(end.y) - margin,
+            width: (start.x - end.x).abs() + margin * 2.0,
+            height: (start.y - end.y).abs() + margin * 2.0,
+        };
+        for obstacle in obstacle_bounds
+            .iter()
+            .filter(|obstacle| rectangles_overlap(route_corridor, **obstacle))
+        {
             candidates.push(deduplicate_points(vec![
                 start,
                 Point {
