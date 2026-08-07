@@ -28,10 +28,41 @@ func (rcvr *fakeLSPProject) Analyze(_ context.Context, uri string, source []byte
 			{Ordinal: 2, ParentOrdinal: 1, ID: "port", Name: "Port", Concept: entity.ProjectConceptPort, SourceTag: "port", Position: entity.Position{Offset: 14, Line: 1, Column: 15}},
 		},
 	}
+	if bytes.Contains(source, []byte("<connection")) {
+		analysis.Symbols = append(analysis.Symbols, entity.ProjectSymbol{Ordinal: 3, ParentOrdinal: 0, ID: "flow", Name: "flow", Concept: entity.ProjectConceptLine, SourceTag: "connection", Source: "api", Target: "api", Position: entity.Position{Offset: 36, Line: 1, Column: 37}})
+	}
 	if bytes.Contains(source, []byte("bad")) {
 		analysis.Diagnostics = []entity.Diagnostic{{Severity: "error", Message: "invalid source", Offset: 1, Line: 1, Column: 2}}
 	}
 	return analysis, nil
+}
+
+func TestServerCompletionDefinitionAndReferences(t *testing.T) {
+	source := `<frame id="main"><item id="api"/><connection src="api" dst="api"/></frame>`
+	position := strings.Index(source, `src="api"`) + len(`src="`)
+	var input bytes.Buffer
+	writeLSPInput(&input, request(1, "initialize", map[string]any{}))
+	writeLSPInput(&input, map[string]any{"jsonrpc": "2.0", "method": "textDocument/didOpen", "params": map[string]any{"textDocument": map[string]any{"uri": "file:///tmp/diagram.xal", "version": 1, "text": source}}})
+	params := map[string]any{"textDocument": map[string]any{"uri": "file:///tmp/diagram.xal"}, "position": map[string]any{"line": 0, "character": position}}
+	writeLSPInput(&input, request(2, "textDocument/completion", params))
+	writeLSPInput(&input, request(3, "textDocument/definition", params))
+	writeLSPInput(&input, request(4, "textDocument/references", params))
+	writeLSPInput(&input, request(5, "shutdown", map[string]any{}))
+	writeLSPInput(&input, map[string]any{"jsonrpc": "2.0", "method": "exit"})
+	var output bytes.Buffer
+	if err := lsp.NewServer(&fakeLSPProject{}).Serve(context.Background(), &input, &output); err != nil {
+		t.Fatal(err)
+	}
+	messages := readLSPOutput(t, output.Bytes())
+	if got := len(messages[2]["result"].([]any)); got != 7 {
+		t.Fatalf("completion count = %d", got)
+	}
+	if messages[3]["result"] == nil {
+		t.Fatalf("definition = %#v", messages[3])
+	}
+	if got := len(messages[4]["result"].([]any)); got != 2 {
+		t.Fatalf("references = %#v", messages[4])
+	}
 }
 
 func (rcvr *fakeLSPProject) IndexDocument(ctx context.Context, uri string, source []byte) (entity.ProjectAnalysis, bool, error) {

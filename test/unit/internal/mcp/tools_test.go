@@ -43,6 +43,10 @@ func (*fakeProject) Search(context.Context, string, int) ([]entity.ProjectSearch
 	return []entity.ProjectSearchResult{{URI: "docs/guide.md", Name: "Guide", Concept: entity.ProjectConceptText}}, nil
 }
 
+func (*fakeProject) Symbols(context.Context, string) ([]entity.ProjectSymbol, error) {
+	return []entity.ProjectSymbol{{ID: "api", Name: "API", Concept: entity.ProjectConceptItem}}, nil
+}
+
 type fakeIcons struct {
 	put     entity.IconRegistration
 	deleted string
@@ -91,6 +95,18 @@ func TestToolServiceKeepsDocsIndexSeparateFromExplicitXALAnalysis(t *testing.T) 
 	}
 	if project.indexedRoot != "/project" || index.StructuredContent.(entity.ProjectIndexStats).Scanned != 2 {
 		t.Fatalf("docs index root=%q result=%#v", project.indexedRoot, index.StructuredContent)
+	}
+}
+
+func TestToolServiceReturnsProjectSymbols(t *testing.T) {
+	service := mcp.NewToolService(&fakeDiagnostics{}, &fakeRender{}, &fakeProject{}, &fakeIcons{}, "/project")
+	result, err := service.Call(context.Background(), "project_symbols", json.RawMessage(`{"uri":"file:///diagram.xal"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	content := result.StructuredContent.(map[string]any)
+	if content["uri"] != "file:///diagram.xal" || len(content["symbols"].([]entity.ProjectSymbol)) != 1 {
+		t.Fatalf("project symbols = %#v", content)
 	}
 }
 

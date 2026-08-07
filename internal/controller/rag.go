@@ -27,6 +27,7 @@ type RAGController interface {
 	Command() *cobra.Command
 	RunIndex(context.Context, string, io.Writer) (entity.ProjectIndexStats, error)
 	RunSearch(context.Context, string, int, bool, io.Writer) error
+	RunSymbols(context.Context, string, io.Writer) error
 	RunWatch(context.Context, string, time.Duration, io.Writer) error
 }
 
@@ -53,8 +54,27 @@ agent requests without adding them to the initial documentation corpus.`,
 	}
 	command.AddCommand(rcvr.indexCommand())
 	command.AddCommand(rcvr.searchCommand())
+	command.AddCommand(rcvr.symbolsCommand())
 	command.AddCommand(rcvr.watchCommand())
 	return command
+}
+
+func (rcvr *ragController) RunSymbols(ctx context.Context, uri string, output io.Writer) error {
+	if rcvr.projectUsecase == nil {
+		return errors.New("project use case is required")
+	}
+	uri = strings.TrimSpace(uri)
+	if uri == "" {
+		return errors.New("project document URI must not be empty")
+	}
+	symbols, err := rcvr.projectUsecase.Symbols(ctx, uri)
+	if err != nil {
+		return err
+	}
+	if output != nil {
+		return writeRAGJSON(output, map[string]any{"uri": uri, "symbols": symbols})
+	}
+	return nil
 }
 
 func (rcvr *ragController) RunIndex(ctx context.Context, root string, output io.Writer) (entity.ProjectIndexStats, error) {
@@ -167,6 +187,16 @@ func (rcvr *ragController) searchCommand() *cobra.Command {
 	command.Flags().IntVar(&limit, "limit", 30, "maximum results (1-100)")
 	command.Flags().BoolVar(&asJSON, "json", false, "write one JSON array instead of tab-separated rows")
 	return command
+}
+
+func (rcvr *ragController) symbolsCommand() *cobra.Command {
+	return &cobra.Command{
+		Use: "symbols <document-uri>", Short: "Return indexed semantic symbols for one document",
+		Args: cobra.ExactArgs(1),
+		RunE: func(command *cobra.Command, args []string) error {
+			return rcvr.RunSymbols(command.Context(), args[0], command.OutOrStdout())
+		},
+	}
 }
 
 func (rcvr *ragController) watchCommand() *cobra.Command {

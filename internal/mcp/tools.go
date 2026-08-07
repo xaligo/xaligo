@@ -29,6 +29,7 @@ type ProjectService interface {
 	Analyze(context.Context, string, []byte) (entity.ProjectAnalysis, error)
 	Index(context.Context, string) (entity.ProjectIndexStats, error)
 	Search(context.Context, string, int) ([]entity.ProjectSearchResult, error)
+	Symbols(context.Context, string) ([]entity.ProjectSymbol, error)
 }
 
 type IconService interface {
@@ -101,6 +102,9 @@ func (rcvr *toolService) Tools() []Tool {
 			"query": stringProperty("FTS5 search expression"),
 			"limit": limitProperty(),
 		}, []string{"query"}, readOnly),
+		newTool("project_symbols", "Get project symbols", "Return the indexed semantic symbol tree for one document URI.", map[string]any{
+			"uri": stringProperty("Indexed document URI"),
+		}, []string{"uri"}, readOnly),
 		newTool("validate_xal", "Validate XAL", "Run shared parser, layout, and connection diagnostics for explicitly supplied .xal source.", map[string]any{
 			"source": stringProperty("Complete .xal source text"),
 		}, []string{"source"}, readOnly),
@@ -122,6 +126,8 @@ func (rcvr *toolService) Call(ctx context.Context, name string, arguments json.R
 		return rcvr.indexDocs(ctx, arguments)
 	case "search_project":
 		return rcvr.searchProject(ctx, arguments)
+	case "project_symbols":
+		return rcvr.projectSymbols(ctx, arguments)
 	case "search_icons":
 		return rcvr.searchIcons(ctx, arguments)
 	case "get_icon":
@@ -135,6 +141,27 @@ func (rcvr *toolService) Call(ctx context.Context, name string, arguments json.R
 	default:
 		return ToolResult{}, ErrUnknownTool
 	}
+}
+
+func (rcvr *toolService) projectSymbols(ctx context.Context, raw json.RawMessage) (ToolResult, error) {
+	var args struct {
+		URI string `json:"uri"`
+	}
+	if err := decodeArguments(raw, &args); err != nil {
+		return ToolResult{}, err
+	}
+	args.URI = strings.TrimSpace(args.URI)
+	if args.URI == "" {
+		return ToolResult{}, errors.New("project document URI must not be empty")
+	}
+	if rcvr.project == nil {
+		return ToolResult{}, errors.New("project service is unavailable")
+	}
+	symbols, err := rcvr.project.Symbols(ctx, args.URI)
+	if err != nil {
+		return ToolResult{}, err
+	}
+	return structuredToolResult(map[string]any{"uri": args.URI, "symbols": symbols})
 }
 
 func (rcvr *toolService) validateXAL(ctx context.Context, raw json.RawMessage) (ToolResult, error) {

@@ -154,6 +154,12 @@ func (rcvr *Server) dispatch(ctx context.Context, message rpcMessage) (any, erro
 		return rcvr.semanticTokens(ctx, message.Params)
 	case "textDocument/hover":
 		return rcvr.hover(ctx, message.Params)
+	case "textDocument/completion":
+		return rcvr.completion(), nil
+	case "textDocument/definition":
+		return rcvr.definition(ctx, message.Params)
+	case "textDocument/references":
+		return rcvr.references(ctx, message.Params)
 	default:
 		return nil, &protocolError{code: -32601, message: "Method not found: " + message.Method}
 	}
@@ -171,6 +177,11 @@ func initializeResult() map[string]any {
 			"documentSymbolProvider":  true,
 			"workspaceSymbolProvider": true,
 			"hoverProvider":           true,
+			"definitionProvider":      true,
+			"referencesProvider":      true,
+			"completionProvider": map[string]any{
+				"triggerCharacters": []string{"<", " ", "\""},
+			},
 			"diagnosticProvider": map[string]any{
 				"identifier": "xaligo", "interFileDependencies": false, "workspaceDiagnostics": false,
 			},
@@ -183,6 +194,87 @@ func initializeResult() map[string]any {
 			},
 		},
 	}
+}
+
+func (rcvr *Server) completion() []map[string]any {
+	values := []struct{ label, detail, insert string }{
+		{"frame", "Physical canvas", `<frame id="${1:main}" width="${2:1280}" height="${3:720}">$0</frame>`},
+		{"row", "Horizontal layout", `<row gap="${1:16}">$0</row>`},
+		{"col", "Vertical layout", `<col span="${1:12}">$0</col>`},
+		{"item", "Icon or atomic item", `<item id="${1:id}" name="${2:label}" />`},
+		{"rectangle", "Generic rectangle", `<rectangle id="${1:id}" title="${2:title}" />`},
+		{"port", "Connection port", `<port id="${1:id}" side="${2|left,right,top,bottom|}" />`},
+		{"connection", "Routed connection", `<connection src="${1:source}" dst="${2:target}" kind="${3|route,traffic|}" />`},
+	}
+	result := make([]map[string]any, 0, len(values))
+	for _, value := range values {
+		result = append(result, map[string]any{"label": value.label, "kind": 10, "detail": value.detail, "insertText": value.insert, "insertTextFormat": 2})
+	}
+	return result
+}
+
+func (rcvr *Server) definition(ctx context.Context, raw json.RawMessage) (any, error) {
+	state, word, err := rcvr.documentWord(ctx, raw)
+	if err != nil || word == "" {
+		return nil, err
+	}
+	for _, symbol := range state.analysis.Symbols {
+		if symbol.ID == word {
+			return location{URI: state.uri, Range: rangeForSymbol(state.source, symbol)}, nil
+		}
+	}
+	return nil, nil
+}
+
+func (rcvr *Server) references(ctx context.Context, raw json.RawMessage) (any, error) {
+	state, word, err := rcvr.documentWord(ctx, raw)
+	if err != nil || word == "" {
+		return nil, err
+	}
+	result := make([]location, 0)
+	for _, symbol := range state.analysis.Symbols {
+		if symbol.ID == word || symbol.Source == word || symbol.Target == word {
+			result = append(result, location{URI: state.uri, Range: rangeForSymbol(state.source, symbol)})
+		}
+	}
+	return result, nil
+}
+
+func (rcvr *Server) documentWord(ctx context.Context, raw json.RawMessage) (*documentState, string, error) {
+	var params struct {
+		TextDocument struct {
+			URI string `json:"uri"`
+		} `json:"textDocument"`
+		Position position `json:"position"`
+	}
+	if err := decodeParams(raw, &params); err != nil {
+		return nil, "", err
+	}
+	state, err := rcvr.document(ctx, params.TextDocument.URI)
+	if err != nil {
+		return nil, "", err
+	}
+	return state, lspWordAt(state.source, params.Position), nil
+}
+
+func lspWordAt(source []byte, at position) string {
+	lines := strings.Split(string(source), "\n")
+	if at.Line < 0 || at.Line >= len(lines) {
+		return ""
+	}
+	line := []rune(lines[at.Line])
+	index := min(max(at.Character, 0), len(line))
+	isWord := func(value rune) bool {
+		return value == '-' || value == '_' || value == '.' || value == ':' || value >= '0' && value <= '9' || value >= 'A' && value <= 'Z' || value >= 'a' && value <= 'z'
+	}
+	start, end := index, index
+	for start > 0 && isWord(line[start-1]) {
+		start--
+	}
+	for end < len(line) && isWord(line[end]) {
+		end++
+	}
+	return string(line[start:end])
 }
 
 func (rcvr *Server) didOpen(ctx context.Context, raw json.RawMessage) error {
