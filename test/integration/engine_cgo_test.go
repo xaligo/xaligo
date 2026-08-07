@@ -15,7 +15,7 @@ import (
 	v2 "github.com/xaligo/xaligo/internal/usecase/v2"
 )
 
-func TestV2SourceUsesOneResolvedPlanForSVGAndPPTX(t *testing.T) {
+func TestV2SourceUsesRustSVGAndSharedResolvedPPTXPlan(t *testing.T) {
 	renderer := usecase.NewRenderUsecase(
 		repository.NewSceneRepository(), repository.NewXaligoRepository(),
 		repository.NewPowerpointRepository(), repository.NewSVGRepository(),
@@ -33,8 +33,27 @@ func TestV2SourceUsesOneResolvedPlanForSVGAndPPTX(t *testing.T) {
 	if err := json.Unmarshal(planJSON, &plan); err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Ops) == 0 || !bytes.Contains(svg, []byte(`>Left</tspan>`)) || !bytes.Contains(planJSON, []byte(`"id":"left"`)) {
+	if len(plan.Ops) == 0 || !bytes.Contains(svg, []byte(`>Left</text>`)) || !bytes.Contains(planJSON, []byte(`"id":"left"`)) {
 		t.Fatalf("V2 projections diverged: svg=%s plan=%s", svg, planJSON)
+	}
+}
+
+func TestV2SVGIsByteStable(t *testing.T) {
+	renderer := usecase.NewRenderUsecase(
+		repository.NewSceneRepository(), repository.NewXaligoRepository(),
+		repository.NewPowerpointRepository(), repository.NewSVGRepository(),
+	)
+	source := []byte(`<xaligo version="2"><frame id="page" width="320" height="180" layout="horizontal"><item id="left" width="80">Left</item><item id="right" weight="1">Right</item><connection id="flow" source="left" target="right" routing="orthogonal"/></frame></xaligo>`)
+	first, err := renderer.RenderSVG(context.Background(), source, entity.RenderOptions{Format: usecase.FormatSVG, PxPerInch: 96})
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := renderer.RenderSVG(context.Background(), source, entity.RenderOptions{Format: usecase.FormatSVG, PxPerInch: 144})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(first, second) {
+		t.Fatal("V2 SVG changed between identical geometry renders")
 	}
 }
 

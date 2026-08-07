@@ -91,6 +91,23 @@ func BenchmarkComplexHybridScaleRustV2RenderSVG(b *testing.B) {
 	}
 }
 
+func BenchmarkV2RenderSVGEndToEnd(b *testing.B) {
+	source := []byte(`<xaligo version="2"><frame id="page" width="1280" height="720" layout="horizontal" gap="16"><group id="clients" weight="1" layout="vertical"><item id="web">Web</item><item id="mobile">Mobile</item></group><group id="services" weight="2" layout="vertical"><item id="api">API</item><item id="worker">Worker</item><item id="database">Database</item></group><connection id="request" source="web" target="api" routing="orthogonal"/><connection id="job" source="api" target="worker" routing="orthogonal"/><connection id="store" source="worker" target="database" routing="orthogonal"/></frame></xaligo>`)
+	renderer := usecase.NewRenderUsecase(
+		repository.NewSceneRepository(), repository.NewXaligoRepository(),
+		repository.NewPowerpointRepository(), repository.NewSVGRepository(),
+	)
+	options := entity.RenderOptions{Format: usecase.FormatSVG, PxPerInch: 96}
+	b.ReportAllocs()
+	b.SetBytes(int64(len(source)))
+	b.ResetTimer()
+	for range b.N {
+		if _, err := renderer.RenderSVG(context.Background(), source, options); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
 // benchmarkComplexHybridEngineSpec preserves the sample's generic concept
 // count, hierarchy, and line count. It is intentionally not a V1-to-V2 visual
 // compatibility adapter; that frontend remains roadmap work.

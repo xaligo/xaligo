@@ -168,6 +168,17 @@ func (rcvr *renderUsecase) RenderArtifacts(ctx context.Context, input []byte, op
 		return nil, fmt.Errorf("render artifacts is only available for SVG, got %q", format)
 	}
 	opts.Format = FormatSVG
+	if renderDocumentVersion(input) == "2" {
+		spec, _, err := rcvr.v2Frontend.Lower(input)
+		if err != nil {
+			return nil, fmt.Errorf("lower V2 document: %w", err)
+		}
+		data, err := rcvr.v2Engine.RenderSVG(ctx, spec)
+		if err != nil {
+			return nil, fmt.Errorf("render V2 SVG: %w", err)
+		}
+		return []entity.RenderArtifact{{ID: "v2", Data: data}}, nil
+	}
 	document, err := rcvr.buildDocumentPlan(ctx, input, opts, false)
 	if err != nil {
 		logger.ERROR(IURRS001, "build document plan failed", map[string]any{"error": err})

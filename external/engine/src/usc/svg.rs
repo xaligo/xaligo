@@ -141,7 +141,16 @@ fn contains_external_url(value: &str) -> bool {
 }
 
 pub(crate) fn render(document: &ResolvedDocument) -> Vec<u8> {
-    let mut output = String::new();
+    const DOCUMENT_OVERHEAD_BYTES: usize = 160;
+    const ELEMENT_ESTIMATE_BYTES: usize = 256;
+    let mut output = String::with_capacity(
+        DOCUMENT_OVERHEAD_BYTES.saturating_add(
+            document
+                .elements
+                .len()
+                .saturating_mul(ELEMENT_ESTIMATE_BYTES),
+        ),
+    );
     output.push_str(r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 "#);
     output.push_str(&format_number(document.width));
     output.push(' ');
@@ -152,21 +161,35 @@ pub(crate) fn render(document: &ResolvedDocument) -> Vec<u8> {
     output.push_str(&format_number(document.height));
     output.push_str(r#"">"#);
 
-    let mut ordered = document.elements.iter().enumerate().collect::<Vec<_>>();
-    ordered.sort_by_key(|(index, element)| (element.visual.layer, *index));
-    for (_, element) in ordered {
-        if !element.visual.visible {
-            continue;
+    if document
+        .elements
+        .windows(2)
+        .all(|pair| pair[0].visual.layer <= pair[1].visual.layer)
+    {
+        for element in &document.elements {
+            render_element(&mut output, element);
         }
-        if element.concept == Concept::Line {
-            render_line(&mut output, element);
-        } else {
-            render_shape(&mut output, element);
-            render_text(&mut output, element, &element.text.value);
+    } else {
+        let mut ordered = (0..document.elements.len()).collect::<Vec<_>>();
+        ordered.sort_by_key(|index| (document.elements[*index].visual.layer, *index));
+        for index in ordered {
+            render_element(&mut output, &document.elements[index]);
         }
     }
     output.push_str("</svg>");
     output.into_bytes()
+}
+
+fn render_element(output: &mut String, element: &ResolvedElement) {
+    if !element.visual.visible {
+        return;
+    }
+    if element.concept == Concept::Line {
+        render_line(output, element);
+    } else {
+        render_shape(output, element);
+        render_text(output, element, &element.text.value);
+    }
 }
 
 fn render_shape(output: &mut String, element: &ResolvedElement) {
