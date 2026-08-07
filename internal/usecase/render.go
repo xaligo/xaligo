@@ -4,14 +4,20 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/csv"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"html"
+	"io/fs"
 	"net/url"
+	"os"
 	"path"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/xaligo/xaligo/internal/config"
 	"github.com/xaligo/xaligo/internal/entity"
@@ -177,6 +183,10 @@ func (rcvr *renderUsecase) RenderArtifacts(ctx context.Context, input []byte, op
 		if err != nil {
 			return nil, fmt.Errorf("render V2 SVG: %w", err)
 		}
+		data, err = embedV2CatalogIcons(data, opts)
+		if err != nil {
+			return nil, fmt.Errorf("embed V2 SVG icons: %w", err)
+		}
 		return []entity.RenderArtifact{{ID: "v2", Data: data}}, nil
 	}
 	document, err := rcvr.buildDocumentPlan(ctx, input, opts, false)
@@ -195,6 +205,90 @@ func (rcvr *renderUsecase) RenderArtifacts(ctx context.Context, input []byte, op
 		artifacts = append(artifacts, entity.RenderArtifact{ID: page.ID, Data: data})
 	}
 	return artifacts, nil
+}
+
+var (
+	v2CatalogRectPattern = regexp.MustCompile(`<rect\b[^>]*\bdata-icon="catalog:([0-9]+)"[^>]*/>`)
+	v2SVGAttrPattern     = regexp.MustCompile(`(?:^|\s)(x|y|width|height)="([^"]+)"`)
+	v2CatalogCache       sync.Map
+)
+
+func embedV2CatalogIcons(svg []byte, opts entity.RenderOptions) ([]byte, error) {
+	matches := v2CatalogRectPattern.FindAllSubmatch(svg, -1)
+	if len(matches) == 0 {
+		return svg, nil
+	}
+	catalog, err := readV2Catalog(opts)
+	if err != nil {
+		return nil, err
+	}
+	var images strings.Builder
+	for _, match := range matches {
+		id, _ := strconv.Atoi(string(match[1]))
+		dataURL := catalog[id]
+		if dataURL == "" {
+			continue
+		}
+		attrs := map[string]float64{}
+		for _, attr := range v2SVGAttrPattern.FindAllSubmatch(match[0], -1) {
+			attrs[string(attr[1])], _ = strconv.ParseFloat(string(attr[2]), 64)
+		}
+		size := min(40.0, attrs["width"]*0.7, attrs["height"]*0.7)
+		if size <= 0 {
+			continue
+		}
+		x := attrs["x"] + (attrs["width"]-size)/2
+		y := attrs["y"] + (attrs["height"]-size)/2
+		fmt.Fprintf(&images, `<image x="%g" y="%g" width="%g" height="%g" preserveAspectRatio="xMidYMid meet" href="%s"/>`, x, y, size, size, html.EscapeString(dataURL))
+	}
+	if images.Len() == 0 {
+		return svg, nil
+	}
+	end := bytes.LastIndex(svg, []byte("</svg>"))
+	if end < 0 {
+		return nil, fmt.Errorf("Rust SVG has no closing element")
+	}
+	output := make([]byte, 0, len(svg)+images.Len())
+	output = append(output, svg[:end]...)
+	output = append(output, images.String()...)
+	output = append(output, svg[end:]...)
+	return output, nil
+}
+
+func readV2Catalog(opts entity.RenderOptions) (map[int]string, error) {
+	var data []byte
+	var err error
+	cacheKey := ""
+	if opts.Assets != nil && opts.Assets.FS != nil {
+		data, err = fs.ReadFile(opts.Assets.FS, opts.Assets.CatalogCSV)
+	} else {
+		cacheKey = config.New().SvcCatalogCSV
+		if cached, ok := v2CatalogCache.Load(cacheKey); ok {
+			return cached.(map[int]string), nil
+		}
+		data, err = os.ReadFile(cacheKey)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("read service catalog: %w", err)
+	}
+	records, err := csv.NewReader(bytes.NewReader(data)).ReadAll()
+	if err != nil {
+		return nil, fmt.Errorf("parse service catalog: %w", err)
+	}
+	catalog := make(map[int]string, len(records))
+	for _, record := range records[1:] {
+		if len(record) < 6 {
+			continue
+		}
+		id, parseErr := strconv.Atoi(strings.TrimSpace(record[0]))
+		if parseErr == nil {
+			catalog[id] = strings.TrimSpace(record[5])
+		}
+	}
+	if cacheKey != "" {
+		v2CatalogCache.Store(cacheKey, catalog)
+	}
+	return catalog, nil
 }
 
 var (

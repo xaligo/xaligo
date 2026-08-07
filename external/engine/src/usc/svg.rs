@@ -176,8 +176,123 @@ pub(crate) fn render(document: &ResolvedDocument) -> Vec<u8> {
             render_element(&mut output, &document.elements[index]);
         }
     }
+    render_line_crossings(&mut output, document);
+    render_junctions(&mut output, document);
     output.push_str("</svg>");
     output.into_bytes()
+}
+
+fn render_line_crossings(output: &mut String, document: &ResolvedDocument) {
+    let lines = document
+        .elements
+        .iter()
+        .filter(|element| element.concept == Concept::Line && element.visual.visible)
+        .collect::<Vec<_>>();
+    for later_index in 1..lines.len() {
+        let later = lines[later_index];
+        for earlier in &lines[..later_index] {
+            for later_segment in later.points.windows(2) {
+                for earlier_segment in earlier.points.windows(2) {
+                    let Some((point, horizontal)) = orthogonal_crossing(
+                        later_segment[0], later_segment[1], earlier_segment[0], earlier_segment[1],
+                    ) else {
+                        continue;
+                    };
+                    output.push_str(r#"<circle cx=""#);
+                    output.push_str(&format_number(point.x));
+                    output.push_str(r#"" cy=""#);
+                    output.push_str(&format_number(point.y));
+                    output.push_str(r##"" r="5" fill="#ffffff"/>"##);
+                    output.push_str(r#"<path d="M "#);
+                    if horizontal {
+                        output.push_str(&format_number(point.x - 6.0));
+                        output.push(' ');
+                        output.push_str(&format_number(point.y));
+                        output.push_str(" Q ");
+                        output.push_str(&format_number(point.x));
+                        output.push(' ');
+                        output.push_str(&format_number(point.y - 6.0));
+                        output.push(' ');
+                        output.push_str(&format_number(point.x + 6.0));
+                        output.push(' ');
+                        output.push_str(&format_number(point.y));
+                    } else {
+                        output.push_str(&format_number(point.x));
+                        output.push(' ');
+                        output.push_str(&format_number(point.y - 6.0));
+                        output.push_str(" Q ");
+                        output.push_str(&format_number(point.x + 6.0));
+                        output.push(' ');
+                        output.push_str(&format_number(point.y));
+                        output.push(' ');
+                        output.push_str(&format_number(point.x));
+                        output.push(' ');
+                        output.push_str(&format_number(point.y + 6.0));
+                    }
+                    output.push_str(r#"" fill="none" stroke=""#);
+                    output.push_str(&escape_xml(&later.visual.stroke));
+                    output.push_str(r#"" stroke-width=""#);
+                    output.push_str(&format_number(later.visual.stroke_width));
+                    output.push_str(r#""/>"#);
+                }
+            }
+        }
+    }
+}
+
+fn orthogonal_crossing(a: Point, b: Point, c: Point, d: Point) -> Option<(Point, bool)> {
+    let ab_horizontal = a.y == b.y && a.x != b.x;
+    let ab_vertical = a.x == b.x && a.y != b.y;
+    let cd_horizontal = c.y == d.y && c.x != d.x;
+    let cd_vertical = c.x == d.x && c.y != d.y;
+    let (horizontal_start, horizontal_end, vertical_start, vertical_end, later_horizontal) =
+        if ab_horizontal && cd_vertical {
+            (a, b, c, d, true)
+        } else if ab_vertical && cd_horizontal {
+            (c, d, a, b, false)
+        } else {
+            return None;
+        };
+    let x = vertical_start.x;
+    let y = horizontal_start.y;
+    if x <= horizontal_start.x.min(horizontal_end.x)
+        || x >= horizontal_start.x.max(horizontal_end.x)
+        || y <= vertical_start.y.min(vertical_end.y)
+        || y >= vertical_start.y.max(vertical_end.y)
+    {
+        return None;
+    }
+    Some((Point { x, y }, later_horizontal))
+}
+
+fn render_junctions(output: &mut String, document: &ResolvedDocument) {
+    let mut endpoints = Vec::<(Point, usize, &str)>::new();
+    for line in document.elements.iter().filter(|element| {
+        element.concept == Concept::Line && element.visual.visible && element.points.len() >= 2
+    }) {
+        for point in [line.points[0], line.points[line.points.len() - 1]] {
+            if let Some(existing) = endpoints
+                .iter_mut()
+                .find(|(candidate, _, _)| candidate.x == point.x && candidate.y == point.y)
+            {
+                existing.1 += 1;
+            } else {
+                endpoints.push((point, 1, line.visual.stroke.as_str()));
+            }
+        }
+    }
+    for (point, count, color) in endpoints {
+        if count < 3 {
+            continue;
+        }
+        output.push_str(r#"<circle cx=""#);
+        output.push_str(&format_number(point.x));
+        output.push_str(r#"" cy=""#);
+        output.push_str(&format_number(point.y));
+        output.push_str(r#"" r="3.5" fill=""#);
+        output.push_str(&escape_xml(color));
+        output.push_str(r#""/>"#);
+    }
 }
 
 fn render_element(output: &mut String, element: &ResolvedElement) {
@@ -188,8 +303,40 @@ fn render_element(output: &mut String, element: &ResolvedElement) {
         render_line(output, element);
     } else {
         render_shape(output, element);
-        render_text(output, element, &element.text.value);
+        if matches!(element.concept, Concept::Group | Concept::Frame)
+            && !element.text.value.is_empty()
+        {
+            render_group_header(output, element);
+        } else {
+            render_text(output, element, &element.text.value);
+        }
     }
+}
+
+fn render_group_header(output: &mut String, element: &ResolvedElement) {
+    let height = 28.0_f64.min(element.height);
+    let width = ((element.text.value.chars().count() as f64 * element.text.font_size * 0.62)
+        + 28.0)
+        .min(element.width)
+        .max(height);
+    let tip = (height / 2.0).min(10.0);
+    polygon(
+        output,
+        &[
+            Point { x: element.x, y: element.y },
+            Point { x: element.x + width - tip, y: element.y },
+            Point { x: element.x + width, y: element.y + height / 2.0 },
+            Point { x: element.x + width - tip, y: element.y + height },
+            Point { x: element.x, y: element.y + height },
+        ],
+        &element.visual.stroke,
+    );
+    let mut label = element.clone();
+    label.x = element.x + 4.0;
+    label.y = element.y;
+    label.width = width - tip - 4.0;
+    label.height = height;
+    render_text(output, &label, &element.text.value);
 }
 
 fn render_shape(output: &mut String, element: &ResolvedElement) {
@@ -629,6 +776,31 @@ mod tests {
         assert!(svg.contains("<path"));
         assert!(svg.contains("calls"));
         usvg::roxmltree::Document::parse(&svg).expect("generated line SVG must be valid XML");
+    }
+
+    #[test]
+    fn renders_line_jumps_and_junctions() {
+        let mut horizontal = resolved_element(Concept::Line);
+        horizontal.id = "horizontal".to_owned();
+        horizontal.points = vec![Point { x: 10.0, y: 50.0 }, Point { x: 90.0, y: 50.0 }];
+        let mut vertical = resolved_element(Concept::Line);
+        vertical.id = "vertical".to_owned();
+        vertical.points = vec![Point { x: 50.0, y: 10.0 }, Point { x: 50.0, y: 90.0 }];
+        let mut branch_a = resolved_element(Concept::Line);
+        branch_a.id = "branch-a".to_owned();
+        branch_a.points = vec![Point { x: 10.0, y: 50.0 }, Point { x: 10.0, y: 90.0 }];
+        let mut branch_b = resolved_element(Concept::Line);
+        branch_b.id = "branch-b".to_owned();
+        branch_b.points = vec![Point { x: 10.0, y: 50.0 }, Point { x: 30.0, y: 90.0 }];
+        let svg = String::from_utf8(render(&ResolvedDocument {
+            width: 100.0,
+            height: 100.0,
+            elements: vec![horizontal, vertical, branch_a, branch_b],
+        }))
+        .expect("UTF-8 SVG");
+        assert!(svg.contains(r##"r="5" fill="#ffffff""##));
+        assert!(svg.contains(r#"r="3.5""#));
+        usvg::roxmltree::Document::parse(&svg).expect("generated SVG must be valid XML");
     }
 
     #[test]

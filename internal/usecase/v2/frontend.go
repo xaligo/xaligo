@@ -126,6 +126,17 @@ func (rcvr *frontendLowerState) lower(node *frontendNode) (entity.EngineElementS
 	if element.Height, err = frontendOptionalNumber(node, "height"); err != nil {
 		return entity.EngineElementSpec{}, err
 	}
+	if element.Concept == entity.EngineConceptItem && len(node.children) == 0 && strings.TrimSpace(node.attrs["weight"]) == "" && strings.TrimSpace(node.attrs["span"]) == "" {
+		const compatibilityItemSize = 72.0
+		if element.Width == nil {
+			width := compatibilityItemSize
+			element.Width = &width
+		}
+		if element.Height == nil {
+			height := compatibilityItemSize
+			element.Height = &height
+		}
+	}
 	if element.Gap, err = frontendOptionalNumber(node, "gap"); err != nil {
 		return entity.EngineElementSpec{}, err
 	}
@@ -145,6 +156,12 @@ func (rcvr *frontendLowerState) lower(node *frontendNode) (entity.EngineElementS
 	}
 	element.Align, element.Justify = frontendAlignment(node.attrs["align"])
 	element.Padding = frontendClassPadding(node.attrs["class"])
+	if row, rowErr := frontendOptionalNumber(node, "row"); rowErr != nil {
+		return entity.EngineElementSpec{}, rowErr
+	} else if row != nil && *row > 1 {
+		top := (*row - 1) * 4
+		element.Margin.Top = &top
+	}
 	if raw := strings.TrimSpace(node.attrs["fill"]); raw != "" {
 		element.Visual.Fill = raw
 	}

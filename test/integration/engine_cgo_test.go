@@ -76,6 +76,12 @@ func TestComplexHybridV2CompatibilityProjection(t *testing.T) {
 	if got := bytes.Count(svg, []byte(`<polyline`)); got != 36 {
 		t.Fatalf("V2 connections = %d, want 36", got)
 	}
+	if got := bytes.Count(svg, []byte(`<image`)); got != 39 {
+		t.Fatalf("V2 embedded catalog icons = %d, want 39", got)
+	}
+	if !bytes.Contains(svg, []byte(`r="5" fill="#ffffff"`)) || !bytes.Contains(svg, []byte(`r="3.5"`)) {
+		t.Fatal("V2 line jumps or junctions were not rendered")
+	}
 	for _, token := range [][]byte{
 		[]byte(`>Complex Hybrid Architecture</text>`),
 		[]byte(`>employee</text>`),

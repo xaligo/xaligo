@@ -73,6 +73,7 @@ impl LayoutState<'_> {
             .enumerate()
             .map(|(index, element)| (element.id.as_str(), index))
             .collect::<HashMap<_, _>>();
+        let mut lane_counts = HashMap::<(usize, usize), usize>::new();
         for index in 0..self.document.elements.len() {
             crate::usc::cancel::check().map_err(LayoutError::new)?;
             let element = &self.document.elements[index];
@@ -119,7 +120,7 @@ impl LayoutState<'_> {
                 target_side,
                 element.line.target_anchor.unwrap_or(0.5),
             );
-            let points = match element.line.routing {
+            let mut points = match element.line.routing {
                 RoutingPolicy::Straight => vec![start, end],
                 RoutingPolicy::Orthogonal => self.route_orthogonal(
                     start,
@@ -130,6 +131,12 @@ impl LayoutState<'_> {
                     element.line.obstacle_margin.unwrap_or(8.0),
                 ),
             };
+            let lane_key = (source_index, target_index);
+            let lane_index = lane_counts.entry(lane_key).or_insert(0);
+            if *lane_index > 0 {
+                points = separate_parallel_lane(points, *lane_index);
+            }
+            *lane_index += 1;
             let min_x = points
                 .iter()
                 .map(|point| point.x)
@@ -307,4 +314,32 @@ impl LayoutState<'_> {
             .map(|(_, points)| points)
             .unwrap_or_else(|| vec![start, end])
     }
+}
+
+fn separate_parallel_lane(points: Vec<Point>, lane_index: usize) -> Vec<Point> {
+    if points.len() < 2 {
+        return points;
+    }
+    let magnitude = ((lane_index + 1) / 2) as f64 * 6.0;
+    let offset = if lane_index % 2 == 1 { magnitude } else { -magnitude };
+    let start = points[0];
+    let end = points[points.len() - 1];
+    let horizontal = (end.x - start.x).abs() >= (end.y - start.y).abs();
+    let mut separated = Vec::with_capacity(points.len() + 4);
+    separated.push(start);
+    if horizontal {
+        separated.push(Point { x: start.x, y: start.y + offset });
+        for point in points.iter().skip(1).take(points.len().saturating_sub(2)) {
+            separated.push(Point { x: point.x, y: point.y + offset });
+        }
+        separated.push(Point { x: end.x, y: end.y + offset });
+    } else {
+        separated.push(Point { x: start.x + offset, y: start.y });
+        for point in points.iter().skip(1).take(points.len().saturating_sub(2)) {
+            separated.push(Point { x: point.x + offset, y: point.y });
+        }
+        separated.push(Point { x: end.x + offset, y: end.y });
+    }
+    separated.push(end);
+    deduplicate_points(separated)
 }
