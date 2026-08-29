@@ -63,15 +63,5 @@ pub fn format_message(level: LogLevel, mcode: MCode, optional_message: &str) -> 
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn formats_message_code_with_optional_detail() {
-        let code = MCode::new("TEST1", "base");
-        assert_eq!(
-            format_message(LogLevel::Warn, code, "detail"),
-            "[WARN][TEST1] base: detail"
-        );
-    }
-}
+#[path = "../../../../test/unit/external/engine/util/mcode_test.rs"]
+mod tests;

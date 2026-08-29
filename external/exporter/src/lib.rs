@@ -10,4 +10,5 @@ pub use ctl::exporter::{
 };
 
 #[cfg(test)]
+#[path = "../../../test/unit/external/exporter/exporter_test.rs"]
 mod tests;

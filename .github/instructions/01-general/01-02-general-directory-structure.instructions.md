@@ -33,6 +33,7 @@ xaligo/
 │   └── config/                  project configuration
 ├── test/
 │   ├── unit/                    unit tests mirroring the project tree
+│   │   └── external/            Rust engine/exporter unit tests
 │   └── integration/             black-box use-case/adapter tests
 ├── external/
 │   ├── engine/                  Go/cgo adapter and one Rust staticlib crate
