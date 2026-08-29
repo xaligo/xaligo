@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/xaligo/xaligo/internal/usecase"
+	v1engine "github.com/xaligo/xaligo/internal/usecase/v1/engine"
 )
 
 type sceneFile struct {
@@ -15,7 +15,7 @@ type sceneFile struct {
 
 func TestApplyThemeJSONDark(t *testing.T) {
 	source := []byte(`{"type":"excalidraw","version":2,"elements":[{"type":"text","strokeColor":"#1e1e1e","backgroundColor":"#ffffff"},{"type":"rectangle","strokeColor":"#8C4FFF","backgroundColor":"transparent"}],"appState":{"viewBackgroundColor":"#ffffff"},"files":{}}`)
-	got, err := usecase.ApplyThemeJSON(source, "dark")
+	got, err := v1engine.ApplyThemeJSONV1EngineThemeApply(source, "dark")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -35,14 +35,14 @@ func TestApplyThemeJSONDark(t *testing.T) {
 }
 
 func TestApplyThemeJSONRejectsUnknownTheme(t *testing.T) {
-	if _, err := usecase.ApplyThemeJSON([]byte(`{}`), "sepia"); err == nil {
+	if _, err := v1engine.ApplyThemeJSONV1EngineThemeApply([]byte(`{}`), "sepia"); err == nil {
 		t.Fatal("expected invalid theme error")
 	}
 }
 
 func TestApplyThemeJSONLightPreservesBytes(t *testing.T) {
 	source := []byte(`{"appState":{}}`)
-	got, err := usecase.ApplyThemeJSON(source, "")
+	got, err := v1engine.ApplyThemeJSONV1EngineThemeApply(source, "")
 	if err != nil {
 		t.Fatal(err)
 	}

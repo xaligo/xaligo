@@ -10,7 +10,6 @@ import "embed"
 // Assets is an embedded filesystem rooted at etc/resources/aws/ that contains:
 //
 //   - service-catalog.csv              — service icon catalog (IDs, names, SVG base64)
-//   - isoflow-icons.json               — generated Isoflow-specific icon manifest
 //   - svg/Architecture-Group-Icons/    — AWS group border icon SVGs
 //   - svg/Architecture-Service-Icons/  — AWS service architecture icon SVGs
 //   - svg/Category-Icons/              — AWS category icon SVGs
@@ -18,14 +17,11 @@ import "embed"
 //   - svg/Tabler-Icons/                — vendored Tabler outline icons (MIT)
 //   - svg/Yamaha-Network-Icons/        — Yamaha network diagram icons (CC BY-ND 4.0)
 //
-//go:embed service-catalog.csv isoflow-icons.json svg
+//go:embed service-catalog.csv svg
 var Assets embed.FS
 
 // CatalogCSV is the path of the service catalog CSV inside Assets.
 const CatalogCSV = "service-catalog.csv"
-
-// IsoflowIconsJSON is the generated Isoflow icon manifest inside Assets.
-const IsoflowIconsJSON = "isoflow-icons.json"
 
 // GroupIconsDir is the path of the Architecture group icons directory inside Assets.
 const GroupIconsDir = "svg/Architecture-Group-Icons"

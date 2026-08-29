@@ -1,11 +1,10 @@
 {
   "name": "@xaligo/xaligo",
-  "version": "0.1.28",
-  "description": "xaligo CLI and TypeScript/WASM API for rendering .xal diagrams",
+  "version": "0.2.0",
+  "description": "xaligo CLI for rendering .xal diagrams",
   "keywords": [
     "xaligo",
     "diagram-as-code",
-    "excalidraw",
     "pptx",
     "svg",
     "aws"
@@ -20,18 +19,6 @@
   },
   "license": "MIT",
   "type": "module",
-  "main": "./external/dist/index.js",
-  "module": "./external/dist/index.js",
-  "types": "./external/dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./external/dist/index.d.ts",
-      "import": "./external/dist/index.js"
-    }
-  },
-  "workspaces": [
-    "external"
-  ],
   "overrides": {
     "brace-expansion": "5.0.8"
   },
@@ -42,12 +29,9 @@
     "bin/xaligo.cjs",
     "scripts/npm",
     "etc/resources/aws/app.yaml",
-    "etc/resources/aws/isoflow-icons.json",
     "etc/resources/aws/service-catalog.csv",
     "etc/resources/aws/service-index.csv",
     "etc/resources/aws/svg",
-    "external/dist",
-    "external/wasm/xaligo.wasm",
     "VERSION",
     "README.md",
     "LICENSE",
@@ -57,15 +41,18 @@
     "access": "public"
   },
   "scripts": {
-    "build": "npm --prefix external run build",
+    "build": "make build",
     "build:npm-binaries": "scripts/build/build-npm.sh",
-    "clean": "npm --prefix external run clean",
-    "gen:isoflow-icons": "node scripts/tool/gen_isoflow_icons.mjs",
+    "clean": "make clean",
     "postinstall": "node scripts/npm/install.cjs",
     "test:npm-installer": "node --test test/unit/scripts/npm/install_test.cjs",
     "test:release-metadata": "bash test/unit/scripts/build/release_metadata_test.sh",
     "import:tabler-icons": "node scripts/tool/import_tabler_icons.mjs",
     "import:yamaha-icons": "node scripts/tool/import_yamaha_icons.mjs"
+  },
+  "devDependencies": {
+    "@tabler/icons": "^3.45.0",
+    "jszip": "^3.10.1"
   },
   "engines": {
     "node": ">=24.0.0",

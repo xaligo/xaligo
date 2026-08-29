@@ -30,15 +30,15 @@ also expose `title` and arbitrary key/value entries in a configurable
 Important rules:
 
 - Layout coordinates use pixels.
-- An identified child frame is one SVG artifact, PPTX slide, PDF page, or Excel
-  worksheet by default. `--combine-frames` preserves the compatibility canvas.
+- An identified child frame is one SVG artifact or PPTX slide by default.
+  `--combine-frames` preserves the compatibility canvas or slide.
 - Frame metadata is page-owned decoration inset from the selected logical frame
   edge and both row ends by its resolved `row-gap` (4 pixels by default). The
   same value separates wrapped rows. Its full-width reservation strip still
   starts at the outer logical frame edge, excludes normal items, text, lines,
-  and labels, follows that page projection, and does not become an XYFlow or
-  Isoflow node. It also supplies the inward normal inset for safe page-link
-  terminals; a frame without metadata uses 4 pixels instead.
+  and labels, and follows that page projection. It also supplies the inward
+  normal inset for safe page-link terminals; a frame without metadata uses 4
+  pixels instead.
 - The origin is the upper-left of the rendered frame.
 - Positive `x` extends right and positive `y` extends down.
 - Connections must be direct children of `<frame>` or inside frame-level

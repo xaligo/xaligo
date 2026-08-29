@@ -6,5 +6,6 @@ applyTo: ".github/instructions/manual/**"
 
 ## v0.1 Foundation
 
-Status: complete. CLI and shared use cases share parser/layout/render paths for
-validation, Excalidraw, and SVG.
+Status: complete and subsequently narrowed. CLI and shared use cases share
+parser/layout/render paths for validation and SVG; the former Excalidraw
+output is retired and only an internal V1 compatibility scene remains.

@@ -15,7 +15,7 @@ The extension target includes:
 - `.xal` syntax highlighting.
 - Validation and source-positioned diagnostics. (Go and TypeScript/WASM APIs implemented)
 - Live Preview and a Preview Panel.
-- SVG preview first; Excalidraw, XYFlow, Isoflow, and 2.5D views later.
+- SVG preview for `.xal` and SVG-embedded Markdown preview.
 
 The extension must call the same validation/render pipeline as the CLI. Do not
 create an extension-only parser, layout engine, or hidden preview format.

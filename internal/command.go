@@ -1,14 +1,20 @@
 package command
 
 import (
+	"errors"
 	"os"
+	"sync"
 
 	"github.com/spf13/cobra"
 	"github.com/xaligo/xaligo/internal/config"
 	"github.com/xaligo/xaligo/internal/controller"
+	"github.com/xaligo/xaligo/internal/core/profiles/builtin"
 	"github.com/xaligo/xaligo/internal/repository"
+	iconrepository "github.com/xaligo/xaligo/internal/repository/icon"
+	projectrepository "github.com/xaligo/xaligo/internal/repository/project"
 	"github.com/xaligo/xaligo/internal/share"
 	"github.com/xaligo/xaligo/internal/usecase"
+	v2 "github.com/xaligo/xaligo/internal/usecase/v2"
 )
 
 var (
@@ -18,56 +24,67 @@ var (
 )
 
 func NewRootCmd() *cobra.Command {
+	root, _ := newRootCmd()
+	return root
+}
+
+func newRootCmd() (*cobra.Command, func() error) {
 	logger.DEBUG(ICNRC001, "start")
 	cfg := config.New()
 
-	excalidrawRepository := repository.NewExcalidrawRepository()
+	sceneRepository := repository.NewSceneRepository()
 	xaligoRepository := repository.NewXaligoRepository()
 	powerpointRepository := repository.NewPowerpointRepository()
-	isoflowRepository := repository.NewIsoflowRepository()
 	svgRepository := repository.NewSVGRepository()
-	xyFlowRepository := repository.NewXYFlowRepository()
-	pdfRepository := repository.NewPDFRepository()
-	spreadsheetRepository := repository.NewSpreadsheetRepository()
+	terminalRepository := repository.NewTerminalRepository()
 
 	renderUsecase := usecase.NewRenderUsecase(
-		excalidrawRepository,
+		sceneRepository,
 		xaligoRepository,
 		powerpointRepository,
-		isoflowRepository,
 		svgRepository,
-		xyFlowRepository,
-		pdfRepository,
-		spreadsheetRepository,
+		terminalRepository,
 	)
-	sceneIOUsecase := usecase.NewSceneIOUsecase(excalidrawRepository)
-	catalogUsecase := usecase.NewCatalogUsecase(xaligoRepository)
-	exportUsecase := usecase.NewExportUsecase(powerpointRepository)
 	diagnosticsUsecase := usecase.NewDiagnosticsUsecase()
-	elementUsecase := usecase.NewElementUsecase()
-	themeUsecase := usecase.NewThemeUsecase()
-	diffUsecase := usecase.NewDiffUsecase(xaligoRepository, excalidrawRepository, svgRepository)
+	diffUsecase := usecase.NewDiffUsecase(xaligoRepository, sceneRepository, svgRepository)
+	engineUsecase := v2.NewEngineUsecase()
+	iconRegistryRepository := iconrepository.NewRegistryRepository(cfg.AssetsDB)
+	iconUsecase := v2.NewIconUsecase(iconRegistryRepository, engineUsecase, builtin.IconRegistrations()...)
+	projectIndexRepository := projectrepository.NewIndexRepository(cfg.ProjectDB)
+	projectUsecase := usecase.NewProjectUsecase(projectIndexRepository)
+	var closeOnce sync.Once
+	var closeErr error
+	closeResources := func() error {
+		closeOnce.Do(func() {
+			closeErr = errors.Join(iconRegistryRepository.Close(), projectUsecase.Close())
+		})
+		return closeErr
+	}
 
-	addController := controller.NewAddController(cfg, sceneIOUsecase, catalogUsecase, elementUsecase)
-	generateController := controller.NewGenerateController(renderUsecase, exportUsecase)
-	renderController := controller.NewRenderController(cfg, renderUsecase, catalogUsecase, sceneIOUsecase, themeUsecase, elementUsecase)
+	generateController := controller.NewGenerateController()
+	renderController := controller.NewRenderController(renderUsecase)
 	validateController := controller.NewValidateController(diagnosticsUsecase)
 	serveController := controller.NewServeController(cfg, renderUsecase)
 	initController := controller.NewInitController()
 	versionController := controller.NewVersionController()
 	diffController := controller.NewDiffController(diffUsecase)
+	iconController := controller.NewIconController(iconUsecase)
+	ragController := controller.NewRAGController(projectUsecase, cfg.ProjectRoot)
+	lspController := controller.NewLSPController(projectUsecase)
 
 	root := &cobra.Command{
 		Use:   "xaligo",
-		Short: "Vue-like DSL to Excalidraw layout generator",
+		Short: "Diagram-as-code renderer for SVG, PPTX, terminal, and Markdown",
 		Long: `xaligo is a diagram-as-code engine for architecture, network, and UML
 diagrams. It parses the Vue-style .xal XML DSL once and pushes the result
-through one shared parser -> layout -> scene/plan -> encoder pipeline shared
-by every output format: Excalidraw, SVG, PPTX, PDF, Excel, XYFlow, and
-Isoflow.
+through one shared parser -> layout -> draw-plan pipeline. The supported
+outputs are SVG and PPTX, V2 terminal text, plus Markdown documents that embed rendered SVGs.
 
 Use 'xaligo <command> --help' for full details, flags, and examples for any
 subcommand below.`,
+		PersistentPostRunE: func(*cobra.Command, []string) error {
+			return closeResources()
+		},
 	}
 
 	root.AddCommand(renderController.Command())
@@ -75,14 +92,22 @@ subcommand below.`,
 	root.AddCommand(serveController.Command())
 	root.AddCommand(initController.Command())
 	root.AddCommand(versionController.Command())
-	root.AddCommand(addController.Command())
 	root.AddCommand(generateController.Command())
 	root.AddCommand(diffController.Command())
-	return root
+	root.AddCommand(iconController.Command())
+	root.AddCommand(ragController.Command())
+	root.AddCommand(lspController.Command())
+	return root, closeResources
 }
 
 func Execute() {
-	if err := NewRootCmd().Execute(); err != nil {
+	root, closeResources := newRootCmd()
+	defer func() {
+		if err := closeResources(); err != nil {
+			logger.ERROR(ICE001, "close resources failed", map[string]any{"error": err})
+		}
+	}()
+	if err := root.Execute(); err != nil {
 		logger.ERROR(ICE001, "execute failed", map[string]any{"error": err})
 		os.Exit(1)
 	}

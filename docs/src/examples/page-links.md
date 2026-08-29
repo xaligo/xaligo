@@ -34,10 +34,8 @@ xaligo render docs/src/examples/samples/page-links.xal --format svg -o output/pa
 xaligo render docs/src/examples/samples/page-links.xal --format svg --combine-frames -o output/page-links.svg
 ```
 
-PPTX, PDF, and Excel use the same frame order as slides, pages, and worksheets:
+PPTX uses the same frame order as slides:
 
 ```bash
 xaligo render docs/src/examples/samples/page-links.xal --format pptx -o output/page-links.pptx
-xaligo render docs/src/examples/samples/page-links.xal --format pdf -o output/page-links.pdf
-xaligo render docs/src/examples/samples/page-links.xal --format excel -o output/page-links.xlsx
 ```

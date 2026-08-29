@@ -10,34 +10,26 @@ Supported formats:
 
 | Format | Output |
 |---|---|
-| `excalidraw` | Editable Excalidraw JSON |
 | `svg` | Standalone SVG; one file per frame by default |
 | `pptx` | PowerPoint presentation; one slide per frame by default |
-| `pdf` | PDF document; one page per frame by default |
-| `excel` | Excel workbook; one frame SVG per worksheet by default |
-| `xlsx` | Alias for `excel` |
-| `xyflow` | React Flow / XYFlow JSON |
-| `isoflow` | Isoflow-compatible model JSON |
+| `terminal` | V2-only Unicode/ASCII text written to stdout by default |
 
-UML input (`<uml>...</uml>`) currently rejects `--format excalidraw` because
-the editable UML Excalidraw export is disabled. Use `svg`, `pdf`, `pptx`,
-`excel`, `xyflow`, or `isoflow` for UML diagrams.
+The default is `svg`. Terminal output requires a V2 document. Retired format names are rejected as unknown formats.
+Markdown is handled by `xaligo render markdown`; it embeds SVG artifacts and is
+not a separate `--format` value.
 
 ### Frames and physical pages
 
-Identified child frames are physical pages for SVG, PPTX, PDF, and Excel. They
+Identified child frames are physical pages for SVG and PPTX. They
 are emitted in source order.
 
 | Format | Multiple-frame default | `--combine-frames` |
 |---|---|---|
 | SVG | Separate `<output-stem>-<safe-frame-id>.svg` files | One SVG canvas |
 | PPTX | One slide per frame in one presentation | One diagram slide |
-| PDF | One page per frame in one document | One PDF page |
-| Excel | One worksheet per frame in one workbook | One worksheet |
 
-Excalidraw, XYFlow, and Isoflow always remain one logical document, so
-`--combine-frames` does not change them. Live SVG preview also uses the combined
-canvas so every frame remains visible in one browser view.
+Live SVG preview uses the combined canvas so every frame remains visible in
+one browser view. Markdown follows the SVG artifact mapping.
 
 For a one-frame SVG document, `-o` is the exact output filename. For several
 frames, `-o output/diagram.svg` produces names such as
@@ -55,18 +47,25 @@ Common render flags:
 | `--theme light|dark` | Output theme |
 | `--services <csv>` | Service metadata and label overrides |
 | `--svg-legend-position top|right|bottom|left` | SVG legend placement |
-| `--arrow-style thin|standard|triangle|stealth|arrow|diamond|oval|none` | SVG/PPTX/PDF/Excel Plan default used when a connection omits its arrowhead. Explicit DSL arrowheads on normal/traffic connections and explicit stroke widths take precedence; routes require effective arrowheads to be `none` |
-| `--combine-frames` | Preserve the compatibility single-canvas/page form for SVG, PPTX, PDF, and Excel |
+| `--arrow-style thin|standard|triangle|stealth|arrow|diamond|oval|none` | SVG/PPTX plan default used when a connection omits its arrowhead. Explicit DSL arrowheads on normal/traffic connections and explicit stroke widths take precedence; routes require effective arrowheads to be `none` |
+| `--combine-frames` | Combine all frames onto one SVG canvas or PPTX slide |
 
-`aws-2.5d` and `topology` are recognized roadmap modes but currently return a
-not-implemented error. Any other mode, format, theme, orientation, paper size,
-arrow-style option, or SVG legend-position value outside its documented enum
-returns an error.
+Terminal flags:
 
-`--arrow-style` belongs to the shared physical Plan used by SVG, PPTX, PDF, and
-Excel. The editable Excalidraw, XYFlow, and Isoflow V1 outputs consume the
-resolved DSL scene directly and therefore use the DSL connection defaults
-instead.
+| Flag | Description |
+|---|---|
+| `--terminal-layout diagram|semantic|hybrid` | Spatial diagram, hierarchy and flow list, or both |
+| `--terminal-style unicode|ascii` | Unicode box drawing or strict 7-bit ASCII |
+| `--terminal-width`, `--terminal-height` | Output grid dimensions; detected for a TTY and otherwise fixed at 100×40 |
+| `--terminal-detail compact|normal|full` | Semantic and hybrid detail level |
+| `--terminal-icons label|symbol|none` | Icon representation policy |
+| `--terminal-focus <id>` | Element shown in the hybrid detail pane |
+| `--color auto|always|never` | ANSI color policy; `auto` enables color only for a TTY |
+
+Any mode, format, theme, orientation, paper size, arrow-style option, or SVG
+legend-position value outside its documented enum returns an error.
+
+`--arrow-style` belongs to the shared physical plan used by SVG and PPTX.
 
 Physical-page and PPTX flags:
 
@@ -138,6 +137,73 @@ Useful generation flags:
 Only `--output` is required. The generated file uses the canonical
 `<xaligo version="1"><frames>...</frames></xaligo>` document envelope.
 
+## SVG Icon Registry
+
+The native CLI manages namespaced SVGs in the local `xaligo-assets.db` SQLite
+registry. The first icon operation installs 13 domain-neutral icons in the
+`builtin` namespace. Registrations are size-limited, safety-checked, and
+normalized by the in-process Rust engine before SQLite indexes their name,
+description, tags, and aliases with FTS5.
+
+```bash
+xaligo icon list --namespace builtin
+xaligo icon search 'database OR storage'
+xaligo icon get builtin:database -o database.svg
+xaligo icon add router.svg --name network:router \
+  --description 'Generic network router' --tag network --tag routing \
+  --alias gateway --license MIT --source local
+xaligo icon remove network:router
+xaligo icon namespaces
+```
+
+Stable identities use `namespace:name`. `icon add` updates an existing identity
+atomically, including its tags, aliases, and search row. `icon get` writes SVG
+to standard output unless `-o` names a file. `icon search` accepts an FTS5
+query and all list/search commands accept `--limit` up to 100. Configure the
+database path with `paths.assets_db` in `etc/resources/aws/app.yaml`.
+
+## Local RAG Index
+
+The RAG command family builds a local SQLite/FTS5 knowledge index. Its initial
+corpus is intentionally restricted to Markdown files below `docs/`; `.xal`
+samples, the root `README.md`, source code, and generated documentation are not
+registered implicitly.
+
+```bash
+xaligo rag index
+xaligo rag search 'database AND table'
+xaligo rag search routing --limit 10 --json
+xaligo rag symbols file:///path/to/diagram.xal
+xaligo rag watch --interval 2s
+```
+
+`rag index` hashes each Markdown source and skips unchanged documents. It
+removes stale rows for deleted documentation files. `rag watch` runs the same
+incremental pass repeatedly. The shared project service can analyze an
+explicit `.xal` document into generic Frame, Group, Capture, Item, Port, Line,
+Text, and Spacer concepts for editor or agent requests, but that explicit path
+does not broaden the initial RAG corpus.
+
+## Language Server
+
+`xaligo lsp` runs the in-process Language Server Protocol 3.18 adapter over
+standard input and output. It uses `Content-Length` framed JSON-RPC and keeps
+all ordinary logs on standard error so protocol output remains clean.
+
+```bash
+xaligo lsp
+```
+
+The server provides full-document synchronization, push and pull diagnostics,
+hierarchical document symbols, project-backed workspace symbols, semantic
+tokens, completion snippets, definition and reference navigation, and hover
+details over tags and semantic identifiers. It reuses the same parser and
+generic concept analysis as the project service rather than maintaining an
+editor-only parser.
+Saving an open `.xal` file is an explicit editor operation and updates that
+document's concept rows; it does not make `.xal` part of `rag index`, whose
+initial corpus remains only `docs/**/*.md` and `docs/**/*.markdown`.
+
 ## Other Commands
 
 | Command | Description |
@@ -146,7 +212,8 @@ Only `--output` is required. The generated file uses the canonical
 | `xaligo validate <file.xal>` | Validate syntax, layout, and connection references |
 | `xaligo render markdown <file.md>` | Embed rendered `xal` code blocks as SVG images into a Markdown file |
 | `xaligo serve <file.xal\|file.md>` | Serve a live preview; `.xal` previews one combined SVG, `.md`/`.markdown` previews the full document with diagrams embedded inline; `--port` overrides the configured `serve.port` (default `8080`), and `--paper`/`--orientation` fix the preview to a physical page size |
-| `xaligo add service --name <name> --file <file>` | Add a service icon |
-| `xaligo add service --list <csv> --file <file>` | Bulk-add service icons |
+| `xaligo icon <add|get|search|remove|list|namespaces>` | Manage the embedded SQLite SVG registry |
+| `xaligo rag <index|search|symbols|watch>` | Index only `docs/**/*.md`/`docs/**/*.markdown` initially, search the local FTS5 knowledge base, and inspect explicitly indexed document symbols |
+| `xaligo lsp` | Run the LSP 3.18 language server over stdio |
 | `xaligo init [-o <dir>]` | Generate a sample `.xal` file |
 | `xaligo version` | Print version |

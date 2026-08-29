@@ -6,8 +6,6 @@ applyTo: ".github/instructions/manual/**"
 
 ### Excalidraw Export
 
-```bash
-xaligo render --format excalidraw
-```
+Retired. `--format excalidraw` is rejected as an unknown format.
 
 ---

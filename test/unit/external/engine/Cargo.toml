@@ -1,0 +1,13 @@
+[package]
+name = "xaligo-engine-unit-tests"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[[test]]
+name = "engine"
+path = "engine_test.rs"
+
+[dependencies]
+usvg = { version = "0.45.1", default-features = false }
+xaligo-pptx-exporter = { path = "../../../../external/exporter" }

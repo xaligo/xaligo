@@ -66,4 +66,4 @@ cross-frame page-link stubs used for any other connectable endpoint.
 
 Group header and item label width estimates count East Asian full-width
 characters as double-width so Japanese and other full-width labels stay aligned
-across Excalidraw, SVG, and PPTX.
+across SVG and PPTX. Markdown inherits SVG text layout.

@@ -373,7 +373,7 @@ func usageSnippet(path string, entry catalogEntry) string {
 }
 
 func fallbackUsage(path string) string {
-	base := strings.TrimPrefix(strings.TrimSuffix(filepath.Base(path), ".svg"), "isoflow-")
+	base := strings.TrimSuffix(filepath.Base(path), ".svg")
 	var id strings.Builder
 	for _, r := range base {
 		if r < '0' || r > '9' {
@@ -710,11 +710,10 @@ func renderSVG(renderer usecase.RenderUsecase, source, outputPath string) {
 		Mode:   usecase.ModeStandard,
 		Theme:  "light",
 		Assets: &entity.AssetSource{
-			FS:               awsassets.Assets,
-			CatalogCSV:       awsassets.CatalogCSV,
-			GroupIconsDir:    awsassets.GroupIconsDir,
-			IsoflowIconsJSON: awsassets.IsoflowIconsJSON,
-			ItemIconSize:     32,
+			FS:            awsassets.Assets,
+			CatalogCSV:    awsassets.CatalogCSV,
+			GroupIconsDir: awsassets.GroupIconsDir,
+			ItemIconSize:  32,
 		},
 		PxPerInch: 96,
 	})
@@ -726,14 +725,11 @@ func renderSVG(renderer usecase.RenderUsecase, source, outputPath string) {
 
 func newUsecase() usecase.RenderUsecase {
 	return usecase.NewRenderUsecase(
-		repository.NewExcalidrawRepository(),
+		repository.NewSceneRepository(),
 		repository.NewXaligoRepository(),
 		repository.NewPowerpointRepository(),
-		repository.NewIsoflowRepository(),
 		repository.NewSVGRepository(),
-		repository.NewXYFlowRepository(),
-		repository.NewPDFRepository(),
-		repository.NewSpreadsheetRepository(),
+		repository.NewTerminalRepository(),
 	)
 }
 

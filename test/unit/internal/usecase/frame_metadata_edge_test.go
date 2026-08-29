@@ -7,43 +7,7 @@ import (
 	"testing"
 
 	"github.com/xaligo/xaligo/internal/entity"
-	"github.com/xaligo/xaligo/internal/usecase"
 )
-
-func TestRenderXYFlowOmitsFrameMetadataReservedNodeAndTags(t *testing.T) {
-	source := []byte(`<xaligo version="1"><frames>
-  <frame id="page" title="Page" width="360" height="200" margin-top="60">
-    <metadata width="120" key-width="40"><entry key="owner" value="platform" /></metadata>
-    <rectangle id="content" title="Content" />
-  </frame>
-</frames></xaligo>`)
-	out, err := newUsecase().RenderXYFlow(context.Background(), source, entity.RenderOptions{Format: usecase.FormatXYFlow, Theme: "light"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	var document entity.XYFlowDocument
-	if err := json.Unmarshal(out, &document); err != nil {
-		t.Fatal(err)
-	}
-	if len(document.Nodes) != 2 {
-		t.Fatalf("XYFlow nodes = %d, want only the page and ordinary content node: %s", len(document.Nodes), out)
-	}
-	wanted := map[string]bool{"paper-frame-page": false, "page-0-rect": false}
-	for _, node := range document.Nodes {
-		if strings.Contains(strings.ToLower(node.ID), "metadata") {
-			t.Fatalf("frame metadata decoration became an XYFlow node: %#v", node)
-		}
-		if _, ok := wanted[node.ID]; !ok {
-			t.Fatalf("unexpected XYFlow node %#v; metadata tags and their reserved strip must be omitted", node)
-		}
-		wanted[node.ID] = true
-	}
-	for id, found := range wanted {
-		if !found {
-			t.Fatalf("XYFlow node %q is missing: %s", id, out)
-		}
-	}
-}
 
 func TestFrameMetadataReservedStripOverridesVisibleOverflow(t *testing.T) {
 	tests := []struct {
@@ -80,10 +44,10 @@ func TestFrameMetadataReservedStripOverridesVisibleOverflow(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			out, err := newUsecase().RenderExcalidraw(context.Background(), []byte(test.source), entity.RenderOptions{Theme: "light"})
+			out, err := newUsecase().BuildScene(context.Background(), []byte(test.source), entity.RenderOptions{Theme: "light"})
 			if err != nil {
 				if !strings.Contains(err.Error(), "metadata reserved strip") {
-					t.Fatalf("RenderExcalidraw() error = %v, want metadata reserved-strip rejection", err)
+					t.Fatalf("BuildScene() error = %v, want metadata reserved-strip rejection", err)
 				}
 				return
 			}
@@ -189,7 +153,7 @@ func TestNarrowUMLRelationLabelStaysOutsideMetadataReservedStrip(t *testing.T) {
 
 func renderFrameMetadataEdgeScene(t *testing.T, source []byte) sceneFile {
 	t.Helper()
-	out, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{Theme: "light"})
+	out, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{Theme: "light"})
 	if err != nil {
 		t.Fatal(err)
 	}

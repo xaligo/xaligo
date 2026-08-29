@@ -5,6 +5,7 @@
 - [Getting Started](getting-started.md)
 - [Command Line](cli.md)
 - [Services and Legends](services.md)
+- [Beautiful Diagram Guidelines](diagram-guidelines.md)
 - [Samples](samples.md)
 - [Examples](examples/index.md)
   - [Line Variants](examples/line-variants.md)
@@ -22,6 +23,7 @@
 
 # Design Proposals
 
+- [V2 Generic Engine](design/v2-engine.md)
 - [Structured Diagrams: Tables, Databases, and UML](design/structured-diagrams.md)
 
 # .xal DSL
@@ -38,12 +40,10 @@
 
 # Rendering
 
-- [Excalidraw](rendering/excalidraw.md)
 - [SVG](rendering/svg.md)
 - [PowerPoint](rendering/pptx.md)
-- [PDF](rendering/pdf.md)
-- [Excel](rendering/excel.md)
-- [XYFlow and Isoflow](rendering/xyflow-isoflow.md)
+- [Terminal](rendering/terminal.md)
+- [Markdown](rendering/markdown.md)
 
 # Reference
 
@@ -68,7 +68,6 @@
     - [Category Icons](reference/icons/category-icons.md)
       - [Page 1](reference/icons/category-icons-001.md)
       - [Page 2](reference/icons/category-icons-002.md)
-    - [Isoflow Icons](reference/icons/isoflow-icons.md)
     - [Resource Icons](reference/icons/resource-icons.md)
       - [Page 1](reference/icons/resource-icons-001.md)
       - [Page 2](reference/icons/resource-icons-002.md)

@@ -259,6 +259,8 @@ Search this file directly, for example: `rg -i "metadata|page-link|WASM" .github
 - 08.08 [Dependency direction](08-architecture/08-08-architecture-dependency-direction.instructions.md) — keywords: architecture, pipeline, layers, Dependency, direction
 - 08.09 [Verification](08-architecture/08-09-architecture-verification.instructions.md) — keywords: architecture, pipeline, layers, Verification, tests, validation
 - 08.10 [V2 generic engine and plugins](08-architecture/08-10-architecture-v2-generic-engine-and-plugins.instructions.md) — keywords: architecture, V2, engine, generic, plugin, AWS, UML, icons, parameters, layout, routing, design, dependencies
+- 08.11 [Single binary, shared service, and external runtimes](08-architecture/08-11-architecture-single-binary-service-and-external-runtimes.instructions.md) — keywords: architecture, single binary, subcommand, service, daemon, Rust, external, engine, PPTX
+- 08.12 [Embedded SVG asset registry](08-architecture/08-12-architecture-embedded-svg-asset-registry.instructions.md) — keywords: architecture, SQLite, FTS5, SVG, icon, asset, registry, search, storage
 
 
 ### 09 Coding
@@ -278,7 +280,7 @@ Search this file directly, for example: `rg -i "metadata|page-link|WASM" .github
 - 10.01 [Brainstorm Reference](10-pptx-routing/10-01-pptx-and-routing-brainstorm-reference.instructions.md) — keywords: PPTX, routing, connector, Brainstorm, Reference
 - 10.02 [Confirmed Decisions](10-pptx-routing/10-02-pptx-and-routing-confirmed-decisions.instructions.md) — keywords: PPTX, routing, connector, Confirmed, Decisions, CI, release
 - 10.03 [Current Pipeline](10-pptx-routing/10-03-pptx-and-routing-current-pipeline.instructions.md) — keywords: PPTX, routing, connector, Pipeline, design, dependencies
-- 10.04 [Go / WASM Boundary](10-pptx-routing/10-04-pptx-and-routing-go-wasm-boundary.instructions.md) — keywords: PPTX, routing, connector, WASM, Boundary, PptxGenJS
+- 10.04 [Go / WASM Boundary](10-pptx-routing/10-04-pptx-and-routing-go-wasm-boundary.instructions.md) — keywords: PPTX, routing, connector, WASM, Boundary, Rust
 - 10.05 [Ownership](10-pptx-routing/10-05-pptx-and-routing-ownership.instructions.md) — keywords: PPTX, routing, connector, Ownership
 - 10.06 [Paper / Scaling](10-pptx-routing/10-06-pptx-and-routing-paper-scaling.instructions.md) — keywords: PPTX, routing, connector, Paper, Scaling, PPI
 - 10.07 [Routing Rules](10-pptx-routing/10-07-pptx-and-routing-routing-rules.instructions.md) — keywords: PPTX, routing, connector, connection
@@ -303,6 +305,6 @@ Search this file directly, for example: `rg -i "metadata|page-link|WASM" .github
 - 11.03 [Step 3 — Create a .xal file](11-diagram-creation/11-03-diagram-creation-step-3-create-a-xal-file.instructions.md) — keywords: diagram, authoring, services, Create, .xal, file
   - 11.03.01 [Choosing the right group tag](11-diagram-creation/11-03-01-diagram-creation-choosing-the-right-group-tag.instructions.md) — keywords: diagram, authoring, services, Choosing, right, tag, capability, implemented
   - 11.03.02 [Service Scope Validation](11-diagram-creation/11-03-02-diagram-creation-service-scope-validation.instructions.md) — keywords: diagram, authoring, services, Service, Scope, Validation, assets, catalog
-- 11.04 [Step 4 — Render the Excalidraw file](11-diagram-creation/11-04-diagram-creation-step-4-render-the-excalidraw-file.instructions.md) — keywords: diagram, authoring, services, Render, Excalidraw, file, scene
+- 11.04 [Step 4 — Render SVG](11-diagram-creation/11-04-diagram-creation-step-4-render-svg.instructions.md) — keywords: diagram, authoring, services, Render, SVG
 - 11.05 [Command Reference](11-diagram-creation/11-05-diagram-creation-command-reference.instructions.md) — keywords: diagram, authoring, services, Command, Reference, CLI
 - 11.06 [PPTX Notes](11-diagram-creation/11-06-diagram-creation-pptx-notes.instructions.md) — keywords: diagram, authoring, services, PPTX, Notes, PowerPoint

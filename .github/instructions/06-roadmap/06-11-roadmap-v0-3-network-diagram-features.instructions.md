@@ -8,5 +8,4 @@ applyTo: ".github/instructions/manual/**"
 
 Status: route/traffic kinds, headless V1 routes, styling, layer order,
 basic lane separation, automatic route junctions, and textual connection
-shorthands are implemented across Excalidraw, SVG, and PPTX and inherited by
-the SVG-based PDF and Excel projections.
+shorthands are implemented in the shared plan consumed by SVG and PPTX.

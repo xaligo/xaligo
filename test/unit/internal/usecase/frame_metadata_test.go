@@ -499,7 +499,7 @@ func TestFrameMetadataFlowsThroughSceneAndPagePlan(t *testing.T) {
   </frame>
 </frames></xaligo>`)
 	renderer := newUsecase()
-	sceneJSON, err := renderer.RenderExcalidraw(context.Background(), source, entity.RenderOptions{Theme: "light"})
+	sceneJSON, err := renderer.BuildScene(context.Background(), source, entity.RenderOptions{Theme: "light"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -608,7 +608,7 @@ func TestFrameMetadataStaysAbovePageLinksAndKeepsTheirLabelsClear(t *testing.T) 
     <rectangle id="db" title="DB" width="100" height="30" />
   </frame>
 </frames></xaligo>`)
-	out, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{Theme: "light"})
+	out, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{Theme: "light"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -702,7 +702,7 @@ func TestFrameMetadataReservedStripExcludesItemsGroupHeadersAndLocalRoutes(t *te
   <item id="110" name="database" />
   <connection src="network" dst="database" bends="210,12" uml-relation-label="calls" />
 </frame></frames></xaligo>`
-	out, err := newUsecase().RenderExcalidraw(context.Background(), []byte(source), entity.RenderOptions{Theme: "light"})
+	out, err := newUsecase().BuildScene(context.Background(), []byte(source), entity.RenderOptions{Theme: "light"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -752,7 +752,7 @@ func TestFrameMetadataKeepsNestedGroupHeadersSeparated(t *testing.T) {
     <generic-group id="edge" title="Global Edge" icon-id="104915" />
   </aws-cloud>
 </frame></frames></xaligo>`
-	out, err := newUsecase().RenderExcalidraw(context.Background(), []byte(source), entity.RenderOptions{Theme: "light"})
+	out, err := newUsecase().BuildScene(context.Background(), []byte(source), entity.RenderOptions{Theme: "light"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -836,7 +836,7 @@ func TestFrameMetadataReservedStripOverridesUnsafeLocalEndpointSide(t *testing.T
   <item id="110" name="destination" />
   <connection src="source" dst="destination" src-side="top" dst-side="top" />
 </frame></frames></xaligo>`
-	out, err := newUsecase().RenderExcalidraw(context.Background(), []byte(source), entity.RenderOptions{Theme: "light"})
+	out, err := newUsecase().BuildScene(context.Background(), []byte(source), entity.RenderOptions{Theme: "light"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -875,7 +875,7 @@ func TestFrameMetadataPageLinksAvoidFullUsableWidthTagsAndFrameEndpoints(t *test
     <rectangle id="item" title="Item" width="80" height="30" />
   </frame>
 </frames></xaligo>`)
-	out, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{Theme: "light"})
+	out, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{Theme: "light"})
 	if err != nil {
 		t.Fatal(err)
 	}

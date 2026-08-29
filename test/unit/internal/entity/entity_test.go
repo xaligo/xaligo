@@ -8,19 +8,6 @@ import (
 	"github.com/xaligo/xaligo/internal/entity"
 )
 
-func TestNewSceneDefaults(t *testing.T) {
-	scene := entity.NewScene()
-	if scene.Type != "excalidraw" || scene.Version != 2 || scene.Source == "" {
-		t.Fatalf("scene metadata = %#v", scene)
-	}
-	if scene.Elements == nil || scene.AppState == nil || scene.Files == nil {
-		t.Fatalf("scene collections = %#v", scene)
-	}
-	if scene.AppState["viewBackgroundColor"] != "#ffffff" {
-		t.Fatalf("app state = %#v", scene.AppState)
-	}
-}
-
 func TestServiceShortLabels(t *testing.T) {
 	if got := entity.ShortLabel(entity.ServiceEntry{OfficialName: "Amazon Simple Storage Service"}); got != "S3" {
 		t.Fatalf("ShortLabel(S3) = %q", got)

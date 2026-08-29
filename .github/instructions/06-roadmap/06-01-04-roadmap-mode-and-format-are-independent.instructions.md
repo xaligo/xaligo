@@ -25,12 +25,13 @@ Target formats:
 | Format | Primary use |
 |---|---|
 | `svg` | Portable output and live preview |
-| `excalidraw` | Editable Excalidraw scene |
 | `pptx` | Editable presentation export; one frame per slide by default |
-| `pdf` | Paginated document export; one frame per page by default |
-| `excel` (`xlsx` alias) | Workbook export; one frame SVG per worksheet by default |
-| `xyflow` | React Flow/GUI editor integration |
-| `isoflow` | Isometric/2.5D integration |
+| `terminal` | V2-only text projection for terminals, TUIs, logs, and SSH sessions |
+
+Markdown is a document workflow that embeds SVG artifacts; it is not a
+separate engine format. Excalidraw, PDF, Excel/XLSX, XYFlow, and Isoflow are
+retired and must not be reintroduced as aliases or compatibility outputs
+without a new explicit product decision.
 
 Target CLI shape:
 

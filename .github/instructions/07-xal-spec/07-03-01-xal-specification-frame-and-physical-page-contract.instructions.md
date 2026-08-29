@@ -14,19 +14,14 @@ have been resolved.
 |---|---|
 | SVG | One `.svg` artifact per frame |
 | PPTX | One slide per frame |
-| PDF | One page per frame |
-| Excel | One worksheet per frame, containing the frame's SVG image |
-| Excalidraw, XYFlow, Isoflow | One logical document containing all frames |
 
-SVG, PPTX, PDF, and Excel omit the page-frame outline in both default and
+SVG and PPTX omit the page-frame outline in both default and
 `--combine-frames` output. Frame geometry remains authoritative for page size,
 cropping, endpoint ownership, and the outer logical page edge used to select a
 cross-frame page-link side and tangent anchor. The drawable frame terminal may
 sit on a parallel inward inset line. A default page-local SVG uses the exact
-frame rectangle as its canvas and clip boundary; PDF pages and Excel page
-images inherit that strict crop. Combined SVG compatibility output retains
-marker-safe bounds expansion. Excalidraw retains editable frame structure with
-transparent page-frame strokes.
+frame rectangle as its canvas and clip boundary. Combined SVG output retains
+marker-safe bounds expansion.
 
 For a document with one child frame, SVG writes exactly the requested output
 path. For multiple child frames, an output request such as `diagram.svg`
@@ -36,7 +31,5 @@ leading and trailing `-` are removed, and an empty result falls back to
 `frame-<source-order>`. Two IDs that resolve to the same output filename are an
 error. SVG does not create an implicit archive.
 
-`--combine-frames` is the explicit compatibility option for page-oriented
-formats. It restores the historical single canvas, single slide, single PDF
-page, or single Excel worksheet. It does not change Excalidraw, XYFlow, or
-Isoflow because those formats are already single logical documents.
+`--combine-frames` explicitly requests one SVG canvas or one PPTX slide.
+Markdown inherits the SVG artifact mapping because it embeds those artifacts.

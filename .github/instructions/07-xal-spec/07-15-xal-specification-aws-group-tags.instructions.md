@@ -7,7 +7,7 @@ applyTo: ".github/instructions/manual/**"
 ## AWS Group Tags
 
 Like `container`, these stack children vertically, but are rendered with **AWS architecture diagram group border styles**.
-Templates are in `etc/resources/aws/templates/excalidraw/` (`.excalidraw`) and `etc/resources/aws/templates/xal/` (`.xal`).
+Templates are in `etc/resources/aws/templates/xal/` (`.xal`).
 Icon SVGs are sourced from `etc/resources/aws/svg/Architecture-Group-Icons/`.
 
 ```xml

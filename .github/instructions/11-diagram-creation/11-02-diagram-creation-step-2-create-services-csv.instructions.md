@@ -33,7 +33,7 @@ applyTo: ".github/instructions/manual/**"
 113,Amazon ElastiCache,EC,In-memory caching,Session and query cache,
 ```
 
-> **Note:** `render --format excalidraw` warns to stderr when an `<item id="N">` in the .xal
+> **Note:** rendering warns to stderr when an `<item id="N">` in the .xal
 > is not listed in services.csv, or when a services.csv entry has no corresponding
 > `<item>` in the diagram.  Keep both files in sync to suppress these warnings.
 

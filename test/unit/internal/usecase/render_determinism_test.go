@@ -10,7 +10,7 @@ import (
 	"github.com/xaligo/xaligo/internal/usecase"
 )
 
-func TestRenderExcalidrawIsExactlyRepeatableV1(t *testing.T) {
+func TestBuildSceneIsExactlyRepeatableV1(t *testing.T) {
 	source := []byte(`<frame width="640" height="240" layout="horizontal" gap="20" class="pa-2">
   <generic-group id="left" title="Left" col="1">
     <item id="27" name="web" />
@@ -21,22 +21,21 @@ func TestRenderExcalidrawIsExactlyRepeatableV1(t *testing.T) {
   <connection src="web" dst="db" />
 </frame>`)
 	opts := entity.RenderOptions{
-		Format: usecase.FormatExcalidraw,
+		Format: usecase.FormatSVG,
 		Theme:  "light",
 		Assets: &entity.AssetSource{
-			FS:               awsassets.Assets,
-			CatalogCSV:       awsassets.CatalogCSV,
-			GroupIconsDir:    awsassets.GroupIconsDir,
-			IsoflowIconsJSON: awsassets.IsoflowIconsJSON,
-			ItemIconSize:     32,
+			FS:            awsassets.Assets,
+			CatalogCSV:    awsassets.CatalogCSV,
+			GroupIconsDir: awsassets.GroupIconsDir,
+			ItemIconSize:  32,
 		},
 	}
 	renderer := newUsecase()
-	first, err := renderer.RenderExcalidraw(context.Background(), source, opts)
+	first, err := renderer.BuildScene(context.Background(), source, opts)
 	if err != nil {
 		t.Fatalf("first render: %v", err)
 	}
-	second, err := renderer.RenderExcalidraw(context.Background(), source, opts)
+	second, err := renderer.BuildScene(context.Background(), source, opts)
 	if err != nil {
 		t.Fatalf("second render: %v", err)
 	}
@@ -46,7 +45,7 @@ func TestRenderExcalidrawIsExactlyRepeatableV1(t *testing.T) {
 
 	nativeOpts := opts
 	nativeOpts.Assets = nil
-	native, err := renderer.RenderExcalidraw(context.Background(), source, nativeOpts)
+	native, err := renderer.BuildScene(context.Background(), source, nativeOpts)
 	if err != nil {
 		t.Fatalf("native-default render: %v", err)
 	}
@@ -57,15 +56,15 @@ func TestRenderExcalidrawIsExactlyRepeatableV1(t *testing.T) {
 
 func TestRenderExplicitV1VersionMatchesUnversionedV1(t *testing.T) {
 	renderer := newUsecase()
-	opts := entity.RenderOptions{Format: usecase.FormatExcalidraw, Theme: "light"}
+	opts := entity.RenderOptions{Format: usecase.FormatSVG, Theme: "light"}
 	unversioned := []byte(`<frame width="240" height="120"><rectangle id="service" title="Service" /></frame>`)
 	explicitV1 := []byte(`<frame version="1" width="240" height="120"><rectangle id="service" title="Service" /></frame>`)
 
-	want, err := renderer.RenderExcalidraw(context.Background(), unversioned, opts)
+	want, err := renderer.BuildScene(context.Background(), unversioned, opts)
 	if err != nil {
 		t.Fatalf("unversioned V1 render: %v", err)
 	}
-	got, err := renderer.RenderExcalidraw(context.Background(), explicitV1, opts)
+	got, err := renderer.BuildScene(context.Background(), explicitV1, opts)
 	if err != nil {
 		t.Fatalf("explicit V1 render: %v", err)
 	}
@@ -80,8 +79,8 @@ func TestRenderV1CompatibilityModesAreEquivalentV1(t *testing.T) {
 	modes := []entity.Mode{usecase.ModeStandard, usecase.ModeNetwork, usecase.ModeAWS}
 	var want []byte
 	for _, mode := range modes {
-		got, err := renderer.RenderExcalidraw(context.Background(), source, entity.RenderOptions{
-			Format: usecase.FormatExcalidraw,
+		got, err := renderer.BuildScene(context.Background(), source, entity.RenderOptions{
+			Format: usecase.FormatSVG,
 			Theme:  "light",
 			Mode:   mode,
 		})

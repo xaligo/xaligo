@@ -8,8 +8,8 @@ applyTo: ".github/instructions/manual/**"
 
 - Go 1.26 module: `github.com/xaligo/xaligo`
 - CLI entry point: `cmd/main.go`
-- PPTX exporter WASM entry point: `external/command.ts`
-- TypeScript package and implementation: `external`
+- PPTX exporter C ABI entry point: `external/exporter/src/ctl/exporter.rs`
+- Rust package and implementation: `external/exporter`
 - Shared application boundary: `internal/usecase`
 - Generated CLI: `.bin/xaligo`
-- Generated PPTX exporter WASM: `external/wasm/xaligo.wasm`
+- Generated native archive: `external/engine/lib/libxaligo_engine.a`

@@ -26,14 +26,14 @@ func TestSVGBGColorSkipsYamahaHiddenReferenceFills(t *testing.T) {
 		t.Fatal(err)
 	}
 	dataURL := "data:image/svg+xml;base64," + base64.StdEncoding.EncodeToString(raw)
-	repo := repository.NewExcalidrawRepository()
+	repo := repository.NewSceneRepository()
 	if got := repo.SVGBGColor(dataURL); got != "#7758c1" {
 		t.Fatalf("SVGBGColor(router_general) = %q, want #7758c1", got)
 	}
 }
 
 func TestSvgToDataURLAndFileID(t *testing.T) {
-	repo := repository.NewExcalidrawRepository()
+	repo := repository.NewSceneRepository()
 	dir := t.TempDir()
 	svgPath := filepath.Join(dir, "icon.svg")
 	if err := os.WriteFile(svgPath, []byte(testSVG), 0644); err != nil {
@@ -52,7 +52,7 @@ func TestSvgToDataURLAndFileID(t *testing.T) {
 }
 
 func TestSvgToDataURLFS(t *testing.T) {
-	repo := repository.NewExcalidrawRepository()
+	repo := repository.NewSceneRepository()
 	fsys := fstest.MapFS{"icons/icon.svg": {Data: []byte(testSVG)}}
 	dataURL, err := repo.SvgToDataURLFS(fsys, "icons/icon.svg")
 	if err != nil {
@@ -64,7 +64,7 @@ func TestSvgToDataURLFS(t *testing.T) {
 }
 
 func TestLoadFromCSVAndLookupCatalog(t *testing.T) {
-	excalidrawRepo := repository.NewExcalidrawRepository()
+	excalidrawRepo := repository.NewSceneRepository()
 	xaligoRepo := repository.NewXaligoRepository()
 	csvPath := filepath.Join(t.TempDir(), "catalog.csv")
 	encoded := base64.StdEncoding.EncodeToString([]byte(testSVG))
@@ -104,7 +104,7 @@ func TestLoadFromCSVAndLookupCatalog(t *testing.T) {
 }
 
 func TestLookupCatalogByIDFS(t *testing.T) {
-	excalidrawRepo := repository.NewExcalidrawRepository()
+	excalidrawRepo := repository.NewSceneRepository()
 	xaligoRepo := repository.NewXaligoRepository()
 	encoded := base64.StdEncoding.EncodeToString([]byte(testSVG))
 	fsys := fstest.MapFS{"catalog.csv": {Data: []byte(strings.Join([]string{
@@ -129,7 +129,7 @@ func TestLookupCatalogByIDFS(t *testing.T) {
 }
 
 func TestCatalogLookupErrors(t *testing.T) {
-	excalidrawRepo := repository.NewExcalidrawRepository()
+	excalidrawRepo := repository.NewSceneRepository()
 	xaligoRepo := repository.NewXaligoRepository()
 	csvPath := filepath.Join(t.TempDir(), "catalog.csv")
 	if err := os.WriteFile(csvPath, []byte("1,Compute,Amazon EC2,ec2.svg,ec2.svg,\n"), 0644); err != nil {

@@ -14,17 +14,22 @@ exporter WebAssembly artifact used by the CLI.
 
 ## Go Build
 
-Build the CLI from source:
+Building the native CLI requires Go 1.26, Rust 1.85 or newer, a C compiler for
+cgo, Node.js 24, npm, and Javy 9. Install the repository dependencies, then
+build the CLI:
 
 ```bash
 git clone https://github.com/xaligo/xaligo
 cd xaligo
-go mod tidy
+npm ci --ignore-scripts
 make build
 .bin/xaligo version
 ```
 
-`make build` produces `.bin/xaligo` and builds the PPTX exporter WASM artifact.
+`make build` compiles the Rust engine as a static library, links it into
+`.bin/xaligo` through cgo, and builds the PPTX exporter WASM artifact. The Rust
+library is part of the executable; no engine process or dynamic library is
+installed alongside it.
 
 ## TypeScript and WebAssembly
 
@@ -46,7 +51,7 @@ const pptx = await renderPptxPlan(planJson, { title: "Architecture" });
 Build only the PPTX exporter WASM artifact:
 
 ```bash
-make build-wasm
+make build-exporter
 ```
 
 Package layout:
@@ -54,4 +59,4 @@ Package layout:
 | Path | Purpose |
 |---|---|
 | `@xaligo/xaligo` | CLI binary plus TypeScript/WASM API exports |
-| `external/` | Internal TypeScript/PptxGenJS build workspace |
+| `external/exporter/` | Internal Rust PPTX exporter linked into the engine static library |

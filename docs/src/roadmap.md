@@ -21,13 +21,10 @@ resolved first and then projected in source order:
 |---|---|
 | SVG | One file per frame |
 | PPTX | One slide per frame |
-| PDF | One page per frame |
-| Excel | One worksheet containing the frame SVG |
 
-`--combine-frames` retains the former single-canvas/page form. Excalidraw,
-XYFlow, and Isoflow remain one logical document. Default SVG uses the exact
-frame rectangle as its canvas and clip boundary; PDF and Excel inherit that
-strict page/image crop, while combined SVG keeps marker-safe bounds.
+`--combine-frames` requests one SVG canvas or PPTX slide. Default SVG uses the
+exact frame rectangle as its canvas and clip boundary, while combined SVG keeps
+marker-safe bounds. Markdown embeds the same SVG artifacts.
 
 Page frames can also add a top/bottom metadata band for built-in `id`, `title`,
 content `version`, and arbitrary key/value tags. The resolved `row-gap`
@@ -48,8 +45,7 @@ metadata is absent; zero retains the outer edge and the value is never clamped.
 Links reject unsafe explicit geometry. Without an explicit frame terminal,
 unsafe candidates are filtered and rendering chooses the nearest safe side
 from actual visual geometry; only an empty candidate set is an error. Labels
-remain 4 layout pixels from the final inset terminal. XYFlow and Isoflow omit
-this page decoration.
+remain 4 layout pixels from the final inset terminal.
 
 This frame pagination is separate from generic tiling. Remaining scale work is
 to split one oversized frame into multiple tiles, add large-diagram regression
@@ -59,8 +55,8 @@ samples and benchmarks, and optimize the slowest measured shared stages.
 
 The shared renderer now rejects non-finite and invalid layout numbers, resolves
 fixed children before flex ratios, records content boxes and explicit overflow,
-detects parent and port overlap violations, and gives SVG/PPTX and the
-SVG-derived PDF/Excel output a common text layout and PPI transform. CLI format
+detects parent and port overlap violations, and gives SVG/PPTX a common text
+layout and PPI transform. CLI format
 dispatch also goes through one use-case entry point. See
 [Internal Architecture and Algorithms](internal-architecture.md).
 
@@ -73,10 +69,9 @@ The next structural steps are:
    preflight already run during `Build`.
 3. Move catalog-derived intrinsic label measurement and final connector
    geometry into the same validation pass used by render.
-4. Replace the remaining Excalidraw-shaped canonical scene and presentation-
-   shaped physical plan schema with genuinely format-neutral models, retaining
-   compatibility aliases at public boundaries.
-5. Extend cross-format regression coverage for editable text behavior, item
+4. Replace the remaining internal Excalidraw-shaped V1 compatibility scene and
+   presentation-shaped plan schema with genuinely format-neutral models.
+5. Extend SVG/PPTX/Markdown regression coverage for text behavior, item
    offsets, connector values, and non-default PPI/paper fitting.
 
 ## V1 Compatibility and V2
@@ -92,6 +87,14 @@ lowered directly to the same typed, renderer-neutral model. The design avoids
 XML rewriting, parser retry, serialized scene round-trips, and running the full
 V1 renderer inside V2. V1 itself remains independent of V2.
 
+The embedded Rust calculation core and C ABI v2 are now implemented for the
+generic Frame, Group, Capture, Item, Port, Line, Text, and Spacer concepts. It
+supports nested fixed/flex, grid, absolute placement, ports, generic routing,
+and deterministic SVG projection. The remaining V2 work is the native syntax
+frontend, V1 compatibility lowering, profile normalization, and connecting the
+resolved document to the PPTX plan. See [V2 Generic
+Engine](design/v2-engine.md).
+
 Golden compatibility tests will cover roots and defaults, unknown nested tags,
 strict versus fallback enum behavior, connection inheritance and anchors,
 signed-32-bit catalog IDs, item-size render contexts, and equivalent resolved
@@ -99,10 +102,10 @@ geometry across native and embedded targets.
 
 ## Input and Output Formats
 
-- Excel-friendly data workflows beyond the implemented frame-image workbook
-  export.
-- Import from existing diagram formats and conversion into `.xal`.
-- Better round-tripping between generated output and `.xal` source.
+SVG and PPTX are the cross-version engine-output set. V2 additionally exposes
+terminal text; Markdown embeds SVG artifacts.
+Import from existing diagram formats may be considered separately, but it must
+normalize into `.xal`/the generic model and cannot add a hidden render path.
 
 The V1 structured-diagram profile includes a document-wide data registry,
 general tables, relational schema/ER views, and the supported class, component,
@@ -115,8 +118,8 @@ canonical V1 syntax; legacy root documents continue to render with warnings.
 ## Editing and Automation
 
 - A dedicated UI for authoring and editing diagrams.
-- MCP interfaces so AI agents and tools can inspect, generate, and update
-  diagrams through xaligo.
+- Add explicitly authorized model-assisted editing operations through the
+  existing application-service boundary.
 - GUI-to-`.xal` workflows, including configuration changes driven from visual
   edits.
 

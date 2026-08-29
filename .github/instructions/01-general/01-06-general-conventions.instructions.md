@@ -19,8 +19,8 @@ applyTo: ".github/instructions/manual/**"
   `<component>_<detail>.go`; express the layer in the exported interface and
   constructor suffix instead.
 - Wrap errors with `fmt.Errorf("context: %w", err)`.
-- Represent Excalidraw elements as `map[string]interface{}` for format
-  compatibility.
+- Represent elements in the temporary V1 compatibility scene as
+  `map[string]interface{}` until the renderer-neutral V2 model replaces it.
 - Do not commit binaries, dependencies, caches, `output`, WASM artifacts, or
   TypeScript `dist` output. Checked-in documentation SVGs generated from
   `docs/src/architecture/*.xal` are the explicit exception; commit each SVG

@@ -2,7 +2,6 @@ package entity
 
 import (
 	"io"
-	"os"
 	"time"
 )
 
@@ -39,39 +38,17 @@ type ControllerRenderOptions struct {
 	PaperMarginBottom float64
 	PaperMarginLeft   float64
 	SVGLegendPosition string
-	ExporterWASM      string
+	TerminalStyle     string
+	TerminalLayout    string
+	TerminalDetail    string
+	TerminalColor     string
+	TerminalIcons     string
+	TerminalWidth     int
+	TerminalHeight    int
+	TerminalFocus     string
 	Theme             string
 	Mode              string
-	Stdout            *os.File
-	Stderr            *os.File
-}
-
-type ControllerPptxGenerateOptions struct {
-	XalPath           string
-	Output            string
-	ServicesFile      string
-	Title             string
-	Author            string
-	Company           string
-	Subject           string
-	CombineFrames     bool
-	Compression       *bool
-	PxPerInch         float64
-	ArrowStyle        string
-	ArrowStub         float64
-	ArrowMargin       float64
-	Paper             string
-	Orientation       string
-	PaperMargin       float64
-	PaperMarginTop    float64
-	PaperMarginRight  float64
-	PaperMarginBottom float64
-	PaperMarginLeft   float64
-	ExporterWASM      string
-	Theme             string
-	Mode              string
-	Stdout            *os.File
-	Stderr            *os.File
+	Stdout            io.Writer
 }
 
 type ControllerServeOptions struct {

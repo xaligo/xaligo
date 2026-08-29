@@ -89,9 +89,8 @@ least one side that satisfies this inset bound and the metadata reservation;
 the shared scene later selects among those safe sides from rendered visual
 geometry. The inset is never implicitly clamped.
 
-The shared layout and presentation scene own this geometry. SVG, PPTX, PDF,
-Excel, and Excalidraw render the owning frame's tags; per-frame projection
-cannot leak another page's band, and combined output retains every band. The
-entire reservation strip, rather than only the tag cells, is a hard exclusion
-zone for normal rendered geometry. XYFlow and Isoflow omit the band because it
-is page decoration rather than a graph node or endpoint.
+The shared layout and presentation plan own this geometry. SVG and PPTX render
+the owning frame's tags; per-frame projection cannot leak another page's band,
+and combined output retains every band. Markdown inherits the SVG projection.
+The entire reservation strip, rather than only the tag cells, is a hard
+exclusion zone for normal rendered geometry.

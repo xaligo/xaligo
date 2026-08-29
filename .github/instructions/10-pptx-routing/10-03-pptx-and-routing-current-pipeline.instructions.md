@@ -17,6 +17,6 @@ applyTo: ".github/instructions/manual/**"
 ```
 
 Geometry belongs on the Go side. The WASM export module should only translate
-the resolved plan into PPTX bytes. Excalidraw-compatible JSON may be one scene
-serialization, but it is not the target architecture name or ownership boundary
-for the shared plan.
+the resolved plan into PPTX bytes. The current Excalidraw-shaped V1 scene is a
+temporary internal compatibility serialization, not an output, target
+architecture name, or ownership boundary for the shared plan.

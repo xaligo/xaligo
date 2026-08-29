@@ -38,7 +38,9 @@ git status --short
 git log -1 --oneline
 ```
 
-Use `npm --prefix external test`, `go build ./...`, `mdbook build docs`, or
+Use `cargo test --manifest-path test/unit/external/exporter/Cargo.toml --locked`, `go build ./...`,
+`make test-engine` for native Rust/cgo engine changes,
+`mdbook build docs`, or
 format-specific render checks only when the changed scope requires them.
 Diagnose/read-only requests stop before editing, staging, or committing.
 Never push, publish, tag, open a PR, or rewrite history without explicit user

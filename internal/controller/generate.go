@@ -1,15 +1,12 @@
 package controller
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/xaligo/xaligo/internal/entity"
 	"github.com/xaligo/xaligo/internal/share"
-	"github.com/xaligo/xaligo/internal/usecase"
 )
 
 var (
@@ -39,16 +36,12 @@ var paperSizes = map[string][2]int{
 
 type GenerateController interface {
 	Command() *cobra.Command
-	RunPptx(opts entity.ControllerPptxGenerateOptions) error
 }
 
-type generateController struct {
-	renderUsecase usecase.RenderUsecase
-	exportUsecase usecase.ExportUsecase
-}
+type generateController struct{}
 
-func NewGenerateController(renderUsecase usecase.RenderUsecase, exportUsecase usecase.ExportUsecase) GenerateController {
-	return &generateController{renderUsecase: renderUsecase, exportUsecase: exportUsecase}
+func NewGenerateController() GenerateController {
+	return &generateController{}
 }
 
 // Command returns the `xaligo generate` parent command with subcommands:
@@ -65,8 +58,7 @@ func (rcvr *generateController) Command() *cobra.Command {
 Currently provides one subcommand:
   xal   generate a .xal file with an AWS infrastructure hierarchy
 
-Format conversion (Excalidraw, SVG, PPTX, PDF, Excel, XYFlow, Isoflow) is a
-separate concern; use 'xaligo render' on the generated .xal file for that.`,
+Render the generated source as SVG or PPTX with 'xaligo render'.`,
 	}
 	parent.AddCommand(initGenerateXalCmd())
 	return parent
@@ -182,85 +174,6 @@ func RunGenerate(
 	return nil
 }
 
-// RunGeneratePptx builds a resolved Go PPTX plan, then asks the repository layer
-// to invoke the WASM exporter that turns the plan into PPTX bytes.
-func (rcvr *generateController) RunPptx(opts entity.ControllerPptxGenerateOptions) error {
-	return runGeneratePptx(rcvr.renderUsecase, rcvr.exportUsecase, opts)
-}
-
-func runGeneratePptx(renderUsecase usecase.RenderUsecase, exportUsecase usecase.ExportUsecase, opts entity.ControllerPptxGenerateOptions) error {
-	if opts.XalPath == "" {
-		return fmt.Errorf("--xal is required")
-	}
-	if opts.Output == "" {
-		return fmt.Errorf("--output is required")
-	}
-	if opts.PxPerInch < 0 {
-		return fmt.Errorf("--px-per-inch must be positive")
-	}
-	if opts.PaperMargin < 0 || opts.PaperMarginTop < 0 || opts.PaperMarginRight < 0 || opts.PaperMarginBottom < 0 || opts.PaperMarginLeft < 0 {
-		return fmt.Errorf("paper margins must be non-negative")
-	}
-	planJSON, err := buildPptxPlanJSON(renderUsecase, opts)
-	if err != nil {
-		return err
-	}
-	return exportUsecase.ExportPptx(context.Background(), entity.PptxExportOptions{
-		PlanJSON:     planJSON,
-		Output:       opts.Output,
-		Title:        opts.Title,
-		Author:       opts.Author,
-		Company:      opts.Company,
-		Subject:      opts.Subject,
-		Compression:  opts.Compression,
-		ExporterWASM: opts.ExporterWASM,
-		Stdout:       opts.Stdout,
-		Stderr:       opts.Stderr,
-	})
-}
-
-func buildPptxPlanJSON(renderUsecase usecase.RenderUsecase, opts entity.ControllerPptxGenerateOptions) ([]byte, error) {
-	if err := renderUsecase.ValidateRenderOptions(entity.RenderOptions{
-		Mode: entity.Mode(opts.Mode), Format: usecase.FormatPPTX, Theme: opts.Theme,
-		CombineFrames: opts.CombineFrames,
-		PxPerInch:     opts.PxPerInch, ArrowStyle: opts.ArrowStyle, ArrowStubPx: opts.ArrowStub, ArrowMarginPx: opts.ArrowMargin,
-		PaperSize: opts.Paper, Orientation: opts.Orientation,
-		PaperMarginIn: opts.PaperMargin, PaperMarginTopIn: opts.PaperMarginTop, PaperMarginRightIn: opts.PaperMarginRight,
-		PaperMarginBottomIn: opts.PaperMarginBottom, PaperMarginLeftIn: opts.PaperMarginLeft,
-	}); err != nil {
-		return nil, err
-	}
-	input, err := os.ReadFile(opts.XalPath)
-	if err != nil {
-		return nil, fmt.Errorf("open input file: %w", err)
-	}
-	var servicesCSV []byte
-	if opts.ServicesFile != "" {
-		servicesCSV, err = os.ReadFile(opts.ServicesFile)
-		if err != nil {
-			return nil, fmt.Errorf("read services %s: %w", opts.ServicesFile, err)
-		}
-	}
-	return renderUsecase.BuildPPTXPlan(context.Background(), input, entity.RenderOptions{
-		Mode:                entity.Mode(opts.Mode),
-		Format:              usecase.FormatPPTX,
-		Theme:               opts.Theme,
-		CombineFrames:       opts.CombineFrames,
-		PxPerInch:           opts.PxPerInch,
-		ArrowStyle:          opts.ArrowStyle,
-		ArrowStubPx:         opts.ArrowStub,
-		ArrowMarginPx:       opts.ArrowMargin,
-		PaperSize:           opts.Paper,
-		Orientation:         opts.Orientation,
-		PaperMarginIn:       opts.PaperMargin,
-		PaperMarginTopIn:    opts.PaperMarginTop,
-		PaperMarginRightIn:  opts.PaperMarginRight,
-		PaperMarginBottomIn: opts.PaperMarginBottom,
-		PaperMarginLeftIn:   opts.PaperMarginLeft,
-		ServicesCSV:         servicesCSV,
-	})
-}
-
 // ── xal builder ─────────────────────────────────────────────────────────────
 
 type xalBuilder struct {
@@ -365,7 +278,7 @@ func buildXAL(W, H, nClouds, nAccounts, nRegions, nAZs int, azLayout string, nSu
 		nClouds, nAccounts, nRegions, nAZs, azLayout, nSubnets, spacingMode, startMode,
 	))
 	if azLayout == "staggered" {
-		b.sb.WriteString("<!-- az-layout=staggered: AZs are rendered with depth offset in the excalidraw output -->\n")
+		b.sb.WriteString("<!-- az-layout=staggered: AZs are rendered with a depth offset -->\n")
 	}
 	b.sb.WriteString("<xaligo version=\"1\">\n")
 	b.sb.WriteString("  <frames>\n")

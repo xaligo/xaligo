@@ -30,12 +30,11 @@ smaller local detour:
    metadata-reserved edges.
 8. Frame metadata bands: visible `id`, `title`, `version`, custom metadata,
    row gaps, widths, wrapping, top/bottom placement, and collision avoidance.
-9. Page-oriented outputs: one frame per SVG artifact, PPTX slide, PDF page, and
-   Excel worksheet; `--combine-frames`; safe artifact IDs; crop boundaries; and
+9. Page-oriented outputs: one frame per SVG artifact or PPTX slide;
+   `--combine-frames`; safe artifact IDs; crop boundaries; and
    filename collision handling.
-10. Renderer matrix: SVG baseline behavior, Excalidraw editability, PPTX plan
-    parity, PDF/Excel native constraints, XYFlow/Isoflow projections, and
-    browser-WASM dependency boundaries.
+10. Renderer matrix: SVG baseline behavior, PPTX plan parity, Markdown SVG
+    embedding, retired-format absence, and browser-WASM dependency boundaries.
 11. CI, release, and tooling: Go, TypeScript, docs, security, version gates,
     RTK operation, npm lockfile policy, vendored dependencies, and generated
     artifact policy.

@@ -14,13 +14,13 @@ func TestNewResolvesDefaultConfigPaths(t *testing.T) {
 	if cfg.ProjectRoot == "" || !filepath.IsAbs(cfg.ProjectRoot) {
 		t.Fatalf("ProjectRoot = %q", cfg.ProjectRoot)
 	}
-	paths := []string{cfg.AssetDir(), cfg.OutputFramesDir(), cfg.ServiceCatalogCSVPath(), cfg.PptxExporterWASM}
+	paths := []string{cfg.AssetDir(), cfg.ServiceCatalogCSVPath(), cfg.AssetsDB}
 	for _, path := range paths {
 		if path == "" || !filepath.IsAbs(path) {
 			t.Fatalf("path = %q, want absolute", path)
 		}
 	}
-	if cfg.Legend.IconSize <= 0 || cfg.Legend.FontSize <= 0 || cfg.ItemIconSize <= 0 {
+	if cfg.ItemIconSize <= 0 {
 		t.Fatalf("config sizes = %#v", cfg)
 	}
 	if cfg.Serve.Port != config.DefaultServePort {
@@ -38,7 +38,7 @@ func TestNewUsesProjectLocalYAMLAndAbsolutePaths(t *testing.T) {
 		t.Fatal(err)
 	}
 	absCatalog := filepath.Join(dir, "catalog.csv")
-	yaml := []byte("paths:\n  asset_package: custom/assets\n  service_catalog_csv: " + absCatalog + "\n  output_frames: custom/output\n  pptx_exporter_wasm: custom/exporter.wasm\nlegend:\n  offset_x: 7\n  offset_y: 8\n  icon_size: 9\n  font_size: 10\nitem:\n  icon_size: 11\nserve:\n  port: 9090\n")
+	yaml := []byte("paths:\n  asset_package: custom/assets\n  service_catalog_csv: " + absCatalog + "\n  assets_db: custom/assets.db\nitem:\n  icon_size: 11\nserve:\n  port: 9090\n")
 	if err := os.WriteFile(filepath.Join(configDir, "app.yaml"), yaml, 0644); err != nil {
 		t.Fatal(err)
 	}
@@ -63,10 +63,10 @@ func TestNewUsesProjectLocalYAMLAndAbsolutePaths(t *testing.T) {
 	if gotRoot != wantRoot {
 		t.Fatalf("ProjectRoot = %q, want %q", cfg.ProjectRoot, dir)
 	}
-	if !filepath.IsAbs(cfg.AssetDir()) || !strings.HasSuffix(filepath.ToSlash(cfg.AssetDir()), "/custom/assets") || cfg.ServiceCatalogCSVPath() != absCatalog || !filepath.IsAbs(cfg.PptxExporterWASM) || !strings.HasSuffix(filepath.ToSlash(cfg.PptxExporterWASM), "/custom/exporter.wasm") {
+	if !filepath.IsAbs(cfg.AssetDir()) || !strings.HasSuffix(filepath.ToSlash(cfg.AssetDir()), "/custom/assets") || cfg.ServiceCatalogCSVPath() != absCatalog || !strings.HasSuffix(filepath.ToSlash(cfg.AssetsDB), "/custom/assets.db") {
 		t.Fatalf("paths = %#v", cfg)
 	}
-	if cfg.Legend.OffsetX != 7 || cfg.Legend.OffsetY != 8 || cfg.Legend.IconSize != 9 || cfg.Legend.FontSize != 10 || cfg.ItemIconSize != 11 {
+	if cfg.ItemIconSize != 11 {
 		t.Fatalf("values = %#v", cfg)
 	}
 	if cfg.Serve.Port != 9090 {
@@ -80,7 +80,7 @@ func TestNewUsesXaligoHome(t *testing.T) {
 	if err := os.MkdirAll(configDir, 0755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(configDir, "app.yaml"), []byte("paths:\n  pptx_exporter_wasm: runtime/exporter.wasm\n"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(configDir, "app.yaml"), []byte("paths:\n  assets_db: runtime/assets.db\n"), 0644); err != nil {
 		t.Fatal(err)
 	}
 	t.Setenv("XALIGO_HOME", home)
@@ -89,7 +89,7 @@ func TestNewUsesXaligoHome(t *testing.T) {
 	if cfg.ProjectRoot != home {
 		t.Fatalf("ProjectRoot = %q, want %q", cfg.ProjectRoot, home)
 	}
-	if cfg.PptxExporterWASM != filepath.Join(home, "runtime", "exporter.wasm") {
-		t.Fatalf("PptxExporterWASM = %q", cfg.PptxExporterWASM)
+	if cfg.AssetsDB != filepath.Join(home, "runtime", "assets.db") {
+		t.Fatalf("AssetsDB = %q", cfg.AssetsDB)
 	}
 }

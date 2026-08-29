@@ -9,10 +9,10 @@ applyTo: ".github/instructions/manual/**"
 | ID | Feature | Status | Summary |
 |---|---|---|---|
 | XAL-7000010 | Light/dark theme support | Implemented | `--theme light|dark` applied consistently across every output format. |
-| XAL-7000020 | Physical paper size selection | Implemented | `--paper A5|A4|A3|A2|A1|Letter|Legal|Tabloid` for PPTX/PDF/Excel physical-page fitting. |
+| XAL-7000020 | Physical paper size selection | Implemented | `--paper A5|A4|A3|A2|A1|Letter|Legal|Tabloid` for SVG/PPTX physical-page fitting and Markdown's embedded SVGs. |
 | XAL-7000030 | Paper orientation selection | Implemented | `--orientation portrait|landscape`, with auto-fit when omitted. |
 | XAL-7000040 | Per-side paper margins | Implemented | `--paper-margin` (all sides) and `--paper-margin-top/right/bottom/left` (inches) applied before fitting frame content to the physical page. |
-| XAL-7000050 | Layout scaling base | Implemented | `--px-per-inch` controls the pixel-to-inch scaling base used for PPTX/PDF/Excel layout. |
+| XAL-7000050 | Layout scaling base | Implemented | `--px-per-inch` controls the shared SVG/PPTX layout scaling base. |
 | XAL-7000060 | PPTX document metadata | Implemented | `--title`/`--author`/`--company`/`--subject` set PPTX package-level metadata, independent of any frame `title` attribute. |
 | XAL-7000070 | PPTX compression control | Implemented | `--compression`/`--no-compression` toggles PPTX output compression. |
 | XAL-7000080 | Rendering mode selection | Implemented | `--mode standard|network|aws`; all three currently share the same resolved 2D rendering pipeline. |

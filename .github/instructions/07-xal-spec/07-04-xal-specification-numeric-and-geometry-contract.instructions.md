@@ -35,7 +35,7 @@ V1 intentionally distinguishes strict values from compatibility fallbacks:
 |---|---|
 | Invalid `overflow`, connection side, or connection anchor | Validation error |
 | Unknown `layout`, connection `kind`, stroke style, arrowhead, or arrowhead-size value | Validation error |
-| Unknown render mode, format, theme, paper/orientation, arrow-style option, or SVG legend position | Render-option error. The CLI normalizes `xlsx` to `excel` before validation |
+| Unknown render mode, format, theme, paper/orientation, arrow-style option, or SVG legend position | Render-option error. Only `svg` and `pptx` are valid formats; retired aliases are not normalized |
 | Recognized but unavailable render mode (`aws-2.5d` or `topology`) | Not-implemented error |
 | Empty `align` | Omitted; defaults to `top-left` |
 | Malformed or unknown non-empty `align` | Warning; each unsupported component keeps its `top` or `left` default |

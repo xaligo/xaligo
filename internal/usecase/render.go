@@ -4,23 +4,27 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/csv"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"html"
-	"io"
-	"math"
+	"io/fs"
 	"net/url"
+	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/xaligo/xaligo/internal/config"
 	"github.com/xaligo/xaligo/internal/entity"
 	"github.com/xaligo/xaligo/internal/repository"
 	"github.com/xaligo/xaligo/internal/share"
 	v1engine "github.com/xaligo/xaligo/internal/usecase/v1/engine"
+	v2usecase "github.com/xaligo/xaligo/internal/usecase/v2"
 	"github.com/yuin/goldmark"
 	goldmarkast "github.com/yuin/goldmark/ast"
 	goldmarktext "github.com/yuin/goldmark/text"
@@ -31,47 +35,39 @@ type RenderUsecase interface {
 	ValidateRenderOptions(entity.RenderOptions) error
 	Render(context.Context, []byte, entity.RenderOptions) ([]byte, error)
 	RenderArtifacts(context.Context, []byte, entity.RenderOptions) ([]entity.RenderArtifact, error)
-	RenderExcalidraw(context.Context, []byte, entity.RenderOptions) ([]byte, error)
+	BuildScene(context.Context, []byte, entity.RenderOptions) ([]byte, error)
 	RenderSVG(context.Context, []byte, entity.RenderOptions) ([]byte, error)
 	RenderPPTX(context.Context, []byte, entity.RenderOptions) ([]byte, error)
-	RenderPDF(context.Context, []byte, entity.RenderOptions) ([]byte, error)
-	RenderExcel(context.Context, []byte, entity.RenderOptions) ([]byte, error)
-	RenderXYFlow(context.Context, []byte, entity.RenderOptions) ([]byte, error)
-	RenderIsoflow(context.Context, []byte, entity.RenderOptions) ([]byte, error)
+	RenderTerminal(context.Context, []byte, entity.RenderOptions) ([]byte, error)
 	BuildPPTXPlan(context.Context, []byte, entity.RenderOptions) ([]byte, error)
 	NewPreviewRepository(string, entity.PreviewOptions) (repository.PreviewRepository, error)
 }
 
 type renderUsecase struct {
-	excalidrawRepository  repository.ExcalidrawRepository
-	xaligoRepository      repository.XaligoRepository
-	powerpointRepository  repository.PowerpointRepository
-	isoflowRepository     repository.IsoflowRepository
-	svgRepository         repository.SVGRepository
-	xyFlowRepository      repository.XYFlowRepository
-	pdfRepository         repository.PDFRepository
-	spreadsheetRepository repository.SpreadsheetRepository
+	sceneRepository      repository.SceneRepository
+	xaligoRepository     repository.XaligoRepository
+	powerpointRepository repository.PowerpointRepository
+	svgRepository        repository.SVGRepository
+	terminalRepository   repository.TerminalRepository
+	v2Frontend           v2usecase.FrontendUsecase
+	v2Engine             v2usecase.EngineUsecase
 }
 
 func NewRenderUsecase(
-	excalidrawRepository repository.ExcalidrawRepository,
+	sceneRepository repository.SceneRepository,
 	xaligoRepository repository.XaligoRepository,
 	powerpointRepository repository.PowerpointRepository,
-	isoflowRepository repository.IsoflowRepository,
 	svgRepository repository.SVGRepository,
-	xyFlowRepository repository.XYFlowRepository,
-	pdfRepository repository.PDFRepository,
-	spreadsheetRepository repository.SpreadsheetRepository,
+	terminalRepository repository.TerminalRepository,
 ) RenderUsecase {
 	return &renderUsecase{
-		excalidrawRepository:  excalidrawRepository,
-		xaligoRepository:      xaligoRepository,
-		powerpointRepository:  powerpointRepository,
-		isoflowRepository:     isoflowRepository,
-		svgRepository:         svgRepository,
-		xyFlowRepository:      xyFlowRepository,
-		pdfRepository:         pdfRepository,
-		spreadsheetRepository: spreadsheetRepository,
+		sceneRepository:      sceneRepository,
+		xaligoRepository:     xaligoRepository,
+		powerpointRepository: powerpointRepository,
+		svgRepository:        svgRepository,
+		terminalRepository:   terminalRepository,
+		v2Frontend:           v2usecase.NewFrontendUsecase(),
+		v2Engine:             v2usecase.NewEngineUsecase(),
 	}
 }
 
@@ -80,30 +76,22 @@ const (
 	ModeNetwork  = v1engine.ModeNetworkV1EngineOptionRender
 	ModeAWS      = v1engine.ModeAWSV1EngineOptionRender
 
-	FormatExcalidraw = v1engine.FormatExcalidrawV1EngineOptionRender
-	FormatSVG        = v1engine.FormatSVGV1EngineOptionRender
-	FormatPPTX       = v1engine.FormatPPTXV1EngineOptionRender
-	FormatPDF        = v1engine.FormatPDFV1EngineOptionRender
-	FormatExcel      = v1engine.FormatExcelV1EngineOptionRender
-	FormatXYFlow     = v1engine.FormatXYFlowV1EngineOptionRender
-	FormatIsoflow    = v1engine.FormatIsoflowV1EngineOptionRender
+	FormatSVG                    = v1engine.FormatSVGV1EngineOptionRender
+	FormatPPTX                   = v1engine.FormatPPTXV1EngineOptionRender
+	FormatTerminal entity.Format = "terminal"
 
 	SeverityError   = v1engine.SeverityErrorV1EngineOptionRender
 	SeverityWarning = v1engine.SeverityWarningV1EngineOptionRender
 )
-
-var ErrNotImplemented = v1engine.ErrNotImplementedV1EngineOptionRender
 
 var (
 	logger   = share.DefaultLogger()
 	IURR001  = share.NewMCode("IURR-001", "Render context check failed")
 	IURR002  = share.NewMCode("IURR-002", "Render validate render options failed")
 	IURR003  = share.NewMCode("IURR-003", "Render default format branch")
-	IURR004  = share.NewMCode("IURR-004", "Render excalidraw branch")
 	IURR005  = share.NewMCode("IURR-005", "Render SVG branch")
 	IURR006  = share.NewMCode("IURR-006", "Render PPTX branch")
-	IURR007  = share.NewMCode("IURR-007", "Render XYFlow branch")
-	IURR008  = share.NewMCode("IURR-008", "Render Isoflow branch")
+	IURR010  = share.NewMCode("IURR-010", "Render terminal branch")
 	IURR009  = share.NewMCode("IURR-009", "Render unknown format branch")
 	IURSO001 = share.NewMCode("IURSO-001", "Service options no services CSV branch")
 	IURSO002 = share.NewMCode("IURSO-002", "Service options services CSV branch")
@@ -122,7 +110,39 @@ var (
 )
 
 func (rcvr *renderUsecase) ValidateRenderOptions(opts entity.RenderOptions) error {
+	return ValidateRenderOptions(opts)
+}
+
+func validateRenderOptions(opts entity.RenderOptions) error {
+	if entity.Format(strings.ToLower(strings.TrimSpace(string(opts.Format)))) == FormatTerminal {
+		if err := validateTerminalRenderOptions(opts); err != nil {
+			return err
+		}
+		opts.Format = FormatSVG
+	}
 	return v1engine.ValidateRenderOptionsV1EngineOptionRender(opts)
+}
+
+func validateTerminalRenderOptions(opts entity.RenderOptions) error {
+	if opts.TerminalStyle != "" && opts.TerminalStyle != entity.TerminalStyleUnicode && opts.TerminalStyle != entity.TerminalStyleASCII {
+		return fmt.Errorf("unknown terminal style %q", opts.TerminalStyle)
+	}
+	if opts.TerminalLayout != "" && opts.TerminalLayout != entity.TerminalLayoutDiagram && opts.TerminalLayout != entity.TerminalLayoutSemantic && opts.TerminalLayout != entity.TerminalLayoutHybrid {
+		return fmt.Errorf("unknown terminal layout %q", opts.TerminalLayout)
+	}
+	if opts.TerminalDetail != "" && opts.TerminalDetail != entity.TerminalDetailCompact && opts.TerminalDetail != entity.TerminalDetailNormal && opts.TerminalDetail != entity.TerminalDetailFull {
+		return fmt.Errorf("unknown terminal detail %q", opts.TerminalDetail)
+	}
+	if opts.TerminalColor != "" && opts.TerminalColor != entity.TerminalColorAuto && opts.TerminalColor != entity.TerminalColorAlways && opts.TerminalColor != entity.TerminalColorNever {
+		return fmt.Errorf("unknown terminal color %q", opts.TerminalColor)
+	}
+	if opts.TerminalIcons != "" && opts.TerminalIcons != entity.TerminalIconsLabel && opts.TerminalIcons != entity.TerminalIconsSymbol && opts.TerminalIcons != entity.TerminalIconsNone {
+		return fmt.Errorf("unknown terminal icons %q", opts.TerminalIcons)
+	}
+	if opts.TerminalWidth < 0 || opts.TerminalHeight < 0 {
+		return fmt.Errorf("terminal dimensions must not be negative")
+	}
+	return nil
 }
 
 func (rcvr *renderUsecase) Render(ctx context.Context, input []byte, opts entity.RenderOptions) ([]byte, error) {
@@ -130,68 +150,60 @@ func (rcvr *renderUsecase) Render(ctx context.Context, input []byte, opts entity
 		logger.ERROR(IURR001, "context check failed", map[string]any{"error": err})
 		return nil, err
 	}
-	if err := ValidateRenderOptions(opts); err != nil {
+	if err := rcvr.ValidateRenderOptions(opts); err != nil {
 		logger.ERROR(IURR002, "validate render options failed", map[string]any{"format": opts.Format, "error": err})
 		return nil, err
 	}
 	format := entity.Format(strings.ToLower(strings.TrimSpace(string(opts.Format))))
 	if format == "" {
 		logger.DEBUG(IURR003, "branch default format")
-		format = FormatExcalidraw
+		format = FormatSVG
 	}
 	opts.Format = format
-	if format == FormatExcalidraw && containsUMLRenderUsecase(input) {
-		return nil, fmt.Errorf("UML Excalidraw export is disabled; use svg, pdf, pptx, excel, xyflow, or isoflow instead")
-	}
 	switch format {
-	case FormatExcalidraw:
-		logger.DEBUG(IURR004, "branch excalidraw")
-		return rcvr.RenderExcalidraw(ctx, input, opts)
 	case FormatSVG:
 		logger.DEBUG(IURR005, "branch svg")
 		return rcvr.RenderSVG(ctx, input, opts)
 	case FormatPPTX:
 		logger.DEBUG(IURR006, "branch pptx")
 		return rcvr.RenderPPTX(ctx, input, opts)
-	case FormatPDF:
-		return rcvr.RenderPDF(ctx, input, opts)
-	case FormatExcel:
-		return rcvr.RenderExcel(ctx, input, opts)
-	case FormatXYFlow:
-		logger.DEBUG(IURR007, "branch xyflow")
-		return rcvr.RenderXYFlow(ctx, input, opts)
-	case FormatIsoflow:
-		logger.DEBUG(IURR008, "branch isoflow")
-		return rcvr.RenderIsoflow(ctx, input, opts)
+	case FormatTerminal:
+		logger.DEBUG(IURR010, "branch terminal")
+		return rcvr.RenderTerminal(ctx, input, opts)
 	default:
 		logger.ERROR(IURR009, "branch unknown format", map[string]any{"format": format})
 		return nil, fmt.Errorf("unknown render format %q", format)
 	}
 }
 
-func containsUMLRenderUsecase(input []byte) bool {
-	decoder := xml.NewDecoder(bytes.NewReader(input))
-	for {
-		token, err := decoder.Token()
-		if err != nil {
-			return false
-		}
-		start, ok := token.(xml.StartElement)
-		if !ok {
-			continue
-		}
-		if start.Name.Local == "uml" {
-			return true
-		}
+func (rcvr *renderUsecase) RenderTerminal(ctx context.Context, input []byte, opts entity.RenderOptions) ([]byte, error) {
+	if renderDocumentVersion(input) != "2" {
+		return nil, fmt.Errorf("terminal output is available only for V2 documents")
 	}
+	spec, _, err := rcvr.v2Frontend.Lower(input)
+	if err != nil {
+		return nil, fmt.Errorf("lower V2 document: %w", err)
+	}
+	resolved, err := rcvr.v2Engine.Resolve(ctx, spec)
+	if err != nil {
+		return nil, fmt.Errorf("resolve V2 document: %w", err)
+	}
+	data, err := rcvr.terminalRepository.Render(resolved, opts)
+	if err != nil {
+		return nil, fmt.Errorf("render V2 terminal output: %w", err)
+	}
+	return data, nil
 }
 
-var IURRE001 = share.NewMCode("IURRE-001", "Render Excalidraw completed")
+var IURBS012 = share.NewMCode("IURBS-012", "Build presentation scene completed")
 
-func (rcvr *renderUsecase) RenderExcalidraw(ctx context.Context, input []byte, opts entity.RenderOptions) ([]byte, error) {
+// BuildScene exposes the transitional V1 presentation scene to internal
+// callers and tests. It is not a supported output format; SVG and PPTX are the
+// only public render projections.
+func (rcvr *renderUsecase) BuildScene(ctx context.Context, input []byte, opts entity.RenderOptions) ([]byte, error) {
 	scene, _, err := rcvr.buildScene(ctx, input, opts)
 	if err == nil {
-		logger.DEBUG(IURRE001, "completed")
+		logger.DEBUG(IURBS012, "completed")
 	}
 	return scene, err
 }
@@ -222,6 +234,21 @@ func (rcvr *renderUsecase) RenderArtifacts(ctx context.Context, input []byte, op
 		return nil, fmt.Errorf("render artifacts is only available for SVG, got %q", format)
 	}
 	opts.Format = FormatSVG
+	if renderDocumentVersion(input) == "2" {
+		spec, _, err := rcvr.v2Frontend.Lower(input)
+		if err != nil {
+			return nil, fmt.Errorf("lower V2 document: %w", err)
+		}
+		data, err := rcvr.v2Engine.RenderSVG(ctx, spec)
+		if err != nil {
+			return nil, fmt.Errorf("render V2 SVG: %w", err)
+		}
+		data, err = embedV2CatalogIcons(data, opts)
+		if err != nil {
+			return nil, fmt.Errorf("embed V2 SVG icons: %w", err)
+		}
+		return []entity.RenderArtifact{{ID: "v2", Data: data}}, nil
+	}
 	document, err := rcvr.buildDocumentPlan(ctx, input, opts, false)
 	if err != nil {
 		logger.ERROR(IURRS001, "build document plan failed", map[string]any{"error": err})
@@ -241,6 +268,90 @@ func (rcvr *renderUsecase) RenderArtifacts(ctx context.Context, input []byte, op
 }
 
 var (
+	v2CatalogRectPattern = regexp.MustCompile(`<rect\b[^>]*\bdata-icon="catalog:([0-9]+)"[^>]*/>`)
+	v2SVGAttrPattern     = regexp.MustCompile(`(?:^|\s)(x|y|width|height)="([^"]+)"`)
+	v2CatalogCache       sync.Map
+)
+
+func embedV2CatalogIcons(svg []byte, opts entity.RenderOptions) ([]byte, error) {
+	matches := v2CatalogRectPattern.FindAllSubmatch(svg, -1)
+	if len(matches) == 0 {
+		return svg, nil
+	}
+	catalog, err := readV2Catalog(opts)
+	if err != nil {
+		return nil, err
+	}
+	var images strings.Builder
+	for _, match := range matches {
+		id, _ := strconv.Atoi(string(match[1]))
+		dataURL := catalog[id]
+		if dataURL == "" {
+			continue
+		}
+		attrs := map[string]float64{}
+		for _, attr := range v2SVGAttrPattern.FindAllSubmatch(match[0], -1) {
+			attrs[string(attr[1])], _ = strconv.ParseFloat(string(attr[2]), 64)
+		}
+		size := min(40.0, attrs["width"]*0.7, attrs["height"]*0.7)
+		if size <= 0 {
+			continue
+		}
+		x := attrs["x"] + (attrs["width"]-size)/2
+		y := attrs["y"] + (attrs["height"]-size)/2
+		fmt.Fprintf(&images, `<image x="%g" y="%g" width="%g" height="%g" preserveAspectRatio="xMidYMid meet" href="%s"/>`, x, y, size, size, html.EscapeString(dataURL))
+	}
+	if images.Len() == 0 {
+		return svg, nil
+	}
+	end := bytes.LastIndex(svg, []byte("</svg>"))
+	if end < 0 {
+		return nil, fmt.Errorf("Rust SVG has no closing element")
+	}
+	output := make([]byte, 0, len(svg)+images.Len())
+	output = append(output, svg[:end]...)
+	output = append(output, images.String()...)
+	output = append(output, svg[end:]...)
+	return output, nil
+}
+
+func readV2Catalog(opts entity.RenderOptions) (map[int]string, error) {
+	var data []byte
+	var err error
+	cacheKey := ""
+	if opts.Assets != nil && opts.Assets.FS != nil {
+		data, err = fs.ReadFile(opts.Assets.FS, opts.Assets.CatalogCSV)
+	} else {
+		cacheKey = config.New().SvcCatalogCSV
+		if cached, ok := v2CatalogCache.Load(cacheKey); ok {
+			return cached.(map[int]string), nil
+		}
+		data, err = os.ReadFile(cacheKey)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("read service catalog: %w", err)
+	}
+	records, err := csv.NewReader(bytes.NewReader(data)).ReadAll()
+	if err != nil {
+		return nil, fmt.Errorf("parse service catalog: %w", err)
+	}
+	catalog := make(map[int]string, len(records))
+	for _, record := range records[1:] {
+		if len(record) < 6 {
+			continue
+		}
+		id, parseErr := strconv.Atoi(strings.TrimSpace(record[0]))
+		if parseErr == nil {
+			catalog[id] = strings.TrimSpace(record[5])
+		}
+	}
+	if cacheKey != "" {
+		v2CatalogCache.Store(cacheKey, catalog)
+	}
+	return catalog, nil
+}
+
+var (
 	IURBPP001 = share.NewMCode("IURBPP-001", "Build PPTX plan build scene failed")
 	IURBPP002 = share.NewMCode("IURBPP-002", "Build PPTX plan build plan failed")
 	IURRP001  = share.NewMCode("IURRP-001", "Render PPTX build plan failed")
@@ -249,6 +360,24 @@ var (
 )
 
 func (rcvr *renderUsecase) buildDocumentPlan(ctx context.Context, input []byte, opts entity.RenderOptions, uniformPages bool) (entity.DocumentPlan, error) {
+	if renderDocumentVersion(input) == "2" {
+		spec, _, err := rcvr.v2Frontend.Lower(input)
+		if err != nil {
+			return entity.DocumentPlan{}, fmt.Errorf("lower V2 document: %w", err)
+		}
+		resolved, err := rcvr.v2Engine.Resolve(ctx, spec)
+		if err != nil {
+			return entity.DocumentPlan{}, fmt.Errorf("resolve V2 document: %w", err)
+		}
+		document, err := v2usecase.BuildDocumentPlan(resolved, opts.PxPerInch)
+		if err != nil {
+			return entity.DocumentPlan{}, fmt.Errorf("build V2 document plan: %w", err)
+		}
+		if uniformPages {
+			v1engine.NormalizeDocumentPageSizesV1EnginePlanDocument(&document)
+		}
+		return document, nil
+	}
 	scene, entries, err := rcvr.buildScene(ctx, input, opts)
 	if err != nil {
 		logger.ERROR(IURBPP001, "build scene failed", map[string]any{"error": err})
@@ -269,6 +398,26 @@ func (rcvr *renderUsecase) buildDocumentPlan(ctx context.Context, input []byte, 
 		v1engine.NormalizeDocumentPageSizesV1EnginePlanDocument(&document)
 	}
 	return document, nil
+}
+
+func renderDocumentVersion(input []byte) string {
+	decoder := xml.NewDecoder(bytes.NewReader(input))
+	for {
+		token, err := decoder.Token()
+		if err != nil {
+			return ""
+		}
+		start, ok := token.(xml.StartElement)
+		if !ok {
+			continue
+		}
+		for _, attr := range start.Attr {
+			if attr.Name.Local == "version" {
+				return strings.TrimSpace(attr.Value)
+			}
+		}
+		return ""
+	}
 }
 
 // BuildPPTXPlan remains as the format-specific compatibility boundary for WASM.
@@ -538,7 +687,6 @@ func (rcvr *renderUsecase) RenderPPTX(ctx context.Context, input []byte, opts en
 	data, err := rcvr.powerpointRepository.ExportPptxBytes(ctx, entity.PptxExportOptions{
 		PlanJSON: planJSON, Title: opts.Title, Author: opts.Author,
 		Company: opts.Company, Subject: opts.Subject, Compression: opts.Compression,
-		ExporterWASM: opts.PPTXExporterWASM,
 	})
 	if err != nil {
 		logger.ERROR(IURRP003, "export failed", map[string]any{"error": err})
@@ -551,162 +699,10 @@ func (rcvr *renderUsecase) RenderPPTX(ctx context.Context, input []byte, opts en
 	return data, nil
 }
 
-// RenderPDF maps each document page to one PDF page.
-func (rcvr *renderUsecase) RenderPDF(ctx context.Context, input []byte, opts entity.RenderOptions) ([]byte, error) {
-	if rcvr.pdfRepository == nil {
-		return nil, fmt.Errorf("PDF repository is not available in this runtime")
-	}
-	document, err := rcvr.buildDocumentPlan(ctx, input, opts, false)
-	if err != nil {
-		return nil, err
-	}
-	pages, err := rcvr.renderDocumentPages(document, opts)
-	if err != nil {
-		return nil, err
-	}
-	return rcvr.pdfRepository.Export(ctx, pages)
-}
-
-// RenderExcel maps each document page to one worksheet with the page SVG
-// embedded as a vector image.
-func (rcvr *renderUsecase) RenderExcel(ctx context.Context, input []byte, opts entity.RenderOptions) ([]byte, error) {
-	if rcvr.spreadsheetRepository == nil {
-		return nil, fmt.Errorf("Excel repository is not available in this runtime")
-	}
-	document, err := rcvr.buildDocumentPlan(ctx, input, opts, false)
-	if err != nil {
-		return nil, err
-	}
-	pages, err := rcvr.renderDocumentPages(document, opts)
-	if err != nil {
-		return nil, err
-	}
-	return rcvr.spreadsheetRepository.Export(ctx, pages)
-}
-
-func (rcvr *renderUsecase) renderDocumentPages(document entity.DocumentPlan, opts entity.RenderOptions) ([]entity.RenderPage, error) {
-	pxPerInch := opts.PxPerInch
-	if pxPerInch <= 0 {
-		pxPerInch = 96
-	}
-	pages := make([]entity.RenderPage, 0, len(document.Pages))
-	for _, page := range document.Pages {
-		svg, err := rcvr.svgRepository.Render(entity.Plan{
-			Slide: page.Slide, Ops: page.Ops, Legend: document.Legend,
-		}, pxPerInch, opts.SVGLegendPosition)
-		if err != nil {
-			return nil, fmt.Errorf("render document page %q as SVG: %w", page.ID, err)
-		}
-		widthPx, heightPx, err := intrinsicSVGDimensionsRenderDocument(svg)
-		if err != nil {
-			return nil, fmt.Errorf("resolve document page %q SVG dimensions: %w", page.ID, err)
-		}
-		pages = append(pages, entity.RenderPage{
-			ID: page.ID, SVG: svg,
-			WidthPx: widthPx, HeightPx: heightPx,
-		})
-	}
-	return pages, nil
-}
-
-func intrinsicSVGDimensionsRenderDocument(data []byte) (float64, float64, error) {
-	decoder := xml.NewDecoder(bytes.NewReader(data))
-	for {
-		token, err := decoder.Token()
-		if err == io.EOF {
-			return 0, 0, fmt.Errorf("SVG root element is missing")
-		}
-		if err != nil {
-			return 0, 0, fmt.Errorf("parse SVG root: %w", err)
-		}
-		start, ok := token.(xml.StartElement)
-		if !ok {
-			continue
-		}
-		if start.Name.Local != "svg" {
-			return 0, 0, fmt.Errorf("root element is <%s>, expected <svg>", start.Name.Local)
-		}
-		width, height := "", ""
-		for _, attribute := range start.Attr {
-			switch attribute.Name.Local {
-			case "width":
-				width = attribute.Value
-			case "height":
-				height = attribute.Value
-			}
-		}
-		parsedWidth, err := parseSVGPixelDimensionRenderDocument(width)
-		if err != nil {
-			return 0, 0, fmt.Errorf("width: %w", err)
-		}
-		parsedHeight, err := parseSVGPixelDimensionRenderDocument(height)
-		if err != nil {
-			return 0, 0, fmt.Errorf("height: %w", err)
-		}
-		return parsedWidth, parsedHeight, nil
-	}
-}
-
-func parseSVGPixelDimensionRenderDocument(value string) (float64, error) {
-	value = strings.TrimSpace(value)
-	if value == "" {
-		return 0, fmt.Errorf("dimension is missing")
-	}
-	parsed, err := strconv.ParseFloat(value, 64)
-	if err != nil {
-		return 0, fmt.Errorf("dimension %q must be a unitless pixel number: %w", value, err)
-	}
-	if parsed <= 0 || math.IsNaN(parsed) || math.IsInf(parsed, 0) {
-		return 0, fmt.Errorf("dimension %q must be positive and finite", value)
-	}
-	return parsed, nil
-}
-
-var (
-	IURRXYF001 = share.NewMCode("IURRXYF-001", "Render XYFlow build scene failed")
-	IURRXYF002 = share.NewMCode("IURRXYF-002", "Render XYFlow scene failed")
-)
-
-func (rcvr *renderUsecase) RenderXYFlow(ctx context.Context, input []byte, opts entity.RenderOptions) ([]byte, error) {
-	scene, _, err := rcvr.buildScene(ctx, input, opts)
-	if err != nil {
-		logger.ERROR(IURRXYF001, "build scene failed", map[string]any{"error": err})
-		return nil, err
-	}
-	out, err := rcvr.xyFlowRepository.Render(scene)
-	if err != nil {
-		logger.ERROR(IURRXYF002, "render scene failed", map[string]any{"error": err})
-		return nil, err
-	}
-	return out, nil
-}
-
-var (
-	IURRI001 = share.NewMCode("IURRI-001", "Render Isoflow load icons")
-	IURRI003 = share.NewMCode("IURRI-003", "Render Isoflow build scene failed")
-	IURRI004 = share.NewMCode("IURRI-004", "Render Isoflow with icons failed")
-)
-
-func (rcvr *renderUsecase) RenderIsoflow(ctx context.Context, input []byte, opts entity.RenderOptions) ([]byte, error) {
-	scene, _, err := rcvr.buildScene(ctx, input, opts)
-	if err != nil {
-		logger.ERROR(IURRI003, "build scene failed", map[string]any{"error": err})
-		return nil, err
-	}
-	logger.DEBUG(IURRI001, "load isoflow icons")
-	icons, _ := rcvr.isoflowRepository.LoadIsoflowIcons(opts.Assets)
-	out, err := rcvr.isoflowRepository.RenderWithIcons(scene, icons)
-	if err != nil {
-		logger.ERROR(IURRI004, "render with icons failed", map[string]any{"error": err})
-		return nil, err
-	}
-	return out, nil
-}
-
 func (rcvr *renderUsecase) serviceOptions(opts entity.RenderOptions) ([]entity.ServiceEntry, map[int]string, error) {
 	if len(bytes.TrimSpace(opts.ServicesCSV)) == 0 {
-		logger.DEBUG(IURSO001, "branch no services csv", map[string]any{"abbreviations": len(opts.Abbreviations)})
-		abbreviations, err := v1engine.ResolveServiceOptionsV1EngineOptionService(nil, opts.Abbreviations)
+		logger.DEBUG(IURSO001, "branch no services csv")
+		abbreviations, err := v1engine.ResolveServiceOptionsV1EngineOptionService(nil, nil)
 		return nil, abbreviations, err
 	}
 
@@ -720,7 +716,7 @@ func (rcvr *renderUsecase) serviceOptions(opts entity.RenderOptions) ([]entity.S
 		logger.ERROR(IURSO003, "read services csv failed", map[string]any{"error": err})
 		return nil, nil, fmt.Errorf("read services CSV: %w", err)
 	}
-	abbreviations, err := v1engine.ResolveServiceOptionsV1EngineOptionService(entries, opts.Abbreviations)
+	abbreviations, err := v1engine.ResolveServiceOptionsV1EngineOptionService(entries, nil)
 	if err != nil {
 		logger.ERROR(IURSO005, "legend validation failed", map[string]any{"error": err})
 		return nil, nil, err
@@ -774,8 +770,8 @@ func (rcvr *renderUsecase) buildScene(ctx context.Context, input []byte, opts en
 
 	connections := v1engine.CollectConnectionNodesV1EngineSceneConnection(doc.Root)
 	dependencies := SceneDependencies{
-		XaligoRepository:     rcvr.xaligoRepository,
-		ExcalidrawRepository: rcvr.excalidrawRepository,
+		XaligoRepository: rcvr.xaligoRepository,
+		SceneRepository:  rcvr.sceneRepository,
 	}.core()
 
 	var scene []byte
@@ -794,7 +790,7 @@ func (rcvr *renderUsecase) buildScene(ctx context.Context, input []byte, opts en
 	}
 	if err != nil {
 		logger.ERROR(IURBS010, "build JSON failed", map[string]any{"error": err})
-		return nil, nil, fmt.Errorf("build excalidraw JSON: %w", err)
+		return nil, nil, fmt.Errorf("build presentation scene: %w", err)
 	}
 	if err := rcvr.checkRenderContext(ctx); err != nil {
 		return nil, nil, err
@@ -822,5 +818,5 @@ func (rcvr *renderUsecase) checkRenderContext(ctx context.Context) error {
 // ValidateRenderOptions is kept as a source-compatible package boundary.
 // Deprecated: construct RenderUsecase and call ValidateRenderOptions.
 func ValidateRenderOptions(opts entity.RenderOptions) error {
-	return v1engine.ValidateRenderOptionsV1EngineOptionRender(opts)
+	return validateRenderOptions(opts)
 }

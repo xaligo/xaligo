@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 
-const require = createRequire(new URL('../../external/package.json', import.meta.url));
+const require = createRequire(new URL('../../package.json', import.meta.url));
 const JSZip = require('jszip');
 
 const root = path.resolve(import.meta.dirname, '../..');

@@ -12,4 +12,4 @@ applyTo: ".github/instructions/manual/**"
 | Q03.2 | not-started | Audit pipe-table parsing and styling parity with tag-based tables. | parser and render comparison tests |
 | Q03.3 | not-started | Verify long English, Japanese, symbols, and narrow columns wrap or fit without overlap. | SVG text geometry assertions |
 | Q03.4 | not-started | Review table visual hierarchy, spacing, typography, and docs-image polish. | design review notes plus regenerated sample SVG |
-| Q03.5 | not-started | Confirm table behavior in Excalidraw and PPTX when shared table contracts change. | focused format checks |
+| Q03.5 | not-started | Confirm table behavior in SVG and PPTX when shared table contracts change. | focused format checks |

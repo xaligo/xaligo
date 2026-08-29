@@ -1,0 +1,13 @@
+[package]
+name = "xaligo-exporter-unit-tests"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[[test]]
+name = "exporter"
+path = "exporter_test.rs"
+
+[dependencies]
+xaligo-pptx-exporter = { path = "../../../../external/exporter" }
+zip = { version = "7.2.0", default-features = false, features = ["deflate-flate2-zlib-rs", "time"] }

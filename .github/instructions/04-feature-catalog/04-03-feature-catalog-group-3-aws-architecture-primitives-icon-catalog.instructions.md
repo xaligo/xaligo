@@ -19,7 +19,7 @@ applyTo: ".github/instructions/manual/**"
 | XAL-3000090 | AWS Architecture-Service-Icons catalog | Implemented | Bundled AWS service icon set looked up by numeric catalog ID from `service-catalog.csv`. |
 | XAL-3000100 | Tabler icon catalog | Implemented | Imported and cataloged Tabler icon set, refreshed via `npm run import:tabler-icons`. |
 | XAL-3000110 | Yamaha icon catalog | Implemented | Imported and cataloged Yamaha icon set, refreshed via `npm run import:yamaha-icons`. |
-| XAL-3000120 | Isoflow icon manifest | Implemented | `isoflow-icons.json` manifest mapping catalog icons to Isoflow-compatible icon references, refreshed via `npm run generate:isoflow-icons`. |
+| XAL-3000120 | Isoflow icon manifest | Excluded unless justified | Retired with Isoflow output; manifest, generator, and generated icon set removed. |
 | XAL-3000130 | Service ID lookup catalogs | Implemented | `service-index.csv` for quick ID lookup and `service-catalog.csv` for the full catalog with embedded icon data. |
 | XAL-3000140 | `services.csv` label overrides | Implemented | `id,OfficialName,Abbreviation,Summary,Usage,Notes` per-diagram service list driving icon abbreviation overrides. |
 | XAL-3000150 | Service legend generation | Implemented | SVG and PPTX output render a service legend derived from `services.csv`, with configurable SVG legend position. |

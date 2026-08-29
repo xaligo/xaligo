@@ -27,9 +27,9 @@ xaligo has one source DSL: `.xal`. Keep every renderer on the same pipeline:
 .xal -> parser -> layout -> shared scene/plan -> encoder
 ```
 
-Do not add format-specific parsers or hidden alternate layout paths. SVG,
-Excalidraw, PPTX, XYFlow, and Isoflow should consume shared parser, layout, and
-scene/plan data wherever possible.
+Do not add format-specific parsers or hidden alternate layout paths. SVG and
+PPTX consume the shared parser, layout, and document plan; Markdown embeds SVG
+artifacts. Other outputs are outside the current product contract.
 
 ## Important Paths
 
@@ -39,7 +39,8 @@ scene/plan data wherever possible.
 | `internal/repository/` | Filesystem, catalog, preview, and output-format adapters |
 | `cmd/` | Native CLI entry point |
 | `cmd/wasm/` | JavaScript/WASM adapter |
-| `external/` | TypeScript package and PPTX exporter implementation |
+| `external/engine/` | Rust layout/SVG engine workspace |
+| `external/exporter/` | Statically linked Rust PPTX exporter implementation |
 | `docs/src/examples/samples/` | Source `.xal` and CSV examples |
 | `docs/src/examples/previews/` | Rendered SVG previews used by the book |
 | `etc/resources/aws/` | Catalogs, icons, templates, and attribution |

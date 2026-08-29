@@ -7,8 +7,9 @@ applyTo: ".github/instructions/manual/**"
 ## Project
 
 `xaligo` is a Go CLI and WebAssembly/TypeScript package that converts the
-`.xal` diagram DSL to Excalidraw, SVG, PPTX, PDF, Excel, XYFlow, and Isoflow
-outputs.
+`.xal` diagram DSL to SVG and PPTX. It also renders fenced `xal` blocks in
+Markdown to SVG and embeds the resulting image references. No other output
+format is supported or planned without an explicit product-scope decision.
 
 ```text
 module: github.com/xaligo/xaligo

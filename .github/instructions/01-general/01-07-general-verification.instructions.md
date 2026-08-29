@@ -17,10 +17,12 @@ builds:
 
 ```bash
 make security-check
+make test-engine
 go test ./...
 go build ./...
 npm ci --ignore-scripts
-npm run build --workspace=@xaligo/xaligo-external
-npm --prefix external run build:pptx-exporter-wasm
+cargo test --manifest-path test/unit/external/engine/Cargo.toml --locked
+cargo test --manifest-path test/unit/external/exporter/Cargo.toml --locked
+make build-exporter
 git diff --check
 ```

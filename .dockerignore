@@ -1,6 +1,10 @@
 .git
-external/dist
-external/node_modules
-external/wasm/*.wasm
+.bin
+bin/native
+docs/book
+external/engine/lib
+external/engine/target
+external/exporter/target
+node_modules
 output
 vendor

@@ -21,7 +21,7 @@ func TestUMLRelationLabelsAvoidUnrelatedClassifierBoxes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	out, err := newUsecase().RenderExcalidraw(context.Background(), source, entity.RenderOptions{Theme: "light"})
+	out, err := newUsecase().BuildScene(context.Background(), source, entity.RenderOptions{Theme: "light"})
 	if err != nil {
 		t.Fatal(err)
 	}

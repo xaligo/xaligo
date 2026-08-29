@@ -16,15 +16,24 @@ func DiagnoseV1EngineDiagnoseDocument(input []byte) []entity.Diagnostic {
 // DiagnoseWithImportsV1EngineDiagnoseDocument validates imported data through
 // the same parse and layout stages used by rendering.
 func DiagnoseWithImportsV1EngineDiagnoseDocument(input []byte, imports *entity.ImportSource) []entity.Diagnostic {
+	_, diagnostics := AnalyzeWithImportsV1EngineDiagnoseDocument(input, imports)
+	return diagnostics
+}
+
+// AnalyzeWithImportsV1EngineDiagnoseDocument parses a source revision once and
+// returns both its normalized document and the diagnostics from the same
+// layout preflight. Editor and project-index adapters use this boundary to
+// avoid reparsing .xal solely to derive symbols.
+func AnalyzeWithImportsV1EngineDiagnoseDocument(input []byte, imports *entity.ImportSource) (entity.Document, []entity.Diagnostic) {
 	doc, err := ParseWithImportsV1EngineParseDocument(bytes.NewReader(input), imports)
 	if err != nil {
-		return []entity.Diagnostic{diagnosticFromErrorV1EngineDiagnoseDocument(err)}
+		return entity.Document{}, []entity.Diagnostic{diagnosticFromErrorV1EngineDiagnoseDocument(err)}
 	}
 	if _, err := BuildV1EngineLayoutBuild(doc); err != nil {
-		return []entity.Diagnostic{diagnosticFromErrorV1EngineDiagnoseDocument(err)}
+		return doc, []entity.Diagnostic{diagnosticFromErrorV1EngineDiagnoseDocument(err)}
 	}
 	if doc.LegacyRoot {
-		return []entity.Diagnostic{{
+		return doc, []entity.Diagnostic{{
 			Severity: SeverityWarningV1EngineOptionRender,
 			Message:  legacyV1RootWarningV1EngineParseNode(doc.Envelope),
 			Offset:   doc.Envelope.Position.Offset,
@@ -33,7 +42,7 @@ func DiagnoseWithImportsV1EngineDiagnoseDocument(input []byte, imports *entity.I
 		}}
 	}
 	if _, specified := doc.Root.Attrs["version"]; !specified {
-		return []entity.Diagnostic{{
+		return doc, []entity.Diagnostic{{
 			Severity: SeverityWarningV1EngineOptionRender,
 			Message:  implicitV1VersionWarningV1EngineParseNode(doc.Root),
 			Offset:   doc.Root.Position.Offset,
@@ -41,7 +50,7 @@ func DiagnoseWithImportsV1EngineDiagnoseDocument(input []byte, imports *entity.I
 			Column:   doc.Root.Position.Column,
 		}}
 	}
-	return nil
+	return doc, nil
 }
 
 func diagnosticFromErrorV1EngineDiagnoseDocument(err error) entity.Diagnostic {

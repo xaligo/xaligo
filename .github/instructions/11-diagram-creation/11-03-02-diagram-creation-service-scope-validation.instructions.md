@@ -107,11 +107,11 @@ route, render beside the route lane. See
 [docs/src/examples/samples/route-traffic.xal](../../docs/src/examples/samples/route-traffic.xal) for a compact
 route/traffic example.
 
-Excalidraw output uses the same orthogonal routing metadata and adds small
-editable anchor grids behind item icons. These anchors keep lines from covering
-icons/labels while preserving visible endpoints. When several lines would share
-the same X or Y lane, the renderer offsets later lines where possible. Group
-header tags are treated as route obstacles so tag labels stay readable.
+The shared route plan uses small anchor grids behind item icons. These anchors
+keep lines from covering icons/labels while preserving visible endpoints. When
+several lines would share the same X or Y lane, the renderer offsets later
+lines where possible. Group header tags are treated as route obstacles so tag
+labels stay readable in SVG and PPTX.
 
 Reference: [docs/src/examples/samples/sample.xal](../../docs/src/examples/samples/sample.xal)
 DSL specification: [07.01 XAL overview](../07-xal-spec/07-01-xal-specification-overview.instructions.md)

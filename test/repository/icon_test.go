@@ -22,7 +22,7 @@ func TestSVGBGColorSkipsYamahaHiddenReferenceFills(t *testing.T) {
 		t.Fatal(err)
 	}
 	dataURL := "data:image/svg+xml;base64," + base64.StdEncoding.EncodeToString(raw)
-	repo := repository.NewExcalidrawRepository()
+	repo := repository.NewSceneRepository()
 	if got := repo.SVGBGColor(dataURL); got != "#7758c1" {
 		t.Fatalf("SVGBGColor(router_general) = %q, want #7758c1", got)
 	}

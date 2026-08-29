@@ -42,7 +42,6 @@ rm -rf "$WORK_DIR"
 mkdir -p "$WORK_DIR/DEBIAN" "$WORK_DIR/usr/bin" "$WORK_DIR/usr/share/doc/${PACKAGE_NAME}"
 
 build_linux_binary "$NATIVE_VERSION_VALUE" "$WORK_DIR/usr/bin/${PACKAGE_NAME}"
-build_wasm_exporter
 install_runtime_files "$RUNTIME_DIR"
 chmod 0755 "$WORK_DIR/usr/bin/${PACKAGE_NAME}"
 cat LICENSE THIRD_PARTY_LICENSES > "$WORK_DIR/usr/share/doc/${PACKAGE_NAME}/copyright"
@@ -57,7 +56,7 @@ Architecture: ${ARCH}
 Maintainer: ${PACKAGE_MAINTAINER}
 Homepage: ${PACKAGE_URL}
 Description: ${PACKAGE_DESCRIPTION}
- xaligo renders the .xal diagram DSL to Excalidraw, SVG, PPTX, XYFlow, and Isoflow formats.
+ xaligo renders the .xal diagram DSL to SVG and PPTX, with SVG embedding for Markdown.
 EOF
 
 mkdir -p "$OUT_DIR"

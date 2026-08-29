@@ -26,8 +26,8 @@ with the same effective scale as the containing geometry. Changing
 `--px-per-inch` or paper fitting therefore preserves the text-to-shape ratio.
 
 An encoder may use native text fitting or deterministic line breaking, but the
-visible result must obey the resolved policy. Editable Excalidraw-compatible
-bound text carries the same `xaligoTextLayout` metadata and must not become a
+visible result must obey the resolved policy. The temporary V1 compatibility
+scene carries the same `xaligoTextLayout` metadata and must not become a
 separate layout authority. Encoders apply text policy in this order: resolve
 padding, wrap when enabled, shrink when requested, then clip when
 `TextLayout.overflow="clip"`.

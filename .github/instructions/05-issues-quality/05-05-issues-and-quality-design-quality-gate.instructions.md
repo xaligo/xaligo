@@ -25,7 +25,7 @@ Check these visual qualities for every rendered feature:
   relation, and page-link lines should remain distinguishable and avoid
   labels, ports, metadata bands, and important shapes.
 - Color and contrast: themes, diff highlights, semantic markers, and metadata
-  tags should preserve readable contrast in SVG, Excalidraw, PPTX, PDF, Excel,
-  XYFlow, and Isoflow projections where applicable.
+  tags should preserve readable contrast in SVG and PPTX; Markdown inherits
+  SVG behavior.
 - Documentation polish: examples should be good enough for users to copy and
   for documentation to present without extra manual cleanup.

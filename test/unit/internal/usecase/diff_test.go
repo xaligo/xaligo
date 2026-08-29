@@ -91,6 +91,6 @@ func TestDiffUsecaseWithoutChangesProducesUnhighlightedImages(t *testing.T) {
 
 func newDiffUsecase() usecase.DiffUsecase {
 	return usecase.NewDiffUsecase(
-		repository.NewXaligoRepository(), repository.NewExcalidrawRepository(), repository.NewSVGRepository(),
+		repository.NewXaligoRepository(), repository.NewSceneRepository(), repository.NewSVGRepository(),
 	)
 }

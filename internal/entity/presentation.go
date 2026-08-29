@@ -7,8 +7,9 @@
 // Plan. SVG and PPTX therefore serialize the same drawing decisions.
 package entity
 
-// PresentationScene is the canonical scene subset used by plan and model
-// encoders. Its JSON remains Excalidraw-compatible for editable output.
+// PresentationScene is the transitional V1 scene subset consumed by the
+// shared SVG/PPTX plan builder. Its JSON shape is internal and is not a
+// supported output contract.
 type PresentationScene struct {
 	Elements []Element            `json:"elements"`
 	Files    map[string]SceneFile `json:"files"`
@@ -187,8 +188,8 @@ type DocumentPlan struct {
 	ConnectorLegend []ConnectorLegendEntry `json:"connectorLegend,omitempty"`
 }
 
-// DocumentPage is one physical output page. PPTX maps it to a slide, PDF to a
-// page, Excel to a worksheet, and SVG to a separate artifact.
+// DocumentPage is one physical output page. PPTX maps it to a slide and SVG to
+// a separate artifact.
 type DocumentPage struct {
 	ID    string    `json:"id"`
 	Slide PlanSlide `json:"slide"`

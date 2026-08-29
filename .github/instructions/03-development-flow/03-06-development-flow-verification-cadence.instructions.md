@@ -21,9 +21,11 @@ Typical final checks are selected by scope:
 
 ```bash
 make security-check
+make test-engine
 go test ./... -count=1
 go build ./...
-npm --prefix external test
+cargo test --manifest-path test/unit/external/engine/Cargo.toml --locked
+cargo test --manifest-path test/unit/external/exporter/Cargo.toml --locked
 mdbook build docs
 git diff --check
 git status --short

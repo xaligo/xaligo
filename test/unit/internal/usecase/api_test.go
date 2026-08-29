@@ -1,11 +1,9 @@
 package usecase_test
 
 import (
-	"archive/zip"
 	"bytes"
 	"context"
 	"encoding/json"
-	"io"
 	"math"
 	"os"
 	"path/filepath"
@@ -13,7 +11,6 @@ import (
 	"testing"
 	"testing/fstest"
 
-	awsassets "github.com/xaligo/xaligo/etc/resources/aws"
 	"github.com/xaligo/xaligo/internal/entity"
 	"github.com/xaligo/xaligo/internal/repository"
 	"github.com/xaligo/xaligo/internal/usecase"
@@ -56,7 +53,7 @@ func TestRenderArtifactsUsesOneSVGPerFrame(t *testing.T) {
 	}
 }
 
-func TestPageDocumentFormatsUseFrameOrder(t *testing.T) {
+func TestPPTXDocumentUsesFrameOrder(t *testing.T) {
 	uc := newUsecase()
 	planJSON, err := uc.BuildPPTXPlan(context.Background(), []byte(multiFrameXAL), entity.RenderOptions{Format: usecase.FormatPPTX, Theme: "light"})
 	if err != nil {
@@ -72,51 +69,6 @@ func TestPageDocumentFormatsUseFrameOrder(t *testing.T) {
 	if document.Pages[0].Slide != document.Pages[1].Slide {
 		t.Fatalf("PPTX pages must share one slide size: %#v", document.Pages)
 	}
-
-	pdf, err := uc.RenderPDF(context.Background(), []byte(multiFrameXAL), entity.RenderOptions{Format: usecase.FormatPDF, Theme: "light"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !bytes.HasPrefix(pdf, []byte("%PDF-")) || !bytes.Contains(pdf, []byte("/Type/Pages/Count 2")) {
-		t.Fatalf("PDF does not contain two pages: %q", pdf)
-	}
-
-	workbook, err := uc.RenderExcel(context.Background(), []byte(multiFrameXAL), entity.RenderOptions{Format: usecase.FormatExcel, Theme: "light"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	workbookXML := zipEntryString(t, workbook, "xl/workbook.xml")
-	if !strings.Contains(workbookXML, `name="overview"`) || !strings.Contains(workbookXML, `name="detail"`) {
-		t.Fatalf("workbook sheets = %s", workbookXML)
-	}
-	if zipEntryString(t, workbook, "xl/media/image1.svg") == "" || zipEntryString(t, workbook, "xl/media/image2.svg") == "" {
-		t.Fatal("workbook frame SVG media is missing")
-	}
-}
-
-func zipEntryString(t *testing.T, archive []byte, name string) string {
-	t.Helper()
-	reader, err := zip.NewReader(bytes.NewReader(archive), int64(len(archive)))
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, file := range reader.File {
-		if file.Name != name {
-			continue
-		}
-		entry, err := file.Open()
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer entry.Close()
-		data, err := io.ReadAll(entry)
-		if err != nil {
-			t.Fatal(err)
-		}
-		return string(data)
-	}
-	t.Fatalf("ZIP entry %s not found", name)
-	return ""
 }
 
 func TestRenderSVGLoadsInjectedTableImport(t *testing.T) {
@@ -139,74 +91,25 @@ type fakePPTXExporter struct {
 	seen entity.PptxExportOptions
 }
 
-type fixedDocumentSVGRepository struct {
-	data []byte
-}
-
-func (rcvr *fixedDocumentSVGRepository) Render(entity.Plan, float64, string) ([]byte, error) {
-	return bytes.Clone(rcvr.data), nil
-}
-
-type capturingSpreadsheetRepository struct {
-	pages []entity.RenderPage
-}
-
-func (rcvr *capturingSpreadsheetRepository) Export(_ context.Context, pages []entity.RenderPage) ([]byte, error) {
-	rcvr.pages = append([]entity.RenderPage(nil), pages...)
-	return []byte("spreadsheet"), nil
-}
-
 func newUsecase() usecase.RenderUsecase {
 	return newUsecaseWithPPTX(repository.NewPowerpointRepository())
 }
 
 func newUsecaseWithPPTX(powerpointRepository repository.PowerpointRepository) usecase.RenderUsecase {
 	return usecase.NewRenderUsecase(
-		repository.NewExcalidrawRepository(),
+		repository.NewSceneRepository(),
 		repository.NewXaligoRepository(),
 		powerpointRepository,
-		repository.NewIsoflowRepository(),
 		repository.NewSVGRepository(),
-		repository.NewXYFlowRepository(),
-		repository.NewPDFRepository(),
-		repository.NewSpreadsheetRepository(),
+		repository.NewTerminalRepository(),
 	)
-}
-
-func TestDocumentContainersUseRenderedSVGIntrinsicDimensions(t *testing.T) {
-	svgRepository := &fixedDocumentSVGRepository{data: []byte(`<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360"></svg>`)}
-	spreadsheetRepository := &capturingSpreadsheetRepository{}
-	uc := usecase.NewRenderUsecase(
-		repository.NewExcalidrawRepository(),
-		repository.NewXaligoRepository(),
-		repository.NewPowerpointRepository(),
-		repository.NewIsoflowRepository(),
-		svgRepository,
-		repository.NewXYFlowRepository(),
-		nil,
-		spreadsheetRepository,
-	)
-	if _, err := uc.RenderExcel(context.Background(), []byte(simpleXAL), entity.RenderOptions{Format: usecase.FormatExcel, Theme: "light"}); err != nil {
-		t.Fatal(err)
-	}
-	if len(spreadsheetRepository.pages) != 1 {
-		t.Fatalf("spreadsheet pages = %#v", spreadsheetRepository.pages)
-	}
-	page := spreadsheetRepository.pages[0]
-	if page.WidthPx != 640 || page.HeightPx != 360 {
-		t.Fatalf("render page dimensions = %gx%g, want intrinsic SVG 640x360", page.WidthPx, page.HeightPx)
-	}
 }
 
 func newSceneDependencies() usecase.SceneDependencies {
 	return usecase.SceneDependencies{
-		XaligoRepository:     repository.NewXaligoRepository(),
-		ExcalidrawRepository: repository.NewExcalidrawRepository(),
+		XaligoRepository: repository.NewXaligoRepository(),
+		SceneRepository:  repository.NewSceneRepository(),
 	}
-}
-
-func (rcvr *fakePPTXExporter) WritePptx(_ context.Context, _ entity.PptxExportOptions) error {
-	return nil
 }
 
 func (rcvr *fakePPTXExporter) ExportPptxBytes(_ context.Context, opts entity.PptxExportOptions) ([]byte, error) {
@@ -234,13 +137,9 @@ func TestUseCaseAPIRendersStableFormats(t *testing.T) {
 		call   func(context.Context, []byte, entity.RenderOptions) ([]byte, error)
 		want   string
 	}{
-		{"Render default", "", uc.Render, `"type": "excalidraw"`},
-		{"RenderExcalidraw", usecase.FormatExcalidraw, uc.RenderExcalidraw, `"type": "excalidraw"`},
+		{"Render default", "", uc.Render, `<svg`},
+		{"BuildScene", usecase.FormatSVG, uc.BuildScene, `"type": "excalidraw"`},
 		{"RenderSVG", usecase.FormatSVG, uc.RenderSVG, `<svg`},
-		{"RenderPDF", usecase.FormatPDF, uc.RenderPDF, `%PDF-`},
-		{"RenderExcel", usecase.FormatExcel, uc.RenderExcel, `PK`},
-		{"RenderXYFlow", usecase.FormatXYFlow, uc.RenderXYFlow, `"nodes"`},
-		{"RenderIsoflow", usecase.FormatIsoflow, uc.RenderIsoflow, `"version": "3.3.0"`},
 		{"BuildPPTXPlan", usecase.FormatPPTX, uc.BuildPPTXPlan, `"slide"`},
 	}
 	for _, check := range checks {
@@ -259,7 +158,7 @@ func TestUseCaseAPIRendersStableFormats(t *testing.T) {
 func TestUseCaseRenderDispatcherBranches(t *testing.T) {
 	uc := newUsecase()
 	ctx := context.Background()
-	formats := []entity.Format{usecase.FormatSVG, usecase.FormatPDF, usecase.FormatExcel, usecase.FormatXYFlow, usecase.FormatIsoflow}
+	formats := []entity.Format{usecase.FormatSVG}
 	for _, format := range formats {
 		t.Run(string(format), func(t *testing.T) {
 			out, err := uc.Render(ctx, []byte(simpleXAL), entity.RenderOptions{Format: format, Theme: "light"})
@@ -275,10 +174,8 @@ func TestUseCaseRenderDispatcherBranches(t *testing.T) {
 		t.Fatalf("unknown format err = %v", err)
 	}
 	umlXAL := []byte(`<xaligo version="1"><data></data><frames><frame id="main" width="320" height="180"><uml id="view"><component-diagram><component id="service" title="Service"><interface>API</interface></component></component-diagram></uml></frame></frames></xaligo>`)
-	for _, options := range []entity.RenderOptions{{Format: usecase.FormatExcalidraw, Theme: "light"}, {Theme: "light"}} {
-		if _, err := uc.Render(ctx, umlXAL, options); err == nil || !strings.Contains(err.Error(), "UML Excalidraw export is disabled") {
-			t.Fatalf("UML Excalidraw export err = %v", err)
-		}
+	if out, err := uc.Render(ctx, umlXAL, entity.RenderOptions{Theme: "light"}); err != nil || !bytes.Contains(out, []byte(`<svg`)) {
+		t.Fatalf("default UML SVG output=%q err=%v", out, err)
 	}
 	canceled, cancel := context.WithCancel(ctx)
 	cancel()
@@ -287,14 +184,20 @@ func TestUseCaseRenderDispatcherBranches(t *testing.T) {
 	}
 }
 
-func TestUseCaseRenderPPTXExportErrorAfterPlanBuild(t *testing.T) {
-	badWASM := filepath.Join(t.TempDir(), "bad.wasm")
-	if err := os.WriteFile(badWASM, []byte("not wasm"), 0644); err != nil {
+func TestRenderTerminalSupportsOnlyV2(t *testing.T) {
+	uc := newUsecase()
+	v2 := []byte(`<scene version="2" width="320" height="180" layout="horizontal"><item id="client">Client</item><item id="api">API</item><line id="request" source="client" target="api" target-decoration="arrow"/></scene>`)
+	output, err := uc.Render(context.Background(), v2, entity.RenderOptions{
+		Format: usecase.FormatTerminal, TerminalLayout: entity.TerminalLayoutSemantic,
+	})
+	if err != nil {
 		t.Fatal(err)
 	}
-	_, err := newUsecase().RenderPPTX(context.Background(), []byte(simpleXAL), entity.RenderOptions{Format: usecase.FormatPPTX, Theme: "light", PPTXExporterWASM: badWASM})
-	if err == nil || !strings.Contains(err.Error(), "run PPTX WASM exporter") {
-		t.Fatalf("RenderPPTX err = %v", err)
+	if !strings.Contains(string(output), "Client") || !strings.Contains(string(output), "API") {
+		t.Fatalf("terminal output = %q", output)
+	}
+	if _, err := uc.Render(context.Background(), []byte(simpleXAL), entity.RenderOptions{Format: usecase.FormatTerminal}); err == nil || !strings.Contains(err.Error(), "only for V2") {
+		t.Fatalf("V1 terminal error = %v", err)
 	}
 }
 
@@ -303,11 +206,10 @@ func TestUseCaseRenderPPTXUsesInjectedExporter(t *testing.T) {
 	uc := newUsecaseWithPPTX(exporter)
 	compression := false
 	opts := entity.RenderOptions{
-		Format:           usecase.FormatPPTX,
-		Theme:            "light",
-		Title:            "Injected",
-		Compression:      &compression,
-		PPTXExporterWASM: "custom.wasm",
+		Format:      usecase.FormatPPTX,
+		Theme:       "light",
+		Title:       "Injected",
+		Compression: &compression,
 	}
 	out, err := uc.RenderPPTX(context.Background(), []byte(simpleXAL), opts)
 	if err != nil {
@@ -316,7 +218,7 @@ func TestUseCaseRenderPPTXUsesInjectedExporter(t *testing.T) {
 	if string(out) != "pptx-from-fake" {
 		t.Fatalf("RenderPPTX output = %q", out)
 	}
-	if exporter.seen.Title != "Injected" || exporter.seen.ExporterWASM != "custom.wasm" || exporter.seen.Compression == nil || *exporter.seen.Compression {
+	if exporter.seen.Title != "Injected" || exporter.seen.Compression == nil || *exporter.seen.Compression {
 		t.Fatalf("exporter opts = %#v", exporter.seen)
 	}
 	if !strings.Contains(string(exporter.seen.PlanJSON), `"slide"`) {
@@ -335,12 +237,10 @@ func TestUseCaseRenderFunctionsReportBuildSceneErrors(t *testing.T) {
 		name string
 		call func(context.Context, []byte, entity.RenderOptions) ([]byte, error)
 	}{
-		{"RenderExcalidraw", uc.RenderExcalidraw},
+		{"BuildScene", uc.BuildScene},
 		{"RenderSVG", uc.RenderSVG},
 		{"BuildPPTXPlan", uc.BuildPPTXPlan},
 		{"RenderPPTX", uc.RenderPPTX},
-		{"RenderXYFlow", uc.RenderXYFlow},
-		{"RenderIsoflow", uc.RenderIsoflow},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -352,28 +252,9 @@ func TestUseCaseRenderFunctionsReportBuildSceneErrors(t *testing.T) {
 	}
 }
 
-func TestUseCaseRenderIsoflowUsesEmbeddedManifest(t *testing.T) {
-	out, err := newUsecase().RenderIsoflow(context.Background(), []byte(simpleXAL), entity.RenderOptions{
-		Format: usecase.FormatIsoflow,
-		Theme:  "light",
-		Assets: &entity.AssetSource{
-			FS:               awsassets.Assets,
-			CatalogCSV:       awsassets.CatalogCSV,
-			GroupIconsDir:    awsassets.GroupIconsDir,
-			IsoflowIconsJSON: awsassets.IsoflowIconsJSON,
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(string(out), `"version": "3.3.0"`) {
-		t.Fatalf("isoflow output = %s", out)
-	}
-}
-
-func TestRenderExcalidrawStaggeredBackgrounds(t *testing.T) {
+func TestBuildSceneStaggeredBackgrounds(t *testing.T) {
 	input := []byte(`<frame width="600" height="300"><aws-cloud id="cloud" title="AWS"><region id="region" title="Region"><vpc id="vpc" title="VPC" layout="staggered"><availability-zone id="az1" title="AZ 1"><blank /></availability-zone><availability-zone id="az2" title="AZ 2"><blank /></availability-zone><availability-zone id="az3" title="AZ 3"><blank /></availability-zone><availability-zone id="az4" title="AZ 4"><blank /></availability-zone><availability-zone id="az5" title="AZ 5"><blank /></availability-zone></vpc></region></aws-cloud></frame>`)
-	out, err := newUsecase().RenderExcalidraw(context.Background(), input, entity.RenderOptions{Theme: "light"})
+	out, err := newUsecase().BuildScene(context.Background(), input, entity.RenderOptions{Theme: "light"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -385,7 +266,7 @@ func TestRenderExcalidrawStaggeredBackgrounds(t *testing.T) {
 	}
 }
 
-func TestRenderExcalidrawFramesAndCrossFrameLabels(t *testing.T) {
+func TestBuildSceneFramesAndCrossFrameLabels(t *testing.T) {
 	input := []byte(`<frames gap="48">
   <frame id="overview" width="320" height="180">
     <rectangle id="web" title="Web" width="120" height="80" />
@@ -395,7 +276,7 @@ func TestRenderExcalidrawFramesAndCrossFrameLabels(t *testing.T) {
     <rectangle id="db" title="DB" width="120" height="80" />
   </frame>
 </frames>`)
-	out, err := newUsecase().RenderExcalidraw(context.Background(), input, entity.RenderOptions{Theme: "light"})
+	out, err := newUsecase().BuildScene(context.Background(), input, entity.RenderOptions{Theme: "light"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -493,7 +374,7 @@ func TestRenderExcalidrawFramesAndCrossFrameLabels(t *testing.T) {
 	}
 }
 
-func TestRenderExcalidrawCrossFrameAutomaticSideUsesEveryNearestEdge(t *testing.T) {
+func TestBuildSceneCrossFrameAutomaticSideUsesEveryNearestEdge(t *testing.T) {
 	input := []byte(`<xaligo version="1"><data></data><frames gap="48">
   <frame id="top-page" width="200" height="200" content-width="40" content-height="40" align="top-center">
     <rectangle id="node" title="Top" width="40" height="40" />
@@ -519,7 +400,7 @@ func TestRenderExcalidrawCrossFrameAutomaticSideUsesEveryNearestEdge(t *testing.
     <rectangle id="target" title="Target" width="80" height="80" />
   </frame>
 </frames></xaligo>`)
-	out, err := newUsecase().RenderExcalidraw(context.Background(), input, entity.RenderOptions{Theme: "light"})
+	out, err := newUsecase().BuildScene(context.Background(), input, entity.RenderOptions{Theme: "light"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -560,7 +441,7 @@ func TestRenderExcalidrawCrossFrameAutomaticSideUsesEveryNearestEdge(t *testing.
 	}
 }
 
-func TestRenderExcalidrawCrossFrameSmallPagesKeepStubsVisible(t *testing.T) {
+func TestBuildSceneCrossFrameSmallPagesKeepStubsVisible(t *testing.T) {
 	input := []byte(`<xaligo version="1"><data></data><frames gap="16">
   <frame id="source-page-with-long-id" width="48.000000001" height="48.000000001">
     <rectangle id="node" title="A" width="48.000000001" height="48.000000001" />
@@ -570,7 +451,7 @@ func TestRenderExcalidrawCrossFrameSmallPagesKeepStubsVisible(t *testing.T) {
     <rectangle id="node" title="B" width="49" height="49" />
   </frame>
 </frames></xaligo>`)
-	out, err := newUsecase().RenderExcalidraw(context.Background(), input, entity.RenderOptions{Theme: "light"})
+	out, err := newUsecase().BuildScene(context.Background(), input, entity.RenderOptions{Theme: "light"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -623,7 +504,7 @@ func TestRenderExcalidrawCrossFrameSmallPagesKeepStubsVisible(t *testing.T) {
 	}
 }
 
-func TestRenderExcalidrawCrossFrameExplicitSidesOverrideNearestEdge(t *testing.T) {
+func TestBuildSceneCrossFrameExplicitSidesOverrideNearestEdge(t *testing.T) {
 	input := []byte(`<frames gap="48">
   <frame id="overview" width="320" height="180">
     <rectangle id="web" title="Web" width="120" height="80" />
@@ -633,7 +514,7 @@ func TestRenderExcalidrawCrossFrameExplicitSidesOverrideNearestEdge(t *testing.T
     <rectangle id="db" title="DB" width="120" height="80" />
   </frame>
 </frames>`)
-	out, err := newUsecase().RenderExcalidraw(context.Background(), input, entity.RenderOptions{Theme: "light"})
+	out, err := newUsecase().BuildScene(context.Background(), input, entity.RenderOptions{Theme: "light"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -671,7 +552,7 @@ func TestRenderExcalidrawCrossFrameExplicitSidesOverrideNearestEdge(t *testing.T
 	assertSceneBindingFixedPoint(t, destinationStub, "endBinding", [2]float64{1, 0.3})
 }
 
-func TestRenderExcalidrawCrossFrameBoundaryAnchorsAndNearbyLabels(t *testing.T) {
+func TestBuildSceneCrossFrameBoundaryAnchorsAndNearbyLabels(t *testing.T) {
 	input := []byte(`<xaligo version="1"><frames gap="48">
   <frame id="overview" width="320" height="180">
     <rectangle id="web" title="Web" width="120" height="80" />
@@ -683,7 +564,7 @@ func TestRenderExcalidrawCrossFrameBoundaryAnchorsAndNearbyLabels(t *testing.T) 
     <rectangle id="db" title="DB" width="120" height="80" />
   </frame>
 </frames></xaligo>`)
-	out, err := newUsecase().RenderExcalidraw(context.Background(), input, entity.RenderOptions{Theme: "light"})
+	out, err := newUsecase().BuildScene(context.Background(), input, entity.RenderOptions{Theme: "light"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -742,7 +623,7 @@ func TestRenderExcalidrawCrossFrameBoundaryAnchorsAndNearbyLabels(t *testing.T) 
 	}
 }
 
-func TestRenderExcalidrawCrossFrameSideDoesNotOverrideAutomaticItemSide(t *testing.T) {
+func TestBuildSceneCrossFrameSideDoesNotOverrideAutomaticItemSide(t *testing.T) {
 	input := []byte(`<xaligo version="1"><frames gap="48">
   <frame id="overview" width="200" height="200" content-width="40" content-height="40" align="top-center">
     <rectangle id="web" title="Web" width="40" height="40" />
@@ -750,7 +631,7 @@ func TestRenderExcalidrawCrossFrameSideDoesNotOverrideAutomaticItemSide(t *testi
   </frame>
   <frame id="detail" width="200" height="200"><rectangle id="db" width="80" height="80" /></frame>
 </frames></xaligo>`)
-	out, err := newUsecase().RenderExcalidraw(context.Background(), input, entity.RenderOptions{Theme: "light"})
+	out, err := newUsecase().BuildScene(context.Background(), input, entity.RenderOptions{Theme: "light"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -778,7 +659,7 @@ func TestRenderExcalidrawCrossFrameSideDoesNotOverrideAutomaticItemSide(t *testi
 	assertCrossFrameEndpointAndTerminalApproaches(t, sourceStub, "top", "bottom", false)
 }
 
-func TestRenderExcalidrawExactFrameAnchorUsesDefaultPageLinkInset(t *testing.T) {
+func TestBuildSceneExactFrameAnchorUsesDefaultPageLinkInset(t *testing.T) {
 	input := []byte(`<xaligo version="1"><frames gap="48">
   <frame id="overview" width="100" height="100">
     <rectangle id="web" title="Web" width="100" height="100" />
@@ -786,7 +667,7 @@ func TestRenderExcalidrawExactFrameAnchorUsesDefaultPageLinkInset(t *testing.T) 
   </frame>
   <frame id="detail" width="100" height="100"><rectangle id="db" width="80" height="80" /></frame>
 </frames></xaligo>`)
-	out, err := newUsecase().RenderExcalidraw(context.Background(), input, entity.RenderOptions{Theme: "light"})
+	out, err := newUsecase().BuildScene(context.Background(), input, entity.RenderOptions{Theme: "light"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1105,8 +986,8 @@ func TestRenderSVGDrawsServiceLegend(t *testing.T) {
 	}
 }
 
-func TestRenderExcalidrawCarriesSharedPortTextLayout(t *testing.T) {
-	out, err := newUsecase().RenderExcalidraw(context.Background(), []byte(`<frame width="240" height="120">
+func TestBuildSceneCarriesSharedPortTextLayout(t *testing.T) {
+	out, err := newUsecase().BuildScene(context.Background(), []byte(`<frame width="240" height="120">
   <rectangle id="service" width="180" height="80">
     <port id="input" side="left" width="80" title="long input port" />
   </rectangle>

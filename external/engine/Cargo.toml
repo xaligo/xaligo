@@ -1,0 +1,23 @@
+[package]
+name = "xaligo-engine-ffi"
+description = "Generic layout and SVG engine exposed through the xaligo C ABI"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+license = "MIT"
+repository = "https://github.com/xaligo/xaligo"
+
+[lib]
+name = "xaligo_engine"
+path = "src/lib.rs"
+crate-type = ["staticlib"]
+
+[dependencies]
+usvg = { version = "0.45.1", default-features = false }
+xaligo-pptx-exporter = { path = "../exporter" }
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true

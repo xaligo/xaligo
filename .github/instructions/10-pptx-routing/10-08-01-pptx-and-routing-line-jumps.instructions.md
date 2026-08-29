@@ -6,8 +6,7 @@ applyTo: ".github/instructions/manual/**"
 
 ### Line Jumps
 
-Excalidraw does not provide reliable built-in line jumps/bridges for this
-workflow. The shared draw plan therefore implements them for SVG/PPTX.
+The shared draw plan implements line jumps for SVG/PPTX.
 
 Current approach:
 
@@ -16,7 +15,4 @@ Current approach:
 - Render jumps as a 6px background-colored mask below the upper line in
   SVG/PPTX output. The mask uses the uppermost opaque container background at
   the crossing. A curved arc may replace the rectangular mask later.
-- For Excalidraw output, approximate with normal lines or supported shape
-  primitives when necessary.
-
-SVG preview and PPTX can support line jumps more accurately than Excalidraw JSON.
+Markdown inherits the SVG line-jump projection.

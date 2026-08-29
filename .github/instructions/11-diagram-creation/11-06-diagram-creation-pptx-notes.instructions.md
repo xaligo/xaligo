@@ -6,8 +6,8 @@ applyTo: ".github/instructions/manual/**"
 
 ## PPTX Notes
 
-- Native CLI export requires `xaligo.wasm`; the npm/WASM API currently
-  exports through PptxGenJS.
+- Native CLI export uses the Rust `pptx` adapter compiled into the single
+  executable; no runtime exporter file is required.
 - Diagram and legend icons are native SVG media. SVG-capable PowerPoint or a
   compatible viewer is required; legacy raster-only viewers do not display the
   icons because independently rasterized copies are not embedded.
@@ -20,6 +20,6 @@ applyTo: ".github/instructions/manual/**"
   tag background width and label width in sync when adjusting tag text metrics.
 - Group header and item label width estimates count East Asian full-width
   characters as double-width, so Japanese and other full-width labels keep their
-  text boxes aligned across Excalidraw, SVG, and PPTX.
+  text boxes aligned across SVG and PPTX.
 - Keep `docs/src/examples/samples/sample.xal` and `docs/src/examples/samples/services.csv` in sync so the legend
   includes every diagram service.

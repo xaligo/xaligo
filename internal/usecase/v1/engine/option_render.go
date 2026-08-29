@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"errors"
 	"fmt"
 	"math"
 	"strings"
@@ -14,19 +13,12 @@ const (
 	ModeNetworkV1EngineOptionRender  entity.Mode = "network"
 	ModeAWSV1EngineOptionRender      entity.Mode = "aws"
 
-	FormatExcalidrawV1EngineOptionRender entity.Format = "excalidraw"
-	FormatSVGV1EngineOptionRender        entity.Format = "svg"
-	FormatPPTXV1EngineOptionRender       entity.Format = "pptx"
-	FormatPDFV1EngineOptionRender        entity.Format = "pdf"
-	FormatExcelV1EngineOptionRender      entity.Format = "excel"
-	FormatXYFlowV1EngineOptionRender     entity.Format = "xyflow"
-	FormatIsoflowV1EngineOptionRender    entity.Format = "isoflow"
+	FormatSVGV1EngineOptionRender  entity.Format = "svg"
+	FormatPPTXV1EngineOptionRender entity.Format = "pptx"
 
 	SeverityErrorV1EngineOptionRender   entity.DiagnosticSeverity = "error"
 	SeverityWarningV1EngineOptionRender entity.DiagnosticSeverity = "warning"
 )
-
-var ErrNotImplementedV1EngineOptionRender = errors.New("renderer not implemented")
 
 // ValidateRenderOptionsV1EngineOptionRender validates mode, format, assets, and shared presentation
 // values without parsing an input document.
@@ -75,7 +67,7 @@ func ValidateRenderOptionsV1EngineOptionRender(opts entity.RenderOptions) error 
 	}
 	format := entity.Format(strings.ToLower(strings.TrimSpace(string(opts.Format))))
 	switch format {
-	case "", FormatExcalidrawV1EngineOptionRender, FormatSVGV1EngineOptionRender, FormatPPTXV1EngineOptionRender, FormatPDFV1EngineOptionRender, FormatExcelV1EngineOptionRender, FormatXYFlowV1EngineOptionRender, FormatIsoflowV1EngineOptionRender:
+	case "", FormatSVGV1EngineOptionRender, FormatPPTXV1EngineOptionRender:
 		return nil
 	default:
 		return fmt.Errorf("unknown render format %q", format)
@@ -157,8 +149,6 @@ func validateModeV1EngineOptionRender(mode entity.Mode) error {
 	switch normalized {
 	case "", ModeStandardV1EngineOptionRender, ModeNetworkV1EngineOptionRender, ModeAWSV1EngineOptionRender:
 		return nil
-	case "aws-2.5d", "topology":
-		return fmt.Errorf("mode %q: %w", normalized, ErrNotImplementedV1EngineOptionRender)
 	default:
 		return fmt.Errorf("unknown render mode %q", normalized)
 	}

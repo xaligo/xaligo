@@ -75,6 +75,7 @@ type LogEntry struct {
 type logger struct {
 	config LoggerConfig
 	level  LogLevel
+	mu     sync.Mutex
 	output io.Writer
 }
 
@@ -118,6 +119,19 @@ func DefaultLogger() Logger {
 		defaultLogger = NewEnvLogger("", "")
 	})
 	return defaultLogger
+}
+
+// UseStderrForProtocol keeps stdout reserved for framed LSP or newline-framed
+// protocol messages. An explicitly configured stderr or file destination is kept.
+func UseStderrForProtocol() {
+	configured := DefaultLogger()
+	if concrete, ok := configured.(*logger); ok {
+		concrete.mu.Lock()
+		if concrete.output == os.Stdout {
+			concrete.output = os.Stderr
+		}
+		concrete.mu.Unlock()
+	}
 }
 
 // DEBUG writes a debug log through the default environment-configured logger.
@@ -287,6 +301,8 @@ func (rcvr *LogEntry) extractError() {
 }
 
 func (rcvr *logger) write(entry LogEntry) {
+	rcvr.mu.Lock()
+	defer rcvr.mu.Unlock()
 	if rcvr.config.Structured {
 		data, err := json.Marshal(entry)
 		if err == nil {

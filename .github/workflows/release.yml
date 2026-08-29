@@ -78,30 +78,101 @@ jobs:
 
       - name: Run Go tests and build
         run: |
-          go test ./... -count=1
+          make test-engine
           go build ./...
 
       - name: Build browser WebAssembly adapter
         run: GOOS=js GOARCH=wasm go build -o /tmp/xaligo-browser.wasm ./cmd/wasm
-
-      - name: Verify native document encoders stay out of browser WebAssembly
-        shell: bash
-        run: |
-          dependencies="$(GOOS=js GOARCH=wasm go list -deps ./cmd/wasm)"
-          if grep -Eq '^(github.com/tdewolff/canvas($|/)|github.com/xuri/excelize/v2($|/))' <<< "$dependencies"; then
-            echo "Native PDF/Excel dependencies entered the browser WebAssembly graph." >&2
-            exit 1
-          fi
 
       - name: Test npm native installer
         run: |
           npm run test:npm-installer
           npm run test:release-metadata
 
-      - name: Test and build TypeScript exporters
+      - name: Test and build Rust exporter
         run: |
-          npm --prefix external test
-          npm run build --workspace=@xaligo/xaligo-external
+          cargo test --manifest-path test/unit/external/exporter/Cargo.toml --locked
+          make build-exporter
+
+  native:
+    name: Build native binary (${{ matrix.target }})
+    runs-on: ${{ matrix.runner }}
+    needs:
+      - metadata
+      - quality
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: darwin-amd64
+            runner: macos-15-intel
+            goos: darwin
+            goarch: amd64
+            rust_target: x86_64-apple-darwin
+          - target: darwin-arm64
+            runner: macos-15
+            goos: darwin
+            goarch: arm64
+            rust_target: aarch64-apple-darwin
+          - target: linux-amd64
+            runner: ubuntu-24.04
+            goos: linux
+            goarch: amd64
+            rust_target: x86_64-unknown-linux-gnu
+          - target: linux-arm64
+            runner: ubuntu-24.04-arm
+            goos: linux
+            goarch: arm64
+            rust_target: aarch64-unknown-linux-gnu
+          - target: windows-amd64
+            runner: windows-2025
+            goos: windows
+            goarch: amd64
+            rust_target: x86_64-pc-windows-gnu
+          - target: windows-arm64
+            runner: windows-11-arm
+            goos: windows
+            goarch: arm64
+            rust_target: aarch64-pc-windows-gnullvm
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.26.x'
+          cache: true
+
+      - name: Install Rust target
+        shell: bash
+        run: rustup target add "${{ matrix.rust_target }}"
+
+      - name: Build Rust-linked native binary
+        shell: bash
+        env:
+          NATIVE_VERSION: ${{ needs.metadata.outputs.native_version }}
+          NPM_PACKAGE_TARGETS: ${{ matrix.goos }}/${{ matrix.goarch }}
+          NPM_SKIP_WASM: '1'
+        run: scripts/build/build-npm.sh
+
+      - name: Verify native checksum
+        shell: bash
+        run: |
+          cd bin/native
+          if command -v sha256sum >/dev/null 2>&1; then
+            sha256sum --check "xaligo-${{ matrix.goos }}-${{ matrix.goarch }}"*.sha256
+          else
+            shasum -a 256 --check "xaligo-${{ matrix.goos }}-${{ matrix.goarch }}"*.sha256
+          fi
+
+      - name: Upload native binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: xaligo-native-${{ matrix.target }}
+          path: bin/native/*
+          if-no-files-found: error
 
   package:
     name: Build packages (${{ matrix.goarch }})
@@ -127,6 +198,11 @@ jobs:
         with:
           platforms: amd64,arm64
 
+      - name: Build packaging toolchain images
+        run: |
+          docker build --platform "${{ matrix.platform }}" -f docker/ubuntu.Dockerfile -t xaligo-package-ubuntu .
+          docker build --platform "${{ matrix.platform }}" -f docker/rocky.Dockerfile -t xaligo-package-rocky .
+
       - name: Build Debian package
         run: |
           docker run --rm \
@@ -137,7 +213,7 @@ jobs:
             -e PACKAGE_VERSION="${{ needs.metadata.outputs.deb_version }}" \
             -e GOARCH="${{ matrix.goarch }}" \
             -e GOFLAGS="-buildvcs=false" \
-            xaligo/ubuntu:26.04 \
+            xaligo-package-ubuntu \
             scripts/build/build-deb.sh
 
       - name: Build RPM package
@@ -151,33 +227,8 @@ jobs:
             -e PACKAGE_RELEASE="${{ needs.metadata.outputs.rpm_release }}" \
             -e GOARCH="${{ matrix.goarch }}" \
             -e GOFLAGS="-buildvcs=false" \
-            xaligo/rocky:10.2 \
+            xaligo-package-rocky \
             scripts/build/build-rpm.sh
-
-      - name: Build npm package
-        if: matrix.goarch == 'amd64'
-        run: |
-          docker run --rm \
-            --platform "${{ matrix.platform }}" \
-            -v "$PWD:/workspace" \
-            -w /workspace \
-            -e NATIVE_VERSION="${{ needs.metadata.outputs.native_version }}" \
-            -e NPM_VERSION="${{ needs.metadata.outputs.npm_version }}" \
-            -e RELEASE_TAG="${{ needs.metadata.outputs.release_tag }}" \
-            -e GOFLAGS="-buildvcs=false" \
-            -e NPM_PACKAGE_TARGETS="darwin/amd64 darwin/arm64 linux/amd64 linux/arm64 windows/amd64 windows/arm64" \
-            xaligo/ubuntu:26.04 \
-            sh -ec '
-              npm ci --ignore-scripts --no-audit --no-fund
-              node -e "const fs=require(\"node:fs\"); const path=\"package.json\"; const pkg=JSON.parse(fs.readFileSync(path, \"utf8\")); const version=fs.readFileSync(\"VERSION\", \"utf8\").trim().replace(/^v/, \"\"); if (pkg.version !== version || process.env.NPM_VERSION !== version) throw new Error(\"package.json, VERSION, and NPM_VERSION must match\"); pkg.xaligo={...(pkg.xaligo || {}), releaseTag: process.env.RELEASE_TAG}; fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + \"\n\");"
-              npm run test:npm-installer
-              npm run test:release-metadata
-              npm run build
-              npm run build:npm-binaries
-              mkdir -p output/packages
-              npm pack --pack-destination output/packages
-              cp bin/native/xaligo-* output/packages/
-            '
 
       - name: Upload packages
         uses: actions/upload-artifact@v4
@@ -186,8 +237,70 @@ jobs:
           path: |
             output/packages/*.deb
             output/packages/*.rpm
-            output/packages/*.tgz
-            output/packages/xaligo-*
+          if-no-files-found: error
+
+  npm-package:
+    name: Build npm package
+    runs-on: ubuntu-24.04
+    needs:
+      - metadata
+      - quality
+      - native
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Download native binaries
+        uses: actions/download-artifact@v4
+        with:
+          pattern: xaligo-native-*
+          path: bin/native
+          merge-multiple: true
+
+      - name: Verify native binary set
+        shell: bash
+        run: |
+          mapfile -t checksums < <(find bin/native -maxdepth 1 -type f -name 'xaligo-*.sha256' -print | sort)
+          if [[ "${#checksums[@]}" -ne 6 ]]; then
+            echo "Expected 6 native binary checksums, found ${#checksums[@]}." >&2
+            exit 1
+          fi
+          for checksum in "${checksums[@]}"; do
+            (
+              cd bin/native
+              sha256sum --check "$(basename "$checksum")"
+            )
+          done
+
+      - name: Build and pack npm distribution
+        shell: bash
+        env:
+          NATIVE_VERSION: ${{ needs.metadata.outputs.native_version }}
+          NPM_VERSION: ${{ needs.metadata.outputs.npm_version }}
+          RELEASE_TAG: ${{ needs.metadata.outputs.release_tag }}
+          NPM_PACKAGE_TARGETS: none
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          node -e 'const fs=require("node:fs"); const path="package.json"; const pkg=JSON.parse(fs.readFileSync(path, "utf8")); const version=fs.readFileSync("VERSION", "utf8").trim().replace(/^v/, ""); if (pkg.version !== version || process.env.NPM_VERSION !== version) throw new Error("package.json, VERSION, and NPM_VERSION must match"); pkg.xaligo={...(pkg.xaligo || {}), releaseTag: process.env.RELEASE_TAG}; fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + "\n");'
+          npm run test:npm-installer
+          npm run test:release-metadata
+          npm run build
+          npm run build:npm-binaries
+          mkdir -p output/packages
+          npm pack --pack-destination output/packages
+
+      - name: Upload npm package
+        uses: actions/upload-artifact@v4
+        with:
+          name: xaligo-npm-package
+          path: output/packages/*.tgz
           if-no-files-found: error
 
   release:
@@ -198,12 +311,13 @@ jobs:
     needs:
       - metadata
       - package
+      - npm-package
 
     steps:
       - name: Download packages
         uses: actions/download-artifact@v4
         with:
-          pattern: xaligo-packages-*
+          pattern: xaligo-*
           path: output/release
           merge-multiple: true
 

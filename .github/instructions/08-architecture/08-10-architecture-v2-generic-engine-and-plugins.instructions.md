@@ -6,8 +6,16 @@ applyTo: ".github/instructions/manual/**"
 
 ## Status and purpose
 
-This file defines the planned V2 architecture. It is a target contract, not a
-description of the current V1 implementation.
+This file defines the V2 architecture. The generic Rust concepts, typed Go
+request/response, C ABI v2, nested layout, generic port/routing calculation,
+SVG projection, builtin icon registry, and LSP/RAG service boundaries are
+implemented. Native V2 and frozen V1-compatibility frontends, complete profile
+normalization, and shared PPTX consumption remain target work. This is not a
+description of the current V1 implementation. V2 adopts the single-binary,
+shared-service, Rust-engine, and external-runtime boundary in
+`08-11-architecture-single-binary-service-and-external-runtimes.instructions.md`
+and the SQLite SVG registry in
+`08-12-architecture-embedded-svg-asset-registry.instructions.md`.
 
 V2 preserves the existing layout concepts, including frames, nested groups,
 captures, items, ports, lines, fixed-versus-flexible allocation, the 12-column
@@ -19,6 +27,15 @@ In this design, a plugin is a separable package of declarative concept data,
 parameter defaults and constraints, aliases, styles, icons, and attribution.
 A plugin is not an executable layout or routing extension.
 
+## Supported output boundary
+
+V2 has exactly two output encoders: SVG and PPTX. Markdown support is a host
+workflow that renders fenced `xal` blocks through the SVG artifact API and
+embeds image references. Excalidraw, PDF, Excel/XLSX, XYFlow, and Isoflow are
+outside the V2 product and plugin contracts. Plugins may tune generic concepts
+and parameters, but may not add encoders, format-specific fields, or output
+callbacks.
+
 ## Pipeline
 
 ```text
@@ -27,13 +44,13 @@ A plugin is not an executable layout or routing extension.
    -> native V2 frontend | frozen V1 compatibility frontend
    -> registered vocabulary/profile normalization
    -> typed version-neutral DocumentSpec
-   -> parameter resolution and validation
-   -> intrinsic measurement
-   -> generic layout and constraint resolution
-   -> generic port and line routing
-   -> immutable ResolvedDocument
-   -> shared scene/plan projection
-   -> output encoder
+   -> versioned Go/Rust engine request
+   -> Rust parameter validation and intrinsic measurement
+   -> Rust generic layout and constraint resolution
+   -> Rust generic port and line routing
+   -> typed immutable ResolvedDocument response
+   -> renderer-neutral draw/document plan
+   -> SVG encoder | PPTX exporter boundary
 ```
 
 The native V2 and V1 compatibility frontends each parse the original bytes
@@ -68,44 +85,100 @@ and a UML inheritance relation is a configured `Line`.
 Core calculations must never branch on source tags, plugin IDs, icon
 namespaces, `aws`, `uml`, or another domain name.
 
-## Target package boundaries
+## Target package and language boundaries
 
 ```text
-internal/usecase/v2/engine/
-├── core/            typed concepts, parameters, measurement, layout, routing
-├── builtin/         default generic concepts, styles, and icons
-├── aws/             declarative AWS profile, catalog, icons, and attribution
-├── uml/             declarative UML profile, symbols, icons, and attribution
-├── native/          native V2 frontend
-└── compatibility/
-    └── v1/          frozen V1 compatibility frontend
+internal/
+├── entity/engine.go       typed Go-side engine request and response
+├── usecase/v2/engine.go   cancellation, lifecycle, and Rust invocation
+├── parser/                V1 compatibility and native V2 frontends (target)
+├── ir/                    version-neutral normalized document (target)
+└── core/profiles/         builtin/AWS/UML declarative profiles (target)
+
+external/
+├── engine/
+│   ├── api.go             Go-side availability contract
+│   ├── bridge_cgo.go      cgo C-ABI invocation adapter
+│   ├── bridge_stub.go     non-native/browser build fallback
+│   ├── Cargo.toml
+│   ├── include/xaligo_engine.h
+│   ├── lib/               generated ignored static-library link location
+│   └── src/
+│       ├── lib.rs         staticlib export boundary
+│       ├── mod.rs         module registry
+│       ├── base.rs        composition root
+│       ├── cnf/           ABI constants, limits, and defaults
+│       ├── ent/           model plus ABI request/response entities
+│       ├── usc/           operation dispatch plus flat layout_*, routing, validation, and SVG files
+│       ├── rep.rs         reserved external-representation layer; currently no implementation
+│       ├── ctl/           versioned C ABI controller
+│       └── util/          explicit codecs/traits, message codes, logger, and errors
+└── exporter/              Rust `pptx` adapter with a C ABI
 ```
 
-The intended dependency direction is:
+The intended dependency and data direction is:
 
 ```text
-builtin ─┐
-aws ─────┼──> core
-uml ─────┘
-
-native ────────────> core
-compatibility/v1 ──> core
-
-core ──X──> builtin | aws | uml
-aws  ──X──> uml
-uml  ──X──> aws
+native frontend ─────────┐
+V1 compatibility ────────┼─> normalized typed IR
+builtin/AWS/UML profiles ┘             |
+                                       v
+                             internal/usecase/v2/engine
+                                       |
+                              direct in-process ABI
+                                       |
+                                       v
+                       external/engine Rust staticlib crate
 ```
 
-The parent `internal/usecase` package owns root dispatch, profile registration,
-I/O adaptation, cancellation, stage ordering, and concurrency policy. V2 core
-calculations are synchronous and must not import repositories, interpret
-`context.Context`, start goroutines, or own worker pools.
+The parent `internal/usecase` composition owns root dispatch and profile
+registration. `internal/usecase/v2` owns V2 I/O adaptation, cancellation,
+stage ordering, Rust library invocation, and concurrency policy. Rust engine
+calculations are synchronous and contain no
+repository access, command dispatch, daemon discovery, sockets, HTTP calls, or
+process spawning. A native build compiles the Rust engine as a platform-native
+`staticlib` and links it into the Go executable through cgo. Go invokes the
+versioned `extern "C"` functions directly; it does not launch Cargo, load a
+sidecar library, or start an engine subprocess at runtime.
 
-`aws` and `uml` are separate packages from their first implementation. They
-must depend only on the stable V2 profile/model contract, the standard library,
-and their own data/assets. They must not depend on repository implementations,
-the V1 engine, one another, or private details of builtin assets. This keeps
-them suitable for later extraction into independent plugin modules.
+Builtin, AWS, and UML profiles are separate declarative data boundaries from
+their first implementation. They depend only on the stable V2 profile/model
+contract and their own data/assets. They must not depend on repositories, the
+V1 implementation, one another, private builtin assets, or Rust implementation
+details. The Go host serializes normalized typed data; the Rust engine never
+branches on profile IDs or source tag names.
+
+The current request path is `ctl -> usc -> ctl`: `ctl` receives and returns
+versioned ABI data, while `usc` validates and calculates the result. `rep` does
+not sit on that path and must not receive calculation logic merely to populate
+the layer. It is reserved for a future Rust-owned external representation such
+as PPTX package generation; such an encoder may be called by `usc` through
+`rep`, while layout and routing remain owned by `usc`. Keep all three layers
+shallow and express responsibility through filenames such as `layout_flow.rs`.
+
+The engine ABI version is independent from the XAL document version. Reject an
+unknown ABI before calculation. Requests and responses use fixed-width,
+little-endian fields with finite numeric validation and explicit optional-value
+flags. Arbitrary maps and renderer-specific JSON must not cross the ABI.
+
+ABI field indexes have one authoritative source at
+`external/engine/abi/fields.csv`. `make generate-engine-abi` produces the Go
+and Rust constants consumed by the explicit codecs. Do not hand-maintain a
+second field-order list.
+
+Rust entities do not use derive or serde annotations to generate behavior.
+Shared standard-trait implementations live explicitly in `util/clone.rs`,
+`util/debug.rs`, `util/default.rs`, and `util/eq.rs`; the request decoder and
+response encoder live in `util/deserialize.rs` and `util/serialize.rs`. This is
+an organization rule, not permission to serialize the neutral model as JSON.
+
+Rust logging uses message codes and the same `XALIGO_LOG_LEVEL`,
+`XALIGO_LOG_STRUCTURED`, `XALIGO_LOG_CALLER`, and `XALIGO_LOG_OUTPUT`
+configuration vocabulary as the Go logger. The in-process static library uses
+stderr as its default diagnostic destination, emits no source document
+contents or sensitive absolute paths, and never exits the Go host. Failures
+continue to cross the typed ABI response; logging is supplementary and debug
+lifecycle logging remains filtered at the default info level.
 
 ## Declarative plugin contract
 
@@ -269,12 +342,13 @@ fallback. Missing-icon behavior is a generic per-element parameter such as
 
 ## Extraction boundary
 
-The in-repository `v2/engine/aws` and `v2/engine/uml` packages are the initial
-plugin boundaries. A later physical extraction may produce independent engine,
-AWS-profile, and UML-profile modules. Before that split, stabilize a public
-profile/model contract and move it with the V2 core; do not expose repository,
-V1-engine, command, or encoder types merely to make an extracted profile
-compile.
+The in-repository builtin, AWS, and UML profile packages are the initial plugin
+boundaries. A later physical extraction may produce independent profile
+modules. The Rust engine remains generic and accepts resolved profile data;
+profiles do not link Rust callbacks or executable extensions. Before a split,
+stabilize the public profile/model and engine ABI contracts. Do not expose
+repository, V1, command, SQLite, or encoder types merely to make an extracted
+profile compile.
 
 The core must run and render generic diagrams with only `builtin` registered.
 Registering or removing AWS or UML changes only the accepted vocabulary,
@@ -285,7 +359,12 @@ set or the geometry of an already normalized generic document.
 
 V2 implementation slices must include tests that establish:
 
-- core packages compile and test without importing AWS or UML;
+- the Rust staticlib crate compiles and tests without importing AWS or UML;
+- Go invokes the Rust engine in-process without a subprocess or daemon;
+- the generated Rust static library is linked only by matching native target
+  builds and is not committed as a repository artifact;
+- ABI version, malformed payload, non-finite number, and range failures are
+  rejected deterministically;
 - builtin-only rendering supports generic frames, groups, captures, items,
   ports, icons, and lines;
 - profile schemas contain only known generic concepts and parameters;
@@ -296,6 +375,6 @@ V2 implementation slices must include tests that establish:
 - equivalent normalized documents from builtin, AWS, and UML profiles resolve
   to equal geometry;
 - registry and layout results are deterministic;
-- missing-icon policies behave identically across output formats; and
+- missing-icon policies behave identically in SVG and PPTX; and
 - the V1 compatibility frontend matches frozen V1 neutral-model and
   resolved-geometry goldens.

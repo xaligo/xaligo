@@ -1,14 +1,8 @@
 paths:
   asset_package:        etc/resources/aws/svg
   service_catalog_csv:  etc/resources/aws/service-catalog.csv
-  output_frames:        output/aws-frames
-  pptx_exporter_wasm:   external/wasm/xaligo.wasm
-
-legend:
-  offset_x:  120
-  offset_y:  0
-  icon_size: 32
-  font_size: 12
+  assets_db:            xaligo-assets.db
+  project_db:           .xaligo/project.db
 
 item:
   icon_size: 32

@@ -6,5 +6,6 @@ applyTo: ".github/instructions/manual/**"
 
 ## v0.8 Excalidraw Integration
 
-Status: native Excalidraw export exists; live WebView/updateScene integration
-is not started.
+Status: retired. Native Excalidraw output and editing commands were removed
+when the product output scope was narrowed to SVG, PPTX, and Markdown SVG
+embedding. This milestone is retained only as a historical, non-reusable ID.

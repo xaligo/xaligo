@@ -1,6 +1,6 @@
 # Development
 
-The canonical implementation pipeline is:
+The current V1 compatibility pipeline is:
 
 ```text
 .xal source
@@ -15,15 +15,33 @@ Important package boundaries:
 | Path | Responsibility |
 |---|---|
 | `internal/usecase` | Parser, layout, validation, scene, routing, and plans |
+| `internal/usecase/v2` | V2 orchestration, cancellation, and typed Rust-engine invocation |
 | `internal/entity` | Shared structures exchanged between layers |
 | `internal/repository` | Filesystem and output-format adapters |
 | `cmd` | CLI entry points |
-| `external` | TypeScript/WASM package and PPTX adapter |
+| `external/engine` | Go/cgo adapter, C ABI, and Rust layout/SVG engine workspace |
+| `external/exporter` | Rust PPTX adapter exposed through a C ABI |
+
+The implemented V2 calculation boundary is:
+
+```text
+typed EngineDocumentSpec
+  -> internal/usecase/v2 (cancellation and ABI adaptation)
+  -> external/engine (Rust layout, routing, and SVG)
+  -> immutable EngineResolvedDocument
+```
+
+ABI v2 flattens the typed tree in pre-order and retains hierarchy with parent
+indexes. The future native V2 and V1 compatibility frontends should lower one
+parsed `.xal` concept tree directly into this request without JSON, source
+rewrites, or a renderer-shaped intermediate scene. See [V2 Generic
+Engine](design/v2-engine.md).
 
 Verification commands:
 
 ```bash
-go test ./...
+make test-engine
+cargo clippy --manifest-path external/engine/Cargo.toml --workspace --all-targets --locked -- -D warnings
 go build ./...
 git diff --check
 ```
@@ -31,8 +49,8 @@ git diff --check
 PPTX exporter builds:
 
 ```bash
-make build-wasm
-npm run build --workspace=@xaligo/xaligo-external
+make build-exporter
+make build
 ```
 
 Generated binaries, `node_modules`, `output`, mdBook build output, WASM
