@@ -116,6 +116,17 @@ func TestDockerToolchainsMatchRepositoryRequirements(t *testing.T) {
 	}
 }
 
+func TestRockyDockerToolchainUsesCompatibleCurlPackage(t *testing.T) {
+	repositoryRoot := integrationRepositoryRoot(t)
+	rocky := readIntegrationFile(t, filepath.Join(repositoryRoot, "docker", "rocky.Dockerfile"))
+	if !strings.Contains(rocky, "\n    curl-minimal \\\n") {
+		t.Error("Rocky Dockerfile does not install curl-minimal")
+	}
+	if strings.Contains(rocky, "\n    curl \\\n") {
+		t.Error("Rocky Dockerfile installs full curl, which conflicts with the base image's curl-minimal package")
+	}
+}
+
 func TestNativePackageBuildLinksRustEngineAndSQLiteFTS(t *testing.T) {
 	repositoryRoot := integrationRepositoryRoot(t)
 	common := readIntegrationFile(t, filepath.Join(repositoryRoot, "scripts", "build", "common.sh"))
@@ -154,6 +165,21 @@ func TestReleaseBuildsEachNativeTargetWithRustEngine(t *testing.T) {
 		"NPM_SKIP_WASM: '1'",
 		"NPM_PACKAGE_TARGETS: none",
 		"pattern: xaligo-native-*",
+	} {
+		if !strings.Contains(workflow, required) {
+			t.Errorf("release workflow does not contain %q", required)
+		}
+	}
+}
+
+func TestReleaseProvisionsWindowsARM64CGOToolchain(t *testing.T) {
+	repositoryRoot := integrationRepositoryRoot(t)
+	workflow := readIntegrationFile(t, filepath.Join(repositoryRoot, ".github", "workflows", "release.yml"))
+	for _, required := range []string{
+		"name: Install LLVM-MinGW for Windows ARM64",
+		"Get-FileHash -Algorithm SHA256",
+		"cgo_cc: aarch64-w64-mingw32-clang",
+		"CC: ${{ matrix.cgo_cc || '' }}",
 	} {
 		if !strings.Contains(workflow, required) {
 			t.Errorf("release workflow does not contain %q", required)

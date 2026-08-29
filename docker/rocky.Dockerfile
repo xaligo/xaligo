@@ -1,6 +1,6 @@
 FROM rockylinux:9
 
-ARG GO_VERSION=1.26.5
+ARG GO_VERSION=1.26.7
 ARG RUST_VERSION=1.85.1
 ARG TARGETARCH
 
@@ -8,7 +8,7 @@ ENV PATH=/usr/local/go/bin:/root/go/bin:/root/.cargo/bin:${PATH}
 
 RUN dnf install -y \
     ca-certificates \
-    curl \
+    curl-minimal \
     gcc \
     gcc-c++ \
     git \
