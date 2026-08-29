@@ -8,7 +8,7 @@ ENV PATH=/usr/local/go/bin:/root/go/bin:/root/.cargo/bin:${PATH}
 
 RUN dnf install -y \
     ca-certificates \
-    curl \
+    curl-minimal \
     gcc \
     gcc-c++ \
     git \

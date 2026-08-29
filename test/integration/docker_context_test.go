@@ -116,6 +116,17 @@ func TestDockerToolchainsMatchRepositoryRequirements(t *testing.T) {
 	}
 }
 
+func TestRockyDockerToolchainUsesCompatibleCurlPackage(t *testing.T) {
+	repositoryRoot := integrationRepositoryRoot(t)
+	rocky := readIntegrationFile(t, filepath.Join(repositoryRoot, "docker", "rocky.Dockerfile"))
+	if !strings.Contains(rocky, "\n    curl-minimal \\\n") {
+		t.Error("Rocky Dockerfile does not install curl-minimal")
+	}
+	if strings.Contains(rocky, "\n    curl \\\n") {
+		t.Error("Rocky Dockerfile installs full curl, which conflicts with the base image's curl-minimal package")
+	}
+}
+
 func TestNativePackageBuildLinksRustEngineAndSQLiteFTS(t *testing.T) {
 	repositoryRoot := integrationRepositoryRoot(t)
 	common := readIntegrationFile(t, filepath.Join(repositoryRoot, "scripts", "build", "common.sh"))
