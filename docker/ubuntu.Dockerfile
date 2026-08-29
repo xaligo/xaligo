@@ -2,7 +2,7 @@ FROM node:24-bookworm-slim AS node-runtime
 
 FROM ubuntu:24.04
 
-ARG GO_VERSION=1.26.5
+ARG GO_VERSION=1.26.7
 ARG RUST_VERSION=1.85.1
 ARG TARGETARCH
 
