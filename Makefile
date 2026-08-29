@@ -1,4 +1,4 @@
-.PHONY: help build build-engine build-exporter generate-engine-abi test test-native security-setup security-check fmt tidy run init clean
+.PHONY: help build build-engine build-exporter generate-engine-abi test test-engine test-native security-setup security-check fmt tidy run init clean
 
 BIN_DIR  := .bin
 BINARY   := $(BIN_DIR)/xaligo
@@ -42,6 +42,8 @@ build-exporter: ## Build the Rust PPTX exporter crate
 
 test: test-native ## Run tests
 	go test ./...
+
+test-engine: test-native ## Test the linked Rust engine and native Go integration
 
 test-native: build-engine build-exporter ## Test the Rust crates and linked cgo paths
 	cargo test --manifest-path $(ENGINE_TEST_DIR)/Cargo.toml --locked
