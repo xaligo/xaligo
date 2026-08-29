@@ -1,6 +1,6 @@
 {
   "name": "@xaligo/xaligo",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "xaligo CLI for rendering .xal diagrams",
   "keywords": [
     "xaligo",
