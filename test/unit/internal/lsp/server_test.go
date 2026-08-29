@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"unicode/utf16"
 
 	"github.com/xaligo/xaligo/internal/entity"
 	"github.com/xaligo/xaligo/internal/lsp"
@@ -62,6 +63,45 @@ func TestServerCompletionDefinitionAndReferences(t *testing.T) {
 	}
 	if got := len(messages[4]["result"].([]any)); got != 2 {
 		t.Fatalf("references = %#v", messages[4])
+	}
+}
+
+func TestServerNavigationUsesUTF16PositionsAndHoverIdentifiers(t *testing.T) {
+	source := `<frame>😀<item id="api" name="API"/></frame>`
+	positionFor := func(value string) int {
+		prefix := source[:strings.Index(source, value)]
+		return len(utf16.Encode([]rune(prefix))) + 1
+	}
+	var input bytes.Buffer
+	writeLSPInput(&input, request(1, "initialize", map[string]any{}))
+	writeLSPInput(&input, map[string]any{
+		"jsonrpc": "2.0", "method": "textDocument/didOpen",
+		"params": map[string]any{"textDocument": map[string]any{
+			"uri": "file:///tmp/unicode.xal", "version": 1, "text": source,
+		}},
+	})
+	for id, requestData := range []struct {
+		method string
+		word   string
+	}{{"textDocument/definition", "api"}, {"textDocument/hover", "API"}} {
+		writeLSPInput(&input, request(id+2, requestData.method, map[string]any{
+			"textDocument": map[string]any{"uri": "file:///tmp/unicode.xal"},
+			"position":     map[string]any{"line": 0, "character": positionFor(requestData.word)},
+		}))
+	}
+	writeLSPInput(&input, request(4, "shutdown", map[string]any{}))
+	writeLSPInput(&input, map[string]any{"jsonrpc": "2.0", "method": "exit"})
+
+	var output bytes.Buffer
+	if err := lsp.NewServer(&fakeLSPProject{}).Serve(context.Background(), &input, &output); err != nil {
+		t.Fatal(err)
+	}
+	messages := readLSPOutput(t, output.Bytes())
+	if messages[2]["result"] == nil {
+		t.Fatalf("UTF-16 definition = %#v", messages[2])
+	}
+	if messages[3]["result"] == nil {
+		t.Fatalf("identifier hover = %#v", messages[3])
 	}
 }
 

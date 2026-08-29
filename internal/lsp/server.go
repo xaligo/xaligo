@@ -263,7 +263,7 @@ func lspWordAt(source []byte, at position) string {
 		return ""
 	}
 	line := []rune(lines[at.Line])
-	index := min(max(at.Character, 0), len(line))
+	index := runeIndexForUTF16Position(line, at.Character)
 	isWord := func(value rune) bool {
 		return value == '-' || value == '_' || value == '.' || value == ':' || value >= '0' && value <= '9' || value >= 'A' && value <= 'Z' || value >= 'a' && value <= 'z'
 	}
@@ -275,6 +275,25 @@ func lspWordAt(source []byte, at position) string {
 		end++
 	}
 	return string(line[start:end])
+}
+
+func runeIndexForUTF16Position(line []rune, character int) int {
+	character = max(0, character)
+	units := 0
+	for index, value := range line {
+		width := 1
+		if value > 0xffff {
+			width = 2
+		}
+		if units+width > character {
+			return index
+		}
+		units += width
+		if units == character {
+			return index + 1
+		}
+	}
+	return len(line)
 }
 
 func (rcvr *Server) didOpen(ctx context.Context, raw json.RawMessage) error {
@@ -499,11 +518,12 @@ func (rcvr *Server) hover(ctx context.Context, raw json.RawMessage) (any, error)
 	if err != nil {
 		return nil, err
 	}
+	word := lspWordAt(state.source, params.Position)
 	var candidate *entity.ProjectSymbol
 	for index := range state.analysis.Symbols {
 		symbol := &state.analysis.Symbols[index]
 		symbolRange := rangeForSymbol(state.source, *symbol)
-		if !positionInRange(params.Position, symbolRange) {
+		if !positionInRange(params.Position, symbolRange) && !projectSymbolIdentifies(*symbol, word) {
 			continue
 		}
 		if candidate == nil || symbol.Position.Offset > candidate.Position.Offset {
@@ -521,6 +541,13 @@ func (rcvr *Server) hover(ctx context.Context, raw json.RawMessage) (any, error)
 		"contents": map[string]any{"kind": "markdown", "value": value},
 		rangeKey:   rangeForSymbol(state.source, *candidate),
 	}, nil
+}
+
+func projectSymbolIdentifies(symbol entity.ProjectSymbol, word string) bool {
+	if word == "" {
+		return false
+	}
+	return symbol.ID == word || symbol.Name == word || symbol.Source == word || symbol.Target == word
 }
 
 const rangeKey = "range"

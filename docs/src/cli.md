@@ -173,6 +173,7 @@ registered implicitly.
 xaligo rag index
 xaligo rag search 'database AND table'
 xaligo rag search routing --limit 10 --json
+xaligo rag symbols file:///path/to/diagram.xal
 xaligo rag watch --interval 2s
 ```
 
@@ -195,8 +196,10 @@ xaligo lsp
 
 The server provides full-document synchronization, push and pull diagnostics,
 hierarchical document symbols, project-backed workspace symbols, semantic
-tokens, and hover details. It reuses the same parser and generic concept
-analysis as the project service rather than maintaining an editor-only parser.
+tokens, completion snippets, definition and reference navigation, and hover
+details over tags and semantic identifiers. It reuses the same parser and
+generic concept analysis as the project service rather than maintaining an
+editor-only parser.
 Saving an open `.xal` file is an explicit editor operation and updates that
 document's concept rows; it does not make `.xal` part of `rag index`, whose
 initial corpus remains only `docs/**/*.md` and `docs/**/*.markdown`.
@@ -210,7 +213,7 @@ initial corpus remains only `docs/**/*.md` and `docs/**/*.markdown`.
 | `xaligo render markdown <file.md>` | Embed rendered `xal` code blocks as SVG images into a Markdown file |
 | `xaligo serve <file.xal\|file.md>` | Serve a live preview; `.xal` previews one combined SVG, `.md`/`.markdown` previews the full document with diagrams embedded inline; `--port` overrides the configured `serve.port` (default `8080`), and `--paper`/`--orientation` fix the preview to a physical page size |
 | `xaligo icon <add|get|search|remove|list|namespaces>` | Manage the embedded SQLite SVG registry |
-| `xaligo rag <index|search|watch>` | Index only `docs/**/*.md`/`docs/**/*.markdown` initially and search the local FTS5 knowledge base |
+| `xaligo rag <index|search|symbols|watch>` | Index only `docs/**/*.md`/`docs/**/*.markdown` initially, search the local FTS5 knowledge base, and inspect explicitly indexed document symbols |
 | `xaligo lsp` | Run the LSP 3.18 language server over stdio |
 | `xaligo init [-o <dir>]` | Generate a sample `.xal` file |
 | `xaligo version` | Print version |
