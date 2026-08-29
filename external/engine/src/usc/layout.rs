@@ -181,4 +181,3 @@ include!("layout_flow.rs");
 include!("layout_geometry.rs");
 include!("layout_routing.rs");
 include!("layout_validation.rs");
-include!("../../../../test/unit/external/engine/usc/layout_test.rs");

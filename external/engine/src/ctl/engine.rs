@@ -165,7 +165,3 @@ pub unsafe extern "C" fn xaligo_engine_buffer_free(buffer: XaligoEngineBuffer) {
     }
     drop(unsafe { Vec::from_raw_parts(buffer.data, buffer.len, buffer.capacity) });
 }
-
-#[cfg(test)]
-#[path = "../../../../test/unit/external/engine/ctl/engine_test.rs"]
-mod tests;

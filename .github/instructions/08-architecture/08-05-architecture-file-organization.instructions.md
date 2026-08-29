@@ -63,9 +63,10 @@ declarations free of `derive`-generated implementations. Implement `Clone`,
 and implement ABI serialization/deserialization explicitly in
 `util/serialize.rs` and `util/deserialize.rs`. These codec files operate on the
 bounded little-endian ABI; they must not introduce serde, JSON, or arbitrary
-maps at the Go/Rust boundary. Required ABI/compiler/test/tooling attributes,
-including `repr(C)`, exported-symbol, `cfg(test)`, test, lint, and targeted
-rustfmt attributes, are not model implementations and remain permitted.
+maps at the Go/Rust boundary. Required ABI/compiler/tooling attributes,
+including `repr(C)`, exported-symbol, lint, and targeted rustfmt attributes,
+are not model implementations and remain permitted. Test attributes and test
+module wiring remain exclusively under `test/`, never in product source.
 
 Write every grouped Rust import vertically, with one imported item per line:
 

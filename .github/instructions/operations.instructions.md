@@ -38,7 +38,7 @@ git status --short
 git log -1 --oneline
 ```
 
-Use `cargo test --manifest-path external/exporter/Cargo.toml --locked`, `go build ./...`,
+Use `cargo test --manifest-path test/unit/external/exporter/Cargo.toml --locked`, `go build ./...`,
 `make test-engine` for native Rust/cgo engine changes,
 `mdbook build docs`, or
 format-specific render checks only when the changed scope requires them.

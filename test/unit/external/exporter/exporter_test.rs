@@ -2,7 +2,7 @@ use std::io::{Cursor, Read};
 
 use zip::ZipArchive;
 
-use crate::export;
+use xaligo_pptx_exporter::export;
 
 fn package_file(bytes: &[u8], path: &str) -> Vec<u8> {
     let mut archive = ZipArchive::new(Cursor::new(bytes)).expect("open PPTX package");

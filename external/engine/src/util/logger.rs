@@ -388,7 +388,3 @@ fn civil_from_days(days_since_epoch: i64) -> (i64, i64, i64) {
     }
     (year, month, day)
 }
-
-#[cfg(test)]
-#[path = "../../../../test/unit/external/engine/util/logger_test.rs"]
-mod tests;

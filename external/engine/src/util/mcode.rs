@@ -61,7 +61,3 @@ pub fn format_message(level: LogLevel, mcode: MCode, optional_message: &str) -> 
         mcode.message_with(optional_message)
     )
 }
-
-#[cfg(test)]
-#[path = "../../../../test/unit/external/engine/util/mcode_test.rs"]
-mod tests;

@@ -43,7 +43,8 @@ make security-setup # first run, or after scanner version updates
 make security-check # required before every commit
 go test ./...
 GOOS=js GOARCH=wasm go build -o /tmp/xaligo-browser.wasm ./cmd/wasm
-cargo test --manifest-path external/exporter/Cargo.toml --locked
+cargo test --manifest-path test/unit/external/engine/Cargo.toml --locked
+cargo test --manifest-path test/unit/external/exporter/Cargo.toml --locked
 git diff --check
 cargo install mdbook-tabs --version 1.0.4 --locked
 mdbook build docs

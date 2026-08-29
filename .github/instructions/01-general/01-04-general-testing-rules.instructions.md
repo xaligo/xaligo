@@ -8,6 +8,9 @@ applyTo: ".github/instructions/manual/**"
 
 - Put unit tests under `test/unit`, mirroring the source tree they cover.
 - Put black-box tests of exported APIs and adapters in `test/integration`.
+- Keep product source free of test functions, test modules, `cfg(test)`, and
+  test-file includes. External Rust tests use the standalone manifests below
+  `test/unit/external`; test commands select those manifests explicitly.
 - Prefer externally observable behavior over package-private helper assertions
   when moving tests outside implementation packages.
 - Add focused coverage for behavior changes and preserve regression tests.

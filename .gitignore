@@ -24,6 +24,8 @@ bin/native/
 /external/engine/target/
 /external/engine/lib/
 /external/exporter/target/
+/test/unit/external/engine/target/
+/test/unit/external/exporter/target/
 
 # mdBook build output
 docs/book/

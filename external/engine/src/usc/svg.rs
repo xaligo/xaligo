@@ -691,7 +691,3 @@ fn format_number(value: f64) -> String {
         trimmed.to_owned()
     }
 }
-
-#[cfg(test)]
-#[path = "../../../../test/unit/external/engine/usc/svg_test.rs"]
-mod tests;

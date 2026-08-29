@@ -7,8 +7,10 @@ GOVULNCHECK   := $(TOOLS_BIN_DIR)/govulncheck
 GOVULNCHECK_VERSION := v1.6.0
 EXPORTER_DIR  := external/exporter
 EXPORTER_PACKAGE := xaligo-pptx-exporter
+EXPORTER_TEST_DIR := test/unit/external/exporter
 ENGINE_DIR    := external/engine
 ENGINE_PACKAGE := xaligo-engine-ffi
+ENGINE_TEST_DIR := test/unit/external/engine
 ENGINE_STATICLIB ?= $(ENGINE_DIR)/target/release/libxaligo_engine.a
 ENGINE_LINK_DIR := $(ENGINE_DIR)/lib
 ENGINE_LINK_LIB := $(ENGINE_LINK_DIR)/libxaligo_engine.a
@@ -42,8 +44,8 @@ test: test-native ## Run tests
 	go test ./...
 
 test-native: build-engine build-exporter ## Test the Rust crates and linked cgo paths
-	cargo test --manifest-path $(ENGINE_DIR)/Cargo.toml --locked
-	cargo test --manifest-path $(EXPORTER_DIR)/Cargo.toml --locked
+	cargo test --manifest-path $(ENGINE_TEST_DIR)/Cargo.toml --locked
+	cargo test --manifest-path $(EXPORTER_TEST_DIR)/Cargo.toml --locked
 	CGO_ENABLED=1 go test -tags "$(NATIVE_BUILD_TAGS)" ./... -count=1
 
 security-setup: ## Install security scanners and prepare npm audit metadata

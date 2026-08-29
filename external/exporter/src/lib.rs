@@ -8,7 +8,3 @@ pub use ctl::exporter::{
     XaligoExporterBuffer, xaligo_exporter_abi_version, xaligo_exporter_buffer_free,
     xaligo_exporter_process,
 };
-
-#[cfg(test)]
-#[path = "../../../test/unit/external/exporter/exporter_test.rs"]
-mod tests;
