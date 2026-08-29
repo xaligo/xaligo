@@ -161,6 +161,21 @@ func TestReleaseBuildsEachNativeTargetWithRustEngine(t *testing.T) {
 	}
 }
 
+func TestReleaseProvisionsWindowsARM64CGOToolchain(t *testing.T) {
+	repositoryRoot := integrationRepositoryRoot(t)
+	workflow := readIntegrationFile(t, filepath.Join(repositoryRoot, ".github", "workflows", "release.yml"))
+	for _, required := range []string{
+		"name: Install LLVM-MinGW for Windows ARM64",
+		"Get-FileHash -Algorithm SHA256",
+		"cgo_cc: aarch64-w64-mingw32-clang",
+		"CC: ${{ matrix.cgo_cc || '' }}",
+	} {
+		if !strings.Contains(workflow, required) {
+			t.Errorf("release workflow does not contain %q", required)
+		}
+	}
+}
+
 func containsIntegrationString(values []string, expected string) bool {
 	for _, value := range values {
 		if value == expected {

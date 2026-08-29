@@ -134,6 +134,7 @@ jobs:
             goos: windows
             goarch: arm64
             rust_target: aarch64-pc-windows-gnullvm
+            cgo_cc: aarch64-w64-mingw32-clang
 
     steps:
       - name: Checkout
@@ -149,12 +150,39 @@ jobs:
         shell: bash
         run: rustup target add "${{ matrix.rust_target }}"
 
+      - name: Install LLVM-MinGW for Windows ARM64
+        if: matrix.cgo_cc == 'aarch64-w64-mingw32-clang'
+        shell: pwsh
+        env:
+          LLVM_MINGW_VERSION: '20260616'
+          LLVM_MINGW_SHA256: 312593669435bd0bfc1a43ac3fba23c8b27e0610bade88b2738e5a01702a99ba
+        run: |
+          $asset = "llvm-mingw-$env:LLVM_MINGW_VERSION-ucrt-aarch64.zip"
+          $archive = Join-Path $env:RUNNER_TEMP $asset
+          $url = "https://github.com/mstorsjo/llvm-mingw/releases/download/$env:LLVM_MINGW_VERSION/$asset"
+          Invoke-WebRequest -Uri $url -OutFile $archive
+
+          $actual = (Get-FileHash -Algorithm SHA256 -LiteralPath $archive).Hash.ToLowerInvariant()
+          if ($actual -ne $env:LLVM_MINGW_SHA256) {
+            throw "LLVM-MinGW checksum mismatch: $actual"
+          }
+
+          Expand-Archive -LiteralPath $archive -DestinationPath $env:RUNNER_TEMP -Force
+          $toolchain = Join-Path $env:RUNNER_TEMP "llvm-mingw-$env:LLVM_MINGW_VERSION-ucrt-aarch64"
+          $bin = Join-Path $toolchain 'bin'
+          $compiler = Join-Path $bin 'aarch64-w64-mingw32-clang.exe'
+          if (-not (Test-Path -LiteralPath $compiler -PathType Leaf)) {
+            throw "LLVM-MinGW compiler not found: $compiler"
+          }
+          Add-Content -Path $env:GITHUB_PATH -Value $bin
+
       - name: Build Rust-linked native binary
         shell: bash
         env:
           NATIVE_VERSION: ${{ needs.metadata.outputs.native_version }}
           NPM_PACKAGE_TARGETS: ${{ matrix.goos }}/${{ matrix.goarch }}
           NPM_SKIP_WASM: '1'
+          CC: ${{ matrix.cgo_cc || '' }}
         run: scripts/build/build-npm.sh
 
       - name: Verify native checksum
