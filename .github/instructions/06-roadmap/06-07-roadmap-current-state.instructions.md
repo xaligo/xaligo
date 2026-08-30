@@ -28,8 +28,10 @@ Implemented or partially implemented:
 - PPTX uses a shared Go document plan and the statically linked Rust `pptx` exporter under
   `external/exporter`; repository code receives PPTX bytes and the CLI
   owns file persistence.
-- Native CLI dependency composition is in `internal.NewRootCmd`. The browser
-  WASM surface exposes SVG rendering, PPTX-plan construction, and diagnostics.
+- Native CLI dependency composition is in `internal.NewRootCmd`. The retained
+  source-only browser WASM adapter exposes the legacy V1 SVG, PPTX-plan, and
+  diagnostics surface; it is not shipped by npm, cannot execute V2, and is not
+  a native build or release requirement.
 - Excalidraw persistence/editing, PDF, Excel/XLSX, XYFlow, and Isoflow output
   implementations, dependencies, generated assets, commands, aliases, and
   browser globals have been removed.

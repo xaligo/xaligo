@@ -2,9 +2,13 @@
 
 ## Public Boundaries
 
-External consumers should use the CLI, the preview protocol, or the
-TypeScript/WASM package. In-repository adapters use `internal/usecase` for the
-same parse, layout, render, and validation pipeline.
+External consumers should use the native CLI or the HTTP/SSE preview protocol.
+In-repository adapters use `internal/usecase` for the same parse, layout,
+render, and validation pipeline. The npm package installs the native CLI; it
+does not expose a TypeScript/WASM rendering API.
+
+`cmd/wasm` remains in source as a legacy V1 browser compatibility adapter. It
+cannot invoke the cgo-linked V2 engine and is not a supported V2 boundary.
 
 Available render paths include:
 
@@ -49,8 +53,8 @@ serve:
 ```
 
 Native configuration remains the default when no explicit asset source is
-provided. Embedded and WASM environments provide assets through their adapter
-instead of forking the render pipeline.
+provided. Embedded environments, including the legacy V1 WASM adapter, provide
+assets through their adapter instead of forking the render pipeline.
 
 `serve.port` selects the default HTTP port for `xaligo serve`. Valid ports are
 `1` through `65535`, and the default is `8080`; an explicit `--address` keeps

@@ -37,6 +37,10 @@ parsed `.xal` concept tree directly into this request without JSON, source
 rewrites, or a renderer-shaped intermediate scene. See [V2 Generic
 Engine](design/v2-engine.md).
 
+V2 is native-only: the Rust engine and PPTX exporter are linked into the CLI
+through cgo. `cmd/wasm` is retained only for the legacy V1 browser surface and
+is not part of the npm package or the V2 build gate.
+
 Verification commands:
 
 ```bash
@@ -54,7 +58,7 @@ make build
 ```
 
 Generated binaries, `node_modules`, `output`, mdBook build output, WASM
-artifacts, and TypeScript `dist` output should not be committed.
+artifacts, and npm package output should not be committed.
 
 GitHub Pages is published by `.github/workflows/pages.yml` when documentation
 changes are merged to `main`. The workflow builds `docs/` with mdBook and

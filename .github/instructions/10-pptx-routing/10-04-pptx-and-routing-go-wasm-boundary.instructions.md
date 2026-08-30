@@ -2,12 +2,12 @@
 applyTo: ".github/instructions/manual/**"
 ---
 
-# 10.04 PPTX and routing: Go / WASM Boundary
+# 10.04 PPTX and routing: Go / Native Rust Boundary
 
-## Go / WASM Boundary
+## Go / Native Rust Boundary
 
-The adopted integration style is Go invoking a WASM-compiled PPTX exporter from
-the repository layer.
+The adopted integration style is Go invoking the statically linked native Rust
+PPTX exporter from the repository layer through cgo and a narrow C ABI.
 
 Implementation preconditions:
 
@@ -28,6 +28,10 @@ Implementation preconditions:
 - Use the MIT-licensed pure-Rust `pptx` crate as the package
   writer; do not introduce `goja`, V8, or a JavaScript drawing layer.
 
+`cmd/wasm` is outside this boundary. It is a retained V1 browser compatibility
+adapter, cannot execute the native V2 engine, and must not become a second PPTX
+runtime or a required V2/release gate.
+
 Other integration styles are not the current implementation target:
 
 | Style | Status |
@@ -35,7 +39,7 @@ Other integration styles are not the current implementation target:
 | stdin/stdout JSON-RPC | Candidate for long-running/high-volume workflows |
 | HTTP API | Candidate for service/BFF separation |
 | gRPC | Candidate for high-performance typed service boundaries |
-| Node.js subprocess | Temporary fallback only; not the target architecture |
+| Node.js subprocess | Not a target for PPTX export |
 | Embedded JS engine (`goja`, V8) | Not a target for PPTX export |
 
 Do not spend implementation time replacing the repository-layer exporter with

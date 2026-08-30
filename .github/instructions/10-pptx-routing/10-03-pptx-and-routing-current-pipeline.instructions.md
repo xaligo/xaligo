@@ -12,11 +12,11 @@ applyTo: ".github/instructions/manual/**"
   -> resolved layout and canonical scene
   -> ordered page-oriented Go document plan (neutral-schema migration remains)
   -> internal repository encoder (SVG), or
-  -> Go repository -> WASM command -> external controller -> use case -> repository
+  -> Go repository -> cgo -> linked Rust exporter C ABI
   -> SVG | .pptx
 ```
 
-Geometry belongs on the Go side. The WASM export module should only translate
+Geometry belongs on the shared Go side. The native Rust exporter only translates
 the resolved plan into PPTX bytes. The current Excalidraw-shaped V1 scene is a
 temporary internal compatibility serialization, not an output, target
 architecture name, or ownership boundary for the shared plan.

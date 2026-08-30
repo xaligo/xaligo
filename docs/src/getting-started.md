@@ -63,7 +63,7 @@ SVG is the default, so this is equivalent:
 xaligo render diagram.xal -o diagram.svg
 ```
 
-PPTX export uses the bundled or configured WASM exporter:
+PPTX export uses the Rust exporter linked into the native CLI:
 
 ```bash
 xaligo render diagram.xal --format pptx -o diagram.pptx \

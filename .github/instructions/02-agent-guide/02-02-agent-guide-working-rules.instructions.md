@@ -7,9 +7,10 @@ applyTo: ".github/instructions/manual/**"
 ## Working rules
 
 - Preserve `.xal -> parser -> layout -> shared scene/plan -> encoder`.
-- CLI, preview, and WASM format-rendering paths call `internal/usecase`. They
-  do not build a parallel parser/layout/render pipeline. Focused `add` and
-  source-generation utilities may use repositories/builders directly.
+- CLI and preview format-rendering paths call `internal/usecase`. The retained
+  legacy V1 WASM adapter does the same and must not grow a parallel
+  parser/layout/render pipeline. Focused `add` and source-generation utilities
+  may use repositories/builders directly.
 - Keep mode and format independent.
 - Put cross-format routing and geometry in shared layers.
 - Return wrapped errors; do not panic in core code.

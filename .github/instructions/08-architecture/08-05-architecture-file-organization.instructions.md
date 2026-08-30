@@ -85,8 +85,8 @@ collapse this required layout.
   implementation and its principal methods.
 - Keep a Go constructor in the file containing the concrete type it returns or
   initializes.
-- Keep a TypeScript interface and factory with the implementation that consumes
-  or realizes that contract when the interface is implementation-specific.
+- Keep an implementation-specific interface and factory in any external
+  language with the implementation that consumes or realizes that contract.
 - When several implementations satisfy one interface, keep the interface with
   the package's primary responsibility/implementation and keep each additional
   implementation with its own methods; do not introduce a declaration-only

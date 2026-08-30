@@ -15,7 +15,7 @@ understandable outcome. Good boundaries include:
 - one root use-case component or orchestration boundary;
 - one repository or output-format behavior;
 - one controller, command, or composition-root migration;
-- one external TypeScript command/controller/use-case/repository boundary;
+- one external Rust or JavaScript adapter responsibility;
 - one user-facing specification or documentation topic; and
 - one architecture diagram source together with its rendered documentation
   asset.

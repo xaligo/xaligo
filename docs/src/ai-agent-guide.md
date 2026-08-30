@@ -38,7 +38,7 @@ artifacts. Other outputs are outside the current product contract.
 | `internal/usecase/` | Parser, layout, validation, shared scene and plan logic |
 | `internal/repository/` | Filesystem, catalog, preview, and output-format adapters |
 | `cmd/` | Native CLI entry point |
-| `cmd/wasm/` | JavaScript/WASM adapter |
+| `cmd/wasm/` | Source-only legacy V1 JavaScript/WASM adapter; no V2 execution |
 | `external/engine/` | Rust layout/SVG engine workspace |
 | `external/exporter/` | Statically linked Rust PPTX exporter implementation |
 | `docs/src/examples/samples/` | Source `.xal` and CSV examples |

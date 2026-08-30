@@ -15,7 +15,7 @@ changes. Numbers are the canonical reading order.
 | Any repository change | keyword-matched sections in 01–03 |
 | Scope/status/planning | keyword-matched sections in 04–06 |
 | `.xal` syntax or behavior | matching 07 section; add matching 08 section for implementation |
-| Go/TypeScript structure | matching 08–09 sections |
+| Go/Rust/JavaScript structure | matching 08–09 sections |
 | PPTX/connectors/routing | matching 07, 08, and 10 sections |
 | Diagram authoring | matching 07 and 11 sections |
 
@@ -265,13 +265,13 @@ Search this file directly, for example: `rg -i "metadata|page-link|WASM" .github
 
 ### 09 Coding
 
-- 09.00 [Overview](09-coding/09-00-coding-overview.instructions.md) — keywords: coding, Go, TypeScript
-- 09.01 [Responsibility-based files](09-coding/09-01-coding-responsibility-based-files.instructions.md) — keywords: coding, Go, TypeScript, Responsibility-based, files
-  - 09.01.01 [`internal/usecase` root contract](09-coding/09-01-01-coding-internal-usecase-root-contract.instructions.md) — keywords: coding, Go, TypeScript, internal, usecase, root, contract, version
-- 09.02 [V1 engine identifiers](09-coding/09-02-coding-v1-engine-identifiers.instructions.md) — keywords: coding, Go, TypeScript, engine, identifiers, naming, style, milestone
-- 09.03 [Engine execution boundary](09-coding/09-03-coding-engine-execution-boundary.instructions.md) — keywords: coding, Go, TypeScript, Engine, execution, boundary
-- 09.04 [Dependency direction](09-coding/09-04-coding-dependency-direction.instructions.md) — keywords: coding, Go, TypeScript, Dependency, direction
-- 09.05 [Verification](09-coding/09-05-coding-verification.instructions.md) — keywords: coding, Go, TypeScript, Verification, tests, validation
+- 09.00 [Overview](09-coding/09-00-coding-overview.instructions.md) — keywords: coding, Go, Rust, JavaScript
+- 09.01 [Responsibility-based files](09-coding/09-01-coding-responsibility-based-files.instructions.md) — keywords: coding, Go, Rust, JavaScript, Responsibility-based, files
+  - 09.01.01 [`internal/usecase` root contract](09-coding/09-01-01-coding-internal-usecase-root-contract.instructions.md) — keywords: coding, Go, Rust, JavaScript, internal, usecase, root, contract, version
+- 09.02 [V1 engine identifiers](09-coding/09-02-coding-v1-engine-identifiers.instructions.md) — keywords: coding, Go, Rust, JavaScript, engine, identifiers, naming, style, milestone
+- 09.03 [Engine execution boundary](09-coding/09-03-coding-engine-execution-boundary.instructions.md) — keywords: coding, Go, Rust, JavaScript, Engine, execution, boundary
+- 09.04 [Dependency direction](09-coding/09-04-coding-dependency-direction.instructions.md) — keywords: coding, Go, Rust, JavaScript, Dependency, direction
+- 09.05 [Verification](09-coding/09-05-coding-verification.instructions.md) — keywords: coding, Go, Rust, JavaScript, Verification, tests, validation
 
 
 ### 10 PPTX and routing
@@ -280,7 +280,7 @@ Search this file directly, for example: `rg -i "metadata|page-link|WASM" .github
 - 10.01 [Brainstorm Reference](10-pptx-routing/10-01-pptx-and-routing-brainstorm-reference.instructions.md) — keywords: PPTX, routing, connector, Brainstorm, Reference
 - 10.02 [Confirmed Decisions](10-pptx-routing/10-02-pptx-and-routing-confirmed-decisions.instructions.md) — keywords: PPTX, routing, connector, Confirmed, Decisions, CI, release
 - 10.03 [Current Pipeline](10-pptx-routing/10-03-pptx-and-routing-current-pipeline.instructions.md) — keywords: PPTX, routing, connector, Pipeline, design, dependencies
-- 10.04 [Go / WASM Boundary](10-pptx-routing/10-04-pptx-and-routing-go-wasm-boundary.instructions.md) — keywords: PPTX, routing, connector, WASM, Boundary, Rust
+- 10.04 [Go / Native Rust Boundary](10-pptx-routing/10-04-pptx-and-routing-go-wasm-boundary.instructions.md) — keywords: PPTX, routing, connector, native, cgo, WASM, Boundary, Rust
 - 10.05 [Ownership](10-pptx-routing/10-05-pptx-and-routing-ownership.instructions.md) — keywords: PPTX, routing, connector, Ownership
 - 10.06 [Paper / Scaling](10-pptx-routing/10-06-pptx-and-routing-paper-scaling.instructions.md) — keywords: PPTX, routing, connector, Paper, Scaling, PPI
 - 10.07 [Routing Rules](10-pptx-routing/10-07-pptx-and-routing-routing-rules.instructions.md) — keywords: PPTX, routing, connector, connection

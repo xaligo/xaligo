@@ -21,9 +21,9 @@ applyTo: ".github/instructions/manual/**"
    terminal text for V2 only. Markdown is an SVG-embedding workflow. Any other
    format requires a new explicit product-scope decision before implementation.
 8. Errors are returned and wrapped with context. Core packages do not panic.
-9. Native CLI dependency construction belongs in `NewRootCmd`; the WASM entry
-   point is its own composition root. Controllers depend on use cases, never on
-   other controllers.
+9. Native CLI dependency construction belongs in `NewRootCmd`; the retained V1
+   WASM compatibility entry point is its own composition root and is not a V2
+   runtime. Controllers depend on use cases, never on other controllers.
 10. Input/output destination dependencies belong in `internal/repository` and
     must not appear as use-case filenames.
 11. Validation and rendering use the same parse, normalization, and geometry
@@ -54,9 +54,9 @@ applyTo: ".github/instructions/manual/**"
 19. Interfaces and constructors/factories live in the responsibility file that
     contains their concrete implementation. Do not create declaration-only
     `interface.go`, `interfaces.go`, `constructor.go`, `constructors.go`, or
-    equivalent TypeScript files. Place an interface beside the concrete type
-    and methods that implement it, and place `NewX`, `createX`, or another
-    factory beside the type and behavior it constructs.
+    equivalent declaration-only files in other languages. Place an interface
+    beside the concrete type and methods that implement it, and place `NewX`,
+    `createX`, or another factory beside the type and behavior it constructs.
 20. Layer components do not depend on peer components in the same layer. A
     repository must not construct, retain, or call another repository; a use
     case must not call another independently constructed use case; and a
