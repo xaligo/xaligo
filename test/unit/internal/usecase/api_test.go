@@ -11,6 +11,7 @@ import (
 	"testing"
 	"testing/fstest"
 
+	enginebridge "github.com/xaligo/xaligo/external/engine"
 	"github.com/xaligo/xaligo/internal/entity"
 	"github.com/xaligo/xaligo/internal/repository"
 	"github.com/xaligo/xaligo/internal/usecase"
@@ -185,8 +186,11 @@ func TestUseCaseRenderDispatcherBranches(t *testing.T) {
 }
 
 func TestRenderTerminalSupportsOnlyV2(t *testing.T) {
+	if !enginebridge.Available() {
+		t.Skip("V2 terminal rendering requires the linked Rust engine")
+	}
 	uc := newUsecase()
-	v2 := []byte(`<scene version="2" width="320" height="180" layout="horizontal"><item id="client">Client</item><item id="api">API</item><line id="request" source="client" target="api" target-decoration="arrow"/></scene>`)
+	v2 := []byte(`<xaligo version="2"><frames><frame id="page" width="320" height="180" layout="horizontal"><item id="client">Client</item><item id="api">API</item><line id="request" source="client" target="api" target-decoration="arrow"/></frame></frames></xaligo>`)
 	output, err := uc.Render(context.Background(), v2, entity.RenderOptions{
 		Format: usecase.FormatTerminal, TerminalLayout: entity.TerminalLayoutSemantic,
 	})
@@ -198,6 +202,48 @@ func TestRenderTerminalSupportsOnlyV2(t *testing.T) {
 	}
 	if _, err := uc.Render(context.Background(), []byte(simpleXAL), entity.RenderOptions{Format: usecase.FormatTerminal}); err == nil || !strings.Contains(err.Error(), "only for V2") {
 		t.Fatalf("V1 terminal error = %v", err)
+	}
+}
+
+func TestRenderRejectsRetiredSceneRoot(t *testing.T) {
+	source := []byte(`<scene version="2"><frame id="page" width="320" height="180"/></scene>`)
+	_, err := newUsecase().RenderSVG(context.Background(), source, entity.RenderOptions{Format: usecase.FormatSVG})
+	if err == nil || !strings.Contains(err.Error(), `use <xaligo version="2">`) {
+		t.Fatalf("RenderSVG error = %v", err)
+	}
+	diagnostics, err := usecase.NewDiagnosticsUsecase().Diagnose(context.Background(), source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(diagnostics) != 1 || diagnostics[0].Code != "XAL-E1001" || !strings.Contains(diagnostics[0].Message, "<xaligo") {
+		t.Fatalf("diagnostics = %#v", diagnostics)
+	}
+}
+
+func TestV2MissingGroupIconUsesRendererFallback(t *testing.T) {
+	if !enginebridge.Available() {
+		t.Skip("V2 SVG rendering requires the linked Rust engine")
+	}
+	source := []byte(`<xaligo version="2"><frames><frame id="page" width="240" height="120"><aws-cloud id="cloud" title="AWS"><blank/></aws-cloud></frame></frames></xaligo>`)
+	output, err := newUsecase().RenderSVG(context.Background(), source, entity.RenderOptions{
+		Format: usecase.FormatSVG,
+		Assets: &entity.AssetSource{
+			FS: fstest.MapFS{}, CatalogCSV: "catalog.csv", GroupIconsDir: "groups",
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Contains(output, []byte(`data-icon="group:AWS-Cloud-logo_32.svg"`)) {
+		t.Fatalf("missing group icon did not retain its generic fallback: %s", output)
+	}
+}
+
+func TestV2RejectsUnsafeGroupIconReference(t *testing.T) {
+	source := []byte(`<xaligo version="2"><frames><frame id="page"><group id="unsafe" icon-ref="group:../secret.svg"><blank/></group></frame></frames></xaligo>`)
+	_, err := newUsecase().RenderSVG(context.Background(), source, entity.RenderOptions{Format: usecase.FormatSVG})
+	if err == nil || !strings.Contains(err.Error(), "invalid V2 group icon name") {
+		t.Fatalf("RenderSVG error = %v", err)
 	}
 }
 

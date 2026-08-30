@@ -68,6 +68,14 @@ impl Serialize for EngineResponse {
                         element.text.font_size,
                         element.text.line_height,
                         element.line.label_position,
+                        element.text.x,
+                        element.text.y,
+                        element.text.width,
+                        element.text.height,
+                        element.icon_x,
+                        element.icon_y,
+                        element.icon_width,
+                        element.icon_height,
                     ] {
                         output.extend_from_slice(&value.to_le_bytes());
                     }

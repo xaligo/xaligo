@@ -1,8 +1,7 @@
 <!--
-  Hybrid enterprise platform showcasing the currently implemented xaligo DSL:
-  AWS/Tabler/Yamaha icons, catalog-backed group icons, nested AWS boundaries,
-  grid and flex layout, route/traffic lanes, orthogonal routing, automatic
-  junctions, line jumps, custom strokes, and independent arrowheads.
+  V2 uses the same concise authoring profile as V1 and lowers it directly to
+  the typed generic engine model. V2 routing chooses bends automatically, so
+  the V1-only manual <bend>/<bends> hints are intentionally omitted here.
 -->
 <xaligo version="2">
   <frames>
@@ -11,7 +10,7 @@
            version="2026.07"
            width="1920" height="1440"
            class="pa-3"
-           item-size="40">
+           item-size="32">
       <row gap="24">
         <col span="3">
           <corporate-data-center id="onprem-hq" title="On-premises Headquarters">
@@ -125,7 +124,7 @@
         <connection src="200036" dst="104915" kind="traffic" color="#0f766e" />
         <connection src="campus-network" dst="aws-edge" kind="route" color="#64748b" />
 
-        <!-- Public request path: DNS -> CDN -> WAF -> VPC ingress -> load balancer. -->
+        <!-- Public request path: V2 computes bends in the generic router. -->
         <connection src="104915" dst="1179" kind="traffic" color="#0284c7"
                     src-anchor="right-3" dst-anchor="left-2" />
         <connection src="1179" dst="1178" kind="route" />

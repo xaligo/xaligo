@@ -161,23 +161,22 @@ pub(crate) fn render(document: &ResolvedDocument) -> Vec<u8> {
     output.push_str(&format_number(document.height));
     output.push_str(r#"">"#);
 
-    if document
-        .elements
-        .windows(2)
-        .all(|pair| pair[0].visual.layer <= pair[1].visual.layer)
-    {
-        for element in &document.elements {
-            render_element(&mut output, element);
-        }
-    } else {
-        let mut ordered = (0..document.elements.len()).collect::<Vec<_>>();
-        ordered.sort_by_key(|index| (document.elements[*index].visual.layer, *index));
-        for index in ordered {
-            render_element(&mut output, &document.elements[index]);
+    let mut ordered = (0..document.elements.len()).collect::<Vec<_>>();
+    ordered.sort_by_key(|index| (document.elements[*index].visual.layer, *index));
+    for index in ordered.iter().copied() {
+        render_element_background(&mut output, &document.elements[index]);
+    }
+    for index in ordered.iter().copied() {
+        let element = &document.elements[index];
+        if element.visual.visible && element.concept == Concept::Line {
+            render_line(&mut output, element);
         }
     }
     render_line_crossings(&mut output, document);
     render_junctions(&mut output, document);
+    for index in ordered {
+        render_element_foreground(&mut output, &document.elements[index]);
+    }
     output.push_str("</svg>");
     output.into_bytes()
 }
@@ -295,48 +294,139 @@ fn render_junctions(output: &mut String, document: &ResolvedDocument) {
     }
 }
 
-fn render_element(output: &mut String, element: &ResolvedElement) {
-    if !element.visual.visible {
+fn render_element_background(output: &mut String, element: &ResolvedElement) {
+    if !element.visual.visible || element.concept == Concept::Line {
         return;
     }
-    if element.concept == Concept::Line {
-        render_line(output, element);
-    } else {
-        render_shape(output, element);
-        if matches!(element.concept, Concept::Group | Concept::Frame)
-            && !element.text.value.is_empty()
-        {
-            render_group_header(output, element);
-        } else {
-            render_text(output, element, &element.text.value);
-        }
+    render_shape(output, element);
+    if renders_group_header(element) {
+        render_group_header_background(output, element);
     }
 }
 
-fn render_group_header(output: &mut String, element: &ResolvedElement) {
+fn render_element_foreground(output: &mut String, element: &ResolvedElement) {
+    if !element.visual.visible || element.concept == Concept::Line {
+        return;
+    }
+    if renders_group_header(element) {
+        render_group_header_foreground(output, element);
+    } else if !element.icon_ref.is_empty() {
+        render_item_foreground(output, element);
+    } else {
+        render_text(output, element, &element.text.value);
+    }
+}
+
+fn renders_group_header(element: &ResolvedElement) -> bool {
+    !element.text.value.is_empty()
+        && (matches!(element.concept, Concept::Group | Concept::Frame)
+            || (element.concept == Concept::Capture && element.text.role == "group-header"))
+}
+
+fn group_header_geometry(element: &ResolvedElement) -> (f64, f64, f64, f64, f64) {
+    if element.text.role == "group-header" {
+        let has_icon = element.icon_width > 0.0 && element.icon_height > 0.0;
+        let height = if has_icon {
+            element.icon_height.max(20.0)
+        } else {
+            20.0
+        };
+        let x = if has_icon {
+            element.icon_x
+        } else {
+            element.text.x - 4.0
+        };
+        let y = if has_icon {
+            element.icon_y - (height - element.icon_height) / 2.0
+        } else {
+            element.text.y - (height - element.text.height) / 2.0
+        };
+        let tip = (height / 2.0).min(14.0);
+        let width = element.text.x + element.text.width + 18.0 + tip - x;
+        return (x, y, height, width, tip);
+    }
     let height = 28.0_f64.min(element.height);
-    let width = ((element.text.value.chars().count() as f64 * element.text.font_size * 0.62)
-        + 28.0)
+    let tip = (height / 2.0).min(10.0);
+    let width = (element.text.x - element.x + element.text.width + tip)
         .min(element.width)
         .max(height);
-    let tip = (height / 2.0).min(10.0);
-    polygon(
+    (element.x, element.y, height, width, tip)
+}
+
+fn render_group_header_background(output: &mut String, element: &ResolvedElement) {
+    let (x, y, height, width, tip) = group_header_geometry(element);
+    outlined_polygon(
         output,
         &[
-            Point { x: element.x, y: element.y },
-            Point { x: element.x + width - tip, y: element.y },
-            Point { x: element.x + width, y: element.y + height / 2.0 },
-            Point { x: element.x + width - tip, y: element.y + height },
-            Point { x: element.x, y: element.y + height },
+            Point { x, y },
+            Point { x: x + width - tip, y },
+            Point { x: x + width, y: y + height / 2.0 },
+            Point { x: x + width - tip, y: y + height },
+            Point { x, y: y + height },
         ],
+        &element.visual.fill,
         &element.visual.stroke,
+        if element.text.role == "group-header" {
+            1.0
+        } else {
+            element.visual.stroke_width
+        },
     );
-    let mut label = element.clone();
-    label.x = element.x + 4.0;
-    label.y = element.y;
-    label.width = width - tip - 4.0;
-    label.height = height;
-    render_text(output, &label, &element.text.value);
+}
+
+fn render_group_header_foreground(output: &mut String, element: &ResolvedElement) {
+    if element.icon_width > 0.0 && element.icon_height > 0.0 {
+        render_icon_anchor(
+            output,
+            element,
+            element.icon_x,
+            element.icon_y,
+            element.icon_width,
+            element.icon_height,
+        );
+    }
+    render_text(output, element, &element.text.value);
+}
+
+fn render_item_foreground(output: &mut String, element: &ResolvedElement) {
+    if element.icon_width > 0.0 && element.icon_height > 0.0 {
+        render_icon_anchor(
+            output,
+            element,
+            element.icon_x,
+            element.icon_y,
+            element.icon_width,
+            element.icon_height,
+        );
+    }
+    render_text(output, element, &element.text.value);
+}
+
+fn render_icon_anchor(
+    output: &mut String,
+    element: &ResolvedElement,
+    x: f64,
+    y: f64,
+    width: f64,
+    height: f64,
+) {
+    output.push_str(r#"<rect id=""#);
+    output.push_str(&escape_xml(&element.id));
+    output.push_str(r#"-icon" data-owner=""#);
+    output.push_str(&escape_xml(&element.id));
+    output.push_str(r#"" data-concept=""#);
+    output.push_str(concept_name(element.concept));
+    output.push_str(r#"" data-icon=""#);
+    output.push_str(&escape_xml(&element.icon_ref));
+    output.push_str(r#"" x=""#);
+    output.push_str(&format_number(x));
+    output.push_str(r#"" y=""#);
+    output.push_str(&format_number(y));
+    output.push_str(r#"" width=""#);
+    output.push_str(&format_number(width));
+    output.push_str(r#"" height=""#);
+    output.push_str(&format_number(height));
+    output.push_str(r#"" fill="none" stroke="none"/>"#);
 }
 
 fn render_shape(output: &mut String, element: &ResolvedElement) {
@@ -345,16 +435,30 @@ fn render_shape(output: &mut String, element: &ResolvedElement) {
     }
     match element.visual.shape {
         Shape::Rectangle | Shape::Default => {
+            let (x, y, width, height) = if element.text.role == "group-header"
+                && matches!(element.concept, Concept::Group | Concept::Capture)
+            {
+                let (_, header_y, header_height, _, _) = group_header_geometry(element);
+                let border_y = header_y + header_height / 2.0;
+                (
+                    element.x,
+                    border_y,
+                    element.width,
+                    (element.y + element.height - border_y).max(0.0),
+                )
+            } else {
+                (element.x, element.y, element.width, element.height)
+            };
             output.push_str(r#"<rect"#);
             common_attributes(output, element);
             output.push_str(r#" x=""#);
-            output.push_str(&format_number(element.x));
+            output.push_str(&format_number(x));
             output.push_str(r#"" y=""#);
-            output.push_str(&format_number(element.y));
+            output.push_str(&format_number(y));
             output.push_str(r#"" width=""#);
-            output.push_str(&format_number(element.width));
+            output.push_str(&format_number(width));
             output.push_str(r#"" height=""#);
-            output.push_str(&format_number(element.height));
+            output.push_str(&format_number(height));
             if element.visual.corner_radius > 0.0 {
                 output.push_str(r#"" rx=""#);
                 output.push_str(&format_number(element.visual.corner_radius));
@@ -389,10 +493,6 @@ fn common_attributes(output: &mut String, element: &ResolvedElement) {
         output.push_str(r#"" data-parent-index=""#);
         output.push_str(&parent.to_string());
     }
-    if !element.icon_ref.is_empty() {
-        output.push_str(r#"" data-icon=""#);
-        output.push_str(&escape_xml(&element.icon_ref));
-    }
     output.push('"');
 }
 
@@ -403,11 +503,17 @@ fn paint_attributes(output: &mut String, element: &ResolvedElement) {
     output.push_str(&escape_xml(&element.visual.stroke));
     output.push_str(r#"" stroke-width=""#);
     output.push_str(&format_number(element.visual.stroke_width));
-    if element.visual.opacity < 1.0 {
-        output.push_str(r#"" opacity=""#);
-        output.push_str(&format_number(element.visual.opacity));
-    }
     output.push('"');
+    match element.line.style {
+        LineStyle::Solid => {}
+        LineStyle::Dashed => output.push_str(r#" stroke-dasharray="8 5""#),
+        LineStyle::Dotted => output.push_str(r#" stroke-dasharray="2 4""#),
+    }
+    if element.visual.opacity < 1.0 {
+        output.push_str(r#" opacity=""#);
+        output.push_str(&format_number(element.visual.opacity));
+        output.push('"');
+    }
 }
 
 fn render_text(output: &mut String, element: &ResolvedElement, value: &str) {
@@ -416,12 +522,21 @@ fn render_text(output: &mut String, element: &ResolvedElement, value: &str) {
     }
     let lines = value.lines().collect::<Vec<_>>();
     let line_height = element.text.font_size * element.text.line_height;
-    let first_y = element.y + element.height / 2.0
-        - line_height * (lines.len().saturating_sub(1) as f64) / 2.0;
+    let top_aligned_item_label = element.concept == Concept::Item && !element.icon_ref.is_empty();
+    let v1_group_header = element.text.role == "group-header";
+    let first_y = if top_aligned_item_label {
+        element.text.y + element.text.font_size
+    } else {
+        element.text.y + element.text.height / 2.0
+            - line_height * (lines.len().saturating_sub(1) as f64) / 2.0
+    };
     output.push_str("<text");
     if element.concept == Concept::Text {
         output.push_str(r#" id=""#);
         output.push_str(&escape_xml(&element.id));
+        if element.visual.shape != Shape::None {
+            output.push_str("-text");
+        }
         output.push('"');
     }
     output.push_str(r#" data-owner=""#);
@@ -429,10 +544,22 @@ fn render_text(output: &mut String, element: &ResolvedElement, value: &str) {
     output.push_str(r#"" data-concept=""#);
     output.push_str(concept_name(element.concept));
     output.push_str(r#"" x=""#);
-    output.push_str(&format_number(element.x + element.width / 2.0));
+    output.push_str(&format_number(if v1_group_header {
+        element.text.x
+    } else {
+        element.text.x + element.text.width / 2.0
+    }));
     output.push_str(r#"" y=""#);
     output.push_str(&format_number(first_y));
-    output.push_str(r#"" text-anchor="middle" dominant-baseline="middle" font-family=""#);
+    output.push_str(if v1_group_header {
+        r#"" text-anchor="start""#
+    } else {
+        r#"" text-anchor="middle""#
+    });
+    if !top_aligned_item_label {
+        output.push_str(r#" dominant-baseline="middle""#);
+    }
+    output.push_str(r#" font-family=""#);
     output.push_str(&escape_xml(&element.text.font_family));
     output.push_str(r#"" font-size=""#);
     output.push_str(&format_number(element.text.font_size));
@@ -444,7 +571,11 @@ fn render_text(output: &mut String, element: &ResolvedElement, value: &str) {
             output.push_str(&escape_xml(line));
         } else {
             output.push_str(r#"<tspan x=""#);
-            output.push_str(&format_number(element.x + element.width / 2.0));
+            output.push_str(&format_number(if v1_group_header {
+                element.text.x
+            } else {
+                element.text.x + element.text.width / 2.0
+            }));
             output.push_str(r#"" dy=""#);
             output.push_str(&format_number(line_height));
             output.push_str(r#"">"#);
@@ -508,6 +639,10 @@ fn render_line(output: &mut String, element: &ResolvedElement) {
         label_owner.y = label_point.y - 1.0;
         label_owner.width = 2.0;
         label_owner.height = 2.0;
+        label_owner.text.x = label_owner.x;
+        label_owner.text.y = label_owner.y;
+        label_owner.text.width = label_owner.width;
+        label_owner.text.height = label_owner.height;
         render_text(output, &label_owner, &element.line.label);
     }
 }
@@ -620,6 +755,29 @@ fn polygon(output: &mut String, points: &[Point], color: &str) {
     }
     output.push_str(r#"" fill=""#);
     output.push_str(&escape_xml(color));
+    output.push_str(r#""/>"#);
+}
+
+fn outlined_polygon(
+    output: &mut String,
+    points: &[Point],
+    fill: &str,
+    stroke: &str,
+    stroke_width: f64,
+) {
+    output.push_str(r#"<polygon points=""#);
+    for (index, point) in points.iter().enumerate() {
+        if index > 0 {
+            output.push(' ');
+        }
+        output.push_str(&point_pair(*point));
+    }
+    output.push_str(r#"" fill=""#);
+    output.push_str(&escape_xml(fill));
+    output.push_str(r#"" stroke=""#);
+    output.push_str(&escape_xml(stroke));
+    output.push_str(r#"" stroke-width=""#);
+    output.push_str(&format_number(stroke_width));
     output.push_str(r#""/>"#);
 }
 

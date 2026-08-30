@@ -11,11 +11,11 @@ applyTo: ".github/instructions/manual/**"
 go build ./...
 go test ./...
 
-# Build distributable adapters
+# Build native adapters and test npm packaging
 make build
 make build-exporter
 npm ci --ignore-scripts
-make build-exporter
+npm run test:npm-installer
 
 # Render and validate
 .bin/xaligo validate docs/src/examples/samples/sample.xal

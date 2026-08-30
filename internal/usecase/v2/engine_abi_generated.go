@@ -91,7 +91,15 @@ const (
 	engineResolvedNumberFontSize      = 7
 	engineResolvedNumberLineHeight    = 8
 	engineResolvedNumberLabelPosition = 9
-	engineResolvedNumberFieldCount    = 10
+	engineResolvedNumberTextX         = 10
+	engineResolvedNumberTextY         = 11
+	engineResolvedNumberTextWidth     = 12
+	engineResolvedNumberTextHeight    = 13
+	engineResolvedNumberIconX         = 14
+	engineResolvedNumberIconY         = 15
+	engineResolvedNumberIconWidth     = 16
+	engineResolvedNumberIconHeight    = 17
+	engineResolvedNumberFieldCount    = 18
 )
 
 const (

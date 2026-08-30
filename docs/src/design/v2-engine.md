@@ -18,12 +18,15 @@ type EngineUsecase interface {
 }
 ```
 
-The generic calculation core and this ABI are implemented. The native
-`<xaligo version="2">` generic frontend now lowers directly to
-`EngineDocumentSpec` and the ordinary render use case projects its resolved
-result through the shared SVG/PPTX document plan. The same frontend contract
-accepts generic V1 input for compatibility analysis. The full-profile V1
-render path remains frozen until equivalent profile normalization is complete.
+The generic calculation core and this ABI are implemented. The
+`<xaligo version="2">` frontend lowers directly to `EngineDocumentSpec`, and
+the ordinary render use case projects its resolved result through the shared
+SVG/PPTX document plan. Its authoring profile preserves V1-style rows, columns,
+AWS groups, catalog items, ports, and connections while keeping generic V2
+parameters available as explicit extensions. Profile normalization is one
+linear tree walk; it does not reparse XML or run the V1 renderer. Catalog icon
+data and short labels share one load per render; the bundled default catalog is
+cached across renders.
 
 ## Rust source structure
 
@@ -128,6 +131,8 @@ The implemented policies are:
 - per-child weights, margins, dimensions, intrinsic sizes, offsets, and
   min/max constraints;
 - generic grids, including a 12-column configuration and row/column spans;
+- adaptive item grids that select rows and columns from the available aspect
+  ratio and shrink icons when label space requires it;
 - absolute placement;
 - nested content boxes with padding, gap, alignment, justification, and
   `error` or `visible` overflow;
@@ -161,7 +166,7 @@ The resolved response remains in deterministic pre-order and contains:
 - parent identity and generic concept;
 - final finite `(x, y, width, height)` geometry;
 - resolved renderer-neutral visual and text values;
-- selected icon reference; and
+- resolved text box plus selected icon reference and icon box; and
 - final line points, style, decorations, label, and label position.
 
 The engine limits one request to 10,000 elements, 128 nesting levels, 16 MiB
@@ -180,10 +185,24 @@ contents through the ABI.
 
 ## `.xal` lowering and efficiency
 
-The native frontend should parse the original `.xal` bytes once and lower the
+The envelope frontend parses the original `.xal` bytes once and lowers the
 typed concepts directly to `EngineDocumentSpec`. The same parsed concept tree
-can supply diagnostics, LSP symbols, RAG rows, and engine input, but
-those consumers must not serialize and parse an intermediate scene.
+can supply diagnostics, LSP symbols, RAG rows, and engine input; those
+consumers do not serialize and parse an intermediate representation.
+
+All-item groups select the generic adaptive-grid policy. Its candidate-column
+scan is linear in the number of slots, uses the resolved content aspect ratio
+and label reservation, and preserves stable source-order tie breaking. Frame
+metadata is lowered as ordinary invisible layout containers plus styled text
+cells, so its reserved strip and content offset use the same core allocator
+instead of renderer-specific coordinates.
+
+V1-profile groups retain the V1 header-tag geometry: 32-pixel group icons,
+left-aligned labels, border-top alignment, frame-metadata clearance, and
+collision avoidance against preceding headers and group boundaries. Collision
+queries use bounded passes over narrow vertical buckets rather than scanning
+every prior element. Group SVG colors are normalized once and retained in a
+size- and entry-bounded cache.
 
 `ProjectConcept` is a Go type alias of the closed `EngineConcept` vocabulary,
 so project analysis, LSP, RAG rows, and future engine lowering do not need
@@ -207,34 +226,31 @@ profiled separately from parsing and layout.
 
 ### Reference benchmark
 
-The repository includes opt-in benchmarks based on
-`docs/src/examples/samples/complex-hybrid-architecture.xal`:
+The repository includes opt-in benchmarks based on both complex-hybrid sample
+versions:
 
 ```bash
-make build-engine
-GOCACHE=/tmp/xaligo-go-cache CGO_ENABLED=1 \
-  go test -tags 'xaligo_engine sqlite_fts5 sqlite_omit_load_extension' \
-  ./test/integration -run '^$' -bench 'BenchmarkComplexHybrid' \
-  -benchmem
+make build
+CGO_ENABLED=1 go test \
+  -tags 'xaligo_engine xaligo_exporter sqlite_fts5 sqlite_omit_load_extension' \
+  ./test/integration -run '^$' \
+  -bench '^BenchmarkComplexHybridV2(RenderSVGEndToEnd|FrontendLower)$' \
+  -benchmem -benchtime=100x
 ```
 
-A 2026-08-02 reference run on Apple M2 (`darwin/arm64`) produced:
+A 2026-08-30 warm-cache reference run on Apple M2 (`darwin/arm64`) produced:
 
 | Stage | Time/op | Go B/op | Go allocs/op |
 |---|---:|---:|---:|
-| Explicit `.xal` concept analysis | 0.997 ms | 671,388 | 7,305 |
-| Existing V1 complete SVG render | 5.871 s | 922,836,714 | 2,573,735 |
-| V2 sample-scale ABI + Rust resolve | 4.570 ms | 265,538 | 3,830 |
-| V2 sample-scale ABI + Rust SVG | 4.672 ms | 228,940 | 16 |
+| V2 compatibility frontend lower | 0.314 ms | 340,176 | 4,611 |
+| V2 complete SVG render | 3.21 ms | 2,334,155 | 7,199 |
 
-This is deliberately a stage-level measurement, not a claimed V1/V2 render
-speedup. The V1 row includes its complete parser, catalog, compatibility scene,
-routing, and SVG work. Until the parity frontend exists, the V2 rows preserve
-the sample's generic concept count, hierarchy, and line count but use neutral
-benchmark parameters rather than equivalent visual assets. Go's `B/op` also
-does not account for allocations made by Rust. Use the benchmark to detect
-regressions within each row; compare end-to-end V1 and V2 only after both
-frontends produce equivalent resolved documents.
+These rows include the V1-style adaptive item grid, frame metadata composition,
+group-header collision handling, catalog labels, tinted group assets, generic
+routing, and SVG embedding used by the V2 sample. Go's `B/op` does not account
+for allocations made by Rust. Use the benchmark to detect regressions within a
+row; renderer and routing differences still make a V1/V2 wall-clock comparison
+unsuitable as a component benchmark.
 
 Project intelligence remains a separate workflow. Initial RAG discovery
 indexes only Markdown under `docs/`. A `.xal` concept tree is analyzed only

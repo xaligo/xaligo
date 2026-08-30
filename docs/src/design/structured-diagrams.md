@@ -2,8 +2,8 @@
 
 > Status: V1 implementation design. Canonical V1 uses
 > `<xaligo version="1">`. Historical root `<frame>` and `<frames>` documents
-> remain accepted and produce a migration warning. V2 remains reserved for
-> `<scene version="2">`.
+> remain accepted and produce a migration warning. V2 uses the same envelope
+> as `<xaligo version="2">`.
 
 This design turns the table, relational-database, and UML discussions into one
 coherent target while keeping their semantic processing independent. It
@@ -256,8 +256,8 @@ layout engine. The common boundary is a typed document registry plus neutral
 resolved drawing contracts.
 
 The envelope parser selects exactly one versioned frontend from the root and
-version pair. It must not retry parsers after an error. `<xaligo version="1">`
-selects V1; `<scene version="2">` remains the reject-safe V2 boundary.
+version pair. It must not retry parsers after an error.
+`<xaligo version="1">` selects V1 and `<xaligo version="2">` selects V2.
 
 ## General tables
 

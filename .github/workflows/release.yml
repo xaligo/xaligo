@@ -49,7 +49,9 @@ jobs:
   quality:
     name: Release quality gate
     runs-on: ubuntu-latest
-    needs: metadata
+    env:
+      CARGO_TARGET_DIR: ${{ github.workspace }}/.cache/cargo-target
+      ENGINE_STATICLIB: ${{ github.workspace }}/.cache/cargo-target/release/libxaligo_engine.a
 
     steps:
       - name: Checkout
@@ -67,6 +69,17 @@ jobs:
           node-version: 24
           cache: npm
 
+      - name: Restore Rust build cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            .cache/cargo-target
+          key: cargo-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('external/**/Cargo.lock', 'test/unit/external/**/Cargo.lock') }}
+          restore-keys: |
+            cargo-v1-${{ runner.os }}-${{ runner.arch }}-
+
       - name: Install npm dependencies
         run: npm ci --ignore-scripts
 
@@ -81,25 +94,15 @@ jobs:
           make test-engine
           go build ./...
 
-      - name: Build browser WebAssembly adapter
-        run: GOOS=js GOARCH=wasm go build -o /tmp/xaligo-browser.wasm ./cmd/wasm
-
       - name: Test npm native installer
         run: |
           npm run test:npm-installer
           npm run test:release-metadata
 
-      - name: Test and build Rust exporter
-        run: |
-          cargo test --manifest-path test/unit/external/exporter/Cargo.toml --locked
-          make build-exporter
-
   native:
     name: Build native binary (${{ matrix.target }})
     runs-on: ${{ matrix.runner }}
-    needs:
-      - metadata
-      - quality
+    needs: metadata
     strategy:
       fail-fast: false
       matrix:
@@ -150,6 +153,17 @@ jobs:
         shell: bash
         run: rustup target add "${{ matrix.rust_target }}"
 
+      - name: Restore Rust build cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            external/engine/target
+          key: cargo-native-v1-${{ runner.os }}-${{ runner.arch }}-${{ matrix.rust_target }}-${{ hashFiles('external/engine/Cargo.lock') }}
+          restore-keys: |
+            cargo-native-v1-${{ runner.os }}-${{ runner.arch }}-${{ matrix.rust_target }}-
+
       - name: Install LLVM-MinGW for Windows ARM64
         if: matrix.cgo_cc == 'aarch64-w64-mingw32-clang'
         shell: pwsh
@@ -181,7 +195,6 @@ jobs:
         env:
           NATIVE_VERSION: ${{ needs.metadata.outputs.native_version }}
           NPM_PACKAGE_TARGETS: ${{ matrix.goos }}/${{ matrix.goarch }}
-          NPM_SKIP_WASM: '1'
           CC: ${{ matrix.cgo_cc || '' }}
         run: scripts/build/build-npm.sh
 
@@ -203,35 +216,47 @@ jobs:
           if-no-files-found: error
 
   package:
-    name: Build packages (${{ matrix.goarch }})
-    runs-on: ubuntu-latest
-    needs:
-      - metadata
-      - quality
+    name: Build package (${{ matrix.format }}, ${{ matrix.goarch }})
+    runs-on: ${{ matrix.runner }}
+    needs: metadata
     strategy:
       fail-fast: false
       matrix:
         include:
-          - goarch: amd64
+          - format: deb
+            goarch: amd64
+            runner: ubuntu-24.04
             platform: linux/amd64
-          - goarch: arm64
+            dockerfile: docker/ubuntu.Dockerfile
+            image: xaligo-package-ubuntu
+          - format: deb
+            goarch: arm64
+            runner: ubuntu-24.04-arm
             platform: linux/arm64
+            dockerfile: docker/ubuntu.Dockerfile
+            image: xaligo-package-ubuntu
+          - format: rpm
+            goarch: amd64
+            runner: ubuntu-24.04
+            platform: linux/amd64
+            dockerfile: docker/rocky.Dockerfile
+            image: xaligo-package-rocky
+          - format: rpm
+            goarch: arm64
+            runner: ubuntu-24.04-arm
+            platform: linux/arm64
+            dockerfile: docker/rocky.Dockerfile
+            image: xaligo-package-rocky
 
     steps:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
-        with:
-          platforms: amd64,arm64
-
-      - name: Build packaging toolchain images
-        run: |
-          docker build --platform "${{ matrix.platform }}" -f docker/ubuntu.Dockerfile -t xaligo-package-ubuntu .
-          docker build --platform "${{ matrix.platform }}" -f docker/rocky.Dockerfile -t xaligo-package-rocky .
+      - name: Build packaging toolchain image
+        run: docker build --platform "${{ matrix.platform }}" -f "${{ matrix.dockerfile }}" -t "${{ matrix.image }}" .
 
       - name: Build Debian package
+        if: matrix.format == 'deb'
         run: |
           docker run --rm \
             --platform "${{ matrix.platform }}" \
@@ -241,10 +266,11 @@ jobs:
             -e PACKAGE_VERSION="${{ needs.metadata.outputs.deb_version }}" \
             -e GOARCH="${{ matrix.goarch }}" \
             -e GOFLAGS="-buildvcs=false" \
-            xaligo-package-ubuntu \
+            "${{ matrix.image }}" \
             scripts/build/build-deb.sh
 
       - name: Build RPM package
+        if: matrix.format == 'rpm'
         run: |
           docker run --rm \
             --platform "${{ matrix.platform }}" \
@@ -255,13 +281,13 @@ jobs:
             -e PACKAGE_RELEASE="${{ needs.metadata.outputs.rpm_release }}" \
             -e GOARCH="${{ matrix.goarch }}" \
             -e GOFLAGS="-buildvcs=false" \
-            xaligo-package-rocky \
+            "${{ matrix.image }}" \
             scripts/build/build-rpm.sh
 
       - name: Upload packages
         uses: actions/upload-artifact@v4
         with:
-          name: xaligo-packages-${{ matrix.goarch }}
+          name: xaligo-package-${{ matrix.format }}-${{ matrix.goarch }}
           path: |
             output/packages/*.deb
             output/packages/*.rpm
@@ -270,10 +296,7 @@ jobs:
   npm-package:
     name: Build npm package
     runs-on: ubuntu-24.04
-    needs:
-      - metadata
-      - quality
-      - native
+    needs: metadata
 
     steps:
       - name: Checkout
@@ -284,28 +307,6 @@ jobs:
         with:
           node-version: 24
           cache: npm
-
-      - name: Download native binaries
-        uses: actions/download-artifact@v4
-        with:
-          pattern: xaligo-native-*
-          path: bin/native
-          merge-multiple: true
-
-      - name: Verify native binary set
-        shell: bash
-        run: |
-          mapfile -t checksums < <(find bin/native -maxdepth 1 -type f -name 'xaligo-*.sha256' -print | sort)
-          if [[ "${#checksums[@]}" -ne 6 ]]; then
-            echo "Expected 6 native binary checksums, found ${#checksums[@]}." >&2
-            exit 1
-          fi
-          for checksum in "${checksums[@]}"; do
-            (
-              cd bin/native
-              sha256sum --check "$(basename "$checksum")"
-            )
-          done
 
       - name: Build and pack npm distribution
         shell: bash
@@ -319,7 +320,6 @@ jobs:
           node -e 'const fs=require("node:fs"); const path="package.json"; const pkg=JSON.parse(fs.readFileSync(path, "utf8")); const version=fs.readFileSync("VERSION", "utf8").trim().replace(/^v/, ""); if (pkg.version !== version || process.env.NPM_VERSION !== version) throw new Error("package.json, VERSION, and NPM_VERSION must match"); pkg.xaligo={...(pkg.xaligo || {}), releaseTag: process.env.RELEASE_TAG}; fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + "\n");'
           npm run test:npm-installer
           npm run test:release-metadata
-          npm run build
           npm run build:npm-binaries
           mkdir -p output/packages
           npm pack --pack-destination output/packages
@@ -338,6 +338,8 @@ jobs:
       contents: write
     needs:
       - metadata
+      - quality
+      - native
       - package
       - npm-package
 

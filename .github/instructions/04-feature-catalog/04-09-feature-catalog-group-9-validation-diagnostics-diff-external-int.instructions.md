@@ -16,7 +16,7 @@ applyTo: ".github/instructions/manual/**"
 | XAL-9000060 | Diff visual output | Implemented | Paired `-removed.svg`/`-added.svg` images highlighting removed/added elements and the old/new side of modified or moved elements. |
 | XAL-9000070 | Rust PPTX exporter | Implemented | Consumes the PPTX draw-plan request through the in-process C ABI. |
 | XAL-9000080 | Rust PPTX byte-output pipeline | Implemented | The external crate consumes `BuildPPTXPlan` output and produces PPTX bytes via the MIT-licensed `pptx` crate. |
-| XAL-9000090 | `cmd/wasm` JavaScript/WASM adapter | Implemented | Exposes SVG rendering, PPTX-plan construction, and diagnostics to JavaScript/WASM hosts alongside the native CLI entry point. |
+| XAL-9000090 | Legacy `cmd/wasm` JavaScript/WASM adapter | Implemented | Source-only V1 compatibility adapter for SVG rendering, PPTX-plan construction, and diagnostics. It is not shipped as an npm API and cannot execute the native V2 engine. |
 | XAL-9000100 | V1/V2 compatibility golden tests | Planned | Golden tests comparing V1-compatibility and native V2 engine output at the neutral-model and resolved-geometry boundaries once the V2 engine exists. |
 | XAL-9000110 | Cross-renderer visual regression suite | Planned | Representative visual regression coverage across SVG, PPTX, and Markdown SVG embedding; currently limited per the roadmap's documented gaps. |
 | XAL-9000120 | Render determinism and concurrency-safety guarantees | Planned | Byte-stable output for identical source/options/assets/environment, and parallel-job safety without shared mutable render state (Q13.1/Q13.2 backlog). |

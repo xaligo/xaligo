@@ -8,7 +8,8 @@ applyTo: ".github/instructions/manual/**"
 
 1. Format changed Go files with `gofmt`.
 2. Run `go test ./...` and `go build ./...`.
-3. For shared render use-case or asset changes, cross-build `cmd/wasm`.
+3. Cross-build `cmd/wasm` only when changing that adapter or a shared V1
+   browser path it consumes. Native V2 changes do not require this check.
 4. For PPTX exporter changes, run its Cargo tests and `make build-exporter`.
 5. Run `git diff --check` and inspect `git status --short`.
 6. Update the DSL spec, architecture, README, or roadmap when their contract

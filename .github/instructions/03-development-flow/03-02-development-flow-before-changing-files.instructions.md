@@ -30,7 +30,7 @@ applyTo: ".github/instructions/manual/**"
    or output encoder.
 
 When one occurrence reveals a structural pattern, audit the corresponding
-controller, use-case, repository, entity, V1-engine, and external TypeScript
-layers as applicable. Examples include peer-layer dependencies, misplaced
-interfaces or constructors, duplicate dispatch, stale format-specific names,
-and inconsistent validation/render paths.
+controller, use-case, repository, entity, V1-engine, external Rust, and
+JavaScript adapter layers as applicable. Examples include peer-layer
+dependencies, misplaced interfaces or constructors, duplicate dispatch, stale
+format-specific names, and inconsistent validation/render paths.

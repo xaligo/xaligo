@@ -422,6 +422,7 @@ fn decode_layout(value: u8) -> Result<LayoutPolicy, String> {
         3 => Ok(LayoutPolicy::Grid),
         4 => Ok(LayoutPolicy::Absolute),
         5 => Ok(LayoutPolicy::None),
+        6 => Ok(LayoutPolicy::AdaptiveGrid),
         _ => Err(format!("unsupported layout policy {value}")),
     }
 }

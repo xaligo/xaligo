@@ -1,7 +1,7 @@
 # .xal Overview
 
-`.xal` is an XML DSL for diagrams. Canonical V1 uses a `<xaligo>` envelope,
-document-wide data, and identified frames.
+`.xal` is an XML DSL for diagrams. Every canonical language version uses a
+`<xaligo>` envelope, document-wide data, and identified frames.
 
 ```xml
 <xaligo version="1">
@@ -15,11 +15,16 @@ document-wide data, and identified frames.
 
 Historical root `<frame>` and `<frames>` documents remain compatible, but
 produce a warning recommending migration to `<xaligo version="1">`. Omitting
-the version from the canonical envelope defaults to V1 with a warning. V2 uses the
-distinct `<scene version="2">` root. This lets a V1 reader reject V2
-immediately; `<frame version="2">` is not valid V2 syntax. A V2 renderer will
-accept both native V2 documents and the frozen V1 profile, but V1 does not need
-to understand V2.
+the version from the canonical envelope defaults to V1 with a warning. V2 uses
+`<xaligo version="2">`; `<frame version="2">` and `<frames version="2">` are
+not valid V2 roots. Dispatch reads the root version once, and a V1 parser
+rejects version 2 before interpreting nested syntax.
+
+V2 deliberately retains the concise V1 authoring profile. Existing
+`<row>`/`<col>`, AWS group tags, numeric catalog items, ports, and
+`<connections>` lower directly to the typed V2 model; generic V2 parameters
+such as `weight`, explicit `padding`, and direct `<line>` tags remain available
+when needed.
 
 The root `version="1"` above selects the DSL. A non-empty `version` on an
 identified `<frame>` directly inside `<frames>` instead identifies that page's

@@ -193,6 +193,10 @@ impl_struct_equality!(
     role,
     font_size,
     line_height,
+    x,
+    y,
+    width,
+    height,
 );
 impl_struct_equality!(
     ResolvedLine,
@@ -214,6 +218,10 @@ impl_struct_equality!(
     visual,
     text,
     icon_ref,
+    icon_x,
+    icon_y,
+    icon_width,
+    icon_height,
     line,
     points,
 );

@@ -10,7 +10,7 @@ applyTo: ".github/instructions/manual/**"
 xaligo/
 ├── cmd/
 │   ├── main.go                  native CLI entry point
-│   └── wasm/main.go             JavaScript/WASM adapter
+│   └── wasm/main.go             legacy V1 JavaScript/WASM compatibility adapter
 ├── internal/
 │   ├── command.go               root Cobra command assembly
 │   ├── controller/              CLI/LSP/RAG flags and transport/file-I/O adapters
@@ -59,5 +59,6 @@ xaligo/
 
 The repository root contains no Go source files. Executable adapters belong in
 `cmd`; application implementation belongs in `internal`. This repository's
-external integration boundary is the CLI, HTTP/SSE preview protocol, and WASM
-adapter rather than an importable public Go package.
+external integration boundary is the native CLI and HTTP/SSE preview protocol,
+rather than an importable public Go package. `cmd/wasm` remains a source-only
+legacy V1 compatibility adapter and is not a V2 runtime or npm API.

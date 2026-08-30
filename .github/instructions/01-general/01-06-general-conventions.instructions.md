@@ -22,6 +22,6 @@ applyTo: ".github/instructions/manual/**"
 - Represent elements in the temporary V1 compatibility scene as
   `map[string]interface{}` until the renderer-neutral V2 model replaces it.
 - Do not commit binaries, dependencies, caches, `output`, WASM artifacts, or
-  TypeScript `dist` output. Checked-in documentation SVGs generated from
+  generated npm package output. Checked-in documentation SVGs generated from
   `docs/src/architecture/*.xal` are the explicit exception; commit each SVG
   with its `.xal` source.

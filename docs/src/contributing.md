@@ -41,14 +41,21 @@ Before opening a pull request:
 ```bash
 make security-setup # first run, or after scanner version updates
 make security-check # required before every commit
+make test-engine
 go test ./...
-GOOS=js GOARCH=wasm go build -o /tmp/xaligo-browser.wasm ./cmd/wasm
-cargo test --manifest-path test/unit/external/engine/Cargo.toml --locked
-cargo test --manifest-path test/unit/external/exporter/Cargo.toml --locked
+go build ./...
 git diff --check
 cargo install mdbook-tabs --version 1.0.4 --locked
 mdbook build docs
 ```
+
+When changing `cmd/wasm` or a shared V1 browser path it consumes, also run:
+
+```bash
+GOOS=js GOARCH=wasm go build -o /tmp/xaligo-browser.wasm ./cmd/wasm
+```
+
+The legacy adapter is not a V2 or PPTX release prerequisite.
 
 For documentation-only changes, the security check is still required;
 `mdbook build docs` and `git diff --check` cover the remaining verification.

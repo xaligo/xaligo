@@ -7,12 +7,11 @@ applyTo: ".github/instructions/manual/**"
 ## Confirmed Decisions
 
 - PPTX export is an A3-landscape-first workflow for the current AWS sample.
-- The PPTX export implementation should be compiled to WASM and invoked from
-  the Go repository layer.
+- The PPTX exporter is compiled into the native Rust engine static library and
+  invoked in process from the Go repository layer through cgo and its C ABI.
 - Do not use `goja` or V8 for PPTX export execution.
-- Avoid a long-term Node.js subprocess dependency for repository-layer PPTX
-  export. Node may remain a development/build tool only while the WASM exporter
-  is being prepared.
+- Do not add Node.js, WASM, or another subprocess dependency to
+  repository-layer PPTX export. Node remains packaging/development tooling.
 - All PPTX geometry and routing decisions are computed by the Go use-case
   pipeline before the exporter boundary.
 - Each identified child frame becomes one diagram slide in source order by

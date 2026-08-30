@@ -16,7 +16,7 @@ applyTo: ".github/instructions/manual/**"
 | `internal/lsp` | LSP 3.18 stdio session state and protocol adaptation over shared use cases |
 | `internal/command.go` | Root Cobra command assembly |
 | `internal/controller` | Cobra CLI argument and file-I/O adapters |
-| `cmd/wasm` | JavaScript-global adapter over shared use cases and embedded assets |
+| `cmd/wasm` | Source-only legacy V1 JavaScript-global compatibility adapter over shared use cases and embedded assets; no native V2 execution |
 | `external/engine` | One layered Rust staticlib crate (`cnf`, `ent`, `usc`, `ctl`, reserved `rep`, and `util`), C header, and Go/cgo adapter for the versioned in-process ABI |
 | `external/exporter` | Rust PPTX adapter with the same `cnf`, `ent`, `usc`, `rep`, `ctl`, and `util` layering as `external/engine`; linked into its static library |
 | `test/unit` | Unit tests mirroring the source tree they cover |

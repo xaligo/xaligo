@@ -14,6 +14,7 @@ pub enum LayoutPolicy {
     Vertical,
     Horizontal,
     Grid,
+    AdaptiveGrid,
     Absolute,
     None,
 }
@@ -214,6 +215,10 @@ pub struct ResolvedText {
     pub role: String,
     pub font_size: f64,
     pub line_height: f64,
+    pub x: f64,
+    pub y: f64,
+    pub width: f64,
+    pub height: f64,
 }
 
 pub struct ResolvedLine {
@@ -235,6 +240,10 @@ pub struct ResolvedElement {
     pub visual: ResolvedVisual,
     pub text: ResolvedText,
     pub icon_ref: String,
+    pub icon_x: f64,
+    pub icon_y: f64,
+    pub icon_width: f64,
+    pub icon_height: f64,
     pub line: ResolvedLine,
     pub points: Vec<Point>,
 }

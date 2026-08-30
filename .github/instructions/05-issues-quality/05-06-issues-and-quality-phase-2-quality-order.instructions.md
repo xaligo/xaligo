@@ -35,7 +35,7 @@ smaller local detour:
    filename collision handling.
 10. Renderer matrix: SVG baseline behavior, PPTX plan parity, Markdown SVG
     embedding, retired-format absence, and browser-WASM dependency boundaries.
-11. CI, release, and tooling: Go, TypeScript, docs, security, version gates,
+11. CI, release, and tooling: Go, Rust, npm, docs, security, version gates,
     RTK operation, npm lockfile policy, vendored dependencies, and generated
     artifact policy.
 12. Diagnostics and error UX: severity, aggregation, source positions,

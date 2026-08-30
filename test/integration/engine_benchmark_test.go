@@ -102,8 +102,21 @@ func BenchmarkComplexHybridScaleRustV2RenderSVG(b *testing.B) {
 	}
 }
 
+func BenchmarkComplexHybridV2FrontendLower(b *testing.B) {
+	source := benchmarkComplexHybridV2Source(b)
+	frontend := v2.NewFrontendUsecase()
+	b.ReportAllocs()
+	b.SetBytes(int64(len(source)))
+	b.ResetTimer()
+	for range b.N {
+		if _, _, err := frontend.Lower(source); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
 func BenchmarkV2RenderSVGEndToEnd(b *testing.B) {
-	source := []byte(`<xaligo version="2"><frame id="page" width="1280" height="720" layout="horizontal" gap="16"><group id="clients" weight="1" layout="vertical"><item id="web">Web</item><item id="mobile">Mobile</item></group><group id="services" weight="2" layout="vertical"><item id="api">API</item><item id="worker">Worker</item><item id="database">Database</item></group><connection id="request" source="web" target="api" routing="orthogonal"/><connection id="job" source="api" target="worker" routing="orthogonal"/><connection id="store" source="worker" target="database" routing="orthogonal"/></frame></xaligo>`)
+	source := []byte(`<xaligo version="2"><frames><frame id="page" width="1280" height="720" layout="horizontal" gap="16"><group id="clients" weight="1" layout="vertical"><item id="web">Web</item><item id="mobile">Mobile</item></group><group id="services" weight="2" layout="vertical"><item id="api">API</item><item id="worker">Worker</item><item id="database">Database</item></group><line id="request" source="web" target="api" routing="orthogonal"/><line id="job" source="api" target="worker" routing="orthogonal"/><line id="store" source="worker" target="database" routing="orthogonal"/></frame></frames></xaligo>`)
 	renderer := usecase.NewRenderUsecase(
 		repository.NewSceneRepository(), repository.NewXaligoRepository(),
 		repository.NewPowerpointRepository(), repository.NewSVGRepository(), repository.NewTerminalRepository(),
@@ -120,7 +133,7 @@ func BenchmarkV2RenderSVGEndToEnd(b *testing.B) {
 }
 
 func BenchmarkV2RenderTerminalEndToEnd(b *testing.B) {
-	source := []byte(`<scene version="2" width="1280" height="720" layout="horizontal" gap="16"><group id="clients" weight="1" layout="vertical"><item id="web">Web</item><item id="mobile">Mobile</item></group><group id="services" weight="2" layout="vertical"><item id="api">API</item><item id="worker">Worker</item><item id="database">Database</item></group><line id="request" source="web" target="api" routing="orthogonal"/><line id="job" source="api" target="worker" routing="orthogonal"/><line id="store" source="worker" target="database" routing="orthogonal"/></scene>`)
+	source := []byte(`<xaligo version="2"><frames><frame id="page" width="1280" height="720" layout="horizontal" gap="16"><group id="clients" weight="1" layout="vertical"><item id="web">Web</item><item id="mobile">Mobile</item></group><group id="services" weight="2" layout="vertical"><item id="api">API</item><item id="worker">Worker</item><item id="database">Database</item></group><line id="request" source="web" target="api" routing="orthogonal"/><line id="job" source="api" target="worker" routing="orthogonal"/><line id="store" source="worker" target="database" routing="orthogonal"/></frame></frames></xaligo>`)
 	renderer := benchmarkRenderUsecase()
 	options := entity.RenderOptions{
 		Format: usecase.FormatTerminal, TerminalLayout: entity.TerminalLayoutHybrid,
@@ -172,8 +185,8 @@ func BenchmarkComplexHybridV2RenderSVGEndToEnd(b *testing.B) {
 }
 
 // benchmarkComplexHybridEngineSpec preserves the sample's generic concept
-// count, hierarchy, and line count. It is intentionally not a V1-to-V2 visual
-// compatibility adapter; that frontend remains roadmap work.
+// count, hierarchy, and line count so engine-only costs remain separate from
+// the authoring-profile frontend benchmark.
 func benchmarkComplexHybridEngineSpec(b *testing.B) entity.EngineDocumentSpec {
 	b.Helper()
 	source := benchmarkComplexHybridSource(b)

@@ -136,6 +136,151 @@ mod tests {
     }
 
     #[test]
+    fn group_header_icon_does_not_become_container_intrinsic_size() {
+        let mut group = element("group", Concept::Group, None);
+        group.icon.reference = "group:Region_32.svg".to_owned();
+        group.icon.width = Some(32.0);
+        group.icon.height = Some(32.0);
+        let resolved = resolve(&document(vec![group])).expect("resolve group");
+        assert_eq!(resolved.elements[0].width, 200.0);
+        assert_eq!(resolved.elements[0].height, 300.0);
+    }
+
+    #[test]
+    fn v1_profile_group_header_uses_v1_geometry_and_metadata_clearance() {
+        let mut frame = element("frame", Concept::Frame, None);
+        frame.layout = LayoutPolicy::Absolute;
+        frame.width = Some(200.0);
+        frame.height = Some(160.0);
+
+        let mut metadata = element("metadata", Concept::Text, Some(0));
+        metadata.x = Some(4.0);
+        metadata.y = Some(4.0);
+        metadata.width = Some(40.0);
+        metadata.height = Some(19.0);
+        metadata.text.value = "id".to_owned();
+        metadata.text.role = "frame-metadata-key".to_owned();
+
+        let mut group = element("group", Concept::Group, Some(0));
+        group.x = Some(24.0);
+        group.y = Some(31.0);
+        group.width = Some(160.0);
+        group.height = Some(100.0);
+        group.text.value = "AWS Cloud".to_owned();
+        group.text.role = "group-header".to_owned();
+        group.text.font_size = Some(14.0);
+        group.text.line_height = Some(1.25);
+        group.icon.reference = "group:AWS-Cloud-logo_32.svg".to_owned();
+        group.icon.width = Some(32.0);
+        group.icon.height = Some(32.0);
+
+        let resolved = resolve(&DocumentSpec {
+            layout: LayoutPolicy::Absolute,
+            width: 200.0,
+            height: 160.0,
+            gap: 0.0,
+            padding: Insets::default(),
+            overflow: Overflow::Error,
+            columns: None,
+            elements: vec![frame, metadata, group],
+        })
+        .expect("resolve V1 profile group header");
+        let group = &resolved.elements[2];
+        assert_eq!(group.x, 24.0);
+        assert_eq!(group.y, 31.0);
+        assert_eq!(group.icon_x, 22.0);
+        assert_eq!(group.icon_y, 31.0);
+        assert_eq!(group.icon_width, 32.0);
+        assert_eq!(group.text.x, 58.0);
+        assert_eq!(group.text.y, 38.0);
+        assert_eq!(group.text.width, 95.0);
+        assert_eq!(group.text.height, 18.0);
+    }
+
+    #[test]
+    fn adaptive_grid_selects_v1_style_columns_and_shrinks_icons() {
+        let mut group = element("group", Concept::Group, None);
+        group.layout = LayoutPolicy::AdaptiveGrid;
+        group.gap = Some(8.0);
+        group.padding = Insets {
+            top: Some(26.0),
+            right: Some(12.0),
+            bottom: Some(8.0),
+            left: Some(12.0),
+        };
+        group.align = Alignment::Center;
+        group.justify = Justification::SpaceEvenly;
+
+        let mut items = Vec::new();
+        for id in ["one", "two", "three"] {
+            let mut item = element(id, Concept::Item, Some(0));
+            item.width = Some(56.0);
+            item.height = Some(63.0);
+            item.icon.reference = format!("catalog:{id}");
+            item.icon.width = Some(32.0);
+            item.icon.height = Some(32.0);
+            item.text.value = "two\nlines".to_owned();
+            item.text.font_size = Some(8.0 * 96.0 / 72.0);
+            item.text.line_height = Some(1.25);
+            items.push(item);
+        }
+        let mut elements = vec![group];
+        elements.extend(items);
+        let resolved = resolve(&DocumentSpec {
+            layout: LayoutPolicy::Vertical,
+            width: 438.0,
+            height: 395.0,
+            gap: 0.0,
+            padding: Insets::default(),
+            overflow: Overflow::Error,
+            columns: None,
+            elements,
+        })
+        .expect("resolve adaptive grid");
+
+        assert!((resolved.elements[1].x - 112.666_666_666_7).abs() < 1e-6);
+        assert!((resolved.elements[1].y - 139.5).abs() < 1e-6);
+        assert!((resolved.elements[1].icon_x - 124.666_666_666_7).abs() < 1e-6);
+        assert!((resolved.elements[2].x - 269.333_333_333_3).abs() < 1e-6);
+        assert!((resolved.elements[3].y - 210.5).abs() < 1e-6);
+
+        let mut compact_group = element("compact", Concept::Group, None);
+        compact_group.layout = LayoutPolicy::AdaptiveGrid;
+        compact_group.gap = Some(8.0);
+        compact_group.padding = Insets {
+            top: Some(26.0),
+            right: Some(12.0),
+            bottom: Some(8.0),
+            left: Some(12.0),
+        };
+        compact_group.align = Alignment::Center;
+        compact_group.justify = Justification::SpaceEvenly;
+        let mut compact_elements = vec![compact_group];
+        for id in ["a", "b", "c", "d", "e"] {
+            let mut item = element(id, Concept::Item, Some(0));
+            item.width = Some(56.0);
+            item.height = Some(63.0);
+            item.icon.reference = format!("catalog:{id}");
+            item.icon.width = Some(32.0);
+            item.icon.height = Some(32.0);
+            compact_elements.push(item);
+        }
+        let compact = resolve(&DocumentSpec {
+            layout: LayoutPolicy::Vertical,
+            width: 1314.0,
+            height: 86.151_766,
+            gap: 0.0,
+            padding: Insets::default(),
+            overflow: Overflow::Error,
+            columns: None,
+            elements: compact_elements,
+        })
+        .expect("resolve compact adaptive grid");
+        assert!((compact.elements[1].icon_width - 21.151_766).abs() < 1e-6);
+        assert!((compact.elements[1].icon_height - 21.151_766).abs() < 1e-6);
+    }
+
+    #[test]
     fn resolves_nested_grid_ports_and_orthogonal_lines() {
         let mut frame = element("frame", Concept::Frame, None);
         frame.width = Some(200.0);

@@ -9,9 +9,11 @@ applyTo: ".github/instructions/manual/**"
 This file defines the V2 architecture. The generic Rust concepts, typed Go
 request/response, C ABI v2, nested layout, generic port/routing calculation,
 SVG projection, builtin icon registry, and LSP/RAG service boundaries are
-implemented. Native V2 and frozen V1-compatibility frontends, complete profile
-normalization, and shared PPTX consumption remain target work. This is not a
-description of the current V1 implementation. V2 adopts the single-binary,
+implemented. The version-selected `<xaligo>` frontend, initial concise V1-style
+authoring normalization, adaptive item-grid selection, frame-metadata
+composition, and shared SVG/PPTX projection are implemented; complete profile
+normalization remains target work. This is not a description of the current V1
+implementation. V2 adopts the single-binary,
 shared-service, Rust-engine, and external-runtime boundary in
 `08-11-architecture-single-binary-service-and-external-runtimes.instructions.md`
 and the SQLite SVG registry in
@@ -41,7 +43,7 @@ callbacks.
 ```text
 .xal source
    -> one root/version dispatch
-   -> native V2 frontend | frozen V1 compatibility frontend
+   -> one envelope frontend with V1 | V2 normalization mode
    -> registered vocabulary/profile normalization
    -> typed version-neutral DocumentSpec
    -> versioned Go/Rust engine request
@@ -53,10 +55,10 @@ callbacks.
    -> SVG encoder | PPTX exporter boundary
 ```
 
-The native V2 and V1 compatibility frontends each parse the original bytes
-once and lower directly to `DocumentSpec`. They do not call the V1 engine,
-rewrite XML, retry another parser, or serialize through an intermediate V1
-scene.
+The envelope frontend parses the original bytes once and lowers directly to
+`DocumentSpec` using the selected normalization mode. It does not call the V1
+engine, rewrite XML, retry another parser, or serialize through an intermediate
+V1 representation.
 
 ## Generic calculation concepts
 
@@ -119,8 +121,8 @@ external/
 The intended dependency and data direction is:
 
 ```text
-native frontend ─────────┐
-V1 compatibility ────────┼─> normalized typed IR
+V2 normalization ────────┐
+V1 normalization ────────┼─> normalized typed IR
 builtin/AWS/UML profiles ┘             |
                                        v
                              internal/usecase/v2/engine
@@ -305,7 +307,10 @@ The core owns all calculations, including:
 
 - fixed-before-flexible child allocation;
 - the existing 12-column row/column grid behavior;
-- generic item-grid selection and intrinsic-size fitting;
+- generic adaptive item-grid selection and intrinsic-size fitting through a
+  linear candidate-column scan;
+- profile-selected group-header geometry and overlap avoidance through bounded
+  passes over vertically bucketed prior headers and boundaries;
 - stack, horizontal/vertical flow, grid, absolute, lane, layered, and timeline
   policies when implemented;
 - margin, padding, gap, content-box, alignment, and overflow resolution;

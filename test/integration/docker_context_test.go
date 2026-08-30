@@ -162,12 +162,86 @@ func TestReleaseBuildsEachNativeTargetWithRustEngine(t *testing.T) {
 	}
 	for _, required := range []string{
 		"make test-engine",
-		"NPM_SKIP_WASM: '1'",
 		"NPM_PACKAGE_TARGETS: none",
-		"pattern: xaligo-native-*",
+		"uses: actions/cache@v4",
 	} {
 		if !strings.Contains(workflow, required) {
 			t.Errorf("release workflow does not contain %q", required)
+		}
+	}
+	for _, removed := range []string{
+		"GOOS=js GOARCH=wasm",
+		"NPM_SKIP_WASM",
+	} {
+		if strings.Contains(workflow, removed) {
+			t.Errorf("release workflow still contains obsolete V2 build requirement %q", removed)
+		}
+	}
+}
+
+func TestCIUsesRustCacheWithoutDuplicatingNativeTests(t *testing.T) {
+	repositoryRoot := integrationRepositoryRoot(t)
+	workflow := readIntegrationFile(t, filepath.Join(repositoryRoot, ".github", "workflows", "test.yml"))
+	for _, required := range []string{
+		"concurrency:",
+		"cancel-in-progress: true",
+		"uses: actions/cache@v4",
+		"make test-engine",
+	} {
+		if !strings.Contains(workflow, required) {
+			t.Errorf("test workflow does not contain %q", required)
+		}
+	}
+	for _, removed := range []string{
+		"GOOS=js GOARCH=wasm",
+		"cargo test --manifest-path test/unit/external/exporter/Cargo.toml",
+		"make build-exporter",
+	} {
+		if strings.Contains(workflow, removed) {
+			t.Errorf("test workflow still contains duplicated or obsolete command %q", removed)
+		}
+	}
+}
+
+func TestReleaseBuildsPackagesInNativeParallelJobs(t *testing.T) {
+	repositoryRoot := integrationRepositoryRoot(t)
+	workflow := readIntegrationFile(t, filepath.Join(repositoryRoot, ".github", "workflows", "release.yml"))
+	packageJob := integrationWorkflowJob(t, workflow, "package")
+	for _, required := range []string{
+		"name: Build package (${{ matrix.format }}, ${{ matrix.goarch }})",
+		"runs-on: ${{ matrix.runner }}",
+		"runner: ubuntu-24.04-arm",
+		"format: deb",
+		"format: rpm",
+	} {
+		if !strings.Contains(packageJob, required) {
+			t.Errorf("package job does not contain %q", required)
+		}
+	}
+	if strings.Contains(packageJob, "setup-qemu-action") {
+		t.Error("package job still uses QEMU instead of native architecture runners")
+	}
+}
+
+func TestReleaseNpmPackagingDoesNotWaitForOrRebuildNativeArtifacts(t *testing.T) {
+	repositoryRoot := integrationRepositoryRoot(t)
+	workflow := readIntegrationFile(t, filepath.Join(repositoryRoot, ".github", "workflows", "release.yml"))
+	npmJob := integrationWorkflowJob(t, workflow, "npm-package")
+	for _, removed := range []string{
+		"Download native binaries",
+		"Verify native binary set",
+		"npm run build\n",
+		"- native",
+		"- quality",
+	} {
+		if strings.Contains(npmJob, removed) {
+			t.Errorf("npm package job still contains unnecessary dependency or work %q", removed)
+		}
+	}
+	releaseJob := integrationWorkflowJob(t, workflow, "release")
+	for _, required := range []string{"- quality", "- native", "- package", "- npm-package"} {
+		if !strings.Contains(releaseJob, required) {
+			t.Errorf("release job does not retain final gate %q", required)
 		}
 	}
 }
@@ -212,6 +286,21 @@ func readIntegrationFile(t *testing.T, path string) string {
 		t.Fatal(err)
 	}
 	return string(data)
+}
+
+func integrationWorkflowJob(t *testing.T, workflow, name string) string {
+	t.Helper()
+	marker := "\n  " + name + ":\n"
+	start := strings.Index(workflow, marker)
+	if start < 0 {
+		t.Fatalf("workflow job %q not found", name)
+	}
+	section := workflow[start+len(marker):]
+	nextJob := regexp.MustCompile(`(?m)^  [a-zA-Z0-9][a-zA-Z0-9-]*:\n`).FindStringIndex(section)
+	if nextJob != nil {
+		section = section[:nextJob[0]]
+	}
+	return section
 }
 
 func requiredVersion(t *testing.T, source, pattern, requirement string) string {

@@ -32,10 +32,11 @@ git status --short
 ```
 
 For `.xal` changes, validate and render the affected source with the same V1
-pipeline used in production. For PPTX changes, also exercise the external
-exporter tests and package validation when the required WASM/tooling is
-available. A sandbox, missing optional tool, or pre-existing failure must be
-reported explicitly; it must not be represented as a successful check.
+pipeline used in production. For PPTX changes, also exercise the native Rust
+exporter tests and package validation. The legacy browser WASM adapter is not
+part of the V2 or PPTX verification path. A sandbox, missing optional tool, or
+pre-existing failure must be reported explicitly; it must not be represented
+as a successful check.
 
 When a shared DSL, layout, routing, scene, or renderer contract changes, verify
 the relevant format matrix and representative documentation `.xal` corpus, not

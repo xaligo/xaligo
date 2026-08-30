@@ -36,8 +36,16 @@ fn resolved_element(concept: Concept) -> ResolvedElement {
             role: String::new(),
             font_size: 14.0,
             line_height: 1.2,
+            x: 10.0,
+            y: 20.0,
+            width: 80.0,
+            height: 40.0,
         },
         icon_ref: String::new(),
+        icon_x: 0.0,
+        icon_y: 0.0,
+        icon_width: 0.0,
+        icon_height: 0.0,
         line: ResolvedLine {
             style: LineStyle::Solid,
             source_decoration: Decoration::None,
@@ -65,6 +73,71 @@ fn renders_deterministic_safe_generic_svg() {
 }
 
 #[test]
+fn renders_shape_line_style_and_opacity_as_valid_xml() {
+    let mut group = resolved_element(Concept::Group);
+    group.line.style = LineStyle::Dashed;
+    group.visual.opacity = 0.5;
+    let svg = String::from_utf8(render(&ResolvedDocument {
+        width: 200.0,
+        height: 100.0,
+        elements: vec![group],
+    }))
+    .expect("UTF-8 SVG");
+    assert!(svg.contains(r#"stroke-dasharray="8 5" opacity="0.5""#));
+    usvg::roxmltree::Document::parse(&svg).expect("generated SVG must be valid XML");
+}
+
+#[test]
+fn renders_v1_profile_group_header_over_the_aligned_border() {
+    let mut group = resolved_element(Concept::Group);
+    group.id = "cloud".to_owned();
+    group.x = 24.0;
+    group.y = 31.0;
+    group.width = 160.0;
+    group.height = 100.0;
+    group.visual.stroke_width = 2.0;
+    group.text.value = "AWS Cloud".to_owned();
+    group.text.role = "group-header".to_owned();
+    group.text.x = 58.0;
+    group.text.y = 38.0;
+    group.text.width = 95.0;
+    group.text.height = 18.0;
+    group.icon_ref = "group:AWS-Cloud-logo_32.svg".to_owned();
+    group.icon_x = 22.0;
+    group.icon_y = 31.0;
+    group.icon_width = 32.0;
+    group.icon_height = 32.0;
+
+    let svg = String::from_utf8(render(&ResolvedDocument {
+        width: 200.0,
+        height: 160.0,
+        elements: vec![group],
+    }))
+    .expect("UTF-8 SVG");
+    assert!(svg.contains(r#"id="cloud" data-concept="group" x="24" y="47" width="160" height="84""#));
+    assert!(svg.contains(r##"<polygon points="22,31 171,31 185,47 171,63 22,63" fill="#ffffff" stroke="#1e1e1e" stroke-width="1"/>"##));
+    assert!(svg.contains(r#"id="cloud-icon" data-owner="cloud" data-concept="group" data-icon="group:AWS-Cloud-logo_32.svg" x="22" y="31" width="32" height="32""#));
+    assert!(svg.contains(r#"data-owner="cloud" data-concept="group" x="58" y="47" text-anchor="start""#));
+    usvg::roxmltree::Document::parse(&svg).expect("generated SVG must be valid XML");
+}
+
+#[test]
+fn text_with_a_background_uses_distinct_shape_and_text_ids() {
+    let mut text = resolved_element(Concept::Text);
+    text.id = "metadata".to_owned();
+    text.text.value = "value".to_owned();
+    let svg = String::from_utf8(render(&ResolvedDocument {
+        width: 200.0,
+        height: 100.0,
+        elements: vec![text],
+    }))
+    .expect("UTF-8 SVG");
+    assert_eq!(svg.matches(r#"id="metadata""#).count(), 1);
+    assert_eq!(svg.matches(r#"id="metadata-text""#).count(), 1);
+    usvg::roxmltree::Document::parse(&svg).expect("generated SVG must be valid XML");
+}
+
+#[test]
 fn renders_line_route_and_decoration() {
     let mut line = resolved_element(Concept::Line);
     line.points = vec![Point { x: 10.0, y: 20.0 }, Point { x: 90.0, y: 20.0 }];
@@ -80,6 +153,53 @@ fn renders_line_route_and_decoration() {
     assert!(svg.contains("<path"));
     assert!(svg.contains("calls"));
     usvg::roxmltree::Document::parse(&svg).expect("generated line SVG must be valid XML");
+}
+
+#[test]
+fn renders_lines_behind_resolved_item_foreground() {
+    let mut item = resolved_element(Concept::Item);
+    item.id = "item".to_owned();
+    item.text.value = "API".to_owned();
+    item.icon_ref = "builtin:service".to_owned();
+    item.icon_x = 34.0;
+    item.icon_y = 22.0;
+    item.icon_width = 32.0;
+    item.icon_height = 24.0;
+
+    let mut line = resolved_element(Concept::Line);
+    line.id = "line".to_owned();
+    line.points = vec![Point { x: 0.0, y: 40.0 }, Point { x: 100.0, y: 40.0 }];
+
+    let svg = String::from_utf8(render(&ResolvedDocument {
+        width: 100.0,
+        height: 80.0,
+        elements: vec![item, line],
+    }))
+    .expect("UTF-8 SVG");
+    let line_position = svg.find("<polyline").expect("line");
+    let icon_position = svg.find(r#"id="item-icon""#).expect("icon anchor");
+    let text_position = svg.find(">API</text>").expect("item label");
+    assert!(line_position < icon_position);
+    assert!(line_position < text_position);
+}
+
+#[test]
+fn renders_icon_item_labels_from_the_top_of_the_resolved_text_box() {
+    let mut item = resolved_element(Concept::Item);
+    item.text.value = "first\nsecond".to_owned();
+    item.text.y = 50.0;
+    item.text.height = 27.0;
+    item.text.font_size = 8.0 * 96.0 / 72.0;
+    item.text.line_height = 1.25;
+    item.icon_ref = "catalog:1".to_owned();
+    let svg = String::from_utf8(render(&ResolvedDocument {
+        width: 200.0,
+        height: 100.0,
+        elements: vec![item],
+    }))
+    .expect("UTF-8 SVG");
+    assert!(svg.contains(r#"y="60.666667" text-anchor="middle" font-family="#));
+    assert!(!svg.contains("dominant-baseline"));
 }
 
 #[test]

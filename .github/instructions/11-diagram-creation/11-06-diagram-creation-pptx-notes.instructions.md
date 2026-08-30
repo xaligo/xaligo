@@ -15,7 +15,8 @@ applyTo: ".github/instructions/manual/**"
 - Legend pages use 4 columns and show icon, abbreviation, and official name.
 - Use `--paper A3 --orientation landscape --paper-margin-top 0.75 --paper-margin-bottom 0.75`
   for the current large AWS sample.
-- Connector routing is resolved in Go/WASM and avoids icon/label obstacles.
+- Connector routing is resolved in the shared Go pipeline and avoids icon/label
+  obstacles before the native Rust exporter boundary.
 - Group header tag labels are intentionally single-line in PPTX output; keep
   tag background width and label width in sync when adjusting tag text metrics.
 - Group header and item label width estimates count East Asian full-width

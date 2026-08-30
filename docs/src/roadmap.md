@@ -64,9 +64,9 @@ The next structural steps are:
 
 1. Store a typed normalized layout specification instead of repeatedly reading
    numeric strings from the syntax tree.
-2. Store the shared item-grid solver's selected cells in resolved layout and
-   include mixed item/rectangle occupancy; minimum-cell and item-offset
-   preflight already run during `Build`.
+2. Extend the V2 resolved adaptive item grid beyond all-item groups to mixed
+   item/rectangle occupancy; minimum-cell and item-offset preflight already run
+   during V1 `Build`.
 3. Move catalog-derived intrinsic label measurement and final connector
    geometry into the same validation pass used by render.
 4. Replace the remaining internal Excalidraw-shaped V1 compatibility scene and
@@ -77,23 +77,25 @@ The next structural steps are:
 ## V1 Compatibility and V2
 
 `<xaligo version="1">` is the canonical V1 envelope. Historical root `<frame>`
-and `<frames>` documents remain compatible but emit a migration warning. V2 will use
-the distinct `<scene version="2">` root, allowing an existing V1 reader to
-reject V2 safely without understanding it.
+and `<frames>` documents remain compatible but emit a migration warning. V2
+uses `<xaligo version="2">`; a V1 reader rejects the unsupported document
+version before interpreting nested syntax.
 
-The V2 renderer will also accept V1 input through a V2-owned compatibility
-frontend. Native V2 and compatible V1 input will each be parsed once and
-lowered directly to the same typed, renderer-neutral model. The design avoids
-XML rewriting, parser retry, serialized scene round-trips, and running the full
-V1 renderer inside V2. V1 itself remains independent of V2.
+The V2-owned frontend can normalize both language versions, while the public
+V1 render path remains frozen. V2 preserves the concise V1 authoring profile
+and lowers it, together with explicit generic V2 extensions, directly to the
+same typed, renderer-neutral model. Each source is parsed once. The design
+avoids XML rewriting, parser retry, serialized intermediate round-trips, and
+running the full V1 renderer inside V2. V1 itself remains independent of V2.
 
-The embedded Rust calculation core and C ABI v2 are now implemented for the
+The embedded Rust calculation core, C ABI v2, authoring-profile frontend, and
+SVG/PPTX projection are implemented for the
 generic Frame, Group, Capture, Item, Port, Line, Text, and Spacer concepts. It
-supports nested fixed/flex, grid, absolute placement, ports, generic routing,
-and deterministic SVG projection. The remaining V2 work is the native syntax
-frontend, V1 compatibility lowering, profile normalization, and connecting the
-resolved document to the PPTX plan. See [V2 Generic
-Engine](design/v2-engine.md).
+supports nested fixed/flex, fixed-column and adaptive item grids, absolute
+placement, ports, generic routing, deterministic SVG projection, V1-style
+frame metadata and AWS/catalog defaults, and shared icon placement. Remaining
+work includes multi-page V2 documents and broader profile coverage. See
+[V2 Generic Engine](design/v2-engine.md).
 
 Golden compatibility tests will cover roots and defaults, unknown nested tags,
 strict versus fallback enum behavior, connection inheritance and anchors,
