@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -14,6 +15,7 @@ import (
 
 type FrontendUsecase interface {
 	Lower([]byte) (entity.EngineDocumentSpec, string, error)
+	LowerWithProvenance([]byte) (entity.EngineDocumentSpec, string, error)
 }
 
 type frontendUsecase struct{}
@@ -24,6 +26,7 @@ func NewFrontendUsecase() FrontendUsecase {
 
 type frontendNode struct {
 	tag      string
+	path     string
 	attrs    map[string]string
 	text     string
 	position entity.Position
@@ -31,6 +34,14 @@ type frontendNode struct {
 }
 
 func (rcvr *frontendUsecase) Lower(source []byte) (entity.EngineDocumentSpec, string, error) {
+	return rcvr.lowerDocument(source, false)
+}
+
+func (rcvr *frontendUsecase) LowerWithProvenance(source []byte) (entity.EngineDocumentSpec, string, error) {
+	return rcvr.lowerDocument(source, true)
+}
+
+func (rcvr *frontendUsecase) lowerDocument(source []byte, preserveProvenance bool) (entity.EngineDocumentSpec, string, error) {
 	root, err := parseFrontendDocument(source)
 	if err != nil {
 		return entity.EngineDocumentSpec{}, "", err
@@ -38,6 +49,9 @@ func (rcvr *frontendUsecase) Lower(source []byte) (entity.EngineDocumentSpec, st
 	version, err := frontendDocumentVersion(root)
 	if err != nil {
 		return entity.EngineDocumentSpec{}, "", err
+	}
+	if preserveProvenance {
+		assignFrontendSourcePaths(root, "", 0)
 	}
 	content := root
 	if root.tag == "xaligo" {
@@ -73,7 +87,7 @@ func (rcvr *frontendUsecase) Lower(source []byte) (entity.EngineDocumentSpec, st
 			return entity.EngineDocumentSpec{}, version, err
 		}
 	}
-	state := frontendLowerState{source: source, version: version, nextID: 1, nextSpanID: 1}
+	state := frontendLowerState{source: source, version: version, preserveProvenance: preserveProvenance, nextID: 1, nextSpanID: 1}
 	elements := make([]entity.EngineElementSpec, 0, len(content.children))
 	if conceptForFrontendTag(content.tag, len(content.children)) == entity.EngineConceptFrame {
 		element, lowerErr := state.lower(content, frontendDefaults{}, nil)
@@ -106,11 +120,12 @@ func (rcvr *frontendUsecase) Lower(source []byte) (entity.EngineDocumentSpec, st
 }
 
 type frontendLowerState struct {
-	source     []byte
-	version    string
-	nextID     int
-	nextSpanID uint32
-	spans      []entity.EngineSourceSpan
+	source             []byte
+	version            string
+	preserveProvenance bool
+	nextID             int
+	nextSpanID         uint32
+	spans              []entity.EngineSourceSpan
 }
 
 type frontendDefaults struct {
@@ -138,6 +153,9 @@ func (rcvr *frontendLowerState) lower(node *frontendNode, inherited frontendDefa
 		Layout: engineLayoutForFrontendNode(node), Overflow: engineOverflowForFrontendNode(node),
 		Visual:  entity.EngineVisualSpec{Shape: engineShapeForFrontendNode(node)},
 		Sources: []entity.EngineParameterSource{{Parameter: "concept", Origin: "profile", SpanID: spanID}},
+	}
+	if rcvr.preserveProvenance {
+		element.Provenance = frontendElementProvenance(node)
 	}
 	if element.X, err = frontendOptionalNumber(node, "x"); err != nil {
 		return entity.EngineElementSpec{}, err
@@ -464,6 +482,56 @@ func frontendLabel(node *frontendNode, concept entity.EngineConcept, version str
 		return strings.TrimSpace(node.attrs["name"])
 	}
 	return ""
+}
+
+func frontendElementProvenance(node *frontendNode) *entity.EngineElementProvenance {
+	identity := firstNonEmpty(node.attrs["id"], node.attrs["name"], node.attrs["ref"])
+	name := firstNonEmpty(node.attrs["title"], node.attrs["label"], node.attrs["name"], node.attrs["ref"], node.attrs["id"])
+	text := strings.TrimSpace(node.text)
+	if name == "" {
+		name = text
+	}
+	keys := make([]string, 0, len(node.attrs))
+	for key := range node.attrs {
+		if !strings.HasPrefix(key, "_") {
+			keys = append(keys, key)
+		}
+	}
+	sort.Strings(keys)
+	parts := make([]string, 0, len(keys)+2)
+	parts = append(parts, node.tag)
+	for _, key := range keys {
+		if value := strings.TrimSpace(node.attrs[key]); value != "" {
+			parts = append(parts, key+"="+value)
+		}
+	}
+	if text != "" {
+		parts = append(parts, text)
+	}
+	return &entity.EngineElementProvenance{
+		Tag: node.tag, Path: node.path, Identity: identity, Name: name, Detail: strings.Join(parts, " "),
+		SourceRef: firstNonEmpty(node.attrs["source"], node.attrs["src"]),
+		TargetRef: firstNonEmpty(node.attrs["target"], node.attrs["dst"]),
+		Position:  node.position,
+	}
+}
+
+func assignFrontendSourcePaths(node *frontendNode, parent string, sibling int) {
+	if node == nil {
+		return
+	}
+	identity := firstNonEmpty(node.attrs["id"], node.attrs["name"], node.attrs["ref"])
+	segment := fmt.Sprintf("%s[%d]", node.tag, sibling)
+	if identity != "" {
+		segment = node.tag + "#" + identity
+	}
+	node.path = segment
+	if parent != "" {
+		node.path = parent + "/" + segment
+	}
+	for index, child := range node.children {
+		assignFrontendSourcePaths(child, node.path, index)
+	}
 }
 
 func frontendLineEndpoint(node *frontendNode, canonical, compatibility string, allowCompatibility bool) (entity.EngineSide, *float64, error) {

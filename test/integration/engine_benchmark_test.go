@@ -47,12 +47,25 @@ func benchmarkRenderUsecase() usecase.RenderUsecase {
 
 func BenchmarkComplexHybridProjectAnalyze(b *testing.B) {
 	source := benchmarkComplexHybridSource(b)
-	project := usecase.NewProjectUsecase(nil)
+	project := usecase.NewProjectUsecase(nil, v2.NewFrontendUsecase(), v2.NewEngineUsecase())
 	b.ReportAllocs()
 	b.SetBytes(int64(len(source)))
 	b.ResetTimer()
 	for range b.N {
 		if _, err := project.Analyze(context.Background(), "file:///complex-hybrid-architecture.xal", source); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkComplexHybridV2ProjectAnalyze(b *testing.B) {
+	source := benchmarkComplexHybridV2Source(b)
+	project := usecase.NewProjectUsecase(nil, v2.NewFrontendUsecase(), v2.NewEngineUsecase())
+	b.ReportAllocs()
+	b.SetBytes(int64(len(source)))
+	b.ResetTimer()
+	for range b.N {
+		if _, err := project.Analyze(context.Background(), "file:///complex-hybrid-architecture-v2.xal", source); err != nil {
 			b.Fatal(err)
 		}
 	}
@@ -110,6 +123,19 @@ func BenchmarkComplexHybridV2FrontendLower(b *testing.B) {
 	b.ResetTimer()
 	for range b.N {
 		if _, _, err := frontend.Lower(source); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkComplexHybridV2FrontendLowerWithProvenance(b *testing.B) {
+	source := benchmarkComplexHybridV2Source(b)
+	frontend := v2.NewFrontendUsecase()
+	b.ReportAllocs()
+	b.SetBytes(int64(len(source)))
+	b.ResetTimer()
+	for range b.N {
+		if _, _, err := frontend.LowerWithProvenance(source); err != nil {
 			b.Fatal(err)
 		}
 	}
@@ -190,7 +216,7 @@ func BenchmarkComplexHybridV2RenderSVGEndToEnd(b *testing.B) {
 func benchmarkComplexHybridEngineSpec(b *testing.B) entity.EngineDocumentSpec {
 	b.Helper()
 	source := benchmarkComplexHybridSource(b)
-	analysis, err := usecase.NewProjectUsecase(nil).Analyze(
+	analysis, err := usecase.NewProjectUsecase(nil, v2.NewFrontendUsecase(), v2.NewEngineUsecase()).Analyze(
 		context.Background(),
 		"file:///complex-hybrid-architecture.xal",
 		source,

@@ -14,6 +14,8 @@ import (
 
 	"github.com/xaligo/xaligo/internal/entity"
 	"github.com/xaligo/xaligo/internal/lsp"
+	"github.com/xaligo/xaligo/internal/usecase"
+	v2 "github.com/xaligo/xaligo/internal/usecase/v2"
 )
 
 type fakeLSPProject struct {
@@ -120,6 +122,25 @@ func (*fakeLSPProject) Search(context.Context, string, int) ([]entity.ProjectSea
 
 var _ lsp.ProjectService = (*fakeLSPProject)(nil)
 
+type fakeLSPV2Engine struct {
+	resolveCalls int
+}
+
+func (rcvr *fakeLSPV2Engine) Resolve(context.Context, entity.EngineDocumentSpec) (entity.EngineResolvedDocument, error) {
+	rcvr.resolveCalls++
+	return entity.EngineResolvedDocument{}, nil
+}
+
+func (*fakeLSPV2Engine) RenderSVG(context.Context, entity.EngineDocumentSpec) ([]byte, error) {
+	return nil, nil
+}
+
+func (*fakeLSPV2Engine) NormalizeSVG(context.Context, []byte) (entity.EngineSVG, error) {
+	return entity.EngineSVG{}, nil
+}
+
+var _ v2.EngineUsecase = (*fakeLSPV2Engine)(nil)
+
 func TestServerLifecycleDiagnosticsSymbolsTokensHoverAndSave(t *testing.T) {
 	project := &fakeLSPProject{}
 	var input bytes.Buffer
@@ -212,6 +233,81 @@ func TestServerPublishesDiagnosticsAfterFullDocumentChange(t *testing.T) {
 	diagnostics := messages[2]["params"].(map[string]any)["diagnostics"].([]any)
 	if len(diagnostics) != 1 || diagnostics[0].(map[string]any)["message"] != "invalid source" {
 		t.Fatalf("changed diagnostics = %#v", diagnostics)
+	}
+}
+
+func TestServerAcceptsSetTraceNotification(t *testing.T) {
+	var input bytes.Buffer
+	writeLSPInput(&input, request(1, "initialize", map[string]any{}))
+	writeLSPInput(&input, map[string]any{"jsonrpc": "2.0", "method": "$/setTrace", "params": map[string]any{"value": "off"}})
+	writeLSPInput(&input, request(2, "shutdown", map[string]any{}))
+	writeLSPInput(&input, map[string]any{"jsonrpc": "2.0", "method": "exit"})
+
+	var output bytes.Buffer
+	if err := lsp.NewServer(&fakeLSPProject{}).Serve(context.Background(), &input, &output); err != nil {
+		t.Fatal(err)
+	}
+	messages := readLSPOutput(t, output.Bytes())
+	if len(messages) != 2 {
+		t.Fatalf("setTrace produced unexpected output: %#v", messages)
+	}
+	if messages[0]["id"] != float64(1) || messages[1]["id"] != float64(2) {
+		t.Fatalf("request responses = %#v", messages)
+	}
+}
+
+func TestServerAnalyzesV2ThroughSharedProjectUsecase(t *testing.T) {
+	const uri = "file:///tmp/diagram-v2.xal"
+	const source = `<xaligo version="2"><frames><frame id="page" width="320" height="180" layout="horizontal"><item id="api" label="API">API</item><item id="worker">Worker</item><line id="flow" source="api" target="worker"/></frame></frames></xaligo>`
+	engine := &fakeLSPV2Engine{}
+	project := usecase.NewProjectUsecase(nil, v2.NewFrontendUsecase(), engine)
+	var input bytes.Buffer
+	writeLSPInput(&input, request(1, "initialize", map[string]any{}))
+	writeLSPInput(&input, map[string]any{"jsonrpc": "2.0", "method": "$/setTrace", "params": map[string]any{"value": "off"}})
+	writeLSPInput(&input, map[string]any{
+		"jsonrpc": "2.0", "method": "textDocument/didOpen",
+		"params": map[string]any{"textDocument": map[string]any{"uri": uri, "version": 1, "text": source}},
+	})
+	document := map[string]any{"textDocument": map[string]any{"uri": uri}}
+	writeLSPInput(&input, request(2, "textDocument/documentSymbol", document))
+	writeLSPInput(&input, request(3, "textDocument/semanticTokens/full", document))
+	writeLSPInput(&input, request(4, "textDocument/diagnostic", document))
+	referencePosition := strings.Index(source, `source="api"`) + len(`source="`)
+	reference := map[string]any{"textDocument": map[string]any{"uri": uri}, "position": map[string]any{"line": 0, "character": referencePosition}}
+	writeLSPInput(&input, request(5, "textDocument/definition", reference))
+	writeLSPInput(&input, request(6, "textDocument/references", reference))
+	hoverPosition := strings.Index(source, ">API<") + 1
+	hover := map[string]any{"textDocument": map[string]any{"uri": uri}, "position": map[string]any{"line": 0, "character": hoverPosition}}
+	writeLSPInput(&input, request(7, "textDocument/hover", hover))
+	writeLSPInput(&input, request(8, "shutdown", map[string]any{}))
+	writeLSPInput(&input, map[string]any{"jsonrpc": "2.0", "method": "exit"})
+
+	var output bytes.Buffer
+	if err := lsp.NewServer(project).Serve(context.Background(), &input, &output); err != nil {
+		t.Fatal(err)
+	}
+	messages := readLSPOutput(t, output.Bytes())
+	if len(messages) != 9 {
+		t.Fatalf("V2 LSP message count = %d, messages=%#v", len(messages), messages)
+	}
+	diagnostics := messages[1]["params"].(map[string]any)["diagnostics"].([]any)
+	if len(diagnostics) != 0 {
+		t.Fatalf("V2 push diagnostics = %#v", diagnostics)
+	}
+	symbols := messages[2]["result"].([]any)
+	if len(symbols) != 1 || len(symbols[0].(map[string]any)["children"].([]any)) != 3 {
+		t.Fatalf("V2 document symbols = %#v", symbols)
+	}
+	tokens := messages[3]["result"].(map[string]any)["data"].([]any)
+	if len(tokens) != 20 {
+		t.Fatalf("V2 semantic tokens = %#v", tokens)
+	}
+	pull := messages[4]["result"].(map[string]any)["items"].([]any)
+	if len(pull) != 0 || engine.resolveCalls != 1 {
+		t.Fatalf("V2 pull diagnostics = %#v, resolve calls = %d", pull, engine.resolveCalls)
+	}
+	if messages[5]["result"] == nil || len(messages[6]["result"].([]any)) != 2 || messages[7]["result"] == nil {
+		t.Fatalf("V2 navigation = definition %#v references %#v hover %#v", messages[5], messages[6], messages[7])
 	}
 }
 

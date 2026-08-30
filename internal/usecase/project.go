@@ -14,6 +14,7 @@ import (
 	"github.com/xaligo/xaligo/internal/entity"
 	projectrepository "github.com/xaligo/xaligo/internal/repository/project"
 	v1engine "github.com/xaligo/xaligo/internal/usecase/v1/engine"
+	v2usecase "github.com/xaligo/xaligo/internal/usecase/v2"
 )
 
 // ProjectUsecase owns source analysis and the durable concept index shared by
@@ -28,11 +29,13 @@ type ProjectUsecase interface {
 }
 
 type projectUsecase struct {
-	index projectrepository.IndexRepository
+	index    projectrepository.IndexRepository
+	frontend v2usecase.FrontendUsecase
+	engine   v2usecase.EngineUsecase
 }
 
-func NewProjectUsecase(index projectrepository.IndexRepository) ProjectUsecase {
-	return &projectUsecase{index: index}
+func NewProjectUsecase(index projectrepository.IndexRepository, frontend v2usecase.FrontendUsecase, engine v2usecase.EngineUsecase) ProjectUsecase {
+	return &projectUsecase{index: index, frontend: frontend, engine: engine}
 }
 
 const (
@@ -64,6 +67,33 @@ func (rcvr *projectUsecase) Analyze(ctx context.Context, uri string, source []by
 		analysis.Symbols = projectMarkdownSymbols(uri, source)
 	default:
 		analysis.Kind = entity.ProjectDocumentXAL
+		version, versionErr := renderDocumentVersion(source)
+		if versionErr != nil {
+			analysis.Diagnostics = []entity.Diagnostic{{Code: "XAL-E1001", Severity: SeverityError, Stage: "parse", Message: versionErr.Error()}}
+			break
+		}
+		if version == "2" {
+			if rcvr.frontend == nil {
+				return entity.ProjectAnalysis{}, errors.New("V2 project frontend is required")
+			}
+			if rcvr.engine == nil {
+				return entity.ProjectAnalysis{}, errors.New("V2 project engine is required")
+			}
+			spec, _, lowerErr := rcvr.frontend.LowerWithProvenance(source)
+			if lowerErr != nil {
+				analysis.Diagnostics = []entity.Diagnostic{{Code: "XAL-E1001", Severity: SeverityError, Stage: "parse", Message: lowerErr.Error()}}
+				break
+			}
+			analysis.Symbols = projectV2XALSymbols(spec.Elements)
+			if _, resolveErr := rcvr.engine.Resolve(ctx, spec); resolveErr != nil {
+				diagnostic, ok := v2usecase.DiagnosticFromEngineError(spec, resolveErr)
+				if !ok {
+					return entity.ProjectAnalysis{}, fmt.Errorf("resolve V2 project document: %w", resolveErr)
+				}
+				analysis.Diagnostics = []entity.Diagnostic{diagnostic}
+			}
+			break
+		}
 		imports := projectImportSource(uri)
 		document, diagnostics := v1engine.AnalyzeWithImportsV1EngineDiagnoseDocument(source, imports)
 		analysis.Diagnostics = diagnostics
@@ -84,6 +114,9 @@ func (rcvr *projectUsecase) IndexDocument(ctx context.Context, uri string, sourc
 	analysis, err := rcvr.Analyze(ctx, uri, source)
 	if err != nil {
 		return entity.ProjectAnalysis{}, false, err
+	}
+	if projectAnalysisHasErrors(analysis) {
+		return analysis, false, nil
 	}
 	rootURI := projectDocumentRootURI(uri)
 	changed, err := rcvr.index.Put(ctx, rootURI, analysis)
@@ -254,6 +287,71 @@ func projectXALSymbols(root *entity.Node) []entity.ProjectSymbol {
 	}
 	visit(root, -1, "", 0)
 	return state.symbols
+}
+
+func projectV2XALSymbols(roots []entity.EngineElementSpec) []entity.ProjectSymbol {
+	type walker struct {
+		symbols []entity.ProjectSymbol
+	}
+	state := &walker{}
+	var visit func(*entity.EngineElementSpec, int, string, int)
+	visit = func(element *entity.EngineElementSpec, parentOrdinal int, parentPath string, sibling int) {
+		childParent := parentOrdinal
+		childPath := parentPath
+		if provenance := element.Provenance; provenance != nil {
+			identity := strings.TrimSpace(provenance.Identity)
+			path := strings.TrimSpace(provenance.Path)
+			if path == "" {
+				segment := fmt.Sprintf("%s[%d]", provenance.Tag, sibling)
+				if identity != "" {
+					segment = provenance.Tag + "#" + identity
+				}
+				path = segment
+				if parentPath != "" {
+					path = parentPath + "/" + segment
+				}
+			}
+			semanticID := identity
+			if semanticID == "" {
+				semanticID = path
+			}
+			name := strings.TrimSpace(provenance.Name)
+			if name == "" {
+				name = semanticID
+			}
+			ordinal := len(state.symbols)
+			state.symbols = append(state.symbols, entity.ProjectSymbol{
+				Ordinal:       ordinal,
+				ParentOrdinal: parentOrdinal,
+				ID:            semanticID,
+				Name:          projectTruncate(name, 256),
+				Detail:        projectTruncate(provenance.Detail, projectMaxDetailBytes),
+				Concept:       element.Concept,
+				SourceTag:     provenance.Tag,
+				Source:        strings.TrimSpace(provenance.SourceRef),
+				Target:        strings.TrimSpace(provenance.TargetRef),
+				Position:      provenance.Position,
+			})
+			childParent = ordinal
+			childPath = path
+		}
+		for index := range element.Children {
+			visit(&element.Children[index], childParent, childPath, index)
+		}
+	}
+	for index := range roots {
+		visit(&roots[index], -1, "", index)
+	}
+	return state.symbols
+}
+
+func projectAnalysisHasErrors(analysis entity.ProjectAnalysis) bool {
+	for _, diagnostic := range analysis.Diagnostics {
+		if strings.EqualFold(strings.TrimSpace(string(diagnostic.Severity)), string(SeverityError)) {
+			return true
+		}
+	}
+	return false
 }
 
 func projectNodeConcept(node *entity.Node) (entity.ProjectConcept, bool) {

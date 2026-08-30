@@ -9,6 +9,7 @@ import (
 	"github.com/xaligo/xaligo/internal/entity"
 	projectrepository "github.com/xaligo/xaligo/internal/repository/project"
 	"github.com/xaligo/xaligo/internal/usecase"
+	v2 "github.com/xaligo/xaligo/internal/usecase/v2"
 )
 
 type fakeProjectIndex struct {
@@ -62,13 +63,40 @@ func (*fakeProjectIndex) Close() error { return nil }
 
 var _ projectrepository.IndexRepository = (*fakeProjectIndex)(nil)
 
+type fakeProjectEngine struct {
+	resolveCalls int
+	resolveErr   error
+}
+
+func (rcvr *fakeProjectEngine) Resolve(context.Context, entity.EngineDocumentSpec) (entity.EngineResolvedDocument, error) {
+	rcvr.resolveCalls++
+	return entity.EngineResolvedDocument{}, rcvr.resolveErr
+}
+
+func (*fakeProjectEngine) RenderSVG(context.Context, entity.EngineDocumentSpec) ([]byte, error) {
+	return nil, nil
+}
+
+func (*fakeProjectEngine) NormalizeSVG(context.Context, []byte) (entity.EngineSVG, error) {
+	return entity.EngineSVG{}, nil
+}
+
+var _ v2.EngineUsecase = (*fakeProjectEngine)(nil)
+
+func newProjectUsecase(index projectrepository.IndexRepository, engine v2.EngineUsecase) usecase.ProjectUsecase {
+	if engine == nil {
+		engine = &fakeProjectEngine{}
+	}
+	return usecase.NewProjectUsecase(index, v2.NewFrontendUsecase(), engine)
+}
+
 func TestProjectAnalyzeBuildsGenericConceptsFromComplexXAL(t *testing.T) {
 	path := filepath.Join("..", "..", "..", "..", "docs", "src", "examples", "samples", "complex-hybrid-architecture.xal")
 	source, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
-	project := usecase.NewProjectUsecase(newFakeProjectIndex())
+	project := newProjectUsecase(newFakeProjectIndex(), nil)
 	analysis, err := project.Analyze(context.Background(), "file:///complex-hybrid-architecture.xal", source)
 	if err != nil {
 		t.Fatal(err)
@@ -85,6 +113,92 @@ func TestProjectAnalyzeBuildsGenericConceptsFromComplexXAL(t *testing.T) {
 	}
 	if counts[entity.ProjectConceptFrame] != 1 || counts[entity.ProjectConceptPort] != 5 || counts[entity.ProjectConceptLine] != 36 {
 		t.Fatalf("generic concept counts = %#v", counts)
+	}
+}
+
+func TestProjectAnalyzeBuildsGenericConceptsFromComplexV2XAL(t *testing.T) {
+	path := filepath.Join("..", "..", "..", "..", "docs", "src", "examples", "samples", "complex-hybrid-architecture-v2.xal")
+	source, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	engine := &fakeProjectEngine{}
+	project := newProjectUsecase(newFakeProjectIndex(), engine)
+	analysis, err := project.Analyze(context.Background(), "file:///complex-hybrid-architecture-v2.xal", source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if analysis.Kind != entity.ProjectDocumentXAL || len(analysis.Diagnostics) != 0 {
+		t.Fatalf("analysis kind=%q diagnostics=%#v", analysis.Kind, analysis.Diagnostics)
+	}
+	counts := map[entity.ProjectConcept]int{}
+	wantRow := "xaligo[0]/frames[0]/frame#complex-hybrid-architecture/row[0]"
+	wantConnection := "xaligo[0]/frames[0]/frame#complex-hybrid-architecture/connections[1]/connection[0]"
+	foundRow, foundConnection := false, false
+	for _, symbol := range analysis.Symbols {
+		counts[symbol.Concept]++
+		foundRow = foundRow || symbol.ID == wantRow
+		foundConnection = foundConnection || symbol.ID == wantConnection
+		if symbol.SourceTag == "aws-cloud" && symbol.Concept != entity.ProjectConceptGroup {
+			t.Fatalf("domain tag did not normalize to group: %#v", symbol)
+		}
+	}
+	if counts[entity.ProjectConceptFrame] != 1 || counts[entity.ProjectConceptPort] != 5 || counts[entity.ProjectConceptLine] != 36 {
+		t.Fatalf("generic concept counts = %#v", counts)
+	}
+	if engine.resolveCalls != 1 {
+		t.Fatalf("V2 resolve calls = %d, want 1", engine.resolveCalls)
+	}
+	if !foundRow || !foundConnection {
+		t.Fatalf("V2 anonymous semantic paths = row %t connection %t", foundRow, foundConnection)
+	}
+}
+
+func TestProjectAnalyzeMapsV2EngineDiagnosticsToSource(t *testing.T) {
+	source := []byte(`<xaligo version="2">
+<frames><frame id="page" width="320" height="180">
+<item id="api">API</item>
+</frame></frames></xaligo>`)
+	engine := &fakeProjectEngine{resolveErr: &entity.EngineDiagnosticError{Diagnostic: entity.EngineDiagnostic{
+		Code: "XAL-E2001", Severity: "error", Stage: "calculate", ElementID: "api", SpanID: 2, Message: "invalid API geometry",
+	}}}
+	analysis, err := newProjectUsecase(newFakeProjectIndex(), engine).Analyze(context.Background(), "file:///diagnostic.xal", source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(analysis.Symbols) != 2 || len(analysis.Diagnostics) != 1 {
+		t.Fatalf("V2 analysis = symbols %#v diagnostics %#v", analysis.Symbols, analysis.Diagnostics)
+	}
+	diagnostic := analysis.Diagnostics[0]
+	if diagnostic.Code != "XAL-E2001" || diagnostic.Element != "api" || diagnostic.Line != 3 || diagnostic.Column != 1 {
+		t.Fatalf("source diagnostic = %#v", diagnostic)
+	}
+}
+
+func TestProjectIndexDocumentKeepsLastGoodV2Symbols(t *testing.T) {
+	const uri = "file:///project-v2.xal"
+	index := newFakeProjectIndex()
+	engine := &fakeProjectEngine{}
+	project := newProjectUsecase(index, engine)
+	valid := []byte(`<xaligo version="2"><frames><frame id="page" width="320" height="180"><item id="api">API</item></frame></frames></xaligo>`)
+	first, changed, err := project.IndexDocument(context.Background(), uri, valid)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !changed || len(first.Diagnostics) != 0 || len(first.Symbols) != 2 {
+		t.Fatalf("first V2 index = changed %t analysis %#v", changed, first)
+	}
+	invalid := []byte(`<xaligo version="2"><frames><frame id="page">`)
+	second, changed, err := project.IndexDocument(context.Background(), uri, invalid)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if changed || len(second.Diagnostics) != 1 {
+		t.Fatalf("invalid V2 index = changed %t diagnostics %#v", changed, second.Diagnostics)
+	}
+	persisted := index.analyses[uri]
+	if persisted.Checksum != first.Checksum || len(persisted.Symbols) != len(first.Symbols) {
+		t.Fatalf("last-good V2 symbols were replaced: %#v", persisted)
 	}
 }
 
@@ -105,7 +219,7 @@ func TestProjectRAGIndexSeedsOnlyDocsMarkdown(t *testing.T) {
 		}
 	}
 	index := newFakeProjectIndex()
-	project := usecase.NewProjectUsecase(index)
+	project := newProjectUsecase(index, nil)
 	first, err := project.Index(context.Background(), root)
 	if err != nil {
 		t.Fatal(err)
