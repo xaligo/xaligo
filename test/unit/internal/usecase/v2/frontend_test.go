@@ -28,9 +28,41 @@ func TestFrontendLowersV1AndV2ToOneGenericContract(t *testing.T) {
 		if frame.Concept != entity.EngineConceptFrame || len(frame.Children) != 3 || frame.Children[2].Concept != entity.EngineConceptLine {
 			t.Fatalf("version %s frame = %#v", test.version, frame)
 		}
+		if frame.Provenance != nil {
+			t.Fatalf("version %s render-only lowering retained project provenance: %#v", test.version, frame.Provenance)
+		}
 		if frame.SpanID == 0 || len(spec.Spans) != 4 || spec.Spans[0].Line < 1 {
 			t.Fatalf("version %s spans = %#v", test.version, spec.Spans)
 		}
+	}
+}
+
+func TestFrontendLowersProjectProvenanceWithoutASecondParse(t *testing.T) {
+	source := []byte(`<xaligo version="2"><frames><frame id="page" title="Architecture" width="320" height="180"><group id="services" title="Services"><item id="api" label="API"><port id="api-out" side="right"/></item></group><line id="flow" source="api-out" target="api" routing="orthogonal"/></frame></frames></xaligo>`)
+	spec, version, err := v2.NewFrontendUsecase().LowerWithProvenance(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if version != "2" || len(spec.Elements) != 1 {
+		t.Fatalf("project frontend result = version %q spec %#v", version, spec)
+	}
+	frame := spec.Elements[0]
+	if frame.Provenance == nil || frame.Provenance.Tag != "frame" || frame.Provenance.Path != "xaligo[0]/frames[0]/frame#page" || frame.Provenance.Identity != "page" || frame.Provenance.Name != "Architecture" || frame.Provenance.Position.Line != 1 {
+		t.Fatalf("frame provenance = %#v", frame.Provenance)
+	}
+	content := frame.Children[1]
+	group := content.Children[0]
+	item := group.Children[0]
+	port := item.Children[0]
+	line := content.Children[1]
+	if group.Provenance == nil || group.Provenance.Tag != "group" || group.Provenance.Name != "Services" {
+		t.Fatalf("group provenance = %#v", group.Provenance)
+	}
+	if item.Provenance == nil || item.Provenance.Identity != "api" || item.Provenance.Name != "API" || port.Provenance == nil || port.Provenance.Tag != "port" {
+		t.Fatalf("item/port provenance = item %#v port %#v", item.Provenance, port.Provenance)
+	}
+	if line.Provenance == nil || line.Provenance.SourceRef != "api-out" || line.Provenance.TargetRef != "api" || line.Provenance.Detail == "" {
+		t.Fatalf("line provenance = %#v", line.Provenance)
 	}
 }
 

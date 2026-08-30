@@ -141,6 +141,20 @@ type EngineParameterSource struct {
 	SpanID    uint32
 }
 
+// EngineElementProvenance preserves source-authored identity for editor and
+// project-intelligence adapters. It remains on the Go side and is never
+// encoded into the domain-neutral Rust engine ABI.
+type EngineElementProvenance struct {
+	Tag       string
+	Path      string
+	Identity  string
+	Name      string
+	Detail    string
+	SourceRef string
+	TargetRef string
+	Position  Position
+}
+
 type EngineDiagnostic struct {
 	Code      string
 	Severity  string
@@ -225,10 +239,11 @@ type EngineLineSpec struct {
 // engine boundary. Width, Height, and Weight retain source compatibility with
 // the original flat V2 prototype.
 type EngineElementSpec struct {
-	ID      string
-	Concept EngineConcept
-	SpanID  uint32
-	Sources []EngineParameterSource
+	ID         string
+	Concept    EngineConcept
+	SpanID     uint32
+	Sources    []EngineParameterSource
+	Provenance *EngineElementProvenance
 
 	X               *float64
 	Y               *float64

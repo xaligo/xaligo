@@ -131,7 +131,7 @@ func (rcvr *Server) dispatch(ctx context.Context, message rpcMessage) (any, erro
 		}
 		rcvr.initialized = true
 		return initializeResult(), nil
-	case "initialized", "$/cancelRequest", "workspace/didChangeConfiguration", "workspace/didChangeWatchedFiles":
+	case "initialized", "$/cancelRequest", "$/setTrace", "workspace/didChangeConfiguration", "workspace/didChangeWatchedFiles":
 		return nil, nil
 	case "shutdown":
 		rcvr.shutdown = true

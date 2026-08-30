@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"errors"
 
 	"github.com/xaligo/xaligo/internal/entity"
 	v1engine "github.com/xaligo/xaligo/internal/usecase/v1/engine"
@@ -67,20 +66,9 @@ func (rcvr *diagnosticsUsecase) DiagnoseWithImports(ctx context.Context, input [
 		if err == nil {
 			return nil, nil
 		}
-		var engineErr *entity.EngineDiagnosticError
-		if !errors.As(err, &engineErr) {
+		diagnostic, ok := v2usecase.DiagnosticFromEngineError(spec, err)
+		if !ok {
 			return nil, err
-		}
-		diagnostic := entity.Diagnostic{
-			Code: engineErr.Diagnostic.Code, Severity: SeverityError, Stage: engineErr.Diagnostic.Stage,
-			Element: engineErr.Diagnostic.ElementID, Parameter: engineErr.Diagnostic.Parameter,
-			Message: engineErr.Diagnostic.Message,
-		}
-		for _, span := range spec.Spans {
-			if span.ID == engineErr.Diagnostic.SpanID {
-				diagnostic.Offset, diagnostic.Line, diagnostic.Column = span.Offset, span.Line, span.Column
-				break
-			}
 		}
 		return []entity.Diagnostic{diagnostic}, nil
 	}

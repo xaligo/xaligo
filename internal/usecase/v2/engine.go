@@ -1033,6 +1033,31 @@ func enrichEngineDiagnostic(err error, spec entity.EngineDocumentSpec) error {
 	return diagnosticErr
 }
 
+// DiagnosticFromEngineError projects a structured engine failure onto the
+// source span retained by the frontend. Non-engine failures are returned to
+// the caller by reporting ok=false.
+func DiagnosticFromEngineError(spec entity.EngineDocumentSpec, err error) (diagnostic entity.Diagnostic, ok bool) {
+	var engineErr *entity.EngineDiagnosticError
+	if !errors.As(err, &engineErr) {
+		return entity.Diagnostic{}, false
+	}
+	diagnostic = entity.Diagnostic{
+		Code: engineErr.Diagnostic.Code, Severity: entity.DiagnosticSeverity(engineErr.Diagnostic.Severity),
+		Stage: engineErr.Diagnostic.Stage, Element: engineErr.Diagnostic.ElementID,
+		Parameter: engineErr.Diagnostic.Parameter, Message: engineErr.Diagnostic.Message,
+	}
+	if diagnostic.Severity == "" {
+		diagnostic.Severity = "error"
+	}
+	for _, span := range spec.Spans {
+		if span.ID == engineErr.Diagnostic.SpanID {
+			diagnostic.Offset, diagnostic.Line, diagnostic.Column = span.Offset, span.Line, span.Column
+			break
+		}
+	}
+	return diagnostic, true
+}
+
 func flattenEngineDiagnosticElements(roots []entity.EngineElementSpec) []entity.EngineElementSpec {
 	result := make([]entity.EngineElementSpec, 0, len(roots))
 	var walk func([]entity.EngineElementSpec)

@@ -51,7 +51,7 @@ func newRootCmd() (*cobra.Command, func() error) {
 	iconRegistryRepository := iconrepository.NewRegistryRepository(cfg.AssetsDB)
 	iconUsecase := v2.NewIconUsecase(iconRegistryRepository, engineUsecase, builtin.IconRegistrations()...)
 	projectIndexRepository := projectrepository.NewIndexRepository(cfg.ProjectDB)
-	projectUsecase := usecase.NewProjectUsecase(projectIndexRepository)
+	projectUsecase := usecase.NewProjectUsecase(projectIndexRepository, v2.NewFrontendUsecase(), engineUsecase)
 	var closeOnce sync.Once
 	var closeErr error
 	closeResources := func() error {
