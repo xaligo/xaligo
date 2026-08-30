@@ -148,6 +148,7 @@ pub(crate) fn resolve(document: &DocumentSpec) -> Result<ResolvedDocument, Layou
         Alignment::Stretch,
         Justification::Start,
     )?;
+    state.align_v1_profile_group_headers()?;
     state.layout_lines()?;
 
     let elements = state

@@ -44,6 +44,9 @@ impl LayoutState<'_> {
             LayoutPolicy::Grid => {
                 self.layout_grid(&flow, content, gap, overflow, columns, align)?
             }
+            LayoutPolicy::AdaptiveGrid => {
+                self.layout_adaptive_grid(&flow, content, gap, overflow, align, justify)?
+            }
             LayoutPolicy::Absolute | LayoutPolicy::None | LayoutPolicy::Default => {
                 self.layout_absolute(&flow, content, overflow, align)?
             }
@@ -289,6 +292,152 @@ impl LayoutState<'_> {
         Ok(())
     }
 
+    #[allow(clippy::too_many_arguments)]
+    fn layout_adaptive_grid(
+        &mut self,
+        indices: &[usize],
+        content: Bounds,
+        gap: f64,
+        overflow: Overflow,
+        align: Alignment,
+        justify: Justification,
+    ) -> Result<(), LayoutError> {
+        const VISUAL_PAD: f64 = 6.0;
+        const MIN_ICON_SIZE: f64 = 8.0;
+
+        crate::usc::cancel::check().map_err(LayoutError::new)?;
+        if indices.is_empty() {
+            return Ok(());
+        }
+
+        let mut maximum_icon_size: f64 = 0.0;
+        let mut maximum_non_icon_height: f64 = 0.0;
+        let mut minimum_slot_width: f64 = 0.0;
+        for index in indices {
+            let element = &self.document.elements[*index];
+            let margin = element.margin.resolved();
+            let width = adaptive_grid_child_width(element, content.width);
+            let height = adaptive_grid_child_height(element, content.height);
+            let icon_size = adaptive_grid_icon_size(element);
+            maximum_icon_size = maximum_icon_size.max(icon_size);
+            maximum_non_icon_height = maximum_non_icon_height.max((height - icon_size).max(0.0));
+            minimum_slot_width = minimum_slot_width.max(width + margin.left + margin.right);
+        }
+
+        let count = indices.len();
+        let mut best_columns = 0usize;
+        let mut best_rows = 0usize;
+        let mut best_icon_size = 0.0;
+        let mut best_score = f64::NEG_INFINITY;
+        for columns in 1..=count {
+            if columns % 256 == 0 {
+                crate::usc::cancel::check().map_err(LayoutError::new)?;
+            }
+            let rows = count.div_ceil(columns);
+            let cell_width =
+                (content.width - gap * columns.saturating_sub(1) as f64) / columns as f64;
+            let cell_height =
+                (content.height - gap * rows.saturating_sub(1) as f64) / rows as f64;
+            let icon_size = if maximum_icon_size > 0.0 {
+                maximum_icon_size
+                    .min(cell_width - VISUAL_PAD * 2.0)
+                    .min(cell_height - maximum_non_icon_height)
+            } else {
+                0.0
+            };
+            if maximum_icon_size > 0.0 && icon_size < MIN_ICON_SIZE {
+                continue;
+            }
+            let slot_width = minimum_slot_width.max(icon_size + VISUAL_PAD * 2.0);
+            let slot_height = icon_size + maximum_non_icon_height;
+            let used_width = slot_width * columns as f64
+                + gap * columns.saturating_sub(1) as f64;
+            let used_height =
+                slot_height * rows as f64 + gap * rows.saturating_sub(1) as f64;
+            if used_width > content.width + f64::EPSILON
+                || used_height > content.height + f64::EPSILON
+            {
+                continue;
+            }
+            let aspect_penalty = ((columns as f64 / rows as f64)
+                - content.width / content.height.max(1.0))
+            .abs();
+            let score = icon_size * 100.0 - aspect_penalty;
+            if score > best_score {
+                best_score = score;
+                best_columns = columns;
+                best_rows = rows;
+                best_icon_size = icon_size;
+            }
+        }
+        if best_columns == 0 || best_rows == 0 {
+            return Err(LayoutError::new(format!(
+                "cannot fit {} adaptive-grid slots in {}x{}",
+                count,
+                format_number(content.width),
+                format_number(content.height)
+            )));
+        }
+
+        let slot_width = minimum_slot_width.max(best_icon_size + VISUAL_PAD * 2.0);
+        let slot_height = best_icon_size + maximum_non_icon_height;
+        let (start_x, step_x) = adaptive_grid_horizontal_axis(
+            content.x,
+            content.width,
+            slot_width,
+            best_columns,
+            gap,
+            justify,
+        );
+        let (start_y, step_y) = adaptive_grid_vertical_axis(
+            content.y,
+            content.height,
+            slot_height,
+            best_rows,
+            gap,
+            align,
+        );
+
+        for (position, index) in indices.iter().enumerate() {
+            let element = &self.document.elements[*index];
+            let margin = element.margin.resolved();
+            let requested_width = adaptive_grid_child_width(element, content.width);
+            let requested_height = adaptive_grid_child_height(element, content.height);
+            let requested_icon_size = adaptive_grid_icon_size(element);
+            let icon_size = if requested_icon_size > 0.0 {
+                requested_icon_size.min(best_icon_size)
+            } else {
+                0.0
+            };
+            let height = if requested_icon_size > 0.0 {
+                icon_size + (requested_height - requested_icon_size).max(0.0)
+            } else {
+                requested_height
+            };
+            let column = position % best_columns;
+            let row = position / best_columns;
+            let outer_width = requested_width + margin.left + margin.right;
+            let bounds = Bounds {
+                x: start_x
+                    + column as f64 * step_x
+                    + (slot_width - outer_width).max(0.0) / 2.0
+                    + margin.left,
+                y: start_y + row as f64 * step_y + margin.top,
+                width: requested_width,
+                height,
+            };
+            if overflow == Overflow::Error && !contains(content, bounds) {
+                return Err(LayoutError::new(format!(
+                    "element {:?} exceeds its adaptive-grid cell",
+                    element.id
+                )));
+            }
+            let icon_limit = (requested_icon_size > 0.0).then_some(icon_size);
+            self.place_with_icon_limit(*index, bounds, icon_limit)?;
+        }
+        Ok(())
+    }
+
     fn layout_absolute(
         &mut self,
         indices: &[usize],
@@ -331,12 +480,21 @@ impl LayoutState<'_> {
         Ok(())
     }
 
-    fn place(&mut self, index: usize, mut bounds: Bounds) -> Result<(), LayoutError> {
+    fn place(&mut self, index: usize, bounds: Bounds) -> Result<(), LayoutError> {
+        self.place_with_icon_limit(index, bounds, None)
+    }
+
+    fn place_with_icon_limit(
+        &mut self,
+        index: usize,
+        mut bounds: Bounds,
+        icon_limit: Option<f64>,
+    ) -> Result<(), LayoutError> {
         let element = &self.document.elements[index];
         bounds.x += element.offset_x.unwrap_or(0.0);
         bounds.y += element.offset_y.unwrap_or(0.0);
         validate_resolved_bounds(element, bounds)?;
-        let resolved = resolved_element(element, bounds)?;
+        let resolved = resolved_element_with_icon_limit(element, bounds, icon_limit)?;
         self.resolved[index] = Some(resolved);
 
         let child_indices = self.children[index].clone();
@@ -360,4 +518,77 @@ impl LayoutState<'_> {
         Ok(())
     }
 
+}
+
+fn adaptive_grid_child_width(element: &ElementSpec, available: f64) -> f64 {
+    element
+        .width
+        .or(element.intrinsic_width)
+        .unwrap_or_else(|| default_absolute_width(element, available))
+}
+
+fn adaptive_grid_child_height(element: &ElementSpec, available: f64) -> f64 {
+    element
+        .height
+        .or(element.intrinsic_height)
+        .unwrap_or_else(|| default_absolute_height(element, available))
+}
+
+fn adaptive_grid_icon_size(element: &ElementSpec) -> f64 {
+    if element.icon.reference.is_empty() && element.icon.fallback_reference.is_empty() {
+        return 0.0;
+    }
+    let scale = element.icon.scale.unwrap_or(1.0);
+    element
+        .icon
+        .width
+        .unwrap_or(DEFAULT_ITEM_SIZE)
+        .min(element.icon.height.unwrap_or(DEFAULT_ITEM_SIZE))
+        * scale
+}
+
+fn adaptive_grid_horizontal_axis(
+    start: f64,
+    available: f64,
+    slot: f64,
+    count: usize,
+    gap: f64,
+    justify: Justification,
+) -> (f64, f64) {
+    if count <= 1 {
+        return (start + (available - slot).max(0.0) / 2.0, 0.0);
+    }
+    let total = slot * count as f64 + gap * count.saturating_sub(1) as f64;
+    let free = (available - total).max(0.0);
+    match justify {
+        Justification::Center => (start + free / 2.0, slot + gap),
+        Justification::End => (start + free, slot + gap),
+        Justification::SpaceBetween => (start, slot + gap + free / (count - 1) as f64),
+        Justification::SpaceEvenly => {
+            let distributed_gap = (available - slot * count as f64) / (count + 1) as f64;
+            (start + distributed_gap, slot + distributed_gap)
+        }
+        Justification::Start => (start, slot + gap),
+    }
+}
+
+fn adaptive_grid_vertical_axis(
+    start: f64,
+    available: f64,
+    slot: f64,
+    count: usize,
+    gap: f64,
+    align: Alignment,
+) -> (f64, f64) {
+    if count <= 1 {
+        return (start + (available - slot).max(0.0) / 2.0, 0.0);
+    }
+    let total = slot * count as f64 + gap * count.saturating_sub(1) as f64;
+    let free = (available - total).max(0.0);
+    let offset = match align {
+        Alignment::Start => 0.0,
+        Alignment::End => free,
+        Alignment::Center | Alignment::Stretch => free / 2.0,
+    };
+    (start + offset, slot + gap)
 }

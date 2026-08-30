@@ -501,6 +501,8 @@ func encodeEngineLayout(value entity.EngineLayoutPolicy) (byte, error) {
 		return 4, nil
 	case entity.EngineLayoutNone:
 		return 5, nil
+	case entity.EngineLayoutAdaptiveGrid:
+		return 6, nil
 	default:
 		return 0, fmt.Errorf("unsupported layout policy %q", value)
 	}

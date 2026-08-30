@@ -81,6 +81,7 @@ impl_enum_debug!(
     LayoutPolicy::Vertical => "Vertical",
     LayoutPolicy::Horizontal => "Horizontal",
     LayoutPolicy::Grid => "Grid",
+    LayoutPolicy::AdaptiveGrid => "AdaptiveGrid",
     LayoutPolicy::Absolute => "Absolute",
     LayoutPolicy::None => "None",
 );

@@ -1,222 +1,174 @@
 <!--
-  Hybrid enterprise platform showcasing the currently implemented xaligo DSL:
-  AWS/Tabler/Yamaha icons, catalog-backed group icons, nested AWS boundaries,
-  grid and flex layout, route/traffic lanes, orthogonal routing, automatic
-  junctions, line jumps, custom strokes, and independent arrowheads.
+  V2 uses the same concise authoring profile as V1 and lowers it directly to
+  the typed generic engine model. V2 routing chooses bends automatically, so
+  the V1-only manual <bend>/<bends> hints are intentionally omitted here.
 -->
-<scene version="2" width="1920" height="1440" layout="absolute">
-  <frame id="complex-hybrid-architecture"
+<xaligo version="2">
+  <frames>
+    <frame id="complex-hybrid-architecture"
            title="Complex Hybrid Architecture"
            version="2026.07"
            width="1920" height="1440"
-           layout="vertical"
-           padding-top="47" padding-x="24" padding-bottom="24"
+           class="pa-3"
            item-size="32">
-      <group id="main-layout" layout="horizontal" gap="24" weight="1" shape="none">
-        <group id="onprem-column" layout="vertical" weight="3" shape="none">
-          <corporate-data-center id="onprem-hq" title="On-premises Headquarters"
-                                 gap="20" padding-top="36" padding-x="12" padding-bottom="12"
-                                 fill="#ffffff" stroke="#7A7C7F" stroke-width="2">
-            <generic-group id="employees-devices" title="Employees &amp; Devices" icon-ref="catalog:104764"
-                           layout="horizontal" align="center" justify="space-evenly"
-                           padding-top="28" padding-x="12" padding-bottom="4"
-                           fill="#ffffff" stroke="#AAB7B8">
-              <item id="200025" label="network_u&#10;ser" icon-ref="catalog:200025" height="60" />
-              <item id="200005" label="desktop_p&#10;c" icon-ref="catalog:200005" height="60" />
-              <item id="200046" label="smartphone" icon-ref="catalog:200046" />
+      <row gap="24">
+        <col span="3">
+          <corporate-data-center id="onprem-hq" title="On-premises Headquarters">
+            <generic-group id="employees-devices" title="Employees &amp; Devices" icon-id="104764" align="middle-spread">
+              <item id="200025" name="employee" />     <!-- Yamaha: network_user -->
+              <item id="200005" name="office-pc" />    <!-- Yamaha: desktop_pc -->
+              <item id="200046" name="mobile" />       <!-- Yamaha: smartphone -->
             </generic-group>
 
-            <generic-group id="campus-network" title="Campus Network" icon-ref="catalog:104635"
-                           layout="horizontal" align="center" justify="space-evenly"
-                           padding-top="28" padding-x="12" padding-bottom="4"
-                           fill="#ffffff" stroke="#AAB7B8">
-              <item id="200013" label="l2_switch_&#10;general" icon-ref="catalog:200013" height="60" />
-              <item id="200036" label="router_ge&#10;neral" icon-ref="catalog:200036" height="60" />
-              <item id="104915" label="world-www" icon-ref="catalog:104915" />
+            <generic-group id="campus-network" title="Campus Network" icon-id="104635" align="middle-spread">
+              <item id="200013" name="access-switch" /> <!-- Yamaha: l2_switch_general -->
+              <item id="200036" name="site-router" />   <!-- Yamaha: router_general -->
+              <item id="104915" name="internet" />      <!-- Tabler: world-www -->
             </generic-group>
 
-            <server-contents id="local-operations" title="Local Operations"
-                             layout="horizontal" align="center" justify="space-evenly"
-                             padding-top="28" padding-x="12" padding-bottom="4"
-                             fill="#ffffff" stroke="#7A7C7F" stroke-width="2">
-              <item id="200041" label="server" icon-ref="catalog:200041" />
-              <item id="104109" label="server" icon-ref="catalog:104109" />
+            <server-contents id="local-operations" title="Local Operations" align="middle-spread">
+              <item id="200041" name="local-monitor" /> <!-- Yamaha: server -->
+              <item id="104109" name="admin-server" />  <!-- Tabler: server -->
             </server-contents>
 
             <rectangle id="legacy-api-gateway" title="Legacy API Gateway" width="300" height="96" font-size="18">
-              <port id="legacy-api-lan" side="left" anchor="0.333333" title="LAN" width="56" height="22" font-size="10" fill="#ffffff" stroke="#334155" />
-              <port id="legacy-api-mgmt" side="left" anchor="0.666667" title="MGT" width="56" height="22" font-size="10" fill="#ffffff" stroke="#334155" />
-              <port id="legacy-api-wan" side="right" anchor="0.333333" title="WAN" width="56" height="22" font-size="10" fill="#ffffff" stroke="#334155" />
-              <port id="legacy-api-dmz" side="right" anchor="0.666667" title="DMZ" width="56" height="22" font-size="10" fill="#ffffff" stroke="#334155" />
-              <port id="legacy-api-ops" side="bottom" anchor="0.5" title="OPS" width="56" height="22" font-size="10" fill="#ffffff" stroke="#334155" />
+              <port id="legacy-api-lan" side="left" title="LAN" font-size="10" />
+              <port id="legacy-api-mgmt" side="left" title="MGT" font-size="10" />
+              <port id="legacy-api-wan" side="right" title="WAN" font-size="10" />
+              <port id="legacy-api-dmz" side="right" title="DMZ" font-size="10" />
+              <port id="legacy-api-ops" side="bottom" title="OPS" width="56" height="22" font-size="10" />
             </rectangle>
           </corporate-data-center>
-        </group>
+        </col>
 
-        <group id="aws-column" layout="vertical" weight="9" shape="none">
-          <aws-cloud id="aws-cloud" title="AWS Cloud"
-                     gap="20" padding-top="36" padding-x="12" padding-bottom="12"
-                     fill="#ffffff" stroke="#000000" stroke-width="2">
-            <generic-group id="aws-edge" title="Global Edge, Identity &amp; Protection" icon-ref="catalog:100648"
-                           layout="horizontal" align="center" justify="space-evenly" height="111.364"
-                           padding-top="28" padding-x="12" padding-bottom="4"
-                           fill="#ffffff" stroke="#AAB7B8">
-              <item id="1179" label="R53" icon-ref="catalog:1179" />
-              <item id="1178" label="CF" icon-ref="catalog:1178" />
-              <item id="227" label="WAF" icon-ref="catalog:227" />
-              <item id="216" label="IAM" icon-ref="catalog:216" />
-              <item id="604" label="CW" icon-ref="catalog:604" />
+        <col span="9">
+          <aws-cloud id="aws-cloud" title="AWS Cloud">
+            <generic-group id="aws-edge" title="Global Edge, Identity &amp; Protection" icon-id="100648" align="middle-spread" row="1">
+              <item id="1179" name="dns" />          <!-- Route 53 -->
+              <item id="1178" name="cdn" />          <!-- CloudFront -->
+              <item id="227" name="waf" />           <!-- AWS WAF -->
+              <item id="216" name="iam" />           <!-- IAM -->
+              <item id="604" name="cloudwatch" />    <!-- CloudWatch -->
             </generic-group>
 
-            <region id="region-apne1" title="ap-northeast-1" weight="10"
-                    gap="20" padding-top="40" padding-x="12" padding-bottom="12"
-                    fill="#ffffff" stroke="#00A1C9" stroke-width="2">
-              <generic-group id="regional-integration" title="Regional Integration &amp; Delivery" icon-ref="catalog:104022"
-                             layout="horizontal" align="center" justify="space-evenly" height="101.967"
-                             padding-top="28" padding-x="12" padding-bottom="4"
-                             fill="#ffffff" stroke="#AAB7B8">
-                <item id="441" label="CP" icon-ref="catalog:441" />
-                <item id="722" label="EB" icon-ref="catalog:722" />
-                <item id="706" label="SQS" icon-ref="catalog:706" />
-                <item id="705" label="SNS" icon-ref="catalog:705" />
-                <item id="1020" label="S3" icon-ref="catalog:1020" />
+            <region id="region-apne1" title="ap-northeast-1" row="10">
+              <generic-group id="regional-integration" title="Regional Integration &amp; Delivery" icon-id="104022" align="middle-spread" row="1">
+                <item id="441" name="pipeline" />     <!-- CodePipeline -->
+                <item id="722" name="event-bus" />    <!-- EventBridge -->
+                <item id="706" name="queue" />        <!-- SQS -->
+                <item id="705" name="notifications" /><!-- SNS -->
+                <item id="1020" name="assets" />      <!-- S3 -->
               </generic-group>
 
-              <vpc id="prod-vpc" title="Production VPC · 10.20.0.0/16" weight="10"
-                   gap="16" padding-top="40" padding-x="12" padding-bottom="12"
-                   fill="#ffffff" stroke="#8C4FFF" stroke-width="2">
-                <generic-group id="vpc-edge-security" title="VPC Edge &amp; Shared Security" icon-ref="catalog:104032"
-                               layout="horizontal" align="center" justify="space-evenly" height="86.152"
-                               overflow="visible"
-                               padding-top="28" padding-x="12" padding-bottom="4"
-                               fill="#ffffff" stroke="#AAB7B8">
-                  <item id="1581" label="IGW" icon-ref="catalog:1581" dx="-12" dy="8" />
-                  <item id="1182" label="ELB" icon-ref="catalog:1182" />
-                  <item id="1582" label="NATGW" icon-ref="catalog:1582" />
-                  <item id="1579" label="VPC&#10;Endpoints" icon-ref="catalog:1579" height="60" />
-                  <item id="222" label="SM" icon-ref="catalog:222" />
+              <vpc id="prod-vpc" title="Production VPC · 10.20.0.0/16" row="10">
+                <generic-group id="vpc-edge-security" title="VPC Edge &amp; Shared Security" icon-id="104032" align="middle-spread" row="1">
+                  <item id="1581" name="igw" dx="-12" dy="8" /> <!-- Internet Gateway -->
+                  <item id="1182" name="alb" />       <!-- Application Load Balancer -->
+                  <item id="1582" name="nat" />       <!-- NAT Gateway -->
+                  <item id="1579" name="endpoint" />  <!-- VPC Endpoint -->
+                  <item id="222" name="secrets" />    <!-- Secrets Manager -->
                 </generic-group>
 
-                <group id="availability-zones" layout="horizontal" gap="16" weight="10" shape="none">
-                  <group id="az-primary-column" layout="vertical" weight="6" shape="none">
-                    <availability-zone id="az-apne1a" title="AZ ap-northeast-1a · Primary"
-                                       gap="20" padding-top="44" padding-x="12" padding-bottom="12"
-                                       fill="#ffffff" stroke="#00A1C9" stroke-width="2">
-                      <public-subnet id="public-subnet-a" title="Public Subnet · 10.20.0.0/24"
-                                     layout="horizontal" align="center" justify="center" height="257.839"
-                                     padding-top="28" padding-x="12" padding-bottom="4"
-                                     fill="#ffffff" stroke="#3F8624" stroke-width="2">
-                        <item id="1542" label="CloudWatch&#10;Event&#10;Event&#10;Based" icon-ref="catalog:1542" height="84" />
+                <row gap="16" row="10">
+                  <col span="6">
+                    <availability-zone id="az-apne1a" title="AZ ap-northeast-1a · Primary">
+                      <public-subnet id="public-subnet-a" title="Public Subnet · 10.20.0.0/24" align="middle-center">
+                        <item id="1542" name="public-acl" /> <!-- Network ACL resource -->
                       </public-subnet>
-                      <private-subnet id="app-subnet-a" title="Application Subnet · 10.20.10.0/24"
-                                      padding-top="40" padding-x="12" padding-bottom="12"
-                                      fill="#ffffff" stroke="#00A1C9" stroke-width="2">
-                        <auto-scaling-group id="elastic-app-tier-a" title="Elastic Application Tier"
-                                            layout="horizontal" align="center" justify="space-evenly"
-                                            padding-top="28" padding-x="12" padding-bottom="4"
-                                            fill="#ffffff" stroke="#DD6B20" stroke-width="2">
-                          <item id="27" label="EC2" icon-ref="catalog:27" />
-                          <item id="547" label="ECS" icon-ref="catalog:547" />
-                          <item id="13" label="Lambda" icon-ref="catalog:13" />
+                      <private-subnet id="app-subnet-a" title="Application Subnet · 10.20.10.0/24">
+                        <auto-scaling-group id="elastic-app-tier-a" title="Elastic Application Tier" align="middle-spread">
+                          <item id="27" name="web-app" />    <!-- EC2 -->
+                          <item id="547" name="containers" /><!-- ECS -->
+                          <item id="13" name="functions" />  <!-- Lambda -->
                         </auto-scaling-group>
                       </private-subnet>
-                      <private-subnet id="data-subnet-a" title="Data Subnet · 10.20.20.0/24"
-                                      layout="horizontal" align="center" justify="space-evenly"
-                                      padding-top="28" padding-x="12" padding-bottom="4"
-                                      fill="#ffffff" stroke="#00A1C9" stroke-width="2">
-                        <item id="110" label="Aurora" icon-ref="catalog:110" />
-                        <item id="113" label="EC" icon-ref="catalog:113" />
+                      <private-subnet id="data-subnet-a" title="Data Subnet · 10.20.20.0/24" align="middle-spread">
+                        <item id="110" name="aurora-primary" /> <!-- Aurora -->
+                        <item id="113" name="cache" />          <!-- ElastiCache -->
                       </private-subnet>
                     </availability-zone>
-                  </group>
+                  </col>
 
-                  <group id="az-resilience-column" layout="vertical" weight="6" shape="none">
-                    <availability-zone id="az-apne1c" title="AZ ap-northeast-1c · Resilience"
-                                       gap="20" padding-top="44" padding-x="12" padding-bottom="12"
-                                       fill="#ffffff" stroke="#00A1C9" stroke-width="2">
-                      <public-subnet id="public-subnet-c" title="Public Subnet · 10.20.1.0/24"
-                                     layout="horizontal" align="center" justify="center" height="257.839"
-                                     padding-top="28" padding-x="12" padding-bottom="4"
-                                     fill="#ffffff" stroke="#3F8624" stroke-width="2">
-                        <item id="1580" label="VPC Flow&#10;Logs" icon-ref="catalog:1580" height="60" />
+                  <col span="6">
+                    <availability-zone id="az-apne1c" title="AZ ap-northeast-1c · Resilience">
+                      <public-subnet id="public-subnet-c" title="Public Subnet · 10.20.1.0/24" align="middle-center">
+                        <item id="1580" name="flow-logs" /> <!-- VPC Flow Logs -->
                       </public-subnet>
-                      <private-subnet id="app-subnet-c" title="Application Subnet · 10.20.11.0/24"
-                                      padding-top="40" padding-x="12" padding-bottom="12"
-                                      fill="#ffffff" stroke="#00A1C9" stroke-width="2">
-                        <security-group id="container-platform" title="Container Platform"
-                                        layout="horizontal" align="center" justify="space-evenly"
-                                        padding-top="28" padding-x="12" padding-bottom="4"
-                                        fill="#ffffff" stroke="#DD344C" stroke-width="2">
-                          <item id="548" label="EKS" icon-ref="catalog:548" />
-                          <item id="1685" label="Elastic&#10;Container&#10;Service&#10;Task" icon-ref="catalog:1685" height="84" />
+                      <private-subnet id="app-subnet-c" title="Application Subnet · 10.20.11.0/24">
+                        <security-group id="container-platform" title="Container Platform" align="middle-spread">
+                          <item id="548" name="kubernetes" /> <!-- EKS -->
+                          <item id="1685" name="worker-task" /><!-- ECS Task resource -->
                         </security-group>
                       </private-subnet>
-                      <private-subnet id="data-subnet-c" title="Data Subnet · 10.20.21.0/24"
-                                      layout="horizontal" align="center" justify="space-evenly"
-                                      padding-top="28" padding-x="12" padding-bottom="4"
-                                      fill="#ffffff" stroke="#00A1C9" stroke-width="2">
-                        <item id="117" label="RDS" icon-ref="catalog:117" />
-                        <item id="112" label="DDB" icon-ref="catalog:112" />
+                      <private-subnet id="data-subnet-c" title="Data Subnet · 10.20.21.0/24" align="middle-spread">
+                        <item id="117" name="rds-standby" /> <!-- RDS -->
+                        <item id="112" name="dynamodb" />   <!-- DynamoDB -->
                       </private-subnet>
                     </availability-zone>
-                  </group>
-                </group>
+                  </col>
+                </row>
               </vpc>
             </region>
           </aws-cloud>
-        </group>
-      </group>
+        </col>
+      </row>
 
-      <!-- V2 lines are direct frame children; traffic semantics use endpoint decorations. -->
-      <!-- Campus access: fan-in/fan-out creates shared trunks and junction dots. -->
-      <line source="200025" target="200005" />
-      <line source="200025" target="200046" />
-      <line source="200005" target="200013" target-decoration="arrow" stroke="#2563eb" />
-      <line source="200046" target="200013" target-decoration="arrow" stroke="#2563eb" />
-      <line source="200013" target="200036" />
-      <line source="200036" target="104915" />
-      <line source="200036" target="104915" target-decoration="arrow" stroke="#0f766e" />
-      <line source="campus-network" target="aws-edge" stroke="#64748b" />
+      <connections grid="8">
+        <!-- Campus access: fan-in/fan-out creates shared trunks and junction dots. -->
+        <connection src="200025" dst="200005" kind="route" />
+        <connection src="200025" dst="200046" kind="route" />
+        <connection src="200005" dst="200013" kind="traffic" color="#2563eb" />
+        <connection src="200046" dst="200013" kind="traffic" color="#2563eb" />
+        <connection src="200013" dst="200036" kind="route" />
+        <connection src="200036" dst="104915" kind="route" />
+        <connection src="200036" dst="104915" kind="traffic" color="#0f766e" />
+        <connection src="campus-network" dst="aws-edge" kind="route" color="#64748b" />
 
-      <!-- Public request path: DNS -> CDN -> WAF -> VPC ingress -> load balancer. -->
-      <line source="104915" target="1179" target-decoration="arrow" stroke="#0284c7"
-            source-side="right" source-anchor="0.5" target-side="left" target-anchor="0.3" />
-      <line source="1179" target="1178" />
-      <line source="1178" target="227" target-decoration="arrow" stroke="#0284c7" />
-      <line source="227" target="1581" target-decoration="arrow" stroke="#dc2626" style="dashed" />
-      <line source="1581" target="1182" />
-      <line source="1581" target="1182" target-decoration="arrow" stroke="#7c3aed" />
+        <!-- Public request path: V2 computes bends in the generic router. -->
+        <connection src="104915" dst="1179" kind="traffic" color="#0284c7"
+                    src-anchor="right-3" dst-anchor="left-2" />
+        <connection src="1179" dst="1178" kind="route" />
+        <connection src="1178" dst="227" kind="traffic" color="#0284c7" />
+        <connection src="227" dst="1581" kind="traffic" color="#dc2626"
+                    stroke-style="dashed" />
+        <connection src="1581" dst="1182" kind="route" />
+        <connection src="1581" dst="1182" kind="traffic" color="#7c3aed" />
 
-      <!-- ALB fan-out demonstrates automatic junction routing. -->
-      <line source="1182" target="27" target-decoration="arrow" stroke="#7c3aed" />
-      <line source="1182" target="547" target-decoration="arrow" stroke="#7c3aed" />
-      <line source="1182" target="548" target-decoration="arrow" stroke="#7c3aed" />
+        <!-- ALB fan-out demonstrates automatic junction routing. -->
+        <connection src="1182" dst="27" kind="traffic" color="#7c3aed" />
+        <connection src="1182" dst="547" kind="traffic" color="#7c3aed" />
+        <connection src="1182" dst="548" kind="traffic" color="#7c3aed" />
 
-      <!-- Application, event, storage, and data paths. -->
-      <line source="27" target="110" target-decoration="arrow" stroke="#059669" />
-      <line source="547" target="113" target-decoration="arrow" stroke="#059669" />
-      <line source="548" target="117" target-decoration="arrow" stroke="#059669" />
-      <line source="13" target="112" target-decoration="arrow" stroke="#059669" />
-      <line source="547" target="706" target-decoration="arrow" stroke="#d97706" style="dashed" />
-      <line source="722" target="706" target-decoration="arrow" stroke="#d97706" />
-      <line source="706" target="13" target-decoration="arrow" stroke="#d97706" />
-      <line source="13" target="705" target-decoration="arrow" stroke="#d97706" />
-      <line source="27" target="1020" target-decoration="arrow" stroke="#0891b2" />
-      <line source="27" target="1579" />
-      <line source="222" target="27" target-decoration="arrow" stroke="#db2777" />
+        <!-- Application, event, storage, and data paths. -->
+        <connection src="27" dst="110" kind="traffic" color="#059669" />
+        <connection src="547" dst="113" kind="traffic" color="#059669" />
+        <connection src="548" dst="117" kind="traffic" color="#059669" />
+        <connection src="13" dst="112" kind="traffic" color="#059669" />
+        <connection src="547" dst="706" kind="traffic" color="#d97706" stroke-style="dashed" />
+        <connection src="722" dst="706" kind="traffic" color="#d97706" />
+        <connection src="706" dst="13" kind="traffic" color="#d97706" />
+        <connection src="13" dst="705" kind="traffic" color="#d97706" />
+        <connection src="27" dst="1020" kind="traffic" color="#0891b2" />
+        <connection src="27" dst="1579" kind="route" />
+        <connection src="222" dst="27" kind="traffic" color="#db2777" />
 
-      <!-- Replication line exercises dotted traffic styling. -->
-      <line source="110" target="117" target-decoration="arrow" stroke="#9333ea" style="dotted" />
+        <!-- Replication line exercises dotted traffic styling. -->
+        <connection src="110" dst="117" kind="traffic" color="#9333ea"
+                    stroke-style="dotted" />
 
-      <!-- Delivery and observability lines cross service paths, producing line jumps. -->
-      <line source="441" target="547" target-decoration="arrow" stroke="#ea580c" style="dashed" />
-      <line source="604" target="705" target-decoration="arrow" stroke="#475569" />
-      <line source="1580" target="604" stroke="#64748b" style="dotted" />
-      <line source="200041" target="604" target-decoration="arrow" stroke="#334155" style="dashed" />
-      <line source="104109" target="216" target-decoration="arrow" stroke="#334155" />
+        <!-- Delivery and observability lines cross service paths, producing line jumps. -->
+        <connection src="441" dst="547" kind="traffic" color="#ea580c"
+                    stroke-style="dashed" />
+        <connection src="604" dst="705" kind="traffic" color="#475569" />
+        <connection src="1580" dst="604" kind="route" color="#64748b" stroke-style="dotted" />
+        <connection src="200041" dst="604" kind="traffic" color="#334155"
+                    stroke-style="dashed" />
+        <connection src="104109" dst="216" kind="traffic" color="#334155" />
 
-      <!-- Private outbound route and its offset traffic lane. -->
-      <line source="548" target="1582" />
-      <line source="548" target="1582" target-decoration="arrow" stroke="#0f766e" />
-  </frame>
-</scene>
+        <!-- Private outbound route and its offset traffic lane. -->
+        <connection src="548" dst="1582" kind="route" />
+        <connection src="548" dst="1582" kind="traffic" color="#0f766e" />
+      </connections>
+    </frame>
+  </frames>
+</xaligo>

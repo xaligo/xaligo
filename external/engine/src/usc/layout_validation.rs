@@ -213,6 +213,14 @@ fn validate_resolved_bounds(element: &ElementSpec, bounds: Bounds) -> Result<(),
 }
 
 fn resolved_element(element: &ElementSpec, bounds: Bounds) -> Result<ResolvedElement, LayoutError> {
+    resolved_element_with_icon_limit(element, bounds, None)
+}
+
+fn resolved_element_with_icon_limit(
+    element: &ElementSpec,
+    bounds: Bounds,
+    icon_limit: Option<f64>,
+) -> Result<ResolvedElement, LayoutError> {
     validate_resolved_bounds(element, bounds)?;
     let shape = match element.visual.shape {
         Shape::Default => default_shape(element.concept),
@@ -251,7 +259,7 @@ fn resolved_element(element: &ElementSpec, bounds: Bounds) -> Result<ResolvedEle
     let font_size = element.text.font_size.unwrap_or(DEFAULT_FONT_SIZE);
     let line_height = element.text.line_height.unwrap_or(DEFAULT_LINE_HEIGHT);
     let (text_x, text_y, text_width, text_height, icon_x, icon_y, icon_width, icon_height) =
-        resolved_foreground_geometry(element, bounds, &icon_ref, font_size, line_height);
+        resolved_foreground_geometry(element, bounds, &icon_ref, font_size, line_height, icon_limit);
     Ok(ResolvedElement {
         parent: element.parent,
         id: element.id.clone(),
@@ -316,6 +324,7 @@ fn resolved_foreground_geometry(
     icon_ref: &str,
     font_size: f64,
     line_height: f64,
+    icon_limit: Option<f64>,
 ) -> (f64, f64, f64, f64, f64, f64, f64, f64) {
     let mut text_x = bounds.x;
     let mut text_y = bounds.y;
@@ -329,7 +338,42 @@ fn resolved_foreground_geometry(
     let has_icon = !icon_ref.is_empty();
     let icon_scale = element.icon.scale.unwrap_or(1.0);
 
-    if matches!(element.concept, Concept::Group | Concept::Frame) && has_text {
+    if uses_v1_profile_group_header(element) && has_text {
+        let header_x = bounds.x - 2.0;
+        let label_width = v1_group_label_width(&element.text.value);
+        icon_width = if has_icon {
+            element
+                .icon
+                .width
+                .map(|value| value * icon_scale)
+                .unwrap_or(32.0)
+        } else {
+            0.0
+        };
+        icon_height = if has_icon {
+            element
+                .icon
+                .height
+                .map(|value| value * icon_scale)
+                .unwrap_or(32.0)
+        } else {
+            0.0
+        };
+        let header_height = if has_icon {
+            icon_height.max(20.0)
+        } else {
+            20.0
+        };
+        let header_y = bounds.y - header_height / 2.0;
+        text_x = header_x + if has_icon { icon_width } else { 0.0 } + 4.0;
+        text_y = header_y + (header_height - 18.0) / 2.0;
+        text_width = label_width;
+        text_height = 18.0;
+        if has_icon {
+            icon_x = header_x;
+            icon_y = header_y + (header_height - icon_height) / 2.0;
+        }
+    } else if matches!(element.concept, Concept::Group | Concept::Frame) && has_text {
         let header_height = 28.0_f64.min(bounds.height);
         let tip = (header_height / 2.0).min(10.0);
         let icon_space = if has_icon { 26.0 } else { 0.0 };
@@ -368,6 +412,7 @@ fn resolved_foreground_geometry(
             .width
             .map(|value| value * icon_scale)
             .unwrap_or(32.0)
+            .min(icon_limit.unwrap_or(f64::INFINITY))
             .min(bounds.width);
         let line_count = element.text.value.lines().count().max(1) as f64;
         let label_height = if has_text {
@@ -381,13 +426,18 @@ fn resolved_foreground_geometry(
             .height
             .map(|value| value * icon_scale)
             .unwrap_or(32.0)
+            .min(icon_limit.unwrap_or(f64::INFINITY))
             .min((bounds.height - label_height - gap).max(1.0));
         let block_height = icon_height + gap + label_height;
         icon_x = bounds.x
             + (bounds.width - icon_width) / 2.0
             + element.icon.offset_x.unwrap_or(0.0);
         icon_y = bounds.y
-            + (bounds.height - block_height).max(0.0) / 2.0
+            + if icon_limit.is_some() {
+                0.0
+            } else {
+                (bounds.height - block_height).max(0.0) / 2.0
+            }
             + element.icon.offset_y.unwrap_or(0.0);
         if has_text {
             text_y = icon_y + icon_height + gap;
@@ -405,6 +455,234 @@ fn resolved_foreground_geometry(
         icon_width,
         icon_height,
     )
+}
+
+const V1_GROUP_HEADER_ROLE: &str = "group-header";
+const V1_GROUP_HEADER_GAP: f64 = 4.0;
+const V1_GROUP_HEADER_BUCKET_HEIGHT: f64 = 64.0;
+
+fn uses_v1_profile_group_header(element: &ElementSpec) -> bool {
+    matches!(element.concept, Concept::Group | Concept::Capture)
+        && element.text.role == V1_GROUP_HEADER_ROLE
+}
+
+fn resolved_uses_v1_profile_group_header(element: &ResolvedElement) -> bool {
+    matches!(element.concept, Concept::Group | Concept::Capture)
+        && element.text.role == V1_GROUP_HEADER_ROLE
+}
+
+fn v1_group_label_width(value: &str) -> f64 {
+    (value.chars().map(v1_display_columns).sum::<f64>() * 9.6).ceil() + 8.0
+}
+
+fn v1_display_columns(value: char) -> f64 {
+    let codepoint = value as u32;
+    if value == '\t' {
+        4.0
+    } else if codepoint < 0x20 {
+        0.0
+    } else if (0x1100..=0x115f).contains(&codepoint)
+        || matches!(codepoint, 0x2329 | 0x232a)
+        || ((0x2e80..=0xa4cf).contains(&codepoint) && codepoint != 0x303f)
+        || (0xac00..=0xd7a3).contains(&codepoint)
+        || (0xf900..=0xfaff).contains(&codepoint)
+        || (0xfe10..=0xfe19).contains(&codepoint)
+        || (0xfe30..=0xfe6f).contains(&codepoint)
+        || (0xff00..=0xff60).contains(&codepoint)
+        || (0xffe0..=0xffe6).contains(&codepoint)
+    {
+        2.0
+    } else {
+        1.0
+    }
+}
+
+fn v1_resolved_group_header_bounds(element: &ResolvedElement) -> Bounds {
+    let has_icon = element.icon_width > 0.0 && element.icon_height > 0.0;
+    let height = if has_icon {
+        element.icon_height.max(20.0)
+    } else {
+        20.0
+    };
+    let x = if has_icon {
+        element.icon_x
+    } else {
+        element.text.x - 4.0
+    };
+    let y = if has_icon {
+        element.icon_y - (height - element.icon_height) / 2.0
+    } else {
+        element.text.y - (height - element.text.height) / 2.0
+    };
+    let tip = (height / 2.0).min(14.0);
+    Bounds {
+        x,
+        y,
+        width: element.text.x + element.text.width + 18.0 + tip - x,
+        height,
+    }
+}
+
+struct V1GroupHeaderObstacle {
+    x: f64,
+    width: f64,
+    y: f64,
+    height: f64,
+    header: bool,
+}
+
+impl Clone for V1GroupHeaderObstacle {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl Copy for V1GroupHeaderObstacle {}
+
+struct V1GroupHeaderObstacleIndex {
+    buckets: HashMap<i64, Vec<V1GroupHeaderObstacle>>,
+}
+
+impl V1GroupHeaderObstacleIndex {
+    fn new() -> Self {
+        Self {
+            buckets: HashMap::new(),
+        }
+    }
+
+    fn insert(&mut self, obstacle: V1GroupHeaderObstacle) {
+        let first = v1_group_header_bucket(obstacle.y);
+        let last = v1_group_header_bucket(obstacle.y + obstacle.height);
+        for bucket in first..=last {
+            self.buckets.entry(bucket).or_default().push(obstacle);
+        }
+    }
+
+    fn avoid(&self, x: f64, width: f64, y: f64, height: f64) -> f64 {
+        let minimum_y = y - V1_GROUP_HEADER_GAP;
+        let maximum_y = y + height + V1_GROUP_HEADER_GAP;
+        let first = v1_group_header_bucket(minimum_y);
+        let last = v1_group_header_bucket(maximum_y);
+        let mut adjusted = y;
+        for bucket in first..=last {
+            let Some(obstacles) = self.buckets.get(&bucket) else {
+                continue;
+            };
+            for obstacle in obstacles {
+                if horizontal_overlap(
+                    x,
+                    x + width,
+                    obstacle.x,
+                    obstacle.x + obstacle.width,
+                ) <= 0.0
+                {
+                    continue;
+                }
+                if obstacle.header {
+                    if obstacle.y < maximum_y && obstacle.y + obstacle.height > minimum_y {
+                        adjusted = adjusted.max(
+                            obstacle.y + obstacle.height + V1_GROUP_HEADER_GAP,
+                        );
+                    }
+                } else if obstacle.y >= minimum_y && obstacle.y <= maximum_y {
+                    adjusted = adjusted.max(obstacle.y + V1_GROUP_HEADER_GAP);
+                }
+            }
+        }
+        adjusted
+    }
+}
+
+fn v1_group_header_bucket(y: f64) -> i64 {
+    (y / V1_GROUP_HEADER_BUCKET_HEIGHT).floor() as i64
+}
+
+fn horizontal_overlap(a0: f64, a1: f64, b0: f64, b1: f64) -> f64 {
+    a1.max(a0).min(b1.max(b0)) - a0.min(a1).max(b0.min(b1))
+}
+
+impl LayoutState<'_> {
+    fn align_v1_profile_group_headers(&mut self) -> Result<(), LayoutError> {
+        let mut enclosing_frames = vec![None; self.document.elements.len()];
+        for (index, element) in self.document.elements.iter().enumerate() {
+            enclosing_frames[index] = if element.concept == Concept::Frame {
+                Some(index)
+            } else {
+                element.parent.and_then(|parent| enclosing_frames[parent])
+            };
+        }
+
+        let mut metadata_floors: Vec<Option<f64>> =
+            vec![None; self.document.elements.len()];
+        for (index, resolved) in self.resolved.iter().enumerate() {
+            let Some(element) = resolved.as_ref() else {
+                continue;
+            };
+            if !element.text.role.starts_with("frame-metadata-") {
+                continue;
+            }
+            let Some(frame) = enclosing_frames[index] else {
+                continue;
+            };
+            let floor = element.y + element.height + 8.0;
+            metadata_floors[frame] = Some(metadata_floors[frame].unwrap_or(floor).max(floor));
+        }
+
+        let mut obstacles = V1GroupHeaderObstacleIndex::new();
+        for index in 0..self.resolved.len() {
+            if index % 256 == 0 {
+                crate::usc::cancel::check().map_err(LayoutError::new)?;
+            }
+            let Some(element) = self.resolved[index].as_ref() else {
+                continue;
+            };
+            if !resolved_uses_v1_profile_group_header(element) {
+                continue;
+            }
+            let header = v1_resolved_group_header_bounds(element);
+            let mut y = header.y;
+            for _ in 0..4 {
+                let next = obstacles.avoid(header.x, header.width, y, header.height);
+                if (next - y).abs() < 0.01 {
+                    break;
+                }
+                y = next;
+            }
+            if let Some(frame) = enclosing_frames[index] {
+                if let Some(floor) = metadata_floors[frame] {
+                    y = y.max(floor);
+                }
+            }
+            let delta = y - header.y;
+            let element = self.resolved[index]
+                .as_mut()
+                .ok_or_else(|| LayoutError::new("group header geometry was not resolved"))?;
+            element.text.y += delta;
+            if element.icon_width > 0.0 && element.icon_height > 0.0 {
+                element.icon_y += delta;
+            }
+            let header = v1_resolved_group_header_bounds(element);
+            obstacles.insert(V1GroupHeaderObstacle {
+                x: header.x,
+                width: header.width,
+                y: header.y,
+                height: header.height,
+                header: true,
+            });
+            let border_top = header.y + header.height / 2.0;
+            let border_bottom = element.y + element.height;
+            for border_y in [border_top, border_bottom] {
+                obstacles.insert(V1GroupHeaderObstacle {
+                    x: element.x,
+                    width: element.width,
+                    y: border_y,
+                    height: 0.0,
+                    header: false,
+                });
+            }
+        }
+        Ok(())
+    }
 }
 
 fn validate_columns(name: &str, value: u16) -> Result<(), LayoutError> {

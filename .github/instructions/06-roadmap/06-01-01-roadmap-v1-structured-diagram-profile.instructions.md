@@ -8,8 +8,8 @@ applyTo: ".github/instructions/manual/**"
 
 The table, relational-database, and UML design extends the V1 engine. Canonical
 V1 uses `<xaligo version="1">`; historical root `<frame>` and `<frames>`
-documents remain compatible but emit a migration warning. This does not replace
-the reserved V2 `<scene version="2">` contract.
+documents remain compatible but emit a migration warning. V2 uses the same
+document envelope with `<xaligo version="2">`.
 
 The target document shape uses `<xaligo>` as a document envelope, a document-
 wide `<data>` registry, and `<frames>` containing identified `<frame>`

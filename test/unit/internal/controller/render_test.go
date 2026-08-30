@@ -31,7 +31,7 @@ func TestRenderCommandDefaults(t *testing.T) {
 func TestRunRenderTerminalWritesStdoutAndForwardsOptions(t *testing.T) {
 	dir := t.TempDir()
 	input := filepath.Join(dir, "diagram.xal")
-	if err := os.WriteFile(input, []byte(`<scene version="2"><item id="api">API</item></scene>`), 0o644); err != nil {
+	if err := os.WriteFile(input, []byte(`<xaligo version="2"><frames><frame id="page"><item id="api">API</item></frame></frames></xaligo>`), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	uc := &fakeUseCase{}

@@ -69,9 +69,11 @@ applyTo: ".github/instructions/manual/**"
     use case owns I/O, cancellation checks, job partitioning, result ordering,
     and any future parallel execution. Order-dependent routing within one plan
     remains sequential.
-22. Language versions are selected by a root/version pair, never by parser
-    fallback. `<frame>`/`<frames>` are V1 and `<scene version="2">` is V2, so a
-    V1 reader rejects V2 before interpreting nested syntax.
+22. Language versions are selected by the document root and version, never by
+    parser fallback. `<frame>`/`<frames>` are legacy V1,
+    `<xaligo version="1">` is canonical V1, and
+    `<xaligo version="2">` is V2. A V1 reader rejects the V2 version before
+    interpreting nested syntax.
 23. V2 renders V1 through a frozen V1 compatibility frontend that lowers once
     into the typed neutral model. V1 has no V2 dependency, and neither XML
     rewriting, double parsing, nor renderer-output round-tripping is allowed.

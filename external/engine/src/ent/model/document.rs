@@ -14,6 +14,7 @@ pub enum LayoutPolicy {
     Vertical,
     Horizontal,
     Grid,
+    AdaptiveGrid,
     Absolute,
     None,
 }

@@ -28,11 +28,12 @@ const (
 type EngineLayoutPolicy string
 
 const (
-	EngineLayoutVertical   EngineLayoutPolicy = "vertical"
-	EngineLayoutHorizontal EngineLayoutPolicy = "horizontal"
-	EngineLayoutGrid       EngineLayoutPolicy = "grid"
-	EngineLayoutAbsolute   EngineLayoutPolicy = "absolute"
-	EngineLayoutNone       EngineLayoutPolicy = "none"
+	EngineLayoutVertical     EngineLayoutPolicy = "vertical"
+	EngineLayoutHorizontal   EngineLayoutPolicy = "horizontal"
+	EngineLayoutGrid         EngineLayoutPolicy = "grid"
+	EngineLayoutAdaptiveGrid EngineLayoutPolicy = "adaptive-grid"
+	EngineLayoutAbsolute     EngineLayoutPolicy = "absolute"
+	EngineLayoutNone         EngineLayoutPolicy = "none"
 )
 
 type EngineOverflow string

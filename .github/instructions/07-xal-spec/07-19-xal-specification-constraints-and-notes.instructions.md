@@ -6,10 +6,10 @@ applyTo: ".github/instructions/manual/**"
 
 ## Constraints and Notes
 
-- The canonical root is `<xaligo version="1">`. Legacy `<frame>` and
-  `<frames>` roots are accepted with a warning. Direct children of `<frames>`
-  must be identified `<frame>` tags. V2 uses `<scene version="2">`, which is
-  intentionally rejected by V1.
+- The canonical root is `<xaligo version="1">` or
+  `<xaligo version="2">`. Legacy `<frame>` and `<frames>` roots are accepted
+  as V1 with a warning. Direct children of `<frames>` must be identified
+  `<frame>` tags. A V1 parser rejects the V2 document version.
 - Both self-closing (`<card title="..." />`) and regular (`<card title="..."></card>`) forms are supported.
 - The sum of `span` values in direct children of `<row>` must not exceed 12.
   Excess is a validation error rather than implicit overflow to the right.

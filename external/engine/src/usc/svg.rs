@@ -299,9 +299,7 @@ fn render_element_background(output: &mut String, element: &ResolvedElement) {
         return;
     }
     render_shape(output, element);
-    if matches!(element.concept, Concept::Group | Concept::Frame)
-        && !element.text.value.is_empty()
-    {
+    if renders_group_header(element) {
         render_group_header_background(output, element);
     }
 }
@@ -310,9 +308,7 @@ fn render_element_foreground(output: &mut String, element: &ResolvedElement) {
     if !element.visual.visible || element.concept == Concept::Line {
         return;
     }
-    if matches!(element.concept, Concept::Group | Concept::Frame)
-        && !element.text.value.is_empty()
-    {
+    if renders_group_header(element) {
         render_group_header_foreground(output, element);
     } else if !element.icon_ref.is_empty() {
         render_item_foreground(output, element);
@@ -321,29 +317,60 @@ fn render_element_foreground(output: &mut String, element: &ResolvedElement) {
     }
 }
 
-fn group_header_geometry(element: &ResolvedElement) -> (f64, f64, f64) {
+fn renders_group_header(element: &ResolvedElement) -> bool {
+    !element.text.value.is_empty()
+        && (matches!(element.concept, Concept::Group | Concept::Frame)
+            || (element.concept == Concept::Capture && element.text.role == "group-header"))
+}
+
+fn group_header_geometry(element: &ResolvedElement) -> (f64, f64, f64, f64, f64) {
+    if element.text.role == "group-header" {
+        let has_icon = element.icon_width > 0.0 && element.icon_height > 0.0;
+        let height = if has_icon {
+            element.icon_height.max(20.0)
+        } else {
+            20.0
+        };
+        let x = if has_icon {
+            element.icon_x
+        } else {
+            element.text.x - 4.0
+        };
+        let y = if has_icon {
+            element.icon_y - (height - element.icon_height) / 2.0
+        } else {
+            element.text.y - (height - element.text.height) / 2.0
+        };
+        let tip = (height / 2.0).min(14.0);
+        let width = element.text.x + element.text.width + 18.0 + tip - x;
+        return (x, y, height, width, tip);
+    }
     let height = 28.0_f64.min(element.height);
     let tip = (height / 2.0).min(10.0);
     let width = (element.text.x - element.x + element.text.width + tip)
         .min(element.width)
         .max(height);
-    (height, width, tip)
+    (element.x, element.y, height, width, tip)
 }
 
 fn render_group_header_background(output: &mut String, element: &ResolvedElement) {
-    let (height, width, tip) = group_header_geometry(element);
+    let (x, y, height, width, tip) = group_header_geometry(element);
     outlined_polygon(
         output,
         &[
-            Point { x: element.x, y: element.y },
-            Point { x: element.x + width - tip, y: element.y },
-            Point { x: element.x + width, y: element.y + height / 2.0 },
-            Point { x: element.x + width - tip, y: element.y + height },
-            Point { x: element.x, y: element.y + height },
+            Point { x, y },
+            Point { x: x + width - tip, y },
+            Point { x: x + width, y: y + height / 2.0 },
+            Point { x: x + width - tip, y: y + height },
+            Point { x, y: y + height },
         ],
         &element.visual.fill,
         &element.visual.stroke,
-        element.visual.stroke_width,
+        if element.text.role == "group-header" {
+            1.0
+        } else {
+            element.visual.stroke_width
+        },
     );
 }
 
@@ -408,16 +435,30 @@ fn render_shape(output: &mut String, element: &ResolvedElement) {
     }
     match element.visual.shape {
         Shape::Rectangle | Shape::Default => {
+            let (x, y, width, height) = if element.text.role == "group-header"
+                && matches!(element.concept, Concept::Group | Concept::Capture)
+            {
+                let (_, header_y, header_height, _, _) = group_header_geometry(element);
+                let border_y = header_y + header_height / 2.0;
+                (
+                    element.x,
+                    border_y,
+                    element.width,
+                    (element.y + element.height - border_y).max(0.0),
+                )
+            } else {
+                (element.x, element.y, element.width, element.height)
+            };
             output.push_str(r#"<rect"#);
             common_attributes(output, element);
             output.push_str(r#" x=""#);
-            output.push_str(&format_number(element.x));
+            output.push_str(&format_number(x));
             output.push_str(r#"" y=""#);
-            output.push_str(&format_number(element.y));
+            output.push_str(&format_number(y));
             output.push_str(r#"" width=""#);
-            output.push_str(&format_number(element.width));
+            output.push_str(&format_number(width));
             output.push_str(r#"" height=""#);
-            output.push_str(&format_number(element.height));
+            output.push_str(&format_number(height));
             if element.visual.corner_radius > 0.0 {
                 output.push_str(r#"" rx=""#);
                 output.push_str(&format_number(element.visual.corner_radius));
@@ -462,11 +503,17 @@ fn paint_attributes(output: &mut String, element: &ResolvedElement) {
     output.push_str(&escape_xml(&element.visual.stroke));
     output.push_str(r#"" stroke-width=""#);
     output.push_str(&format_number(element.visual.stroke_width));
-    if element.visual.opacity < 1.0 {
-        output.push_str(r#"" opacity=""#);
-        output.push_str(&format_number(element.visual.opacity));
-    }
     output.push('"');
+    match element.line.style {
+        LineStyle::Solid => {}
+        LineStyle::Dashed => output.push_str(r#" stroke-dasharray="8 5""#),
+        LineStyle::Dotted => output.push_str(r#" stroke-dasharray="2 4""#),
+    }
+    if element.visual.opacity < 1.0 {
+        output.push_str(r#" opacity=""#);
+        output.push_str(&format_number(element.visual.opacity));
+        output.push('"');
+    }
 }
 
 fn render_text(output: &mut String, element: &ResolvedElement, value: &str) {
@@ -475,12 +522,21 @@ fn render_text(output: &mut String, element: &ResolvedElement, value: &str) {
     }
     let lines = value.lines().collect::<Vec<_>>();
     let line_height = element.text.font_size * element.text.line_height;
-    let first_y = element.text.y + element.text.height / 2.0
-        - line_height * (lines.len().saturating_sub(1) as f64) / 2.0;
+    let top_aligned_item_label = element.concept == Concept::Item && !element.icon_ref.is_empty();
+    let v1_group_header = element.text.role == "group-header";
+    let first_y = if top_aligned_item_label {
+        element.text.y + element.text.font_size
+    } else {
+        element.text.y + element.text.height / 2.0
+            - line_height * (lines.len().saturating_sub(1) as f64) / 2.0
+    };
     output.push_str("<text");
     if element.concept == Concept::Text {
         output.push_str(r#" id=""#);
         output.push_str(&escape_xml(&element.id));
+        if element.visual.shape != Shape::None {
+            output.push_str("-text");
+        }
         output.push('"');
     }
     output.push_str(r#" data-owner=""#);
@@ -488,10 +544,22 @@ fn render_text(output: &mut String, element: &ResolvedElement, value: &str) {
     output.push_str(r#"" data-concept=""#);
     output.push_str(concept_name(element.concept));
     output.push_str(r#"" x=""#);
-    output.push_str(&format_number(element.text.x + element.text.width / 2.0));
+    output.push_str(&format_number(if v1_group_header {
+        element.text.x
+    } else {
+        element.text.x + element.text.width / 2.0
+    }));
     output.push_str(r#"" y=""#);
     output.push_str(&format_number(first_y));
-    output.push_str(r#"" text-anchor="middle" dominant-baseline="middle" font-family=""#);
+    output.push_str(if v1_group_header {
+        r#"" text-anchor="start""#
+    } else {
+        r#"" text-anchor="middle""#
+    });
+    if !top_aligned_item_label {
+        output.push_str(r#" dominant-baseline="middle""#);
+    }
+    output.push_str(r#" font-family=""#);
     output.push_str(&escape_xml(&element.text.font_family));
     output.push_str(r#"" font-size=""#);
     output.push_str(&format_number(element.text.font_size));
@@ -503,7 +571,11 @@ fn render_text(output: &mut String, element: &ResolvedElement, value: &str) {
             output.push_str(&escape_xml(line));
         } else {
             output.push_str(r#"<tspan x=""#);
-            output.push_str(&format_number(element.text.x + element.text.width / 2.0));
+            output.push_str(&format_number(if v1_group_header {
+                element.text.x
+            } else {
+                element.text.x + element.text.width / 2.0
+            }));
             output.push_str(r#"" dy=""#);
             output.push_str(&format_number(line_height));
             output.push_str(r#"">"#);

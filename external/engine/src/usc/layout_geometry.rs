@@ -118,7 +118,11 @@ fn intrinsic_main(element: &ElementSpec, axis: Axis) -> Option<f64> {
         Axis::Horizontal => element.intrinsic_width,
     };
     explicit
-        .or_else(|| icon_size(element, axis))
+        .or_else(|| {
+            matches!(element.concept, Concept::Item)
+                .then(|| icon_size(element, axis))
+                .flatten()
+        })
         .or_else(|| match element.concept {
             Concept::Item => Some(DEFAULT_ITEM_SIZE),
             Concept::Text => Some(match axis {
@@ -135,7 +139,11 @@ fn intrinsic_cross(element: &ElementSpec, axis: Axis) -> Option<f64> {
         Axis::Vertical => element.intrinsic_width,
         Axis::Horizontal => element.intrinsic_height,
     };
-    explicit.or_else(|| icon_cross_size(element, axis))
+    explicit.or_else(|| {
+        matches!(element.concept, Concept::Item)
+            .then(|| icon_cross_size(element, axis))
+            .flatten()
+    })
 }
 
 fn icon_size(element: &ElementSpec, axis: Axis) -> Option<f64> {
@@ -158,17 +166,37 @@ fn measured_text_size(element: &ElementSpec) -> (f64, f64) {
     let font_size = element.text.font_size.unwrap_or(DEFAULT_FONT_SIZE);
     let line_height = element.text.line_height.unwrap_or(DEFAULT_LINE_HEIGHT);
     let padding = element.text.padding.resolved();
-    let lines = element.text.value.lines().collect::<Vec<_>>();
-    let line_count = lines.len().max(1) as f64;
-    let longest = lines
-        .iter()
-        .map(|line| line.chars().count())
-        .max()
-        .unwrap_or(0) as f64;
+    let mut line_count = 0usize;
+    let mut longest = 0.0_f64;
+    for line in element.text.value.lines() {
+        line_count += 1;
+        longest = longest.max(presentation_text_width(line, font_size));
+    }
     (
-        (longest * font_size * 0.6 + padding.left + padding.right).max(1.0),
-        (line_count * font_size * line_height + padding.top + padding.bottom).max(1.0),
+        (longest.ceil() + padding.left + padding.right).max(1.0),
+        (line_count.max(1) as f64 * font_size * line_height + padding.top + padding.bottom)
+            .max(1.0),
     )
+}
+
+fn presentation_text_width(value: &str, font_size: f64) -> f64 {
+    value
+        .chars()
+        .map(|character| {
+            if character.is_whitespace() {
+                0.33
+            } else if character >= '\u{1100}' {
+                1.0
+            } else if character.is_ascii_punctuation() {
+                0.42
+            } else if character.is_uppercase() {
+                0.62
+            } else {
+                0.55
+            }
+        })
+        .sum::<f64>()
+        * font_size
 }
 
 fn default_absolute_width(element: &ElementSpec, available: f64) -> f64 {

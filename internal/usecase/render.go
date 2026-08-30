@@ -7,6 +7,7 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"html"
 	"io/fs"
@@ -188,6 +189,9 @@ func (rcvr *renderUsecase) RenderTerminal(ctx context.Context, input []byte, opt
 	if err != nil {
 		return nil, fmt.Errorf("lower V2 document: %w", err)
 	}
+	if _, err := prepareV2Document(&spec, opts, false); err != nil {
+		return nil, fmt.Errorf("prepare V2 document: %w", err)
+	}
 	resolved, err := rcvr.v2Engine.Resolve(ctx, spec)
 	if err != nil {
 		return nil, fmt.Errorf("resolve V2 document: %w", err)
@@ -247,11 +251,15 @@ func (rcvr *renderUsecase) RenderArtifacts(ctx context.Context, input []byte, op
 		if err != nil {
 			return nil, fmt.Errorf("lower V2 document: %w", err)
 		}
+		icons, err := prepareV2Document(&spec, opts, true)
+		if err != nil {
+			return nil, fmt.Errorf("prepare V2 document: %w", err)
+		}
 		data, err := rcvr.v2Engine.RenderSVG(ctx, spec)
 		if err != nil {
 			return nil, fmt.Errorf("render V2 SVG: %w", err)
 		}
-		data, err = embedV2CatalogIcons(data, opts)
+		data, err = embedV2Icons(data, icons)
 		if err != nil {
 			return nil, fmt.Errorf("embed V2 SVG icons: %w", err)
 		}
@@ -276,54 +284,224 @@ func (rcvr *renderUsecase) RenderArtifacts(ctx context.Context, input []byte, op
 }
 
 var (
-	v2CatalogRectPattern = regexp.MustCompile(`<rect\b[^>]*\bdata-icon="catalog:([0-9]+)"[^>]*/>`)
-	v2SVGAttrPattern     = regexp.MustCompile(`(?:^|\s)(x|y|width|height)="([^"]+)"`)
-	v2CatalogCache       sync.Map
+	v2IconRectPattern = regexp.MustCompile(`<rect\b[^>]*\bdata-icon="([^"]+)"[^>]*/>`)
+	v2SVGAttrPattern  = regexp.MustCompile(`(?:^|\s)(x|y|width|height)="([^"]+)"`)
+	v2SVGColorPattern = regexp.MustCompile(`(?i)#[0-9a-f]{3,8}|currentColor`)
+	v2CatalogCache    sync.Map
+	v2GroupIconCache  sync.Map
+	v2TintedIconCache = v2BoundedTintedIconCache{values: make(map[v2TintedIconCacheKey]string)}
 )
 
-func embedV2CatalogIcons(svg []byte, opts entity.RenderOptions) ([]byte, error) {
-	matches := v2CatalogRectPattern.FindAllSubmatch(svg, -1)
-	if len(matches) == 0 {
+const (
+	v2TintedIconCacheEntries  = 128
+	v2TintedIconCacheMaxInput = 256 * 1024
+)
+
+type v2TintedIconCacheKey struct {
+	dataURL string
+	color   string
+}
+
+type v2BoundedTintedIconCache struct {
+	mu     sync.Mutex
+	values map[v2TintedIconCacheKey]string
+}
+
+type v2CatalogEntry struct {
+	label   string
+	dataURL string
+}
+
+func embedV2Icons(svg []byte, icons map[string]string) ([]byte, error) {
+	if len(icons) == 0 {
 		return svg, nil
 	}
-	catalog, err := readV2Catalog(opts)
-	if err != nil {
-		return nil, err
-	}
-	var images strings.Builder
-	for _, match := range matches {
-		id, _ := strconv.Atoi(string(match[1]))
-		dataURL := catalog[id]
-		if dataURL == "" {
-			continue
-		}
-		attrs := map[string]float64{}
-		for _, attr := range v2SVGAttrPattern.FindAllSubmatch(match[0], -1) {
-			attrs[string(attr[1])], _ = strconv.ParseFloat(string(attr[2]), 64)
-		}
-		size := min(40.0, attrs["width"], attrs["height"])
-		if size <= 0 {
-			continue
-		}
-		x := attrs["x"] + (attrs["width"]-size)/2
-		y := attrs["y"] + (attrs["height"]-size)/2
-		fmt.Fprintf(&images, `<image x="%g" y="%g" width="%g" height="%g" preserveAspectRatio="xMidYMid meet" href="%s"/>`, x, y, size, size, html.EscapeString(dataURL))
-	}
-	if images.Len() == 0 {
+	matches := v2IconRectPattern.FindAllSubmatch(svg, -1)
+	if len(matches) == 0 {
 		return svg, nil
 	}
 	end := bytes.LastIndex(svg, []byte("</svg>"))
 	if end < 0 {
 		return nil, fmt.Errorf("Rust SVG has no closing element")
 	}
-	output := make([]byte, 0, len(svg)+images.Len())
-	output = append(output, svg[:end]...)
-	output = append(output, images.String()...)
-	output = append(output, svg[end:]...)
-	return output, nil
+	estimatedSize := len(svg)
+	for _, match := range matches {
+		if dataURL := icons[string(match[1])]; dataURL != "" {
+			estimatedSize += len(dataURL) + 128
+		}
+	}
+	var output bytes.Buffer
+	output.Grow(estimatedSize)
+	_, _ = output.Write(svg[:end])
+	wroteImage := false
+	for _, match := range matches {
+		dataURL := icons[string(match[1])]
+		if dataURL == "" {
+			continue
+		}
+		var x, y, width, height float64
+		for _, attr := range v2SVGAttrPattern.FindAllSubmatch(match[0], -1) {
+			value, _ := strconv.ParseFloat(string(attr[2]), 64)
+			switch string(attr[1]) {
+			case "x":
+				x = value
+			case "y":
+				y = value
+			case "width":
+				width = value
+			case "height":
+				height = value
+			}
+		}
+		size := min(40.0, width, height)
+		if size <= 0 {
+			continue
+		}
+		x += (width - size) / 2
+		y += (height - size) / 2
+		fmt.Fprintf(&output, `<image x="%g" y="%g" width="%g" height="%g" preserveAspectRatio="xMidYMid meet" href="%s"/>`, x, y, size, size, html.EscapeString(dataURL))
+		wroteImage = true
+	}
+	if !wroteImage {
+		return svg, nil
+	}
+	_, _ = output.Write(svg[end:])
+	return output.Bytes(), nil
 }
 
-func readV2Catalog(opts entity.RenderOptions) (map[int]string, error) {
+func prepareV2Document(spec *entity.EngineDocumentSpec, opts entity.RenderOptions, includeIcons bool) (map[string]string, error) {
+	if spec == nil {
+		return nil, nil
+	}
+	refs := make(map[string]struct{})
+	colors := make(map[string]string)
+	colorConflicts := make(map[string]struct{})
+	collectV2IconRefs(spec.Elements, refs, colors, colorConflicts)
+	needsCatalog := false
+	for ref := range refs {
+		if strings.HasPrefix(ref, "catalog:") {
+			needsCatalog = true
+			break
+		}
+	}
+	var catalog map[int]v2CatalogEntry
+	if needsCatalog {
+		var err error
+		catalog, err = readV2Catalog(opts)
+		if err != nil {
+			return nil, err
+		}
+		labels := make(map[int]string, len(refs))
+		for ref := range refs {
+			if !strings.HasPrefix(ref, "catalog:") {
+				continue
+			}
+			id, parseErr := strconv.Atoi(strings.TrimPrefix(ref, "catalog:"))
+			if parseErr == nil {
+				labels[id] = entity.ItemShortName(catalog[id].label)
+			}
+		}
+		v2usecase.ApplyCatalogLabels(spec, labels)
+	}
+	if !includeIcons {
+		return nil, nil
+	}
+	icons := make(map[string]string, len(refs))
+	for ref := range refs {
+		dataURL := ""
+		switch {
+		case strings.HasPrefix(ref, "catalog:"):
+			id, err := strconv.Atoi(strings.TrimPrefix(ref, "catalog:"))
+			if err == nil && catalog[id].dataURL != "" {
+				dataURL = catalog[id].dataURL
+			}
+		case strings.HasPrefix(ref, "group:"):
+			var err error
+			dataURL, err = readV2GroupIcon(strings.TrimPrefix(ref, "group:"), opts)
+			if err != nil {
+				if errors.Is(err, fs.ErrNotExist) {
+					continue
+				}
+				return nil, err
+			}
+		}
+		if dataURL == "" {
+			continue
+		}
+		if _, conflict := colorConflicts[ref]; !conflict {
+			dataURL = tintV2SVGDataURL(dataURL, colors[ref])
+		}
+		icons[ref] = dataURL
+	}
+	return icons, nil
+}
+
+func collectV2IconRefs(elements []entity.EngineElementSpec, refs map[string]struct{}, colors map[string]string, conflicts map[string]struct{}) {
+	for index := range elements {
+		element := &elements[index]
+		if element.Icon != nil && strings.TrimSpace(element.Icon.Ref) != "" {
+			ref := element.Icon.Ref
+			color := ""
+			if element.Concept == entity.EngineConceptGroup || element.Concept == entity.EngineConceptCapture {
+				color = strings.TrimSpace(element.Icon.Color)
+				if color == "" {
+					color = strings.TrimSpace(element.Visual.Stroke)
+				}
+			}
+			if previous, exists := colors[ref]; exists && previous != color {
+				conflicts[ref] = struct{}{}
+			} else if !exists {
+				colors[ref] = color
+			}
+			refs[ref] = struct{}{}
+		}
+		collectV2IconRefs(element.Children, refs, colors, conflicts)
+	}
+}
+
+// tintV2SVGDataURL mirrors the V1 group-header treatment while keeping icon
+// loading generic. A shared icon reference with conflicting requested colors
+// is left untouched by the caller so an item icon is never recolored by a
+// group that happens to use the same asset.
+func tintV2SVGDataURL(dataURL, color string) string {
+	if strings.TrimSpace(color) == "" || !strings.HasPrefix(dataURL, share.SVGDataURLPrefix) {
+		return dataURL
+	}
+	cacheable := len(dataURL) <= v2TintedIconCacheMaxInput
+	key := v2TintedIconCacheKey{dataURL: dataURL, color: color}
+	if cacheable {
+		v2TintedIconCache.mu.Lock()
+		cached, ok := v2TintedIconCache.values[key]
+		v2TintedIconCache.mu.Unlock()
+		if ok {
+			return cached
+		}
+	}
+	raw, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(dataURL, share.SVGDataURLPrefix))
+	if err != nil {
+		return dataURL
+	}
+	tinted := v2SVGColorPattern.ReplaceAllStringFunc(string(raw), func(found string) string {
+		switch strings.ToLower(found) {
+		case "#fff", "#ffffff", "#ffffffff":
+			return found
+		default:
+			return color
+		}
+	})
+	result := share.SVGDataURLFromBytes([]byte(tinted))
+	if cacheable {
+		v2TintedIconCache.mu.Lock()
+		if len(v2TintedIconCache.values) >= v2TintedIconCacheEntries {
+			clear(v2TintedIconCache.values)
+		}
+		v2TintedIconCache.values[key] = result
+		v2TintedIconCache.mu.Unlock()
+	}
+	return result
+}
+
+func readV2Catalog(opts entity.RenderOptions) (map[int]v2CatalogEntry, error) {
 	var data []byte
 	var err error
 	cacheKey := ""
@@ -332,7 +510,7 @@ func readV2Catalog(opts entity.RenderOptions) (map[int]string, error) {
 	} else {
 		cacheKey = config.New().SvcCatalogCSV
 		if cached, ok := v2CatalogCache.Load(cacheKey); ok {
-			return cached.(map[int]string), nil
+			return cached.(map[int]v2CatalogEntry), nil
 		}
 		data, err = os.ReadFile(cacheKey)
 	}
@@ -343,20 +521,48 @@ func readV2Catalog(opts entity.RenderOptions) (map[int]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("parse service catalog: %w", err)
 	}
-	catalog := make(map[int]string, len(records))
+	catalog := make(map[int]v2CatalogEntry, len(records))
 	for _, record := range records[1:] {
 		if len(record) < 6 {
 			continue
 		}
 		id, parseErr := strconv.Atoi(strings.TrimSpace(record[0]))
 		if parseErr == nil {
-			catalog[id] = strings.TrimSpace(record[5])
+			catalog[id] = v2CatalogEntry{label: strings.TrimSpace(record[2]), dataURL: strings.TrimSpace(record[5])}
 		}
 	}
 	if cacheKey != "" {
 		v2CatalogCache.Store(cacheKey, catalog)
 	}
 	return catalog, nil
+}
+
+func readV2GroupIcon(filename string, opts entity.RenderOptions) (string, error) {
+	filename = strings.TrimSpace(filename)
+	if filename == "" || strings.ContainsAny(filename, `/\`) || path.Base(filename) != filename || !strings.HasSuffix(strings.ToLower(filename), ".svg") {
+		return "", fmt.Errorf("invalid V2 group icon name %q", filename)
+	}
+	var data []byte
+	var err error
+	if opts.Assets != nil && opts.Assets.FS != nil {
+		data, err = fs.ReadFile(opts.Assets.FS, path.Join(opts.Assets.GroupIconsDir, filename))
+	} else {
+		groupDir := filepath.Join(config.New().AssetDir_, "Architecture-Group-Icons")
+		iconPath := filepath.Join(groupDir, filename)
+		if cached, ok := v2GroupIconCache.Load(iconPath); ok {
+			return cached.(string), nil
+		}
+		data, err = os.ReadFile(iconPath)
+		if err == nil {
+			dataURL := share.SVGDataURLFromBytes(data)
+			v2GroupIconCache.Store(iconPath, dataURL)
+			return dataURL, nil
+		}
+	}
+	if err != nil {
+		return "", fmt.Errorf("read V2 group icon %q: %w", filename, err)
+	}
+	return share.SVGDataURLFromBytes(data), nil
 }
 
 var (
@@ -377,13 +583,13 @@ func (rcvr *renderUsecase) buildDocumentPlan(ctx context.Context, input []byte, 
 		if err != nil {
 			return entity.DocumentPlan{}, fmt.Errorf("lower V2 document: %w", err)
 		}
+		icons, err := prepareV2Document(&spec, opts, true)
+		if err != nil {
+			return entity.DocumentPlan{}, fmt.Errorf("prepare V2 document: %w", err)
+		}
 		resolved, err := rcvr.v2Engine.Resolve(ctx, spec)
 		if err != nil {
 			return entity.DocumentPlan{}, fmt.Errorf("resolve V2 document: %w", err)
-		}
-		icons, err := resolvedV2CatalogIcons(resolved, opts)
-		if err != nil {
-			return entity.DocumentPlan{}, fmt.Errorf("resolve V2 plan icons: %w", err)
 		}
 		document, err := v2usecase.BuildDocumentPlanWithIcons(resolved, opts.PxPerInch, icons)
 		if err != nil {
@@ -416,34 +622,6 @@ func (rcvr *renderUsecase) buildDocumentPlan(ctx context.Context, input []byte, 
 	return document, nil
 }
 
-func resolvedV2CatalogIcons(document entity.EngineResolvedDocument, opts entity.RenderOptions) (map[string]string, error) {
-	wanted := make(map[int]string)
-	for _, element := range document.Elements {
-		const prefix = "catalog:"
-		if !strings.HasPrefix(element.IconRef, prefix) {
-			continue
-		}
-		id, err := strconv.Atoi(strings.TrimPrefix(element.IconRef, prefix))
-		if err == nil {
-			wanted[id] = element.IconRef
-		}
-	}
-	if len(wanted) == 0 {
-		return nil, nil
-	}
-	catalog, err := readV2Catalog(opts)
-	if err != nil {
-		return nil, err
-	}
-	icons := make(map[string]string, len(wanted))
-	for id, ref := range wanted {
-		if data := catalog[id]; data != "" {
-			icons[ref] = data
-		}
-	}
-	return icons, nil
-}
-
 func renderDocumentVersion(input []byte) (string, error) {
 	decoder := xml.NewDecoder(bytes.NewReader(input))
 	for {
@@ -464,15 +642,15 @@ func renderDocumentVersion(input []byte) (string, error) {
 		}
 		switch start.Name.Local {
 		case "scene":
-			if version != "2" {
-				return "", fmt.Errorf("<scene> requires version=\"2\"")
-			}
-			return "2", nil
+			return "", fmt.Errorf("unsupported XAL document root <scene>; use <xaligo version=\"2\">")
 		case "xaligo":
 			if version == "" || version == "1" {
 				return "1", nil
 			}
-			return "", fmt.Errorf("<xaligo> accepts only version=\"1\"; V2 uses <scene version=\"2\">")
+			if version == "2" {
+				return "2", nil
+			}
+			return "", fmt.Errorf("<xaligo> version must be \"1\" or \"2\", got %q", version)
 		case "frame", "frames":
 			return "1", nil
 		default:

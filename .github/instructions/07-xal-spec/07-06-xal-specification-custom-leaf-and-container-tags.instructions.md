@@ -14,8 +14,8 @@ insets and lays out those children vertically by default, horizontally for
 `layout="staggered"`. If every child is item-like (`item`, `spacer`, or
 `blank`), the children use the item-grid row behavior instead.
 
-This rule applies only below a valid V1 root. An unknown root is always a parse
-error, so `<scene version="2">` can never be mistaken for a generic V1 group.
+This rule applies only below a valid document root. An unknown root is always a
+parse error and can never be mistaken for a generic group.
 
 ```xml
 <card title="Dashboard" />
