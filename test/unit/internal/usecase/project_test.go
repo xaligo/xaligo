@@ -143,7 +143,7 @@ func TestProjectAnalyzeBuildsGenericConceptsFromComplexV2XAL(t *testing.T) {
 			t.Fatalf("domain tag did not normalize to group: %#v", symbol)
 		}
 	}
-	if counts[entity.ProjectConceptFrame] != 1 || counts[entity.ProjectConceptPort] != 5 || counts[entity.ProjectConceptLine] != 36 {
+	if counts[entity.ProjectConceptFrame] != 1 || counts[entity.ProjectConceptPort] != 5 || counts[entity.ProjectConceptLine] != 38 {
 		t.Fatalf("generic concept counts = %#v", counts)
 	}
 	if engine.resolveCalls != 1 {

@@ -81,18 +81,18 @@ func TestComplexHybridV2CompatibilityProjection(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := bytes.Count(svg, []byte(`<polyline`)); got != 36 {
-		t.Fatalf("V2 connections = %d, want 36", got)
+	if got := bytes.Count(svg, []byte(`<polyline`)); got != 38 {
+		t.Fatalf("V2 connections = %d, want 38", got)
 	}
-	if got := bytes.Count(svg, []byte(`<image`)); got != 51 {
-		t.Fatalf("V2 embedded catalog and group icons = %d, want 51", got)
+	if got := bytes.Count(svg, []byte(`<image`)); got != 56 {
+		t.Fatalf("V2 embedded catalog and group icons = %d, want 56", got)
 	}
 	if !bytes.Contains(svg, []byte(`r="5" fill="#ffffff"`)) || !bytes.Contains(svg, []byte(`r="3.5"`)) {
 		t.Fatal("V2 line jumps or junctions were not rendered")
 	}
 	for _, token := range [][]byte{
-		[]byte(`>Complex Hybrid Architecture</text>`),
-		[]byte(`>R53</text>`),
+		[]byte(`>Hybrid Enterprise Request &amp; Data Flow</text>`),
+		[]byte(`>DNS</text>`),
 		[]byte(`data-icon="catalog:200025"`),
 		[]byte(`stroke="#2563eb"`),
 		[]byte(`stroke-dasharray="8 5"`),
@@ -129,17 +129,17 @@ func TestComplexHybridV2CompatibilityProjection(t *testing.T) {
 				}
 			}
 		}
-		if op.ID == "200025-icon" {
+		if op.ID == "employee-icon" {
 			employeeIcon = op
 		}
 	}
-	if imageCount != 51 || lineCount != 36 || groupHeaderCount != 20 {
-		t.Fatalf("V2 PPTX plan has %d images, %d lines, and %d group headers; want 51, 36, and 20", imageCount, lineCount, groupHeaderCount)
+	if imageCount != 56 || lineCount != 38 || groupHeaderCount != 21 {
+		t.Fatalf("V2 PPTX plan has %d images, %d lines, and %d group headers; want 56, 38, and 21", imageCount, lineCount, groupHeaderCount)
 	}
 	if employeeIcon == nil {
 		t.Fatal("V2 PPTX plan does not contain the employee icon")
 	}
-	svgEmployeeIcon := svgElementGeometry(t, svg, "200025-icon")
+	svgEmployeeIcon := svgElementGeometry(t, svg, "employee-icon")
 	for index, got := range []float64{employeeIcon.X, employeeIcon.Y, employeeIcon.W, employeeIcon.H} {
 		if want := svgEmployeeIcon[index] / 96; math.Abs(got-want) > 0.00001 {
 			t.Fatalf("employee icon PPTX geometry = (%v, %v, %v, %v), SVG geometry = %v", employeeIcon.X, employeeIcon.Y, employeeIcon.W, employeeIcon.H, svgEmployeeIcon)
@@ -149,37 +149,38 @@ func TestComplexHybridV2CompatibilityProjection(t *testing.T) {
 		"complex-hybrid-architecture-metadata-0-key":   {4, 4, 22, 19},
 		"complex-hybrid-architecture-metadata-0-value": {26, 4, 184, 19},
 		"complex-hybrid-architecture-metadata-1-key":   {218, 4, 41, 19},
-		"complex-hybrid-architecture-metadata-1-value": {259, 4, 184, 19},
-		"complex-hybrid-architecture-metadata-2-key":   {451, 4, 55, 19},
-		"complex-hybrid-architecture-metadata-2-value": {506, 4, 53, 19},
-		"onprem-hq":                 {24, 47, 462, 1369},
-		"aws-cloud":                 {510, 47, 1386, 1369},
-		"aws-edge":                  {522, 83, 1362, 111.364},
-		"region-apne1":              {522, 214.364, 1362, 1189.636},
-		"prod-vpc":                  {534, 376.331, 1338, 1015.669},
-		"vpc-edge-security":         {546, 416.331, 1314, 86.152},
-		"az-apne1a":                 {546, 518.482, 649, 861.518},
-		"public-subnet-a":           {558, 562.482, 625, 257.839},
-		"elastic-app-tier-a":        {570, 880.322, 601, 201.839},
-		"onprem-hq-icon":            {22, 31, 32, 32},
-		"employees-devices-icon":    {34, 67, 32, 32},
-		"campus-network-icon":       {34, 474, 32, 32},
-		"local-operations-icon":     {34, 885, 32, 32},
-		"aws-cloud-icon":            {508, 31, 32, 32},
-		"aws-edge-icon":             {520, 67, 32, 32},
-		"region-apne1-icon":         {520, 198.364, 32, 32},
-		"regional-integration-icon": {532, 238.364, 32, 32},
-		"prod-vpc-icon":             {532, 360.331, 32, 32},
-		"vpc-edge-security-icon":    {544, 400.331, 32, 32},
-		"public-subnet-a-icon":      {556, 546.482, 32, 32},
-		"app-subnet-a-icon":         {556, 824.322, 32, 32},
-		"elastic-app-tier-a-icon":   {568, 864.322, 32, 32},
-		"data-subnet-a-icon":        {556, 1098.161, 32, 32},
-		"public-subnet-c-icon":      {1221, 546.482, 32, 32},
-		"app-subnet-c-icon":         {1221, 824.322, 32, 32},
-		"data-subnet-c-icon":        {1221, 1098.161, 32, 32},
-		"200025-icon":               {160.667, 214.5, 32, 32},
-		"1581-icon":                 {731.757, 450.331, 21.152, 21.152},
+		"complex-hybrid-architecture-metadata-1-value": {259, 4, 242, 19},
+		"complex-hybrid-architecture-metadata-2-key":   {509, 4, 55, 19},
+		"complex-hybrid-architecture-metadata-2-value": {564, 4, 53, 19},
+		"onprem-hq":               {32, 47, 456, 1121},
+		"aws-cloud":               {520, 47, 1368, 1121},
+		"aws-edge":                {532, 83, 1344, 89.545},
+		"region-apne1":            {532, 192.545, 1344, 963.455},
+		"prod-vpc":                {544, 403.121, 1320, 740.879},
+		"vpc-edge-security":       {556, 445.121, 1296, 100.332},
+		"az-apne1a":               {556, 563.453, 639, 568.547},
+		"public-subnet-a":         {568, 607.453, 615, 138.442},
+		"elastic-app-tier-a":      {580, 803.895, 591, 151.663},
+		"onprem-hq-icon":          {30, 31, 32, 32},
+		"employees-devices-icon":  {42, 67, 32, 32},
+		"campus-network-icon":     {42, 387.333, 32, 32},
+		"local-operations-icon":   {42, 832.667, 32, 32},
+		"aws-cloud-icon":          {518, 31, 32, 32},
+		"aws-edge-icon":           {530, 67, 32, 32},
+		"region-apne1-icon":       {530, 176.545, 32, 32},
+		"regional-delivery-icon":  {542, 218.545, 32, 32},
+		"regional-data-ops-icon":  {1319.5, 218.545, 32, 32},
+		"prod-vpc-icon":           {542, 387.121, 32, 32},
+		"vpc-edge-security-icon":  {554, 429.121, 32, 32},
+		"public-subnet-a-icon":    {566, 591.453, 32, 32},
+		"app-subnet-a-icon":       {566, 749.895, 32, 32},
+		"elastic-app-tier-a-icon": {578, 787.895, 32, 32},
+		"data-subnet-a-icon":      {566, 971.558, 32, 32},
+		"public-subnet-c-icon":    {1223, 591.453, 32, 32},
+		"app-subnet-c-icon":       {1223, 749.895, 32, 32},
+		"data-subnet-c-icon":      {1223, 971.558, 32, 32},
+		"employee-icon":           {120, 210, 40, 40},
+		"igw-icon":                {704, 475.62, 40, 40},
 	} {
 		got := svgElementGeometry(t, svg, id)
 		for index := range want {
