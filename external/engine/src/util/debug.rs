@@ -289,6 +289,10 @@ impl_struct_debug!(
     role,
     font_size,
     line_height,
+    x,
+    y,
+    width,
+    height,
 );
 impl_struct_debug!(
     ResolvedLine,
@@ -312,6 +316,10 @@ impl_struct_debug!(
     visual,
     text,
     icon_ref,
+    icon_x,
+    icon_y,
+    icon_width,
+    icon_height,
     line,
     points,
 );

@@ -11,6 +11,12 @@ import (
 // renderer-neutral document plan. It performs unit conversion only; geometry,
 // text sizing, and routes remain owned by the Rust calculation result.
 func BuildDocumentPlan(document entity.EngineResolvedDocument, ppi float64) (entity.DocumentPlan, error) {
+	return BuildDocumentPlanWithIcons(document, ppi, nil)
+}
+
+// BuildDocumentPlanWithIcons projects resolved geometry and already-resolved
+// icon assets without asking the output adapter to calculate placement.
+func BuildDocumentPlanWithIcons(document entity.EngineResolvedDocument, ppi float64, icons map[string]string) (entity.DocumentPlan, error) {
 	if ppi <= 0 || math.IsNaN(ppi) || math.IsInf(ppi, 0) {
 		ppi = 96
 	}
@@ -18,7 +24,7 @@ func BuildDocumentPlan(document entity.EngineResolvedDocument, ppi float64) (ent
 		ID: "v2", Slide: entity.PlanSlide{W: document.Width / ppi, H: document.Height / ppi, Background: "FFFFFF", CropToSlide: true},
 	}
 	for _, element := range document.Elements {
-		ops, err := resolvedElementOps(element, ppi)
+		ops, err := resolvedElementOps(element, ppi, icons)
 		if err != nil {
 			return entity.DocumentPlan{}, err
 		}
@@ -27,7 +33,7 @@ func BuildDocumentPlan(document entity.EngineResolvedDocument, ppi float64) (ent
 	return entity.DocumentPlan{SchemaVersion: 2, Pages: []entity.DocumentPage{page}}, nil
 }
 
-func resolvedElementOps(element entity.EngineResolvedElement, ppi float64) ([]entity.DrawOp, error) {
+func resolvedElementOps(element entity.EngineResolvedElement, ppi float64, icons map[string]string) ([]entity.DrawOp, error) {
 	if !element.Visual.Visible {
 		return nil, nil
 	}
@@ -65,10 +71,21 @@ func resolvedElementOps(element entity.EngineResolvedElement, ppi float64) ([]en
 			ops = append(ops, base)
 		}
 	}
+	if data := icons[element.IconRef]; data != "" && element.IconWidth > 0 && element.IconHeight > 0 {
+		ops = append(ops, entity.DrawOp{
+			ID: element.ID + "-icon", GroupID: element.ID, FrontLayer: true, Kind: "image",
+			X: element.IconX / ppi, Y: element.IconY / ppi,
+			W: element.IconWidth / ppi, H: element.IconHeight / ppi, Data: data,
+		})
+	}
 	if element.Text.Value != "" {
+		textX, textY, textWidth, textHeight := element.Text.X, element.Text.Y, element.Text.Width, element.Text.Height
+		if textWidth <= 0 || textHeight <= 0 {
+			textX, textY, textWidth, textHeight = element.X, element.Y, element.Width, element.Height
+		}
 		text := entity.DrawOp{
-			ID: element.ID + "-text", GroupID: element.ID, Kind: "text",
-			X: element.X / ppi, Y: element.Y / ppi, W: element.Width / ppi, H: element.Height / ppi,
+			ID: element.ID + "-text", GroupID: element.ID, FrontLayer: true, Kind: "text",
+			X: textX / ppi, Y: textY / ppi, W: textWidth / ppi, H: textHeight / ppi,
 			Text: element.Text.Value, Color: planColor(element.Text.Color, "111827"),
 			FontFace: element.Text.FontFamily, FontSize: element.Text.FontSize, Align: "center", Valign: "mid",
 			TextLayout: &entity.TextLayout{Role: entity.TextRole(element.Text.Role), Wrap: true, LineHeight: element.Text.LineHeight},
@@ -76,6 +93,9 @@ func resolvedElementOps(element entity.EngineResolvedElement, ppi float64) ([]en
 		ops = append(ops, text)
 	}
 	if len(ops) == 0 {
+		if element.Visual.Shape == entity.EngineShapeNone {
+			return nil, nil
+		}
 		return nil, fmt.Errorf("resolved element %q has no projectable representation", element.ID)
 	}
 	return ops, nil

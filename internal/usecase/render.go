@@ -177,7 +177,11 @@ func (rcvr *renderUsecase) Render(ctx context.Context, input []byte, opts entity
 }
 
 func (rcvr *renderUsecase) RenderTerminal(ctx context.Context, input []byte, opts entity.RenderOptions) ([]byte, error) {
-	if renderDocumentVersion(input) != "2" {
+	version, err := renderDocumentVersion(input)
+	if err != nil {
+		return nil, err
+	}
+	if version != "2" {
 		return nil, fmt.Errorf("terminal output is available only for V2 documents")
 	}
 	spec, _, err := rcvr.v2Frontend.Lower(input)
@@ -234,7 +238,11 @@ func (rcvr *renderUsecase) RenderArtifacts(ctx context.Context, input []byte, op
 		return nil, fmt.Errorf("render artifacts is only available for SVG, got %q", format)
 	}
 	opts.Format = FormatSVG
-	if renderDocumentVersion(input) == "2" {
+	version, err := renderDocumentVersion(input)
+	if err != nil {
+		return nil, err
+	}
+	if version == "2" {
 		spec, _, err := rcvr.v2Frontend.Lower(input)
 		if err != nil {
 			return nil, fmt.Errorf("lower V2 document: %w", err)
@@ -293,7 +301,7 @@ func embedV2CatalogIcons(svg []byte, opts entity.RenderOptions) ([]byte, error) 
 		for _, attr := range v2SVGAttrPattern.FindAllSubmatch(match[0], -1) {
 			attrs[string(attr[1])], _ = strconv.ParseFloat(string(attr[2]), 64)
 		}
-		size := min(40.0, attrs["width"]*0.7, attrs["height"]*0.7)
+		size := min(40.0, attrs["width"], attrs["height"])
 		if size <= 0 {
 			continue
 		}
@@ -360,7 +368,11 @@ var (
 )
 
 func (rcvr *renderUsecase) buildDocumentPlan(ctx context.Context, input []byte, opts entity.RenderOptions, uniformPages bool) (entity.DocumentPlan, error) {
-	if renderDocumentVersion(input) == "2" {
+	version, err := renderDocumentVersion(input)
+	if err != nil {
+		return entity.DocumentPlan{}, err
+	}
+	if version == "2" {
 		spec, _, err := rcvr.v2Frontend.Lower(input)
 		if err != nil {
 			return entity.DocumentPlan{}, fmt.Errorf("lower V2 document: %w", err)
@@ -369,7 +381,11 @@ func (rcvr *renderUsecase) buildDocumentPlan(ctx context.Context, input []byte, 
 		if err != nil {
 			return entity.DocumentPlan{}, fmt.Errorf("resolve V2 document: %w", err)
 		}
-		document, err := v2usecase.BuildDocumentPlan(resolved, opts.PxPerInch)
+		icons, err := resolvedV2CatalogIcons(resolved, opts)
+		if err != nil {
+			return entity.DocumentPlan{}, fmt.Errorf("resolve V2 plan icons: %w", err)
+		}
+		document, err := v2usecase.BuildDocumentPlanWithIcons(resolved, opts.PxPerInch, icons)
 		if err != nil {
 			return entity.DocumentPlan{}, fmt.Errorf("build V2 document plan: %w", err)
 		}
@@ -400,23 +416,68 @@ func (rcvr *renderUsecase) buildDocumentPlan(ctx context.Context, input []byte, 
 	return document, nil
 }
 
-func renderDocumentVersion(input []byte) string {
+func resolvedV2CatalogIcons(document entity.EngineResolvedDocument, opts entity.RenderOptions) (map[string]string, error) {
+	wanted := make(map[int]string)
+	for _, element := range document.Elements {
+		const prefix = "catalog:"
+		if !strings.HasPrefix(element.IconRef, prefix) {
+			continue
+		}
+		id, err := strconv.Atoi(strings.TrimPrefix(element.IconRef, prefix))
+		if err == nil {
+			wanted[id] = element.IconRef
+		}
+	}
+	if len(wanted) == 0 {
+		return nil, nil
+	}
+	catalog, err := readV2Catalog(opts)
+	if err != nil {
+		return nil, err
+	}
+	icons := make(map[string]string, len(wanted))
+	for id, ref := range wanted {
+		if data := catalog[id]; data != "" {
+			icons[ref] = data
+		}
+	}
+	return icons, nil
+}
+
+func renderDocumentVersion(input []byte) (string, error) {
 	decoder := xml.NewDecoder(bytes.NewReader(input))
 	for {
 		token, err := decoder.Token()
 		if err != nil {
-			return ""
+			return "", fmt.Errorf("inspect XAL document root: %w", err)
 		}
 		start, ok := token.(xml.StartElement)
 		if !ok {
 			continue
 		}
+		version := ""
 		for _, attr := range start.Attr {
 			if attr.Name.Local == "version" {
-				return strings.TrimSpace(attr.Value)
+				version = strings.TrimSpace(attr.Value)
+				break
 			}
 		}
-		return ""
+		switch start.Name.Local {
+		case "scene":
+			if version != "2" {
+				return "", fmt.Errorf("<scene> requires version=\"2\"")
+			}
+			return "2", nil
+		case "xaligo":
+			if version == "" || version == "1" {
+				return "1", nil
+			}
+			return "", fmt.Errorf("<xaligo> accepts only version=\"1\"; V2 uses <scene version=\"2\">")
+		case "frame", "frames":
+			return "1", nil
+		default:
+			return "", fmt.Errorf("unsupported XAL document root <%s>", start.Name.Local)
+		}
 	}
 }
 

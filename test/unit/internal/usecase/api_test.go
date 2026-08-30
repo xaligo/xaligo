@@ -11,6 +11,7 @@ import (
 	"testing"
 	"testing/fstest"
 
+	enginebridge "github.com/xaligo/xaligo/external/engine"
 	"github.com/xaligo/xaligo/internal/entity"
 	"github.com/xaligo/xaligo/internal/repository"
 	"github.com/xaligo/xaligo/internal/usecase"
@@ -185,6 +186,9 @@ func TestUseCaseRenderDispatcherBranches(t *testing.T) {
 }
 
 func TestRenderTerminalSupportsOnlyV2(t *testing.T) {
+	if !enginebridge.Available() {
+		t.Skip("V2 terminal rendering requires the linked Rust engine")
+	}
 	uc := newUsecase()
 	v2 := []byte(`<scene version="2" width="320" height="180" layout="horizontal"><item id="client">Client</item><item id="api">API</item><line id="request" source="client" target="api" target-decoration="arrow"/></scene>`)
 	output, err := uc.Render(context.Background(), v2, entity.RenderOptions{
@@ -198,6 +202,21 @@ func TestRenderTerminalSupportsOnlyV2(t *testing.T) {
 	}
 	if _, err := uc.Render(context.Background(), []byte(simpleXAL), entity.RenderOptions{Format: usecase.FormatTerminal}); err == nil || !strings.Contains(err.Error(), "only for V2") {
 		t.Fatalf("V1 terminal error = %v", err)
+	}
+}
+
+func TestRenderRejectsV2VersionOnV1Root(t *testing.T) {
+	source := []byte(`<xaligo version="2"><frame id="page" width="320" height="180"/></xaligo>`)
+	_, err := newUsecase().RenderSVG(context.Background(), source, entity.RenderOptions{Format: usecase.FormatSVG})
+	if err == nil || !strings.Contains(err.Error(), `V2 uses <scene version="2">`) {
+		t.Fatalf("RenderSVG error = %v", err)
+	}
+	diagnostics, err := usecase.NewDiagnosticsUsecase().Diagnose(context.Background(), source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(diagnostics) != 1 || diagnostics[0].Code != "XAL-E1001" || !strings.Contains(diagnostics[0].Message, "<scene") {
+		t.Fatalf("diagnostics = %#v", diagnostics)
 	}
 }
 

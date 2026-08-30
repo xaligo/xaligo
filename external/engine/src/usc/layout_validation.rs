@@ -238,6 +238,20 @@ fn resolved_element(element: &ElementSpec, bounds: Bounds) -> Result<ResolvedEle
         }
         String::new()
     };
+    let fill = if element.visual.fill.is_empty() {
+        default_fill.to_owned()
+    } else {
+        element.visual.fill.clone()
+    };
+    let stroke = if element.visual.stroke.is_empty() {
+        default_stroke.to_owned()
+    } else {
+        element.visual.stroke.clone()
+    };
+    let font_size = element.text.font_size.unwrap_or(DEFAULT_FONT_SIZE);
+    let line_height = element.text.line_height.unwrap_or(DEFAULT_LINE_HEIGHT);
+    let (text_x, text_y, text_width, text_height, icon_x, icon_y, icon_width, icon_height) =
+        resolved_foreground_geometry(element, bounds, &icon_ref, font_size, line_height);
     Ok(ResolvedElement {
         parent: element.parent,
         id: element.id.clone(),
@@ -248,16 +262,8 @@ fn resolved_element(element: &ElementSpec, bounds: Bounds) -> Result<ResolvedEle
         height: bounds.height,
         visual: ResolvedVisual {
             shape,
-            fill: if element.visual.fill.is_empty() {
-                default_fill.to_owned()
-            } else {
-                element.visual.fill.clone()
-            },
-            stroke: if element.visual.stroke.is_empty() {
-                default_stroke.to_owned()
-            } else {
-                element.visual.stroke.clone()
-            },
+            fill,
+            stroke: stroke.clone(),
             stroke_width: element.visual.stroke_width.unwrap_or(1.5),
             corner_radius: element.visual.corner_radius.unwrap_or(4.0),
             opacity: element.visual.opacity.unwrap_or(1.0),
@@ -272,15 +278,27 @@ fn resolved_element(element: &ElementSpec, bounds: Bounds) -> Result<ResolvedEle
                 element.text.font_family.clone()
             },
             color: if element.text.color.is_empty() {
-                "#0f172a".to_owned()
+                if matches!(element.concept, Concept::Group | Concept::Frame) {
+                    stroke
+                } else {
+                    "#0f172a".to_owned()
+                }
             } else {
                 element.text.color.clone()
             },
             role: element.text.role.clone(),
-            font_size: element.text.font_size.unwrap_or(DEFAULT_FONT_SIZE),
-            line_height: element.text.line_height.unwrap_or(DEFAULT_LINE_HEIGHT),
+            font_size,
+            line_height,
+            x: text_x,
+            y: text_y,
+            width: text_width,
+            height: text_height,
         },
         icon_ref,
+        icon_x,
+        icon_y,
+        icon_width,
+        icon_height,
         line: ResolvedLine {
             style: element.line.style,
             source_decoration: element.line.source_decoration,
@@ -290,6 +308,103 @@ fn resolved_element(element: &ElementSpec, bounds: Bounds) -> Result<ResolvedEle
         },
         points: Vec::new(),
     })
+}
+
+fn resolved_foreground_geometry(
+    element: &ElementSpec,
+    bounds: Bounds,
+    icon_ref: &str,
+    font_size: f64,
+    line_height: f64,
+) -> (f64, f64, f64, f64, f64, f64, f64, f64) {
+    let mut text_x = bounds.x;
+    let mut text_y = bounds.y;
+    let mut text_width = bounds.width;
+    let mut text_height = bounds.height;
+    let mut icon_x = 0.0;
+    let mut icon_y = 0.0;
+    let mut icon_width = 0.0;
+    let mut icon_height = 0.0;
+    let has_text = !element.text.value.is_empty();
+    let has_icon = !icon_ref.is_empty();
+    let icon_scale = element.icon.scale.unwrap_or(1.0);
+
+    if matches!(element.concept, Concept::Group | Concept::Frame) && has_text {
+        let header_height = 28.0_f64.min(bounds.height);
+        let tip = (header_height / 2.0).min(10.0);
+        let icon_space = if has_icon { 26.0 } else { 0.0 };
+        let header_width = ((element.text.value.chars().count() as f64 * font_size * 0.62)
+            + 28.0
+            + icon_space)
+            .min(bounds.width)
+            .max(header_height);
+        text_x = bounds.x + 4.0 + icon_space;
+        text_y = bounds.y;
+        text_width = (header_width - tip - 4.0 - icon_space).max(1.0);
+        text_height = header_height;
+        if has_icon {
+            icon_width = element
+                .icon
+                .width
+                .map(|value| value * icon_scale)
+                .unwrap_or(20.0)
+                .min(20.0)
+                .min(header_height);
+            icon_height = element
+                .icon
+                .height
+                .map(|value| value * icon_scale)
+                .unwrap_or(20.0)
+                .min(20.0)
+                .min(header_height);
+            icon_x = bounds.x + 4.0 + element.icon.offset_x.unwrap_or(0.0);
+            icon_y = bounds.y
+                + (header_height - icon_height) / 2.0
+                + element.icon.offset_y.unwrap_or(0.0);
+        }
+    } else if has_icon {
+        icon_width = element
+            .icon
+            .width
+            .map(|value| value * icon_scale)
+            .unwrap_or(32.0)
+            .min(bounds.width);
+        let line_count = element.text.value.lines().count().max(1) as f64;
+        let label_height = if has_text {
+            font_size * line_height * line_count
+        } else {
+            0.0
+        };
+        let gap = if has_text { 4.0 } else { 0.0 };
+        icon_height = element
+            .icon
+            .height
+            .map(|value| value * icon_scale)
+            .unwrap_or(32.0)
+            .min((bounds.height - label_height - gap).max(1.0));
+        let block_height = icon_height + gap + label_height;
+        icon_x = bounds.x
+            + (bounds.width - icon_width) / 2.0
+            + element.icon.offset_x.unwrap_or(0.0);
+        icon_y = bounds.y
+            + (bounds.height - block_height).max(0.0) / 2.0
+            + element.icon.offset_y.unwrap_or(0.0);
+        if has_text {
+            text_y = icon_y + icon_height + gap;
+            text_height = label_height;
+        }
+    }
+
+    (
+        text_x,
+        text_y,
+        text_width,
+        text_height,
+        icon_x,
+        icon_y,
+        icon_width,
+        icon_height,
+    )
 }
 
 fn validate_columns(name: &str, value: u16) -> Result<(), LayoutError> {

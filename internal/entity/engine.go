@@ -303,6 +303,10 @@ type EngineResolvedText struct {
 	Role       string
 	FontSize   float64
 	LineHeight float64
+	X          float64
+	Y          float64
+	Width      float64
+	Height     float64
 }
 
 type EngineResolvedLine struct {
@@ -317,18 +321,22 @@ type EngineResolvedLine struct {
 // parameters calculated by the Rust engine. Elements remain in deterministic
 // pre-order and ParentID reconstructs their hierarchy.
 type EngineResolvedElement struct {
-	ID       string
-	ParentID string
-	Concept  EngineConcept
-	X        float64
-	Y        float64
-	Width    float64
-	Height   float64
-	Visual   EngineResolvedVisual
-	Text     EngineResolvedText
-	Line     EngineResolvedLine
-	IconRef  string
-	Points   []EnginePoint
+	ID         string
+	ParentID   string
+	Concept    EngineConcept
+	X          float64
+	Y          float64
+	Width      float64
+	Height     float64
+	Visual     EngineResolvedVisual
+	Text       EngineResolvedText
+	Line       EngineResolvedLine
+	IconRef    string
+	IconX      float64
+	IconY      float64
+	IconWidth  float64
+	IconHeight float64
+	Points     []EnginePoint
 }
 
 // EngineResolvedDocument is the immutable resolved result consumed by output

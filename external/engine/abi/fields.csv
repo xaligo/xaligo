@@ -75,6 +75,14 @@ resolved_number,opacity,6
 resolved_number,font_size,7
 resolved_number,line_height,8
 resolved_number,label_position,9
+resolved_number,text_x,10
+resolved_number,text_y,11
+resolved_number,text_width,12
+resolved_number,text_height,13
+resolved_number,icon_x,14
+resolved_number,icon_y,15
+resolved_number,icon_width,16
+resolved_number,icon_height,17
 resolved_string,id,0
 resolved_string,text_value,1
 resolved_string,font_family,2

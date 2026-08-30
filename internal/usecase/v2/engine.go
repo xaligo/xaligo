@@ -808,13 +808,14 @@ func decodeEngineLayout(input []byte, spec entity.EngineDocumentSpec) (entity.En
 			Text: entity.EngineResolvedText{
 				Value: strings[1], FontFamily: strings[2], Color: strings[3], Role: strings[4],
 				FontSize: numbers[7], LineHeight: numbers[8],
+				X: numbers[10], Y: numbers[11], Width: numbers[12], Height: numbers[13],
 			},
 			Line: entity.EngineResolvedLine{
 				Style: lineStyle, SourceDecoration: sourceDecoration, TargetDecoration: targetDecoration,
 				Label: strings[8], LabelPosition: numbers[9],
 			},
-			IconRef: strings[5],
-			Points:  points,
+			IconRef: strings[5], IconX: numbers[14], IconY: numbers[15],
+			IconWidth: numbers[16], IconHeight: numbers[17], Points: points,
 		})
 	}
 	if reader.Len() != 0 {

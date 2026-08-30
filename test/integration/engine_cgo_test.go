@@ -10,6 +10,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 
 	"github.com/xaligo/xaligo/internal/entity"
@@ -23,10 +24,13 @@ func TestV2SourceUsesRustSVGAndSharedResolvedPPTXPlan(t *testing.T) {
 		repository.NewSceneRepository(), repository.NewXaligoRepository(),
 		repository.NewPowerpointRepository(), repository.NewSVGRepository(), repository.NewTerminalRepository(),
 	)
-	source := []byte(`<xaligo version="2"><frames><frame id="page" width="320" height="180" layout="horizontal"><item id="left" width="80">Left</item><item id="right" weight="1">Right</item><connection id="flow" source="left" target="right" routing="orthogonal"/></frame></frames></xaligo>`)
+	source := []byte(`<scene version="2" width="320" height="180" layout="absolute"><frame id="page" width="320" height="180" layout="horizontal"><item id="left" width="80">Left</item><item id="right" weight="1">Right</item><line id="flow" source="left" target="right" routing="orthogonal"/></frame></scene>`)
 	svg, err := renderer.RenderSVG(context.Background(), source, entity.RenderOptions{Format: usecase.FormatSVG, PxPerInch: 96})
 	if err != nil {
 		t.Fatal(err)
+	}
+	if !bytes.Contains(source, []byte(`<scene version="2"`)) || bytes.Contains(source, []byte(`<xaligo version="2"`)) {
+		t.Fatal("V2 sample does not use the reject-safe native document root")
 	}
 	planJSON, err := renderer.BuildPPTXPlan(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
 	if err != nil {
@@ -46,7 +50,7 @@ func TestV2SVGIsByteStable(t *testing.T) {
 		repository.NewSceneRepository(), repository.NewXaligoRepository(),
 		repository.NewPowerpointRepository(), repository.NewSVGRepository(), repository.NewTerminalRepository(),
 	)
-	source := []byte(`<xaligo version="2"><frame id="page" width="320" height="180" layout="horizontal"><item id="left" width="80">Left</item><item id="right" weight="1">Right</item><connection id="flow" source="left" target="right" routing="orthogonal"/></frame></xaligo>`)
+	source := []byte(`<scene version="2" width="320" height="180" layout="absolute"><frame id="page" width="320" height="180" layout="horizontal"><item id="left" width="80">Left</item><item id="right" weight="1">Right</item><line id="flow" source="left" target="right" routing="orthogonal"/></frame></scene>`)
 	first, err := renderer.RenderSVG(context.Background(), source, entity.RenderOptions{Format: usecase.FormatSVG, PxPerInch: 96})
 	if err != nil {
 		t.Fatal(err)
@@ -64,6 +68,9 @@ func TestComplexHybridV2CompatibilityProjection(t *testing.T) {
 	source, err := os.ReadFile(filepath.Join("..", "..", "docs", "src", "examples", "samples", "complex-hybrid-architecture-v2.xal"))
 	if err != nil {
 		t.Fatal(err)
+	}
+	if !bytes.Contains(source, []byte(`<scene version="2"`)) || bytes.Contains(source, []byte(`<xaligo version="2"`)) {
+		t.Fatal("complex V2 sample does not use the reject-safe native document root")
 	}
 	renderer := usecase.NewRenderUsecase(
 		repository.NewSceneRepository(), repository.NewXaligoRepository(),
@@ -84,13 +91,68 @@ func TestComplexHybridV2CompatibilityProjection(t *testing.T) {
 	}
 	for _, token := range [][]byte{
 		[]byte(`>Complex Hybrid Architecture</text>`),
-		[]byte(`>employee</text>`),
+		[]byte(`>R53</text>`),
 		[]byte(`data-icon="catalog:200025"`),
 		[]byte(`stroke="#2563eb"`),
 		[]byte(`stroke-dasharray="8 5"`),
 	} {
 		if !bytes.Contains(svg, token) {
 			t.Fatalf("V2 compatibility SVG does not contain %q", token)
+		}
+	}
+	planJSON, err := renderer.BuildPPTXPlan(context.Background(), source, entity.RenderOptions{PxPerInch: 96})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var plan entity.Plan
+	if err := json.Unmarshal(planJSON, &plan); err != nil {
+		t.Fatal(err)
+	}
+	var imageCount, lineCount int
+	var employeeIcon *entity.DrawOp
+	for index := range plan.Ops {
+		op := &plan.Ops[index]
+		switch op.Kind {
+		case "image":
+			imageCount++
+			if !op.FrontLayer {
+				t.Fatalf("PPTX image %q is not projected above connections", op.ID)
+			}
+		case "line":
+			lineCount++
+		}
+		if op.ID == "200025-icon" {
+			employeeIcon = op
+		}
+	}
+	if imageCount != 39 || lineCount != 36 {
+		t.Fatalf("V2 PPTX plan has %d images and %d lines, want 39 and 36", imageCount, lineCount)
+	}
+	if employeeIcon == nil {
+		t.Fatal("V2 PPTX plan does not contain the employee icon")
+	}
+	svgEmployeeIcon := svgElementGeometry(t, svg, "200025-icon")
+	for index, got := range []float64{employeeIcon.X, employeeIcon.Y, employeeIcon.W, employeeIcon.H} {
+		if want := svgEmployeeIcon[index] / 96; math.Abs(got-want) > 0.00001 {
+			t.Fatalf("employee icon PPTX geometry = (%v, %v, %v, %v), SVG geometry = %v", employeeIcon.X, employeeIcon.Y, employeeIcon.W, employeeIcon.H, svgEmployeeIcon)
+		}
+	}
+	for id, want := range map[string][4]float64{
+		"onprem-hq":          {24, 47, 462, 1369},
+		"aws-cloud":          {510, 47, 1386, 1369},
+		"aws-edge":           {522, 83, 1362, 111.364},
+		"region-apne1":       {522, 214.364, 1362, 1189.636},
+		"prod-vpc":           {534, 376.331, 1338, 1015.669},
+		"vpc-edge-security":  {546, 416.331, 1314, 86.152},
+		"az-apne1a":          {546, 518.482, 649, 861.518},
+		"public-subnet-a":    {558, 562.482, 625, 257.839},
+		"elastic-app-tier-a": {570, 880.322, 601, 201.839},
+	} {
+		got := svgElementGeometry(t, svg, id)
+		for index := range want {
+			if math.Abs(got[index]-want[index]) > 0.002 {
+				t.Fatalf("%s geometry = %v, want %v", id, got, want)
+			}
 		}
 	}
 	var root struct {
@@ -104,8 +166,38 @@ func TestComplexHybridV2CompatibilityProjection(t *testing.T) {
 	}
 }
 
+func svgElementGeometry(t *testing.T, svg []byte, id string) [4]float64 {
+	t.Helper()
+	decoder := xml.NewDecoder(bytes.NewReader(svg))
+	for {
+		token, err := decoder.Token()
+		if err != nil {
+			t.Fatalf("find SVG element %q: %v", id, err)
+		}
+		start, ok := token.(xml.StartElement)
+		if !ok {
+			continue
+		}
+		attrs := make(map[string]string, len(start.Attr))
+		for _, attr := range start.Attr {
+			attrs[attr.Name.Local] = attr.Value
+		}
+		if attrs["id"] != id {
+			continue
+		}
+		var geometry [4]float64
+		for index, name := range []string{"x", "y", "width", "height"} {
+			geometry[index], err = strconv.ParseFloat(attrs[name], 64)
+			if err != nil {
+				t.Fatalf("SVG element %q %s=%q: %v", id, name, attrs[name], err)
+			}
+		}
+		return geometry
+	}
+}
+
 func TestV2StructuredDiagnosticMapsBackToSourceSpan(t *testing.T) {
-	source := []byte("<xaligo version=\"2\"><frame width=\"200\" height=\"100\">\n  <connection id=\"bad\" source=\"missing\" target=\"also-missing\"/>\n</frame></xaligo>")
+	source := []byte("<scene version=\"2\" width=\"200\" height=\"100\">\n  <line id=\"bad\" source=\"missing\" target=\"also-missing\"/>\n</scene>")
 	diagnostics, err := usecase.NewDiagnosticsUsecase().Diagnose(context.Background(), source)
 	if err != nil {
 		t.Fatal(err)

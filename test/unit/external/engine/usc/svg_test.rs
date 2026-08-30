@@ -36,8 +36,16 @@ fn resolved_element(concept: Concept) -> ResolvedElement {
             role: String::new(),
             font_size: 14.0,
             line_height: 1.2,
+            x: 10.0,
+            y: 20.0,
+            width: 80.0,
+            height: 40.0,
         },
         icon_ref: String::new(),
+        icon_x: 0.0,
+        icon_y: 0.0,
+        icon_width: 0.0,
+        icon_height: 0.0,
         line: ResolvedLine {
             style: LineStyle::Solid,
             source_decoration: Decoration::None,
@@ -80,6 +88,34 @@ fn renders_line_route_and_decoration() {
     assert!(svg.contains("<path"));
     assert!(svg.contains("calls"));
     usvg::roxmltree::Document::parse(&svg).expect("generated line SVG must be valid XML");
+}
+
+#[test]
+fn renders_lines_behind_resolved_item_foreground() {
+    let mut item = resolved_element(Concept::Item);
+    item.id = "item".to_owned();
+    item.text.value = "API".to_owned();
+    item.icon_ref = "builtin:service".to_owned();
+    item.icon_x = 34.0;
+    item.icon_y = 22.0;
+    item.icon_width = 32.0;
+    item.icon_height = 24.0;
+
+    let mut line = resolved_element(Concept::Line);
+    line.id = "line".to_owned();
+    line.points = vec![Point { x: 0.0, y: 40.0 }, Point { x: 100.0, y: 40.0 }];
+
+    let svg = String::from_utf8(render(&ResolvedDocument {
+        width: 100.0,
+        height: 80.0,
+        elements: vec![item, line],
+    }))
+    .expect("UTF-8 SVG");
+    let line_position = svg.find("<polyline").expect("line");
+    let icon_position = svg.find(r#"id="item-icon""#).expect("icon anchor");
+    let text_position = svg.find(">API</text>").expect("item label");
+    assert!(line_position < icon_position);
+    assert!(line_position < text_position);
 }
 
 #[test]

@@ -19,7 +19,7 @@ type EngineUsecase interface {
 ```
 
 The generic calculation core and this ABI are implemented. The native
-`<xaligo version="2">` generic frontend now lowers directly to
+`<scene version="2">` generic frontend now lowers directly to
 `EngineDocumentSpec` and the ordinary render use case projects its resolved
 result through the shared SVG/PPTX document plan. The same frontend contract
 accepts generic V1 input for compatibility analysis. The full-profile V1
@@ -161,7 +161,7 @@ The resolved response remains in deterministic pre-order and contains:
 - parent identity and generic concept;
 - final finite `(x, y, width, height)` geometry;
 - resolved renderer-neutral visual and text values;
-- selected icon reference; and
+- resolved text box plus selected icon reference and icon box; and
 - final line points, style, decorations, label, and label position.
 
 The engine limits one request to 10,000 elements, 128 nesting levels, 16 MiB

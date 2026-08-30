@@ -196,6 +196,10 @@ impl_struct_clone!(
     role,
     font_size,
     line_height,
+    x,
+    y,
+    width,
+    height,
 );
 impl_struct_clone!(
     ResolvedLine,
@@ -217,6 +221,10 @@ impl_struct_clone!(
     visual,
     text,
     icon_ref,
+    icon_x,
+    icon_y,
+    icon_width,
+    icon_height,
     line,
     points,
 );

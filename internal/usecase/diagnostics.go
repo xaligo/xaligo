@@ -54,7 +54,11 @@ func (rcvr *diagnosticsUsecase) DiagnoseWithImports(ctx context.Context, input [
 	if err := checkContext(ctx); err != nil {
 		return nil, err
 	}
-	if renderDocumentVersion(input) == "2" {
+	version, versionErr := renderDocumentVersion(input)
+	if versionErr != nil {
+		return []entity.Diagnostic{{Code: "XAL-E1001", Severity: SeverityError, Stage: "parse", Message: versionErr.Error()}}, nil
+	}
+	if version == "2" {
 		spec, _, err := rcvr.frontend.Lower(input)
 		if err != nil {
 			return []entity.Diagnostic{{Code: "XAL-E1001", Severity: SeverityError, Stage: "parse", Message: err.Error()}}, nil
