@@ -39,8 +39,8 @@ connector.
 
 | Attribute | Type | Required | Description |
 |---|---|---|---|
-| `src` | string | ✓ | Catalog ID, or `id`/`name`/`ref` of the arrow start item, AWS group, rectangle, port, or identified child frame |
-| `dst` | string | ✓ | Catalog ID, or `id`/`name`/`ref` of the arrow end item, AWS group, rectangle, port, or identified child frame |
+| `src` | string | ✓ | Catalog ID, or `id`/`name`/`ref` of the arrow start item, AWS group/boundary resource, rectangle, port, or identified child frame |
+| `dst` | string | ✓ | Catalog ID, or `id`/`name`/`ref` of the arrow end item, AWS group/boundary resource, rectangle, port, or identified child frame |
 | `src-side` / `dst-side` | string | — | Optional endpoint side: `top`, `right`, `bottom`, or `left` |
 | `src-anchor` / `dst-anchor` | string | — | Optional edge anchor. Each side has five inset positions (`top-1` through `top-5`, etc.) for 20 unique perimeter anchors |
 | `src-frame-side` / `dst-frame-side` | string | — | Cross-frame-only logical page side, independent of the endpoint side; the drawable terminal uses that side's inward inset line |

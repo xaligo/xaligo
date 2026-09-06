@@ -148,6 +148,7 @@ pub struct LineSpec {
 }
 
 pub struct ElementSpec {
+    pub aws: Option<crate::ent::model::aws::Component>,
     pub parent: Option<usize>,
     pub id: String,
     pub concept: Concept,

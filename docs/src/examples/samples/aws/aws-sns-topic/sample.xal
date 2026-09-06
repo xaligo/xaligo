@@ -1,0 +1,20 @@
+<!-- AWS functional design library v2. Editable: see README.md and research/designs.json. -->
+<!-- Configuration cards describe AWS concepts; their text is not a provisioning command. -->
+<xaligo version="2">
+<frames>
+  <frame id="sample" title="aws-sns-topic" width="1500" height="1160">
+    <col width="1360" height="1000" margin="32" gap="24">
+      <row height="230" gap="32"><aws-sns-topic id="component" label="Amazon Simple Notification Service&#10;Topic" label-width="340" />
+        <rectangle id="overview" width="920" height="180" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Design review / 設計レビュー&#10;Research: resource-schema&#10;AWS::SNS::Topic&#10;Functional structure and full reference tables are in README." />
+      </row>
+      <row height="242" gap="24"><rectangle id="part-1" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Resource configuration&#10;Topic&#10;Topic Name: String&#10;Archive Policy: Json&#10;Content Based Deduplication: Boolean&#10;Data Protection Policy: Json&#10;Delivery Status Logging: list" />
+        <rectangle id="part-2" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Nested configuration&#10;Delivery Status Logging -&gt; object&#10;Protocol*: String&#10;Failure Feedback Role Arn: String&#10;Subscription -&gt; object&#10;Protocol*: String&#10;Endpoint*: String" />
+        <rectangle id="part-3" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Additional parameters&#10;Fifo Throughput Scope: String&#10;Fifo Topic: Boolean&#10;Kms Master Key Id: String&#10;Signature Version: String&#10;Subscription: list&#10;Tracing Config: String&#10;Complete field list in README" /></row>
+      <row height="242" gap="24"><rectangle id="part-4" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Referenced resource types&#10;Subscription&#10;Based on identifier fields&#10;References are NOT child ownership" />
+        <rectangle id="part-5" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Operations / lifecycle&#10;CreateTopic&#10;ListTopics&#10;DeleteTopic&#10;GetTopicAttributes&#10;ListSubscriptionsByTopic&#10;Input / output schemas: linked API sheet" />
+        <rectangle id="part-6" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Icon meaning / interpretation&#10;Amazon Simple Notification Service&#10;Topic&#10;Mapped resource model shown above&#10;Do not infer API fields from icon artwork&#10;Solid enclosure = authored membership&#10;Type references are not traffic paths" /></row>
+      <rectangle id="design-legend" width="1284" height="150" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="DESIGN CONTRACT / 図の読み方&#10;* = required in the source schema, not a required XAL attribute. Values are not deployed to AWS.&#10;Configuration / API cards are references, not automatically nested resources or network traffic.&#10;Availability and region support must be checked before deployment. Research source/version and full parameter tables: README." />
+    </col>
+  </frame>
+</frames>
+</xaligo>

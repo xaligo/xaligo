@@ -88,6 +88,9 @@ func childIDV1EngineLayoutAttributes(parent string, index int) string {
 }
 
 func labelOfV1EngineLayoutAttributes(n *entity.Node) string {
+	if label, ok := awsGroupLabelV1EngineAwsResource(n); ok {
+		return label
+	}
 	if title := n.Attr("title"); title != "" {
 		loggerV1EngineSharedLogging.DEBUG(IULLO001V1EngineLayoutAttributes, "branch title", map[string]any{"tag": n.Tag})
 		return title

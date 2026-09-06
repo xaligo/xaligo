@@ -1,0 +1,14 @@
+<!-- AWS functional design library v2. Editable: see README.md and research/designs.json. -->
+<!-- Configuration cards describe AWS concepts; their text is not a provisioning command. -->
+<xaligo version="2">
+<frames>
+  <frame id="sample" title="aws-category-arch-category-contact-center" width="1500" height="1160">
+    <col width="1360" height="1000" margin="32" gap="24">
+      <row height="230" gap="32"><aws-category-arch-category-contact-center id="component" label="Arch Category Contact Center" label-width="340" />
+        <rectangle id="overview" width="920" height="180" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Design review / 設計レビュー&#10;Research: category&#10;Scope: logical&#10;Functional structure and full reference tables are in README." />
+      </row>
+      <rectangle id="design-legend" width="1284" height="150" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="DESIGN CONTRACT / 図の読み方&#10;* = required in the source schema, not a required XAL attribute. Values are not deployed to AWS.&#10;Configuration / API cards are references, not automatically nested resources or network traffic.&#10;Availability and region support must be checked before deployment. Research source/version and full parameter tables: README." />
+    </col>
+  </frame>
+</frames>
+</xaligo>

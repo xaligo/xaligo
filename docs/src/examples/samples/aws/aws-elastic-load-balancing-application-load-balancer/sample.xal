@@ -1,0 +1,11 @@
+<xaligo version="2">
+<frames>
+  <frame id="sample" title="ALB / listeners" width="640" height="320">
+    <aws-elastic-load-balancing-application-load-balancer id="component" domain="api.example.test" margin="24">
+      <aws-listener id="http" protocol="HTTP" port="80" target-group="web" />
+      <aws-listener id="https" protocol="HTTPS" port="443" certificate="server-cert" target-group="api" />
+      <aws-listener id="admin" protocol="HTTPS" port="8443" mtls="verify" certificate="server-cert" trust-store="client-ca" target-group="admin" />
+    </aws-elastic-load-balancing-application-load-balancer>
+  </frame>
+</frames>
+</xaligo>

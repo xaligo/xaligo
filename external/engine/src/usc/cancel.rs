@@ -1,8 +1,5 @@
 use std::cell::Cell;
-use std::sync::atomic::{
-    AtomicU8,
-    Ordering,
-};
+use std::sync::atomic::{AtomicU8, Ordering};
 
 thread_local! {
     static CURRENT: Cell<*const AtomicU8> = const { Cell::new(std::ptr::null()) };

@@ -113,7 +113,7 @@ func BuildJSONV1EngineSceneBuild(root *entity.Box, svgGroupDir string, catalogCS
 		registerConnectionEndpointV1EngineSceneWalk(root, "paper-frame", frameRects[frameID], itemImgRects, itemImgIDs)
 	}
 
-	walkV1EngineSceneWalk(root, &elements, files, svgGroupDir, catalogCSV, projectRoot, fsys, root, itemGroups, ancestorBoxes, itemFrames, itemImgRects, itemImgIDs, nil, deps)
+	walkV1EngineSceneWalk(root, &elements, files, svgGroupDir, catalogCSV, projectRoot, fsys, root, itemGroups, ancestorBoxes, itemFrames, itemImgRects, itemLblRects, itemImgIDs, itemLblIDs, nil, deps)
 	ancestorIDs := make([]string, 0, len(itemGroups))
 	for ancID := range itemGroups {
 		ancestorIDs = append(ancestorIDs, ancID)

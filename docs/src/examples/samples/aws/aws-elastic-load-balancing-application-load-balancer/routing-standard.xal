@@ -1,0 +1,30 @@
+<!-- Editable native ALB example; AWS setting references are not credentials or deployment configuration. -->
+<xaligo version="2">
+  <frames>
+<frame id="routing-standard" title="ALB / routing-standard" width="547" height="413">
+      <aws-elastic-load-balancing-application-load-balancer id="alb" domain="api.example.test" detail-level="standard" margin="24">
+        <aws-listener id="listener-10" protocol="HTTPS" port="443" certificate="server-cert">
+          <aws-listener-rule id="route-orders" priority="10">
+            <aws-rule-condition id="condition-1" field="host-header">
+              <aws-rule-match id="match-2" value="api.example.test" />
+            </aws-rule-condition>
+            <aws-rule-condition id="condition-3" field="path-pattern">
+              <aws-rule-match id="match-4" value="/v1/*" />
+            </aws-rule-condition>
+            <aws-rule-action id="forward-5" type="forward" order="1" target-group="orders" />
+          </aws-listener-rule>
+          <aws-listener-rule id="route-admin" priority="20">
+            <aws-rule-condition id="condition-6" field="path-pattern">
+              <aws-rule-match id="match-7" value="/admin/*" />
+            </aws-rule-condition>
+            <aws-rule-action id="forward-8" type="forward" order="1" target-group="admin" />
+          </aws-listener-rule>
+          <aws-listener-rule id="route-default" priority="default">
+            <aws-rule-action id="forward-9" type="forward" order="1" target-group="web" />
+          </aws-listener-rule>
+          <aws-option id="policy" name="tls-policy" value="ELBSecurityPolicy-TLS13-1-2-2021-06" />
+        </aws-listener>
+      </aws-elastic-load-balancing-application-load-balancer>
+    </frame>
+  </frames>
+</xaligo>

@@ -1,44 +1,14 @@
-use std::fmt::{
-    Debug,
-    Formatter,
-};
+use std::fmt::{Debug, Formatter};
 
 use crate::ent::model::document::{
-    Alignment,
-    Concept,
-    Decoration,
-    DocumentSpec,
-    ElementSpec,
-    IconSpec,
-    Insets,
-    Justification,
-    LayoutPolicy,
-    LineSpec,
-    LineStyle,
-    MissingIconPolicy,
-    Overflow,
-    Point,
-    PortSpec,
-    ResolvedDocument,
-    ResolvedElement,
-    ResolvedLine,
-    ResolvedText,
-    ResolvedVisual,
-    RoutingPolicy,
-    Shape,
-    Side,
-    TextSpec,
-    VisualSpec,
+    Alignment, Concept, Decoration, DocumentSpec, ElementSpec, IconSpec, Insets, Justification,
+    LayoutPolicy, LineSpec, LineStyle, MissingIconPolicy, Overflow, Point, PortSpec,
+    ResolvedDocument, ResolvedElement, ResolvedLine, ResolvedText, ResolvedVisual, RoutingPolicy,
+    Shape, Side, TextSpec, VisualSpec,
 };
 use crate::ent::model::svg::NormalizedSvg;
-use crate::util::error::{
-    LayoutError,
-    SvgError,
-};
-use crate::util::mcode::{
-    LogLevel,
-    MCode,
-};
+use crate::util::error::{LayoutError, SvgError};
+use crate::util::mcode::{LogLevel, MCode};
 
 macro_rules! impl_enum_debug {
     ($target:ty, $($variant:path => $name:literal),+ $(,)?) => {
@@ -194,16 +164,7 @@ impl_struct_debug!(
     offset_y,
     missing_policy,
 );
-impl_struct_debug!(
-    PortSpec,
-    "PortSpec",
-    side,
-    anchor,
-    offset,
-    size,
-    visible,
-    label,
-);
+impl_struct_debug!(PortSpec, "PortSpec", side, anchor, offset, size, visible, label,);
 impl_struct_debug!(
     LineSpec,
     "LineSpec",
@@ -324,8 +285,21 @@ impl_struct_debug!(
     line,
     points,
 );
-impl_struct_debug!(ResolvedDocument, "ResolvedDocument", width, height, elements,);
-impl_struct_debug!(NormalizedSvg, "NormalizedSvg", data, view_box, width, height,);
+impl_struct_debug!(
+    ResolvedDocument,
+    "ResolvedDocument",
+    width,
+    height,
+    elements,
+);
+impl_struct_debug!(
+    NormalizedSvg,
+    "NormalizedSvg",
+    data,
+    view_box,
+    width,
+    height,
+);
 impl_struct_debug!(LayoutError, "LayoutError", message,);
 impl_struct_debug!(SvgError, "SvgError", message,);
 impl_struct_debug!(MCode, "MCode", code, message,);

@@ -10,7 +10,8 @@ const (
 )
 
 // EngineConcept is the closed, domain-neutral calculation vocabulary accepted
-// by the V2 engine. AWS, UML, and other profiles lower to these concepts.
+// by the V2 layout/router. Native AWS components expand to these concepts
+// before calculation; other profiles lower directly.
 type EngineConcept string
 
 const (
@@ -235,9 +236,10 @@ type EngineLineSpec struct {
 }
 
 // EngineElementSpec is one unresolved generic concept. Children are lowered
-// to parent-indexed ABI records; no domain tag or plugin identifier crosses the
-// engine boundary. Width, Height, and Weight retain source compatibility with
-// the original flat V2 prototype.
+// to parent-indexed ABI records. Raw source tags and plugin identifiers stay on
+// the Go side; the optional AWS field carries closed native composition models.
+// Width, Height, and Weight retain source compatibility with the original flat
+// V2 prototype.
 type EngineElementSpec struct {
 	ID         string
 	Concept    EngineConcept
@@ -276,6 +278,7 @@ type EngineElementSpec struct {
 	Icon   *EngineIconSpec
 	Port   *EnginePortSpec
 	Line   *EngineLineSpec
+	AWS    *EngineAWSComponentSpec
 
 	Children []EngineElementSpec
 }

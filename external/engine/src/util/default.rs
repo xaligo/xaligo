@@ -1,7 +1,4 @@
-use crate::ent::model::document::{
-    Insets,
-    Point,
-};
+use crate::ent::model::document::{Insets, Point};
 
 impl Insets {
     const fn empty() -> Self {

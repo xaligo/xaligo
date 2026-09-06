@@ -1,0 +1,20 @@
+<!-- AWS functional design library v2. Editable: see README.md and research/designs.json. -->
+<!-- Configuration cards describe AWS concepts; their text is not a provisioning command. -->
+<xaligo version="2">
+<frames>
+  <frame id="sample" title="aws-iot-fleetwise" width="1500" height="1160">
+    <col width="1360" height="1000" margin="32" gap="24">
+      <row height="230" gap="32"><aws-iot-fleetwise id="component" label="AWS IoT FleetWise" label-width="340" />
+        <rectangle id="overview" width="920" height="180" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Design review / 設計レビュー&#10;Research: service-context&#10;AWS::IoTFleetWise::Campaign&#10;Configuration context; icon itself may represent a feature." />
+      </row>
+      <row height="242" gap="24"><rectangle id="part-1" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Service configuration context&#10;Campaign&#10;Collection Scheme*: object&#10;Signal Catalog Arn*: String&#10;Target Arn*: String&#10;Action: String&#10;Compression: String" />
+        <rectangle id="part-2" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Nested configuration&#10;Collection Scheme -&gt; object&#10;Condition Based Collection Scheme: object&#10;Time Based Collection Scheme: object&#10;Data Dest Configs -&gt; object&#10;Mqtt Topic Config: object&#10;S3 Config: object" />
+        <rectangle id="part-3" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Additional parameters&#10;Data Dest Configs: list&#10;Data Extra Dimensions: list&#10;Data Partitions: list&#10;Diagnostics Mode: String&#10;Expiry Time: String&#10;Post Trigger Collection Duration: Double&#10;Complete field list in README" /></row>
+      <row height="242" gap="24"><rectangle id="part-4" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Referenced resource types&#10;SignalCatalog&#10;Based on identifier fields&#10;References are NOT child ownership" />
+        <rectangle id="part-5" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Operations / lifecycle&#10;CreateCampaign&#10;GetCampaign&#10;ListCampaigns&#10;UpdateCampaign&#10;DeleteCampaign&#10;Input / output schemas: linked API sheet" />
+        <rectangle id="part-6" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Icon meaning / interpretation&#10;AWS IoT FleetWise&#10;Service-level schema shown as context&#10;Do not infer API fields from icon artwork&#10;Solid enclosure = authored membership&#10;Type references are not traffic paths" /></row>
+      <rectangle id="design-legend" width="1284" height="150" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="DESIGN CONTRACT / 図の読み方&#10;* = required in the source schema, not a required XAL attribute. Values are not deployed to AWS.&#10;Configuration / API cards are references, not automatically nested resources or network traffic.&#10;Availability and region support must be checked before deployment. Research source/version and full parameter tables: README." />
+    </col>
+  </frame>
+</frames>
+</xaligo>

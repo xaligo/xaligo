@@ -1,0 +1,11 @@
+<xaligo version="2">
+<frames>
+  <frame id="sample" title="NLB / listeners" width="640" height="320">
+    <aws-elastic-load-balancing-network-load-balancer id="component" domain="nlb.example.test" margin="24">
+      <aws-listener id="tcp" protocol="TCP" port="80" target-group="web" />
+      <aws-listener id="tls" protocol="TLS" port="443" certificate="server-cert" backend-tls="true" backend-mtls="false" target-group="secure" />
+      <aws-listener id="passthrough" protocol="TCP" port="8443" backend-tls="true" backend-mtls="true" target-group="private" />
+    </aws-elastic-load-balancing-network-load-balancer>
+  </frame>
+</frames>
+</xaligo>

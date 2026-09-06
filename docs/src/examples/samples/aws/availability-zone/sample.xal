@@ -1,0 +1,18 @@
+<!-- AWS functional design library v2. Editable: see README.md and research/designs.json. -->
+<!-- Configuration cards describe AWS concepts; their text is not a provisioning command. -->
+<xaligo version="2">
+<frames>
+  <frame id="sample" title="availability-zone" width="1500" height="1160">
+    <col width="1360" height="1000" margin="32" gap="24">
+      <row height="230" gap="32"><availability-zone id="component" title="Availability Zone" width="308" height="180" margin="16"><rectangle id="member" width="180" height="64" title="Member / 子要素" /></availability-zone>
+        <rectangle id="overview" width="920" height="180" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Design review / 設計レビュー&#10;Research: group&#10;Scope: availability-zone&#10;Functional structure and full reference tables are in README." />
+      </row>
+      <row height="242" gap="24"><rectangle id="part-1" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Containment&#10;Availability Zone&#10;Scope: availability-zone&#10;Children retain individual identities" />
+        <rectangle id="part-2" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Boundary design&#10;Border: dashed&#10;Color: #00A1C9&#10;Header: icon + measured label" />
+        <rectangle id="part-3" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Membership / references&#10;Enclosure represents diagram membership&#10;Connections bind semantic child IDs&#10;Not an AWS deployment validator" /></row>
+      <row height="242" gap="24"><rectangle id="part-4" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Authoring parameters&#10;zone: text&#10;id / title / width / height / layout" /></row>
+      <rectangle id="design-legend" width="1284" height="150" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="DESIGN CONTRACT / 図の読み方&#10;* = required in the source schema, not a required XAL attribute. Values are not deployed to AWS.&#10;Configuration / API cards are references, not automatically nested resources or network traffic.&#10;Availability and region support must be checked before deployment. Research source/version and full parameter tables: README." />
+    </col>
+  </frame>
+</frames>
+</xaligo>

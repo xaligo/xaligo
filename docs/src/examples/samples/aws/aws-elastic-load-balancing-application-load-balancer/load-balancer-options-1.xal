@@ -1,0 +1,26 @@
+<!-- Editable native ALB example; AWS setting references are not credentials or deployment configuration. -->
+<xaligo version="2">
+  <frames>
+<frame id="load-balancer-options-1" title="ALB / load-balancer-options-1" width="480" height="737">
+      <aws-elastic-load-balancing-application-load-balancer id="alb" domain="api.example.test" detail-level="detailed" margin="24">
+        <aws-listener id="listener-110" protocol="HTTPS" port="443" certificate="server-cert" target-group="app">
+        </aws-listener>
+        <aws-option id="opt-111" name="scheme" value="internet-facing" />
+        <aws-option id="opt-112" name="ip-address-type" value="dualstack" />
+        <aws-option id="opt-113" name="subnets" value="subnet-a, subnet-c" />
+        <aws-option id="opt-114" name="security-groups" value="sg-edge" />
+        <aws-option id="opt-115" name="ipam-pool" value="ipam-pool-example" />
+        <aws-option id="opt-116" name="placement" value="regional" />
+        <aws-option id="opt-117" name="waf" value="web-acl" />
+        <aws-option id="opt-118" name="shield" value="advanced" />
+        <aws-option id="opt-119" name="capacity-units" value="100" />
+        <aws-option id="opt-120" name="capacity-reset" value="false" />
+        <aws-option id="opt-121" name="tags" value="env=production" />
+        <aws-option id="opt-122" name="cloudwatch" value="5XX / latency alarm" />
+        <aws-option id="opt-123" name="cloudtrail" value="audit trail" />
+        <aws-option id="opt-124" name="route53" value="api.example.test" />
+        <aws-option id="opt-125" name="global-accelerator" value="accelerator" />
+      </aws-elastic-load-balancing-application-load-balancer>
+    </frame>
+  </frames>
+</xaligo>

@@ -46,7 +46,8 @@ const (
 	engineNumberTargetAnchor      = 40
 	engineNumberObstacleMargin    = 41
 	engineNumberLabelPosition     = 42
-	engineNumberFieldCount        = 43
+	engineNumberAwsPort           = 43
+	engineNumberFieldCount        = 44
 )
 
 const (
@@ -64,20 +65,38 @@ const (
 	engineStringLineSource      = 11
 	engineStringLineTarget      = 12
 	engineStringLineLabel       = 13
-	engineStringFieldCount      = 14
+	engineStringAwsKind         = 14
+	engineStringAwsDomain       = 15
+	engineStringAwsProtocol     = 16
+	engineStringAwsMutualTls    = 17
+	engineStringAwsCertificate  = 18
+	engineStringAwsTrustStore   = 19
+	engineStringAwsTargetGroup  = 20
+	engineStringAwsDetailLevel  = 21
+	engineStringAwsShow         = 22
+	engineStringAwsHide         = 23
+	engineStringAwsType         = 24
+	engineStringAwsName         = 25
+	engineStringAwsValue        = 26
+	engineStringAwsAux          = 27
+	engineStringAwsOrder        = 28
+	engineStringFieldCount      = 29
 )
 
 const (
-	engineBoolVisible     = 0
-	engineBoolTextWrap    = 1
-	engineBoolTextFit     = 2
-	engineBoolTextClip    = 3
-	engineBoolPortVisible = 4
-	engineBoolLayer       = 5
-	engineBoolColumns     = 6
-	engineBoolColumnSpan  = 7
-	engineBoolRowSpan     = 8
-	engineBoolFieldCount  = 9
+	engineBoolVisible        = 0
+	engineBoolTextWrap       = 1
+	engineBoolTextFit        = 2
+	engineBoolTextClip       = 3
+	engineBoolPortVisible    = 4
+	engineBoolLayer          = 5
+	engineBoolColumns        = 6
+	engineBoolColumnSpan     = 7
+	engineBoolRowSpan        = 8
+	engineBoolAwsBackendTls  = 9
+	engineBoolAwsBackendMtls = 10
+	engineBoolAwsShowTitle   = 11
+	engineBoolFieldCount     = 12
 )
 
 const (

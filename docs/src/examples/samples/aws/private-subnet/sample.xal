@@ -1,0 +1,20 @@
+<!-- AWS functional design library v2. Editable: see README.md and research/designs.json. -->
+<!-- Configuration cards describe AWS concepts; their text is not a provisioning command. -->
+<xaligo version="2">
+<frames>
+  <frame id="sample" title="private-subnet" width="1500" height="1160">
+    <col width="1360" height="1000" margin="32" gap="24">
+      <row height="230" gap="32"><private-subnet id="component" title="Private subnet" width="308" height="180" margin="16"><rectangle id="member" width="180" height="64" title="Member / 子要素" /></private-subnet>
+        <rectangle id="overview" width="920" height="180" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Design review / 設計レビュー&#10;Research: resource-schema&#10;AWS::EC2::Subnet&#10;Functional structure and full reference tables are in README." />
+      </row>
+      <row height="242" gap="24"><rectangle id="part-1" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Resource configuration&#10;Subnet&#10;Vpc Id*: String&#10;Cidr Block: String&#10;Availability Zone: String&#10;Assign Ipv6 Address On Creation: Boolean&#10;Availability Zone Id: String" />
+        <rectangle id="part-2" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Nested configuration&#10;Private Dns Name Options On Launch -&gt;&#10;object&#10;Enable Resource Name Dns AAAARecord:&#10;Boolean&#10;Enable Resource Name Dns ARecord: Boolean" />
+        <rectangle id="part-3" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Additional parameters&#10;Enable Dns64: Boolean&#10;Enable Lni At Device Index: Integer&#10;Ipv4 Ipam Pool Id: String&#10;Ipv4 Netmask Length: Integer&#10;Ipv6 Cidr Block: String&#10;Ipv6 Ipam Pool Id: String&#10;Complete field list in README" /></row>
+      <row height="242" gap="24"><rectangle id="part-4" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Referenced resource types&#10;VPC&#10;Based on identifier fields&#10;References are NOT child ownership" />
+        <rectangle id="part-5" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Operations / lifecycle&#10;CreateSubnet&#10;DescribeSubnets&#10;DeleteSubnet&#10;CreateDefaultSubnet&#10;CreateSecondarySubnet&#10;Input / output schemas: linked API sheet" />
+        <rectangle id="part-6" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Icon meaning / interpretation&#10;Private subnet&#10;Mapped resource model shown above&#10;Do not infer API fields from icon artwork&#10;Solid enclosure = authored membership&#10;Type references are not traffic paths" /></row>
+      <rectangle id="design-legend" width="1284" height="150" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="DESIGN CONTRACT / 図の読み方&#10;* = required in the source schema, not a required XAL attribute. Values are not deployed to AWS.&#10;Configuration / API cards are references, not automatically nested resources or network traffic.&#10;Availability and region support must be checked before deployment. Research source/version and full parameter tables: README." />
+    </col>
+  </frame>
+</frames>
+</xaligo>

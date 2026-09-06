@@ -29,6 +29,7 @@ mod tests {
 
     fn element(id: &str, concept: Concept, parent: Option<usize>) -> ElementSpec {
         ElementSpec {
+            aws: None,
             parent,
             id: id.to_owned(),
             concept,
@@ -116,6 +117,43 @@ mod tests {
         }
     }
 
+    include!("aws_test.rs");
+
+    #[test]
+    fn icon_item_connections_use_visible_icon_not_label_slot() {
+        let mut source = element("source", Concept::Item, None);
+        source.width = Some(160.0);
+        source.height = Some(100.0);
+        source.visual.shape = Shape::None;
+        source.icon.reference = "builtin:service".to_owned();
+        source.icon.width = Some(48.0);
+        source.icon.height = Some(48.0);
+        source.text.value = "A wide label".to_owned();
+        let mut target = element("target", Concept::Item, None);
+        target.width = Some(40.0);
+        target.height = Some(40.0);
+        let mut line = element("line", Concept::Line, None);
+        line.line.source = "source".to_owned();
+        line.line.target = "target".to_owned();
+        line.line.source_side = Side::Right;
+        let mut input = document(vec![source, target, line]);
+        input.width = 400.0;
+        input.layout = LayoutPolicy::Horizontal;
+        let resolved = resolve(&input).expect("icon connection layout");
+        let source = &resolved.elements[0];
+        let point = &resolved.elements[2].points[0];
+        assert_eq!(point.x, source.icon_x + source.icon_width);
+        assert_eq!(point.y, source.icon_y + source.icon_height / 2.0);
+        assert_ne!(point.x, source.x + source.width);
+
+        input.elements[2].line.source_side = Side::Bottom;
+        let resolved = resolve(&input).expect("bottom icon connection layout");
+        let source = &resolved.elements[0];
+        let point = &resolved.elements[2].points[0];
+        assert_eq!(point.y, source.text.y + source.text.height);
+        assert!(point.y > source.icon_y + source.icon_height);
+    }
+
     #[test]
     fn allocates_fixed_before_flexible_vertical_children() {
         let mut header = element("header", Concept::Item, None);
@@ -193,8 +231,18 @@ mod tests {
         assert_eq!(group.icon_width, 32.0);
         assert_eq!(group.text.x, 58.0);
         assert_eq!(group.text.y, 38.0);
-        assert_eq!(group.text.width, 95.0);
+        assert_eq!(group.text.width, 79.0);
         assert_eq!(group.text.height, 18.0);
+    }
+
+    #[test]
+    fn v1_profile_group_header_width_fits_half_and_full_width_characters() {
+        assert_eq!(v1_group_label_width("ABCD", 14.0), 43.0);
+        assert_eq!(v1_group_label_width("ＡＢＣＤ", 14.0), 64.0);
+        assert_eq!(v1_group_label_width("API基盤", 14.0), 63.0);
+        assert_eq!(v1_group_label_width("ｶﾅ", 14.0), 24.0);
+        assert_eq!(v1_group_label_width("A B", 14.0), 30.0);
+        assert_eq!(v1_group_label_width("A　B", 14.0), 40.0);
     }
 
     #[test]
@@ -406,5 +454,182 @@ mod tests {
         })
         .expect("port on padded owner border");
         assert_eq!(resolved.elements[1].x, 92.0);
+    }
+
+    #[test]
+    fn allows_icon_ports_to_straddle_the_selected_owner_border() {
+        let mut owner = element("owner", Concept::Group, None);
+        owner.width = Some(100.0);
+        owner.height = Some(100.0);
+        let mut port = element("boundary-icon", Concept::Port, Some(0));
+        port.width = Some(40.0);
+        port.height = Some(40.0);
+        port.port.side = Side::Right;
+        port.port.anchor = Some(0.25);
+        port.offset_x = Some(20.0);
+        port.visual.shape = Shape::None;
+        port.icon.reference = "catalog:1579".to_owned();
+        port.icon.width = Some(40.0);
+        port.icon.height = Some(40.0);
+        let resolved = resolve(&DocumentSpec {
+            layout: LayoutPolicy::Absolute,
+            width: 100.0,
+            height: 100.0,
+            gap: 0.0,
+            padding: Insets::default(),
+            overflow: Overflow::Error,
+            columns: None,
+            elements: vec![owner, port],
+        })
+        .expect("icon port centered on owner border");
+        assert_eq!(resolved.elements[1].x, 80.0);
+        assert_eq!(resolved.elements[1].y, 15.0);
+        assert_eq!(resolved.elements[1].icon_x, 80.0);
+        assert_eq!(resolved.elements[1].icon_width, 40.0);
+    }
+
+    #[test]
+    fn boundary_icon_ports_can_use_every_owner_side() {
+        for (side, offset_x, offset_y, expected_x, expected_y) in [
+            (Side::Top, None, Some(-10.0), 40.0, -10.0),
+            (Side::Right, Some(10.0), None, 90.0, 40.0),
+            (Side::Bottom, None, Some(10.0), 40.0, 90.0),
+            (Side::Left, Some(-10.0), None, -10.0, 40.0),
+        ] {
+            let mut owner = element("owner", Concept::Group, None);
+            owner.width = Some(100.0);
+            owner.height = Some(100.0);
+            let mut port = element("boundary-icon", Concept::Port, Some(0));
+            port.width = Some(20.0);
+            port.height = Some(20.0);
+            port.port.side = side;
+            port.offset_x = offset_x;
+            port.offset_y = offset_y;
+            port.visual.shape = Shape::None;
+            port.icon.reference = "catalog:1579".to_owned();
+            let resolved = resolve(&DocumentSpec {
+                layout: LayoutPolicy::Absolute,
+                width: 100.0,
+                height: 100.0,
+                gap: 0.0,
+                padding: Insets::default(),
+                overflow: Overflow::Error,
+                columns: None,
+                elements: vec![owner, port],
+            })
+            .expect("boundary icon port on selected side");
+            assert_eq!(resolved.elements[1].x, expected_x);
+            assert_eq!(resolved.elements[1].y, expected_y);
+        }
+    }
+
+    #[test]
+    fn still_rejects_visible_port_shapes_outside_the_owner() {
+        let mut owner = element("owner", Concept::Group, None);
+        owner.width = Some(100.0);
+        owner.height = Some(100.0);
+        let mut port = element("outside-shape", Concept::Port, Some(0));
+        port.width = Some(40.0);
+        port.height = Some(40.0);
+        port.port.side = Side::Right;
+        port.offset_x = Some(20.0);
+        assert!(resolve(&DocumentSpec {
+            layout: LayoutPolicy::Absolute,
+            width: 100.0,
+            height: 100.0,
+            gap: 0.0,
+            padding: Insets::default(),
+            overflow: Overflow::Error,
+            columns: None,
+            elements: vec![owner, port],
+        })
+        .expect_err("visible port shape outside owner")
+        .to_string()
+        .contains("lies outside owner"));
+    }
+
+    #[test]
+    fn rejects_overlapping_boundary_icon_ports() {
+        let mut owner = element("owner", Concept::Group, None);
+        owner.width = Some(100.0);
+        owner.height = Some(100.0);
+        let mut first = element("first", Concept::Port, Some(0));
+        first.width = Some(40.0);
+        first.height = Some(40.0);
+        first.port.side = Side::Right;
+        first.offset_x = Some(20.0);
+        first.visual.shape = Shape::None;
+        first.icon.reference = "catalog:1".to_owned();
+        let mut second = element("second", Concept::Port, Some(0));
+        second.width = Some(40.0);
+        second.height = Some(40.0);
+        second.port.side = Side::Right;
+        second.offset_x = Some(20.0);
+        second.visual.shape = Shape::None;
+        second.icon.reference = "catalog:2".to_owned();
+        assert!(resolve(&DocumentSpec {
+            layout: LayoutPolicy::Absolute,
+            width: 100.0,
+            height: 100.0,
+            gap: 0.0,
+            padding: Insets::default(),
+            overflow: Overflow::Error,
+            columns: None,
+            elements: vec![owner, first, second],
+        })
+        .expect_err("overlapping boundary ports")
+        .to_string()
+        .contains("overlaps sibling port"));
+    }
+
+    #[test]
+    fn overlapping_ordinary_ports_remain_supported() {
+        let mut owner = element("owner", Concept::Group, None);
+        owner.width = Some(100.0);
+        owner.height = Some(100.0);
+        let mut first = element("first", Concept::Port, Some(0));
+        first.width = Some(20.0);
+        first.height = Some(20.0);
+        first.port.side = Side::Right;
+        let mut second = first.clone();
+        second.id = "second".to_owned();
+        resolve(&DocumentSpec {
+            layout: LayoutPolicy::Absolute,
+            width: 100.0,
+            height: 100.0,
+            gap: 0.0,
+            padding: Insets::default(),
+            overflow: Overflow::Error,
+            columns: None,
+            elements: vec![owner, first, second],
+        })
+        .expect("ordinary ports preserve the existing overlap behavior");
+    }
+
+    #[test]
+    fn rejects_boundary_icons_that_cross_the_opposite_owner_edge() {
+        let mut owner = element("owner", Concept::Group, None);
+        owner.width = Some(100.0);
+        owner.height = Some(100.0);
+        let mut port = element("too-wide", Concept::Port, Some(0));
+        port.width = Some(220.0);
+        port.height = Some(20.0);
+        port.port.side = Side::Right;
+        port.offset_x = Some(110.0);
+        port.visual.shape = Shape::None;
+        port.icon.reference = "catalog:1579".to_owned();
+        assert!(resolve(&DocumentSpec {
+            layout: LayoutPolicy::Absolute,
+            width: 100.0,
+            height: 100.0,
+            gap: 0.0,
+            padding: Insets::default(),
+            overflow: Overflow::Error,
+            columns: None,
+            elements: vec![owner, port],
+        })
+        .expect_err("boundary icon crossing both horizontal owner edges")
+        .to_string()
+        .contains("lies outside owner"));
     }
 }

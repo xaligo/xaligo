@@ -1,0 +1,20 @@
+<!-- AWS functional design library v2. Editable: see README.md and research/designs.json. -->
+<!-- Configuration cards describe AWS concepts; their text is not a provisioning command. -->
+<xaligo version="2">
+<frames>
+  <frame id="sample" title="aws-gamelift-streams" width="1500" height="1160">
+    <col width="1360" height="1000" margin="32" gap="24">
+      <row height="230" gap="32"><aws-gamelift-streams id="component" label="Amazon GameLift Streams" label-width="340" />
+        <rectangle id="overview" width="920" height="180" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Design review / 設計レビュー&#10;Research: api-context&#10;API: gameliftstreams&#10;Functional structure and full reference tables are in README." />
+      </row>
+      <row height="242" gap="24"><rectangle id="part-1" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="CreateApplication&#10;API input (not an XAL attribute)&#10;Application Source Uri*: string&#10;Executable Path*: string&#10;Runtime Environment*: object&#10;Application Log Output Uri: string&#10;Application Log Paths: list&#10;Full input/output schema in API sheet" />
+        <rectangle id="part-2" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="CreateStreamGroup&#10;API input (not an XAL attribute)&#10;Stream Class*: string&#10;Client Token: string&#10;Default Application Identifier: string&#10;Location Configs: list&#10;Description*: string&#10;Full input/output schema in API sheet" />
+        <rectangle id="part-3" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="CreateStreamSessionAdminShell&#10;API input (not an XAL attribute)&#10;Identifier*: string&#10;Stream Session Identifier*: string&#10;Full input/output schema in API sheet" /></row>
+      <row height="242" gap="24"><rectangle id="part-4" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="CreateStreamSessionConnection&#10;API input (not an XAL attribute)&#10;Identifier*: string&#10;Signal Request*: string&#10;Stream Session Identifier*: string&#10;Client Token: string&#10;Full input/output schema in API sheet" />
+        <rectangle id="part-5" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="CreateStreamUrl&#10;API input (not an XAL attribute)&#10;Protocol*: string&#10;Application Identifier*: string&#10;Identifier*: string&#10;Locations*: list&#10;Url Expires After Minutes*: integer&#10;Full input/output schema in API sheet" />
+        <rectangle id="part-6" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="StartStreamSession&#10;API input (not an XAL attribute)&#10;Protocol*: string&#10;Application Identifier*: string&#10;Identifier*: string&#10;Signal Request*: string&#10;Additional Environment Variables: map&#10;Full input/output schema in API sheet" /></row>
+      <rectangle id="design-legend" width="1284" height="150" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="DESIGN CONTRACT / 図の読み方&#10;* = required in the source schema, not a required XAL attribute. Values are not deployed to AWS.&#10;Configuration / API cards are references, not automatically nested resources or network traffic.&#10;Availability and region support must be checked before deployment. Research source/version and full parameter tables: README." />
+    </col>
+  </frame>
+</frames>
+</xaligo>

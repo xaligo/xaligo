@@ -1,0 +1,29 @@
+<!-- Logical service membership; registered targets use AWS ip/instance/lambda types. -->
+<xaligo version="2">
+  <frames>
+<frame id="eks-targets" title="ALB / eks-targets" width="795" height="487">
+      <aws-elastic-load-balancing-application-load-balancer id="alb" domain="api.example.test" detail-level="detailed" margin="24">
+        <aws-listener id="https" protocol="HTTPS" port="443" target-group="pods" />
+        <aws-target-group id="pods" name="pods" target-type="ip" protocol="HTTP" port="8080">
+          <aws-target-service id="eks-pods" service="eks" name="orders / pod mode">
+            <aws-option id="cluster-pods" name="cluster" value="production" />
+            <aws-option id="namespace-pods" name="namespace" value="apps" />
+            <aws-option id="service-port-pods" name="kubernetes-service-port" value="80" />
+            <aws-registered-target id="pod-a" name="10.30.1.10" port="8080" />
+            <aws-registered-target id="pod-b" name="10.30.2.10" port="8080" />
+          </aws-target-service>
+        </aws-target-group>
+        <aws-target-group id="nodes" name="nodes" target-type="instance" protocol="HTTP" port="30080">
+          <aws-target-service id="eks-nodes" service="eks" name="orders / node mode">
+            <aws-option id="cluster-nodes" name="cluster" value="production" />
+            <aws-option id="namespace-nodes" name="namespace" value="apps" />
+            <aws-option id="service-port-nodes" name="kubernetes-service-port" value="80" />
+            <aws-option id="node-port" name="node-port" value="30080" />
+            <aws-registered-target id="node-a" name="i-node-a" port="30080" />
+            <aws-registered-target id="node-b" name="i-node-b" port="30080" />
+          </aws-target-service>
+        </aws-target-group>
+      </aws-elastic-load-balancing-application-load-balancer>
+    </frame>
+  </frames>
+</xaligo>

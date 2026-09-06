@@ -1,0 +1,21 @@
+<!-- Logical service membership; registered targets use AWS ip/instance/lambda types. -->
+<xaligo version="2">
+  <frames>
+<frame id="ecs-ec2" title="ALB / ecs-ec2" width="557" height="541">
+      <aws-elastic-load-balancing-application-load-balancer id="alb" domain="api.example.test" detail-level="detailed" margin="24">
+        <aws-listener id="https" protocol="HTTPS" port="443" target-group="containers" />
+        <aws-target-group id="containers" name="containers" target-type="instance" protocol="HTTP" port="8080">
+          <aws-target-service id="ecs-api" service="ecs" name="API on EC2">
+            <aws-option id="cluster" name="cluster" value="legacy-cluster" />
+            <aws-option id="launch" name="launch-type" value="ec2" />
+            <aws-option id="network" name="network-mode" value="bridge" />
+            <aws-option id="container" name="container-name" value="api" />
+            <aws-option id="container-port" name="container-port" value="8080" />
+            <aws-registered-target id="task-1" name="i-example" port="32768" />
+            <aws-registered-target id="task-2" name="i-example" port="32769" />
+          </aws-target-service>
+        </aws-target-group>
+      </aws-elastic-load-balancing-application-load-balancer>
+    </frame>
+  </frames>
+</xaligo>

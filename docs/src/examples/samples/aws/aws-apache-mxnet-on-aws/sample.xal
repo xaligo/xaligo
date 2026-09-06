@@ -1,0 +1,18 @@
+<!-- AWS functional design library v2. Editable: see README.md and research/designs.json. -->
+<!-- Configuration cards describe AWS concepts; their text is not a provisioning command. -->
+<xaligo version="2">
+<frames>
+  <frame id="sample" title="aws-apache-mxnet-on-aws" width="1500" height="1160">
+    <col width="1360" height="1000" margin="32" gap="24">
+      <row height="230" gap="32"><aws-apache-mxnet-on-aws id="component" label="Apache MXNet on AWS" label-width="340" />
+        <rectangle id="overview" width="920" height="180" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Design review / 設計レビュー&#10;Research: product-guide&#10;MXNet program / Training data / Compute / accelerator / Model artifact&#10;Functional structure and full reference tables are in README." />
+      </row>
+      <row height="242" gap="24"><rectangle id="part-1" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="1. MXNet program&#10;Product / workflow concept&#10;Use a separate connectable component&#10;Not a CloudFormation property&#10;See the product-specific guide" />
+        <rectangle id="part-2" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="2. Training data&#10;Product / workflow concept&#10;Use a separate connectable component&#10;Not a CloudFormation property&#10;See the product-specific guide" />
+        <rectangle id="part-3" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="3. Compute / accelerator&#10;Product / workflow concept&#10;Use a separate connectable component&#10;Not a CloudFormation property&#10;See the product-specific guide" /></row>
+      <row height="242" gap="24"><rectangle id="part-4" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="4. Model artifact&#10;Product / workflow concept&#10;Use a separate connectable component&#10;Not a CloudFormation property&#10;See the product-specific guide" /></row>
+      <rectangle id="design-legend" width="1284" height="150" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="DESIGN CONTRACT / 図の読み方&#10;* = required in the source schema, not a required XAL attribute. Values are not deployed to AWS.&#10;Configuration / API cards are references, not automatically nested resources or network traffic.&#10;Availability and region support must be checked before deployment. Research source/version and full parameter tables: README." />
+    </col>
+  </frame>
+</frames>
+</xaligo>

@@ -1,0 +1,26 @@
+<!-- Logical service membership; registered targets use AWS ip/instance/lambda types. -->
+<xaligo version="2">
+  <frames>
+<frame id="target-services" title="ALB / target-services" width="853" height="525">
+      <aws-elastic-load-balancing-application-load-balancer id="alb" domain="api.example.test" detail-level="detailed" margin="24">
+        <aws-listener id="https" protocol="HTTPS" port="443" target-group="web" />
+        <aws-target-group id="web" name="web" target-type="instance" protocol="HTTP" port="8080">
+          <aws-target-service id="web-service" service="ec2" name="Web fleet">
+            <aws-option id="asg" name="autoscaling-group" value="web-asg" />
+            <aws-registered-target id="web-1" name="i-web-1" port="8080" />
+          </aws-target-service>
+        </aws-target-group>
+        <aws-target-group id="function" name="function" target-type="lambda">
+          <aws-target-service id="function-service" service="lambda" name="Invoice">
+            <aws-registered-target id="lambda-target" name="arn:aws:lambda:ap-northeast-1:123456789012:function:invoice" />
+          </aws-target-service>
+        </aws-target-group>
+        <aws-target-group id="private-api" name="private-api" target-type="ip" protocol="HTTP" port="8080">
+          <aws-target-service id="private-service" service="ip" name="Private / on-prem HTTP API">
+            <aws-registered-target id="onprem" name="10.100.1.20" port="8080" />
+          </aws-target-service>
+        </aws-target-group>
+      </aws-elastic-load-balancing-application-load-balancer>
+    </frame>
+  </frames>
+</xaligo>

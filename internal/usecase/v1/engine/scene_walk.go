@@ -8,7 +8,9 @@ import (
 	"strconv"
 	"strings"
 
+	awsprofile "github.com/xaligo/xaligo/internal/core/profiles/aws"
 	"github.com/xaligo/xaligo/internal/entity"
+	"github.com/xaligo/xaligo/internal/share"
 )
 
 type semanticElementMetadataV1EngineSceneWalk struct {
@@ -16,7 +18,7 @@ type semanticElementMetadataV1EngineSceneWalk struct {
 	Kind            string
 }
 
-func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[string]any, svgGroupDir string, catalogCSV string, projectRoot string, fsys fs.FS, visibleAncestor *entity.Box, itemGroups map[string][]*entity.Box, ancestorBoxes, itemFrames map[string]*entity.Box, itemImgRects map[string][4]float64, itemImgIDs map[string]string, activeFrame *entity.Box, deps SceneDependenciesV1EngineSceneTypes) {
+func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[string]any, svgGroupDir string, catalogCSV string, projectRoot string, fsys fs.FS, visibleAncestor *entity.Box, itemGroups map[string][]*entity.Box, ancestorBoxes, itemFrames map[string]*entity.Box, itemImgRects, itemLblRects map[string][4]float64, itemImgIDs, itemLblIDs map[string]string, activeFrame *entity.Box, deps SceneDependenciesV1EngineSceneTypes) {
 	if b != nil && b.Tag == "frame" {
 		activeFrame = b
 	}
@@ -98,7 +100,7 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 				iconBackground = "transparent"
 				textX = headerX + float64(groupIconSizeV1EngineSceneTypes) + groupHeaderTextInsetV1EngineSceneTypes
 			}
-			lblW := textWidthV1EngineSceneItem(b.Label, groupLabelCharWV1EngineSceneTypes)
+			lblW := math.Ceil(share.PresentationTextWidth(b.Label, groupFontSizeV1EngineSceneTypes, false)) + groupHeaderTextSpareV1EngineSceneTypes
 			headerBackground := staggerBGColorV1EngineSceneTypes(b)
 			if headerBackground == "transparent" {
 				headerBackground = "#ffffff"
@@ -159,7 +161,8 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 			textY := headerY + (headerH-float64(groupTextHeightV1EngineSceneTypes))/2
 			labelID := fmt.Sprintf("%s-label", b.ID)
 			labelSeed := stableSceneSeedV1EngineSceneTypes(labelID)
-			// groupFontFamily=2 (Helvetica 14px): ~7.5px/rune
+			// groupFontFamily=2 (Helvetica 14px); lblW includes a small
+			// cross-renderer safety allowance beyond the estimated glyph width.
 			*elements = append(*elements, map[string]any{
 				"id": labelID, "type": "text",
 				"x": textX, "y": textY,
@@ -181,6 +184,28 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 					"xaligoTextLayout":         sceneTextLayoutV1EngineSceneBuild(entity.TextRoleGroupHeader, false, 1.25),
 				},
 			})
+		} else if isAWSResourceV1EngineAwsResource(b.Tag) {
+			definition, _ := awsprofile.DefinitionForTag(b.Tag)
+			size := attrFloatV1EngineLayoutAttributes(b.Attrs["size"], 48)
+			label := awsResourceLabelV1EngineAwsResource(b.Tag, b.Attrs, b.W)
+			labelH := 0.0
+			if label != "" {
+				labelH = 4 + math.Ceil(float64(strings.Count(label, "\n")+1)*itemLabelFontPxV1EngineSceneTypes*1.25)
+			}
+			x, y := b.X+(b.W-size)/2, b.Y+(b.H-size-labelH)/2
+			key := b.Attrs[internalConnectionKeyAttrV1EngineParseDocument]
+			renderIconWithTextBoxV1EngineSceneItem(b.ID, key, strconv.Itoa(definition.CatalogID), x, y, size, elements, files, catalogCSV, projectRoot, fsys, itemImgRects, itemLblRects, itemImgIDs, itemLblIDs, nil, deps, &label, b.W)
+		} else if isAWSBoundaryAttachmentV1EngineAwsBoundary(b.Tag) {
+			connectionKey := strings.TrimSpace(b.Attrs[internalConnectionKeyAttrV1EngineParseDocument])
+			if connectionKey == "" {
+				connectionKey = b.ID
+			}
+			emptyLabel := ""
+			renderIconAtWithLabelV1EngineSceneItem(
+				b.ID, connectionKey, awsBoundaryCatalogIDV1EngineAwsBoundary(b.Tag),
+				b.X, b.Y, b.W, elements, files, catalogCSV, projectRoot, fsys,
+				itemImgRects, nil, itemImgIDs, nil, nil, deps, &emptyLabel,
+			)
 		} else if !isLayoutTagV1EngineSceneWalk(b.Tag) {
 			// ── Generic tag: rectangle + label ──────────────────────
 			rectID := fmt.Sprintf("%s-rect", b.ID)
@@ -358,7 +383,7 @@ func walkV1EngineSceneWalk(b *entity.Box, elements *[]map[string]any, files map[
 		nextVisible = visibleAncestor
 	}
 	for _, c := range b.Children {
-		walkV1EngineSceneWalk(c, elements, files, svgGroupDir, catalogCSV, projectRoot, fsys, nextVisible, itemGroups, ancestorBoxes, itemFrames, itemImgRects, itemImgIDs, activeFrame, deps)
+		walkV1EngineSceneWalk(c, elements, files, svgGroupDir, catalogCSV, projectRoot, fsys, nextVisible, itemGroups, ancestorBoxes, itemFrames, itemImgRects, itemLblRects, itemImgIDs, itemLblIDs, activeFrame, deps)
 	}
 }
 
@@ -1363,6 +1388,12 @@ func collectSemanticElementMetadataV1EngineSceneWalk(root *entity.Box) map[strin
 		case box.Tag == "frame" && !isRoot:
 			semanticElementID = pageFrameElementIDV1EngineSceneWalk(box)
 			semanticKind = "frame"
+		case isAWSBoundaryAttachmentV1EngineAwsBoundary(box.Tag) && selfVisible:
+			semanticElementID = box.ID + "-item"
+			semanticKind = "port"
+		case isAWSResourceV1EngineAwsResource(box.Tag) && selfVisible:
+			semanticElementID = box.ID + "-item"
+			semanticKind = "item"
 		case box.Tag != "frame" && selfVisible && !isLayoutTagV1EngineSceneWalk(box.Tag):
 			semanticElementID = box.ID + "-rect"
 			semanticKind = semanticElementKindV1EngineSceneWalk(box)

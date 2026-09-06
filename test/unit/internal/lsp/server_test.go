@@ -12,6 +12,7 @@ import (
 	"testing"
 	"unicode/utf16"
 
+	awsprofile "github.com/xaligo/xaligo/internal/core/profiles/aws"
 	"github.com/xaligo/xaligo/internal/entity"
 	"github.com/xaligo/xaligo/internal/lsp"
 	"github.com/xaligo/xaligo/internal/usecase"
@@ -57,8 +58,22 @@ func TestServerCompletionDefinitionAndReferences(t *testing.T) {
 		t.Fatal(err)
 	}
 	messages := readLSPOutput(t, output.Bytes())
-	if got := len(messages[2]["result"].([]any)); got != 7 {
+	if got := len(messages[2]["result"].([]any)); got != 20+len(awsprofile.Definitions()) {
 		t.Fatalf("completion count = %d", got)
+	}
+	completionTags := map[string]bool{}
+	for _, item := range messages[2]["result"].([]any) {
+		completionTags[item.(map[string]any)["label"].(string)] = true
+	}
+	for _, definition := range awsprofile.Definitions() {
+		if !completionTags[definition.Tag] {
+			t.Errorf("completion missing %s", definition.Tag)
+		}
+	}
+	for _, tag := range []string{"aws-listener-rule", "aws-rule-condition", "aws-rule-match", "aws-rule-action", "aws-forward-target", "aws-jwt-claim", "aws-rule-transform", "aws-rule-rewrite", "aws-target-group", "aws-registered-target", "aws-option"} {
+		if !completionTags[tag] {
+			t.Errorf("native ALB completion missing %s", tag)
+		}
 	}
 	if messages[3]["result"] == nil {
 		t.Fatalf("definition = %#v", messages[3])

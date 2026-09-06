@@ -236,6 +236,7 @@ Search this file directly, for example: `rg -i "metadata|page-link|WASM" .github
 - 07.15 [AWS Group Tags](07-xal-spec/07-15-xal-specification-aws-group-tags.instructions.md) — keywords: XAL, DSL, XML, AWS, Tags, capability, implemented, cloud
   - 07.15.01 [Layout Control Attributes (shared by all containers)](07-xal-spec/07-15-01-xal-specification-layout-control-attributes-shared-by-all-containe.instructions.md) — keywords: XAL, DSL, XML, Layout, Control, Attributes, all, containers
   - 07.15.02 [Child Size Ratio Attributes](07-xal-spec/07-15-02-xal-specification-child-size-ratio-attributes.instructions.md) — keywords: XAL, DSL, XML, Child, Size, Ratio, Attributes
+  - 07.15.03 [Dedicated AWS resource tags](07-xal-spec/07-15-03-xal-specification-aws-resource-tags.instructions.md) — keywords: XAL, AWS, resource, tags, catalog, parameters, samples, VPC, boundary
 - 07.16 [Spacing Classes (`class` attribute)](07-xal-spec/07-16-xal-specification-spacing-classes-class-attribute.instructions.md) — keywords: XAL, DSL, XML, Spacing, Classes, class, attribute, CI
   - 07.16.01 [All-sides shorthand](07-xal-spec/07-16-01-xal-specification-all-sides-shorthand.instructions.md) — keywords: XAL, DSL, XML, All-sides, shorthand
   - 07.16.02 [Axis shorthand](07-xal-spec/07-16-02-xal-specification-axis-shorthand.instructions.md) — keywords: XAL, DSL, XML, Axis, shorthand

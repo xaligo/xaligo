@@ -81,11 +81,11 @@ func TestComplexHybridV2CompatibilityProjection(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := bytes.Count(svg, []byte(`<polyline`)); got != 38 {
-		t.Fatalf("V2 connections = %d, want 38", got)
+	if got := bytes.Count(svg, []byte(`<polyline`)); got != 40 {
+		t.Fatalf("V2 connections = %d, want 40", got)
 	}
-	if got := bytes.Count(svg, []byte(`<image`)); got != 56 {
-		t.Fatalf("V2 embedded catalog and group icons = %d, want 56", got)
+	if got := bytes.Count(svg, []byte(`<image`)); got != 58 {
+		t.Fatalf("V2 embedded catalog and group icons = %d, want 58", got)
 	}
 	if !bytes.Contains(svg, []byte(`r="5" fill="#ffffff"`)) || !bytes.Contains(svg, []byte(`r="3.5"`)) {
 		t.Fatal("V2 line jumps or junctions were not rendered")
@@ -133,8 +133,20 @@ func TestComplexHybridV2CompatibilityProjection(t *testing.T) {
 			employeeIcon = op
 		}
 	}
-	if imageCount != 56 || lineCount != 38 || groupHeaderCount != 21 {
-		t.Fatalf("V2 PPTX plan has %d images, %d lines, and %d group headers; want 56, 38, and 21", imageCount, lineCount, groupHeaderCount)
+	if imageCount != 58 || lineCount != 40 || groupHeaderCount != 21 {
+		t.Fatalf("V2 PPTX plan has %d images, %d lines, and %d group headers; want 58, 40, and 21", imageCount, lineCount, groupHeaderCount)
+	}
+	for _, value := range []string{"private.api.example.test", "TLS OFF", "mTLS OFF", "Listener", "10.20.10.20 :443"} {
+		if !bytes.Contains(svg, []byte(value)) || !bytes.Contains(planJSON, []byte(value)) {
+			t.Errorf("NLB passthrough is missing from SVG/PPTX: %s", value)
+		}
+	}
+	stored, err := os.ReadFile(filepath.Join("..", "..", "docs", "src", "examples", "samples", "complex-hybrid-architecture-v2.svg"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(bytes.TrimSpace(stored), bytes.TrimSpace(svg)) {
+		t.Fatal("complex V2 SVG is stale; regenerate it from the XAL sample")
 	}
 	if employeeIcon == nil {
 		t.Fatal("V2 PPTX plan does not contain the employee icon")
@@ -152,35 +164,40 @@ func TestComplexHybridV2CompatibilityProjection(t *testing.T) {
 		"complex-hybrid-architecture-metadata-1-value": {259, 4, 242, 19},
 		"complex-hybrid-architecture-metadata-2-key":   {509, 4, 55, 19},
 		"complex-hybrid-architecture-metadata-2-value": {564, 4, 53, 19},
-		"onprem-hq":               {32, 47, 456, 1121},
-		"aws-cloud":               {520, 47, 1368, 1121},
-		"aws-edge":                {532, 83, 1344, 89.545},
-		"region-apne1":            {532, 192.545, 1344, 963.455},
-		"prod-vpc":                {544, 403.121, 1320, 740.879},
-		"vpc-edge-security":       {556, 445.121, 1296, 100.332},
-		"az-apne1a":               {556, 563.453, 639, 568.547},
-		"public-subnet-a":         {568, 607.453, 615, 138.442},
-		"elastic-app-tier-a":      {580, 803.895, 591, 151.663},
+		"onprem-hq":               {32, 47, 456, 1421},
+		"aws-cloud":               {520, 47, 1368, 1421},
+		"aws-edge":                {532, 83, 1344, 116.818},
+		"region-apne1":            {532, 219.818, 1344, 1236.182},
+		"prod-vpc":                {544, 475.848, 1320, 968.152},
+		"vpc-edge-security":       {556, 517.848, 1296, 96.323},
+		"az-apne1a":               {556, 886.171, 639, 545.829},
+		"public-subnet-a":         {568, 930.171, 615, 131.951},
+		"elastic-app-tier-a":      {580, 1120.122, 591, 141.927},
 		"onprem-hq-icon":          {30, 31, 32, 32},
 		"employees-devices-icon":  {42, 67, 32, 32},
-		"campus-network-icon":     {42, 387.333, 32, 32},
-		"local-operations-icon":   {42, 832.667, 32, 32},
+		"campus-network-icon":     {42, 487.333, 32, 32},
+		"local-operations-icon":   {42, 1032.667, 32, 32},
 		"aws-cloud-icon":          {518, 31, 32, 32},
 		"aws-edge-icon":           {530, 67, 32, 32},
-		"region-apne1-icon":       {530, 176.545, 32, 32},
-		"regional-delivery-icon":  {542, 218.545, 32, 32},
-		"regional-data-ops-icon":  {1319.5, 218.545, 32, 32},
-		"prod-vpc-icon":           {542, 387.121, 32, 32},
-		"vpc-edge-security-icon":  {554, 429.121, 32, 32},
-		"public-subnet-a-icon":    {566, 591.453, 32, 32},
-		"app-subnet-a-icon":       {566, 749.895, 32, 32},
-		"elastic-app-tier-a-icon": {578, 787.895, 32, 32},
-		"data-subnet-a-icon":      {566, 971.558, 32, 32},
-		"public-subnet-c-icon":    {1223, 591.453, 32, 32},
-		"app-subnet-c-icon":       {1223, 749.895, 32, 32},
-		"data-subnet-c-icon":      {1223, 971.558, 32, 32},
-		"employee-icon":           {120, 210, 40, 40},
-		"igw-icon":                {704, 475.62, 40, 40},
+		"region-apne1-icon":       {530, 203.818, 32, 32},
+		"regional-delivery-icon":  {542, 245.818, 32, 32},
+		"regional-data-ops-icon":  {1319.5, 245.818, 32, 32},
+		"prod-vpc-icon":           {542, 459.848, 32, 32},
+		"vpc-edge-security-icon":  {554, 501.848, 32, 32},
+		"public-subnet-a-icon":    {566, 914.171, 32, 32},
+		"app-subnet-a-icon":       {566, 1066.122, 32, 32},
+		"elastic-app-tier-a-icon": {578, 1104.122, 32, 32},
+		"data-subnet-a-icon":      {566, 1278.049, 32, 32},
+		"public-subnet-c-icon":    {1223, 914.171, 32, 32},
+		"app-subnet-c-icon":       {1223, 1066.122, 32, 32},
+		"data-subnet-c-icon":      {1223, 1278.049, 32, 32},
+		"employee-icon":           {120, 260, 40, 40},
+		"igw-icon":                {736, 546.343, 40, 40},
+		"endpoint-icon":           {1840, 732.051, 48, 48},
+		"private-nlb":             {556, 642.171, 264, 216},
+		"private-tcp-443":         {568, 698.171, 124, 148},
+		"private-api":             {852, 727.171, 240, 90},
+		"mtls-api-icon":           {1015.25, 1158.086, 40, 40},
 	} {
 		got := svgElementGeometry(t, svg, id)
 		for index := range want {
@@ -200,6 +217,57 @@ func TestComplexHybridV2CompatibilityProjection(t *testing.T) {
 	}
 	if root.XMLName.Local != "svg" {
 		t.Fatalf("SVG root = %q", root.XMLName.Local)
+	}
+}
+
+func TestComplexHybridV2PrivateNLBTopology(t *testing.T) {
+	source, err := os.ReadFile(filepath.Join("..", "..", "docs", "src", "examples", "samples", "complex-hybrid-architecture-v2.xal"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	document, _, err := v2.NewFrontendUsecase().Lower(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	elements := map[string]entity.EngineElementSpec{}
+	parents := map[string]string{}
+	edges := map[string]bool{}
+	var walk func([]entity.EngineElementSpec, string)
+	walk = func(children []entity.EngineElementSpec, parent string) {
+		for _, element := range children {
+			elements[element.ID], parents[element.ID] = element, parent
+			if element.Line != nil {
+				edges[element.Line.Source+"->"+element.Line.Target] = true
+			}
+			walk(element.Children, element.ID)
+		}
+	}
+	walk(document.Elements, "")
+	if model := elements["private-nlb"].AWS; model == nil || model.Kind != "nlb" {
+		t.Fatal("private ingress lost the native NLB component")
+	}
+	model := elements["private-tcp-443"].AWS
+	if model == nil || model.Kind != "listener" || model.Protocol != "TCP" || model.Port == nil || *model.Port != 443 || model.TargetGroup != "private-api" {
+		t.Fatalf("private TCP listener: %#v", model)
+	}
+	if model.BackendTLS == nil || !*model.BackendTLS || model.BackendMTLS == nil || !*model.BackendMTLS || model.Certificate != "" || model.TrustStore != "" || model.MutualTLS != "" && model.MutualTLS != "off" {
+		t.Fatalf("TLS/mTLS must terminate at the target, not NLB: %#v", model)
+	}
+	for id, parent := range map[string]string{
+		"private-tcp-443": "private-nlb", "private-nlb": "private-ingress", "private-ingress": "prod-vpc",
+		"mtls-api": "elastic-app-tier-a", "elastic-app-tier-a": "app-subnet-a", "app-subnet-a": "az-apne1a",
+	} {
+		if parents[id] != parent {
+			t.Errorf("%s belongs to %s, want %s", id, parents[id], parent)
+		}
+	}
+	for _, edge := range []string{"site-router->direct-connect", "direct-connect->private-tcp-443", "private-tcp-443->private-api", "private-api->mtls-api", "waf->alb", "alb->web-app"} {
+		if !edges[edge] {
+			t.Errorf("missing public/private path: %s", edge)
+		}
+	}
+	if edges["direct-connect->alb"] {
+		t.Error("private passthrough must use NLB, not ALB")
 	}
 }
 

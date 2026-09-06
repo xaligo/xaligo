@@ -42,6 +42,11 @@ AWS service placement should reflect its real scope:
 | VPC | Inside the VPC, outside availability zones | Internet gateway, load balancer |
 | AZ | Inside an availability zone and subnet | EC2, NAT gateway, database instance |
 
+For a VPC Endpoint that represents connectivity through the VPC boundary, use
+`<vpc-endpoint>` directly under `<vpc>`. Its icon is attached to the border and
+can be moved along the selected edge without taking space from the VPC's
+normal child layout.
+
 See [AWS Groups](xal/groups.md) for the available containers and their
 semantics.
 

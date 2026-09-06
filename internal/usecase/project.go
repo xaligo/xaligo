@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strings"
 
+	awsprofile "github.com/xaligo/xaligo/internal/core/profiles/aws"
 	"github.com/xaligo/xaligo/internal/entity"
 	projectrepository "github.com/xaligo/xaligo/internal/repository/project"
 	v1engine "github.com/xaligo/xaligo/internal/usecase/v1/engine"
@@ -355,6 +356,15 @@ func projectAnalysisHasErrors(analysis entity.ProjectAnalysis) bool {
 }
 
 func projectNodeConcept(node *entity.Node) (entity.ProjectConcept, bool) {
+	if _, ok := awsprofile.BoundaryAttachmentForTag(node.Tag); ok {
+		return entity.ProjectConceptPort, true
+	}
+	if definition, ok := awsprofile.DefinitionForTag(node.Tag); ok {
+		if definition.Group != nil {
+			return entity.ProjectConceptGroup, true
+		}
+		return entity.ProjectConceptItem, true
+	}
 	switch node.Tag {
 	case "xaligo", "scene", "frames", "data", "connections", "bends":
 		return "", false

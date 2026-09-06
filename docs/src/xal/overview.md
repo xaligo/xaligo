@@ -21,10 +21,10 @@ not valid V2 roots. Dispatch reads the root version once, and a V1 parser
 rejects version 2 before interpreting nested syntax.
 
 V2 deliberately retains the concise V1 authoring profile. Existing
-`<row>`/`<col>`, AWS group tags, numeric catalog items, ports, and
-`<connections>` lower directly to the typed V2 model; generic V2 parameters
-such as `weight`, explicit `padding`, and direct `<line>` tags remain available
-when needed.
+`<row>`/`<col>`, AWS group and boundary-resource tags, numeric catalog items,
+ports, and `<connections>` lower directly to the typed V2 model; generic V2
+parameters such as `weight`, explicit `padding`, and direct `<line>` tags
+remain available when needed.
 
 The root `version="1"` above selects the DSL. A non-empty `version` on an
 identified `<frame>` directly inside `<frames>` instead identifies that page's
@@ -48,8 +48,8 @@ Important rules:
 - Positive `x` extends right and positive `y` extends down.
 - Connections must be direct children of `<frame>` or inside frame-level
   `<connections>`.
-- AWS group tags, `<rectangle>`, and `<port>` require non-empty unique IDs so
-  they can be referenced by connectors.
+- AWS group and boundary-resource tags, `<rectangle>`, and `<port>` require
+  non-empty unique IDs so they can be referenced by connectors.
 
 Unknown nested tags are a V1 extension point. A tag without layout children is
 a generic rectangle-and-text leaf. A tag with layout children is a generic

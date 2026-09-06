@@ -1,30 +1,13 @@
 use std::collections::BTreeMap;
 use std::env;
-use std::fs::{
-    File,
-    OpenOptions,
-};
-use std::io::{
-    self,
-    Write,
-};
+use std::fs::{File, OpenOptions};
+use std::io::{self, Write};
 use std::panic::Location;
 use std::path::Path;
-use std::sync::{
-    Mutex,
-    OnceLock,
-};
-use std::time::{
-    SystemTime,
-    UNIX_EPOCH,
-};
+use std::sync::{Mutex, OnceLock};
+use std::time::{SystemTime, UNIX_EPOCH};
 
-use crate::util::mcode::{
-    LogLevel,
-    MCode,
-    MLOG_OUTPUT_FALLBACK,
-    format_message,
-};
+use crate::util::mcode::{format_message, LogLevel, MCode, MLOG_OUTPUT_FALLBACK};
 
 pub type LogFields = BTreeMap<String, String>;
 
@@ -43,8 +26,7 @@ impl LoggerConfig {
             component: component.into(),
             service: service.into(),
             level: env::var("XALIGO_LOG_LEVEL").unwrap_or_default(),
-            structured: env::var("XALIGO_LOG_STRUCTURED")
-                .is_ok_and(|value| truthy(&value)),
+            structured: env::var("XALIGO_LOG_STRUCTURED").is_ok_and(|value| truthy(&value)),
             enable_caller: env::var("XALIGO_LOG_CALLER").is_ok_and(|value| truthy(&value)),
             output: env::var("XALIGO_LOG_OUTPUT").unwrap_or_default(),
         }
@@ -139,7 +121,10 @@ impl Logger {
         } else {
             render_text(&entry)
         };
-        let mut output = self.output.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        let mut output = self
+            .output
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
         let _ = writeln!(output, "{line}");
     }
 }
@@ -376,8 +361,7 @@ fn civil_from_days(days_since_epoch: i64) -> (i64, i64, i64) {
     } / 146_097;
     let day_of_era = shifted - era * 146_097;
     let year_of_era =
-        (day_of_era - day_of_era / 1_460 + day_of_era / 36_524 - day_of_era / 146_096)
-            / 365;
+        (day_of_era - day_of_era / 1_460 + day_of_era / 36_524 - day_of_era / 146_096) / 365;
     let mut year = year_of_era + era * 400;
     let day_of_year = day_of_era - (365 * year_of_era + year_of_era / 4 - year_of_era / 100);
     let month_prime = (5 * day_of_year + 2) / 153;

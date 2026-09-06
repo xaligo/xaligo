@@ -1,0 +1,26 @@
+<!-- Editable native ALB example; AWS setting references are not credentials or deployment configuration. -->
+<xaligo version="2">
+  <frames>
+<frame id="load-balancer-options-2" title="ALB / load-balancer-options-2" width="480" height="737">
+      <aws-elastic-load-balancing-application-load-balancer id="alb" domain="api.example.test" detail-level="detailed" margin="24">
+        <aws-listener id="listener-126" protocol="HTTPS" port="443" certificate="server-cert" target-group="app">
+        </aws-listener>
+        <aws-option id="opt-127" name="cloudfront" value="distribution" />
+        <aws-option id="opt-128" name="websockets" value="true" />
+        <aws-option id="opt-129" name="arc-zonal-autoshift" value="true" />
+        <aws-option id="opt-130" name="deletion_protection.enabled" value="true" />
+        <aws-option id="opt-131" name="load_balancing.cross_zone.enabled" value="true" />
+        <aws-option id="opt-132" name="access_logs.s3.enabled" value="true" />
+        <aws-option id="opt-133" name="access_logs.s3.bucket" value="alb-logs" />
+        <aws-option id="opt-134" name="access_logs.s3.prefix" value="access/" />
+        <aws-option id="opt-135" name="connection_logs.s3.enabled" value="true" />
+        <aws-option id="opt-136" name="connection_logs.s3.bucket" value="alb-logs" />
+        <aws-option id="opt-137" name="connection_logs.s3.prefix" value="connection/" />
+        <aws-option id="opt-138" name="health_check_logs.s3.enabled" value="true" />
+        <aws-option id="opt-139" name="health_check_logs.s3.bucket" value="alb-logs" />
+        <aws-option id="opt-140" name="health_check_logs.s3.prefix" value="health/" />
+        <aws-option id="opt-141" name="ipv6.deny_all_igw_traffic" value="false" />
+      </aws-elastic-load-balancing-application-load-balancer>
+    </frame>
+  </frames>
+</xaligo>

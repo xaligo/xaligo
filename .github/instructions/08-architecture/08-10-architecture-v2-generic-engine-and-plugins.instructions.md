@@ -7,7 +7,7 @@ applyTo: ".github/instructions/manual/**"
 ## Status and purpose
 
 This file defines the V2 architecture. The generic Rust concepts, typed Go
-request/response, C ABI v2, nested layout, generic port/routing calculation,
+request/response, C ABI v5, nested layout, generic port/routing calculation,
 SVG projection, builtin icon registry, and LSP/RAG service boundaries are
 implemented. The version-selected `<xaligo>` frontend, initial concise V1-style
 authoring normalization, adaptive item-grid selection, frame-metadata
@@ -22,8 +22,9 @@ and the SQLite SVG registry in
 V2 preserves the existing layout concepts, including frames, nested groups,
 captures, items, ports, lines, fixed-versus-flexible allocation, the 12-column
 grid, item grids, spacing, overflow validation, and shared connector routing.
-It removes domain names and domain-specific calculations from the engine so
-AWS, UML, and future vocabularies use the same calculation pipeline.
+Generic layout, routing, and encoders remain domain-neutral. Built-in AWS
+service components now have a typed native composition stage before that
+shared pipeline, as explicitly requested for per-service design control.
 
 In this design, a plugin is a separable package of declarative concept data,
 parameter defaults and constraints, aliases, styles, icons, and attribution.
@@ -47,6 +48,7 @@ callbacks.
    -> registered vocabulary/profile normalization
    -> typed version-neutral DocumentSpec
    -> versioned Go/Rust engine request
+   -> optional native AWS component validation/composition
    -> Rust parameter validation and intrinsic measurement
    -> Rust generic layout and constraint resolution
    -> Rust generic port and line routing
@@ -84,8 +86,28 @@ composition of existing concepts. For example, an AWS VPC is a configured
 `Group`; a UML class is a composition of groups, items, and text compartments;
 and a UML inheritance relation is a configured `Line`.
 
-Core calculations must never branch on source tags, plugin IDs, icon
+Generic layout/routing calculations must never branch on source tags, plugin IDs, icon
 namespaces, `aws`, `uml`, or another domain name.
+
+### Native AWS composition boundary
+
+Per-service data definitions belong in `external/engine/src/ent/model/aws/`;
+validation and visual composition belong in `external/engine/src/usc/aws/`.
+This built-in, statically linked stage is an explicit exception to the former
+all-domains-declarative-only rule, not a dynamic plugin callback mechanism.
+ALB, NLB, listener and ALB rule/condition/action/transform/target/service/option models
+are implemented. Other catalog tags retain
+their generic profile behavior; do not claim all services have native models.
+Go parses source once and passes typed fields through ABI v5. Rust expands
+components into ordinary generic elements, then uses the same layout/router
+and resolved SVG/PPTX plan. No XML, arbitrary maps, network access, renderer
+branches, watermark, or source rewriting belongs in this stage.
+Composition owns listener-card dimensions, header/domain-tag measurement,
+per-service TLS/mTLS rules, and stable generated IDs. It must preserve authored
+component/listener IDs and not mutate the source document. Generated decoration
+parts are internal; native presentation controls select their visibility,
+not renderer-specific styling. Component
+geometry/attribute constraints are documented in 07.15.03.
 
 ## Target package and language boundaries
 
@@ -147,8 +169,8 @@ Builtin, AWS, and UML profiles are separate declarative data boundaries from
 their first implementation. They depend only on the stable V2 profile/model
 contract and their own data/assets. They must not depend on repositories, the
 V1 implementation, one another, private builtin assets, or Rust implementation
-details. The Go host serializes normalized typed data; the Rust engine never
-branches on profile IDs or source tag names.
+details. The Go host serializes normalized typed data; Rust composition selects
+closed AWS component kinds, never arbitrary profile IDs or source tag names.
 
 The current request path is `ctl -> usc -> ctl`: `ctl` receives and returns
 versioned ABI data, while `usc` validates and calculates the result. `rep` does
@@ -207,8 +229,9 @@ A profile must not declare or register:
 
 If a domain needs behavior that existing core concepts and parameters cannot
 express, add or generalize a reusable core concept or algorithm first. The
-plugin then selects that behavior through data. Do not solve the gap with an
-AWS- or UML-specific conditional, callback, or hook.
+plugin then selects that behavior through data. The built-in native AWS stage
+above is the sole service-specific exception; do not add domain branches to
+generic layout, routing, or encoders.
 
 Profiles are registered explicitly at a composition boundary. Do not use Go
 `init` functions for registration. Reject duplicate profile IDs, concept
@@ -217,8 +240,8 @@ registry before normalization begins so calculation is deterministic.
 
 ## Neutral input and resolved output
 
-The input to calculation is a typed tree of generic elements. Domain source
-names are retained only as optional provenance and must not drive calculation.
+The input is a typed tree of generic elements with optional closed AWS component
+models. Domain source names are optional provenance, not calculation selectors.
 
 ```go
 type ElementSpec struct {
@@ -248,7 +271,8 @@ separation is mandatory:
 Every source-authored element has a stable semantic ID. Every part generated by
 a declarative composition has a deterministic semantic part ID derived from
 its owning element and profile part name, not from renderer-generated IDs.
-Generated parts remain individually addressable for parameter overrides.
+Declarative parts remain individually addressable for parameter overrides;
+native AWS decoration overrides are not exposed yet.
 
 ## Fine-grained per-element parameters
 
@@ -269,7 +293,9 @@ At minimum, the typed parameter system must cover:
   padding, and semantic role;
 - icons: namespaced reference, size, scale, color, placement, offset, and
   missing-icon policy;
-- ports: owning element, side, anchor, offset, size, visibility, and label; and
+- ports: owning element, side, anchor, tangential offset, size, visibility,
+  label, and an icon-only boundary presentation composed from generic visual
+  and icon parameters; and
 - lines: source/target endpoint, source/target side and anchor, routing policy,
   obstacle margin, line style, endpoint decorations, label, and label
   placement.
@@ -315,13 +341,15 @@ The core owns all calculations, including:
   policies when implemented;
 - margin, padding, gap, content-box, alignment, and overflow resolution;
 - text and icon intrinsic measurement;
-- port and anchor resolution;
+- port and anchor resolution, including strict owner-contained ports and
+  shape-less icon ports that intersect one selected owner border while staying
+  within its tangential extent;
 - orthogonal and other shared routing policies;
 - obstacle collection, collision avoidance, junctions, and line labels;
 - frame-local and cross-frame connection geometry; and
 - deterministic source ordering and stable tie-breaking.
 
-AWS and UML profiles may select and tune these policies but cannot calculate
+Declarative AWS and UML profiles may select and tune these policies but cannot calculate
 columns, cells, bounds, coordinates, anchors, routes, or labels themselves.
 Equivalent normalized generic input must produce equivalent resolved geometry
 regardless of which profile vocabulary created it.
@@ -349,7 +377,7 @@ fallback. Missing-icon behavior is a generic per-element parameter such as
 
 The in-repository builtin, AWS, and UML profile packages are the initial plugin
 boundaries. A later physical extraction may produce independent profile
-modules. The Rust engine remains generic and accepts resolved profile data;
+modules. Generic Rust algorithms accept resolved profile data;
 profiles do not link Rust callbacks or executable extensions. Before a split,
 stabilize the public profile/model and engine ABI contracts. Do not expose
 repository, V1, command, SQLite, or encoder types merely to make an extracted
@@ -364,7 +392,7 @@ set or the geometry of an already normalized generic document.
 
 V2 implementation slices must include tests that establish:
 
-- the Rust staticlib crate compiles and tests without importing AWS or UML;
+- generic documents remain unchanged with the built-in AWS composition stage present;
 - Go invokes the Rust engine in-process without a subprocess or daemon;
 - the generated Rust static library is linked only by matching native target
   builds and is not committed as a repository artifact;
@@ -375,7 +403,7 @@ V2 implementation slices must include tests that establish:
 - profile schemas contain only known generic concepts and parameters;
 - explicit element values override every lower-precedence default;
 - unset values remain distinct from explicit zero/false values;
-- generated semantic parts have stable IDs and accept independent overrides;
+- generated semantic parts have stable IDs; declarative parts accept independent overrides;
 - invalid parameters fail before layout or rendering;
 - equivalent normalized documents from builtin, AWS, and UML profiles resolve
   to equal geometry;

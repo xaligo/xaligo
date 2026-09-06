@@ -421,6 +421,60 @@ func TestRectanglePortsStayInsideAndShareSameSide(t *testing.T) {
 	}
 }
 
+func TestVPCEndpointsAttachToAndSlideAlongVPCBorder(t *testing.T) {
+	doc, err := usecase.Parse(strings.NewReader(`
+<frame width="400" height="240">
+  <vpc id="network" title="VPC" width="300" height="180">
+    <vpc-endpoint id="private-api" side="right" anchor="0.25" size="40" />
+    <vpc-endpoint id="private-data" side="right" anchor="0.75" size="40" />
+  </vpc>
+</frame>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	root, err := usecase.Build(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(root.Children) != 1 {
+		t.Fatalf("root children = %#v", root.Children)
+	}
+	vpc := root.Children[0]
+	if len(vpc.Children) != 2 {
+		t.Fatalf("VPC children = %#v", vpc.Children)
+	}
+	first, second := vpc.Children[0], vpc.Children[1]
+	if first.Tag != "vpc-endpoint" || second.Tag != "vpc-endpoint" {
+		t.Fatalf("VPC endpoint tags = %q, %q", first.Tag, second.Tag)
+	}
+	wantX := vpc.X + vpc.W - first.W/2
+	if first.X != wantX || second.X != wantX {
+		t.Fatalf("endpoint x = %.1f, %.1f, want border-centered %.1f", first.X, second.X, wantX)
+	}
+	if first.Y != vpc.Y+0.25*(vpc.H-first.H) || second.Y != vpc.Y+0.75*(vpc.H-second.H) {
+		t.Fatalf("endpoint y = %.1f, %.1f; VPC = %#v", first.Y, second.Y, vpc)
+	}
+	if second.Y <= first.Y || first.W != 40 || first.H != 40 {
+		t.Fatalf("endpoint geometry = %#v, %#v", first, second)
+	}
+}
+
+func TestBuildRejectsOverlappingVPCEndpoints(t *testing.T) {
+	doc, err := usecase.Parse(strings.NewReader(`
+<frame width="400" height="240">
+  <vpc id="network" width="300" height="180">
+    <vpc-endpoint id="first" side="right" anchor="0.5" />
+    <vpc-endpoint id="second" side="right" anchor="0.5" />
+  </vpc>
+</frame>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := usecase.Build(doc); err == nil || !strings.Contains(err.Error(), `vpc-endpoint "second" overlaps "first"`) {
+		t.Fatalf("Build() error = %v, want VPC endpoint overlap diagnostic", err)
+	}
+}
+
 func TestLeafPaddingPreservesBorderAndSeparatesContentBox(t *testing.T) {
 	doc, err := usecase.Parse(strings.NewReader(`
 <frame width="240" height="140">

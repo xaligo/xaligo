@@ -179,14 +179,14 @@ fn measured_text_size(element: &ElementSpec) -> (f64, f64) {
     )
 }
 
-fn presentation_text_width(value: &str, font_size: f64) -> f64 {
+pub(crate) fn presentation_text_width(value: &str, font_size: f64) -> f64 {
     value
         .chars()
         .map(|character| {
-            if character.is_whitespace() {
-                0.33
-            } else if character >= '\u{1100}' {
+            if is_presentation_full_width(character) {
                 1.0
+            } else if character.is_whitespace() {
+                0.33
             } else if character.is_ascii_punctuation() {
                 0.42
             } else if character.is_uppercase() {
@@ -197,6 +197,21 @@ fn presentation_text_width(value: &str, font_size: f64) -> f64 {
         })
         .sum::<f64>()
         * font_size
+}
+
+fn is_presentation_full_width(character: char) -> bool {
+    let codepoint = character as u32;
+    (0x1100..=0x115f).contains(&codepoint)
+        || matches!(codepoint, 0x2329 | 0x232a)
+        || ((0x2e80..=0xa4cf).contains(&codepoint) && codepoint != 0x303f)
+        || (0xac00..=0xd7a3).contains(&codepoint)
+        || (0xf900..=0xfaff).contains(&codepoint)
+        || (0xfe10..=0xfe19).contains(&codepoint)
+        || (0xfe30..=0xfe6f).contains(&codepoint)
+        || (0xff00..=0xff60).contains(&codepoint)
+        || (0xffe0..=0xffe6).contains(&codepoint)
+        || (0x20000..=0x2fffd).contains(&codepoint)
+        || (0x30000..=0x3fffd).contains(&codepoint)
 }
 
 fn default_absolute_width(element: &ElementSpec, available: f64) -> f64 {

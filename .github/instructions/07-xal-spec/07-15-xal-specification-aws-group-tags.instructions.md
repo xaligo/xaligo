@@ -43,9 +43,10 @@ Icon SVGs are sourced from `etc/resources/aws/svg/Architecture-Group-Icons/`.
 | `<generic-group>` | Generic group | `#AAB7B8` | dashed | Configurable with `icon-id` |
 | `<capture>` | Capture | `#F5A623` | dashed | — |
 
-All AWS group tags require a non-empty `id`. IDs for group tags, `<rectangle>`,
-and `<port>` must be unique among frame-like components. Group tags otherwise
-accept the same attributes as `container` (`title`, `class`, `gap`, etc.).
+All AWS group tags require a non-empty `id`. IDs for group tags, AWS boundary
+resources, `<rectangle>`, and `<port>` must be unique among connectable
+components. Group tags otherwise accept the same attributes as `container`
+(`title`, `class`, `gap`, etc.).
 
 `<capture>` is a lightweight structural annotation container rather than an
 AWS/architectural boundary. It participates in normal nested layout: its
@@ -68,15 +69,52 @@ This matches the built-in group icon size. Every group header receives an
 opaque mask matching its local background behind the icon and label, preventing
 solid or dashed border strokes from crossing the header content.
 Group header tag labels use the shared single-line text policy. The tag
-background and label box use a conservative width estimate so no-wrap text
-remains inside the tag in SVG and PowerPoint. Keep group tag text concise; if
-changing group tag font, padding, or geometry, update the shared text-layout
-policy, renderer width estimate, and regression tests together.
-East Asian full-width characters, including Japanese labels, count as
-double-width in group header and item label width estimates.
+background and label box use the shared glyph-class width estimate so no-wrap
+text remains inside the tag in SVG and PowerPoint without a large trailing
+gap. East Asian wide/full-width characters use one font-size unit; proportional
+half-width characters, including half-width Katakana, use their narrower
+estimate. The label box keeps an 8px cross-renderer safety allowance, followed
+by 4px before the tag tip. Item labels continue to count East Asian full-width
+characters as two display columns. If changing group tag font, padding, or
+geometry, update the shared text-layout policy, renderer width estimate, and
+regression tests together.
 
 ```xml
 <generic-group id="network-topology" title="Network Topology" icon-id="104635">
   <item id="200036" />
 </generic-group>
 ```
+
+## AWS boundary resources
+
+`<vpc-endpoint>` is an icon-only, connectable VPC boundary resource. It must
+be an empty direct child of `<vpc>` and requires a non-empty, whitespace-free
+`id`. The AWS profile fixes its catalog icon to Amazon VPC Endpoints (catalog
+ID `1579`), so the author-facing `id` remains a stable connection identifier
+instead of a catalog number.
+
+```xml
+<vpc id="application-vpc" title="Application VPC">
+  <vpc-endpoint id="private-api" side="right" anchor="0.35" />
+  <private-subnet id="application" title="Application Subnet">
+    <item id="27" name="app" />
+  </private-subnet>
+</vpc>
+```
+
+| Attribute | Type | Required | Description |
+|---|---|---|---|
+| `id` | identifier | yes | Unique connection endpoint ID |
+| `side` | enum | no | `top`, `right`, `bottom`, or `left`; default `right` |
+| `anchor` | float `0..1` | no | Position along the usable edge extent; `0` is nearest the start corner and `1` nearest the end corner |
+| `offset` | float | no | Additional layout-pixel movement along the selected edge |
+| `size` | positive float | no | Square icon size in layout pixels; default `48` |
+
+The icon center lies on the selected VPC border, with half of the icon inside
+and half outside. Boundary resources do not consume stack, row, column, or
+item-grid space. Omitted anchors for multiple resources on the same side are
+distributed evenly; explicit positions that overlap or move beyond the usable
+edge produce a layout diagnostic. Ordinary `<item id="1579">` remains a
+normal catalog item and is not moved to the VPC border. V1 and V2 normalize
+this tag to the same boundary-port semantics, while the Rust engine receives
+only the generic icon/port parameters and never branches on the AWS tag.

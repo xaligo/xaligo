@@ -100,7 +100,7 @@ fn renders_v1_profile_group_header_over_the_aligned_border() {
     group.text.role = "group-header".to_owned();
     group.text.x = 58.0;
     group.text.y = 38.0;
-    group.text.width = 95.0;
+    group.text.width = 79.0;
     group.text.height = 18.0;
     group.icon_ref = "group:AWS-Cloud-logo_32.svg".to_owned();
     group.icon_x = 22.0;
@@ -115,7 +115,7 @@ fn renders_v1_profile_group_header_over_the_aligned_border() {
     }))
     .expect("UTF-8 SVG");
     assert!(svg.contains(r#"id="cloud" data-concept="group" x="24" y="47" width="160" height="84""#));
-    assert!(svg.contains(r##"<polygon points="22,31 171,31 185,47 171,63 22,63" fill="#ffffff" stroke="#1e1e1e" stroke-width="1"/>"##));
+    assert!(svg.contains(r##"<polygon points="22,31 141,31 155,47 141,63 22,63" fill="#ffffff" stroke="#1e1e1e" stroke-width="1"/>"##));
     assert!(svg.contains(r#"id="cloud-icon" data-owner="cloud" data-concept="group" data-icon="group:AWS-Cloud-logo_32.svg" x="22" y="31" width="32" height="32""#));
     assert!(svg.contains(r#"data-owner="cloud" data-concept="group" x="58" y="47" text-anchor="start""#));
     usvg::roxmltree::Document::parse(&svg).expect("generated SVG must be valid XML");

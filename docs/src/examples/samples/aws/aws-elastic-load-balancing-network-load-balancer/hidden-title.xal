@@ -1,0 +1,10 @@
+<xaligo version="2">
+  <frames>
+    <frame id="hidden-title" title="NLB / automatic size and optional heading" width="480" height="300">
+      <aws-elastic-load-balancing-network-load-balancer id="component" domain="nlb.example.test" margin="24">
+        <aws-listener id="tcp" protocol="TCP" port="443" show-title="false"
+                      backend-tls="true" backend-mtls="true" />
+      </aws-elastic-load-balancing-network-load-balancer>
+    </frame>
+  </frames>
+</xaligo>

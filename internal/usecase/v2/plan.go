@@ -140,6 +140,8 @@ type v1GroupHeaderGeometry struct {
 	height float64
 }
 
+const v1GroupHeaderEndPadding = 4.0
+
 func resolvedV1GroupHeaderGeometry(element entity.EngineResolvedElement) (v1GroupHeaderGeometry, bool) {
 	if element.Text.Role != string(entity.TextRoleGroupHeader) || (element.Concept != entity.EngineConceptGroup && element.Concept != entity.EngineConceptCapture) {
 		return v1GroupHeaderGeometry{}, false
@@ -157,7 +159,7 @@ func resolvedV1GroupHeaderGeometry(element entity.EngineResolvedElement) (v1Grou
 	}
 	tip := math.Min(14, height/2)
 	return v1GroupHeaderGeometry{
-		x: x, y: y, width: element.Text.X + element.Text.Width + 18 + tip - x, height: height,
+		x: x, y: y, width: element.Text.X + element.Text.Width + v1GroupHeaderEndPadding + tip - x, height: height,
 	}, true
 }
 

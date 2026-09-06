@@ -1,0 +1,20 @@
+<!-- AWS functional design library v2. Editable: see README.md and research/designs.json. -->
+<!-- Configuration cards describe AWS concepts; their text is not a provisioning command. -->
+<xaligo version="2">
+<frames>
+  <frame id="sample" title="vpc-endpoint" width="1500" height="1160">
+    <col width="1360" height="1000" margin="32" gap="24">
+      <row height="230" gap="32"><vpc id="boundary-context" title="VPC / 論理境界" width="308" height="180" margin="16"><aws-ec2 id="member" label="Workload" /><vpc-endpoint id="component" side="right" anchor="0.55" /></vpc>
+        <rectangle id="overview" width="920" height="180" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Design review / 設計レビュー&#10;Research: resource-schema&#10;AWS::EC2::VPCEndpoint&#10;Functional structure and full reference tables are in README." />
+      </row>
+      <row height="242" gap="24"><rectangle id="part-1" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Resource configuration&#10;VPCEndpoint&#10;Vpc Id*: String&#10;Subnet Ids: list&#10;Security Group Ids: list&#10;Service Name: String&#10;Private Dns Enabled: Boolean" />
+        <rectangle id="part-2" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Nested configuration&#10;Dns Options -&gt; object&#10;Dns Record Ip Type: String&#10;Private Dns Only For Inbound Resolver&#10;Endpoint: String" />
+        <rectangle id="part-3" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Additional parameters&#10;Route Table Ids: list&#10;Ip Address Type: String&#10;Dns Options: object&#10;Policy Document: Json&#10;Resource Config Arn: String&#10;Service Network Arn: String&#10;Complete field list in README" /></row>
+      <row height="242" gap="24"><rectangle id="part-4" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Referenced resource types&#10;RouteTable&#10;SecurityGroup&#10;Subnet&#10;VPC&#10;Based on identifier fields&#10;References are NOT child ownership" />
+        <rectangle id="part-5" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Operations / lifecycle&#10;CreateVpcEndpoint&#10;DescribeVpcEndpoints&#10;DeleteVpcEndpoints&#10;ModifyVpcEndpoint&#10;CreateVpcEndpointConnectionNotification&#10;Input / output schemas: linked API sheet" />
+        <rectangle id="part-6" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Icon meaning / interpretation&#10;Amazon VPC Endpoints&#10;Mapped resource model shown above&#10;Do not infer API fields from icon artwork&#10;Solid enclosure = authored membership&#10;Type references are not traffic paths" /></row>
+      <rectangle id="design-legend" width="1284" height="150" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="DESIGN CONTRACT / 図の読み方&#10;* = required in the source schema, not a required XAL attribute. Values are not deployed to AWS.&#10;Configuration / API cards are references, not automatically nested resources or network traffic.&#10;Availability and region support must be checked before deployment. Research source/version and full parameter tables: README." />
+    </col>
+  </frame>
+</frames>
+</xaligo>

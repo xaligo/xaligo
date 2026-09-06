@@ -1,18 +1,8 @@
 use crate::cnf::engine::{
-    ABI_VERSION,
-    OPERATION_LAYOUT,
-    OPERATION_NORMALIZE_SVG,
-    OPERATION_SVG,
-    RESPONSE_MAGIC,
-    STATUS_ERROR,
-    STATUS_OK,
+    ABI_VERSION, OPERATION_LAYOUT, OPERATION_NORMALIZE_SVG, OPERATION_SVG, RESPONSE_MAGIC,
+    STATUS_ERROR, STATUS_OK,
 };
-use crate::ent::model::document::{
-    Concept,
-    Decoration,
-    LineStyle,
-    Shape,
-};
+use crate::ent::model::document::{Concept, Decoration, LineStyle, Shape};
 use crate::ent::response::engine::EngineResponse;
 
 pub(crate) trait Serialize {

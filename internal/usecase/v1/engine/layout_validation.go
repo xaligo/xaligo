@@ -102,6 +102,13 @@ func validateLayoutNodeAttributesV1EngineLayoutValidation(node *entity.Node) err
 			layoutNumberRuleV1EngineLayoutValidation{name: "dy", allowZero: true, allowNegative: true},
 		)
 	}
+	if isAWSBoundaryAttachmentV1EngineAwsBoundary(node.Tag) {
+		rules = append(rules,
+			layoutNumberRuleV1EngineLayoutValidation{name: "anchor", allowZero: true, maximum: 1},
+			layoutNumberRuleV1EngineLayoutValidation{name: "offset", allowZero: true, allowNegative: true},
+			layoutNumberRuleV1EngineLayoutValidation{name: "size"},
+		)
+	}
 	if isBendNodeV1EngineLayoutValidation(node.Tag) {
 		rules = append(rules,
 			layoutNumberRuleV1EngineLayoutValidation{name: "x", allowZero: true, allowNegative: true},
@@ -214,7 +221,7 @@ func isUnknownContainerV1EngineLayoutValidation(node *entity.Node) bool {
 }
 
 func validatePortSideV1EngineLayoutValidation(node *entity.Node) error {
-	if node.Tag != "port" {
+	if node.Tag != "port" && !isAWSBoundaryAttachmentV1EngineAwsBoundary(node.Tag) {
 		return nil
 	}
 	raw, exists := node.Attrs["side"]
@@ -409,7 +416,7 @@ func validateResolvedBoxV1EngineLayoutValidation(box, parent, metadataFrame *ent
 	if metadataFrame != nil && box != metadataFrame && boxOverlapsFrameMetadataReservedV1EngineLayoutValidation(box, metadataFrame) {
 		return newResolvedLayoutErrorV1EngineLayoutValidation(box, "resolved box enters frame metadata reserved strip; overflow=\"visible\" cannot override this page-decoration exclusion zone")
 	}
-	if parent != nil && !containsRectV1EngineLayoutValidation(parent.ContentX, parent.ContentY, parent.ContentW, parent.ContentH, box.X, box.Y, box.W, box.H) {
+	if parent != nil && !containsRectV1EngineLayoutValidation(parent.ContentX, parent.ContentY, parent.ContentW, parent.ContentH, box.X, box.Y, box.W, box.H) && !resolvedAWSBoundaryAttachmentV1EngineLayoutAwsBoundary(box, parent) {
 		if parent.Overflow != entity.OverflowVisible {
 			return newResolvedLayoutErrorV1EngineLayoutValidation(box, "resolved box overflows parent <%s> content box; set overflow=\"visible\" on the parent to allow it explicitly", parent.Tag)
 		}

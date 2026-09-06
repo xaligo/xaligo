@@ -6,11 +6,13 @@ applyTo: ".github/instructions/manual/**"
 
 ## `<connection>` Tag
 
-Draws an **elbowed arrow** between `<item>` elements or group borders.
+Draws an **elbowed arrow** between `<item>` elements, semantic AWS boundary
+resources such as `<vpc-endpoint>`, or group borders.
 Must be written as a direct child of `<frame>` or inside a frame-level
 `<connections>` tag, **outside** layout tags.
 Use the same catalog IDs as `<item id="N">`, or assign `id`, `name`, or `ref`
-to an AWS/group tag, for `src` / `dst`.
+to an AWS/group tag, for `src` / `dst`. A `<vpc-endpoint>` uses its required
+semantic `id`, not its profile-owned catalog icon ID.
 
 ```xml
 <frame width="1122" height="794" class="pa-4">

@@ -75,6 +75,9 @@ func itemGridAreaV1EngineLayoutItemGrid(ancestor *entity.Box) (x, y, w, h float6
 	if _, isGroup := awsGroupsV1EngineSceneTypes[ancestor.Tag]; isGroup {
 		allItemChildren := true
 		for _, child := range ancestor.Children {
+			if isAWSBoundaryAttachmentV1EngineAwsBoundary(child.Tag) {
+				continue
+			}
 			if !IsItemLikeV1EngineLayoutAttributes(child.Tag) {
 				allItemChildren = false
 				break

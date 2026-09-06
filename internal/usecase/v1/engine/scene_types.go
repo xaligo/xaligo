@@ -45,41 +45,20 @@ type groupDefV1EngineSceneTypes struct {
 }
 
 // awsGroups maps xal tag names to their AWS group visual definitions.
-var awsGroupsV1EngineSceneTypes = map[string]groupDefV1EngineSceneTypes{
-	"aws-cloud":                     {"#000000", "solid", 2, "AWS-Cloud-logo_32.svg"},
-	"aws-cloud-alt":                 {"#000000", "solid", 2, "AWS-Cloud_32.svg"},
-	"region":                        {"#00A1C9", "dashed", 2, "Region_32.svg"},
-	"availability-zone":             {"#00A1C9", "dashed", 2, ""},
-	"security-group":                {"#CC0000", "dashed", 2, ""},
-	"auto-scaling-group":            {"#E7601B", "dashed", 2, "Auto-Scaling-group_32.svg"},
-	"vpc":                           {"#8C4FFF", "solid", 2, "Virtual-private-cloud-VPC_32.svg"},
-	"private-subnet":                {"#00A1C9", "solid", 2, "Private-subnet_32.svg"},
-	"public-subnet":                 {"#3F8624", "solid", 2, "Public-subnet_32.svg"},
-	"server-contents":               {"#7A7C7F", "solid", 2, "Server-contents_32.svg"},
-	"corporate-data-center":         {"#7A7C7F", "solid", 2, "Corporate-data-center_32.svg"},
-	"ec2-instance-contents":         {"#E7601B", "solid", 2, "EC2-instance-contents_32.svg"},
-	"spot-fleet":                    {"#E7601B", "solid", 2, "Spot-Fleet_32.svg"},
-	"aws-account":                   {"#E7008A", "solid", 2, "AWS-Account_32.svg"},
-	"aws-iot-greengrass-deployment": {"#3F8624", "solid", 2, "AWS-IoT-Greengrass-Deployment_32.svg"},
-	"aws-iot-greengrass":            {"#3F8624", "solid", 2, ""},
-	"elastic-beanstalk-container":   {"#E7601B", "solid", 2, ""},
-	"aws-step-functions-workflow":   {"#E7008A", "solid", 2, ""},
-	"generic-group":                 {"#AAB7B8", "dashed", 1, ""},
-	"capture":                       {"#F5A623", "dashed", 1, ""},
-}
+var awsGroupsV1EngineSceneTypes = awsGroupDefinitionsV1EngineAwsResource()
 
 const (
 	groupIconSizeV1EngineSceneTypes           = 32
 	groupHeaderLeftOverflowV1EngineSceneTypes = 2
 	groupHeaderTextInsetV1EngineSceneTypes    = 4
-	groupHeaderPadEndV1EngineSceneTypes       = 18
+	groupHeaderTextSpareV1EngineSceneTypes    = 8
+	groupHeaderPadEndV1EngineSceneTypes       = 4
 	groupHeaderTipMaxV1EngineSceneTypes       = 14
 	groupHeaderBorderGapV1EngineSceneTypes    = 4
 	groupFontSizeV1EngineSceneTypes           = 14
 	groupTextHeightV1EngineSceneTypes         = groupFontSizeV1EngineSceneTypes + 4
 	groupHeaderTextPadYV1EngineSceneTypes     = 1
 	groupFontFamilyV1EngineSceneTypes         = 2 // Helvetica (normal)
-	groupLabelCharWV1EngineSceneTypes         = 9.6
 	itemFallbackIconColorV1EngineSceneTypes   = "#7758C1"
 )
 

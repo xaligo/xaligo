@@ -1,39 +1,12 @@
 use crate::ent::model::document::{
-    Alignment,
-    Concept,
-    Decoration,
-    DocumentSpec,
-    ElementSpec,
-    IconSpec,
-    Insets,
-    Justification,
-    LayoutPolicy,
-    LineSpec,
-    LineStyle,
-    MissingIconPolicy,
-    Overflow,
-    Point,
-    PortSpec,
-    ResolvedDocument,
-    ResolvedElement,
-    ResolvedLine,
-    ResolvedText,
-    ResolvedVisual,
-    RoutingPolicy,
-    Shape,
-    Side,
-    TextSpec,
-    VisualSpec,
+    Alignment, Concept, Decoration, DocumentSpec, ElementSpec, IconSpec, Insets, Justification,
+    LayoutPolicy, LineSpec, LineStyle, MissingIconPolicy, Overflow, Point, PortSpec,
+    ResolvedDocument, ResolvedElement, ResolvedLine, ResolvedText, ResolvedVisual, RoutingPolicy,
+    Shape, Side, TextSpec, VisualSpec,
 };
 use crate::ent::model::svg::NormalizedSvg;
-use crate::util::error::{
-    LayoutError,
-    SvgError,
-};
-use crate::util::mcode::{
-    LogLevel,
-    MCode,
-};
+use crate::util::error::{LayoutError, SvgError};
+use crate::util::mcode::{LogLevel, MCode};
 
 macro_rules! impl_enum_equality {
     ($($target:ty),+ $(,)?) => {

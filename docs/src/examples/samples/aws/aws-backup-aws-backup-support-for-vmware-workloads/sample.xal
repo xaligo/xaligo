@@ -1,0 +1,20 @@
+<!-- AWS functional design library v2. Editable: see README.md and research/designs.json. -->
+<!-- Configuration cards describe AWS concepts; their text is not a provisioning command. -->
+<xaligo version="2">
+<frames>
+  <frame id="sample" title="aws-backup-aws-backup-support-for-vmware-workloads" width="1500" height="1160">
+    <col width="1360" height="1000" margin="32" gap="24">
+      <row height="230" gap="32"><aws-backup-aws-backup-support-for-vmware-workloads id="component" label="AWS Backup AWS Backup Support for&#10;VMware Workloads" label-width="340" />
+        <rectangle id="overview" width="920" height="180" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Design review / 設計レビュー&#10;Research: service-context&#10;AWS::Backup::BackupPlan&#10;Configuration context; icon itself may represent a feature." />
+      </row>
+      <row height="242" gap="24"><rectangle id="part-1" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Service configuration context&#10;BackupPlan&#10;Backup Plan*: object&#10;Backup Plan Tags: map" />
+        <rectangle id="part-2" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Nested configuration&#10;Backup Plan -&gt; object&#10;Backup Plan Rule*: list&#10;Advanced Backup Settings: list" />
+        <rectangle id="part-3" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Additional parameters" /></row>
+      <row height="242" gap="24"><rectangle id="part-4" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Referenced resource types&#10;No peer type selected from ID fields&#10;Full service type inventory in README" />
+        <rectangle id="part-5" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Operations / lifecycle&#10;CreateBackupPlan&#10;GetBackupPlan&#10;ListBackupPlans&#10;UpdateBackupPlan&#10;DeleteBackupPlan&#10;Input / output schemas: linked API sheet" />
+        <rectangle id="part-6" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Icon meaning / interpretation&#10;AWS Backup AWS Backup Support for&#10;VMware Workloads&#10;Service-level schema shown as context&#10;Do not infer API fields from icon artwork&#10;Solid enclosure = authored membership&#10;Type references are not traffic paths" /></row>
+      <rectangle id="design-legend" width="1284" height="150" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="DESIGN CONTRACT / 図の読み方&#10;* = required in the source schema, not a required XAL attribute. Values are not deployed to AWS.&#10;Configuration / API cards are references, not automatically nested resources or network traffic.&#10;Availability and region support must be checked before deployment. Research source/version and full parameter tables: README." />
+    </col>
+  </frame>
+</frames>
+</xaligo>

@@ -1,0 +1,18 @@
+<!-- Editable native ALB example; AWS setting references are not credentials or deployment configuration. -->
+<xaligo version="2">
+  <frames>
+<frame id="grpc" title="ALB / grpc" width="487" height="567">
+      <aws-elastic-load-balancing-application-load-balancer id="alb" domain="api.example.test" detail-level="detailed" margin="24">
+        <aws-listener id="listener-224" protocol="HTTPS" port="443" certificate="server-cert">
+          <aws-listener-rule id="rule-223" priority="10">
+            <aws-rule-condition id="condition-220" field="path-pattern">
+              <aws-rule-match id="match-221" value="/orders.v1.Service/*" />
+            </aws-rule-condition>
+            <aws-rule-action id="forward-222" type="forward" order="1" target-group="grpc-api" />
+          </aws-listener-rule>
+        </aws-listener>
+        <aws-target-group id="grpc-api" name="grpc-api" target-type="ip" protocol="HTTP" port="50051"><aws-option id="opt-225" name="protocol-version" value="GRPC" /><aws-option id="opt-226" name="health-check-path" value="/grpc.health.v1.Health/Check" /><aws-option id="opt-227" name="health-check-matcher" value="0" /><aws-registered-target id="grpc-target" name="10.20.2.20" port="50051" /></aws-target-group>
+      </aws-elastic-load-balancing-application-load-balancer>
+    </frame>
+  </frames>
+</xaligo>

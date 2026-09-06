@@ -340,7 +340,7 @@ fn resolved_foreground_geometry(
 
     if uses_v1_profile_group_header(element) && has_text {
         let header_x = bounds.x - 2.0;
-        let label_width = v1_group_label_width(&element.text.value);
+        let label_width = v1_group_label_width(&element.text.value, font_size);
         icon_width = if has_icon {
             element
                 .icon
@@ -460,6 +460,8 @@ fn resolved_foreground_geometry(
 const V1_GROUP_HEADER_ROLE: &str = "group-header";
 const V1_GROUP_HEADER_GAP: f64 = 4.0;
 const V1_GROUP_HEADER_BUCKET_HEIGHT: f64 = 64.0;
+const V1_GROUP_HEADER_TEXT_SPARE: f64 = 8.0;
+const V1_GROUP_HEADER_END_PADDING: f64 = 4.0;
 
 fn uses_v1_profile_group_header(element: &ElementSpec) -> bool {
     matches!(element.concept, Concept::Group | Concept::Capture)
@@ -471,30 +473,8 @@ fn resolved_uses_v1_profile_group_header(element: &ResolvedElement) -> bool {
         && element.text.role == V1_GROUP_HEADER_ROLE
 }
 
-fn v1_group_label_width(value: &str) -> f64 {
-    (value.chars().map(v1_display_columns).sum::<f64>() * 9.6).ceil() + 8.0
-}
-
-fn v1_display_columns(value: char) -> f64 {
-    let codepoint = value as u32;
-    if value == '\t' {
-        4.0
-    } else if codepoint < 0x20 {
-        0.0
-    } else if (0x1100..=0x115f).contains(&codepoint)
-        || matches!(codepoint, 0x2329 | 0x232a)
-        || ((0x2e80..=0xa4cf).contains(&codepoint) && codepoint != 0x303f)
-        || (0xac00..=0xd7a3).contains(&codepoint)
-        || (0xf900..=0xfaff).contains(&codepoint)
-        || (0xfe10..=0xfe19).contains(&codepoint)
-        || (0xfe30..=0xfe6f).contains(&codepoint)
-        || (0xff00..=0xff60).contains(&codepoint)
-        || (0xffe0..=0xffe6).contains(&codepoint)
-    {
-        2.0
-    } else {
-        1.0
-    }
+fn v1_group_label_width(value: &str, font_size: f64) -> f64 {
+    presentation_text_width(value, font_size).ceil() + V1_GROUP_HEADER_TEXT_SPARE
 }
 
 fn v1_resolved_group_header_bounds(element: &ResolvedElement) -> Bounds {
@@ -518,7 +498,7 @@ fn v1_resolved_group_header_bounds(element: &ResolvedElement) -> Bounds {
     Bounds {
         x,
         y,
-        width: element.text.x + element.text.width + 18.0 + tip - x,
+        width: element.text.x + element.text.width + V1_GROUP_HEADER_END_PADDING + tip - x,
         height,
     }
 }

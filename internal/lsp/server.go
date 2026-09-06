@@ -13,6 +13,7 @@ import (
 	"strings"
 	"unicode/utf16"
 
+	awsprofile "github.com/xaligo/xaligo/internal/core/profiles/aws"
 	"github.com/xaligo/xaligo/internal/entity"
 )
 
@@ -204,11 +205,34 @@ func (rcvr *Server) completion() []map[string]any {
 		{"item", "Icon or atomic item", `<item id="${1:id}" name="${2:label}" />`},
 		{"rectangle", "Generic rectangle", `<rectangle id="${1:id}" title="${2:title}" />`},
 		{"port", "Connection port", `<port id="${1:id}" side="${2|left,right,top,bottom|}" />`},
+		{"aws-listener", "V2 ALB/NLB listener (auto-sized; show-title=false hides Listener)", `<aws-listener id="${1:listener}" protocol="${2|HTTPS,HTTP,TLS,TCP,UDP,TCP_UDP,QUIC,TCP_QUIC|}" port="${3:443}" show-title="${4|true,false|}" />`},
 		{"connection", "Routed connection", `<connection src="${1:source}" dst="${2:target}" kind="${3|route,traffic|}" />`},
+		{"aws-listener-rule", "ALB ordered rule; detail-level and show/hide control abstraction", `<aws-listener-rule id="${1:rule}" priority="${2:10}">$0</aws-listener-rule>`},
+		{"aws-rule-condition", "ALB condition (AND between conditions)", `<aws-rule-condition id="${1:condition}" field="${2|host-header,path-pattern,http-header,http-request-method,query-string,source-ip|}">$0</aws-rule-condition>`},
+		{"aws-rule-match", "OR value or regex; visible=false hides a comparison", `<aws-rule-match id="${1:match}" value="${2:/api/*}" />`},
+		{"aws-rule-action", "ALB ordered action", `<aws-rule-action id="${1:action}" type="${2|forward,redirect,fixed-response,authenticate-oidc,authenticate-cognito,jwt-validation|}" order="${3:1}">$0</aws-rule-action>`},
+		{"aws-forward-target", "Weighted target group", `<aws-forward-target id="${1:weight}" target-group="${2:app}" weight="${3:100}" />`},
+		{"aws-jwt-claim", "JWT additional claim with literal match children", `<aws-jwt-claim id="${1:claim}" name="${2:aud}" format="${3|single-string,string-array,space-separated-values|}">$0</aws-jwt-claim>`},
+		{"aws-rule-transform", "ALB rewrite transform", `<aws-rule-transform id="${1:transform}" type="${2|url-rewrite,host-header-rewrite|}">$0</aws-rule-transform>`},
+		{"aws-rule-rewrite", "Regex and replacement", `<aws-rule-rewrite id="${1:rewrite}" regex="${2:^/v1/(.*)}" replace="${3:/v2/\$1}" />`},
+		{"aws-target-service", "Logical ECS/EKS/EC2/Lambda/IP workload inside an ALB target group", `<aws-target-service id="${1:service}" service="${2|ecs,eks,ec2,lambda,ip|}" name="${3:app}">$0</aws-target-service>`},
+		{"aws-target-group", "ALB target group (Lambda: omit protocol/port)", `<aws-target-group id="${1:tg}" name="${2:app}" target-type="${3|ip,instance|}" protocol="HTTP" port="${4:8080}">$0</aws-target-group>`},
+		{"aws-registered-target", "IP, instance or Lambda target", `<aws-registered-target id="${1:target}" name="${2:10.0.1.20}" />`},
+		{"aws-option", "Closed ALB setting; visible=false hides only this setting", `<aws-option id="${1:option}" name="${2:health-check-path}" value="${3:/health}" visible="${4|true,false|}" />`},
 	}
 	result := make([]map[string]any, 0, len(values))
 	for _, value := range values {
 		result = append(result, map[string]any{"label": value.label, "kind": 10, "detail": value.detail, "insertText": value.insert, "insertTextFormat": 2})
+	}
+	for _, definition := range awsprofile.Definitions() {
+		insert := fmt.Sprintf(`<%s id="${1:resource}" label="${2:label}" />`, definition.Tag)
+		if definition.Group != nil {
+			insert = fmt.Sprintf(`<%s id="${1:group}" title="${2:title}">$0</%s>`, definition.Tag, definition.Tag)
+		}
+		if definition.Boundary != nil {
+			insert = fmt.Sprintf(`<%s id="${1:endpoint}" side="${2|%s|}" anchor="${3:0.5}" />`, definition.Tag, "right,left,top,bottom")
+		}
+		result = append(result, map[string]any{"label": definition.Tag, "kind": 10, "detail": definition.Name + " — " + definition.Description, "insertText": insert, "insertTextFormat": 2})
 	}
 	return result
 }

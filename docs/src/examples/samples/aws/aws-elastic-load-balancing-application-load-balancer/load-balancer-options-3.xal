@@ -1,0 +1,24 @@
+<!-- Editable native ALB example; AWS setting references are not credentials or deployment configuration. -->
+<xaligo version="2">
+  <frames>
+<frame id="load-balancer-options-3" title="ALB / load-balancer-options-3" width="480" height="677">
+      <aws-elastic-load-balancing-application-load-balancer id="alb" domain="api.example.test" detail-level="detailed" margin="24">
+        <aws-listener id="listener-142" protocol="HTTPS" port="443" certificate="server-cert" target-group="app">
+        </aws-listener>
+        <aws-option id="opt-143" name="zonal_shift.config.enabled" value="true" />
+        <aws-option id="opt-144" name="idle_timeout.timeout_seconds" value="60" />
+        <aws-option id="opt-145" name="client_keep_alive.seconds" value="3600" />
+        <aws-option id="opt-146" name="routing.http.desync_mitigation_mode" value="defensive" />
+        <aws-option id="opt-147" name="routing.http.drop_invalid_header_fields.enabled" value="true" />
+        <aws-option id="opt-148" name="routing.http.preserve_host_header.enabled" value="true" />
+        <aws-option id="opt-149" name="routing.http.x_amzn_tls_version_and_cipher_suite.enabled" value="true" />
+        <aws-option id="opt-150" name="routing.http.xff_client_port.enabled" value="true" />
+        <aws-option id="opt-151" name="routing.http.xff_header_processing.mode" value="append" />
+        <aws-option id="opt-152" name="routing.http2.enabled" value="true" />
+        <aws-option id="opt-153" name="waf.fail_open.enabled" value="false" />
+        <aws-option id="opt-154" name="aws-config" value="compliance recorder" />
+        <aws-option id="opt-155" name="state" value="active" />
+      </aws-elastic-load-balancing-application-load-balancer>
+    </frame>
+  </frames>
+</xaligo>

@@ -17,24 +17,9 @@ use crate::cnf::engine::{
     MAX_ID_BYTES,
 };
 use crate::ent::model::document::{
-    Alignment,
-    Concept,
-    DocumentSpec,
-    ElementSpec,
-    Insets,
-    Justification,
-    LayoutPolicy,
-    MissingIconPolicy,
-    Overflow,
-    Point,
-    ResolvedDocument,
-    ResolvedElement,
-    ResolvedLine,
-    ResolvedText,
-    ResolvedVisual,
-    RoutingPolicy,
-    Shape,
-    Side,
+    Alignment, Concept, DocumentSpec, ElementSpec, Insets, Justification, LayoutPolicy,
+    MissingIconPolicy, Overflow, Point, ResolvedDocument, ResolvedElement, ResolvedLine,
+    ResolvedText, ResolvedVisual, RoutingPolicy, Shape, Side,
 };
 use crate::util::error::LayoutError;
 
@@ -116,6 +101,18 @@ impl Bounds {
 pub(crate) fn resolve(document: &DocumentSpec) -> Result<ResolvedDocument, LayoutError> {
     crate::usc::cancel::check().map_err(LayoutError::new)?;
     validate_document(document)?;
+    let expanded;
+    let document = if document
+        .elements
+        .iter()
+        .any(|element| element.aws.is_some())
+    {
+        expanded = crate::usc::aws::compose(document)?;
+        validate_document(&expanded)?;
+        &expanded
+    } else {
+        document
+    };
     let mut children = vec![Vec::new(); document.elements.len()];
     let mut roots = Vec::new();
     for (index, element) in document.elements.iter().enumerate() {
@@ -176,7 +173,6 @@ struct LayoutState<'a> {
     children: Vec<Vec<usize>>,
     resolved: Vec<Option<ResolvedElement>>,
 }
-
 
 include!("layout_flow.rs");
 include!("layout_geometry.rs");

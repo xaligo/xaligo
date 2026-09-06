@@ -273,6 +273,14 @@ func gridAxisV1EngineSceneItem(areaStart, areaSize, totalSize, cellSize float64,
 // itemImgRects/itemLblRects/itemImgIDs/itemLblIDs are populated with the bounding rect
 // and element ID of the image and label elements, keyed by the unique item connection key.
 func renderIconAtV1EngineSceneItem(boxID, connectionKey, idAttr string, iconX, iconY, iconSize float64, elements *[]map[string]any, files map[string]any, catalogCSV string, projectRoot string, fsys fs.FS, itemImgRects map[string][4]float64, itemLblRects map[string][4]float64, itemImgIDs map[string]string, itemLblIDs map[string]string, abbrevMap map[int]string, deps SceneDependenciesV1EngineSceneTypes) {
+	renderIconAtWithLabelV1EngineSceneItem(boxID, connectionKey, idAttr, iconX, iconY, iconSize, elements, files, catalogCSV, projectRoot, fsys, itemImgRects, itemLblRects, itemImgIDs, itemLblIDs, abbrevMap, deps, nil)
+}
+
+func renderIconAtWithLabelV1EngineSceneItem(boxID, connectionKey, idAttr string, iconX, iconY, iconSize float64, elements *[]map[string]any, files map[string]any, catalogCSV string, projectRoot string, fsys fs.FS, itemImgRects map[string][4]float64, itemLblRects map[string][4]float64, itemImgIDs map[string]string, itemLblIDs map[string]string, abbrevMap map[int]string, deps SceneDependenciesV1EngineSceneTypes, labelOverride *string) {
+	renderIconWithTextBoxV1EngineSceneItem(boxID, connectionKey, idAttr, iconX, iconY, iconSize, elements, files, catalogCSV, projectRoot, fsys, itemImgRects, itemLblRects, itemImgIDs, itemLblIDs, abbrevMap, deps, labelOverride, itemLabelWV1EngineSceneTypes)
+}
+
+func renderIconWithTextBoxV1EngineSceneItem(boxID, connectionKey, idAttr string, iconX, iconY, iconSize float64, elements *[]map[string]any, files map[string]any, catalogCSV string, projectRoot string, fsys fs.FS, itemImgRects map[string][4]float64, itemLblRects map[string][4]float64, itemImgIDs map[string]string, itemLblIDs map[string]string, abbrevMap map[int]string, deps SceneDependenciesV1EngineSceneTypes, labelOverride *string, labelWidth float64) {
 	if catalogCSV == "" {
 		return
 	}
@@ -317,16 +325,23 @@ func renderIconAtV1EngineSceneItem(boxID, connectionKey, idAttr string, iconX, i
 	iconID := fmt.Sprintf("%s-item", boxID)
 	seed := stableSceneSeedV1EngineSceneTypes(iconID)
 	anchorGroupID := fmt.Sprintf("%s-anchor", boxID)
-	var label string
-	if abbrevMap != nil {
-		label = abbrevMap[id]
-	}
-	if label == "" {
-		label = entity.ItemShortName(ce.Service)
+	label := ""
+	if labelOverride != nil {
+		label = strings.TrimSpace(*labelOverride)
+	} else {
+		if abbrevMap != nil {
+			label = abbrevMap[id]
+		}
+		if label == "" {
+			label = entity.ItemShortName(ce.Service)
+		}
 	}
 	labelH := itemLabelHeightV1EngineSceneItem(label)
+	if labelWidth != itemLabelWV1EngineSceneTypes {
+		labelH = math.Ceil(float64(strings.Count(label, "\n")+1) * itemLabelFontPxV1EngineSceneTypes * 1.25)
+	}
 	labelY := iconY + iconSize + 4
-	labelX := iconX + (iconSize-itemLabelWV1EngineSceneTypes)/2 // centre label on icon
+	labelX := iconX + (iconSize-labelWidth)/2 // centre label on icon
 	anchorX := iconX - excalidrawAnchorPadPxV1EngineSceneTypes
 	anchorY := iconY - excalidrawAnchorPadPxV1EngineSceneTypes
 	anchorW := iconSize + excalidrawAnchorPadPxV1EngineSceneTypes*2
@@ -352,16 +367,19 @@ func renderIconAtV1EngineSceneItem(boxID, connectionKey, idAttr string, iconX, i
 		"updated": updated, "link": nil, "locked": false, "frameId": nil,
 		"customData": map[string]any{"xaligoAnchorContent": true},
 	})
+	if label == "" {
+		return
+	}
 	// Record label bounding rect for bottom-side connection binding.
 	if itemLblRects != nil {
-		itemLblRects[connectionKey] = [4]float64{labelX, labelY, itemLabelWV1EngineSceneTypes, labelH}
+		itemLblRects[connectionKey] = [4]float64{labelX, labelY, labelWidth, labelH}
 		itemLblIDs[connectionKey] = iconID + "-lbl"
 	}
 	textSeed := stableSceneSeedV1EngineSceneTypes(iconID + "-lbl")
 	*elements = append(*elements, map[string]any{
 		"id": iconID + "-lbl", "type": "text",
 		"x": labelX, "y": labelY,
-		"width": itemLabelWV1EngineSceneTypes, "height": labelH,
+		"width": labelWidth, "height": labelH,
 		"angle":       0,
 		"strokeColor": "#1e1e1e", "backgroundColor": "transparent",
 		"fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",

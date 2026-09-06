@@ -1,11 +1,11 @@
 # V2 Generic Engine
 
-The V2 calculation core is a domain-neutral Rust library linked into the
+The V2 calculation engine is a Rust library linked into the
 `xaligo` executable. It does not run as a daemon, sidecar, dynamic plugin, or
 separate command:
 
 ```text
-Go use case -> cgo -> C ABI v2 -> Rust staticlib
+Go use case -> cgo -> C ABI v5 -> Rust staticlib
 ```
 
 The public Go use-case boundary remains:
@@ -41,9 +41,11 @@ external/engine/src/
 ├── cnf/engine.rs           ABI constants, limits, and defaults
 ├── cnf/engine_abi.rs       generated ABI field constants
 ├── ent/model/              generic document and normalized SVG models
+├── ent/model/aws/          typed ALB, NLB, and listener definitions
 ├── ent/request/engine.rs   binary request decoding
 ├── ent/response/engine.rs  binary response encoding
 ├── usc/engine.rs           operation dispatch
+├── usc/aws/                per-service validation and visual composition
 ├── usc/cancel.rs           call-scoped cooperative cancellation
 ├── usc/layout.rs           layout resolution entry point and shared state
 ├── usc/layout_flow.rs      stack, grid, and absolute placement
@@ -68,6 +70,16 @@ external/engine/src/
 `make generate-engine-abi` regenerates both Go and Rust constants without
 introducing runtime reflection, serde, JSON, or arbitrary maps.
 
+The module hierarchy is declared only in
+[`external/engine/src/mod.rs`](../../../external/engine/src/mod.rs), including
+the inline AWS namespaces. There are no nested AWS `mod.rs` files. The component
+enum lives in
+[`ent/model/aws/component.rs`](../../../external/engine/src/ent/model/aws/component.rs),
+and the composition entry point lives in
+[`usc/aws/composition.rs`](../../../external/engine/src/usc/aws/composition.rs).
+Re-exports preserve the existing `ent::model::aws::Component` and
+`usc::aws::compose` paths; this organization does not change rendering or ABI.
+
 This preserves the `cnf / ent / usc / ctl / util` dependency vocabulary while
 placing calculation behavior in cohesive use-case files and without copying
 VEM's CLI-specific `main.rs`. `lib.rs` is the corresponding library entry
@@ -78,8 +90,8 @@ The current data path is `ctl -> usc -> ctl`. The `rep` layer deliberately has
 no implementation because calculation results return directly through `ctl`.
 If PPTX package generation later moves into Rust, its external-representation
 writer belongs in a flat `rep/pptx_*.rs` slice and may be called from `usc`;
-layout, routing, and validation remain in `usc`. Layer directories stay shallow
-and use filenames such as `layout_flow.rs` instead of nested directories.
+layout, routing, and validation remain in `usc`. Generic algorithm files stay
+shallow; service components deliberately use `usc/aws/<component>.rs`.
 
 Engine-owned models intentionally have no `derive` or serde annotations.
 Standard traits and the binary ABI codecs are implemented explicitly under
@@ -114,14 +126,37 @@ The engine accepts only the following calculation concepts:
 | `Group` | Nested content box and child layout |
 | `Capture` | Generic emphasis or annotation boundary |
 | `Item` | Atomic or composed visual slot |
-| `Port` | Addressable endpoint placed inside its owner |
+| `Port` | Addressable endpoint placed inside or as an icon intersecting one selected owner border |
 | `Line` | Straight or orthogonal route between IDs |
 | `Text` | Renderer-neutral intrinsic text measurement and label data |
 | `Spacer` | Non-drawing layout participant |
 
-AWS, UML, and future vocabularies must lower to these concepts. No profile ID,
-source tag, icon namespace, `aws`, or `uml` discriminator crosses into a Rust
-calculation branch.
+These concepts remain the shared layout/routing vocabulary. Native AWS
+components pass a closed, typed component model across the ABI and expand once
+into these generic parts before layout. Source tags and profile IDs do not
+drive generic algorithms or either encoder.
+
+## Native AWS components
+
+ALB/NLB service definitions live in `ent/model/aws/{alb,nlb,listener}.rs` and
+their validation/design in `usc/aws/`. The latter controls domain-tag text
+measurement, listener-card placement and security badges. It clones and expands
+the source document without changing authored IDs. Both SVG and PPTX consume
+the same result. There are no watermarks or renderer-specific drawing strings.
+
+ALB feature models add rules, conditions/matches, actions/weighted forwards/JWT
+claims, transforms/rewrites, target groups/targets, typed options and inherited
+presentation controls. Their corresponding `usc/aws/` files validate and
+measure the feature tree before generic layout. A closed option schema checks
+each setting's owner and type; it is not an AWS deployment validator. Hidden
+cards do not allocate layout space, but are still validated. Connections to
+hidden IDs are projected to their visible ancestors. All modules are declared
+centrally in `external/engine/src/mod.rs`, without AWS-local `mod.rs` files.
+
+This is a statically linked built-in composition stage, not executable profile
+callbacks. Other AWS catalog tags still use their icon/group/boundary profiles;
+native models for all services are not yet implemented. See the [component
+syntax and limits](../xal/aws-resources.md#native-albnlb-components-v2).
 
 ## Layout and routing
 
@@ -136,7 +171,9 @@ The implemented policies are:
 - absolute placement;
 - nested content boxes with padding, gap, alignment, justification, and
   `error` or `visible` overflow;
-- owner-relative ports with side, anchor, offset, and explicit size; and
+- owner-relative ports with side, anchor, tangential offset, explicit size,
+  boundary-icon overlap validation, and a generic shape-less boundary-icon
+  form; and
 - straight and deterministic orthogonal routes with generic obstacle scoring,
   endpoint decorations, line styles, and labels.
 
@@ -152,14 +189,22 @@ decorations without recomputing layout or routing. SVG registration continues
 to pass through the separate safe normalization operation before SQLite stores
 it.
 
-## ABI v2
+## ABI v5
 
-ABI v2 is a bounded binary contract. All fixed-width values are little-endian;
+ABI v5 is a bounded binary contract. All fixed-width values are little-endian;
 variable text is UTF-8 with explicit lengths. An input tree is flattened once
 in pre-order and each record stores its parent index. Optional numeric and
 boolean fields use presence bitsets, so an omitted value cannot collapse into
 its zero value. Named string slots carry IDs, text, colors, icon references,
-and endpoints; arbitrary maps and renderer JSON are not accepted.
+and endpoints; arbitrary maps and renderer JSON are not accepted. Version 3 added
+closed AWS component kind/domain/protocol/mTLS/reference fields, a listener
+port, and optional backend TLS/mTLS flags. Version 4 adds the optional listener
+`show-title` boolean, preserving unset versus false. Version 5 adds bounded
+feature kind/subtype/name/value/aux/order slots and detail-level/show/hide
+controls. Rust decodes them into closed service models; no arbitrary option
+maps, renderer strings or plugin callbacks cross the ABI. The XLE2/XLR2 family
+magic remains; the independent version field is 5 and rejects older layouts
+before decoding.
 
 The resolved response remains in deterministic pre-order and contains:
 

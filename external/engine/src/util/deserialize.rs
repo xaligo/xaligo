@@ -1,44 +1,13 @@
 use crate::cnf::engine::{
-    ABI_VERSION,
-    BOOL_COLUMN_SPAN,
-    BOOL_COLUMNS,
-    BOOL_KNOWN,
-    BOOL_LAYER,
-    BOOL_PORT_VISIBLE,
-    BOOL_ROW_SPAN,
-    BOOL_TEXT_CLIP,
-    BOOL_TEXT_FIT,
-    BOOL_TEXT_WRAP,
-    BOOL_VISIBLE,
-    MAX_ELEMENTS,
-    MAX_REQUEST_BYTES,
-    NUMERIC_FIELD_COUNT,
-    OPERATION_LAYOUT,
-    OPERATION_NORMALIZE_SVG,
-    OPERATION_SVG,
-    REQUEST_MAGIC,
-    STRING_FIELD_COUNT,
+    ABI_VERSION, BOOL_COLUMNS, BOOL_COLUMN_SPAN, BOOL_KNOWN, BOOL_LAYER, BOOL_PORT_VISIBLE,
+    BOOL_ROW_SPAN, BOOL_TEXT_CLIP, BOOL_TEXT_FIT, BOOL_TEXT_WRAP, BOOL_VISIBLE, MAX_ELEMENTS,
+    MAX_REQUEST_BYTES, NUMERIC_FIELD_COUNT, OPERATION_LAYOUT, OPERATION_NORMALIZE_SVG,
+    OPERATION_SVG, REQUEST_MAGIC, STRING_FIELD_COUNT,
 };
 use crate::ent::model::document::{
-    Alignment,
-    Concept,
-    Decoration,
-    DocumentSpec,
-    ElementSpec,
-    IconSpec,
-    Insets,
-    Justification,
-    LayoutPolicy,
-    LineSpec,
-    LineStyle,
-    MissingIconPolicy,
-    Overflow,
-    PortSpec,
-    RoutingPolicy,
-    Shape,
-    Side,
-    TextSpec,
-    VisualSpec,
+    Alignment, Concept, Decoration, DocumentSpec, ElementSpec, IconSpec, Insets, Justification,
+    LayoutPolicy, LineSpec, LineStyle, MissingIconPolicy, Overflow, PortSpec, RoutingPolicy, Shape,
+    Side, TextSpec, VisualSpec,
 };
 use crate::ent::request::engine::EngineRequest;
 
@@ -264,6 +233,25 @@ fn decode_element(decoder: &mut Decoder<'_>, index: usize) -> Result<ElementSpec
     }
     let number = |field: usize| option_from_u64_flag(numeric_flags, field, numbers[field]);
     Ok(ElementSpec {
+        aws: decode_aws_component(
+            &strings,
+            number(crate::cnf::engine_abi::NUMBER_AWS_PORT),
+            decode_optional_bool(
+                booleans_present,
+                booleans_value,
+                crate::cnf::engine_abi::BOOL_AWS_BACKEND_TLS,
+            ),
+            decode_optional_bool(
+                booleans_present,
+                booleans_value,
+                crate::cnf::engine_abi::BOOL_AWS_BACKEND_MTLS,
+            ),
+            decode_optional_bool(
+                booleans_present,
+                booleans_value,
+                crate::cnf::engine_abi::BOOL_AWS_SHOW_TITLE,
+            ),
+        )?,
         parent,
         id: strings[0].clone(),
         concept,
@@ -375,6 +363,8 @@ fn option_from_u8_flag(flags: u8, bit: u8, value: f64) -> Option<f64> {
         None
     }
 }
+
+include!("deserialize_aws.rs");
 
 fn option_from_u64_flag(flags: u64, bit: usize, value: f64) -> Option<f64> {
     if flags & (1 << bit) != 0 {

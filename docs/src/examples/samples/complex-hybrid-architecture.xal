@@ -62,11 +62,11 @@
               </generic-group>
 
               <vpc id="prod-vpc" title="Production VPC · 10.20.0.0/16" row="10">
+                <vpc-endpoint id="endpoint" side="right" anchor="0.28" />
                 <generic-group id="vpc-edge-security" title="VPC Edge &amp; Shared Security" icon-id="104032" align="middle-spread" row="1">
                   <item id="1581" name="igw" dx="-12" dy="8" /> <!-- Internet Gateway -->
                   <item id="1182" name="alb" />       <!-- Application Load Balancer -->
                   <item id="1582" name="nat" />       <!-- NAT Gateway -->
-                  <item id="1579" name="endpoint" />  <!-- VPC Endpoint -->
                   <item id="222" name="secrets" />    <!-- Secrets Manager -->
                 </generic-group>
 
@@ -157,7 +157,7 @@
         <connection src="706" dst="13" kind="traffic" color="#d97706" />
         <connection src="13" dst="705" kind="traffic" color="#d97706" />
         <connection src="27" dst="1020" kind="traffic" color="#0891b2" />
-        <connection src="27" dst="1579" kind="route" />
+        <connection src="27" dst="endpoint" kind="route" />
         <connection src="222" dst="27" kind="traffic" color="#db2777" />
 
         <!-- Replication line exercises dotted traffic styling. -->

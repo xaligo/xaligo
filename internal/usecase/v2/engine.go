@@ -30,7 +30,7 @@ func NewEngineUsecase() EngineUsecase {
 }
 
 const (
-	engineABIVersion            = uint16(2)
+	engineABIVersion            = uint16(5)
 	engineOperationLayout       = byte(1)
 	engineOperationSVG          = byte(2)
 	engineOperationNormalizeSVG = byte(3)
@@ -313,6 +313,30 @@ func encodeEngineElement(output *bytes.Buffer, flat flatEngineElement) error {
 	}
 	strings[8] = element.Visual.Fill
 	strings[9] = element.Visual.Stroke
+	if component := element.AWS; component != nil {
+		strings[engineStringAwsKind] = component.Kind
+		strings[engineStringAwsDomain] = component.Domain
+		strings[engineStringAwsProtocol] = component.Protocol
+		strings[engineStringAwsMutualTls] = component.MutualTLS
+		strings[engineStringAwsCertificate] = component.Certificate
+		strings[engineStringAwsTrustStore] = component.TrustStore
+		strings[engineStringAwsTargetGroup] = component.TargetGroup
+		strings[engineStringAwsDetailLevel] = component.DetailLevel
+		strings[engineStringAwsShow] = component.Show
+		strings[engineStringAwsHide] = component.Hide
+		strings[engineStringAwsType] = component.Type
+		strings[engineStringAwsName] = component.Name
+		strings[engineStringAwsValue] = component.Value
+		strings[engineStringAwsAux] = component.Aux
+		strings[engineStringAwsOrder] = component.Order
+		if component.Port != nil {
+			port := float64(*component.Port)
+			setEngineNumber(&numberFlags, &numbers, engineNumberAwsPort, &port)
+		}
+		setEngineBool(&booleansPresent, &booleansValue, engineBoolAwsBackendTls, component.BackendTLS)
+		setEngineBool(&booleansPresent, &booleansValue, engineBoolAwsBackendMtls, component.BackendMTLS)
+		setEngineBool(&booleansPresent, &booleansValue, engineBoolAwsShowTitle, component.ShowTitle)
+	}
 
 	var side byte
 	if element.Port != nil {

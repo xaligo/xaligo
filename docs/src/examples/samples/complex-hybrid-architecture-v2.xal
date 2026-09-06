@@ -5,13 +5,17 @@
   green for data, amber for asynchronous delivery, and slate for operations.
   V2 routing chooses bends automatically, so the V1-only manual <bend>/<bends>
   hints are intentionally omitted here.
+  The private ingress path embeds the native NLB TCP passthrough component:
+  Direct Connect -> TCP:443 listener -> IP target group -> backend TLS/mTLS.
+  Unlike the public ALB path, TLS and client-certificate verification happen
+  at the private API target, not at the NLB.
 -->
 <xaligo version="2">
   <frames>
     <frame id="complex-hybrid-architecture"
            title="Hybrid Enterprise Request &amp; Data Flow"
            version="2026.08"
-           width="1920" height="1200"
+           width="1920" height="1500"
            class="pa-4"
            item-size="40">
       <row gap="32">
@@ -80,15 +84,27 @@
               </row>
 
               <vpc id="prod-vpc" title="Production VPC · 10.20.0.0/16" gap="18" row="10">
+                <vpc-endpoint id="endpoint" side="right" anchor="0.28" />
                 <generic-group id="vpc-edge-security" title="Connectivity &amp; Security" icon-id="104032"
                                layout="horizontal" align="middle-spread" row="1.5">
                   <item id="igw" icon-ref="catalog:1581" label="Internet GW" />
                   <item id="direct-connect" icon-ref="catalog:1169" label="Direct Connect" />
                   <item id="alb" icon-ref="catalog:1182" label="Public ALB" />
-                  <item id="endpoint" icon-ref="catalog:1579" label="Private Endpoint" />
                   <item id="secrets" icon-ref="catalog:222" label="Secrets" />
                   <item id="flow-logs" icon-ref="catalog:1580" label="Flow Logs" />
                 </generic-group>
+
+                <!-- VPC-scoped private NLB; the registered target lives in AZ-a below. -->
+                <row id="private-ingress" height="236" gap="32">
+                  <aws-elastic-load-balancing-network-load-balancer
+                      id="private-nlb" domain="private.api.example.test" margin-top="10">
+                    <aws-listener id="private-tcp-443" protocol="TCP" port="443"
+                                  backend-tls="true" backend-mtls="true" target-group="private-api" />
+                  </aws-elastic-load-balancing-network-load-balancer>
+                  <rectangle id="private-api" width="240" height="90" margin-top="95"
+                             title="Target group / private-api&#10;TCP :443 · ip"
+                             fill="#fff7ed" stroke="#fb923c" />
+                </row>
 
                 <row gap="18" row="8.5">
                   <col span="6">
@@ -103,6 +119,8 @@
                                             layout="horizontal" align="middle-spread">
                           <item id="web-app" icon-ref="catalog:27" label="Web / API" />
                           <item id="containers" icon-ref="catalog:547" label="Services" />
+                          <item id="mtls-api" icon-ref="catalog:27"
+                                label="mTLS API&#10;10.20.10.20 :443&#10;TLS + mTLS" />
                         </auto-scaling-group>
                       </private-subnet>
                       <private-subnet id="data-subnet-a" title="Data · 10.20.20.0/24"
@@ -178,8 +196,14 @@
         <connection src="igw" dst="alb" kind="route" src-side="right" dst-side="left" />
         <connection src="igw" dst="alb" kind="traffic" color="#2563eb" stroke-width="2"
                     src-side="right" dst-side="left" />
-        <connection src="direct-connect" dst="alb" kind="traffic" color="#2563eb"
-                    stroke-style="dashed" src-side="right" dst-side="left" />
+
+        <!-- Private TLS passthrough: NLB forwards encrypted TCP, target verifies mTLS. -->
+        <connection src="direct-connect" dst="private-tcp-443" kind="traffic" color="#2563eb"
+                    src-side="bottom" dst-side="left" label="443" />
+        <connection src="private-tcp-443" dst="private-api" kind="traffic" color="#2563eb"
+                    src-side="right" dst-side="left" />
+        <connection src="private-api" dst="mtls-api" kind="traffic" color="#2563eb"
+                    src-side="bottom" dst-side="top" label="443" />
 
         <!-- ALB fan-out uses separate anchors to keep the three request lanes legible. -->
         <connection src="alb" dst="web-app" kind="traffic" color="#2563eb"

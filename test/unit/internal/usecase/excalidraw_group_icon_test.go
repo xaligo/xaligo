@@ -77,52 +77,32 @@ func TestGenericGroupCatalogIcon(t *testing.T) {
 	if !(header["x"].(float64) <= icon["x"].(float64) && header["y"].(float64) <= icon["y"].(float64) && header["x"].(float64)+header["width"].(float64) >= label["x"].(float64)+label["width"].(float64)) {
 		t.Fatalf("header does not cover icon and label: header=%#v icon=%#v label=%#v", header, icon, label)
 	}
-	wantRight := 18.0 + min(14.0, header["height"].(float64)/2)
+	wantRight := 4.0 + min(14.0, header["height"].(float64)/2)
 	if got := header["x"].(float64) + header["width"].(float64) - label["x"].(float64) - label["width"].(float64); got != wantRight {
 		t.Fatalf("header right extent = %v, want %v", got, wantRight)
 	}
 }
 
-func TestGroupHeaderKeepsConservativeTextSpare(t *testing.T) {
-	doc, err := usecase.Parse(strings.NewReader(`<frame width="800" height="240"><aws-cloud id="cloud" title="AWS Cloud"><region id="region" title="ap-northeast-1"><generic-group id="app-subnet" title="Application Subnet upper lane" /></region></aws-cloud></frame>`))
-	if err != nil {
-		t.Fatal(err)
+func TestGroupHeaderTextWidthFitsHalfAndFullWidthCharacters(t *testing.T) {
+	tests := []struct {
+		name  string
+		label string
+		want  float64
+	}{
+		{name: "half-width Latin", label: "ABCD", want: 43},
+		{name: "full-width Latin", label: "ＡＢＣＤ", want: 64},
+		{name: "mixed Japanese", label: "API基盤", want: 63},
+		{name: "half-width Katakana", label: "ｶﾅ", want: 24},
+		{name: "half-width space", label: "A B", want: 30},
+		{name: "full-width space", label: "A　B", want: 40},
 	}
-	root, err := usecase.Build(doc)
-	if err != nil {
-		t.Fatal(err)
-	}
-	out, err := usecase.BuildJSONWithFS(root, awsassets.Assets, awsassets.CatalogCSV, awsassets.GroupIconsDir, 32, nil, nil, newSceneDependencies())
-	if err != nil {
-		t.Fatal(err)
-	}
-	var scene sceneFile
-	if err := json.Unmarshal(out, &scene); err != nil {
-		t.Fatal(err)
-	}
-	for _, element := range scene.Elements {
-		label, ok := element["text"].(string)
-		if !ok || label != "Application Subnet upper lane" {
-			continue
-		}
-		width := element["width"].(float64)
-		if want := float64(len(label)) * 9.2; width < want {
-			t.Fatalf("group label width = %v, want at least %v", width, want)
-		}
-		return
-	}
-	t.Fatal("group label not found")
-}
-
-func TestGroupHeaderTextWidthAccountsForFullWidthCharacters(t *testing.T) {
-	scene := buildSceneForGroupTitle(t, "ＡＢＣＤ")
-	fullWidth := groupLabelWidth(t, scene, "ＡＢＣＤ")
-
-	scene = buildSceneForGroupTitle(t, "ABCD")
-	ascii := groupLabelWidth(t, scene, "ABCD")
-
-	if fullWidth <= ascii*1.5 {
-		t.Fatalf("full-width label width = %v, ASCII width = %v", fullWidth, ascii)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			scene := buildSceneForGroupTitle(t, tt.label)
+			if got := groupLabelWidth(t, scene, tt.label); got != tt.want {
+				t.Fatalf("group label width = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
 
@@ -178,6 +158,46 @@ func TestItemIconOffsetRejectsParentBoundsOverflow(t *testing.T) {
 	_, err := newUsecase().RenderSVG(context.Background(), input, entity.RenderOptions{Theme: "light"})
 	if err == nil || !strings.Contains(err.Error(), "outside parent") {
 		t.Fatalf("RenderSVG() err = %v, want outside parent", err)
+	}
+}
+
+func TestVPCEndpointIconIsCenteredOnVPCBorderWithoutItemLabel(t *testing.T) {
+	scene := buildItemScene(t, `<frame width="400" height="240"><vpc id="network" title="VPC" width="300" height="180"><vpc-endpoint id="private-api" side="right" anchor="0.5" size="40" /></vpc></frame>`)
+	var border, icon map[string]any
+	for _, element := range scene.Elements {
+		if element["id"] == "frame-0-rect" {
+			border = element
+		}
+		if element["fileId"] == "item-cat-1579" {
+			icon = element
+		}
+	}
+	if border == nil || icon == nil {
+		t.Fatalf("VPC border/icon missing: border=%#v icon=%#v", border, icon)
+	}
+	if got, want := icon["x"].(float64)+icon["width"].(float64)/2, border["x"].(float64)+border["width"].(float64); got != want {
+		t.Fatalf("endpoint center x = %v, want VPC right border %v", got, want)
+	}
+	customData, _ := icon["customData"].(map[string]any)
+	if customData["xaligoSemanticElementKind"] != "port" || customData["xaligoSemanticParentElementId"] != border["id"] {
+		t.Fatalf("VPC endpoint semantic metadata = %#v, want port child of %v", customData, border["id"])
+	}
+	for _, element := range scene.Elements {
+		if element["id"] == icon["id"].(string)+"-lbl" {
+			t.Fatalf("VPC endpoint unexpectedly rendered a normal item label: %#v", element)
+		}
+	}
+}
+
+func TestVPCEndpointDoesNotConsumeVPCItemLayout(t *testing.T) {
+	base := buildItemScene(t, `<frame width="400" height="240"><vpc id="network" title="VPC" width="300" height="180"><item id="27" /></vpc></frame>`)
+	withEndpoint := buildItemScene(t, `<frame width="400" height="240"><vpc id="network" title="VPC" width="300" height="180"><item id="27" /><vpc-endpoint id="private-api" /></vpc></frame>`)
+	baseItem := itemIconByFileID(t, base, "item-cat-27")
+	endpointItem := itemIconByFileID(t, withEndpoint, "item-cat-27")
+	for _, axis := range []string{"x", "y", "width", "height"} {
+		if baseItem[axis] != endpointItem[axis] {
+			t.Fatalf("item %s changed after adding VPC endpoint: base=%#v endpoint=%#v", axis, baseItem, endpointItem)
+		}
 	}
 }
 

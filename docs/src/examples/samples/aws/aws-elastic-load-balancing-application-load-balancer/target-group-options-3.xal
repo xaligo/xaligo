@@ -1,0 +1,20 @@
+<!-- Editable native ALB example; AWS setting references are not credentials or deployment configuration. -->
+<xaligo version="2">
+  <frames>
+<frame id="target-group-options-3" title="ALB / target-group-options-3" width="695" height="447">
+      <aws-elastic-load-balancing-application-load-balancer id="alb" domain="api.example.test" detail-level="detailed" margin="24">
+        <aws-listener id="listener-206" protocol="HTTPS" port="443" certificate="server-cert" target-group="app">
+        </aws-listener>
+        <aws-target-group id="app" name="app" target-type="ip" protocol="HTTP" port="8080">
+          <aws-option id="opt-207" name="target-cross-zone" value="use_load_balancer_configuration" />
+          <aws-option id="opt-208" name="target_group_health.dns_failover.minimum_healthy_targets.count" value="1" />
+          <aws-option id="opt-209" name="target_group_health.dns_failover.minimum_healthy_targets.percentage" value="off" />
+          <aws-option id="opt-210" name="target_group_health.unhealthy_state_routing.minimum_healthy_targets.count" value="1" />
+          <aws-option id="opt-211" name="target_group_health.unhealthy_state_routing.minimum_healthy_targets.percentage" value="off" />
+          <aws-option id="opt-212" name="waf.http2.traffic_inspection_behavior" value="inspect_after_sufficient_data" />
+          <aws-registered-target id="api" name="10.20.1.20" port="8080" zone="ap-northeast-1a" />
+        </aws-target-group>
+      </aws-elastic-load-balancing-application-load-balancer>
+    </frame>
+  </frames>
+</xaligo>

@@ -47,6 +47,12 @@
     "postinstall": "node scripts/npm/install.cjs",
     "test:npm-installer": "node --test test/unit/scripts/npm/install_test.cjs",
     "test:release-metadata": "bash test/unit/scripts/build/release_metadata_test.sh",
+    "generate:aws-tags": "node scripts/tool/generate_aws_tags.mjs",
+    "generate:aws-samples": "node scripts/tool/generate_aws_samples.mjs",
+    "generate:aws-designs": "node scripts/tool/generate_aws_designs.mjs",
+    "import:aws-cfn-research": "node scripts/tool/import_aws_research.mjs",
+    "import:aws-api-research": "node scripts/tool/import_aws_api_research.mjs",
+    "test:aws-designs": "node --test test/unit/scripts/tool/aws_design_test.mjs",
     "import:tabler-icons": "node scripts/tool/import_tabler_icons.mjs",
     "import:yamaha-icons": "node scripts/tool/import_yamaha_icons.mjs"
   },

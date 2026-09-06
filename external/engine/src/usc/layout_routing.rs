@@ -49,11 +49,30 @@ impl LayoutState<'_> {
             width,
             height,
         };
-        if !contains(owner_bounds, bounds) {
+        let boundary_icon = is_boundary_icon_port(element, owner_bounds, bounds);
+        if !contains(owner_bounds, bounds) && !boundary_icon {
             return Err(LayoutError::new(format!(
                 "port {:?} lies outside owner {:?}",
                 element.id, owner.id
             )));
+        }
+        for previous_index in 0..index {
+            let previous = &self.document.elements[previous_index];
+            if previous.concept != Concept::Port || previous.parent != element.parent {
+                continue;
+            }
+            let Some(previous_resolved) = self.resolved[previous_index].as_ref() else {
+                continue;
+            };
+            let previous_bounds = bounds_of(previous_resolved);
+            if (boundary_icon || is_boundary_icon_port(previous, owner_bounds, previous_bounds))
+                && port_bounds_overlap(bounds, previous_bounds)
+            {
+                return Err(LayoutError::new(format!(
+                    "port {:?} overlaps sibling port {:?}",
+                    element.id, previous.id
+                )));
+            }
         }
         let mut resolved = resolved_element(element, bounds)?;
         resolved.visual.visible = element.port.visible.unwrap_or(resolved.visual.visible);
@@ -98,8 +117,8 @@ impl LayoutState<'_> {
             let target = self.resolved[target_index]
                 .as_ref()
                 .ok_or_else(|| LayoutError::new("line target was not resolved"))?;
-            let source_bounds = bounds_of(source);
-            let target_bounds = bounds_of(target);
+            let source_bounds = connection_bounds_of(source);
+            let target_bounds = connection_bounds_of(target);
             let source_side = resolve_auto_side(
                 element.line.source_side,
                 source_bounds.center(),
@@ -110,13 +129,13 @@ impl LayoutState<'_> {
                 target_bounds.center(),
                 source_bounds.center(),
             );
-            let start = anchor_point(
-                source_bounds,
+            let start = connection_anchor_point(
+                source,
                 source_side,
                 element.line.source_anchor.unwrap_or(0.5),
             );
-            let end = anchor_point(
-                target_bounds,
+            let end = connection_anchor_point(
+                target,
                 target_side,
                 element.line.target_anchor.unwrap_or(0.5),
             );
@@ -314,6 +333,93 @@ impl LayoutState<'_> {
             .map(|(_, points)| points)
             .unwrap_or_else(|| vec![start, end])
     }
+}
+
+// Icon-only items have a wider text/layout slot. Connect to their visible icon,
+// not to the invisible slot edge. This is a generic visual rule, not a domain
+// resource lookup; group and port boundary geometry is unchanged.
+fn connection_bounds_of(element: &ResolvedElement) -> Bounds {
+    if element.concept == Concept::Item
+        && element.visual.shape == Shape::None
+        && !element.icon_ref.is_empty()
+        && element.icon_width > 0.0
+        && element.icon_height > 0.0
+    {
+        return Bounds {
+            x: element.icon_x,
+            y: element.icon_y,
+            width: element.icon_width,
+            height: element.icon_height,
+        };
+    }
+    bounds_of(element)
+}
+
+fn connection_anchor_point(element: &ResolvedElement, side: Side, anchor: f64) -> Point {
+    let mut bounds = connection_bounds_of(element);
+    // A bottom connection must leave below the label, not strike through it.
+    // Other sides bind directly to the visible icon.
+    if side == Side::Bottom
+        && element.concept == Concept::Item
+        && element.visual.shape == Shape::None
+        && !element.icon_ref.is_empty()
+        && !element.text.value.is_empty()
+    {
+        bounds = Bounds {
+            x: element.text.x,
+            y: element.text.y,
+            width: element.text.width,
+            height: element.text.height,
+        };
+    }
+    anchor_point(bounds, side, anchor)
+}
+
+fn is_boundary_icon_port(element: &ElementSpec, owner: Bounds, port: Bounds) -> bool {
+    if element.visual.shape != Shape::None
+        || (element.icon.reference.is_empty() && element.icon.fallback_reference.is_empty())
+    {
+        return false;
+    }
+    const EPSILON: f64 = 1e-9;
+    match element.port.side {
+        Side::Top | Side::Auto => {
+            port.x + EPSILON >= owner.x
+                && port.x + port.width <= owner.x + owner.width + EPSILON
+                && port.y < owner.y - EPSILON
+                && port.y + port.height > owner.y + EPSILON
+                && port.y + port.height < owner.y + owner.height - EPSILON
+        }
+        Side::Right => {
+            port.y + EPSILON >= owner.y
+                && port.y + port.height <= owner.y + owner.height + EPSILON
+                && port.x < owner.x + owner.width - EPSILON
+                && port.x + port.width > owner.x + owner.width + EPSILON
+                && port.x > owner.x + EPSILON
+        }
+        Side::Bottom => {
+            port.x + EPSILON >= owner.x
+                && port.x + port.width <= owner.x + owner.width + EPSILON
+                && port.y < owner.y + owner.height - EPSILON
+                && port.y + port.height > owner.y + owner.height + EPSILON
+                && port.y > owner.y + EPSILON
+        }
+        Side::Left => {
+            port.y + EPSILON >= owner.y
+                && port.y + port.height <= owner.y + owner.height + EPSILON
+                && port.x < owner.x - EPSILON
+                && port.x + port.width > owner.x + EPSILON
+                && port.x + port.width < owner.x + owner.width - EPSILON
+        }
+    }
+}
+
+fn port_bounds_overlap(left: Bounds, right: Bounds) -> bool {
+    const EPSILON: f64 = 1e-9;
+    left.x < right.x + right.width - EPSILON
+        && left.x + left.width > right.x + EPSILON
+        && left.y < right.y + right.height - EPSILON
+        && left.y + left.height > right.y + EPSILON
 }
 
 fn separate_parallel_lane(points: Vec<Point>, lane_index: usize) -> Vec<Point> {

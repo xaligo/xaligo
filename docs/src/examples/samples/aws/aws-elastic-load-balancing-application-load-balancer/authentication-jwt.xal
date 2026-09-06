@@ -1,0 +1,26 @@
+<!-- Editable native ALB example; AWS setting references are not credentials or deployment configuration. -->
+<xaligo version="2">
+  <frames>
+<frame id="authentication-jwt" title="ALB / authentication-jwt" width="507" height="1017">
+      <aws-elastic-load-balancing-application-load-balancer id="alb" domain="api.example.test" detail-level="detailed" margin="24">
+        <aws-listener id="listener-90" protocol="HTTPS" port="443" certificate="server-cert">
+          <aws-listener-rule id="rule-89" priority="10">
+            <aws-rule-condition id="condition-85" field="path-pattern">
+              <aws-rule-match id="match-86" value="/secure/*" />
+            </aws-rule-condition>
+            <aws-rule-action id="auth-87" type="jwt-validation" order="1">
+              <aws-option id="opt-75" name="jwt-issuer" value="https://id.example.test" />
+              <aws-option id="opt-76" name="jwks-endpoint" value="https://id.example.test/.well-known/jwks.json" />
+              <aws-jwt-claim id="claim-77" name="aud" format="single-string"><aws-rule-match id="match-78" value="orders" /></aws-jwt-claim>
+              <aws-jwt-claim id="claim-79" name="roles" format="string-array"><aws-rule-match id="match-80" value="reader" />
+              <aws-rule-match id="match-81" value="admin" /></aws-jwt-claim>
+              <aws-jwt-claim id="claim-82" name="scope" format="space-separated-values"><aws-rule-match id="match-83" value="read" />
+              <aws-rule-match id="match-84" value="write" /></aws-jwt-claim>
+            </aws-rule-action>
+            <aws-rule-action id="forward-88" type="forward" order="2" target-group="app" />
+          </aws-listener-rule>
+        </aws-listener>
+      </aws-elastic-load-balancing-application-load-balancer>
+    </frame>
+  </frames>
+</xaligo>

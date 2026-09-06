@@ -23,5 +23,7 @@ applyTo: ".github/instructions/manual/**"
   `map[string]interface{}` until the renderer-neutral V2 model replaces it.
 - Do not commit binaries, dependencies, caches, `output`, WASM artifacts, or
   generated npm package output. Checked-in documentation SVGs generated from
-  `docs/src/architecture/*.xal` are the explicit exception; commit each SVG
-  with its `.xal` source.
+  `docs/src/architecture/*.xal` and the AWS component samples under
+  `docs/src/examples/samples/aws/<tag>/` are explicit exceptions; commit each
+  SVG with its `.xal` source. Preserve hand-edited AWS sample sources when
+  refreshing generated profile data or SVG previews.

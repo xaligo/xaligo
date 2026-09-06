@@ -1,0 +1,22 @@
+<!-- Editable native ALB example; AWS setting references are not credentials or deployment configuration. -->
+<xaligo version="2">
+  <frames>
+<frame id="target-types" title="ALB / target-types" width="919" height="579">
+      <aws-elastic-load-balancing-application-load-balancer id="alb" domain="api.example.test" detail-level="detailed" margin="24">
+        <aws-listener id="listener-213" protocol="HTTPS" port="443" certificate="server-cert" target-group="ip-app">
+        </aws-listener>
+        <aws-target-group id="ip-app" name="ip-app" target-type="ip" protocol="HTTP" port="8080">
+          <aws-registered-target id="api-ip" name="10.20.1.20" port="8080" zone="ap-northeast-1a">
+            <aws-option id="opt-214" name="health" value="unhealthy" />
+            <aws-option id="opt-215" name="health-reason" value="Target.ResponseCodeMismatch" />
+            <aws-option id="opt-216" name="anomaly" value="normal" />
+            <aws-option id="opt-217" name="administrative-override" value="zonal_shift_active" />
+            <aws-option id="opt-218" name="optimizer-agent" value="concurrency=100; data=:8080" />
+          </aws-registered-target>
+        </aws-target-group>
+        <aws-target-group id="instance-app" name="instance-app" target-type="instance" protocol="HTTPS" port="8443"><aws-registered-target id="api-instance" name="i-example" /></aws-target-group>
+        <aws-target-group id="lambda-app" name="lambda-app" target-type="lambda"><aws-registered-target id="api-lambda" name="lambda:orders" /><aws-option id="opt-219" name="lambda.multi_value_headers.enabled" value="true" /></aws-target-group>
+      </aws-elastic-load-balancing-application-load-balancer>
+    </frame>
+  </frames>
+</xaligo>

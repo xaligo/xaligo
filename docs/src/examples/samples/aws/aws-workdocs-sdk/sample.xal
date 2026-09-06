@@ -1,0 +1,20 @@
+<!-- AWS functional design library v2. Editable: see README.md and research/designs.json. -->
+<!-- Configuration cards describe AWS concepts; their text is not a provisioning command. -->
+<xaligo version="2">
+<frames>
+  <frame id="sample" title="aws-workdocs-sdk" width="1500" height="1160">
+    <col width="1360" height="1000" margin="32" gap="24">
+      <row height="230" gap="32"><aws-workdocs-sdk id="component" label="Amazon WorkDocs SDK" label-width="340" />
+        <rectangle id="overview" width="920" height="180" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="RETIRED — historical diagrams only / 提供終了&#10;Research: api-context&#10;API: workdocs&#10;Functional structure and full reference tables are in README." />
+      </row>
+      <row height="242" gap="24"><rectangle id="part-1" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="CreateComment&#10;API input (not an XAL attribute)&#10;Document Id*: string&#10;Text*: string&#10;Version Id*: string&#10;Authentication Token: string&#10;Notify Collaborators: boolean&#10;Full input/output schema in API sheet" />
+        <rectangle id="part-2" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="CreateCustomMetadata&#10;API input (not an XAL attribute)&#10;Custom Metadata*: map&#10;Resource Id*: string&#10;Authentication Token: string&#10;Version Id: string&#10;Full input/output schema in API sheet" />
+        <rectangle id="part-3" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="CreateFolder&#10;API input (not an XAL attribute)&#10;Parent Folder Id*: string&#10;Authentication Token: string&#10;Name: string&#10;Full input/output schema in API sheet" /></row>
+      <row height="242" gap="24"><rectangle id="part-4" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="CreateLabels&#10;API input (not an XAL attribute)&#10;Labels*: list&#10;Resource Id*: string&#10;Authentication Token: string&#10;Full input/output schema in API sheet" />
+        <rectangle id="part-5" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="CreateNotificationSubscription&#10;API input (not an XAL attribute)&#10;Protocol*: string&#10;Endpoint*: string&#10;Organization Id*: string&#10;Subscription Type*: string&#10;Full input/output schema in API sheet" />
+        <rectangle id="part-6" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="CreateUser&#10;API input (not an XAL attribute)&#10;Password*: string&#10;Surname*: string&#10;Username*: string&#10;Authentication Token: string&#10;Email Address: string&#10;Full input/output schema in API sheet" /></row>
+      <rectangle id="design-legend" width="1284" height="150" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="DESIGN CONTRACT / 図の読み方&#10;* = required in the source schema, not a required XAL attribute. Values are not deployed to AWS.&#10;Configuration / API cards are references, not automatically nested resources or network traffic.&#10;AWS lists this product as retired. Keep for historical diagrams; do not treat this as a deployment recommendation." />
+    </col>
+  </frame>
+</frames>
+</xaligo>

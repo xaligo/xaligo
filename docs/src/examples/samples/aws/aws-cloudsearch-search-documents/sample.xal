@@ -1,0 +1,20 @@
+<!-- AWS functional design library v2. Editable: see README.md and research/designs.json. -->
+<!-- Configuration cards describe AWS concepts; their text is not a provisioning command. -->
+<xaligo version="2">
+<frames>
+  <frame id="sample" title="aws-cloudsearch-search-documents" width="1500" height="1160">
+    <col width="1360" height="1000" margin="32" gap="24">
+      <row height="230" gap="32"><aws-cloudsearch-search-documents id="component" label="Amazon CloudSearch Search Documents" label-width="340" />
+        <rectangle id="overview" width="920" height="180" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Design review / 設計レビュー&#10;Research: api-context&#10;API: cloudsearch&#10;Functional structure and full reference tables are in README." />
+      </row>
+      <row height="242" gap="24"><rectangle id="part-1" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="CreateDomain&#10;API input (not an XAL attribute)&#10;Domain Name*: string&#10;Full input/output schema in API sheet" />
+        <rectangle id="part-2" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="DescribeAnalysisSchemes&#10;API input (not an XAL attribute)&#10;Analysis Scheme Names: list&#10;Deployed: boolean&#10;Domain Name*: string&#10;Full input/output schema in API sheet" />
+        <rectangle id="part-3" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="DescribeAvailabilityOptions&#10;API input (not an XAL attribute)&#10;Deployed: boolean&#10;Domain Name*: string&#10;Full input/output schema in API sheet" /></row>
+      <row height="242" gap="24"><rectangle id="part-4" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="DescribeDomainEndpointOptions&#10;API input (not an XAL attribute)&#10;Deployed: boolean&#10;Domain Name*: string&#10;Full input/output schema in API sheet" />
+        <rectangle id="part-5" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="DescribeDomains&#10;API input (not an XAL attribute)&#10;Domain Names: list&#10;Full input/output schema in API sheet" />
+        <rectangle id="part-6" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="DescribeExpressions&#10;API input (not an XAL attribute)&#10;Deployed: boolean&#10;Expression Names: list&#10;Domain Name*: string&#10;Full input/output schema in API sheet" /></row>
+      <rectangle id="design-legend" width="1284" height="150" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="DESIGN CONTRACT / 図の読み方&#10;* = required in the source schema, not a required XAL attribute. Values are not deployed to AWS.&#10;Configuration / API cards are references, not automatically nested resources or network traffic.&#10;Availability and region support must be checked before deployment. Research source/version and full parameter tables: README." />
+    </col>
+  </frame>
+</frames>
+</xaligo>

@@ -1,0 +1,20 @@
+<!-- AWS functional design library v2. Editable: see README.md and research/designs.json. -->
+<!-- Configuration cards describe AWS concepts; their text is not a provisioning command. -->
+<xaligo version="2">
+<frames>
+  <frame id="sample" title="aws-cloudtrail-cloudtrail-lake" width="1500" height="1160">
+    <col width="1360" height="1000" margin="32" gap="24">
+      <row height="230" gap="32"><aws-cloudtrail-cloudtrail-lake id="component" label="AWS CloudTrail CloudTrail Lake" label-width="340" />
+        <rectangle id="overview" width="920" height="180" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Design review / 設計レビュー&#10;Research: service-context&#10;AWS::CloudTrail::Trail&#10;Configuration context; icon itself may represent a feature." />
+      </row>
+      <row height="242" gap="24"><rectangle id="part-1" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Service configuration context&#10;Trail&#10;Is Logging*: Boolean&#10;Advanced Event Selectors: list&#10;Aggregation Configs: list&#10;Cloud Watch Logs Log Group Arn: String&#10;Cloud Watch Logs Role Arn: String" />
+        <rectangle id="part-2" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Nested configuration&#10;Advanced Event Selectors -&gt; object&#10;Field Selectors*: list&#10;Name: String&#10;Aggregation Configs -&gt; object&#10;Event Category*: String&#10;Templates*: list" />
+        <rectangle id="part-3" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Additional parameters&#10;Enable Log File Validation: Boolean&#10;Event Selectors: list&#10;Include Global Service Events: Boolean&#10;Insight Selectors: list&#10;Is Multi Region Trail: Boolean&#10;Is Organization Trail: Boolean&#10;Complete field list in README" /></row>
+      <row height="242" gap="24"><rectangle id="part-4" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Referenced resource types&#10;No peer type selected from ID fields&#10;Full service type inventory in README" />
+        <rectangle id="part-5" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Operations / lifecycle&#10;CreateTrail&#10;DescribeTrails&#10;GetTrail&#10;ListTrails&#10;UpdateTrail&#10;Input / output schemas: linked API sheet" />
+        <rectangle id="part-6" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Icon meaning / interpretation&#10;AWS CloudTrail CloudTrail Lake&#10;Service-level schema shown as context&#10;Do not infer API fields from icon artwork&#10;Solid enclosure = authored membership&#10;Type references are not traffic paths" /></row>
+      <rectangle id="design-legend" width="1284" height="150" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="DESIGN CONTRACT / 図の読み方&#10;* = required in the source schema, not a required XAL attribute. Values are not deployed to AWS.&#10;Configuration / API cards are references, not automatically nested resources or network traffic.&#10;Availability and region support must be checked before deployment. Research source/version and full parameter tables: README." />
+    </col>
+  </frame>
+</frames>
+</xaligo>

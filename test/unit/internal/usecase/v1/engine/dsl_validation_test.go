@@ -67,6 +67,34 @@ func TestV1BuildValidatesPortSide(t *testing.T) {
 	}
 }
 
+func TestV1ValidatesVPCEndpointSemantics(t *testing.T) {
+	valid := `<frame width="320" height="240"><vpc id="network" height="160"><vpc-endpoint id="private-api" side="left" anchor="0" offset="4" size="40" /></vpc><rectangle id="client" height="64"/><connection src="client" dst="private-api" /></frame>`
+	if err := parseAndBuildV1EngineDSLValidationTest(valid); err != nil {
+		t.Fatalf("Build(valid VPC endpoint) error = %v", err)
+	}
+
+	tests := []struct {
+		name   string
+		source string
+		want   string
+	}{
+		{name: "missing id", source: `<frame><vpc id="network"><vpc-endpoint /></vpc></frame>`, want: "requires a non-empty id"},
+		{name: "wrong parent", source: `<frame><region id="region"><vpc-endpoint id="endpoint" /></region></frame>`, want: "must be a direct child of <vpc>"},
+		{name: "has children", source: `<frame><vpc id="network"><vpc-endpoint id="endpoint"><item id="27" /></vpc-endpoint></vpc></frame>`, want: "must be empty"},
+		{name: "invalid side", source: `<frame><vpc id="network"><vpc-endpoint id="endpoint" side="front" /></vpc></frame>`, want: "must be top, right, bottom, or left"},
+		{name: "anchor below range", source: `<frame><vpc id="network"><vpc-endpoint id="endpoint" anchor="-0.1" /></vpc></frame>`, want: "zero or greater"},
+		{name: "anchor above range", source: `<frame><vpc id="network"><vpc-endpoint id="endpoint" anchor="1.1" /></vpc></frame>`, want: "must not exceed 1"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := parseAndBuildV1EngineDSLValidationTest(test.source)
+			if err == nil || !strings.Contains(err.Error(), test.want) {
+				t.Fatalf("error = %v, want %q", err, test.want)
+			}
+		})
+	}
+}
+
 func TestV1BuildValidatesLayoutByTag(t *testing.T) {
 	valid := []string{
 		`<frame width="240" height="120" layout="vertical"><blank /></frame>`,

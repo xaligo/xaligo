@@ -1,0 +1,19 @@
+<!-- Editable native ALB example; AWS setting references are not credentials or deployment configuration. -->
+<xaligo version="2">
+  <frames>
+<frame id="rewrites" title="ALB / rewrites" width="575" height="403">
+      <aws-elastic-load-balancing-application-load-balancer id="alb" domain="api.example.test" detail-level="detailed" margin="24">
+        <aws-listener id="listener-42" protocol="HTTPS" port="443" certificate="server-cert">
+          <aws-listener-rule id="rule-41" priority="10">
+            <aws-rule-condition id="condition-38" field="host-header">
+              <aws-rule-match id="match-39" value="legacy.example.test" />
+            </aws-rule-condition>
+            <aws-rule-transform id="rewrite-host" type="host-header-rewrite"><aws-rule-rewrite id="host-pattern" regex="^legacy[.]example[.]test$" replace="internal.example.test" /></aws-rule-transform>
+            <aws-rule-transform id="rewrite-url" type="url-rewrite"><aws-rule-rewrite id="url-pattern" regex="^/v1/(.*)$" replace="/v2/$1" /></aws-rule-transform>
+            <aws-rule-action id="forward-40" type="forward" order="1" target-group="app" />
+          </aws-listener-rule>
+        </aws-listener>
+      </aws-elastic-load-balancing-application-load-balancer>
+    </frame>
+  </frames>
+</xaligo>

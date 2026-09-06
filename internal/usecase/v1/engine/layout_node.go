@@ -41,7 +41,7 @@ var (
 func layoutKidsV1EngineLayoutNode(node *entity.Node) []*entity.Node {
 	var kids []*entity.Node
 	for _, c := range node.Children {
-		if c.Tag == "connection" || c.Tag == "connections" || c.Tag == "metadata" {
+		if c.Tag == "connection" || c.Tag == "connections" || c.Tag == "metadata" || isAWSBoundaryAttachmentV1EngineAwsBoundary(c.Tag) {
 			loggerV1EngineSharedLogging.DEBUG(IULLK001V1EngineLayoutNode, "branch skip connection")
 			continue
 		}
@@ -50,7 +50,14 @@ func layoutKidsV1EngineLayoutNode(node *entity.Node) []*entity.Node {
 	return kids
 }
 
-func layoutNodeV1EngineLayoutNode(node *entity.Node, target *entity.Box, x, y, w, h float64) error {
+func layoutNodeV1EngineLayoutNode(node *entity.Node, target *entity.Box, x, y, w, h float64) (layoutErr error) {
+	if hasAWSBoundaryAttachmentChildrenV1EngineLayoutAwsBoundary(node) {
+		defer func() {
+			if layoutErr == nil {
+				layoutErr = layoutAWSBoundaryAttachmentsV1EngineLayoutAwsBoundary(node, target)
+			}
+		}()
+	}
 	target.Attrs = node.Attrs
 	target.Position = node.Position
 	target.Overflow = normalizedOverflowV1EngineLayoutConstraints(node)

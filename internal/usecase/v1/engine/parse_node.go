@@ -148,7 +148,7 @@ func nodeConnectableByIDV1EngineParseNode(node *entity.Node) bool {
 }
 
 func isConnectableFrameTagV1EngineParseNode(tag string) bool {
-	if tag == "rectangle" || tag == "port" {
+	if tag == "rectangle" || tag == "port" || isAWSBoundaryAttachmentV1EngineAwsBoundary(tag) || isAWSResourceV1EngineAwsResource(tag) {
 		return true
 	}
 	_, isGroup := awsGroupsV1EngineSceneTypes[tag]

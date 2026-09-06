@@ -1,0 +1,24 @@
+<!-- Editable native ALB example; AWS setting references are not credentials or deployment configuration. -->
+<xaligo version="2">
+  <frames>
+<frame id="listener-options-2" title="ALB / listener-options-2" width="480" height="681">
+      <aws-elastic-load-balancing-application-load-balancer id="alb" domain="api.example.test" detail-level="detailed" margin="24">
+        <aws-listener id="listener-181" protocol="HTTPS" port="443" certificate="server-cert" mtls="verify" trust-store="client-ca" target-group="app">
+          <aws-option id="opt-169" name="routing.http.request.x_amzn_tls_version.header_name" value="X-TLS-version" />
+          <aws-option id="opt-170" name="routing.http.request.x_amzn_tls_cipher_suite.header_name" value="X-TLS-cipher" />
+          <aws-option id="opt-171" name="routing.http.response.server.enabled" value="false" />
+          <aws-option id="opt-172" name="routing.http.response.strict_transport_security.header_value" value="max-age=31536000" />
+          <aws-option id="opt-173" name="routing.http.response.access_control_allow_origin.header_value" value="https://app.example.test" />
+          <aws-option id="opt-174" name="routing.http.response.access_control_allow_methods.header_value" value="GET, POST" />
+          <aws-option id="opt-175" name="routing.http.response.access_control_allow_headers.header_value" value="Authorization" />
+          <aws-option id="opt-176" name="routing.http.response.access_control_allow_credentials.header_value" value="true" />
+          <aws-option id="opt-177" name="routing.http.response.access_control_expose_headers.header_value" value="X-Request-Id" />
+          <aws-option id="opt-178" name="routing.http.response.access_control_max_age.header_value" value="600" />
+          <aws-option id="opt-179" name="routing.http.response.content_security_policy.header_value" value="default-src 'self'" />
+          <aws-option id="opt-180" name="routing.http.response.x_content_type_options.header_value" value="nosniff" />
+          <aws-option id="frame-options" name="routing.http.response.x_frame_options.header_value" value="DENY" />
+        </aws-listener>
+      </aws-elastic-load-balancing-application-load-balancer>
+    </frame>
+  </frames>
+</xaligo>

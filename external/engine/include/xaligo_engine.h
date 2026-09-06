@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-#define XALIGO_ENGINE_ABI_VERSION 2u
+#define XALIGO_ENGINE_ABI_VERSION 5u
 
 typedef struct XaligoEngineBuffer {
     uint8_t *data;

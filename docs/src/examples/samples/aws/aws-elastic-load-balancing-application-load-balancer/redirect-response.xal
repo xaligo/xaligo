@@ -1,0 +1,30 @@
+<!-- Editable native ALB example; AWS setting references are not credentials or deployment configuration. -->
+<xaligo version="2">
+  <frames>
+<frame id="redirect-response" title="ALB / redirect-response" width="606" height="607">
+      <aws-elastic-load-balancing-application-load-balancer id="alb" domain="api.example.test" detail-level="detailed" margin="24">
+        <aws-listener id="listener-98" protocol="HTTP" port="80">
+          <aws-listener-rule id="rule-97" priority="default">
+            <aws-rule-action id="redirect" type="redirect">
+              <aws-option id="opt-91" name="protocol" value="HTTPS" />
+              <aws-option id="opt-92" name="host" value="#{host}" />
+              <aws-option id="opt-93" name="port" value="443" />
+              <aws-option id="opt-94" name="path" value="/#{path}" />
+              <aws-option id="opt-95" name="query" value="#{query}" />
+              <aws-option id="opt-96" name="status-code" value="HTTP_301" />
+            </aws-rule-action>
+          </aws-listener-rule>
+        </aws-listener>
+        <aws-listener id="listener-103" protocol="HTTPS" port="443" certificate="server-cert">
+          <aws-listener-rule id="rule-102" priority="default">
+            <aws-rule-action id="response" type="fixed-response">
+              <aws-option id="opt-99" name="status-code" value="503" />
+              <aws-option id="opt-100" name="content-type" value="text/plain" />
+              <aws-option id="opt-101" name="message-body" value="Temporarily unavailable" />
+            </aws-rule-action>
+          </aws-listener-rule>
+        </aws-listener>
+      </aws-elastic-load-balancing-application-load-balancer>
+    </frame>
+  </frames>
+</xaligo>

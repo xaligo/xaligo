@@ -1,0 +1,22 @@
+<!-- Editable native ALB example; AWS setting references are not credentials or deployment configuration. -->
+<xaligo version="2">
+  <frames>
+<frame id="weighted-forward" title="ALB / weighted-forward" width="488" height="651">
+      <aws-elastic-load-balancing-application-load-balancer id="alb" domain="api.example.test" detail-level="detailed" margin="24">
+        <aws-listener id="listener-109" protocol="HTTPS" port="443" certificate="server-cert">
+          <aws-listener-rule id="rule-108" priority="10">
+            <aws-rule-condition id="condition-104" field="path-pattern">
+              <aws-rule-match id="match-105" value="/api/*" />
+            </aws-rule-condition>
+            <aws-rule-action id="split" type="forward">
+              <aws-forward-target id="blue-weight" target-group="blue" weight="90" />
+              <aws-forward-target id="green-weight" target-group="green" weight="10" />
+              <aws-option id="opt-106" name="stickiness" value="true" />
+              <aws-option id="opt-107" name="stickiness-duration" value="3600" />
+            </aws-rule-action>
+          </aws-listener-rule>
+        </aws-listener>
+      </aws-elastic-load-balancing-application-load-balancer>
+    </frame>
+  </frames>
+</xaligo>

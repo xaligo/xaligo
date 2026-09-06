@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	awsprofile "github.com/xaligo/xaligo/internal/core/profiles/aws"
 	"github.com/xaligo/xaligo/internal/entity"
 )
 
@@ -49,6 +50,9 @@ func (rcvr *frontendUsecase) lowerDocument(source []byte, preserveProvenance boo
 	version, err := frontendDocumentVersion(root)
 	if err != nil {
 		return entity.EngineDocumentSpec{}, "", err
+	}
+	if err := validateFrontendAWSBoundaryAttachments(root); err != nil {
+		return entity.EngineDocumentSpec{}, version, err
 	}
 	if preserveProvenance {
 		assignFrontendSourcePaths(root, "", 0)
@@ -271,7 +275,12 @@ func (rcvr *frontendLowerState) lower(node *frontendNode, inherited frontendDefa
 		if frontendUsesV1AuthoringProfile(rcvr.version) {
 			portLabel = firstNonEmpty(portLabel, node.attrs["name"])
 		}
-		element.Port = &entity.EnginePortSpec{Side: entity.EngineSide(firstNonEmpty(node.attrs["side"], string(entity.EngineSideAuto))), Anchor: portAnchor, Label: portLabel}
+		defaultSide := string(entity.EngineSideAuto)
+		if definition, ok := frontendAWSBoundaryAttachment(node.tag); ok {
+			defaultSide = definition.DefaultSide
+			portLabel = ""
+		}
+		element.Port = &entity.EnginePortSpec{Side: entity.EngineSide(firstNonEmpty(node.attrs["side"], defaultSide)), Anchor: portAnchor, Label: portLabel}
 		if element.Port.Anchor, err = frontendOptionalNumberFallback(node, "anchor", element.Port.Anchor); err != nil {
 			return entity.EngineElementSpec{}, err
 		}
@@ -284,6 +293,7 @@ func (rcvr *frontendLowerState) lower(node *frontendNode, inherited frontendDefa
 		if element.Port.Visible, err = frontendOptionalBool(node, "port-visible"); err != nil {
 			return entity.EngineElementSpec{}, err
 		}
+		applyFrontendAWSBoundaryPortProfile(node, &element)
 	}
 	if element.Concept == entity.EngineConceptLine {
 		element.Line = &entity.EngineLineSpec{
@@ -329,7 +339,7 @@ func (rcvr *frontendLowerState) lower(node *frontendNode, inherited frontendDefa
 			return entity.EngineElementSpec{}, err
 		}
 		applyFrontendV1IconProfile(node, &element)
-		if element.Concept == entity.EngineConceptItem && defaults.itemSize != nil {
+		if element.Concept == entity.EngineConceptItem && defaults.itemSize != nil && !awsprofile.IsResourceTag(node.tag) {
 			if element.Icon.Width == nil {
 				element.Icon.Width = defaults.itemSize
 			}
@@ -352,6 +362,9 @@ func (rcvr *frontendLowerState) lower(node *frontendNode, inherited frontendDefa
 				element.Height = &height
 			}
 		}
+	}
+	if err := applyFrontendAWSResource(node, &element); err != nil {
+		return entity.EngineElementSpec{}, err
 	}
 	var portAnchors map[*frontendNode]*float64
 	if frontendUsesV1AuthoringProfile(rcvr.version) {
@@ -475,6 +488,22 @@ func frontendLabel(node *frontendNode, concept entity.EngineConcept, version str
 	if concept == entity.EngineConceptLine {
 		return ""
 	}
+	if _, ok := frontendAWSBoundaryAttachment(node.tag); ok {
+		return ""
+	}
+	if definition, ok := awsprofile.DefinitionForTag(node.tag); ok {
+		if definition.Group == nil {
+			return definition.Label(node.attrs)
+		}
+		for _, parameter := range definition.Parameters {
+			if node.attrs[parameter.Name] != "" {
+				return definition.Label(node.attrs)
+			}
+		}
+		if node.attrs["detail"] != "" {
+			return definition.Label(node.attrs)
+		}
+	}
 	if label := firstNonEmpty(node.attrs["label"], node.attrs["title"]); label != "" {
 		return label
 	}
@@ -559,13 +588,17 @@ func frontendLineEndpoint(node *frontendNode, canonical, compatibility string, a
 func frontendPortAnchors(children []*frontendNode) map[*frontendNode]*float64 {
 	var bySide map[string][]*frontendNode
 	for _, child := range children {
-		if child.tag != "port" || strings.TrimSpace(child.attrs["anchor"]) != "" {
+		if !isFrontendPortTag(child.tag) || strings.TrimSpace(child.attrs["anchor"]) != "" {
 			continue
 		}
 		if bySide == nil {
 			bySide = make(map[string][]*frontendNode)
 		}
-		side := strings.ToLower(firstNonEmpty(child.attrs["side"], string(entity.EngineSideAuto)))
+		defaultSide := string(entity.EngineSideAuto)
+		if definition, ok := frontendAWSBoundaryAttachment(child.tag); ok {
+			defaultSide = definition.DefaultSide
+		}
+		side := strings.ToLower(firstNonEmpty(child.attrs["side"], defaultSide))
 		bySide[side] = append(bySide[side], child)
 	}
 	if len(bySide) == 0 {
@@ -645,6 +678,15 @@ func firstFrontendContent(root *frontendNode, version string) (*frontendNode, er
 }
 
 func conceptForFrontendTag(tag string, childCount int) entity.EngineConcept {
+	if _, ok := frontendAWSBoundaryAttachment(tag); ok {
+		return entity.EngineConceptPort
+	}
+	if definition, ok := awsprofile.DefinitionForTag(tag); ok {
+		if definition.Group != nil {
+			return entity.EngineConceptGroup
+		}
+		return entity.EngineConceptItem
+	}
 	switch tag {
 	case "frame", "frames":
 		return entity.EngineConceptFrame
@@ -722,6 +764,13 @@ func engineDecorationForFrontendValue(value string) entity.EngineDecoration {
 }
 
 func frontendIconRef(node *frontendNode, version string) string {
+	if definition, ok := frontendAWSBoundaryAttachment(node.tag); ok {
+		return "catalog:" + strconv.Itoa(definition.CatalogID)
+	}
+	if awsprofile.IsResourceTag(node.tag) {
+		definition, _ := awsprofile.DefinitionForTag(node.tag)
+		return "catalog:" + strconv.Itoa(definition.CatalogID)
+	}
 	if ref := firstNonEmpty(node.attrs["icon"], node.attrs["icon-ref"]); ref != "" {
 		return ref
 	}
@@ -752,6 +801,9 @@ func engineOverflowForFrontendNode(node *frontendNode) entity.EngineOverflow {
 }
 
 func engineShapeForFrontendNode(node *frontendNode) entity.EngineShape {
+	if _, ok := frontendAWSBoundaryAttachment(node.tag); ok {
+		return entity.EngineShapeNone
+	}
 	switch strings.TrimSpace(node.attrs["shape"]) {
 	case "ellipse":
 		return entity.EngineShapeEllipse

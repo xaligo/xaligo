@@ -144,7 +144,7 @@ func TestResolvedDocumentPlanProjectsV1GroupHeaderGeometry(t *testing.T) {
 	if border := ops[0]; border.Kind != "rect" || border.Y != 47.0/96.0 || border.H != 84.0/96.0 {
 		t.Fatalf("border op = %#v", border)
 	}
-	if header := ops[1]; header.Kind != "polygon" || !header.FrontLayer || header.GroupID != "" || header.X != 22.0/96.0 || header.Y != 31.0/96.0 || len(header.Points) != 5 {
+	if header := ops[1]; header.Kind != "polygon" || !header.FrontLayer || header.GroupID != "" || header.X != 22.0/96.0 || header.Y != 31.0/96.0 || header.W != 149.0/96.0 || len(header.Points) != 5 {
 		t.Fatalf("header op = %#v", header)
 	}
 	if label := ops[3]; label.Align != "left" || label.Valign != "mid" || label.FontSize != 10.5 || label.TextLayout == nil || label.TextLayout.Wrap {
@@ -191,6 +191,48 @@ func TestFrontendNormalizesV1ProfileAttributesForV2(t *testing.T) {
 	}
 	if line.Concept != entity.EngineConceptLine || len(frame.Children) != 2 {
 		t.Fatalf("V1 connections wrapper was not flattened: %#v", frame.Children)
+	}
+}
+
+func TestFrontendLowersVPCEndpointToBoundaryIconPort(t *testing.T) {
+	source := []byte(`<xaligo version="2"><frame id="page" width="400" height="240"><vpc id="network" title="VPC"><vpc-endpoint id="private-api" side="right" anchor="0.25" offset="6" size="40" /><item id="27" /></vpc></frame></xaligo>`)
+	spec, _, err := v2.NewFrontendUsecase().Lower(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	vpc := spec.Elements[0].Children[0]
+	if len(vpc.Children) != 2 || vpc.Layout != entity.EngineLayoutAdaptiveGrid || vpc.Children[1].Concept != entity.EngineConceptItem {
+		t.Fatalf("VPC children = %#v", vpc.Children)
+	}
+	endpoint := vpc.Children[0]
+	if endpoint.Concept != entity.EngineConceptPort || endpoint.Port == nil || endpoint.Port.Side != entity.EngineSideRight || endpoint.Port.Anchor == nil || *endpoint.Port.Anchor != 0.25 || endpoint.Port.Offset == nil || *endpoint.Port.Offset != 6 {
+		t.Fatalf("VPC endpoint port = %#v", endpoint)
+	}
+	if endpoint.Icon == nil || endpoint.Icon.Ref != "catalog:1579" || endpoint.Width == nil || *endpoint.Width != 40 || endpoint.Height == nil || *endpoint.Height != 40 || endpoint.Icon.Width == nil || *endpoint.Icon.Width != 40 || endpoint.Icon.Height == nil || *endpoint.Icon.Height != 40 {
+		t.Fatalf("VPC endpoint icon geometry = %#v", endpoint)
+	}
+	if endpoint.Visual.Shape != entity.EngineShapeNone || endpoint.OffsetX == nil || *endpoint.OffsetX != 20 || endpoint.OffsetY != nil || endpoint.Text != nil {
+		t.Fatalf("VPC endpoint boundary profile = %#v", endpoint)
+	}
+}
+
+func TestFrontendDistributesAndValidatesVPCEndpoints(t *testing.T) {
+	source := []byte(`<xaligo version="2"><frame id="page"><vpc id="network"><vpc-endpoint id="first"/><vpc-endpoint id="second"/></vpc></frame></xaligo>`)
+	spec, _, err := v2.NewFrontendUsecase().Lower(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	endpoints := spec.Elements[0].Children[0].Children
+	if len(endpoints) != 2 || endpoints[0].Port.Anchor == nil || endpoints[1].Port.Anchor == nil || *endpoints[0].Port.Anchor != 1.0/3.0 || *endpoints[1].Port.Anchor != 2.0/3.0 {
+		t.Fatalf("VPC endpoint anchors = %#v", endpoints)
+	}
+	for _, invalid := range []string{
+		`<xaligo version="2"><frame id="page"><region id="region"><vpc-endpoint id="endpoint"/></region></frame></xaligo>`,
+		`<xaligo version="2"><frame id="page"><vpc id="network"><vpc-endpoint id="endpoint"><item id="27"/></vpc-endpoint></vpc></frame></xaligo>`,
+	} {
+		if _, _, err := v2.NewFrontendUsecase().Lower([]byte(invalid)); err == nil {
+			t.Fatalf("invalid VPC endpoint accepted: %s", invalid)
+		}
 	}
 }
 

@@ -19,8 +19,12 @@ applyTo: ".github/instructions/manual/**"
   obstacles before the native Rust exporter boundary.
 - Group header tag labels are intentionally single-line in PPTX output; keep
   tag background width and label width in sync when adjusting tag text metrics.
-- Group header and item label width estimates count East Asian full-width
-  characters as double-width, so Japanese and other full-width labels keep their
-  text boxes aligned across SVG and PPTX.
+- Group headers use proportional half-width glyph estimates and one font-size
+  unit for East Asian wide/full-width glyphs, keeping Japanese and mixed-width
+  labels compact and aligned across SVG and PPTX. Item labels count full-width
+  characters as two display columns when calculating wrapping.
+- AWS boundary resources such as `<vpc-endpoint>` use the same resolved
+  border-centered icon bounds in SVG and PPTX. Keep them out of normal child
+  flow and preserve their connection endpoint ID when changing projection.
 - Keep `docs/src/examples/samples/sample.xal` and `docs/src/examples/samples/services.csv` in sync so the legend
   includes every diagram service.

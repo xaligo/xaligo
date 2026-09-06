@@ -48,8 +48,7 @@ impl MCode {
     }
 }
 
-pub const MLOG_OUTPUT_FALLBACK: MCode =
-    MCode::new("MLOG2", "Logger output fallback to stderr");
+pub const MLOG_OUTPUT_FALLBACK: MCode = MCode::new("MLOG2", "Logger output fallback to stderr");
 pub const MENGINE_PROCESS: MCode = MCode::new("MENG1", "Engine request processing started");
 pub const MENGINE_COMPLETE: MCode = MCode::new("MENG2", "Engine request processing completed");
 

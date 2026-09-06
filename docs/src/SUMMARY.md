@@ -18,6 +18,7 @@
   - [Imported Tables](examples/table-imports.md)
   - [Relational Database](examples/databases.md)
   - [UML Diagrams](examples/uml.md)
+  - [AWS Component Catalog](examples/samples/aws/README.md)
 - [AI Agent Guide](ai-agent-guide.md)
 - [Planned Work](roadmap.md)
 
@@ -31,6 +32,9 @@
 - [Overview](xal/overview.md)
 - [Layout](xal/layout.md)
 - [AWS Groups](xal/groups.md)
+- [AWS Resource Tags](xal/aws-resources.md)
+  - [ALB Rules and Detail Levels](xal/alb.md)
+  - [ALB Options](xal/alb-options.md)
 - [Items and Spacers](xal/items.md)
 - [Rectangles and Ports](xal/rectangles-ports.md)
 - [Connections](xal/connections.md)

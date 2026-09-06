@@ -1,0 +1,20 @@
+<!-- AWS functional design library v2. Editable: see README.md and research/designs.json. -->
+<!-- Configuration cards describe AWS concepts; their text is not a provisioning command. -->
+<xaligo version="2">
+<frames>
+  <frame id="sample" title="aws-opensearch-service-ultrawarm-node" width="1500" height="1160">
+    <col width="1360" height="1000" margin="32" gap="24">
+      <row height="230" gap="32"><aws-opensearch-service-ultrawarm-node id="component" label="Amazon OpenSearch Service&#10;UltraWarm Node" label-width="340" />
+        <rectangle id="overview" width="920" height="180" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Design review / 設計レビュー&#10;Research: service-context&#10;AWS::OpenSearchService::Domain&#10;Configuration context; icon itself may represent a feature." />
+      </row>
+      <row height="242" gap="24"><rectangle id="part-1" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Service configuration context&#10;Domain&#10;Access Policies: Json&#10;Advanced Options: map&#10;Advanced Security Options: object&#10;AIMLOptions: object&#10;Automated Snapshot Pause Options: object" />
+        <rectangle id="part-2" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Nested configuration&#10;Advanced Security Options -&gt; object&#10;Anonymous Auth Disable Date: String&#10;Anonymous Auth Enabled: Boolean&#10;AIMLOptions -&gt; object&#10;S3 Vectors Engine: object&#10;Serverless Vector Acceleration: object" />
+        <rectangle id="part-3" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Additional parameters&#10;Cluster Config: object&#10;Cognito Options: object&#10;Deployment Strategy Options: object&#10;Domain Endpoint Options: object&#10;EBSOptions: object&#10;Encryption At Rest Options: object&#10;Complete field list in README" /></row>
+      <row height="242" gap="24"><rectangle id="part-4" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Referenced resource types&#10;No peer type selected from ID fields&#10;Full service type inventory in README" />
+        <rectangle id="part-5" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Operations / lifecycle&#10;CreateDomain&#10;DescribeDomain&#10;DescribeDomains&#10;DeleteDomain&#10;StartDomainMaintenance&#10;Input / output schemas: linked API sheet" />
+        <rectangle id="part-6" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Icon meaning / interpretation&#10;Amazon OpenSearch Service UltraWarm&#10;Node&#10;Service-level schema shown as context&#10;Do not infer API fields from icon artwork&#10;Solid enclosure = authored membership&#10;Type references are not traffic paths" /></row>
+      <rectangle id="design-legend" width="1284" height="150" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="DESIGN CONTRACT / 図の読み方&#10;* = required in the source schema, not a required XAL attribute. Values are not deployed to AWS.&#10;Configuration / API cards are references, not automatically nested resources or network traffic.&#10;Availability and region support must be checked before deployment. Research source/version and full parameter tables: README." />
+    </col>
+  </frame>
+</frames>
+</xaligo>

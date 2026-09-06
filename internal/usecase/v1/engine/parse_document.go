@@ -200,6 +200,9 @@ func ParseWithImportsV1EngineParseDocument(r io.Reader, imports *entity.ImportSo
 		loggerV1EngineSharedLogging.ERROR(IUPP006V1EngineParseDocument, "frame hierarchy validation failed", map[string]any{"error": err})
 		return entity.Document{}, err
 	}
+	if err := validateAWSBoundaryAttachmentsV1EngineAwsBoundary(root); err != nil {
+		return entity.Document{}, err
+	}
 	if err := normalizeFrameMetadataV1EngineParseFrameMetadata(root, envelope); err != nil {
 		return entity.Document{}, err
 	}

@@ -1,0 +1,31 @@
+<!-- Editable native ALB example; AWS setting references are not credentials or deployment configuration. -->
+<xaligo version="2">
+  <frames>
+<frame id="authentication-oidc" title="ALB / authentication-oidc" width="508" height="873">
+      <aws-elastic-load-balancing-application-load-balancer id="alb" domain="api.example.test" detail-level="detailed" margin="24">
+        <aws-listener id="listener-60" protocol="HTTPS" port="443" certificate="server-cert">
+          <aws-listener-rule id="rule-59" priority="10">
+            <aws-rule-condition id="condition-55" field="path-pattern">
+              <aws-rule-match id="match-56" value="/secure/*" />
+            </aws-rule-condition>
+            <aws-rule-action id="auth-57" type="authenticate-oidc" order="1">
+              <aws-option id="opt-43" name="client-id" value="client-id" />
+              <aws-option id="opt-44" name="on-unauthenticated-request" value="authenticate" />
+              <aws-option id="opt-45" name="scope" value="openid email" />
+              <aws-option id="opt-46" name="session-cookie" value="ALBAuthSession" />
+              <aws-option id="opt-47" name="session-timeout" value="3600" />
+              <aws-option id="opt-48" name="auth-parameter" value="login" key="prompt" />
+              <aws-option id="opt-49" name="issuer" value="https://id.example.test" />
+              <aws-option id="opt-50" name="authorization-endpoint" value="https://id.example.test/authorize" />
+              <aws-option id="opt-51" name="token-endpoint" value="https://id.example.test/token" />
+              <aws-option id="opt-52" name="user-info-endpoint" value="https://id.example.test/userinfo" />
+              <aws-option id="opt-53" name="client-secret-ref" value="secret:oidc-client" visible="false" />
+              <aws-option id="opt-54" name="use-existing-client-secret" value="true" />
+            </aws-rule-action>
+            <aws-rule-action id="forward-58" type="forward" order="2" target-group="app" />
+          </aws-listener-rule>
+        </aws-listener>
+      </aws-elastic-load-balancing-application-load-balancer>
+    </frame>
+  </frames>
+</xaligo>

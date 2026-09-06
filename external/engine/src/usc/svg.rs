@@ -193,7 +193,10 @@ fn render_line_crossings(output: &mut String, document: &ResolvedDocument) {
             for later_segment in later.points.windows(2) {
                 for earlier_segment in earlier.points.windows(2) {
                     let Some((point, horizontal)) = orthogonal_crossing(
-                        later_segment[0], later_segment[1], earlier_segment[0], earlier_segment[1],
+                        later_segment[0],
+                        later_segment[1],
+                        earlier_segment[0],
+                        earlier_segment[1],
                     ) else {
                         continue;
                     };
@@ -323,6 +326,8 @@ fn renders_group_header(element: &ResolvedElement) -> bool {
             || (element.concept == Concept::Capture && element.text.role == "group-header"))
 }
 
+const V1_GROUP_HEADER_END_PADDING: f64 = 4.0;
+
 fn group_header_geometry(element: &ResolvedElement) -> (f64, f64, f64, f64, f64) {
     if element.text.role == "group-header" {
         let has_icon = element.icon_width > 0.0 && element.icon_height > 0.0;
@@ -342,7 +347,7 @@ fn group_header_geometry(element: &ResolvedElement) -> (f64, f64, f64, f64, f64)
             element.text.y - (height - element.text.height) / 2.0
         };
         let tip = (height / 2.0).min(14.0);
-        let width = element.text.x + element.text.width + 18.0 + tip - x;
+        let width = element.text.x + element.text.width + V1_GROUP_HEADER_END_PADDING + tip - x;
         return (x, y, height, width, tip);
     }
     let height = 28.0_f64.min(element.height);
@@ -359,9 +364,18 @@ fn render_group_header_background(output: &mut String, element: &ResolvedElement
         output,
         &[
             Point { x, y },
-            Point { x: x + width - tip, y },
-            Point { x: x + width, y: y + height / 2.0 },
-            Point { x: x + width - tip, y: y + height },
+            Point {
+                x: x + width - tip,
+                y,
+            },
+            Point {
+                x: x + width,
+                y: y + height / 2.0,
+            },
+            Point {
+                x: x + width - tip,
+                y: y + height,
+            },
             Point { x, y: y + height },
         ],
         &element.visual.fill,

@@ -39,6 +39,26 @@ xaligo render docs/src/examples/samples/complex-hybrid-architecture.xal \
   -o output/complex-hybrid-architecture.svg
 ```
 
+### V2: Private NLB TCP Passthrough
+
+![Hybrid architecture with private NLB passthrough](examples/samples/complex-hybrid-architecture-v2.svg)
+
+The V2 sample embeds the [NLB passthrough component](examples/samples/aws/aws-elastic-load-balancing-network-load-balancer/passthrough.xal)
+into the private request path: on-premises → Direct Connect → NLB TCP:443
+listener → IP target group → API at `10.20.10.20:443` in the primary application
+subnet. TLS and mTLS terminate at the API, not at the NLB. The public ALB path
+remains separate. The taller canvas accommodates the native listener card.
+This component requires V2; the V1 example above is unchanged.
+
+[Editable XAL](examples/samples/complex-hybrid-architecture-v2.xal) ·
+[SVG](examples/samples/complex-hybrid-architecture-v2.svg)
+
+```bash
+xaligo render docs/src/examples/samples/complex-hybrid-architecture-v2.xal \
+  --format svg \
+  -o docs/src/examples/samples/complex-hybrid-architecture-v2.svg
+```
+
 ## Structural Diff
 
 This pair demonstrates a title update, an element moved between groups, a

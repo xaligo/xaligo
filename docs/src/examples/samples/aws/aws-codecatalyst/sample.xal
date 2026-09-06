@@ -1,0 +1,20 @@
+<!-- AWS functional design library v2. Editable: see README.md and research/designs.json. -->
+<!-- Configuration cards describe AWS concepts; their text is not a provisioning command. -->
+<xaligo version="2">
+<frames>
+  <frame id="sample" title="aws-codecatalyst" width="1500" height="1160">
+    <col width="1360" height="1000" margin="32" gap="24">
+      <row height="230" gap="32"><aws-codecatalyst id="component" label="Amazon CodeCatalyst" label-width="340" />
+        <rectangle id="overview" width="920" height="180" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="Design review / 設計レビュー&#10;Research: api-context&#10;API: codecatalyst&#10;Functional structure and full reference tables are in README." />
+      </row>
+      <row height="242" gap="24"><rectangle id="part-1" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="CreateAccessToken&#10;API input (not an XAL attribute)&#10;name*: string&#10;expires Time: timestamp&#10;Full input/output schema in API sheet" />
+        <rectangle id="part-2" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="CreateDevEnvironment&#10;API input (not an XAL attribute)&#10;instance Type*: string&#10;persistent Storage*: object&#10;alias: string&#10;client Token: string&#10;ides: list&#10;Full input/output schema in API sheet" />
+        <rectangle id="part-3" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="CreateProject&#10;API input (not an XAL attribute)&#10;description: string&#10;display Name*: string&#10;space Name*: string&#10;Full input/output schema in API sheet" /></row>
+      <row height="242" gap="24"><rectangle id="part-4" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="CreateSourceRepository&#10;API input (not an XAL attribute)&#10;name*: string&#10;description: string&#10;project Name*: string&#10;space Name*: string&#10;Full input/output schema in API sheet" />
+        <rectangle id="part-5" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="CreateSourceRepositoryBranch&#10;API input (not an XAL attribute)&#10;name*: string&#10;head Commit Id: string&#10;project Name*: string&#10;source Repository Name*: string&#10;space Name*: string&#10;Full input/output schema in API sheet" />
+        <rectangle id="part-6" width="412" height="242" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="StartDevEnvironment&#10;API input (not an XAL attribute)&#10;id*: string&#10;ides: list&#10;inactivity Timeout Minutes: integer&#10;instance Type: string&#10;project Name*: string&#10;Full input/output schema in API sheet" /></row>
+      <rectangle id="design-legend" width="1284" height="150" font-size="16" fill="#f8fafc" stroke="#cbd5e1" title="DESIGN CONTRACT / 図の読み方&#10;* = required in the source schema, not a required XAL attribute. Values are not deployed to AWS.&#10;Configuration / API cards are references, not automatically nested resources or network traffic.&#10;Availability and region support must be checked before deployment. Research source/version and full parameter tables: README." />
+    </col>
+  </frame>
+</frames>
+</xaligo>

@@ -1,0 +1,17 @@
+<xaligo version="2">
+<frames>
+  <frame id="flow-passthrough" title="NLB / passthrough" width="860" height="420" layout="absolute">
+    <rectangle id="client" x="24" y="125" width="140" height="90" title="Client" fill="#f8fbff" stroke="#c7d8f4" />
+    <aws-elastic-load-balancing-network-load-balancer id="component" domain="nlb.example.test" x="190" y="40">
+      <aws-listener id="listener" protocol="TCP" port="443" backend-tls="true" backend-mtls="true" target-group="app" />
+    </aws-elastic-load-balancing-network-load-balancer>
+    <rectangle id="target-group" x="580" y="125" width="240" height="90" title="Target group / app&#10;TCP :443 · ip" fill="#fff7ed" stroke="#fb923c" />
+    <rectangle id="target" x="580" y="280" width="240" height="96" title="10.0.2.20 :443&#10;TLS + mTLS" fill="#f0fdf4" stroke="#86efac" />
+    <connections>
+      <connection src="client" dst="listener" kind="traffic" src-side="right" dst-side="left" color="#2563eb" label="443" />
+      <connection src="listener" dst="target-group" kind="traffic" src-side="right" dst-side="left" color="#2563eb" />
+      <connection src="target-group" dst="target" kind="traffic" src-side="bottom" dst-side="top" color="#2563eb" label="443" />
+    </connections>
+  </frame>
+</frames>
+</xaligo>

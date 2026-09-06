@@ -55,7 +55,16 @@ or place all responsibilities back into a monolithic `lib.rs` or `usc/engine.rs`
 
 Keep `ctl`, `usc`, and `rep` shallow. Express cohesive slices with filenames
 such as `layout_flow.rs`, `layout_routing.rs`, and a future `pptx_package.rs`;
-do not create responsibility subdirectories below those layer directories.
+the native `usc/aws/` components defined in 08.10 are the explicit exception.
+
+Declare the Rust engine's module hierarchy centrally in
+`external/engine/src/mod.rs`, including inline `ent::model::aws` and `usc::aws`
+namespaces. Do not add nested `mod.rs` files. Keep declarations and re-exports
+in that registry; model data and execution logic stay in responsibility files
+such as `ent/model/aws/component.rs` and `usc/aws/composition.rs`. Preserve
+existing module paths with re-exports when relocating implementation content.
+The standalone test registry under `test/unit/external/engine` mirrors this
+hierarchy and includes responsibility files directly, not removed registries.
 
 The Rust engine follows VEM's explicit implementation convention. Keep entity
 declarations free of `derive`-generated implementations. Implement `Clone`,

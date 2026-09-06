@@ -1,0 +1,25 @@
+<!-- Editable native ALB example; AWS setting references are not credentials or deployment configuration. -->
+<xaligo version="2">
+  <frames>
+<frame id="target-group-options-1" title="ALB / target-group-options-1" width="550" height="597">
+      <aws-elastic-load-balancing-application-load-balancer id="alb" domain="api.example.test" detail-level="detailed" margin="24">
+        <aws-listener id="listener-182" protocol="HTTPS" port="443" certificate="server-cert" target-group="app">
+        </aws-listener>
+        <aws-target-group id="app" name="app" target-type="ip" protocol="HTTP" port="8080">
+          <aws-option id="opt-183" name="protocol-version" value="HTTP1" />
+          <aws-option id="opt-184" name="vpc" value="vpc-production" />
+          <aws-option id="opt-185" name="target-ip-address-type" value="ipv4" />
+          <aws-option id="opt-186" name="health-check-enabled" value="true" />
+          <aws-option id="opt-187" name="health-check-protocol" value="HTTP" />
+          <aws-option id="opt-188" name="health-check-port" value="traffic-port" />
+          <aws-option id="opt-189" name="health-check-path" value="/health" />
+          <aws-option id="opt-190" name="health-check-interval" value="30" />
+          <aws-option id="opt-191" name="health-check-timeout" value="5" />
+          <aws-option id="opt-192" name="healthy-threshold" value="5" />
+          <aws-option id="opt-193" name="unhealthy-threshold" value="2" />
+          <aws-registered-target id="api" name="10.20.1.20" port="8080" zone="ap-northeast-1a" />
+        </aws-target-group>
+      </aws-elastic-load-balancing-application-load-balancer>
+    </frame>
+  </frames>
+</xaligo>

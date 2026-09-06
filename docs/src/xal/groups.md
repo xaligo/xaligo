@@ -1,5 +1,9 @@
 # AWS Groups
 
+For dedicated service/resource icons and per-component XAL/SVG examples, see
+[AWS resource tags](aws-resources.md) and the
+[AWS component catalog](../examples/samples/aws/README.md).
+
 AWS group tags render architecture-style containers with headers, icons, and
 border styles. Examples include:
 
@@ -39,6 +43,35 @@ non-decimal syntax, and out-of-range values are invalid.
 </generic-group>
 ```
 
+## VPC endpoints on the VPC border
+
+Use `<vpc-endpoint>` for an Amazon VPC Endpoint that should sit on the VPC
+boundary. It is excluded from the VPC's normal child layout, so moving it does
+not resize or reorder subnets and other resources.
+
+```xml
+<vpc id="application-vpc" title="Application VPC">
+  <vpc-endpoint id="private-api" side="right" anchor="0.35" />
+  <private-subnet id="application" title="Application Subnet">
+    <item id="27" name="app" />
+  </private-subnet>
+</vpc>
+```
+
+`side` accepts `top`, `right`, `bottom`, or `left` and defaults to `right`.
+Set `anchor` from `0` to `1` to slide the icon along that edge; `offset` adds a
+pixel adjustment in the same direction. `size` controls the square icon size
+and defaults to `48`. If several endpoints on one side omit `anchor`, they are
+distributed evenly. Overlapping endpoints and positions beyond the usable
+edge are rejected.
+
+The element must be empty, must be a direct child of `<vpc>`, and requires a
+unique, whitespace-free `id` used by connections. Its AWS catalog icon is
+fixed to Amazon VPC Endpoints, and its center is drawn directly on the VPC
+line. It is intentionally icon-only; use the service legend or nearby text
+when an explanatory label is needed. A numeric `<item id="1579">` remains a
+regular item inside normal layout for backward compatibility.
+
 ## Capture (Structural Annotation)
 
 `<capture>` is a lightweight structural annotation group. It participates in
@@ -64,6 +97,9 @@ cross-frame page-link stubs used for any other connectable endpoint.
 
 ## Text Width
 
-Group header and item label width estimates count East Asian full-width
-characters as double-width so Japanese and other full-width labels stay aligned
-across SVG and PPTX. Markdown inherits SVG text layout.
+Group headers estimate proportional half-width glyphs separately from East
+Asian wide/full-width glyphs, which use one font-size unit. This keeps Japanese,
+half-width Katakana, and mixed-width titles compact while preserving a small
+cross-renderer safety allowance and 4px before the tag tip. Item labels still
+count full-width characters as two display columns when calculating wrapping.
+Markdown inherits SVG text layout.

@@ -1,7 +1,8 @@
 # Connections
 
-`<connection>` draws an elbowed connector between items, AWS groups,
-rectangles, ports, or identified child frames in a `<frames>` document.
+`<connection>` draws an elbowed connector between items, AWS groups and
+boundary resources such as `<vpc-endpoint>`, rectangles, ports, or identified
+child frames in a `<frames>` document.
 
 Connections must be direct children of `<frame>` or inside a frame-level
 `<connections>` block.
@@ -31,7 +32,7 @@ child tags are validation errors.
 
 | Attribute | Description |
 |---|---|
-| `src`, `dst` | Catalog ID or `id`/`name`/`ref` of an item, AWS group, rectangle, port, or identified child frame |
+| `src`, `dst` | Catalog ID or `id`/`name`/`ref` of an item, AWS group/boundary resource, rectangle, port, or identified child frame |
 | `src-side`, `dst-side` | Optional endpoint side: `top`, `right`, `bottom`, or `left` |
 | `src-anchor`, `dst-anchor` | Optional edge anchor: `top-1` through `top-5`, `right-1` through `right-5`, `bottom-1` through `bottom-5`, or `left-1` through `left-5` |
 | `src-frame-side`, `dst-frame-side` | Cross-frame-only logical page side, independent of the endpoint side; the drawable terminal uses that side's inward inset line |

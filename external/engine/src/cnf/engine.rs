@@ -1,4 +1,4 @@
-pub const ABI_VERSION: u16 = 2;
+pub const ABI_VERSION: u16 = 5;
 
 pub(crate) const REQUEST_MAGIC: &[u8; 4] = b"XLE2";
 pub(crate) const RESPONSE_MAGIC: &[u8; 4] = b"XLR2";
@@ -23,16 +23,8 @@ pub(crate) const DEFAULT_FONT_SIZE: f64 = 14.0;
 pub(crate) const DEFAULT_LINE_HEIGHT: f64 = 1.2;
 
 pub(crate) use crate::cnf::engine_abi::{
-    BOOL_COLUMNS,
-    BOOL_COLUMN_SPAN,
-    BOOL_LAYER,
-    BOOL_PORT_VISIBLE,
-    BOOL_ROW_SPAN,
-    BOOL_TEXT_CLIP,
-    BOOL_TEXT_FIT,
-    BOOL_TEXT_WRAP,
-    BOOL_VISIBLE,
-    NUMBER_FIELD_COUNT as NUMERIC_FIELD_COUNT,
+    BOOL_COLUMNS, BOOL_COLUMN_SPAN, BOOL_LAYER, BOOL_PORT_VISIBLE, BOOL_ROW_SPAN, BOOL_TEXT_CLIP,
+    BOOL_TEXT_FIT, BOOL_TEXT_WRAP, BOOL_VISIBLE, NUMBER_FIELD_COUNT as NUMERIC_FIELD_COUNT,
     STRING_FIELD_COUNT,
 };
 pub(crate) const BOOL_KNOWN: u16 = BOOL_VISIBLE
@@ -43,7 +35,10 @@ pub(crate) const BOOL_KNOWN: u16 = BOOL_VISIBLE
     | BOOL_LAYER
     | BOOL_COLUMNS
     | BOOL_COLUMN_SPAN
-    | BOOL_ROW_SPAN;
+    | BOOL_ROW_SPAN
+    | crate::cnf::engine_abi::BOOL_AWS_BACKEND_TLS
+    | crate::cnf::engine_abi::BOOL_AWS_BACKEND_MTLS
+    | crate::cnf::engine_abi::BOOL_AWS_SHOW_TITLE;
 
 pub(crate) const FFI_OK: i32 = 0;
 pub(crate) const FFI_NULL_OUTPUT: i32 = 1;

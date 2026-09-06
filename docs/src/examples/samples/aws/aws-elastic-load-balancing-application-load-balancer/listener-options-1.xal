@@ -1,0 +1,23 @@
+<!-- Editable native ALB example; AWS setting references are not credentials or deployment configuration. -->
+<xaligo version="2">
+  <frames>
+<frame id="listener-options-1" title="ALB / listener-options-1" width="485" height="651">
+      <aws-elastic-load-balancing-application-load-balancer id="alb" domain="api.example.test" detail-level="detailed" margin="24">
+        <aws-listener id="listener-168" protocol="HTTPS" port="443" certificate="server-cert" mtls="verify" trust-store="client-ca" target-group="app">
+          <aws-option id="opt-156" name="tls-policy" value="ELBSecurityPolicy-TLS13-1-2-2021-06" />
+          <aws-option id="opt-157" name="sni-certificates" value="api-cert, admin-cert" />
+          <aws-option id="opt-158" name="mtls-ignore-expiry" value="false" />
+          <aws-option id="opt-159" name="mtls-advertise-ca" value="true" />
+          <aws-option id="opt-160" name="trust-store-ca-bundle" value="s3://trust/ca.pem" />
+          <aws-option id="opt-161" name="trust-store-crls" value="s3://trust/revoked.pem" />
+          <aws-option id="opt-162" name="routing.http.request.x_amzn_mtls_clientcert_serial_number.header_name" value="X-Client-Serial" />
+          <aws-option id="opt-163" name="routing.http.request.x_amzn_mtls_clientcert_issuer.header_name" value="X-Client-Issuer" />
+          <aws-option id="opt-164" name="routing.http.request.x_amzn_mtls_clientcert_subject.header_name" value="X-Client-Subject" />
+          <aws-option id="opt-165" name="routing.http.request.x_amzn_mtls_clientcert_validity.header_name" value="X-Client-Validity" />
+          <aws-option id="opt-166" name="routing.http.request.x_amzn_mtls_clientcert_leaf.header_name" value="X-Client-Leaf" />
+          <aws-option id="opt-167" name="routing.http.request.x_amzn_mtls_clientcert.header_name" value="X-Client-Chain" />
+        </aws-listener>
+      </aws-elastic-load-balancing-application-load-balancer>
+    </frame>
+  </frames>
+</xaligo>

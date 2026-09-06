@@ -1,11 +1,13 @@
 package v2
 
 import (
+	"fmt"
 	"math"
 	"strconv"
 	"strings"
 	"unicode/utf8"
 
+	awsprofile "github.com/xaligo/xaligo/internal/core/profiles/aws"
 	"github.com/xaligo/xaligo/internal/entity"
 )
 
@@ -49,28 +51,7 @@ type frontendV1MetadataTag struct {
 // frontendV1GroupProfiles is the authoring-profile boundary. AWS names and
 // assets stop here; the Rust engine receives only generic group, visual, and
 // icon parameters.
-var frontendV1GroupProfiles = map[string]frontendV1GroupProfile{
-	"aws-cloud":                     {stroke: "#000000", strokeWidth: 2, icon: "AWS-Cloud-logo_32.svg"},
-	"aws-cloud-alt":                 {stroke: "#000000", strokeWidth: 2, icon: "AWS-Cloud_32.svg"},
-	"region":                        {stroke: "#00A1C9", strokeWidth: 2, strokeStyle: entity.EngineLineDashed, icon: "Region_32.svg"},
-	"availability-zone":             {stroke: "#00A1C9", strokeWidth: 2, strokeStyle: entity.EngineLineDashed},
-	"security-group":                {stroke: "#CC0000", strokeWidth: 2, strokeStyle: entity.EngineLineDashed},
-	"auto-scaling-group":            {stroke: "#E7601B", strokeWidth: 2, strokeStyle: entity.EngineLineDashed, icon: "Auto-Scaling-group_32.svg"},
-	"vpc":                           {stroke: "#8C4FFF", strokeWidth: 2, icon: "Virtual-private-cloud-VPC_32.svg"},
-	"private-subnet":                {stroke: "#00A1C9", strokeWidth: 2, icon: "Private-subnet_32.svg"},
-	"public-subnet":                 {stroke: "#3F8624", strokeWidth: 2, icon: "Public-subnet_32.svg"},
-	"server-contents":               {stroke: "#7A7C7F", strokeWidth: 2, icon: "Server-contents_32.svg"},
-	"corporate-data-center":         {stroke: "#7A7C7F", strokeWidth: 2, icon: "Corporate-data-center_32.svg"},
-	"ec2-instance-contents":         {stroke: "#E7601B", strokeWidth: 2, icon: "EC2-instance-contents_32.svg"},
-	"spot-fleet":                    {stroke: "#E7601B", strokeWidth: 2, icon: "Spot-Fleet_32.svg"},
-	"aws-account":                   {stroke: "#E7008A", strokeWidth: 2, icon: "AWS-Account_32.svg"},
-	"aws-iot-greengrass-deployment": {stroke: "#3F8624", strokeWidth: 2, icon: "AWS-IoT-Greengrass-Deployment_32.svg"},
-	"aws-iot-greengrass":            {stroke: "#3F8624", strokeWidth: 2},
-	"elastic-beanstalk-container":   {stroke: "#E7601B", strokeWidth: 2},
-	"aws-step-functions-workflow":   {stroke: "#E7008A", strokeWidth: 2},
-	"generic-group":                 {stroke: "#AAB7B8", strokeWidth: 1, strokeStyle: entity.EngineLineDashed},
-	"capture":                       {stroke: "#F5A623", strokeWidth: 1, strokeStyle: entity.EngineLineDashed},
-}
+var frontendV1GroupProfiles = frontendAWSGroupProfiles()
 
 func applyFrontendV1GeometryProfile(node *frontendNode, element *entity.EngineElementSpec) {
 	if node == nil || element == nil {
@@ -80,6 +61,11 @@ func applyFrontendV1GeometryProfile(node *frontendNode, element *entity.EngineEl
 		if frontendHasFrameMetadata(node) && !frontendHasExplicitInsets(node, "padding") {
 			frontendSetInsetMinimum(&element.Padding.Top, frontendV1FrameMetadataContentTop)
 		}
+		return
+	}
+	if definition, ok := frontendAWSBoundaryAttachment(node.tag); ok {
+		frontendSetNumberDefault(&element.Width, definition.DefaultSize)
+		frontendSetNumberDefault(&element.Height, definition.DefaultSize)
 		return
 	}
 	if element.Concept == entity.EngineConceptPort {
@@ -120,6 +106,10 @@ func applyFrontendV1GeometryProfile(node *frontendNode, element *entity.EngineEl
 
 func applyFrontendV1VisualProfile(node *frontendNode, element *entity.EngineElementSpec) {
 	if node == nil || element == nil {
+		return
+	}
+	if _, ok := frontendAWSBoundaryAttachment(node.tag); ok {
+		element.Visual.Shape = entity.EngineShapeNone
 		return
 	}
 	if element.Concept == entity.EngineConceptPort {
@@ -168,6 +158,18 @@ func applyFrontendV1TextProfile(node *frontendNode, element *entity.EngineElemen
 
 func applyFrontendV1IconProfile(node *frontendNode, element *entity.EngineElementSpec) {
 	if node == nil || element == nil || element.Icon == nil {
+		return
+	}
+	if definition, ok := frontendAWSBoundaryAttachment(node.tag); ok {
+		width, height := definition.DefaultSize, definition.DefaultSize
+		if element.Width != nil {
+			width = *element.Width
+		}
+		if element.Height != nil {
+			height = *element.Height
+		}
+		frontendSetNumberDefault(&element.Icon.Width, width)
+		frontendSetNumberDefault(&element.Icon.Height, height)
 		return
 	}
 	if element.Concept == entity.EngineConceptGroup || element.Concept == entity.EngineConceptCapture {
@@ -336,6 +338,16 @@ func frontendHasOnlyItemChildren(node *frontendNode) bool {
 	}
 	found := false
 	for _, child := range node.children {
+		if frontendAWSComponent(child) {
+			return false
+		}
+		if _, ok := frontendAWSBoundaryAttachment(child.tag); ok {
+			continue
+		}
+		if awsprofile.IsResourceTag(child.tag) {
+			found = true
+			continue
+		}
 		switch child.tag {
 		case "item", "spacer", "blank":
 			found = true
@@ -346,6 +358,107 @@ func frontendHasOnlyItemChildren(node *frontendNode) bool {
 		}
 	}
 	return found
+}
+
+func frontendAWSBoundaryAttachment(tag string) (awsprofile.BoundaryAttachment, bool) {
+	return awsprofile.BoundaryAttachmentForTag(tag)
+}
+
+func isFrontendPortTag(tag string) bool {
+	if tag == "port" {
+		return true
+	}
+	_, ok := frontendAWSBoundaryAttachment(tag)
+	return ok
+}
+
+func validateFrontendAWSBoundaryAttachments(root *frontendNode) error {
+	var walk func(*frontendNode, *frontendNode) error
+	walk = func(node, parent *frontendNode) error {
+		if node == nil {
+			return nil
+		}
+		if root.attrs["version"] != "2" && frontendAWSComponent(node) {
+			return fmt.Errorf("<%s> component requires XAL version 2", node.tag)
+		}
+		if err := validateFrontendAWSResource(node); err != nil {
+			return err
+		}
+		if node.tag == "aws-listener" && (parent == nil || frontendAWSLoadBalancer(parent.tag) == "") {
+			return fmt.Errorf("<aws-listener> must be a direct child of an ALB or NLB component")
+		}
+		if definition, ok := frontendAWSBoundaryAttachment(node.tag); ok {
+			if parent == nil || parent.tag != definition.ParentTag {
+				return fmt.Errorf("<%s> must be a direct child of <%s>", node.tag, definition.ParentTag)
+			}
+			id := strings.TrimSpace(node.attrs["id"])
+			if id == "" {
+				return fmt.Errorf("<%s> requires a non-empty id attribute", node.tag)
+			}
+			if strings.ContainsAny(id, " \t\r\n") {
+				return fmt.Errorf("<%s id=%q> must not contain whitespace", node.tag, id)
+			}
+			if len(node.children) != 0 || strings.TrimSpace(node.text) != "" {
+				return fmt.Errorf("<%s> must be empty", node.tag)
+			}
+			if raw := strings.TrimSpace(node.attrs["side"]); raw != "" {
+				side := strings.ToLower(raw)
+				switch side {
+				case "top", "right", "bottom", "left":
+					node.attrs["side"] = side
+				default:
+					return fmt.Errorf("<%s> side=%q must be top, right, bottom, or left", node.tag, raw)
+				}
+			}
+		}
+		for _, child := range node.children {
+			if err := walk(child, node); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	return walk(root, nil)
+}
+
+func applyFrontendAWSBoundaryPortProfile(node *frontendNode, element *entity.EngineElementSpec) {
+	definition, ok := frontendAWSBoundaryAttachment(node.tag)
+	if !ok || element == nil || element.Port == nil {
+		return
+	}
+	if element.Port.Size != nil {
+		if strings.TrimSpace(node.attrs["width"]) == "" {
+			element.Width = element.Port.Size
+		}
+		if strings.TrimSpace(node.attrs["height"]) == "" {
+			element.Height = element.Port.Size
+		}
+	}
+	width, height := definition.DefaultSize, definition.DefaultSize
+	if element.Width != nil {
+		width = *element.Width
+	}
+	if element.Height != nil {
+		height = *element.Height
+	}
+	switch element.Port.Side {
+	case entity.EngineSideTop:
+		frontendAddNumber(&element.OffsetY, -height/2)
+	case entity.EngineSideBottom:
+		frontendAddNumber(&element.OffsetY, height/2)
+	case entity.EngineSideLeft:
+		frontendAddNumber(&element.OffsetX, -width/2)
+	default:
+		frontendAddNumber(&element.OffsetX, width/2)
+	}
+}
+
+func frontendAddNumber(target **float64, amount float64) {
+	value := amount
+	if *target != nil {
+		value += **target
+	}
+	*target = &value
 }
 
 func frontendHasGroupHeaderIcon(node *frontendNode) bool {

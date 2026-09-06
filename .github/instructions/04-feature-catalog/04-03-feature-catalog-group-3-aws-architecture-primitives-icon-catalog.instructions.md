@@ -24,3 +24,6 @@ applyTo: ".github/instructions/manual/**"
 | XAL-3000140 | `services.csv` label overrides | Implemented | `id,OfficialName,Abbreviation,Summary,Usage,Notes` per-diagram service list driving icon abbreviation overrides. |
 | XAL-3000150 | Service legend generation | Implemented | SVG and PPTX output render a service legend derived from `services.csv`, with configurable SVG legend position. |
 | XAL-3000160 | Icon license and attribution bundling | Implemented | Bundled license and attribution files for AWS, Tabler, and Yamaha icon sets are preserved alongside the generated catalogs. |
+| XAL-3000170 | `vpc-endpoint` boundary tag | Implemented | VPC Endpoint resource icon attached to, connectable on, and movable along a VPC border without consuming normal child layout. |
+| XAL-3000180 | Dedicated AWS resource tags | Implemented baseline | 877 declarative tags cover all 1,875 bundled AWS catalog entries, with typed diagram annotations, V1/V2 lowering, and per-tag editable XAL/SVG/design samples. This is not an AWS provisioning schema. |
+| XAL-3000190 | VPC gateway boundary tags | Implemented | Internet Gateway and VPN Gateway use generic VPC boundary ports; subnet-scoped NAT remains an interior resource. |

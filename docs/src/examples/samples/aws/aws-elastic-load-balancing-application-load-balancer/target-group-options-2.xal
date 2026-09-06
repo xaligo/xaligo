@@ -1,0 +1,25 @@
+<!-- Editable native ALB example; AWS setting references are not credentials or deployment configuration. -->
+<xaligo version="2">
+  <frames>
+<frame id="target-group-options-2" title="ALB / target-group-options-2" width="527" height="597">
+      <aws-elastic-load-balancing-application-load-balancer id="alb" domain="api.example.test" detail-level="detailed" margin="24">
+        <aws-listener id="listener-194" protocol="HTTPS" port="443" certificate="server-cert" target-group="app">
+        </aws-listener>
+        <aws-target-group id="app" name="app" target-type="ip" protocol="HTTP" port="8080">
+          <aws-option id="opt-195" name="health-check-matcher" value="200-299" />
+          <aws-option id="opt-196" name="target-control-port" value="8081" />
+          <aws-option id="opt-197" name="deregistration_delay.timeout_seconds" value="300" />
+          <aws-option id="opt-198" name="stickiness.enabled" value="true" />
+          <aws-option id="opt-199" name="stickiness.type" value="lb_cookie" />
+          <aws-option id="opt-200" name="stickiness.app_cookie.cookie_name" value="SESSION" />
+          <aws-option id="opt-201" name="stickiness.app_cookie.duration_seconds" value="86400" />
+          <aws-option id="opt-202" name="stickiness.lb_cookie.duration_seconds" value="86400" />
+          <aws-option id="opt-203" name="load_balancing.algorithm.type" value="round_robin" />
+          <aws-option id="opt-204" name="load_balancing.algorithm.anomaly_mitigation" value="off" />
+          <aws-option id="opt-205" name="slow_start.duration_seconds" value="30" />
+          <aws-registered-target id="api" name="10.20.1.20" port="8080" zone="ap-northeast-1a" />
+        </aws-target-group>
+      </aws-elastic-load-balancing-application-load-balancer>
+    </frame>
+  </frames>
+</xaligo>

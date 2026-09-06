@@ -1,0 +1,51 @@
+<!-- Editable native ALB example; AWS setting references are not credentials or deployment configuration. -->
+<xaligo version="2">
+  <frames>
+<frame id="conditions" title="ALB / conditions" width="542" height="865">
+      <aws-elastic-load-balancing-application-load-balancer id="alb" domain="api.example.test" detail-level="detailed" margin="24">
+        <aws-listener id="listener-19" protocol="HTTPS" port="443" certificate="server-cert">
+          <aws-listener-rule id="rule-14" priority="10">
+            <aws-rule-condition id="condition-11" field="host-header">
+              <aws-rule-match id="match-12" regex="^api[.]example[.]test$" />
+            </aws-rule-condition>
+            <aws-rule-action id="forward-13" type="forward" order="1" target-group="app" />
+          </aws-listener-rule>
+          <aws-listener-rule id="rule-18" priority="20">
+            <aws-rule-condition id="condition-15" field="path-pattern">
+              <aws-rule-match id="match-16" value="/orders/*" />
+            </aws-rule-condition>
+            <aws-rule-action id="forward-17" type="forward" order="1" target-group="app" />
+          </aws-listener-rule>
+        </aws-listener>
+        <aws-listener id="listener-28" protocol="HTTPS" port="444" certificate="server-cert">
+          <aws-listener-rule id="rule-23" priority="10">
+            <aws-rule-condition id="condition-20" field="http-header" name="X-Device">
+              <aws-rule-match id="match-21" regex="^(mobile|tablet)$" />
+            </aws-rule-condition>
+            <aws-rule-action id="forward-22" type="forward" order="1" target-group="app" />
+          </aws-listener-rule>
+          <aws-listener-rule id="rule-27" priority="20">
+            <aws-rule-condition id="condition-24" field="http-request-method">
+              <aws-rule-match id="match-25" value="GET" />
+            </aws-rule-condition>
+            <aws-rule-action id="forward-26" type="forward" order="1" target-group="app" />
+          </aws-listener-rule>
+        </aws-listener>
+        <aws-listener id="listener-37" protocol="HTTPS" port="445" certificate="server-cert">
+          <aws-listener-rule id="rule-32" priority="10">
+            <aws-rule-condition id="condition-29" field="query-string">
+              <aws-rule-match id="match-30" value="v2" key="version" />
+            </aws-rule-condition>
+            <aws-rule-action id="forward-31" type="forward" order="1" target-group="app" />
+          </aws-listener-rule>
+          <aws-listener-rule id="rule-36" priority="20">
+            <aws-rule-condition id="condition-33" field="source-ip">
+              <aws-rule-match id="match-34" value="10.20.0.0/16" />
+            </aws-rule-condition>
+            <aws-rule-action id="forward-35" type="forward" order="1" target-group="app" />
+          </aws-listener-rule>
+        </aws-listener>
+      </aws-elastic-load-balancing-application-load-balancer>
+    </frame>
+  </frames>
+</xaligo>

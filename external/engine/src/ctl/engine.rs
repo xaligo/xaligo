@@ -4,10 +4,7 @@ use std::panic::{
     catch_unwind,
 };
 use std::ptr;
-use std::sync::atomic::{
-    AtomicU8,
-    Ordering,
-};
+use std::sync::atomic::{AtomicU8, Ordering};
 
 use crate::base::process_request;
 #[rustfmt::skip]
